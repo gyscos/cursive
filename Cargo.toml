@@ -1,0 +1,11 @@
+[package]
+name = "cursive"
+version = "0.1.0"
+authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
+
+[lib]
+name = "cursive"
+
+[dependencies.ncurses]
+git = "https://github.com/jeaye/ncurses-rs"
+
