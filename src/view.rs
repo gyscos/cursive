@@ -9,7 +9,7 @@ pub use text_view::TextView;
 use super::Size;
 
 /// Describe constraints on a view layout in one dimension.
-#[derive(PartialEq)]
+#[derive(PartialEq,Clone,Copy)]
 pub enum DimensionRequest {
     /// The view must use exactly the attached size.
     Fixed(u32),
@@ -20,7 +20,7 @@ pub enum DimensionRequest {
 }
 
 /// Describes constraints on a view layout.
-#[derive(PartialEq)]
+#[derive(PartialEq,Clone,Copy)]
 pub struct SizeRequest {
     /// Restriction on the view width
     pub w: DimensionRequest,
