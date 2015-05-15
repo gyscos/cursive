@@ -1,8 +1,7 @@
-use ncurses;
-
-use super::Size;
+use vec2::Vec2;
 use view::{View,DimensionRequest,SizeRequest};
 use div::*;
+use printer::Printer;
 
 /// A simple view showing a fixed text
 pub struct TextView {
@@ -48,19 +47,20 @@ impl TextView {
 }
 
 impl View for TextView {
-    fn draw(&self, win: ncurses::WINDOW, size: Size) {
+    fn draw(&self, printer: &Printer) {
+        printer.print((0,0), &self.content);
     }
 
-    fn get_min_size(&self, size: SizeRequest) -> Size {
+    fn get_min_size(&self, size: SizeRequest) -> Vec2 {
         match (size.w,size.h) {
-            (DimensionRequest::Unknown, DimensionRequest::Unknown) => Size::new(self.content.len() as u32, 1),
+            (DimensionRequest::Unknown, DimensionRequest::Unknown) => Vec2::new(self.content.len() as u32, 1),
             (DimensionRequest::Fixed(w),_) => {
                 let h = self.get_num_lines(w as usize) as u32;
-                Size::new(w, h)
+                Vec2::new(w, h)
             },
             (_,DimensionRequest::Fixed(h)) => {
                 let w = self.get_num_cols(h as usize) as u32;
-                Size::new(w, h)
+                Vec2::new(w, h)
             },
             (DimensionRequest::AtMost(_),DimensionRequest::AtMost(_)) => unreachable!(),
             _ => unreachable!(),

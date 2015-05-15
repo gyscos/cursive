@@ -1,10 +1,9 @@
 use std::cmp::max;
 
-use ncurses;
-
-use super::Size;
+use vec2::Vec2;
 use view::{View,SizeRequest};
 use event::EventResult;
+use printer::Printer;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -33,10 +32,10 @@ impl StackView {
 
 
 impl View for StackView {
-    fn draw(&self, win: ncurses::WINDOW, size: Size) {
+    fn draw(&self, printer: &Printer) {
         match self.layers.last() {
             None => (),
-            Some(v) => v.draw(win, size),
+            Some(v) => v.draw(printer),
         }
     }
 
@@ -47,14 +46,14 @@ impl View for StackView {
         }
     }
 
-    fn get_min_size(&self, size: SizeRequest) -> Size {
+    fn get_min_size(&self, size: SizeRequest) -> Vec2 {
         // The min size is the max of all children's
-        let mut s = Size::new(1,1);
+        let mut s = Vec2::new(1,1);
 
         for view in self.layers.iter() {
             let vs = view.get_min_size(size);
-            s.w = max(s.w, vs.w);
-            s.h = max(s.h, vs.h);
+            s.x = max(s.x, vs.x);
+            s.y = max(s.y, vs.y);
         }
 
         s
