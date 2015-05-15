@@ -3,8 +3,13 @@ name = "cursive"
 version = "0.1.0"
 authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
 
+[[bin]]
+name = "cursive-example"
+
 [lib]
 name = "cursive"
+
+[dependencies]
 
 [dependencies.ncurses]
 git = "https://github.com/jeaye/ncurses-rs"
