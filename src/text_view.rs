@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use ncurses;
 
 use super::Size;
@@ -13,18 +11,16 @@ pub struct TextView {
 
 /// Returns the number of lines required to display the given text with the
 /// specified maximum line width.
-fn get_line_span(line: &str, maxWidth: usize) -> usize {
+fn get_line_span(line: &str, max_width: usize) -> usize {
     let mut lines = 1;
     let mut length = 0;
-    line.split(" ")
-        .map(|word| word.len())
-        .map(|l| {
-            length += l;
-            if length > maxWidth {
-                length = l;
-                lines += 1;
-            }
-        });
+    for l in line.split(" ").map(|word| word.len()) {
+        length += l;
+        if length > max_width {
+            length = l;
+            lines += 1;
+        }
+    }
     lines
 }
 
@@ -38,15 +34,15 @@ impl TextView {
 
     /// Returns the number of lines required to display the content
     /// with the given width.
-    fn get_num_lines(&self, maxWidth: usize) -> usize {
+    fn get_num_lines(&self, max_width: usize) -> usize {
         self.content.split("\n")
-            .map(|line| get_line_span(line, maxWidth))
+            .map(|line| get_line_span(line, max_width))
             .fold(0, |sum, x| sum + x)
     }
 
-    fn get_num_cols(&self, maxHeight: usize) -> usize {
-        (div_up_usize(self.content.len(), maxHeight)..self.content.len())
-            .find(|w| self.get_num_lines(*w) <= maxHeight)
+    fn get_num_cols(&self, max_height: usize) -> usize {
+        (div_up_usize(self.content.len(), max_height)..self.content.len())
+            .find(|w| self.get_num_lines(*w) <= max_height)
             .unwrap()
     }
 }
@@ -66,7 +62,7 @@ impl View for TextView {
                 let w = self.get_num_cols(h as usize) as u32;
                 Size::new(w, h)
             },
-            (DimensionRequest::AtMost(w),DimensionRequest::AtMost(h)) => unreachable!(),
+            (DimensionRequest::AtMost(_),DimensionRequest::AtMost(_)) => unreachable!(),
             _ => unreachable!(),
         }
     }

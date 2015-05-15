@@ -16,10 +16,18 @@ impl StackView {
             layers: Vec::new(),
         }
     }
+
+    pub fn add_layer(&mut self, view: Box<View>) {
+        self.layers.push(view);
+    }
 }
 
 
 impl View for StackView {
     fn draw(&self, win: ncurses::WINDOW, size: Size) {
+        match self.layers.last() {
+            None => (),
+            Some(v) => v.draw(win, size),
+        }
     }
 }
