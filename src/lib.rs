@@ -1,12 +1,31 @@
+//! # Cursive
+//!
+//! Cursive is a TUI library built on top of ncurses-rs.
+//! It allows to easily build layouts for text-based applications.
+//!
+//! ## Example
+//! ```
+//! extern crate cursive;
+//!
+//! use cursive::Cursive;
+//! use cursive::view::TextView;
+//!
+//! fn main() {
+//!     let mut siv = Cursive::new();
+//!
+//!     siv.add_layer(TextView::new("Hello World!\nPress q to quit."));
+//!
+//!     siv.add_global_callback('q' as i32, |s| s.quit());
+//!
+//!     siv.run();
+//! }
+//! ```
+
 extern crate ncurses;
 
-/// User-input events and their effects.
 pub mod event;
-/// Defines various views to use when creating the layout.
 pub mod view;
-/// Makes drawing on ncurses windows easier.
 pub mod printer;
-/// 2D points.
 pub mod vec2;
 mod box_view;
 mod stack_view;

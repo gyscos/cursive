@@ -1,3 +1,5 @@
+//! Defines various views to use when creating the layout.
+
 use event::EventResult;
 
 pub use box_view::BoxView;

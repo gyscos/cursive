@@ -1,3 +1,5 @@
+//! 2D points.
+
 use std::ops::{Add, Sub};
 use std::cmp::min;
 

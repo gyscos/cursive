@@ -1,3 +1,5 @@
+//! Makes drawing on ncurses windows easier.
+
 use ncurses;
 use vec2::{Vec2,ToVec2};
 

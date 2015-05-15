@@ -1,3 +1,5 @@
+//! User-input events and their effects.
+
 use std::rc::Rc;
 
 /// Callback is a function that can be triggered by an event.
