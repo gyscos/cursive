@@ -47,6 +47,12 @@ impl ToVec2 for (u32,u32) {
     }
 }
 
+impl ToVec2 for (usize,usize) {
+    fn to_vec2(self) -> Vec2 {
+        Vec2::new(self.0 as u32, self.1 as u32)
+    }
+}
+
 impl Add for Vec2 {
     type Output = Vec2;
 

@@ -46,9 +46,62 @@ impl TextView {
     }
 }
 
+struct LinesIterator<'a> {
+    line: &'a str,
+    start: usize,
+    width: usize,
+}
+
+impl <'a> LinesIterator<'a> {
+    fn new(line: &'a str, width: usize) -> Self {
+        if line.len() == 0 {
+            LinesIterator {
+                line: " ",
+                width: width,
+                start: 0,
+            }
+        } else {
+            LinesIterator {
+                line: line,
+                width: width,
+                start: 0,
+            }
+        }
+    }
+}
+
+impl <'a> Iterator for LinesIterator<'a> {
+
+    type Item = &'a str;
+
+    fn next(&mut self) -> Option<&'a str> {
+        if self.start >= self.line.len() {
+            None
+        } else if self.start + self.width >= self.line.len() {
+            let start = self.start;
+            self.start = self.line.len();
+            Some(&self.line[start..])
+        } else {
+            let start = self.start;
+            let end = match self.line[start..start+self.width].rfind(" ") {
+                // Hard break
+                None => start + self.width,
+                Some(i) => start+i,
+            };
+            self.start = end;
+            Some(&self.line[start..end])
+        }
+    }
+}
+
 impl View for TextView {
     fn draw(&self, printer: &Printer) {
-        printer.print((0,0), &self.content);
+        let lines = self.content.split("\n")
+            .flat_map(|line| LinesIterator::new(line, printer.size.x as usize));
+        for (i, line) in lines.enumerate() {
+            printer.print((0,i), line);
+        }
+
     }
 
     fn get_min_size(&self, size: SizeRequest) -> Vec2 {

@@ -36,7 +36,9 @@ mod div;
 use std::rc::Rc;
 use std::collections::HashMap;
 
+use vec2::Vec2;
 use view::View;
+use printer::Printer;
 use stack_view::StackView;
 
 use event::{EventResult,Callback};
@@ -120,6 +122,7 @@ impl Cursive {
         self.screen_mut().add_layer(view);
     }
 
+    // Handles a key event when it was ignored by the current view
     fn on_key_event(&mut self, ch: i32) {
         let cb = match self.global_callbacks.get(&ch) {
             None => return,
@@ -128,16 +131,48 @@ impl Cursive {
         cb(self);
     }
 
+    pub fn screen_size(&self) -> Vec2 {
+        let mut x: i32 = 0;
+        let mut y: i32 = 0;
+        ncurses::getmaxyx(ncurses::stdscr, &mut y, &mut x);
+
+        Vec2 {
+            x: x as u32,
+            y: y as u32,
+        }
+    }
+
+    fn layout(&mut self) {
+        let size = self.screen_size();
+        self.screen_mut().layout(size);
+    }
+
+    fn draw(&mut self) {
+        let printer = Printer {
+            win: ncurses::stdscr,
+            offset: Vec2::new(0,0),
+            size: self.screen_size(),
+        };
+        self.screen_mut().draw(&printer);
+    }
+
     /// Runs the event loop.
     /// It will wait for user input (key presses) and trigger callbacks accordingly.
     /// Blocks until quit() is called.
     pub fn run(&mut self) {
         while self.running {
+            // Do we need to redraw everytime?
+            // Probably actually.
+            ncurses::clear();
+            self.layout();
+            self.draw();
             ncurses::refresh();
 
-            // Handle event
+            // Blocks until the user press a key.
+            // TODO: Add a timeout?
             let ch = ncurses::getch();
 
+            // If the event was ignored, it is our turn to play with it.
             match self.screen_mut().on_key_event(ch) {
                 EventResult::Ignored => self.on_key_event(ch),
                 EventResult::Consumed(None) => (),
