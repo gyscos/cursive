@@ -154,22 +154,27 @@ impl Cursive {
             size: self.screen_size(),
         };
         self.screen_mut().draw(&printer);
+        ncurses::wrefresh(ncurses::stdscr);
     }
 
     /// Runs the event loop.
     /// It will wait for user input (key presses) and trigger callbacks accordingly.
     /// Blocks until quit() is called.
     pub fn run(&mut self) {
+        // And the big event loop begins!
         while self.running {
             // Do we need to redraw everytime?
             // Probably actually.
+            // TODO: Do we actually need to clear everytime?
             ncurses::clear();
+            // TODO: Do we need to re-layout everytime?
             self.layout();
+            // TODO: Do we need to redraw every view every time?
+            // (Is this getting repetitive? :p)
             self.draw();
-            ncurses::refresh();
 
             // Blocks until the user press a key.
-            // TODO: Add a timeout?
+            // TODO: Add a timeout? Animations?
             let ch = ncurses::getch();
 
             // If the event was ignored, it is our turn to play with it.
@@ -183,7 +188,6 @@ impl Cursive {
 
     pub fn quit(&mut self) {
         self.running = false;
-        println!("Quitting now!");
     }
 }
 

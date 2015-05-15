@@ -1,6 +1,6 @@
 //! 2D points.
 
-use std::ops::{Add, Sub};
+use std::ops::{Add, Sub, Mul, Div};
 use std::cmp::min;
 
 /// Simple 2D size, in characters.
@@ -71,6 +71,28 @@ impl Sub for Vec2 {
         Vec2 {
             x: self.x - other.x,
             y: self.y - other.y,
+        }
+    }
+}
+
+impl Div<u32> for Vec2 {
+    type Output = Vec2;
+
+    fn div(self, other: u32) -> Vec2 {
+        Vec2 {
+            x: self.x / other,
+            y: self.y / other,
+        }
+    }
+}
+
+impl Mul<u32> for Vec2 {
+    type Output = Vec2;
+
+    fn mul(self, other: u32) -> Vec2 {
+        Vec2 {
+            x: self.x * other,
+            y: self.y * other,
         }
     }
 }

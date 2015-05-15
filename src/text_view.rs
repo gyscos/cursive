@@ -83,12 +83,15 @@ impl <'a> Iterator for LinesIterator<'a> {
             Some(&self.line[start..])
         } else {
             let start = self.start;
-            let end = match self.line[start..start+self.width].rfind(" ") {
+            let (end,skip_space) = match self.line[start..start+self.width].rfind(" ") {
                 // Hard break
-                None => start + self.width,
-                Some(i) => start+i,
+                None => (start + self.width, false),
+                Some(i) => (start+i, true),
             };
             self.start = end;
+            if skip_space {
+                self.start += 1;
+            }
             Some(&self.line[start..end])
         }
     }
@@ -115,7 +118,14 @@ impl View for TextView {
                 let w = self.get_num_cols(h as usize) as u32;
                 Vec2::new(w, h)
             },
-            (DimensionRequest::AtMost(_),DimensionRequest::AtMost(_)) => unreachable!(),
+            (DimensionRequest::AtMost(w),_) => {
+                if w >= self.content.len() as u32 {
+                    Vec2::new(self.content.len() as u32, 1)
+                } else {
+                    let h = self.get_num_lines(w as usize) as u32;
+                    Vec2::new(w, h)
+                }
+            },
             _ => unreachable!(),
         }
     }
