@@ -42,6 +42,7 @@ impl Cursive {
         ncurses::initscr();
         ncurses::keypad(ncurses::stdscr, true);
         ncurses::noecho();
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 
         let mut res = Cursive {
             screens: Vec::new(),
