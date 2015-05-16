@@ -5,6 +5,7 @@ mod stack_view;
 mod text_view;
 mod key_event_view;
 mod view_path;
+mod dialog;
 
 use std::any::Any;
 
@@ -13,6 +14,7 @@ pub use self::key_event_view::KeyEventView;
 pub use self::box_view::BoxView;
 pub use self::stack_view::StackView;
 pub use self::text_view::TextView;
+pub use self::dialog::Dialog;
 
 use event::EventResult;
 use vec2::Vec2;

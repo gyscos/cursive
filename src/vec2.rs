@@ -53,24 +53,26 @@ impl ToVec2 for (usize,usize) {
     }
 }
 
-impl Add for Vec2 {
+impl <T: ToVec2> Add<T> for Vec2 {
     type Output = Vec2;
 
-    fn add(self, other: Vec2) -> Vec2 {
+    fn add(self, other: T) -> Vec2 {
+        let ov = other.to_vec2();
         Vec2 {
-            x: self.x + other.x,
-            y: self.y + other.y,
+            x: self.x + ov.x,
+            y: self.y + ov.y,
         }
     }
 }
 
-impl Sub for Vec2 {
+impl <T: ToVec2> Sub<T> for Vec2 {
     type Output = Vec2;
 
-    fn sub(self, other: Vec2) -> Vec2 {
+    fn sub(self, other: T) -> Vec2 {
+        let ov = other.to_vec2();
         Vec2 {
-            x: self.x - other.x,
-            y: self.y - other.y,
+            x: self.x - ov.x,
+            y: self.y - ov.y,
         }
     }
 }

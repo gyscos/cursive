@@ -28,6 +28,9 @@ pub mod printer;
 pub mod vec2;
 
 mod div;
+mod margins;
+
+pub use margins::Margins;
 
 use std::any::Any;
 use std::rc::Rc;
