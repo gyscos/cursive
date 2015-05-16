@@ -11,9 +11,5 @@ fn main() {
 
     siv.add_layer(TextView::new("Hello World!\nPress q to quit the application."));
 
-    siv.add_global_callback('a' as i32, |s, _| {
-        //
-    });
-
     siv.run();
 }
