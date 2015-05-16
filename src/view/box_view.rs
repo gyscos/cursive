@@ -1,6 +1,6 @@
 use event::EventResult;
 use vec2::{Vec2,ToVec2};
-use view::{View,SizeRequest};
+use super::{View,SizeRequest};
 use printer::Printer;
 
 /// BoxView is a wrapper around an other view, with a given minimum size.

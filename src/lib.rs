@@ -20,26 +20,23 @@
 //!     siv.run();
 //! }
 //! ```
-
 extern crate ncurses;
 
 pub mod event;
 pub mod view;
 pub mod printer;
 pub mod vec2;
-mod box_view;
-mod stack_view;
-mod text_view;
 
 mod div;
 
+use std::any::Any;
 use std::rc::Rc;
 use std::collections::HashMap;
 
 use vec2::Vec2;
 use view::View;
 use printer::Printer;
-use stack_view::StackView;
+use view::{StackView,ViewPath};
 
 use event::{EventResult,Callback};
 
@@ -47,6 +44,7 @@ use event::{EventResult,Callback};
 pub type ScreenId = usize;
 
 /// Central part of the cursive library.
+///
 /// It initializes ncurses on creation and cleans up on drop.
 /// To use it, you should populate it with views, layouts and callbacks,
 /// then start the event loop with run().
@@ -110,9 +108,23 @@ impl Cursive {
         self.active_screen = screen_id;
     }
 
+    fn find_any(&mut self, path: &ViewPath) -> Option<&mut Any> {
+        self.screen_mut().find(path)
+    }
+
+    /// Tries to find the view pointed to by the given path.
+    /// If the view is not found, or if it is not of the asked type,
+    /// it returns None.
+    pub fn find<V: View + Any>(&mut self, path: &ViewPath) -> Option<&mut V> {
+        match self.find_any(path) {
+            None => None,
+            Some(b) => b.downcast_mut::<V>(),
+        }
+    }
+
     /// Adds a global callback, triggered on the given key press when no view catches it.
     pub fn add_global_callback<F>(&mut self, key: i32, cb: F)
-        where F: Fn(&mut Cursive) + 'static
+        where F: Fn(&mut Cursive, &ViewPath) + 'static
     {
         self.global_callbacks.insert(key, Rc::new(Box::new(cb)));
     }
@@ -128,9 +140,11 @@ impl Cursive {
             None => return,
             Some(cb) => cb.clone(),
         };
-        cb(self);
+        // Not from a view, so no viewpath here
+        cb(self, &ViewPath::new());
     }
 
+    /// Returns the size of the screen, in characters.
     pub fn screen_size(&self) -> Vec2 {
         let mut x: i32 = 0;
         let mut y: i32 = 0;
@@ -180,12 +194,13 @@ impl Cursive {
             // If the event was ignored, it is our turn to play with it.
             match self.screen_mut().on_key_event(ch) {
                 EventResult::Ignored => self.on_key_event(ch),
-                EventResult::Consumed(None) => (),
-                EventResult::Consumed(Some(cb)) => cb(self),
+                EventResult::Consumed(None, _) => (),
+                EventResult::Consumed(Some(cb), path) => cb(self, &path),
             }
         }
     }
 
+    /// Stops the event loop.
     pub fn quit(&mut self) {
         self.running = false;
     }

@@ -1,11 +1,20 @@
 //! Defines various views to use when creating the layout.
 
+mod box_view;
+mod stack_view;
+mod text_view;
+mod key_event_view;
+mod view_path;
+
+use std::any::Any;
+
+pub use self::view_path::ViewPath;
+pub use self::key_event_view::KeyEventView;
+pub use self::box_view::BoxView;
+pub use self::stack_view::StackView;
+pub use self::text_view::TextView;
+
 use event::EventResult;
-
-pub use box_view::BoxView;
-pub use stack_view::StackView;
-pub use text_view::TextView;
-
 use vec2::Vec2;
 use printer::Printer;
 
@@ -43,4 +52,9 @@ pub trait View {
 
     /// Draws the view within the given bounds.
     fn draw(&self, &Printer);
+
+    /// Finds the view pointed to by the given path.
+    /// Returns None if the path doesn't lead to a view.
+    fn find(&mut self, &ViewPath) -> Option<&mut Any> { None }
 }
+
