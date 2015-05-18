@@ -1,6 +1,6 @@
 use ::Cursive;
 use view::{View,ViewPath,SizeRequest,DimensionRequest};
-use vec2::{Vec2};
+use vec::{Vec2};
 use printer::Printer;
 
 enum Focus {

@@ -25,7 +25,7 @@ extern crate ncurses;
 pub mod event;
 pub mod view;
 pub mod printer;
-pub mod vec2;
+pub mod vec;
 
 mod div;
 mod margins;
@@ -36,7 +36,7 @@ use std::any::Any;
 use std::rc::Rc;
 use std::collections::HashMap;
 
-use vec2::Vec2;
+use vec::Vec2;
 use view::View;
 use printer::Printer;
 use view::{StackView,ViewPath};

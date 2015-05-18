@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use ::Cursive;
 use event::{EventResult,Callback};
-use vec2::{Vec2};
+use vec::{Vec2};
 use super::{View,SizeRequest,ViewPath};
 use printer::Printer;
 

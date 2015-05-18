@@ -1,6 +1,6 @@
 use std::cmp::max;
 
-use vec2::Vec2;
+use vec::Vec2;
 use view::{View,SizeRequest,DimensionRequest};
 use event::EventResult;
 use printer::Printer;

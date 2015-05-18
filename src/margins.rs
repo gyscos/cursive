@@ -1,3 +1,5 @@
+use vec::Vec2;
+
 /// Fixed margins around a rectangular view.
 pub struct Margins {
     /// Left margin
@@ -19,5 +21,17 @@ impl Margins {
             top: top,
             bottom: bottom,
         }
+    }
+
+    pub fn horizontal(&self) -> u32 {
+        self.left + self.right
+    }
+
+    pub fn vertical(&self) -> u32 {
+        self.top + self.bottom
+    }
+
+    pub fn combined(&self) -> Vec2 {
+        Vec2::new(self.horizontal(), self.vertical())
     }
 }

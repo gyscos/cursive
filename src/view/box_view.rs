@@ -1,5 +1,5 @@
 use event::EventResult;
-use vec2::{Vec2,ToVec2};
+use vec::{Vec2,ToVec2};
 use super::{View,SizeRequest};
 use printer::Printer;
 

@@ -17,7 +17,7 @@ pub use self::text_view::TextView;
 pub use self::dialog::Dialog;
 
 use event::EventResult;
-use vec2::Vec2;
+use vec::Vec2;
 use printer::Printer;
 
 /// Describe constraints on a view layout in one dimension.

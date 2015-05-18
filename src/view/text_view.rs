@@ -1,6 +1,6 @@
 use std::cmp;
 
-use vec2::Vec2;
+use vec::Vec2;
 use view::{View,DimensionRequest,SizeRequest};
 use div::*;
 use printer::Printer;
