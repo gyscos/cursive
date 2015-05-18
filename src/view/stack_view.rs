@@ -44,7 +44,9 @@ impl View for StackView {
         match self.layers.last() {
             None => (),
             Some(v) => {
-                let offset = (printer.size - v.size) / 2;
+                // Center the view
+                let view_size = Vec2::min(printer.size, v.size);
+                let offset = (printer.size - view_size) / 2;
                 v.view.draw(&printer.sub_printer(offset, v.size));
             },
         }
