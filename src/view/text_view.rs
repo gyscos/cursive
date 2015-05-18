@@ -1,3 +1,5 @@
+use std::cmp;
+
 use vec2::Vec2;
 use view::{View,DimensionRequest,SizeRequest};
 use div::*;
@@ -43,6 +45,18 @@ impl TextView {
         (div_up_usize(self.content.len(), max_height)..self.content.len())
             .find(|w| self.get_num_lines(*w) <= max_height)
             .unwrap()
+    }
+
+    fn get_ideal_size(&self) -> Vec2 {
+        let mut maxWidth = 0;
+        let mut height = 0;
+
+        for line in self.content.split("\n") {
+            height += 1;
+            maxWidth = cmp::max(maxWidth, line.len() as u32);
+        }
+
+        Vec2::new(maxWidth, height)
     }
 }
 
@@ -119,8 +133,10 @@ impl View for TextView {
                 Vec2::new(w, h)
             },
             (DimensionRequest::AtMost(w),_) => {
-                if w >= self.content.len() as u32 {
-                    Vec2::new(self.content.len() as u32, 1)
+                let ideal = self.get_ideal_size();
+
+                if w >= ideal.x {
+                    ideal
                 } else {
                     let h = self.get_num_lines(w as usize) as u32;
                     Vec2::new(w, h)
