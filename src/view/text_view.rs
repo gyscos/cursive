@@ -48,15 +48,15 @@ impl TextView {
     }
 
     fn get_ideal_size(&self) -> Vec2 {
-        let mut maxWidth = 0;
+        let mut max_width = 0;
         let mut height = 0;
 
         for line in self.content.split("\n") {
             height += 1;
-            maxWidth = cmp::max(maxWidth, line.len() as u32);
+            max_width = cmp::max(max_width, line.len() as u32);
         }
 
-        Vec2::new(maxWidth, height)
+        Vec2::new(max_width, height)
     }
 }
 
