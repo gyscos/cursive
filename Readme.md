@@ -8,16 +8,17 @@ It is designed to be safe and easy to use:
 ```rust
 extern crate cursive;
 
-use cursive::{Cursive,Dialog};
+use cursive::{Cursive,Dialog,TextView};
 
 fn main() {
-	let mut siv = Cursive::new();
+    let mut siv = Cursive::new();
 
-	// Create a popup window with a "Ok" button that quits the application
-	siv.add_layer(Dialog::new("Hello world!").button("Ok", |s, _| s.quit()));
+    // Create a popup window with a "Ok" button that quits the application
+    siv.add_layer(Dialog::new(TextView::new("Hello world!"))
+                    .button("Quit", |s, _| s.quit()));
 
-	// Starts the event loop.
-	siv.run();
+    // Starts the event loop.
+    siv.run();
 }
 ```
 
