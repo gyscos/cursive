@@ -7,8 +7,8 @@ pub trait ViewWrapper {
     fn get_view(&self) -> &View;
     fn get_view_mut(&mut self) -> &mut View;
 
-    fn wrap_draw(&self, printer: &Printer) {
-        self.get_view().draw(printer);
+    fn wrap_draw(&self, printer: &Printer, focused: bool) {
+        self.get_view().draw(printer, focused);
     }
 
     fn wrap_get_min_size(&self, req: SizeRequest) -> Vec2 {
@@ -25,8 +25,8 @@ pub trait ViewWrapper {
 }
 
 impl <T: ViewWrapper> View for T {
-    fn draw(&self, printer: &Printer) {
-        self.wrap_draw(printer);
+    fn draw(&self, printer: &Printer, focused: bool) {
+        self.wrap_draw(printer, focused);
     }
 
     fn get_min_size(&self, req: SizeRequest) -> Vec2 {
@@ -40,4 +40,18 @@ impl <T: ViewWrapper> View for T {
     fn layout(&mut self, size: Vec2) {
         self.wrap_layout(size);
     }
+}
+
+#[macro_export]
+macro_rules! wrap_impl {
+    ($v:ident) => {
+
+        fn get_view(&self) -> &View {
+            &*self.$v
+        }
+
+        fn get_view_mut(&mut self) -> &mut View {
+            &mut *self.$v
+        }
+    };
 }

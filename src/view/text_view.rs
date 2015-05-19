@@ -112,7 +112,9 @@ impl <'a> Iterator for LinesIterator<'a> {
 }
 
 impl View for TextView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer, _: bool) {
+        // We don't have a focused view
+
         let lines = self.content.split("\n")
             .flat_map(|line| LinesIterator::new(line, printer.size.x as usize));
         for (i, line) in lines.enumerate() {

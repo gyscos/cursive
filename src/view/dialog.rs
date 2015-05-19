@@ -13,7 +13,6 @@ use printer::Printer;
 enum Focus {
     Content,
     Button(usize),
-    Nothing,
 }
 
 pub struct Dialog {
@@ -48,26 +47,16 @@ impl Dialog {
 
 }
 
-fn offset_request(request: DimensionRequest, offset: i32) -> DimensionRequest {
-    match request {
-        DimensionRequest::Fixed(w) => DimensionRequest::Fixed((w as i32 + offset) as u32),
-        DimensionRequest::AtMost(w) => DimensionRequest::AtMost((w as i32 + offset) as u32),
-        DimensionRequest::Unknown => DimensionRequest::Unknown,
-    }
-}
-
 impl View for Dialog {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer, focused: bool) {
 
         let mut height = 0;
         let mut x = 0;
         for (i,button) in self.buttons.iter().enumerate().rev() {
             let size = button.size;
             let offset = printer.size - self.borders.bot_right() - self.padding.bot_right() - size - Vec2::new(x, 0);
-            if self.focus == Focus::Button(i) {
-                // Add some special effect to the focused button
-            }
-            button.draw(&printer.sub_printer(offset, size));
+            // Add some special effect to the focused button
+            button.draw(&printer.sub_printer(offset, size), focused && (self.focus == Focus::Button(i)));
             x += size.x + 1;
             height = max(height, size.y+1);
         }
@@ -77,7 +66,7 @@ impl View for Dialog {
             - self.borders.combined()
             - self.padding.combined();
 
-        self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(), inner_size));
+        self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(), inner_size), focused && self.focus == Focus::Content);
 
         printer.print(Vec2::new(0,0), "+");
         printer.print(Vec2::new(printer.size.x-1, 0), "+");
@@ -147,7 +136,16 @@ impl View for Dialog {
                 },
                 res => res,
             },
-            Focus::Nothing => EventResult::Ignored,
+        }
+    }
+
+    fn take_focus(&mut self) -> bool {
+        if !self.buttons.is_empty() {
+            self.focus = Focus::Button(0);
+            true
+        } else {
+            self.focus = Focus::Content;
+            self.content.take_focus()
         }
     }
 }

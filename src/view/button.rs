@@ -1,7 +1,5 @@
 use std::rc::Rc;
 
-use ncurses;
-
 use ::Cursive;
 use vec::Vec2;
 use view::{View,ViewPath,SizeRequest};
@@ -9,12 +7,14 @@ use event::{Callback,EventResult};
 use printer::Printer;
 
 /// Simple text label with a callback when ENTER is pressed.
+/// A button shows its content in a single line and has a fixed size.
 pub struct Button {
     label: String,
     callback: Rc<Callback>,
 }
 
 impl Button {
+    /// Creates a new button with the given content and callback.
     pub fn new<F>(label: &str, cb: F) -> Self
         where F: Fn(&mut Cursive, &ViewPath) + 'static
     {
@@ -27,13 +27,17 @@ impl Button {
 
 impl View for Button {
 
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer, focused: bool) {
         printer.print((1u32,0u32), &self.label);
-        printer.print((0u32,0u32), "<");
-        printer.print((printer.size.x-1,0), ">");
+
+        if focused {
+            printer.print((0u32,0u32), "<");
+            printer.print((printer.size.x-1,0), ">");
+        }
     }
 
-    fn get_min_size(&self, req: SizeRequest) -> Vec2 {
+    fn get_min_size(&self, _: SizeRequest) -> Vec2 {
+        // Meh. Fixed size we are.
         Vec2::new(2 + self.label.len() as u32, 1)
     }
 
@@ -43,5 +47,9 @@ impl View for Button {
             10 => EventResult::callback(self.callback.clone()),
             _ => EventResult::Ignored,
         }
+    }
+
+    fn take_focus(&mut self) -> bool {
+        true
     }
 }

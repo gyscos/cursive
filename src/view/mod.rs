@@ -1,5 +1,6 @@
 //! Defines various views to use when creating the layout.
 
+#[macro_use] mod view_wrapper;
 mod box_view;
 mod stack_view;
 mod text_view;
@@ -8,7 +9,6 @@ mod view_path;
 mod dialog;
 mod button;
 mod sized_view;
-mod view_wrapper;
 
 use std::any::Any;
 
@@ -85,11 +85,14 @@ pub trait View {
     /// propagate the information to its children.
     fn layout(&mut self, Vec2) { }
 
-    /// Draws the view within the given bounds.
-    fn draw(&self, &Printer);
+    /// Draws the view with the given printer (includes bounds) and focus.
+    fn draw(&self, printer: &Printer, focused: bool);
 
     /// Finds the view pointed to by the given path.
     /// Returns None if the path doesn't lead to a view.
     fn find(&mut self, &ViewPath) -> Option<&mut Any> { None }
+
+    /// This view is offered focus. Will it take it?
+    fn take_focus(&mut self) -> bool { false }
 }
 

@@ -40,14 +40,14 @@ impl StackView {
 
 
 impl View for StackView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer, focused: bool) {
         match self.layers.last() {
             None => (),
             Some(v) => {
                 // Center the view
                 let view_size = Vec2::min(printer.size, v.size);
                 let offset = (printer.size - view_size) / 2;
-                v.view.draw(&printer.sub_printer(offset, v.size));
+                v.view.draw(&printer.sub_printer(offset, v.size), focused);
             },
         }
     }
@@ -81,5 +81,12 @@ impl View for StackView {
         }
 
         s
+    }
+
+    fn take_focus(&mut self) -> bool {
+        match self.layers.last_mut() {
+            None => false,
+            Some(mut v) => v.view.take_focus()
+        }
     }
 }

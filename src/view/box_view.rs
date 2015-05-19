@@ -1,7 +1,5 @@
-use event::EventResult;
 use vec::{Vec2,ToVec2};
-use super::{View,SizeRequest};
-use printer::Printer;
+use super::{View,ViewWrapper,SizeRequest};
 
 /// BoxView is a wrapper around an other view, with a given minimum size.
 pub struct BoxView {
@@ -27,20 +25,11 @@ impl BoxView {
     }
 }
 
-impl View for BoxView {
-    fn on_key_event(&mut self, ch: i32) -> EventResult {
-        self.content.on_key_event(ch)
-    }
+impl ViewWrapper for BoxView {
 
-    fn draw(&self, printer: &Printer) {
-        self.content.draw(printer)
-    }
+    wrap_impl!(content);
 
-    fn get_min_size(&self, _: SizeRequest) -> Vec2 {
+    fn wrap_get_min_size(&self, _: SizeRequest) -> Vec2 {
         self.size
-    }
-
-    fn layout(&mut self, size: Vec2) {
-        self.content.layout(size);
     }
 }

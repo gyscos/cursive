@@ -3,9 +3,7 @@ use std::rc::Rc;
 
 use ::Cursive;
 use event::{EventResult,Callback};
-use vec::{Vec2};
-use super::{View,SizeRequest,ViewPath};
-use printer::Printer;
+use super::{View,ViewPath,ViewWrapper};
 
 /// A simple wrapper view that catches some ignored event from its child.
 ///
@@ -34,26 +32,18 @@ impl KeyEventView {
     }
 }
 
-impl View for KeyEventView {
-    fn on_key_event(&mut self, ch: i32) -> EventResult {
+impl ViewWrapper for KeyEventView {
+
+    wrap_impl!(content);
+
+    fn wrap_on_key_event(&mut self, ch: i32) -> EventResult {
         match self.content.on_key_event(ch) {
             EventResult::Ignored => match self.callbacks.get(&ch) {
                 None => EventResult::Ignored,
                 Some(cb) => EventResult::Consumed(Some(cb.clone()), ViewPath::new()),
             },
-            EventResult::Consumed(cb, path) => EventResult::Consumed(cb, path),
+            res => res,
         }
     }
 
-    fn draw(&self, printer: &Printer) {
-        self.content.draw(printer)
-    }
-
-    fn get_min_size(&self, req: SizeRequest) -> Vec2 {
-        self.content.get_min_size(req)
-    }
-
-    fn layout(&mut self, size: Vec2) {
-        self.content.layout(size);
-    }
 }

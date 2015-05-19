@@ -171,7 +171,7 @@ impl Cursive {
             offset: Vec2::new(0,0),
             size: self.screen_size(),
         };
-        self.screen_mut().draw(&printer);
+        self.screen_mut().draw(&printer, true);
         ncurses::wrefresh(ncurses::stdscr);
     }
 
