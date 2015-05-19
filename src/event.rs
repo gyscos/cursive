@@ -17,3 +17,13 @@ pub enum EventResult {
     /// The event was consumed. An optionnal callback to run is attached.
     Consumed(Option<Rc<Callback>>, ViewPath),
 }
+
+impl EventResult {
+    pub fn callback(cb: Rc<Callback>) -> Self {
+        EventResult::Consumed(Some(cb), ViewPath::new())
+    }
+
+    pub fn consume() -> Self {
+        EventResult::Consumed(None, ViewPath::new())
+    }
+}

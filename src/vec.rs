@@ -1,7 +1,7 @@
-//! 2D points.
+//! Points on the 2D character grid.
 
 use std::ops::{Add, Sub, Mul, Div};
-use std::cmp::min;
+use std::cmp::{min,max};
 
 /// Simple 2D size, in characters.
 #[derive(Clone,Copy)]
@@ -21,12 +21,27 @@ impl Vec2 {
         }
     }
 
+    /// Returns a new Vec2 that is a maximum per coordinate.
+    pub fn max(a: Self, b: Self) -> Self {
+        Vec2::new(max(a.x, b.x), max(a.y, b.y))
+    }
+
     /// Returns a new Vec2 that is no larger than any input in both dimensions.
-    pub fn min(a: Vec2, b: Vec2) -> Vec2 {
-        Vec2 {
-            x: min(a.x, b.x),
-            y: min(a.y, b.y),
-        }
+    pub fn min(a: Self, b: Self) -> Self {
+        Vec2::new(min(a.x, b.x), min(a.y, b.y))
+    }
+
+    pub fn keep_x(&self) -> Self {
+        Vec2::new(self.x, 0)
+    }
+
+    pub fn keep_y(&self) -> Self {
+        Vec2::new(0, self.y)
+    }
+
+    /// Alias for Vec::new(0,0)
+    pub fn zero() -> Self {
+        Vec2::new(0,0)
     }
 }
 

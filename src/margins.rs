@@ -34,4 +34,12 @@ impl Margins {
     pub fn combined(&self) -> Vec2 {
         Vec2::new(self.horizontal(), self.vertical())
     }
+
+    pub fn top_left(&self) -> Vec2 {
+        Vec2::new(self.left, self.top)
+    }
+
+    pub fn bot_right(&self) -> Vec2 {
+        Vec2::new(self.right, self.bottom)
+    }
 }
