@@ -34,7 +34,7 @@ impl KeyEventView {
 
 impl ViewWrapper for KeyEventView {
 
-    wrap_impl_box!(self.content);
+    wrap_impl!(self.content);
 
     fn wrap_on_key_event(&mut self, ch: i32) -> EventResult {
         match self.content.on_key_event(ch) {

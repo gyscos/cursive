@@ -44,7 +44,7 @@ impl <T: ViewWrapper> View for T {
 
 #[macro_export]
 macro_rules! wrap_impl {
-    (self.$v:ident) => {
+    (&self.$v:ident) => {
 
         fn get_view(&self) -> &View {
             &self.$v
@@ -54,10 +54,6 @@ macro_rules! wrap_impl {
             &mut self.$v
         }
     };
-}
-
-#[macro_export]
-macro_rules! wrap_impl_box {
     (self.$v:ident) => {
 
         fn get_view(&self) -> &View {
