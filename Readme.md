@@ -8,7 +8,8 @@ It is designed to be safe and easy to use:
 ```rust
 extern crate cursive;
 
-use cursive::{Cursive,Dialog,TextView};
+use cursive::Cursive;
+use cursive::view::{Dialog,TextView};
 
 fn main() {
     let mut siv = Cursive::new();
