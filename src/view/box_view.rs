@@ -27,7 +27,7 @@ impl BoxView {
 
 impl ViewWrapper for BoxView {
 
-    wrap_impl!(content);
+    wrap_impl_box!(self.content);
 
     fn wrap_get_min_size(&self, _: SizeRequest) -> Vec2 {
         self.size
