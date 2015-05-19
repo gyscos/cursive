@@ -28,16 +28,19 @@ impl Button {
 impl View for Button {
 
     fn draw(&self, printer: &Printer) {
-        printer.print(Vec2::zero(), &self.label);
+        printer.print((1u32,0u32), &self.label);
+        printer.print((0u32,0u32), "<");
+        printer.print((printer.size.x-1,0), ">");
     }
 
     fn get_min_size(&self, req: SizeRequest) -> Vec2 {
-        Vec2::new(self.label.len() as u32, 1)
+        Vec2::new(2 + self.label.len() as u32, 1)
     }
 
     fn on_key_event(&mut self, ch: i32) -> EventResult {
         match ch {
-            ncurses::KEY_ENTER => EventResult::callback(self.callback.clone()),
+            // 10 is the ascii code for '\n', that is the return key
+            10 => EventResult::callback(self.callback.clone()),
             _ => EventResult::Ignored,
         }
     }

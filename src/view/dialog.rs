@@ -9,6 +9,7 @@ use view::{Button,SizedView};
 use vec::Vec2;
 use printer::Printer;
 
+#[derive(PartialEq)]
 enum Focus {
     Content,
     Button(usize),
@@ -31,7 +32,7 @@ impl Dialog {
         Dialog {
             content: Box::new(view),
             buttons: Vec::new(),
-            focus: Focus::Nothing,
+            focus: Focus::Content,
             padding: Margins::new(1,1,0,0),
             borders: Margins::new(1,1,1,1),
         }
@@ -60,10 +61,12 @@ impl View for Dialog {
 
         let mut height = 0;
         let mut x = 0;
-        for button in self.buttons.iter().rev() {
-            // button.draw(&printer.sub_printer(), 
+        for (i,button) in self.buttons.iter().enumerate().rev() {
             let size = button.size;
             let offset = printer.size - self.borders.bot_right() - self.padding.bot_right() - size - Vec2::new(x, 0);
+            if self.focus == Focus::Button(i) {
+                // Add some special effect to the focused button
+            }
             button.draw(&printer.sub_printer(offset, size));
             x += size.x + 1;
             height = max(height, size.y+1);
@@ -132,6 +135,14 @@ impl View for Dialog {
             },
             Focus::Button(i) => match self.buttons[i].on_key_event(ch) {
                 EventResult::Ignored => match ch {
+                    ncurses::KEY_RIGHT if i+1 < self.buttons.len() => {
+                        self.focus = Focus::Button(i+1);
+                        EventResult::consume()
+                    },
+                    ncurses::KEY_LEFT if i > 0 => {
+                        self.focus = Focus::Button(i-1);
+                        EventResult::consume()
+                    },
                     _ => EventResult::Ignored,
                 },
                 res => res,
