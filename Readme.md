@@ -23,7 +23,7 @@ fn main() {
 }
 ```
 
-The goal is to be flexible enough, so that recreating these kind of tools would - relatively - easy (at least on the layout front):
+The goal is to be flexible enough, so that recreating these kind of tools would be - relatively - easy (at least on the layout front):
 
 * [menuconfig](http://en.wikipedia.org/wiki/Menuconfig#/media/File:Linux_x86_3.10.0-rc2_Kernel_Configuration.png)
 * [nmtui](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/sec-Configure_a_Network_Team_Using_the_Text_User_Interface_nmtui.html)
