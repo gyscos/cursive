@@ -15,6 +15,13 @@ enum Focus {
     Button(usize),
 }
 
+/// Popup-like view with a main content, and optional buttons under it.
+///
+/// # Examples
+///
+/// ```
+/// let dialog = Dialog::new(TextView::new("Hello!")).button("Ok", |s,_| s.quit());
+/// ```
 pub struct Dialog {
     content: Box<View>,
 
@@ -27,6 +34,7 @@ pub struct Dialog {
 }
 
 impl Dialog {
+    /// Creates a new Dialog with the given content.
     pub fn new<V: View + 'static>(view: V) -> Self {
         Dialog {
             content: Box::new(view),
@@ -37,6 +45,9 @@ impl Dialog {
         }
     }
 
+    /// Adds a button to the dialog with the given label and callback.
+    ///
+    /// Consumes and returns self for easy chaining.
     pub fn button<'a, F>(mut self, label: &'a str, cb: F) -> Self
         where F: Fn(&mut Cursive, &ViewPath) + 'static
     {

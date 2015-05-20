@@ -23,22 +23,27 @@ impl Margins {
         }
     }
 
+    /// Returns left + right.
     pub fn horizontal(&self) -> u32 {
         self.left + self.right
     }
 
+    /// Returns top + bottom.
     pub fn vertical(&self) -> u32 {
         self.top + self.bottom
     }
 
+    /// Returns (left+right, top+bottom).
     pub fn combined(&self) -> Vec2 {
         Vec2::new(self.horizontal(), self.vertical())
     }
 
+    /// Returns (left, top).
     pub fn top_left(&self) -> Vec2 {
         Vec2::new(self.left, self.top)
     }
 
+    /// Returns (right, bottom).
     pub fn bot_right(&self) -> Vec2 {
         Vec2::new(self.right, self.bottom)
     }

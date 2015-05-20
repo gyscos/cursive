@@ -13,12 +13,15 @@ impl ViewPath {
         }
     }
 
+    /// Creates a path from the given item.
     pub fn from<T: ToPath>(path: T) -> Self {
         path.to_path()
     }
 }
 
+/// Generic trait for elements that can be converted into a ViewPath.
 pub trait ToPath {
+    /// Creates a path from the element.
     fn to_path(self) -> ViewPath;
 }
 
