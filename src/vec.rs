@@ -31,15 +31,17 @@ impl Vec2 {
         Vec2::new(min(a.x, b.x), min(a.y, b.y))
     }
 
+    /// Returns a vector with the X component of self, and y=0.
     pub fn keep_x(&self) -> Self {
         Vec2::new(self.x, 0)
     }
 
+    /// Returns a vector with the Y component of self, and x=0.
     pub fn keep_y(&self) -> Self {
         Vec2::new(0, self.y)
     }
 
-    /// Alias for Vec::new(0,0)
+    /// Alias for Vec::new(0,0).
     pub fn zero() -> Self {
         Vec2::new(0,0)
     }
@@ -47,6 +49,7 @@ impl Vec2 {
 
 /// A generic trait for converting a value into a 2D vector.
 pub trait ToVec2 {
+    /// Converts self into a Vec2.
     fn to_vec2(self) -> Vec2;
 }
 

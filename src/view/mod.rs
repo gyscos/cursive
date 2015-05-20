@@ -38,6 +38,7 @@ pub enum DimensionRequest {
 }
 
 impl DimensionRequest {
+    /// Returns a new request, reduced from the original by the given offset.
     pub fn reduced(self, offset: u32) -> Self {
         match self {
             DimensionRequest::Fixed(w) => DimensionRequest::Fixed(w - offset),
@@ -57,6 +58,7 @@ pub struct SizeRequest {
 }
 
 impl SizeRequest {
+    /// Returns a new SizeRequest, reduced from the original by the given offset.
     pub fn reduced<T: ToVec2>(self, offset: T) -> Self {
         let ov = offset.to_vec2();
         SizeRequest {
@@ -65,6 +67,7 @@ impl SizeRequest {
         }
     }
 
+    /// Creates a new dummy request, with no restriction.
     pub fn dummy() -> Self {
         SizeRequest {
             w: DimensionRequest::Unknown,

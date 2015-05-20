@@ -19,10 +19,13 @@ pub enum EventResult {
 }
 
 impl EventResult {
+    /// Convenient method to create EventResult::Consumed
+    /// from the given callback and empty ViewPath.
     pub fn callback(cb: Rc<Callback>) -> Self {
         EventResult::Consumed(Some(cb), ViewPath::new())
     }
 
+    /// Convenient method to create EventResult::Consumed with no callback.
     pub fn consume() -> Self {
         EventResult::Consumed(None, ViewPath::new())
     }
