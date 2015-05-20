@@ -79,10 +79,8 @@ impl View for Dialog {
 
         self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(), inner_size), focused && self.focus == Focus::Content);
 
-        printer.print(Vec2::new(0,0), "+");
-        printer.print(Vec2::new(printer.size.x-1, 0), "+");
-        printer.print(Vec2::new(0, printer.size.y-1), "+");
-        printer.print(Vec2::new(printer.size.x-1, printer.size.y-1), "+");
+        printer.print_box(Vec2::new(0,0), printer.size, '+', '-', '|');
+
     }
 
     fn get_min_size(&self, req: SizeRequest) -> Vec2 {
@@ -135,6 +133,14 @@ impl View for Dialog {
             },
             Focus::Button(i) => match self.buttons[i].on_key_event(ch) {
                 EventResult::Ignored => match ch {
+                    ncurses::KEY_UP => {
+                        if self.content.take_focus() {
+                            self.focus = Focus::Content;
+                            EventResult::consume()
+                        } else {
+                            EventResult::Ignored
+                        }
+                    },
                     ncurses::KEY_RIGHT if i+1 < self.buttons.len() => {
                         self.focus = Focus::Button(i+1);
                         EventResult::consume()
