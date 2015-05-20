@@ -1,3 +1,5 @@
 target
 *.swp
 Cargo.lock
+tags
+.ctags
