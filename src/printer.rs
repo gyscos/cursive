@@ -32,6 +32,13 @@ impl Printer {
         ncurses::mvwhline(self.win, (p.y + self.offset.y) as i32, (p.x + self.offset.x) as i32, c as u64, len as i32);
     }
 
+    /// Prints a rectangular box.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// printer.print_box((0,0), (6,4), '+', '-', '|');
+    /// ```
     pub fn print_box<T: ToVec2>(&self, start: T, size: T, corners: char, horizontal: char, vertical: char) {
         let start_v = start.to_vec2();
         let size_v = size.to_vec2() - (1,1);
