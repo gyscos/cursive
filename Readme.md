@@ -5,6 +5,11 @@ Cursive is a ncurses-based TUI (Text User Interface) library for rust. It is bas
 
 It is designed to be safe and easy to use:
 
+```
+[dependencies.cursive]
+git = "https://github.com/Gyscos/cursive"
+```
+
 ```rust
 extern crate cursive;
 
