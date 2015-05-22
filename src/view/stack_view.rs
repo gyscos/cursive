@@ -103,8 +103,7 @@ impl View for StackView {
 
         for layer in self.layers.iter() {
             let vs = layer.view.get_min_size(size);
-            s.x = max(s.x, vs.x);
-            s.y = max(s.y, vs.y);
+            s = Vec2::max(s, vs);
         }
 
         s

@@ -76,17 +76,22 @@ impl Dialog {
 impl View for Dialog {
     fn draw(&self, printer: &Printer, focused: bool) {
 
+        // This will be the height used by the buttons.
         let mut height = 0;
+        // Current horizontal position of the next button we'll draw.
         let mut x = 0;
         for (i,button) in self.buttons.iter().enumerate().rev() {
             let size = button.size;
             let offset = printer.size - self.borders.bot_right() - self.padding.bot_right() - size - Vec2::new(x, 0);
             // Add some special effect to the focused button
             button.draw(&printer.sub_printer(offset, size), focused && (self.focus == Focus::Button(i)));
+            // Keep 1 blank between two buttons
             x += size.x + 1;
+            // Also keep 1 blank above the buttons
             height = max(height, size.y+1);
         }
 
+        // What do we have left?
         let inner_size = printer.size
             - Vec2::new(0, height)
             - self.borders.combined()
@@ -107,6 +112,7 @@ impl View for Dialog {
     }
 
     fn get_min_size(&self, req: SizeRequest) -> Vec2 {
+        // Padding and borders are not available for kids.
         let content_req = req.reduced(self.padding.combined() + self.borders.combined());
         let content_size = self.content.get_min_size(content_req);
 
@@ -117,11 +123,14 @@ impl View for Dialog {
             buttons_size.y = max(buttons_size.y, s.y + 1);
         }
 
+        // On the Y axis, we add buttons and content.
+        // On the X axis, we take the max.
         let mut inner_size = Vec2::new(max(content_size.x, buttons_size.x),
                                    content_size.y + buttons_size.y)
                         + self.padding.combined() + self.borders.combined();
 
         if self.title.len() > 0 {
+            // If we have a title, we have to fit it too!
             inner_size.x = max(inner_size.x, self.title.len() as u32 + 6);
         }
 
@@ -129,13 +138,14 @@ impl View for Dialog {
     }
 
     fn layout(&mut self, mut size: Vec2) {
-        // First layout the buttons
+        // Padding and borders are taken, sorry.
         size = size - (self.borders.combined() + self.padding.combined());
         let req = SizeRequest {
             w: DimensionRequest::AtMost(size.x),
             h: DimensionRequest::AtMost(size.y),
         };
 
+        // Buttons are kings, we give them everything they want.
         let mut buttons_height = 0;
         for button in self.buttons.iter_mut().rev() {
             let size = button.get_min_size(req);
@@ -143,14 +153,17 @@ impl View for Dialog {
             button.layout(size);
         }
 
+        // Poor content will have to make do with what's left.
         self.content.layout(size - Vec2::new(0, buttons_height));
     }
 
     fn on_key_event(&mut self, ch: i32) -> EventResult {
         match self.focus {
+            // If we are on the content, we can only go down.
             Focus::Content => match self.content.on_key_event(ch) {
                 EventResult::Ignored if !self.buttons.is_empty() => match ch {
                     ncurses::KEY_DOWN => {
+                        // Default to leftmost button when going down.
                         self.focus = Focus::Button(0);
                         EventResult::Consumed(None, ViewPath::new())
                     },
@@ -158,8 +171,10 @@ impl View for Dialog {
                 },
                 res => res,
             },
+            // If we are on a button, we have more choice
             Focus::Button(i) => match self.buttons[i].on_key_event(ch) {
                 EventResult::Ignored => match ch {
+                    // Up goes back to the content
                     ncurses::KEY_UP => {
                         if self.content.take_focus() {
                             self.focus = Focus::Content;
@@ -168,6 +183,7 @@ impl View for Dialog {
                             EventResult::Ignored
                         }
                     },
+                    // Left and Right move to other buttons
                     ncurses::KEY_RIGHT if i+1 < self.buttons.len() => {
                         self.focus = Focus::Button(i+1);
                         EventResult::consume()
@@ -184,6 +200,7 @@ impl View for Dialog {
     }
 
     fn take_focus(&mut self) -> bool {
+        // TODO: add a direction to the focus. Meanwhile, takes button first.
         if !self.buttons.is_empty() {
             self.focus = Focus::Button(0);
             true
