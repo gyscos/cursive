@@ -22,6 +22,8 @@ fn main() {
     thread::spawn(|| { generate_logs(tx); });
 
     // And sets the view to read from the other end of the channel.
+    // (We use FullView to force fullscreen because
+    // we have no min_size for the BufferView).
     siv.add_layer(FullView::new(BufferView::new(200, rx)));
 
     siv.run();
@@ -68,8 +70,8 @@ impl BufferView {
         while let Ok(line) = self.rx.try_recv() {
             i = (i+1) % self.buffer.len();
             self.buffer[i] = line;
-            self.pos = i;
         }
+        self.pos = i;
     }
 
     // Chain together the two parts of the buffer to appear as a circular one.

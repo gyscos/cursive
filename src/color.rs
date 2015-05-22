@@ -8,6 +8,7 @@ use std::path::Path;
 use ncurses;
 use toml;
 
+/// Represents a colorpair from a Theme.
 pub type ThemeColor = i16;
 
 /// Application background, where no view is present.
