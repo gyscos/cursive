@@ -8,7 +8,8 @@ fn main() {
 
     // Creates a dialog with a single "Quit" button
     siv.add_layer(Dialog::new(TextView::new("Hello Dialog!"))
-                    .button("Quit", |s,_| s.quit()));
+                  .title("Cursive")
+                  .button("Quit", |s,_| s.quit()));
 
     siv.run();
 }

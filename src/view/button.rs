@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use color;
 use ::Cursive;
 use vec::Vec2;
 use view::{View,ViewPath,SizeRequest};
@@ -28,12 +29,13 @@ impl Button {
 impl View for Button {
 
     fn draw(&self, printer: &Printer, focused: bool) {
-        printer.print((1u32,0u32), &self.label);
+        let style = if !focused { color::PRIMARY } else { color::HIGHLIGHT };
+        let x = printer.size.x - 1;
 
-        if focused {
-            printer.print((0u32,0u32), "<");
-            printer.print((printer.size.x-1,0), ">");
-        }
+        let printer = printer.style(style);
+        printer.print((1u32,0u32), &self.label);
+        printer.print((0u32,0u32), "<");
+        printer.print((x,0), ">");
     }
 
     fn get_min_size(&self, _: SizeRequest) -> Vec2 {

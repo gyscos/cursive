@@ -2,6 +2,7 @@ use std::cmp::max;
 
 use ncurses;
 
+use color;
 use ::{Cursive,Margins};
 use event::EventResult;
 use view::{View,ViewPath,SizeRequest,DimensionRequest};
@@ -23,6 +24,7 @@ enum Focus {
 /// let dialog = Dialog::new(TextView::new("Hello!")).button("Ok", |s,_| s.quit());
 /// ```
 pub struct Dialog {
+    title: String,
     content: Box<View>,
 
     buttons: Vec<SizedView<Button>>,
@@ -39,6 +41,7 @@ impl Dialog {
         Dialog {
             content: Box::new(view),
             buttons: Vec::new(),
+            title: String::new(),
             focus: Focus::Content,
             padding: Margins::new(1,1,0,0),
             borders: Margins::new(1,1,1,1),
@@ -53,6 +56,11 @@ impl Dialog {
     {
         self.buttons.push(SizedView::new(Button::new(label, cb)));
 
+        self
+    }
+
+    pub fn title(mut self, label: &str) -> Self {
+        self.title = label.to_string();
         self
     }
 
@@ -79,7 +87,15 @@ impl View for Dialog {
 
         self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(), inner_size), focused && self.focus == Focus::Content);
 
-        printer.print_box(Vec2::new(0,0), printer.size, '+', '-', '|');
+        printer.print_box(Vec2::new(0,0), printer.size);
+
+        if self.title.len() > 0 {
+            let x = (printer.size.x - self.title.len() as u32) / 2;
+            printer.print((x-2,0), "┤ ");
+            printer.print((x+self.title.len() as u32,0), " ├");
+
+            printer.style(color::TITLE_PRIMARY).print((x,0), &self.title);
+        }
 
     }
 
@@ -94,11 +110,15 @@ impl View for Dialog {
             buttons_size.y = max(buttons_size.y, s.y + 1);
         }
 
-        let inner_size = Vec2::new(
-            max(content_size.x, buttons_size.x),
-            content_size.y + buttons_size.y);
+        let mut inner_size = Vec2::new(max(content_size.x, buttons_size.x),
+                                   content_size.y + buttons_size.y)
+                        + self.padding.combined() + self.borders.combined();
 
-        inner_size + self.padding.combined() + self.borders.combined()
+        if self.title.len() > 0 {
+            inner_size.x = max(inner_size.x, self.title.len() as u32 + 6);
+        }
+
+        inner_size
     }
 
     fn layout(&mut self, mut size: Vec2) {

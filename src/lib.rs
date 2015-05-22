@@ -21,11 +21,13 @@
 //! }
 //! ```
 extern crate ncurses;
+extern crate toml;
 
 pub mod event;
 pub mod view;
 pub mod printer;
 pub mod vec;
+pub mod color;
 
 mod div;
 mod margins;
@@ -66,11 +68,18 @@ pub struct Cursive {
 impl Cursive {
     /// Creates a new Cursive root, and initialize ncurses.
     pub fn new() -> Self {
+        ncurses::setlocale(ncurses::LcCategory::all, "");
         ncurses::initscr();
         ncurses::keypad(ncurses::stdscr, true);
         ncurses::noecho();
         ncurses::cbreak();
+        ncurses::start_color();
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+        color::load_legacy();
+        // color::load_default();
+        // color::load_theme("assets/style.toml").ok().unwrap();
+
+        ncurses::wbkgd(ncurses::stdscr, ncurses::COLOR_PAIR(color::BACKGROUND));
 
         let mut res = Cursive {
             screens: Vec::new(),
@@ -172,7 +181,6 @@ impl Cursive {
             size: self.screen_size(),
         };
         self.screen_mut().draw(&printer, true);
-        ncurses::wrefresh(ncurses::stdscr);
     }
 
     /// Runs the event loop.

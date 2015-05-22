@@ -12,6 +12,7 @@ keywords = ["ncurses", "TUI"]
 name = "cursive"
 
 [dependencies]
+toml = "0.1"
 
 [dependencies.ncurses]
 git = "https://github.com/jeaye/ncurses-rs"

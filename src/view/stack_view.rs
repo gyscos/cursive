@@ -1,5 +1,8 @@
 use std::cmp::max;
 
+use ncurses;
+
+use color;
 use vec::Vec2;
 use view::{View,SizeRequest,DimensionRequest};
 use event::EventResult;
@@ -14,6 +17,7 @@ pub struct StackView {
 struct Layer {
     view: Box<View>,
     size: Vec2,
+    win: Option<ncurses::WINDOW>,
 }
 
 impl StackView {
@@ -29,6 +33,7 @@ impl StackView {
         self.layers.push(Layer {
             view: Box::new(view),
             size: Vec2::new(0,0),
+            win: None,
         });
     }
 
@@ -41,14 +46,23 @@ impl StackView {
 
 impl View for StackView {
     fn draw(&self, printer: &Printer, focused: bool) {
-        match self.layers.last() {
-            None => (),
-            Some(v) => {
-                // Center the view
-                let view_size = Vec2::min(printer.size, v.size);
-                let offset = (printer.size - view_size) / 2;
-                v.view.draw(&printer.sub_printer(offset, v.size), focused);
-            },
+        ncurses::wrefresh(printer.win);
+        for v in self.layers.iter() {
+            // Center the view
+            v.view.draw(&Printer::new(v.win.unwrap(), v.size), focused);
+
+            let h = v.size.y;
+            let w = v.size.x;
+            let x = (printer.size.x - w) / 2;
+            let y = (printer.size.y - h) / 2;
+
+
+            let printer = printer.style(color::SHADOW);
+            printer.print_hline((x+1,y+h), w, ' ' as u64);
+            printer.print_vline((x+w,y+1), h, ' ' as u64);
+
+            // v.view.draw(&printer.sub_printer(offset, v.size), focused);
+            ncurses::wrefresh(v.win.unwrap());
         }
     }
 
@@ -65,8 +79,21 @@ impl View for StackView {
             h: DimensionRequest::AtMost(size.y),
         };
         for layer in self.layers.iter_mut() {
-            layer.size = layer.view.get_min_size(req);
+            layer.size = Vec2::min(size, layer.view.get_min_size(req));
             layer.view.layout(layer.size);
+
+            let h = layer.size.y as i32;
+            let w = layer.size.x as i32;
+            let x = (size.x as i32 - w) / 2;
+            let y = (size.y as i32 - h) / 2;
+            let win = ncurses::newwin(h, w, y, x);
+            ncurses::wbkgd(win, ncurses::COLOR_PAIR(color::PRIMARY));
+
+            match layer.win {
+                None => (),
+                Some(w) => { ncurses::delwin(w); },
+            }
+            layer.win = Some(win);
         }
     }
 

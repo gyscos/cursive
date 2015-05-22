@@ -1,0 +1,14 @@
+background = "#3465a4"
+shadow     = "#000000"
+view       = "#d3d7cf"
+
+primary   = "#111111"
+secondary = "#EEEEEE"
+tertiary  = "#444444"
+
+title_primary   = "#ff5555"
+title_secondary = "#ffff55"
+
+highlight          = "#FF0000"
+highlight_inactive = "#5555FF"
+
