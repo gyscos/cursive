@@ -45,9 +45,9 @@ impl StackView {
 
 
 impl View for StackView {
-    fn draw(&self, printer: &Printer, focused: bool) {
+    fn draw(&mut self, printer: &Printer, focused: bool) {
         ncurses::wrefresh(printer.win);
-        for v in self.layers.iter() {
+        for v in self.layers.iter_mut() {
             // Center the view
             v.view.draw(&Printer::new(v.win.unwrap(), v.size), focused);
 

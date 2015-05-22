@@ -112,7 +112,7 @@ impl <'a> Iterator for LinesIterator<'a> {
 }
 
 impl View for TextView {
-    fn draw(&self, printer: &Printer, _: bool) {
+    fn draw(&mut self, printer: &Printer, _: bool) {
         // We don't have a focused view
 
         let lines = self.content.split("\n")

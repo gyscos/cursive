@@ -74,13 +74,13 @@ impl Dialog {
 }
 
 impl View for Dialog {
-    fn draw(&self, printer: &Printer, focused: bool) {
+    fn draw(&mut self, printer: &Printer, focused: bool) {
 
         // This will be the height used by the buttons.
         let mut height = 0;
         // Current horizontal position of the next button we'll draw.
         let mut x = 0;
-        for (i,button) in self.buttons.iter().enumerate().rev() {
+        for (i,button) in self.buttons.iter_mut().enumerate().rev() {
             let size = button.size;
             let offset = printer.size - self.borders.bot_right() - self.padding.bot_right() - size - Vec2::new(x, 0);
             // Add some special effect to the focused button

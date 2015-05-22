@@ -1,8 +1,7 @@
 extern crate cursive;
 
 use cursive::Cursive;
-use cursive::view::TextView;
-use cursive::view::Dialog;
+use cursive::view::{TextView,Dialog};
 
 use std::fs::File;
 use std::io::Read;

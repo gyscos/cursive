@@ -28,3 +28,7 @@ path = "examples/lorem.rs"
 [[example]]
 name = "dialog"
 path = "examples/dialog.rs"
+
+[[example]]
+name = "logs"
+path = "examples/logs.rs"

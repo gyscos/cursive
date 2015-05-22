@@ -37,6 +37,7 @@ pub use margins::Margins;
 use std::any::Any;
 use std::rc::Rc;
 use std::collections::HashMap;
+use std::sync::mpsc;
 
 use vec::Vec2;
 use view::View;
@@ -93,6 +94,17 @@ impl Cursive {
         res
     }
 
+    /// Regularly redraws everything, even when no input is given.
+    ///
+    /// Call with fps=0 to disable (default value).
+    pub fn set_fps(&self, fps: u32) {
+        if fps == 0 {
+            ncurses::timeout(-1);
+        } else {
+            ncurses::timeout(1000 / fps as i32);
+        }
+    }
+
     /// Returns a mutable reference to the currently active screen.
     pub fn screen_mut(&mut self) -> &mut StackView {
         let id = self.active_screen;
@@ -122,6 +134,7 @@ impl Cursive {
     }
 
     fn find_any(&mut self, path: &ViewPath) -> Option<&mut Any> {
+        // Internal find method that returns a Any object.
         self.screen_mut().find(path)
     }
 
@@ -190,7 +203,7 @@ impl Cursive {
         // And the big event loop begins!
         while self.running {
             // Do we need to redraw everytime?
-            // Probably actually.
+            // Probably, actually.
             // TODO: Do we actually need to clear everytime?
             ncurses::clear();
             // TODO: Do we need to re-layout everytime?

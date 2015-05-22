@@ -9,6 +9,7 @@ mod view_path;
 mod dialog;
 mod button;
 mod sized_view;
+mod full_view;
 
 use std::any::Any;
 
@@ -21,6 +22,7 @@ pub use self::dialog::Dialog;
 pub use self::button::Button;
 pub use self::sized_view::SizedView;
 pub use self::view_wrapper::ViewWrapper;
+pub use self::full_view::FullView;
 
 use event::EventResult;
 use vec::{Vec2,ToVec2};
@@ -89,7 +91,7 @@ pub trait View {
     fn layout(&mut self, Vec2) { }
 
     /// Draws the view with the given printer (includes bounds) and focus.
-    fn draw(&self, printer: &Printer, focused: bool);
+    fn draw(&mut self, printer: &Printer, focused: bool);
 
     /// Finds the view pointed to by the given path.
     /// Returns None if the path doesn't lead to a view.
