@@ -59,6 +59,13 @@ impl Dialog {
         self
     }
 
+    /// Shortcut method to add a button that will dismiss the dialog.
+    pub fn dismiss_button<'a>(self, label: &'a str) -> Self {
+        self.button(label, |s, _| s.screen_mut().pop_layer())
+    }
+
+    /// Sets the title of the dialog.
+    /// If not empty, it will be visible at the top.
     pub fn title(mut self, label: &str) -> Self {
         self.title = label.to_string();
         self
