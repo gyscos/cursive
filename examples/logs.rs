@@ -36,8 +36,10 @@ fn generate_logs(tx: mpsc::Sender<String>) {
     loop {
         let line = format!("Interesting log line {}", i);
         i += 1;
+        // The send will fail when the other side is dropped.
+        // (When the application ends).
         match tx.send(line) {
-            Err(_) => panic!("Uh?..."),
+            Err(_) => return,
             Ok(_) => (),
         }
         thread::sleep_ms(30);
