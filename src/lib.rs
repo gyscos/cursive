@@ -1,3 +1,4 @@
+//! /// Represents a colorpair from a Theme.
 //! # Cursive
 //!
 //! Cursive is a TUI library built on top of ncurses-rs.
@@ -37,7 +38,6 @@ pub use margins::Margins;
 use std::any::Any;
 use std::rc::Rc;
 use std::collections::HashMap;
-use std::sync::mpsc;
 
 use vec::Vec2;
 use view::View;
