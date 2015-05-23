@@ -1,4 +1,3 @@
-//! /// Represents a colorpair from a Theme.
 //! # Cursive
 //!
 //! Cursive is a TUI library built on top of ncurses-rs.
