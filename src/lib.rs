@@ -188,11 +188,11 @@ impl Cursive {
 
     fn draw(&mut self) {
         let printer = Printer {
-            win: ncurses::stdscr,
             offset: Vec2::new(0,0),
             size: self.screen_size(),
         };
         self.screen_mut().draw(&printer, true);
+        ncurses::refresh();
     }
 
     /// Runs the event loop.

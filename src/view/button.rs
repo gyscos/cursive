@@ -32,10 +32,11 @@ impl View for Button {
         let style = if !focused { color::PRIMARY } else { color::HIGHLIGHT };
         let x = printer.size.x - 1;
 
-        let printer = printer.style(style);
-        printer.print((1u32,0u32), &self.label);
-        printer.print((0u32,0u32), "<");
-        printer.print((x,0), ">");
+        printer.with_style(style, |printer| {
+            printer.print((1u32,0u32), &self.label);
+            printer.print((0u32,0u32), "<");
+            printer.print((x,0), ">");
+        });
     }
 
     fn get_min_size(&self, _: SizeRequest) -> Vec2 {

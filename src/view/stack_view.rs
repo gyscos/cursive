@@ -1,11 +1,9 @@
 use std::cmp::max;
 use std::any::Any;
 
-use ncurses;
-
 use color;
 use vec::Vec2;
-use view::{View,SizeRequest,DimensionRequest,Selector};
+use view::{View,SizeRequest,DimensionRequest,Selector,ShadowView};
 use event::EventResult;
 use printer::Printer;
 
@@ -18,7 +16,6 @@ pub struct StackView {
 struct Layer {
     view: Box<View>,
     size: Vec2,
-    win: Option<ncurses::WINDOW>,
 }
 
 impl StackView {
@@ -32,9 +29,8 @@ impl StackView {
     /// Add new view on top of the stack.
     pub fn add_layer<T: 'static + View>(&mut self, view: T) {
         self.layers.push(Layer {
-            view: Box::new(view),
+            view: Box::new(ShadowView::new(view)),
             size: Vec2::new(0,0),
-            win: None,
         });
     }
 
@@ -44,26 +40,17 @@ impl StackView {
     }
 }
 
-
 impl View for StackView {
     fn draw(&mut self, printer: &Printer, focused: bool) {
-        ncurses::wrefresh(printer.win);
         for v in self.layers.iter_mut() {
             // Center the view
-            v.view.draw(&Printer::new(v.win.unwrap(), v.size), focused);
-
-            let h = v.size.y;
-            let w = v.size.x;
-            let x = (printer.size.x - w) / 2;
-            let y = (printer.size.y - h) / 2;
+            let size = v.size;
+            let offset = (printer.size - size) / 2;
+            v.view.draw(&printer.sub_printer(offset, size), focused);
 
 
-            let printer = printer.style(color::HIGHLIGHT);
-            printer.print_hline((x+1,y+h), w, ' ' as u64);
-            printer.print_vline((x+w,y+1), h, ' ' as u64);
 
             // v.view.draw(&printer.sub_printer(offset, v.size), focused);
-            ncurses::wrefresh(v.win.unwrap());
         }
     }
 
@@ -87,14 +74,6 @@ impl View for StackView {
             let w = layer.size.x as i32;
             let x = (size.x as i32 - w) / 2;
             let y = (size.y as i32 - h) / 2;
-            let win = ncurses::newwin(h, w, y, x);
-            ncurses::wbkgd(win, ncurses::COLOR_PAIR(color::PRIMARY));
-
-            match layer.win {
-                None => (),
-                Some(w) => { ncurses::delwin(w); },
-            }
-            layer.win = Some(win);
         }
     }
 
