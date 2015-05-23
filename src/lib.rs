@@ -94,7 +94,7 @@ impl Cursive {
         res
     }
 
-    /// Regularly redraws everything, even when no input is given.
+    /// Regularly redraws everything, even when no input is given. Between 0 and 1000.
     ///
     /// Call with fps=0 to disable (default value).
     pub fn set_fps(&self, fps: u32) {

@@ -70,8 +70,8 @@ impl BufferView {
     fn update(&mut self) {
         let mut i = self.pos;
         while let Ok(line) = self.rx.try_recv() {
-            i = (i+1) % self.buffer.len();
             self.buffer[i] = line;
+            i = (i+1) % self.buffer.len();
         }
         self.pos = i;
     }
@@ -91,17 +91,16 @@ impl View for BufferView {
         // Before drawing, we'll want to update the buffer
         self.update();
 
-        // If the buffer is large enough, we can fill the window
-        if self.buffer.len() > printer.size.y as usize {
-            // We'll only print the last entries that fit.
-            // So discard entries if there are too many.
-            let discard = self.buffer.len() - printer.size.y as usize;
-            // And we discard the first entries if needed
-            for (i, line) in self.ring().skip(discard).enumerate() {
-                printer.print((0,i as u32), line);
-            }
+        // If the buffer is large enough, we'll discard the beginning and keep the end.
+        // If the buffer is too small, only print a part of it with an offset.
+        let (discard,offset) = if self.buffer.len() > printer.size.y as usize {
+            (self.buffer.len() - printer.size.y as usize, 0)
         } else {
+            (0, printer.size.y - self.buffer.len() as u32)
+        };
 
+        for (i, line) in self.ring().skip(discard).enumerate() {
+            printer.print((0,offset + i as u32), line);
         }
     }
 }
