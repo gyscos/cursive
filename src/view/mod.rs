@@ -10,6 +10,7 @@ mod dialog;
 mod button;
 mod sized_view;
 mod full_view;
+mod id_view;
 
 use std::any::Any;
 
@@ -23,10 +24,40 @@ pub use self::button::Button;
 pub use self::sized_view::SizedView;
 pub use self::view_wrapper::ViewWrapper;
 pub use self::full_view::FullView;
+pub use self::id_view::IdView;
 
 use event::EventResult;
 use vec::{Vec2,ToVec2};
 use printer::Printer;
+
+/// Main trait defining a view behaviour.
+pub trait View {
+    /// Called when a key was pressed. Default implementation just ignores it.
+    fn on_key_event(&mut self, i32) -> EventResult { EventResult::Ignored }
+
+    /// Returns the minimum size the view requires under the given restrictions.
+    fn get_min_size(&self, SizeRequest) -> Vec2 { Vec2::new(1,1) }
+
+    /// Called once the size for this view has been decided, so it can
+    /// propagate the information to its children.
+    fn layout(&mut self, Vec2) { }
+
+    /// Draws the view with the given printer (includes bounds) and focus.
+    fn draw(&mut self, printer: &Printer, focused: bool);
+
+    /// Finds the view pointed to by the given path.
+    /// Returns None if the path doesn't lead to a view.
+    fn find(&mut self, &Selector) -> Option<&mut Any> { None }
+
+    /// This view is offered focus. Will it take it?
+    fn take_focus(&mut self) -> bool { false }
+}
+
+/// Selects a single view (if any) in the tree.
+pub enum Selector<'a> {
+    Id(&'a str),
+    Path(&'a ViewPath),
+}
 
 /// Describe constraints on a view layout in one dimension.
 #[derive(PartialEq,Clone,Copy)]
@@ -78,26 +109,4 @@ impl SizeRequest {
     }
 }
 
-/// Main trait defining a view behaviour.
-pub trait View {
-    /// Called when a key was pressed. Default implementation just ignores it.
-    fn on_key_event(&mut self, i32) -> EventResult { EventResult::Ignored }
-
-    /// Returns the minimum size the view requires under the given restrictions.
-    fn get_min_size(&self, SizeRequest) -> Vec2 { Vec2::new(1,1) }
-
-    /// Called once the size for this view has been decided, so it can
-    /// propagate the information to its children.
-    fn layout(&mut self, Vec2) { }
-
-    /// Draws the view with the given printer (includes bounds) and focus.
-    fn draw(&mut self, printer: &Printer, focused: bool);
-
-    /// Finds the view pointed to by the given path.
-    /// Returns None if the path doesn't lead to a view.
-    fn find(&mut self, &ViewPath) -> Option<&mut Any> { None }
-
-    /// This view is offered focus. Will it take it?
-    fn take_focus(&mut self) -> bool { false }
-}
 

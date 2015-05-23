@@ -41,7 +41,7 @@ use std::collections::HashMap;
 use vec::Vec2;
 use view::View;
 use printer::Printer;
-use view::{StackView,ViewPath};
+use view::{StackView,ViewPath,Selector};
 
 use event::{EventResult,Callback};
 
@@ -132,16 +132,16 @@ impl Cursive {
         self.active_screen = screen_id;
     }
 
-    fn find_any(&mut self, path: &ViewPath) -> Option<&mut Any> {
+    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
         // Internal find method that returns a Any object.
-        self.screen_mut().find(path)
+        self.screen_mut().find(selector)
     }
 
     /// Tries to find the view pointed to by the given path.
     /// If the view is not found, or if it is not of the asked type,
     /// it returns None.
-    pub fn find<V: View + Any>(&mut self, path: &ViewPath) -> Option<&mut V> {
-        match self.find_any(path) {
+    pub fn find<V: View + Any>(&mut self, selector: &Selector) -> Option<&mut V> {
+        match self.find_any(selector) {
             None => None,
             Some(b) => b.downcast_mut::<V>(),
         }

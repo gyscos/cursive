@@ -1,9 +1,14 @@
+use std::any::Any;
+
 use vec::Vec2;
-use view::{View,SizeRequest};
+use view::{View,SizeRequest,Selector};
 use printer::Printer;
 use event::EventResult;
 
-/// Wrapper around a view. Can override some methods, forwards the others.
+/// Generic wrapper around a view.
+///
+/// Default implementation forwards all calls to the child view.
+/// Overrides some methods as desired.
 pub trait ViewWrapper {
     /// Get an immutable reference to the wrapped view, so that we can forward some calls to it.
     fn get_view(&self) -> &View;
@@ -34,6 +39,10 @@ pub trait ViewWrapper {
     fn wrap_take_focus(&mut self) -> bool {
         self.get_view_mut().take_focus()
     }
+
+    fn wrap_find(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.get_view_mut().find(selector)
+    }
 }
 
 impl <T: ViewWrapper> View for T {
@@ -55,6 +64,10 @@ impl <T: ViewWrapper> View for T {
 
     fn take_focus(&mut self) -> bool {
         self.wrap_take_focus()
+    }
+
+    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.wrap_find(selector)
     }
 }
 

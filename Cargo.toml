@@ -32,3 +32,7 @@ path = "examples/dialog.rs"
 [[example]]
 name = "logs"
 path = "examples/logs.rs"
+
+[[example]]
+name = "mutation"
+path = "examples/mutation.rs"

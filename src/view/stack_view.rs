@@ -1,10 +1,11 @@
 use std::cmp::max;
+use std::any::Any;
 
 use ncurses;
 
 use color;
 use vec::Vec2;
-use view::{View,SizeRequest,DimensionRequest};
+use view::{View,SizeRequest,DimensionRequest,Selector};
 use event::EventResult;
 use printer::Printer;
 
@@ -57,7 +58,7 @@ impl View for StackView {
             let y = (printer.size.y - h) / 2;
 
 
-            let printer = printer.style(color::SHADOW);
+            let printer = printer.style(color::HIGHLIGHT);
             printer.print_hline((x+1,y+h), w, ' ' as u64);
             printer.print_vline((x+w,y+1), h, ' ' as u64);
 
@@ -114,5 +115,14 @@ impl View for StackView {
             None => false,
             Some(mut v) => v.view.take_focus()
         }
+    }
+
+    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
+        for layer in self.layers.iter_mut() {
+            if let Some(any) = layer.view.find(selector) {
+                return Some(any);
+            }
+        }
+        None
     }
 }

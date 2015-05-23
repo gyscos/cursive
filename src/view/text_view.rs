@@ -33,6 +33,10 @@ impl TextView {
         }
     }
 
+    pub fn set_content(&mut self, content: &str) {
+        self.content = content.to_string();
+    }
+
     /// Returns the number of lines required to display the content
     /// with the given width.
     fn get_num_lines(&self, max_width: usize) -> usize {
