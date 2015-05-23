@@ -33,8 +33,14 @@ impl TextView {
         }
     }
 
+    /// Replace the text in this view.
     pub fn set_content(&mut self, content: &str) {
         self.content = content.to_string();
+    }
+
+    /// Returns the current text in this view.
+    pub fn get_content(&self) -> &str {
+        &self.content
     }
 
     /// Returns the number of lines required to display the content
