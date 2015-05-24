@@ -1,5 +1,7 @@
 //! Makes drawing on ncurses windows easier.
 
+use std::cmp::min;
+
 use ncurses;
 
 use color;
@@ -24,21 +26,36 @@ impl Printer {
 
     /// Prints some text at the given position relative to the window.
     pub fn print<S: ToVec2>(&self, pos: S, text: &str) {
-        let mut p = pos.to_vec2();
-        if p.y >= self.size.y { return; }
-        p = p + self.offset;
+        let p = pos.to_vec2();
+        if p.y >= self.size.y || p.x >= self.size.x { return; }
+        // Do we have enough room for the entire line?
+        let room = (self.size.x - p.x) as usize;
+        // We want the number of CHARACTERS, not bytes.
+        let text = match text.char_indices().nth(room) {
+            Some((i,_)) => &text[..i],
+            _ => text,
+        };
+        let p = p + self.offset;
         ncurses::mvprintw(p.y as i32, p.x as i32, text);
     }
 
     /// Prints a vertical line using the given character.
     pub fn print_vline<T: ToVec2>(&self, start: T, len: u32, c: u64) {
-        let p = start.to_vec2() + self.offset;
+        let p = start.to_vec2();
+        if p.y > self.size.y || p.x > self.size.x { return; }
+        let len = min(len, self.size.y - p.y);
+
+        let p = p + self.offset;
         ncurses::mvvline(p.y as i32, p.x as i32, c, len as i32);
     }
 
     /// Prints a horizontal line using the given character.
     pub fn print_hline<T: ToVec2>(&self, start: T, len: u32, c: u64) {
-        let p = start.to_vec2() + self.offset;
+        let p = start.to_vec2();
+        if p.y > self.size.y || p.x > self.size.x { return; }
+        let len = min(len, self.size.x - p.x);
+
+        let p = p + self.offset;
         ncurses::mvhline(p.y as i32, p.x as i32, c, len as i32);
     }
 
