@@ -19,7 +19,7 @@ fn show_popup(siv: &mut Cursive) {
 fn main() {
     let mut siv = Cursive::new();
 
-    let content = "Press Q to quit the application.\n\nPress P to bring back the popup.";
+    let content = "Press Q to quit the application.\n\nPress P to open the popup.";
 
     siv.add_global_callback('q' as i32, |s| s.quit());
 
@@ -28,8 +28,6 @@ fn main() {
     // so that we can't call it when the popup is already visible.
     siv.add_layer(KeyEventView::new(IdView::new("text", TextView::new(content)))
                   .register('p' as i32, |s| show_popup(s)));
-
-    show_popup(&mut siv);
 
 
     siv.run();
