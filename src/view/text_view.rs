@@ -17,10 +17,11 @@ fn get_line_span(line: &str, max_width: usize) -> usize {
     let mut length = 0;
     for l in line.split(" ").map(|word| word.len()) {
         length += l;
-        if length > max_width {
+        if length >= max_width {
             length = l;
             lines += 1;
         }
+        length += 1;
     }
     lines
 }

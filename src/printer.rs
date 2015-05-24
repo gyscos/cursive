@@ -24,7 +24,9 @@ impl Printer {
 
     /// Prints some text at the given position relative to the window.
     pub fn print<S: ToVec2>(&self, pos: S, text: &str) {
-        let p = pos.to_vec2() + self.offset;
+        let mut p = pos.to_vec2();
+        if p.y >= self.size.y { return; }
+        p = p + self.offset;
         ncurses::mvprintw(p.y as i32, p.x as i32, text);
     }
 
