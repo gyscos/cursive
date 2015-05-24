@@ -1,7 +1,6 @@
 use std::cmp::max;
 use std::any::Any;
 
-use color;
 use vec::Vec2;
 use view::{View,SizeRequest,DimensionRequest,Selector,ShadowView};
 use event::EventResult;
@@ -47,10 +46,6 @@ impl View for StackView {
             let size = v.size;
             let offset = (printer.size - size) / 2;
             v.view.draw(&printer.sub_printer(offset, size), focused);
-
-
-
-            // v.view.draw(&printer.sub_printer(offset, v.size), focused);
         }
     }
 
@@ -69,11 +64,6 @@ impl View for StackView {
         for layer in self.layers.iter_mut() {
             layer.size = Vec2::min(size, layer.view.get_min_size(req));
             layer.view.layout(layer.size);
-
-            let h = layer.size.y as i32;
-            let w = layer.size.x as i32;
-            let x = (size.x as i32 - w) / 2;
-            let y = (size.y as i32 - h) / 2;
         }
     }
 

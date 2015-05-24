@@ -5,7 +5,7 @@ use ncurses;
 use color;
 use ::{Cursive,Margins};
 use event::EventResult;
-use view::{View,ViewPath,SizeRequest,DimensionRequest};
+use view::{View,SizeRequest,DimensionRequest};
 use view::{Button,SizedView};
 use vec::Vec2;
 use printer::Printer;

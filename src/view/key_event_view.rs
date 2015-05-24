@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use ::Cursive;
 use event::{EventResult,Callback};
-use super::{View,ViewPath,ViewWrapper};
+use super::{View,ViewWrapper};
 
 /// A simple wrapper view that catches some ignored event from its child.
 ///

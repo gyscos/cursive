@@ -29,15 +29,12 @@ impl <T: View> ViewWrapper for ShadowView<T> {
 
     fn wrap_draw(&mut self, printer: &Printer, focused: bool) {
 
-        {
-            printer.with_style(color::PRIMARY, |printer| {
-                // Draw the view background
-                for y in 1..printer.size.y-1 {
-                    printer.print_hline((1,y), printer.size.x-2, ' ' as u64);
-                }
-            });
-        }
-
+        printer.with_style(color::PRIMARY, |printer| {
+            // Draw the view background
+            for y in 1..printer.size.y-1 {
+                printer.print_hline((1,y), printer.size.x-2, ' ' as u64);
+            }
+        });
 
         self.view.draw(&printer.sub_printer(Vec2::new(1,1), printer.size - (2,2)), focused);
 
