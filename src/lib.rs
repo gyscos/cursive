@@ -41,7 +41,7 @@ use std::collections::HashMap;
 use vec::Vec2;
 use view::View;
 use printer::Printer;
-use view::{StackView,ViewPath,Selector};
+use view::{StackView,Selector};
 
 use event::{EventResult,Callback};
 
@@ -149,7 +149,7 @@ impl Cursive {
 
     /// Adds a global callback, triggered on the given key press when no view catches it.
     pub fn add_global_callback<F>(&mut self, key: i32, cb: F)
-        where F: Fn(&mut Cursive, &ViewPath) + 'static
+        where F: Fn(&mut Cursive) + 'static
     {
         self.global_callbacks.insert(key, Rc::new(Box::new(cb)));
     }
@@ -166,7 +166,7 @@ impl Cursive {
             Some(cb) => cb.clone(),
         };
         // Not from a view, so no viewpath here
-        cb(self, &ViewPath::new());
+        cb(self);
     }
 
     /// Returns the size of the screen, in characters.
@@ -218,8 +218,8 @@ impl Cursive {
             // If the event was ignored, it is our turn to play with it.
             match self.screen_mut().on_key_event(ch) {
                 EventResult::Ignored => self.on_key_event(ch),
-                EventResult::Consumed(None, _) => (),
-                EventResult::Consumed(Some(cb), path) => cb(self, &path),
+                EventResult::Consumed(None) => (),
+                EventResult::Consumed(Some(cb)) => cb(self),
             }
         }
     }

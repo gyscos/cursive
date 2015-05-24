@@ -52,7 +52,7 @@ impl Dialog {
     ///
     /// Consumes and returns self for easy chaining.
     pub fn button<'a, F>(mut self, label: &'a str, cb: F) -> Self
-        where F: Fn(&mut Cursive, &ViewPath) + 'static
+        where F: Fn(&mut Cursive) + 'static
     {
         self.buttons.push(SizedView::new(Button::new(label, cb)));
 
@@ -61,7 +61,7 @@ impl Dialog {
 
     /// Shortcut method to add a button that will dismiss the dialog.
     pub fn dismiss_button<'a>(self, label: &'a str) -> Self {
-        self.button(label, |s, _| s.screen_mut().pop_layer())
+        self.button(label, |s| s.screen_mut().pop_layer())
     }
 
     /// Sets the title of the dialog.
@@ -165,7 +165,7 @@ impl View for Dialog {
                     ncurses::KEY_DOWN => {
                         // Default to leftmost button when going down.
                         self.focus = Focus::Button(0);
-                        EventResult::Consumed(None, ViewPath::new())
+                        EventResult::Consumed(None)
                     },
                     _ => EventResult::Ignored,
                 },
@@ -178,7 +178,7 @@ impl View for Dialog {
                     ncurses::KEY_UP => {
                         if self.content.take_focus() {
                             self.focus = Focus::Content;
-                            EventResult::consume()
+                            EventResult::Consumed(None)
                         } else {
                             EventResult::Ignored
                         }
@@ -186,11 +186,11 @@ impl View for Dialog {
                     // Left and Right move to other buttons
                     ncurses::KEY_RIGHT if i+1 < self.buttons.len() => {
                         self.focus = Focus::Button(i+1);
-                        EventResult::consume()
+                        EventResult::Consumed(None)
                     },
                     ncurses::KEY_LEFT if i > 0 => {
                         self.focus = Focus::Button(i-1);
-                        EventResult::consume()
+                        EventResult::Consumed(None)
                     },
                     _ => EventResult::Ignored,
                 },

@@ -24,7 +24,7 @@ impl KeyEventView {
 
     /// Registers a callback when the given key is ignored by the child.
     pub fn register<F>(mut self, key: i32, cb: F) -> Self
-        where F: Fn(&mut Cursive, &ViewPath) + 'static
+        where F: Fn(&mut Cursive) + 'static
     {
         self.callbacks.insert(key, Rc::new(Box::new(cb)));
 
@@ -40,7 +40,7 @@ impl ViewWrapper for KeyEventView {
         match self.content.on_key_event(ch) {
             EventResult::Ignored => match self.callbacks.get(&ch) {
                 None => EventResult::Ignored,
-                Some(cb) => EventResult::Consumed(Some(cb.clone()), ViewPath::new()),
+                Some(cb) => EventResult::Consumed(Some(cb.clone())),
             },
             res => res,
         }

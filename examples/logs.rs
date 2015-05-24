@@ -13,7 +13,7 @@ fn main() {
 
     // We want to refresh the page even when no input is given.
     siv.set_fps(10);
-    siv.add_global_callback('q' as i32, |s,_| s.quit());
+    siv.add_global_callback('q' as i32, |s| s.quit());
 
     // A channel will communicate data from our running task to the UI.
     let (tx,rx) = mpsc::channel();

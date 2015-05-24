@@ -15,7 +15,7 @@ fn main() {
     file.read_to_string(&mut content).unwrap();
 
     // We can quit by pressing q
-    siv.add_global_callback('q' as i32, |s,_| s.quit());
+    siv.add_global_callback('q' as i32, |s| s.quit());
 
     // The text is too long to fit on a line, so the view will wrap lines,
     // and will adapt to the terminal size.
