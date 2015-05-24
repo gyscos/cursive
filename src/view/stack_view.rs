@@ -26,7 +26,8 @@ impl StackView {
     }
 
     /// Add new view on top of the stack.
-    pub fn add_layer<T: 'static + View>(&mut self, view: T) {
+    pub fn add_layer<T: 'static + View>(&mut self, mut view: T) {
+        view.take_focus();
         self.layers.push(Layer {
             view: Box::new(ShadowView::new(view)),
             size: Vec2::new(0,0),

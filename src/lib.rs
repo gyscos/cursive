@@ -199,6 +199,7 @@ impl Cursive {
     /// It will wait for user input (key presses) and trigger callbacks accordingly.
     /// Blocks until quit() is called.
     pub fn run(&mut self) {
+
         // And the big event loop begins!
         while self.running {
             // Do we need to redraw everytime?
