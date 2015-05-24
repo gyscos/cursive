@@ -21,7 +21,7 @@ fn main() {
 
     // Create a popup window with a "Ok" button that quits the application
     siv.add_layer(Dialog::new(TextView::new("Hello world!"))
-                    .button("Quit", |s, _| s.quit()));
+                    .button("Quit", |s| s.quit()));
 
     // Starts the event loop.
     siv.run();
