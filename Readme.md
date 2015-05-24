@@ -21,12 +21,18 @@ fn main() {
 
     // Create a popup window with a "Ok" button that quits the application
     siv.add_layer(Dialog::new(TextView::new("Hello world!"))
+					.title("Cursive")
                     .button("Quit", |s| s.quit()));
 
     // Starts the event loop.
     siv.run();
 }
 ```
+
+![Cursive dialog example](https://raw.githubusercontent.com/Gyscos/Cursive/master/doc/cursive_example.png)
+
+_(Colors may depend on your terminal configuration)_
+
 
 The goal is to be flexible enough, so that recreating these kind of tools would be - relatively - easy (at least on the layout front):
 
