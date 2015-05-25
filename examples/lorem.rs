@@ -21,7 +21,7 @@ fn main() {
     // and will adapt to the terminal size.
     siv.add_layer(TextView::new(&content));
     // Show a popup on top of the view.
-    siv.add_layer(Dialog::new(TextView::new("Try resizing the terminal!\n(Press 'q' to quit when you're done)"))
+    siv.add_layer(Dialog::new(TextView::new("Try resizing the terminal!\n(Press 'q' to quit when you're done.)"))
                   .dismiss_button("Ok"));
 
     siv.run();

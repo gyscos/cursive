@@ -36,7 +36,7 @@ fn get_line_span(line: &str, max_width: usize) -> usize {
     let mut length = 0;
     for l in line.split(" ").map(|word| word.len()) {
         length += l;
-        if length >= max_width {
+        if length > max_width {
             length = l;
             lines += 1;
         }
@@ -129,7 +129,7 @@ impl <'a> Iterator for LinesIterator<'a> {
         let content = &self.content[self.start..];
 
         if let Some(next) = content.find("\n") {
-            if next < self.width {
+            if next <= self.width {
                 // We found a newline before the allowed limit.
                 // Break early.
                 self.start += next+1;
@@ -149,7 +149,7 @@ impl <'a> Iterator for LinesIterator<'a> {
             });
         }
 
-        if let Some(i) = content[..self.width].rfind(" ") {
+        if let Some(i) = content[..self.width+1].rfind(" ") {
             // If we have to break, try to find a whitespace for that.
             self.start += i+1;
             return Some(Row {
