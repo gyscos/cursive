@@ -1,14 +1,29 @@
-background = "#3465a4"
-shadow     = "#000000"
-view       = "#d3d7cf"
+# Everything in a theme file is optional.
 
-primary   = "#111111"
-secondary = "#EEEEEE"
-tertiary  = "#444444"
+shadow = false
+borders = "simple", # Alternatives are "none" and "outset"
 
-title_primary   = "#ff5555"
-title_secondary = "#ffff55"
+# Base colors are red, green, blue,
+# cyan, magenta, yellow, white and black.
+[colors]
+	background = "black"
+	# If the value is an array, the first valid color will be used.
+	# If the terminal doesn't support custom color,
+	# non-base colors will be skipped.
+	shadow     = ["#000000", "black"]
+	view       = "#d3d7cf"
 
-highlight          = "#FF0000"
-highlight_inactive = "#5555FF"
+	# Array and simple values have the same effect.
+	primary   = ["#111111"]
+	secondary = "#EEEEEE"
+	tertiary  = "#444444"
+
+	# Hex values can use lower or uppercase.
+	# (base color MUST be lowercase)
+	title_primary   = "#ff5555"
+	title_secondary = "#ffff55"
+
+	# Lower precision values can use only 3 digits.
+	highlight          = "#F00"
+	highlight_inactive = "#5555FF"
 

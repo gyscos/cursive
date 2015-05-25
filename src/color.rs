@@ -133,15 +133,15 @@ impl Color {
         if s.starts_with("#") {
             let s = &s[1..];
             // HTML-style
-            let l = match s.len() {
-                6 => 2,
-                3 => 1,
+            let (l,max) = match s.len() {
+                6 => (2,255),
+                3 => (1,15),
                 _ => panic!("Cannot parse color: {}", s),
             };
 
-            self.r = (load_hex(&s[0*l..1*l]) as i32 * 1000 / 255) as i16;
-            self.g = (load_hex(&s[1*l..2*l]) as i32 * 1000 / 255) as i16;
-            self.b = (load_hex(&s[2*l..3*l]) as i32 * 1000 / 255) as i16;
+            self.r = (load_hex(&s[0*l..1*l]) as i32 * 1000 / max) as i16;
+            self.g = (load_hex(&s[1*l..2*l]) as i32 * 1000 / max) as i16;
+            self.b = (load_hex(&s[2*l..3*l]) as i32 * 1000 / max) as i16;
         } else {
             // Unknown color. Panic.
             panic!("Cannot parse color: {}", s);
