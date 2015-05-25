@@ -3,11 +3,11 @@ use std::cmp::max;
 use ncurses;
 
 use color;
-use ::{Cursive,Margins};
+use ::{Cursive};
 use event::EventResult;
 use view::{View,SizeRequest,DimensionRequest};
 use view::{Button,SizedView};
-use vec::Vec2;
+use vec::{Vec2,Vec4,ToVec4};
 use printer::Printer;
 
 #[derive(PartialEq)]
@@ -29,8 +29,8 @@ pub struct Dialog {
 
     buttons: Vec<SizedView<Button>>,
 
-    padding: Margins,
-    borders: Margins,
+    padding: Vec4,
+    borders: Vec4,
 
     focus: Focus,
 }
@@ -43,8 +43,8 @@ impl Dialog {
             buttons: Vec::new(),
             title: String::new(),
             focus: Focus::Content,
-            padding: Margins::new(1,1,0,0),
-            borders: Margins::new(1,1,1,1),
+            padding: Vec4::new(1,1,0,0),
+            borders: Vec4::new(1,1,1,1),
         }
     }
 
@@ -68,6 +68,12 @@ impl Dialog {
     /// If not empty, it will be visible at the top.
     pub fn title(mut self, label: &str) -> Self {
         self.title = label.to_string();
+        self
+    }
+
+    pub fn padding<T: ToVec4>(mut self, padding: T) -> Self {
+        self.padding = padding.to_vec4();
+
         self
     }
 

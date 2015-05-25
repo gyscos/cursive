@@ -122,3 +122,74 @@ impl Mul<usize> for Vec2 {
         }
     }
 }
+
+/// Four values representing each direction.
+pub struct Vec4 {
+    /// Left margin
+    pub left: usize,
+    /// Right margin
+    pub right: usize,
+    /// Top margin
+    pub top: usize,
+    /// Bottom margin
+    pub bottom: usize,
+}
+
+impl Vec4 {
+    /// Creates a new Vec4.
+    pub fn new(left: usize, right: usize, top: usize, bottom: usize) -> Self {
+        Vec4 {
+            left: left,
+            right: right,
+            top: top,
+            bottom: bottom,
+        }
+    }
+
+    /// Returns left + right.
+    pub fn horizontal(&self) -> usize {
+        self.left + self.right
+    }
+
+    /// Returns top + bottom.
+    pub fn vertical(&self) -> usize {
+        self.top + self.bottom
+    }
+
+    /// Returns (left+right, top+bottom).
+    pub fn combined(&self) -> Vec2 {
+        Vec2::new(self.horizontal(), self.vertical())
+    }
+
+    /// Returns (left, top).
+    pub fn top_left(&self) -> Vec2 {
+        Vec2::new(self.left, self.top)
+    }
+
+    /// Returns (right, bottom).
+    pub fn bot_right(&self) -> Vec2 {
+        Vec2::new(self.right, self.bottom)
+    }
+}
+
+/// Generic trait for converting a value into a Vec4.
+pub trait ToVec4 {
+    /// Converts self to a Vec4.
+    fn to_vec4(self) -> Vec4;
+}
+
+impl ToVec4 for Vec4 {
+    fn to_vec4(self) -> Vec4 { self }
+}
+
+impl ToVec4 for (usize,usize,usize,usize) {
+    fn to_vec4(self) -> Vec4 {
+        Vec4::new(self.0, self.1, self.2, self.3)
+    }
+}
+
+impl ToVec4 for (i32,i32,i32,i32) {
+    fn to_vec4(self) -> Vec4 {
+        Vec4::new(self.0 as usize, self.1 as usize, self.2 as usize, self.3 as usize)
+    }
+}
