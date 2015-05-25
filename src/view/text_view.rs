@@ -10,6 +10,14 @@ pub struct TextView {
     content: String,
 }
 
+fn strip_last_newline(content: &str) -> &str {
+    if !content.is_empty() && content.chars().last().unwrap() == '\n' {
+        &content[..content.len() - 1]
+    } else {
+        content
+    }
+}
+
 /// Returns the number of lines required to display the given text with the
 /// specified maximum line width.
 fn get_line_span(line: &str, max_width: usize) -> usize {
@@ -29,6 +37,7 @@ fn get_line_span(line: &str, max_width: usize) -> usize {
 impl TextView {
     /// Creates a new TextView with the given content.
     pub fn new(content: &str) -> Self {
+        let content = strip_last_newline(content);
         TextView {
             content: content.to_string(),
         }
@@ -36,6 +45,7 @@ impl TextView {
 
     /// Replace the text in this view.
     pub fn set_content(&mut self, content: &str) {
+        let content = strip_last_newline(content);
         self.content = content.to_string();
     }
 
