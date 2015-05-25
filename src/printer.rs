@@ -29,7 +29,7 @@ impl Printer {
         let p = pos.to_vec2();
         if p.y >= self.size.y || p.x >= self.size.x { return; }
         // Do we have enough room for the entire line?
-        let room = (self.size.x - p.x) as usize;
+        let room = self.size.x - p.x;
         // We want the number of CHARACTERS, not bytes.
         let text = match text.char_indices().nth(room) {
             Some((i,_)) => &text[..i],
@@ -40,7 +40,7 @@ impl Printer {
     }
 
     /// Prints a vertical line using the given character.
-    pub fn print_vline<T: ToVec2>(&self, start: T, len: u32, c: u64) {
+    pub fn print_vline<T: ToVec2>(&self, start: T, len: usize, c: u64) {
         let p = start.to_vec2();
         if p.y > self.size.y || p.x > self.size.x { return; }
         let len = min(len, self.size.y - p.y);
@@ -50,7 +50,7 @@ impl Printer {
     }
 
     /// Prints a horizontal line using the given character.
-    pub fn print_hline<T: ToVec2>(&self, start: T, len: u32, c: u64) {
+    pub fn print_hline<T: ToVec2>(&self, start: T, len: usize, c: u64) {
         let p = start.to_vec2();
         if p.y > self.size.y || p.x > self.size.x { return; }
         let len = min(len, self.size.x - p.x);

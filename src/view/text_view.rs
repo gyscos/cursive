@@ -89,7 +89,7 @@ impl TextView {
 
         for line in self.content.split("\n") {
             height += 1;
-            max_width = cmp::max(max_width, line.len() as u32);
+            max_width = cmp::max(max_width, line.len());
         }
 
         Vec2::new(max_width, height)
@@ -182,11 +182,11 @@ impl View for TextView {
             // TODO: what if the text has newlines??
             (DimensionRequest::Unknown, DimensionRequest::Unknown) => self.get_ideal_size(),
             (DimensionRequest::Fixed(w),_) => {
-                let h = self.get_num_lines(w as usize) as u32;
+                let h = self.get_num_lines(w);
                 Vec2::new(w, h)
             },
             (_,DimensionRequest::Fixed(h)) => {
-                let w = self.get_num_cols(h as usize) as u32;
+                let w = self.get_num_cols(h);
                 Vec2::new(w, h)
             },
             (DimensionRequest::AtMost(w),_) => {
@@ -196,7 +196,7 @@ impl View for TextView {
                 if w >= ideal.x {
                     ideal
                 } else {
-                    let h = self.get_num_lines(w as usize) as u32;
+                    let h = self.get_num_lines(w);
                     Vec2::new(w, h)
                 }
             },

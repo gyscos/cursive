@@ -33,15 +33,15 @@ impl View for Button {
         let x = printer.size.x - 1;
 
         printer.with_style(style, |printer| {
-            printer.print((1u32,0u32), &self.label);
-            printer.print((0u32,0u32), "<");
+            printer.print((1,0), &self.label);
+            printer.print((0,0), "<");
             printer.print((x,0), ">");
         });
     }
 
     fn get_min_size(&self, _: SizeRequest) -> Vec2 {
         // Meh. Fixed size we are.
-        Vec2::new(2 + self.label.len() as u32, 1)
+        Vec2::new(2 + self.label.len(), 1)
     }
 
     fn on_key_event(&mut self, ch: i32) -> EventResult {

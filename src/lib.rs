@@ -176,8 +176,8 @@ impl Cursive {
         ncurses::getmaxyx(ncurses::stdscr, &mut y, &mut x);
 
         Vec2 {
-            x: x as u32,
-            y: y as u32,
+            x: x as usize,
+            y: y as usize,
         }
     }
 

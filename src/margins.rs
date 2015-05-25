@@ -3,18 +3,18 @@ use vec::Vec2;
 /// Fixed margins around a rectangular view.
 pub struct Margins {
     /// Left margin
-    pub left: u32,
+    pub left: usize,
     /// Right margin
-    pub right: u32,
+    pub right: usize,
     /// Top margin
-    pub top: u32,
+    pub top: usize,
     /// Bottom margin
-    pub bottom: u32,
+    pub bottom: usize,
 }
 
 impl Margins {
     /// Creates new margins.
-    pub fn new(left: u32, right: u32, top: u32, bottom: u32) -> Self {
+    pub fn new(left: usize, right: usize, top: usize, bottom: usize) -> Self {
         Margins {
             left: left,
             right: right,
@@ -24,12 +24,12 @@ impl Margins {
     }
 
     /// Returns left + right.
-    pub fn horizontal(&self) -> u32 {
+    pub fn horizontal(&self) -> usize {
         self.left + self.right
     }
 
     /// Returns top + bottom.
-    pub fn vertical(&self) -> u32 {
+    pub fn vertical(&self) -> usize {
         self.top + self.bottom
     }
 

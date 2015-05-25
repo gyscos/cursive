@@ -7,14 +7,14 @@ use std::cmp::{min,max};
 #[derive(Clone,Copy)]
 pub struct Vec2 {
     /// X coordinate (column), from left to right.
-    pub x: u32,
+    pub x: usize,
     /// Y coordinate (row), from top to bottom.
-    pub y: u32,
+    pub y: usize,
 }
 
 impl Vec2 {
     /// Creates a new Vec2 from coordinates.
-    pub fn new(x: u32, y: u32) -> Self {
+    pub fn new(x: usize, y: usize) -> Self {
         Vec2 {
             x: x,
             y: y,
@@ -61,19 +61,19 @@ impl ToVec2 for Vec2 {
 
 impl ToVec2 for (i32,i32) {
     fn to_vec2(self) -> Vec2 {
-        (self.0 as u32, self.1 as u32).to_vec2()
-    }
-}
-
-impl ToVec2 for (u32,u32) {
-    fn to_vec2(self) -> Vec2 {
-        Vec2::new(self.0, self.1)
+        (self.0 as usize, self.1 as usize).to_vec2()
     }
 }
 
 impl ToVec2 for (usize,usize) {
     fn to_vec2(self) -> Vec2 {
-        Vec2::new(self.0 as u32, self.1 as u32)
+        Vec2::new(self.0, self.1)
+    }
+}
+
+impl ToVec2 for (u32,u32) {
+    fn to_vec2(self) -> Vec2 {
+        Vec2::new(self.0 as usize, self.1 as usize)
     }
 }
 
@@ -101,10 +101,10 @@ impl <T: ToVec2> Sub<T> for Vec2 {
     }
 }
 
-impl Div<u32> for Vec2 {
+impl Div<usize> for Vec2 {
     type Output = Vec2;
 
-    fn div(self, other: u32) -> Vec2 {
+    fn div(self, other: usize) -> Vec2 {
         Vec2 {
             x: self.x / other,
             y: self.y / other,
@@ -112,10 +112,10 @@ impl Div<u32> for Vec2 {
     }
 }
 
-impl Mul<u32> for Vec2 {
+impl Mul<usize> for Vec2 {
     type Output = Vec2;
 
-    fn mul(self, other: u32) -> Vec2 {
+    fn mul(self, other: usize) -> Vec2 {
         Vec2 {
             x: self.x * other,
             y: self.y * other,

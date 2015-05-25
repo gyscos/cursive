@@ -65,16 +65,16 @@ pub enum Selector<'a> {
 #[derive(PartialEq,Clone,Copy)]
 pub enum DimensionRequest {
     /// The view must use exactly the attached size.
-    Fixed(u32),
+    Fixed(usize),
     /// The view is free to choose its size if it stays under the limit.
-    AtMost(u32),
+    AtMost(usize),
     /// No clear restriction apply.
     Unknown,
 }
 
 impl DimensionRequest {
     /// Returns a new request, reduced from the original by the given offset.
-    pub fn reduced(self, offset: u32) -> Self {
+    pub fn reduced(self, offset: usize) -> Self {
         match self {
             DimensionRequest::Fixed(w) => DimensionRequest::Fixed(w - offset),
             DimensionRequest::AtMost(w) => DimensionRequest::AtMost(w - offset),
