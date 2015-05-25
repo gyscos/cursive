@@ -8,6 +8,13 @@ use printer::Printer;
 /// A simple view showing a fixed text
 pub struct TextView {
     content: String,
+    rows: Vec<Row>,
+    start_line: usize,
+}
+
+struct Row {
+    start: usize,
+    end: usize,
 }
 
 fn strip_last_newline(content: &str) -> &str {
@@ -40,6 +47,8 @@ impl TextView {
         let content = strip_last_newline(content);
         TextView {
             content: content.to_string(),
+            start_line: 0,
+            rows: Vec::new(),
         }
     }
 
@@ -82,70 +91,81 @@ impl TextView {
 }
 
 struct LinesIterator<'a> {
-    line: &'a str,
+    content: &'a str,
     start: usize,
     width: usize,
 }
 
 impl <'a> LinesIterator<'a> {
-    fn new(line: &'a str, width: usize) -> Self {
-        if line.len() == 0 {
-            LinesIterator {
-                line: " ",
-                width: width,
-                start: 0,
-            }
-        } else {
-            LinesIterator {
-                line: line,
-                width: width,
-                start: 0,
-            }
+    fn new(content: &'a str, width: usize) -> Self {
+        LinesIterator {
+            content: content,
+            width: width,
+            start: 0,
         }
     }
 }
 
 impl <'a> Iterator for LinesIterator<'a> {
 
-    type Item = &'a str;
+    type Item = Row;
 
-    fn next(&mut self) -> Option<&'a str> {
-        if self.start >= self.line.len() {
-            None
-        } else if self.start + self.width >= self.line.len() {
-            let start = self.start;
-            self.start = self.line.len();
-            Some(&self.line[start..])
-        } else {
-            let start = self.start;
-            let (end,skip_space) = match self.line[start..start+self.width].rfind(" ") {
-                // Hard break
-                None => (start + self.width, false),
-                Some(i) => (start+i, true),
-            };
-            self.start = end;
-            if skip_space {
-                self.start += 1;
-            }
-            Some(&self.line[start..end])
+    fn next(&mut self) -> Option<Row> {
+        if self.start >= self.content.len() {
+            // This is the end
+            return None;
         }
+
+        let start = self.start;
+        let content = &self.content[self.start..];
+
+        if let Some(next) = content.find("\n") {
+            if next < self.width {
+                self.start += next+1;
+                return Some(Row {
+                    start: start,
+                    end: next + start,
+                });
+            }
+        }
+
+        if content.len() <= self.width {
+            self.start += content.len();
+            return Some(Row{
+                start: start,
+                end: start + content.len(),
+            });
+        }
+
+
+        if let Some(i) = content[..self.width].rfind(" ") {
+            self.start += i+1;
+            return Some(Row {
+                start: start,
+                end: i + start,
+            });
+        }
+
+        self.start += self.width;
+        return Some(Row {
+            start: start,
+            end: start + self.width,
+        });
     }
 }
 
 impl View for TextView {
     fn draw(&mut self, printer: &Printer, _: bool) {
         // We don't have a focused view
-
-        let lines = self.content.split("\n")
-            .flat_map(|line| LinesIterator::new(line, printer.size.x as usize));
-        for (i, line) in lines.enumerate() {
+        for (i,line) in self.rows.iter().skip(self.start_line).map(|row| &self.content[row.start..row.end]).enumerate() {
             printer.print((0,i), line);
         }
-
     }
 
     fn get_min_size(&self, size: SizeRequest) -> Vec2 {
         match (size.w,size.h) {
+            // If we have no directive, ask for a single big line.
+            // TODO: what if the text has newlines??
             (DimensionRequest::Unknown, DimensionRequest::Unknown) => Vec2::new(self.content.len() as u32, 1),
             (DimensionRequest::Fixed(w),_) => {
                 let h = self.get_num_lines(w as usize) as u32;
@@ -156,6 +176,7 @@ impl View for TextView {
                 Vec2::new(w, h)
             },
             (DimensionRequest::AtMost(w),_) => {
+                // Don't _force_ the max width, but take it if we have to.
                 let ideal = self.get_ideal_size();
 
                 if w >= ideal.x {
@@ -167,5 +188,11 @@ impl View for TextView {
             },
             _ => unreachable!(),
         }
+    }
+
+    fn layout(&mut self, size: Vec2) {
+        // Compute the text rows.
+
+        self.rows = LinesIterator::new(&self.content, size.x as usize).collect();
     }
 }
