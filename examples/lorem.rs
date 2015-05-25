@@ -7,12 +7,12 @@ use std::fs::File;
 use std::io::Read;
 
 fn main() {
-    let mut siv = Cursive::new();
-
     // Read some long text from a file.
     let mut file = File::open("assets/lorem.txt").unwrap();
     let mut content = String::new();
     file.read_to_string(&mut content).unwrap();
+
+    let mut siv = Cursive::new();
 
     // We can quit by pressing q
     siv.add_global_callback('q' as i32, |s| s.quit());
