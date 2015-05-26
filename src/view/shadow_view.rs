@@ -3,11 +3,15 @@ use printer::Printer;
 use vec::Vec2;
 use color;
 
+/// Wrapper view that adds a shadow.
+///
+/// It reserves a 1 pixel border on each side.
 pub struct ShadowView<T: View> {
-    pub view: T,
+    view: T,
 }
 
 impl <T: View> ShadowView<T> {
+    /// Wraps the given view.
     pub fn new(view: T) -> Self {
         ShadowView {
             view: view,

@@ -61,6 +61,14 @@ impl Printer {
 
     /// Returns a wrapper around this printer,
     /// that will apply the given style on prints.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// printer.with_style(color::HIGHLIGHT, |printer| {
+    ///     printer.print((0,0), "This text is highlighted!");
+    /// });
+    /// ```
     pub fn with_style<'a, F>(&'a self, style: color::ThemeColor, f: F)
         where F: Fn(&Printer)
     {
@@ -75,7 +83,7 @@ impl Printer {
     /// # Examples
     ///
     /// ```
-    /// printer.print_box((0,0), (6,4), '+', '-', '|');
+    /// printer.print_box((0,0), (6,4));
     /// ```
     pub fn print_box<T: ToVec2>(&self, start: T, size: T) {
         let start_v = start.to_vec2();

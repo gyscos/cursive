@@ -96,11 +96,11 @@ impl View for BufferView {
         let (discard,offset) = if self.buffer.len() > printer.size.y as usize {
             (self.buffer.len() - printer.size.y as usize, 0)
         } else {
-            (0, printer.size.y - self.buffer.len() as u32)
+            (0, printer.size.y - self.buffer.len())
         };
 
         for (i, line) in self.ring().skip(discard).enumerate() {
-            printer.print((0,offset + i as u32), line);
+            printer.print((0,offset + i), line);
         }
     }
 }

@@ -156,6 +156,7 @@ impl Cursive {
         self.screen_mut().add_layer(view);
     }
 
+    /// Convenient method to remove a layer from the current screen.
     pub fn pop_layer(&mut self) {
         self.screen_mut().pop_layer();
     }

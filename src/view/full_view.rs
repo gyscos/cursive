@@ -3,8 +3,7 @@ use vec::Vec2;
 
 /// Simple wrapper view that asks for all the space it can get.
 pub struct FullView<T: View> {
-    /// Wrapped view.
-    pub view: T,
+    view: T,
 }
 
 impl <T: View> FullView<T> {

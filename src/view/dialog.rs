@@ -72,6 +72,7 @@ impl Dialog {
         self
     }
 
+    /// Sets the padding in the dialog (around content and buttons).
     pub fn padding<T: ToVec4>(mut self, padding: T) -> Self {
         self.padding = padding.to_vec4();
 
