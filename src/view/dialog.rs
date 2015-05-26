@@ -1,11 +1,12 @@
 use std::cmp::max;
+use std::any::Any;
 
 use ncurses;
 
 use color;
 use ::{Cursive};
 use event::EventResult;
-use view::{View,SizeRequest,DimensionRequest};
+use view::{View,SizeRequest,DimensionRequest,Selector};
 use view::{Button,SizedView};
 use vec::{Vec2,Vec4,ToVec4};
 use printer::Printer;
@@ -214,5 +215,9 @@ impl View for Dialog {
             self.focus = Focus::Content;
             self.content.take_focus()
         }
+    }
+
+    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.content.find(selector)
     }
 }

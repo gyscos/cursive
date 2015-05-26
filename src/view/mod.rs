@@ -12,6 +12,7 @@ mod sized_view;
 mod full_view;
 mod id_view;
 mod shadow_view;
+mod edit_view;
 
 use std::any::Any;
 
@@ -27,6 +28,7 @@ pub use self::view_wrapper::ViewWrapper;
 pub use self::full_view::FullView;
 pub use self::id_view::IdView;
 pub use self::shadow_view::ShadowView;
+pub use self::edit_view::EditView;
 
 use event::EventResult;
 use vec::{Vec2,ToVec2};

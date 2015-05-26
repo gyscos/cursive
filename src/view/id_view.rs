@@ -22,6 +22,7 @@ impl <T: View + Any> ViewWrapper for IdView<T> {
     wrap_impl!(&self.view);
 
     fn wrap_find(&mut self, selector: &Selector) -> Option<&mut Any> {
+        println!("  ID VIEWING  ");
         match selector {
             &Selector::Id(id) if id == self.id => Some(&mut self.view),
             s => self.view.find(s),

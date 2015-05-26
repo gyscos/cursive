@@ -156,6 +156,10 @@ impl Cursive {
         self.screen_mut().add_layer(view);
     }
 
+    pub fn pop_layer(&mut self) {
+        self.screen_mut().pop_layer();
+    }
+
     // Handles a key event when it was ignored by the current view
     fn on_key_event(&mut self, ch: i32) {
         let cb = match self.global_callbacks.get(&ch) {
