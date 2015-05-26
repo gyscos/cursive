@@ -1,15 +1,20 @@
-use std::cmp;
+use std::cmp::{max,min};
 
+use ncurses;
+
+use color;
 use vec::Vec2;
 use view::{View,DimensionRequest,SizeRequest};
 use div::*;
 use printer::Printer;
+use event::EventResult;
 
 /// A simple view showing a fixed text
 pub struct TextView {
     content: String,
     rows: Vec<Row>,
     start_line: usize,
+    view_height: usize,
 }
 
 // Subset of the main content representing a row on the display.
@@ -53,6 +58,7 @@ impl TextView {
             content: content.to_string(),
             start_line: 0,
             rows: Vec::new(),
+            view_height: 0,
         }
     }
 
@@ -89,7 +95,7 @@ impl TextView {
 
         for line in self.content.split("\n") {
             height += 1;
-            max_width = cmp::max(max_width, line.len());
+            max_width = max(max_width, line.len());
         }
 
         Vec2::new(max_width, height)
@@ -174,6 +180,32 @@ impl View for TextView {
         for (i,line) in self.rows.iter().skip(self.start_line).map(|row| &self.content[row.start..row.end]).enumerate() {
             printer.print((0,i), line);
         }
+        if self.view_height < self.rows.len() {
+            // We directly compute the size of the scrollbar (this allow use to avoid using floats).
+            // (ratio) * max_height
+            // Where ratio is ({start or end} / content.height)
+            let start = self.view_height * self.start_line / self.rows.len();
+            let end = self.view_height * (self.start_line + self.view_height) / self.rows.len();
+            printer.with_style(color::HIGHLIGHT, |printer| {
+                printer.print_vline((printer.size.x-1, start), end-start, ' ' as u64);
+            });
+        }
+    }
+
+    fn on_key_event(&mut self, ch: i32) -> EventResult {
+        if self.view_height >= self.rows.len() {
+            return EventResult::Ignored;
+        }
+
+        match ch {
+            ncurses::KEY_UP if self.start_line > 0 => self.start_line -= 1,
+            ncurses::KEY_DOWN if self.start_line+self.view_height < self.rows.len() => self.start_line += 1,
+            ncurses::KEY_NPAGE => self.start_line = min(self.start_line+10, self.rows.len()-self.view_height),
+            ncurses::KEY_PPAGE => self.start_line -= min(self.start_line, 10),
+            _ => return EventResult::Ignored,
+        }
+
+        return EventResult::Consumed(None);
     }
 
     fn get_min_size(&self, size: SizeRequest) -> Vec2 {
@@ -206,6 +238,13 @@ impl View for TextView {
 
     fn layout(&mut self, size: Vec2) {
         // Compute the text rows.
-        self.rows = LinesIterator::new(&self.content, size.x as usize).collect();
+        self.view_height = size.y;
+        self.rows = LinesIterator::new(&self.content, size.x ).collect();
+        if self.rows.len() > size.y {
+            self.rows = LinesIterator::new(&self.content, size.x - 1).collect();
+            self.start_line = min(self.start_line, self.rows.len() - size.y);
+        } else {
+            self.start_line = 0;
+        }
     }
 }
