@@ -1,7 +1,8 @@
 use ncurses;
 
 use color;
-use view::{View};
+use vec::Vec2;
+use view::{View,SizeRequest};
 use event::EventResult;
 use printer::Printer;
 
@@ -10,27 +11,41 @@ pub struct EditView {
     content: String,
     cursor: usize,
     multiline: bool,
+    min_length: usize,
 }
 
 impl EditView {
+    /// Creates a new, empty edit view.
     pub fn new() -> Self {
         EditView {
             content: String::new(),
             cursor: 0,
             multiline: false,
+            min_length: 1,
         }
     }
 
+    /// Replace the entire content of the view with the given one.
     pub fn set_content<'a>(&mut self, content: &'a str) {
         self.content = content.to_string();
     }
 
+    /// Get the current text.
     pub fn get_content(&self) -> &str {
         &self.content
     }
 
+    /// Sets the current content to the given value. Convenient chainable method.
     pub fn content<'a>(mut self, content: &'a str) -> Self {
         self.set_content(content);
+        self
+    }
+
+    /// Sets the minimum length for this view.
+    /// (This applies to the layout, not the content.)
+    pub fn min_length(mut self, min_length: usize) -> Self {
+        self.min_length = min_length;
+
         self
     }
 }
@@ -50,6 +65,10 @@ impl View for EditView {
         printer.with_style(style, |printer| {
             printer.print((0,0), &self.content);
         });
+    }
+
+    fn get_min_size(&self, req: SizeRequest) -> Vec2 {
+        Vec2::new(self.min_length, 1)
     }
 
     fn take_focus(&mut self) -> bool {
