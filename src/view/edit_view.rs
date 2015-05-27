@@ -65,6 +65,17 @@ impl View for EditView {
                 printer.print((0,0), &self.content);
                 printer.print_hline((self.content.len(),0), printer.size.x-self.content.len(), '_' as u64);
             });
+
+            // Now print cursor
+            if focused {
+                let c = if self.cursor == self.content.len() {
+                    '_'
+                } else {
+                    // Get the char from the string... Is it so hard?
+                    self.content[self.cursor..].chars().next().unwrap()
+                };
+                printer.print_hline((self.cursor, 0), 1, c as u64);
+            }
         });
     }
 
