@@ -40,3 +40,7 @@ path = "examples/mutation.rs"
 [[example]]
 name = "edit"
 path = "examples/edit.rs"
+
+[[example]]
+name = "key_codes"
+path = "examples/key_codes.rs"
