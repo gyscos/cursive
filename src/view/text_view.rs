@@ -186,7 +186,7 @@ impl View for TextView {
             // Where ratio is ({start or end} / content.height)
             let start = self.view_height * self.start_line / self.rows.len();
             let end = self.view_height * (self.start_line + self.view_height) / self.rows.len();
-            printer.with_style(
+            printer.with_color(
                 if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE },
                 |printer| {
                     printer.print_vline((printer.size.x-1, start), end-start, ' ' as u64);

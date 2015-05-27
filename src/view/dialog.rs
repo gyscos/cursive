@@ -114,7 +114,7 @@ impl View for Dialog {
             printer.print((x-2,0), "┤ ");
             printer.print((x+self.title.len(),0), " ├");
 
-            printer.with_style(color::TITLE_PRIMARY, |p| p.print((x,0), &self.title));
+            printer.with_color(color::TITLE_PRIMARY, |p| p.print((x,0), &self.title));
         }
 
     }

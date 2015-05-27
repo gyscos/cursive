@@ -30,7 +30,6 @@ pub const HIGHLIGHT: ThemeColor = 8;
 /// Highlight color for inactive views (not in focus).
 pub const HIGHLIGHT_INACTIVE: ThemeColor = 9;
 
-
 fn load_hex(s: &str) -> i16 {
     let mut sum = 0;
     for c in s.chars() {

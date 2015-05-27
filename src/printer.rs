@@ -69,13 +69,21 @@ impl Printer {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
     /// ```
-    pub fn with_style<'a, F>(&'a self, style: color::ThemeColor, f: F)
+    pub fn with_color<'a, F>(&'a self, c: color::ThemeColor, f: F)
         where F: Fn(&Printer)
     {
-        ncurses::attron(ncurses::COLOR_PAIR(style));
+        ncurses::attron(ncurses::COLOR_PAIR(c));
         f(self);
-        ncurses::attroff(ncurses::COLOR_PAIR(style));
+        ncurses::attroff(ncurses::COLOR_PAIR(c));
         ncurses::attron(ncurses::COLOR_PAIR(color::PRIMARY));
+    }
+
+    pub fn with_style<'a, F>(&'a self, style: ncurses::attr_t, f: F)
+        where F: Fn(&Printer)
+    {
+        ncurses::attron(style);
+        f(self);
+        ncurses::attroff(style);
     }
 
     /// Prints a rectangular box.

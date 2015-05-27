@@ -32,7 +32,7 @@ impl View for Button {
         let style = if !focused { color::PRIMARY } else { color::HIGHLIGHT };
         let x = printer.size.x - 1;
 
-        printer.with_style(style, |printer| {
+        printer.with_color(style, |printer| {
             printer.print((1,0), &self.label);
             printer.print((0,0), "<");
             printer.print((x,0), ">");

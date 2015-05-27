@@ -59,9 +59,12 @@ fn read_char(ch: i32) -> Option<char> {
 
 impl View for EditView {
     fn draw(&mut self, printer: &Printer, focused: bool) {
-        let style = if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
-        printer.with_style(style, |printer| {
-            printer.print((0,0), &self.content);
+        // let style = if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
+        printer.with_color(color::SECONDARY, |printer| {
+            printer.with_style(ncurses::A_REVERSE(), |printer| {
+                printer.print((0,0), &self.content);
+                printer.print_hline((self.content.len(),0), printer.size.x-self.content.len(), '_' as u64);
+            });
         });
     }
 
