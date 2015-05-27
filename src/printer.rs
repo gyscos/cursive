@@ -59,13 +59,13 @@ impl Printer {
         ncurses::mvhline(p.y as i32, p.x as i32, c, len as i32);
     }
 
-    /// Returns a wrapper around this printer,
-    /// that will apply the given style on prints.
+    /// Call the given closure with a colored printer,
+    /// that will apply the given color on prints.
     ///
     /// # Examples
     ///
     /// ```
-    /// printer.with_style(color::HIGHLIGHT, |printer| {
+    /// printer.with_color(color::HIGHLIGHT, |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
     /// ```
@@ -78,6 +78,10 @@ impl Printer {
         ncurses::attron(ncurses::COLOR_PAIR(color::PRIMARY));
     }
 
+    /// Same as `with_color`, but apply a ncurses style instead,
+    /// like `ncurses::A_BOLD()` or `ncurses::A_REVERSE()`.
+    ///
+    /// Will probably use a cursive enum some day.
     pub fn with_style<'a, F>(&'a self, style: ncurses::attr_t, f: F)
         where F: Fn(&Printer)
     {
