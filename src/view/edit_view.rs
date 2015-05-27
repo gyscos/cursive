@@ -10,7 +10,6 @@ use printer::Printer;
 pub struct EditView {
     content: String,
     cursor: usize,
-    multiline: bool,
     min_length: usize,
 }
 
@@ -20,7 +19,6 @@ impl EditView {
         EditView {
             content: String::new(),
             cursor: 0,
-            multiline: false,
             min_length: 1,
         }
     }
@@ -67,7 +65,7 @@ impl View for EditView {
         });
     }
 
-    fn get_min_size(&self, req: SizeRequest) -> Vec2 {
+    fn get_min_size(&self, _: SizeRequest) -> Vec2 {
         Vec2::new(self.min_length, 1)
     }
 
