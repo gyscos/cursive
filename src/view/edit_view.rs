@@ -72,7 +72,7 @@ impl View for EditView {
                     '_'
                 } else {
                     // Get the char from the string... Is it so hard?
-                    self.content[self.cursor..].chars().next().unwrap()
+                    self.content.chars().nth(self.cursor).unwrap()
                 };
                 printer.print_hline((self.cursor, 0), 1, c as u64);
             }
