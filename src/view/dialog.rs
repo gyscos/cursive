@@ -209,12 +209,14 @@ impl View for Dialog {
 
     fn take_focus(&mut self) -> bool {
         // TODO: add a direction to the focus. Meanwhile, takes button first.
-        if !self.buttons.is_empty() {
+        if self.content.take_focus() {
+            self.focus = Focus::Content;
+            true
+        } else if !self.buttons.is_empty() {
             self.focus = Focus::Button(0);
             true
         } else {
-            self.focus = Focus::Content;
-            self.content.take_focus()
+            false
         }
     }
 
