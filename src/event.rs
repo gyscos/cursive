@@ -23,6 +23,7 @@ pub enum EventResult {
 #[derive(PartialEq,Eq,Clone,Copy,Hash)]
 pub enum Key {
     Enter,
+    Tab,
     ArrowLeft,
     ArrowRight,
     ArrowUp,
@@ -39,6 +40,7 @@ pub enum Key {
 impl Key {
     pub fn from_ncurses(ch: i32) -> Self {
         match ch {
+            9 => Key::Tab,
             10 => Key::Enter,
             127 => Key::Backspace,
             330 => Key::Del,
@@ -70,6 +72,8 @@ impl fmt::Display for Key {
                 Key::End => "End",
                 Key::Backspace => "Backspace",
                 Key::Del => "Del",
+                Key::Enter => "Enter",
+                Key::Tab => "Tab",
                 _ => "",
             }),
         }
