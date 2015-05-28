@@ -66,6 +66,8 @@ pub struct Cursive {
 impl Cursive {
     /// Creates a new Cursive root, and initialize ncurses.
     pub fn new() -> Self {
+        // Default delay is way too long. 25 is imperceptible yet works fine.
+        std::env::set_var("ESCDELAY", "25");
         ncurses::setlocale(ncurses::LcCategory::all, "");
         ncurses::initscr();
         ncurses::keypad(ncurses::stdscr, true);
@@ -199,7 +201,7 @@ impl Cursive {
     }
 
     fn poll_event() -> Event {
-        let ch = ncurses::getch();
+        let ch: i32 = ncurses::getch();
 
         // Is it a UTF-8 starting point?
         if 32 <= ch && ch < 0x100 && ch != 127 {
@@ -226,14 +228,12 @@ impl Cursive {
             // (Is this getting repetitive? :p)
             self.draw();
 
-            // Blocks until the user press a key.
-            // TODO: Add a timeout? Animations?
+            // Wait for next event.
+            // (If set_fps was called, this returns -1 now and then)
             let event = Cursive::poll_event();
 
-            // Make an event out of it.
-
-            // If the event was ignored, it is our turn to play with it.
             match self.screen_mut().on_event(event) {
+                // If the event was ignored, it is our turn to play with it.
                 EventResult::Ignored => self.on_event(event),
                 EventResult::Consumed(None) => (),
                 EventResult::Consumed(Some(cb)) => cb(self),

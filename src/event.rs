@@ -39,6 +39,9 @@ pub enum Key {
     Del,
     /// Insert key
     Ins,
+    /// Escape key. Often buffered by the terminal,
+    /// may appear with a delay or along with the next key.
+    Esc,
     F1,
     F2,
     F3,
@@ -63,6 +66,7 @@ impl Key {
             9 => Key::Tab,
             // Treat Return and the numpad Enter the same
             10 | ncurses::KEY_ENTER => Key::Enter,
+            27 => Key::Esc,
             127 => Key::Backspace,
             330 => Key::Del,
             331 => Key::Ins,
@@ -112,6 +116,7 @@ impl fmt::Display for Key {
                 Key::Enter => "Enter",
                 Key::Tab => "Tab",
                 Key::Ins => "Ins",
+                Key::Esc => "Esc",
                 Key::F1 => "F1",
                 Key::F2 => "F2",
                 Key::F3 => "F3",
