@@ -168,7 +168,7 @@ impl View for Dialog {
             // If we are on the content, we can only go down.
             Focus::Content => match self.content.on_event(event) {
                 EventResult::Ignored if !self.buttons.is_empty() => match event {
-                    Event::KeyEvent(Key::ArrowDown) => {
+                    Event::KeyEvent(Key::Down) => {
                         // Default to leftmost button when going down.
                         self.focus = Focus::Button(0);
                         EventResult::Consumed(None)
@@ -181,7 +181,7 @@ impl View for Dialog {
             Focus::Button(i) => match self.buttons[i].on_event(event) {
                 EventResult::Ignored => match event {
                     // Up goes back to the content
-                    Event::KeyEvent(Key::ArrowUp) => {
+                    Event::KeyEvent(Key::Up) => {
                         if self.content.take_focus() {
                             self.focus = Focus::Content;
                             EventResult::Consumed(None)
@@ -190,11 +190,11 @@ impl View for Dialog {
                         }
                     },
                     // Left and Right move to other buttons
-                    Event::KeyEvent(Key::ArrowRight) if i+1 < self.buttons.len() => {
+                    Event::KeyEvent(Key::Right) if i+1 < self.buttons.len() => {
                         self.focus = Focus::Button(i+1);
                         EventResult::Consumed(None)
                     },
-                    Event::KeyEvent(Key::ArrowRight) if i > 0 => {
+                    Event::KeyEvent(Key::Right) if i > 0 => {
                         self.focus = Focus::Button(i-1);
                         EventResult::Consumed(None)
                     },

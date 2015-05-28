@@ -89,8 +89,8 @@ impl View for EditView {
             Event::KeyEvent(key) => match key {
                 Key::Home => self.cursor = 0,
                 Key::End => self.cursor = self.content.len(),
-                Key::ArrowLeft if self.cursor > 0 => self.cursor -= 1,
-                Key::ArrowRight if self.cursor < self.content.len() => self.cursor += 1,
+                Key::Left if self.cursor > 0 => self.cursor -= 1,
+                Key::Right if self.cursor < self.content.len() => self.cursor += 1,
                 Key::Backspace if self.cursor > 0 => { self.cursor -= 1; self.content.remove(self.cursor); },
                 Key::Del if self.cursor < self.content.len() => { self.content.remove(self.cursor); },
                 _ => return EventResult::Ignored,
