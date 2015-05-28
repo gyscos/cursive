@@ -4,12 +4,12 @@ use cursive::Cursive;
 
 use cursive::view::{View,BoxView};
 use cursive::printer::Printer;
-use cursive::event::EventResult;
+use cursive::event::{EventResult,Event};
 
 fn main() {
     let mut siv = Cursive::new();
 
-    siv.add_layer(BoxView::new((10,4), KeyCodeView::new(4)));
+    siv.add_layer(BoxView::new((30,10), KeyCodeView::new(10)));
 
     siv.run();
 }
@@ -39,7 +39,7 @@ impl View for KeyCodeView {
         let line = match event {
             Event::CharEvent(c) => format!("Char: {}", c),
             Event::KeyEvent(key) => format!("Key: {}", key),
-        }
+        };
         self.history.push(line);
 
         while self.history.len() > self.size {
