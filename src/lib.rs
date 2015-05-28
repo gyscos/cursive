@@ -202,7 +202,7 @@ impl Cursive {
         let ch = ncurses::getch();
 
         // Is it a UTF-8 starting point?
-        if 32 <= ch && ch < 0x100 {
+        if 32 <= ch && ch < 0x100 && ch != 127 {
             Event::CharEvent(utf8::read_char(ch as u8, || ncurses::getch() as u8).unwrap())
         } else {
             Event::KeyEvent(Key::from_ncurses(ch))
