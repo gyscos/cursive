@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use ::Cursive;
-use event::{EventResult,Callback};
+use event::{Event,EventResult,ToEvent,Callback};
 use super::{View,ViewWrapper};
 
 /// A simple wrapper view that catches some ignored event from its child.
@@ -10,7 +10,7 @@ use super::{View,ViewWrapper};
 /// Events ignored by its child without a callback will stay ignored.
 pub struct KeyEventView {
     content: Box<View>,
-    callbacks: HashMap<i32, Rc<Callback>>,
+    callbacks: HashMap<Event, Rc<Callback>>,
 }
 
 impl KeyEventView {
@@ -23,10 +23,10 @@ impl KeyEventView {
     }
 
     /// Registers a callback when the given key is ignored by the child.
-    pub fn register<F>(mut self, key: i32, cb: F) -> Self
+    pub fn register<F,E: ToEvent>(mut self, event: E, cb: F) -> Self
         where F: Fn(&mut Cursive) + 'static
     {
-        self.callbacks.insert(key, Rc::new(Box::new(cb)));
+        self.callbacks.insert(event.to_event(), Rc::new(Box::new(cb)));
 
         self
     }
@@ -36,9 +36,9 @@ impl ViewWrapper for KeyEventView {
 
     wrap_impl!(self.content);
 
-    fn wrap_on_key_event(&mut self, ch: i32) -> EventResult {
-        match self.content.on_key_event(ch) {
-            EventResult::Ignored => match self.callbacks.get(&ch) {
+    fn wrap_on_event(&mut self, event: Event) -> EventResult {
+        match self.content.on_event(event) {
+            EventResult::Ignored => match self.callbacks.get(&event) {
                 None => EventResult::Ignored,
                 Some(cb) => EventResult::Consumed(Some(cb.clone())),
             },

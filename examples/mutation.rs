@@ -21,13 +21,13 @@ fn main() {
 
     let content = "Press Q to quit the application.\n\nPress P to open the popup.";
 
-    siv.add_global_callback('q' as i32, |s| s.quit());
+    siv.add_global_callback('q', |s| s.quit());
 
     // Let's wrap the view to give it a recognizable ID, so we can look for it.
     // We add the P callback on the textview only (and not globally),
     // so that we can't call it when the popup is already visible.
     siv.add_layer(KeyEventView::new(IdView::new("text", TextView::new(content)))
-                  .register('p' as i32, |s| show_popup(s)));
+                  .register('p', |s| show_popup(s)));
 
 
     siv.run();

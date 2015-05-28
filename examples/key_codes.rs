@@ -15,7 +15,7 @@ fn main() {
 }
 
 struct KeyCodeView {
-    history: Vec<i32>,
+    history: Vec<String>,
     size: usize,
 }
 
@@ -30,13 +30,17 @@ impl KeyCodeView {
 
 impl View for KeyCodeView {
     fn draw(&mut self, printer: &Printer, _: bool) {
-        for (y,n) in self.history.iter().enumerate() {
-            printer.print((0,y), &format!("{}", n));
+        for (y,line) in self.history.iter().enumerate() {
+            printer.print((0,y), &line);
         }
     }
 
-    fn on_key_event(&mut self, ch: i32) -> EventResult {
-        self.history.push(ch);
+    fn on_event(&mut self, event: Event) -> EventResult {
+        let line = match event {
+            Event::CharEvent(c) => format!("Char: {}", c),
+            Event::KeyEvent(key) => format!("Key: {}", key),
+        }
+        self.history.push(line);
 
         while self.history.len() > self.size {
             self.history.remove(0);

@@ -1,11 +1,9 @@
 use std::cmp::max;
 use std::any::Any;
 
-use ncurses;
-
 use color;
 use ::{Cursive};
-use event::EventResult;
+use event::*;
 use view::{View,SizeRequest,DimensionRequest,Selector};
 use view::{Button,SizedView};
 use vec::{Vec2,Vec4,ToVec4};
@@ -165,12 +163,12 @@ impl View for Dialog {
         self.content.layout(size - Vec2::new(0, buttons_height));
     }
 
-    fn on_key_event(&mut self, ch: i32) -> EventResult {
+    fn on_event(&mut self, event: Event) -> EventResult {
         match self.focus {
             // If we are on the content, we can only go down.
-            Focus::Content => match self.content.on_key_event(ch) {
-                EventResult::Ignored if !self.buttons.is_empty() => match ch {
-                    ncurses::KEY_DOWN => {
+            Focus::Content => match self.content.on_event(event) {
+                EventResult::Ignored if !self.buttons.is_empty() => match event {
+                    Event::KeyEvent(Key::ArrowDown) => {
                         // Default to leftmost button when going down.
                         self.focus = Focus::Button(0);
                         EventResult::Consumed(None)
@@ -180,10 +178,10 @@ impl View for Dialog {
                 res => res,
             },
             // If we are on a button, we have more choice
-            Focus::Button(i) => match self.buttons[i].on_key_event(ch) {
-                EventResult::Ignored => match ch {
+            Focus::Button(i) => match self.buttons[i].on_event(event) {
+                EventResult::Ignored => match event {
                     // Up goes back to the content
-                    ncurses::KEY_UP => {
+                    Event::KeyEvent(Key::ArrowUp) => {
                         if self.content.take_focus() {
                             self.focus = Focus::Content;
                             EventResult::Consumed(None)
@@ -192,11 +190,11 @@ impl View for Dialog {
                         }
                     },
                     // Left and Right move to other buttons
-                    ncurses::KEY_RIGHT if i+1 < self.buttons.len() => {
+                    Event::KeyEvent(Key::ArrowRight) if i+1 < self.buttons.len() => {
                         self.focus = Focus::Button(i+1);
                         EventResult::Consumed(None)
                     },
-                    ncurses::KEY_LEFT if i > 0 => {
+                    Event::KeyEvent(Key::ArrowRight) if i > 0 => {
                         self.focus = Focus::Button(i-1);
                         EventResult::Consumed(None)
                     },

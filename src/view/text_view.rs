@@ -1,13 +1,11 @@
 use std::cmp::{max,min};
 
-use ncurses;
-
 use color;
 use vec::Vec2;
 use view::{View,DimensionRequest,SizeRequest};
 use div::*;
 use printer::Printer;
-use event::EventResult;
+use event::*;
 
 /// A simple view showing a fixed text
 pub struct TextView {
@@ -194,16 +192,16 @@ impl View for TextView {
         }
     }
 
-    fn on_key_event(&mut self, ch: i32) -> EventResult {
+    fn on_event(&mut self, event: Event) -> EventResult {
         if self.view_height >= self.rows.len() {
             return EventResult::Ignored;
         }
 
-        match ch {
-            ncurses::KEY_UP if self.start_line > 0 => self.start_line -= 1,
-            ncurses::KEY_DOWN if self.start_line+self.view_height < self.rows.len() => self.start_line += 1,
-            ncurses::KEY_NPAGE => self.start_line = min(self.start_line+10, self.rows.len()-self.view_height),
-            ncurses::KEY_PPAGE => self.start_line -= min(self.start_line, 10),
+        match event {
+            Event::KeyEvent(Key::ArrowUp) if self.start_line > 0 => self.start_line -= 1,
+            Event::KeyEvent(Key::ArrowDown) if self.start_line+self.view_height < self.rows.len() => self.start_line += 1,
+            Event::KeyEvent(Key::PageUp) => self.start_line = min(self.start_line+10, self.rows.len()-self.view_height),
+            Event::KeyEvent(Key::PageDown) => self.start_line -= min(self.start_line, 10),
             _ => return EventResult::Ignored,
         }
 

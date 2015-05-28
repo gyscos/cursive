@@ -3,7 +3,7 @@ use std::any::Any;
 use vec::Vec2;
 use view::{View,SizeRequest,Selector};
 use printer::Printer;
-use event::EventResult;
+use event::{Event,EventResult};
 
 /// Generic wrapper around a view.
 ///
@@ -25,9 +25,9 @@ pub trait ViewWrapper {
         self.get_view().get_min_size(req)
     }
 
-    /// Wraps the on_key_event method.
-    fn wrap_on_key_event(&mut self, ch: i32) -> EventResult {
-        self.get_view_mut().on_key_event(ch)
+    /// Wraps the on_event method.
+    fn wrap_on_event(&mut self, ch: Event) -> EventResult {
+        self.get_view_mut().on_event(ch)
     }
 
     /// Wraps the layout method
@@ -54,8 +54,8 @@ impl <T: ViewWrapper> View for T {
         self.wrap_get_min_size(req)
     }
 
-    fn on_key_event(&mut self, ch: i32) -> EventResult {
-        self.wrap_on_key_event(ch)
+    fn on_event(&mut self, ch: Event) -> EventResult {
+        self.wrap_on_event(ch)
     }
 
     fn layout(&mut self, size: Vec2) {

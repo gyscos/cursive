@@ -30,14 +30,14 @@ pub use self::id_view::IdView;
 pub use self::shadow_view::ShadowView;
 pub use self::edit_view::EditView;
 
-use event::EventResult;
+use event::{Event,EventResult};
 use vec::{Vec2,ToVec2};
 use printer::Printer;
 
 /// Main trait defining a view behaviour.
 pub trait View {
     /// Called when a key was pressed. Default implementation just ignores it.
-    fn on_key_event(&mut self, i32) -> EventResult { EventResult::Ignored }
+    fn on_event(&mut self, Event) -> EventResult { EventResult::Ignored }
 
     /// Returns the minimum size the view requires under the given restrictions.
     fn get_min_size(&self, SizeRequest) -> Vec2 { Vec2::new(1,1) }

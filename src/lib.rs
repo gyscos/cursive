@@ -40,7 +40,7 @@ use view::View;
 use printer::Printer;
 use view::{StackView,Selector};
 
-use event::{EventResult,Callback};
+use event::{Event,ToEvent,Key,EventResult,Callback};
 
 /// Identifies a screen in the cursive ROOT.
 pub type ScreenId = usize;
@@ -59,7 +59,7 @@ pub struct Cursive {
 
     running: bool,
 
-    global_callbacks: HashMap<i32, Rc<Callback>>,
+    global_callbacks: HashMap<Event, Rc<Callback>>,
 }
 
 impl Cursive {
@@ -145,10 +145,10 @@ impl Cursive {
     }
 
     /// Adds a global callback, triggered on the given key press when no view catches it.
-    pub fn add_global_callback<F>(&mut self, key: i32, cb: F)
+    pub fn add_global_callback<F,E: ToEvent>(&mut self, event: E, cb: F)
         where F: Fn(&mut Cursive) + 'static
     {
-        self.global_callbacks.insert(key, Rc::new(Box::new(cb)));
+        self.global_callbacks.insert(event.to_event(), Rc::new(Box::new(cb)));
     }
 
     /// Convenient method to add a layer to the current screen.
@@ -162,8 +162,8 @@ impl Cursive {
     }
 
     // Handles a key event when it was ignored by the current view
-    fn on_key_event(&mut self, ch: i32) {
-        let cb = match self.global_callbacks.get(&ch) {
+    fn on_event(&mut self, event: Event) {
+        let cb = match self.global_callbacks.get(&event) {
             None => return,
             Some(cb) => cb.clone(),
         };
@@ -197,6 +197,17 @@ impl Cursive {
         ncurses::refresh();
     }
 
+    fn poll_event() -> Event {
+        let ch = ncurses::getch();
+
+        // Is it a UTF-8 starting point?
+        if 32 <= ch && ch < 127 {
+            Event::CharEvent(ch as u8 as char)
+        } else {
+            Event::KeyEvent(Key::from_ncurses(ch))
+        }
+    }
+
     /// Runs the event loop.
     /// It will wait for user input (key presses) and trigger callbacks accordingly.
     /// Blocks until quit() is called.
@@ -216,11 +227,13 @@ impl Cursive {
 
             // Blocks until the user press a key.
             // TODO: Add a timeout? Animations?
-            let ch = ncurses::getch();
+            let event = Cursive::poll_event();
+
+            // Make an event out of it.
 
             // If the event was ignored, it is our turn to play with it.
-            match self.screen_mut().on_key_event(ch) {
-                EventResult::Ignored => self.on_key_event(ch),
+            match self.screen_mut().on_event(event) {
+                EventResult::Ignored => self.on_event(event),
                 EventResult::Consumed(None) => (),
                 EventResult::Consumed(Some(cb)) => cb(self),
             }

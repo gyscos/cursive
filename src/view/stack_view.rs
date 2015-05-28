@@ -3,7 +3,7 @@ use std::any::Any;
 
 use vec::Vec2;
 use view::{View,SizeRequest,DimensionRequest,Selector,ShadowView};
-use event::EventResult;
+use event::{Event,EventResult};
 use printer::Printer;
 
 /// Simple stack of views.
@@ -50,10 +50,10 @@ impl View for StackView {
         }
     }
 
-    fn on_key_event(&mut self, ch: i32) -> EventResult {
+    fn on_event(&mut self, event: Event) -> EventResult {
         match self.layers.last_mut() {
             None => EventResult::Ignored,
-            Some(v) => v.view.on_key_event(ch),
+            Some(v) => v.view.on_event(event),
         }
     }
 

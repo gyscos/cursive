@@ -3,7 +3,7 @@ use ncurses;
 use color;
 use vec::Vec2;
 use view::{View,SizeRequest};
-use event::EventResult;
+use event::*;
 use printer::Printer;
 
 /// Displays an editable text.
@@ -48,15 +48,6 @@ impl EditView {
     }
 }
 
-fn read_char(ch: i32) -> Option<char> {
-    // Printable ascii range: 32-126
-    if ch >= ' ' as i32 && ch <= '~' as i32 {
-        Some(ch as u8 as char)
-    } else {
-        None
-    }
-}
-
 impl View for EditView {
     fn draw(&mut self, printer: &Printer, focused: bool) {
         // let style = if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
@@ -87,22 +78,24 @@ impl View for EditView {
         true
     }
 
-    fn on_key_event(&mut self, ch: i32) -> EventResult {
+    fn on_event(&mut self, event: Event) -> EventResult {
 
-        if let Some(ch) = read_char(ch) {
-            self.content.insert(self.cursor, ch);
-            self.cursor += 1;
-            return EventResult::Consumed(None);
-        }
+        match event {
+            Event::CharEvent(ch) => {
+                self.content.insert(self.cursor, ch);
+                self.cursor += 1;
+                return EventResult::Consumed(None);
+            },
+            Event::KeyEvent(key) => match key {
+                Key::Home => self.cursor = 0,
+                Key::End => self.cursor = self.content.len(),
+                Key::ArrowLeft if self.cursor > 0 => self.cursor -= 1,
+                Key::ArrowRight if self.cursor < self.content.len() => self.cursor += 1,
+                Key::Backspace if self.cursor > 0 => { self.cursor -= 1; self.content.remove(self.cursor); },
+                Key::Del if self.cursor < self.content.len() => { self.content.remove(self.cursor); },
+                _ => return EventResult::Ignored,
 
-        match ch {
-            ncurses::KEY_HOME => self.cursor = 0,
-            ncurses::KEY_END => self.cursor = self.content.len(),
-            ncurses::KEY_LEFT if self.cursor > 0 => self.cursor -= 1,
-            ncurses::KEY_RIGHT if self.cursor < self.content.len() => self.cursor += 1,
-            127 if self.cursor > 0 => { self.cursor -= 1; self.content.remove(self.cursor); },
-            330 if self.cursor < self.content.len() => { self.content.remove(self.cursor); },
-            _ => return EventResult::Ignored,
+            },
         }
 
         EventResult::Consumed(None)

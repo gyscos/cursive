@@ -4,7 +4,7 @@ use color;
 use ::Cursive;
 use vec::Vec2;
 use view::{View,SizeRequest};
-use event::{Callback,EventResult};
+use event::*;
 use printer::Printer;
 
 /// Simple text label with a callback when ENTER is pressed.
@@ -44,10 +44,10 @@ impl View for Button {
         Vec2::new(2 + self.label.len(), 1)
     }
 
-    fn on_key_event(&mut self, ch: i32) -> EventResult {
-        match ch {
+    fn on_event(&mut self, event: Event) -> EventResult {
+        match event {
             // 10 is the ascii code for '\n', that is the return key
-            10 => EventResult::Consumed(Some(self.callback.clone())),
+            Event::KeyEvent(Key::Enter) => EventResult::Consumed(Some(self.callback.clone())),
             _ => EventResult::Ignored,
         }
     }
