@@ -35,8 +35,13 @@ impl Printer {
             Some((i,_)) => &text[..i],
             _ => text,
         };
+
         let p = p + self.offset;
-        ncurses::mvprintw(p.y as i32, p.x as i32, text);
+        if text.contains("%") {
+            ncurses::mvprintw(p.y as i32, p.x as i32, &text.replace("%", "%%"));
+        } else {
+            ncurses::mvprintw(p.y as i32, p.x as i32, text);
+        }
     }
 
     /// Prints a vertical line using the given character.
