@@ -37,7 +37,7 @@ fn get_line_span(line: &str, max_width: usize) -> usize {
     // (Or use a common function? Better!)
     let mut lines = 1;
     let mut length = 0;
-    for l in line.split(" ").map(|word| word.len()) {
+    for l in line.split(" ").map(|word| word.chars().count()) {
         length += l;
         if length > max_width {
             length = l;
@@ -81,7 +81,8 @@ impl TextView {
 
     // Given the specified height, how many columns do we need to properly display?
     fn get_num_cols(&self, max_height: usize) -> usize {
-        (div_up_usize(self.content.len(), max_height)..self.content.len())
+        let len = self.content.chars().count();
+        (div_up_usize(len, max_height)..len)
             .find(|w| self.get_num_lines(*w) <= max_height)
             .unwrap()
     }
@@ -93,7 +94,7 @@ impl TextView {
 
         for line in self.content.split("\n") {
             height += 1;
-            max_width = max(max_width, line.len());
+            max_width = max(max_width, line.chars().count());
         }
 
         Vec2::new(max_width, height)
@@ -133,7 +134,7 @@ impl <'a> Iterator for LinesIterator<'a> {
         let content = &self.content[self.start..];
 
         if let Some(next) = content.find("\n") {
-            if next <= self.width {
+            if content[..next].chars().count() <= self.width {
                 // We found a newline before the allowed limit.
                 // Break early.
                 self.start += next+1;
@@ -144,7 +145,8 @@ impl <'a> Iterator for LinesIterator<'a> {
             }
         }
 
-        if content.len() <= self.width {
+        let content_len = content.chars().count();
+        if content_len <= self.width {
             // I thought it would be longer! -- that's what she said :(
             self.start += content.len();
             return Some(Row{
@@ -153,7 +155,14 @@ impl <'a> Iterator for LinesIterator<'a> {
             });
         }
 
-        if let Some(i) = content[..self.width+1].rfind(" ") {
+        let i = if content_len == self.width+1 {
+            // We can't look at the index if we're looking at the end of the string
+            content.len()
+        } else {
+            content.char_indices().nth(self.width+1).unwrap().0
+        };
+        let substr = &content[..i];
+        if let Some(i) = substr.rfind(" ") {
             // If we have to break, try to find a whitespace for that.
             self.start += i+1;
             return Some(Row {
@@ -200,8 +209,8 @@ impl View for TextView {
         match event {
             Event::KeyEvent(Key::Up) if self.start_line > 0 => self.start_line -= 1,
             Event::KeyEvent(Key::Down) if self.start_line+self.view_height < self.rows.len() => self.start_line += 1,
-            Event::KeyEvent(Key::PageUp) => self.start_line = min(self.start_line+10, self.rows.len()-self.view_height),
-            Event::KeyEvent(Key::PageDown) => self.start_line -= min(self.start_line, 10),
+            Event::KeyEvent(Key::PageDown) => self.start_line = min(self.start_line+10, self.rows.len()-self.view_height),
+            Event::KeyEvent(Key::PageUp) => self.start_line -= min(self.start_line, 10),
             _ => return EventResult::Ignored,
         }
 

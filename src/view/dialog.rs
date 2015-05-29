@@ -108,9 +108,10 @@ impl View for Dialog {
         printer.print_box(Vec2::new(0,0), printer.size);
 
         if self.title.len() > 0 {
-            let x = (printer.size.x - self.title.len()) / 2;
+            let len = self.title.chars().count();
+            let x = (printer.size.x - len) / 2;
             printer.print((x-2,0), "┤ ");
-            printer.print((x+self.title.len(),0), " ├");
+            printer.print((x+len,0), " ├");
 
             printer.with_color(color::TITLE_PRIMARY, |p| p.print((x,0), &self.title));
         }
@@ -137,7 +138,7 @@ impl View for Dialog {
 
         if self.title.len() > 0 {
             // If we have a title, we have to fit it too!
-            inner_size.x = max(inner_size.x, self.title.len() + 6);
+            inner_size.x = max(inner_size.x, self.title.chars().count() + 6);
         }
 
         inner_size

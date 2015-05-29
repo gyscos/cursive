@@ -41,7 +41,7 @@ impl View for Button {
 
     fn get_min_size(&self, _: SizeRequest) -> Vec2 {
         // Meh. Fixed size we are.
-        Vec2::new(2 + self.label.len(), 1)
+        Vec2::new(2 + self.label.chars().count(), 1)
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
