@@ -207,6 +207,8 @@ impl View for TextView {
         }
 
         match event {
+            Event::KeyEvent(Key::Home) => self.start_line = 0,
+            Event::KeyEvent(Key::End) => self.start_line = self.rows.len() - self.view_height,
             Event::KeyEvent(Key::Up) if self.start_line > 0 => self.start_line -= 1,
             Event::KeyEvent(Key::Down) if self.start_line+self.view_height < self.rows.len() => self.start_line += 1,
             Event::KeyEvent(Key::PageDown) => self.start_line = min(self.start_line+10, self.rows.len()-self.view_height),
