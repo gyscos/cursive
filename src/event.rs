@@ -76,9 +76,6 @@ impl Key {
             27 => Key::Esc,
             // `Backspace` sends 127, but Ctrl-H sends `Backspace`
             127 | ncurses::KEY_BACKSPACE => Key::Backspace,
-            // Del and Ins currently use a bad value in ncurses-rs
-            330 => Key::Del,
-            331 => Key::Ins,
             // Those keys don't seem to be documented...
             515 => Key::CtrlDel,
             521 => Key::CtrlDown,
@@ -89,6 +86,8 @@ impl Key {
             556 => Key::CtrlRight,
             557 => Key::CtrlShiftRight,
             562 => Key::CtrlUp,
+            ncurses::KEY_DC => Key::Del,
+            ncurses::KEY_IC => Key::Ins,
             ncurses::KEY_BTAB => Key::ShiftTab,
             ncurses::KEY_SLEFT => Key::ShiftLeft,
             ncurses::KEY_SRIGHT => Key::ShiftRight,
