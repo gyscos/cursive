@@ -44,3 +44,12 @@ A few notes :
 * The main focus point is _not_ performance. This is a simple layout library, guys, not [compiz](https://www.google.com/search?q=compiz&tbm=isch) piped into [libcaca](https://www.google.com/search?q=libcaca&tbm=isch). Unless you are running it on your microwave's microcontroller, it's not going to be slow.
 * The library is single-threaded. Thus, callback methods are blocking - careful what you're doing in there! Feel free to use threads on your side, though.
 * This goal is _not_ to have an equivalent to every ncurses function. You _can_ access the underlying ncurses window when creating your own custom views, so you can do what you want with that, but the main library will probably only use a subset of the ncurses features.
+
+Contribute
+----------
+
+You want to help? Great! Here is a non-exhaustive list of things you could do:
+
+* Provide example use-case: a good idea of application for existing or new components.
+* Test and reports issues: a bug won't get fixed if we don't know it's there.
+* Hack the code! If you feel confident with rust, pick an issue you like and hack away!
