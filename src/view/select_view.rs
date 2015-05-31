@@ -65,13 +65,15 @@ impl <T> SelectView<T> {
 
 impl SelectView<String> {
     /// For String-based SelectView, this is a convenient method to use the label as value.
+    pub fn add_item_str(&mut self, label: &str) {
+        self.add_item(label, label.to_string());
+    }
+
+    /// Chainable variant of add_item_str
     pub fn item_str(self, label: &str) -> Self {
         self.item(label, label.to_string())
     }
 
-    pub fn add_item_str(&mut self, label: &str) {
-        self.add_item(label, label.to_string());
-    }
 }
 
 impl <T> View for SelectView<T> {

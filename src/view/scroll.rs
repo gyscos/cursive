@@ -4,6 +4,7 @@ use color;
 use vec::Vec2;
 use printer::Printer;
 
+/// Provide scrolling functionalities to a view.
 pub struct ScrollBase {
     pub start_line: usize,
     pub content_height: usize,
@@ -19,6 +20,7 @@ impl ScrollBase {
         }
     }
 
+    /// Call this method whem the content or the view changes.
     pub fn set_heights(&mut self, view_height: usize, content_height: usize) {
         self.view_height = view_height;
         self.content_height = content_height;
@@ -30,22 +32,27 @@ impl ScrollBase {
         }
     }
 
+    /// Returns `TRUE` if the view needs to scroll.
     pub fn scrollable(&self) -> bool {
         self.view_height < self.content_height
     }
 
+    /// Returns `TRUE` unless we are at the top.
     pub fn can_scroll_up(&self) -> bool {
         self.start_line > 0
     }
 
+    /// Returns `TRUE` unless we are at the bottom.
     pub fn can_scroll_down(&self) -> bool {
         self.start_line + self.view_height < self.content_height
     }
 
+    /// Scroll to the top of the view.
     pub fn scroll_top(&mut self) {
         self.start_line = 0;
     }
 
+    /// Makes sure that the given line is visible, scrolling if needed.
     pub fn scroll_to(&mut self, y: usize) {
         if y >= self.start_line + self.view_height {
             self.start_line = 1 + y - self.view_height;
@@ -54,26 +61,48 @@ impl ScrollBase {
         }
     }
 
+    /// Scroll to the bottom of the view.
     pub fn scroll_bottom(&mut self) {
         self.start_line = self.content_height - self.view_height;
     }
 
+    /// Scroll down by the given number of line, never going further than the bottom of the view.
     pub fn scroll_down(&mut self, n: usize) {
         self.start_line = min(self.start_line+n, self.content_height - self.view_height);
     }
 
+    /// Scroll up by the given number of lines, never going above the top of the view.
     pub fn scroll_up(&mut self, n: usize) {
         self.start_line -= min(self.start_line, n);
     }
 
+    /// Draws the scroll bar and the content using the given drawer.
+    ///
+    /// `line_drawer` will be called once for each line that needs to be drawn.
+    /// It will be given the absolute ID of the item to draw..
+    /// It will also be given a printer with the correct offset,
+    /// so it should only print on the first line.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// scrollbase.draw(printer, |printer, i| {
+    ///     printer.print((0,0), lines[i]);
+    /// });
+    /// ```
     pub fn draw<F>(&self, printer: &Printer, line_drawer: F)
         where F: Fn(&Printer,usize)
     {
-        for y in 0..self.view_height {
+        // Print the content in a sub_printer
+        let max_y = min(self.view_height, self.content_height - self.start_line);
+        for y in 0..max_y {
+            // Y is the actual coordinate of the line.
+            // The item ID is then Y + self.start_line
             line_drawer(&printer.sub_printer(Vec2::new(0,y),printer.size,true), y+self.start_line);
         }
 
 
+        // And draw the scrollbar if needed
         if self.view_height < self.content_height {
             // We directly compute the size of the scrollbar (this allow use to avoid using floats).
             // (ratio) * max_height
