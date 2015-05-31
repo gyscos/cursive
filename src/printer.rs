@@ -13,6 +13,8 @@ pub struct Printer {
     pub offset: Vec2,
     /// Size of the area we are allowed to draw on.
     pub size: Vec2,
+    /// Whether the view to draw is currently focused or not.
+    pub focused: bool,
 }
 
 impl Printer {
@@ -21,6 +23,7 @@ impl Printer {
         Printer {
             offset: Vec2::zero(),
             size: size.to_vec2(),
+            focused: true,
         }
     }
 
@@ -118,12 +121,13 @@ impl Printer {
     }
 
     /// Returns a printer on a subset of this one's area.
-    pub fn sub_printer<S: ToVec2>(&self, offset: S, size: S) -> Printer {
+    pub fn sub_printer<S: ToVec2>(&self, offset: S, size: S, focused: bool) -> Printer {
         let offset_v = offset.to_vec2();
         Printer {
             offset: self.offset + offset_v,
             // We can't be larger than what remains
             size: Vec2::min(self.size - offset_v, size.to_vec2()),
+            focused: self.focused && focused,
         }
     }
 }

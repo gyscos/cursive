@@ -192,11 +192,8 @@ impl Cursive {
     }
 
     fn draw(&mut self) {
-        let printer = Printer {
-            offset: Vec2::new(0,0),
-            size: self.screen_size(),
-        };
-        self.screen_mut().draw(&printer, true);
+        let printer = Printer::new(self.screen_size());
+        self.screen_mut().draw(&printer);
         ncurses::refresh();
     }
 

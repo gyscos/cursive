@@ -28,8 +28,8 @@ impl Button {
 
 impl View for Button {
 
-    fn draw(&mut self, printer: &Printer, focused: bool) {
-        let style = if !focused { color::PRIMARY } else { color::HIGHLIGHT };
+    fn draw(&mut self, printer: &Printer) {
+        let style = if !printer.focused { color::PRIMARY } else { color::HIGHLIGHT };
         let x = printer.size.x - 1;
 
         printer.with_color(style, |printer| {

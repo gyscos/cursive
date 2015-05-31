@@ -31,7 +31,7 @@ impl <T: View> ViewWrapper for ShadowView<T> {
         self.view.layout(size - (2,2));
     }
 
-    fn wrap_draw(&mut self, printer: &Printer, focused: bool) {
+    fn wrap_draw(&mut self, printer: &Printer) {
 
         printer.with_color(color::PRIMARY, |printer| {
             // Draw the view background
@@ -40,7 +40,7 @@ impl <T: View> ViewWrapper for ShadowView<T> {
             }
         });
 
-        self.view.draw(&printer.sub_printer(Vec2::new(1,1), printer.size - (2,2)), focused);
+        self.view.draw(&printer.sub_printer(Vec2::new(1,1), printer.size - (2,2), true));
 
 
         let h = printer.size.y-1;

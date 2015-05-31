@@ -41,12 +41,13 @@ impl StackView {
 }
 
 impl View for StackView {
-    fn draw(&mut self, printer: &Printer, focused: bool) {
+    fn draw(&mut self, printer: &Printer) {
         for v in self.layers.iter_mut() {
             // Center the view
             let size = v.size;
             let offset = (printer.size - size) / 2;
-            v.view.draw(&printer.sub_printer(offset, size), focused);
+            // TODO: only draw focus for the top view
+            v.view.draw(&printer.sub_printer(offset, size, true));
         }
     }
 

@@ -182,7 +182,7 @@ impl <'a> Iterator for LinesIterator<'a> {
 }
 
 impl View for TextView {
-    fn draw(&mut self, printer: &Printer, focused: bool) {
+    fn draw(&mut self, printer: &Printer) {
         // We don't have a focused view
         for (i,line) in self.rows.iter().skip(self.start_line).map(|row| &self.content[row.start..row.end]).enumerate() {
             printer.print((0,i), line);
@@ -194,7 +194,7 @@ impl View for TextView {
             let start = self.view_height * self.start_line / self.rows.len();
             let end = self.view_height * (self.start_line + self.view_height) / self.rows.len();
             printer.with_color(
-                if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE },
+                if printer.focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE },
                 |printer| {
                     printer.print_vline((printer.size.x-1, start), end-start, ' ' as u64);
                 });

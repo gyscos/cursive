@@ -80,7 +80,7 @@ impl Dialog {
 }
 
 impl View for Dialog {
-    fn draw(&mut self, printer: &Printer, focused: bool) {
+    fn draw(&mut self, printer: &Printer) {
 
         // This will be the height used by the buttons.
         let mut height = 0;
@@ -90,7 +90,7 @@ impl View for Dialog {
             let size = button.size;
             let offset = printer.size - self.borders.bot_right() - self.padding.bot_right() - size - Vec2::new(x, 0);
             // Add some special effect to the focused button
-            button.draw(&printer.sub_printer(offset, size), focused && (self.focus == Focus::Button(i)));
+            button.draw(&printer.sub_printer(offset, size, self.focus == Focus::Button(i)));
             // Keep 1 blank between two buttons
             x += size.x + 1;
             // Also keep 1 blank above the buttons
@@ -103,7 +103,7 @@ impl View for Dialog {
             - self.borders.combined()
             - self.padding.combined();
 
-        self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(), inner_size), focused && self.focus == Focus::Content);
+        self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(), inner_size, self.focus == Focus::Content));
 
         printer.print_box(Vec2::new(0,0), printer.size);
 
@@ -174,6 +174,10 @@ impl View for Dialog {
                         self.focus = Focus::Button(0);
                         EventResult::Consumed(None)
                     },
+                    Event::KeyEvent(Key::Tab) | Event::KeyEvent(Key::ShiftTab) => {
+                        self.focus = Focus::Button(0);
+                        EventResult::Consumed(None)
+                    }
                     _ => EventResult::Ignored,
                 },
                 res => res,
@@ -183,6 +187,14 @@ impl View for Dialog {
                 EventResult::Ignored => match event {
                     // Up goes back to the content
                     Event::KeyEvent(Key::Up) => {
+                        if self.content.take_focus() {
+                            self.focus = Focus::Content;
+                            EventResult::Consumed(None)
+                        } else {
+                            EventResult::Ignored
+                        }
+                    },
+                    Event::KeyEvent(Key::Tab) | Event::KeyEvent(Key::ShiftTab) => {
                         if self.content.take_focus() {
                             self.focus = Focus::Content;
                             EventResult::Consumed(None)

@@ -57,7 +57,7 @@ fn remove_char(s: &mut String, cursor: usize) {
 }
 
 impl View for EditView {
-    fn draw(&mut self, printer: &Printer, focused: bool) {
+    fn draw(&mut self, printer: &Printer) {
         // let style = if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
         let len = self.content.chars().count();
         printer.with_color(color::SECONDARY, |printer| {
@@ -67,7 +67,7 @@ impl View for EditView {
             });
 
             // Now print cursor
-            if focused {
+            if printer.focused {
                 let c = if self.cursor == len {
                     '_'
                 } else {
