@@ -46,5 +46,5 @@ name = "key_codes"
 path = "examples/key_codes.rs"
 
 [[example]]
-name = "list"
-path = "examples/list.rs"
+name = "select"
+path = "examples/select.rs"

@@ -13,7 +13,7 @@ mod full_view;
 mod id_view;
 mod shadow_view;
 mod edit_view;
-mod list_view;
+mod select_view;
 
 use std::any::Any;
 
@@ -30,7 +30,7 @@ pub use self::full_view::FullView;
 pub use self::id_view::IdView;
 pub use self::shadow_view::ShadowView;
 pub use self::edit_view::EditView;
-pub use self::list_view::ListView;
+pub use self::select_view::SelectView;
 
 use event::{Event,EventResult};
 use vec::{Vec2,ToVec2};

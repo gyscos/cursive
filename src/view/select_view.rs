@@ -18,41 +18,49 @@ impl <T> Item<T> {
     }
 }
 
-pub struct ListView<T=String> {
+/// View to select an item among a list.
+///
+/// It contains a list of values of type T, with associated labels.
+pub struct SelectView<T=String> {
     items: Vec<Item<T>>,
     focus: usize,
 }
 
-impl <T> ListView<T> {
+impl <T> SelectView<T> {
+    /// Creates a new empty SelectView.
     pub fn new() -> Self {
-        ListView {
+        SelectView {
             items: Vec::new(),
             focus: 0,
         }
     }
 
+    /// Returns the value of the currently selected item. Panics if the list is empty.
     pub fn selection(&self) -> &T {
         &self.items[self.focus].value
     }
 
+    /// Adds a item to the list, with given label and value.
     pub fn item(mut self, label: &str, value: T) -> Self {
         self.items.push(Item::new(label,value));
 
         self
     }
 
+    /// Wraps this view into an IdView with the given id.
     pub fn with_id(self, label: &str) -> IdView<Self> {
         IdView::new(label, self)
     }
 }
 
-impl ListView<String> {
+impl SelectView<String> {
+    /// For String-based SelectView, this is a convenient method to use the label as value.
     pub fn item_str(self, label: &str) -> Self {
         self.item(label, label.to_string())
     }
 }
 
-impl <T> View for ListView<T> {
+impl <T> View for SelectView<T> {
     fn draw(&mut self, printer: &Printer) {
         for (i,item) in self.items.iter().enumerate() {
             let style = if i == self.focus { if printer.focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE } } else { color::PRIMARY };
