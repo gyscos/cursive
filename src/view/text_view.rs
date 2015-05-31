@@ -247,6 +247,10 @@ impl View for TextView {
         }
     }
 
+    fn take_focus(&mut self) -> bool {
+        self.view_height < self.rows.len()
+    }
+
     fn layout(&mut self, size: Vec2) {
         // Compute the text rows.
         self.view_height = size.y;

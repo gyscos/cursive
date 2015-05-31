@@ -15,6 +15,8 @@ pub struct StackView {
 struct Layer {
     view: Box<View>,
     size: Vec2,
+    // Has it received the gift yet?
+    virgin: bool,
 }
 
 impl StackView {
@@ -26,11 +28,11 @@ impl StackView {
     }
 
     /// Add new view on top of the stack.
-    pub fn add_layer<T: 'static + View>(&mut self, mut view: T) {
-        view.take_focus();
+    pub fn add_layer<T: 'static + View>(&mut self, view: T) {
         self.layers.push(Layer {
             view: Box::new(ShadowView::new(view)),
             size: Vec2::new(0,0),
+            virgin: true,
         });
     }
 
@@ -42,12 +44,13 @@ impl StackView {
 
 impl View for StackView {
     fn draw(&mut self, printer: &Printer) {
-        for v in self.layers.iter_mut() {
+        let last = self.layers.len();
+        for (i,v) in self.layers.iter_mut().enumerate() {
             // Center the view
             let size = v.size;
             let offset = (printer.size - size) / 2;
             // TODO: only draw focus for the top view
-            v.view.draw(&printer.sub_printer(offset, size, true));
+            v.view.draw(&printer.sub_printer(offset, size, i+1 == last));
         }
     }
 
@@ -66,6 +69,10 @@ impl View for StackView {
         for layer in self.layers.iter_mut() {
             layer.size = Vec2::min(size, layer.view.get_min_size(req));
             layer.view.layout(layer.size);
+            if layer.virgin {
+                layer.view.take_focus();
+                layer.virgin = false;
+            }
         }
     }
 

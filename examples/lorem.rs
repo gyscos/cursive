@@ -19,7 +19,8 @@ fn main() {
 
     // The text is too long to fit on a line, so the view will wrap lines,
     // and will adapt to the terminal size.
-    siv.add_layer(TextView::new(&content));
+    siv.add_layer(Dialog::new(TextView::new(&content))
+                  .button("Quit", |s| s.quit()));
     // Show a popup on top of the view.
     siv.add_layer(Dialog::new(TextView::new("Try resizing the terminal!\n(Press 'q' to quit when you're done.)"))
                   .padding((0,0,0,0))
