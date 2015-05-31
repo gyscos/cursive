@@ -15,6 +15,8 @@ mod shadow_view;
 mod edit_view;
 mod select_view;
 
+mod scroll;
+
 use std::any::Any;
 
 pub use self::view_path::ViewPath;

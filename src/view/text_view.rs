@@ -1,18 +1,18 @@
-use std::cmp::{max,min};
+use std::cmp::max;
 
-use color;
 use vec::Vec2;
 use view::{View,DimensionRequest,SizeRequest};
 use div::*;
 use printer::Printer;
 use event::*;
+use super::scroll::ScrollBase;
 
 /// A simple view showing a fixed text
 pub struct TextView {
     content: String,
     rows: Vec<Row>,
-    start_line: usize,
-    view_height: usize,
+
+    scrollbase: ScrollBase,
 }
 
 // Subset of the main content representing a row on the display.
@@ -54,9 +54,8 @@ impl TextView {
         let content = strip_last_newline(content);
         TextView {
             content: content.to_string(),
-            start_line: 0,
             rows: Vec::new(),
-            view_height: 0,
+            scrollbase: ScrollBase::new(),
         }
     }
 
@@ -183,36 +182,24 @@ impl <'a> Iterator for LinesIterator<'a> {
 
 impl View for TextView {
     fn draw(&mut self, printer: &Printer) {
-        // We don't have a focused view
-        for (i,line) in self.rows.iter().skip(self.start_line).map(|row| &self.content[row.start..row.end]).enumerate() {
-            printer.print((0,i), line);
-        }
-        if self.view_height < self.rows.len() {
-            // We directly compute the size of the scrollbar (this allow use to avoid using floats).
-            // (ratio) * max_height
-            // Where ratio is ({start or end} / content.height)
-            let start = self.view_height * self.start_line / self.rows.len();
-            let end = self.view_height * (self.start_line + self.view_height) / self.rows.len();
-            printer.with_color(
-                if printer.focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE },
-                |printer| {
-                    printer.print_vline((printer.size.x-1, start), end-start, ' ' as u64);
-                });
-        }
+        self.scrollbase.draw(printer, |printer, i| {
+            let row = &self.rows[i];
+            printer.print((0,0), &self.content[row.start..row.end]);
+        });
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        if self.view_height >= self.rows.len() {
+        if !self.scrollbase.scrollable() {
             return EventResult::Ignored;
         }
 
         match event {
-            Event::KeyEvent(Key::Home) => self.start_line = 0,
-            Event::KeyEvent(Key::End) => self.start_line = self.rows.len() - self.view_height,
-            Event::KeyEvent(Key::Up) if self.start_line > 0 => self.start_line -= 1,
-            Event::KeyEvent(Key::Down) if self.start_line+self.view_height < self.rows.len() => self.start_line += 1,
-            Event::KeyEvent(Key::PageDown) => self.start_line = min(self.start_line+10, self.rows.len()-self.view_height),
-            Event::KeyEvent(Key::PageUp) => self.start_line -= min(self.start_line, 10),
+            Event::KeyEvent(Key::Home) => self.scrollbase.scroll_top(),
+            Event::KeyEvent(Key::End) => self.scrollbase.scroll_bottom(),
+            Event::KeyEvent(Key::Up) if self.scrollbase.can_scroll_up() => self.scrollbase.scroll_up(1),
+            Event::KeyEvent(Key::Down) if self.scrollbase.can_scroll_down() => self.scrollbase.scroll_down(1),
+            Event::KeyEvent(Key::PageDown) => self.scrollbase.scroll_down(10),
+            Event::KeyEvent(Key::PageUp) => self.scrollbase.scroll_up(10),
             _ => return EventResult::Ignored,
         }
 
@@ -248,18 +235,15 @@ impl View for TextView {
     }
 
     fn take_focus(&mut self) -> bool {
-        self.view_height < self.rows.len()
+        self.scrollbase.scrollable()
     }
 
     fn layout(&mut self, size: Vec2) {
         // Compute the text rows.
-        self.view_height = size.y;
-        self.rows = LinesIterator::new(&self.content, size.x ).collect();
+        self.rows = LinesIterator::new(&self.content, size.x).collect();
         if self.rows.len() > size.y {
             self.rows = LinesIterator::new(&self.content, size.x - 1).collect();
-            self.start_line = min(self.start_line, self.rows.len() - size.y);
-        } else {
-            self.start_line = 0;
         }
+        self.scrollbase.set_heights(size.y, self.rows.len());
     }
 }

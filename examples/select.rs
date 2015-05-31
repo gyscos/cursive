@@ -1,17 +1,25 @@
 extern crate cursive;
 
+use std::fs::File;
+use std::io::{BufReader,BufRead};
+
 use cursive::Cursive;
-use cursive::view::{Dialog,SelectView,TextView,Selector};
+use cursive::view::{Dialog,SelectView,TextView,Selector,BoxView};
 
 fn main() {
+
+    let mut select = SelectView::new();
+
+    // Read the list of cities from separate file, and fill the view with it.
+    let file = File::open("assets/cities.txt").unwrap();
+    let reader = BufReader::new(file);
+    for line in reader.lines() {
+        select.add_item_str(&line.unwrap());
+    }
+
     let mut siv = Cursive::new();
 
-    siv.add_layer(Dialog::new(SelectView::new()
-                              .item_str("Berlin")
-                              .item_str("London")
-                              .item_str("New York")
-                              .item_str("Paris")
-                              .with_id("city"))
+    siv.add_layer(Dialog::new(BoxView::new((20,10), select.with_id("city")))
                   .title("Where are you from?")
                   .button("Ok", |s| {
                       let city = s.find::<SelectView>(&Selector::Id("city")).unwrap().selection().to_string();

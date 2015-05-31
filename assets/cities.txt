@@ -1,0 +1,254 @@
+Abidjan
+Abu Dhabi
+Abuja
+Accra
+Adamstown
+Addis Ababa
+Algiers
+Alofi
+Amman
+Amsterdam
+Andorra la Vella
+Ankara
+Antananarivo
+Apia
+Arbil
+Ashgabat
+Asmara
+Astana
+Asunción
+Athens
+Avarua
+Baghdad
+Baku
+Bamako
+Bandar Seri Begawan
+Bangkok
+Bangui
+Banjul
+Basseterre
+Beijing
+Beirut
+Belgrade
+Belmopan
+Berlin
+Bern
+Bishkek
+Bissau
+Bogotá
+Brasília
+Bratislava
+Brazzaville
+Bridgetown
+Brussels
+Bucharest
+Budapest
+Buenos Aires
+Bujumbura
+Cairo
+Canberra
+Caracas
+Cardiff
+Castries
+Cayenne
+Charlotte Amalie
+Chișinău
+Cockburn Town
+Colombo
+Conakry
+Copenhagen
+Dakar
+Damascus
+Dhaka
+Dili
+Djibouti
+Dodoma
+Doha
+Douglas
+Dublin
+Dushanbe
+Edinburgh
+Fort-de-France
+Freetown
+Funafuti
+Funchal
+Gaborone
+Garoowe
+Gaza
+Georgetown
+Georgetown
+George Town
+Gibraltar
+Grozny
+Guatemala City
+Hagatna
+Hamilton
+Hanoi
+Harare
+Hargeisa
+Havana
+Helsinki
+Honiara
+Islamabad
+Jakarta
+Jamestown
+Jerusalem
+Jerusalem
+Kabul
+Kampala
+Kathmandu
+Khartoum
+Kiev
+Kigali
+Kilinochchi
+Kingston
+Kingston
+Kingstown
+Kinshasa
+Kuala Lumpur
+Kuwait City
+La Paz
+Las Palmas
+Libreville
+Lilongwe
+Lima
+Lisbon
+Ljubljana
+Lomé
+London
+Luanda
+Lusaka
+Luxembourg
+Madrid
+Majuro
+Malabo
+Malé
+Mamoudzou
+Managua
+Manama
+Manila
+Maputo
+Maseru
+Mata-Utu
+Mbabane
+Melekeok
+Mexico City
+Minsk
+Mogadishu
+Monaco
+Monrovia
+Montevideo
+Moroni
+Moscow
+Muscat
+Nairobi
+Nassau
+Naypyidaw
+N'Djamena
+New Delhi
+Niamey
+Nicosia
+none
+Nouakchott
+Nouméa
+Nuku'alofa
+Nuuk
+Oranjestad
+Oslo
+Ottawa
+Ouagadougou
+Pago Pago
+Palikir
+Panama City
+Papeete
+Paramaribo
+Paris
+Phnom Penh
+Plymouth
+Podgorica
+Ponta Delgada
+Port-au-Prince
+Port Louis
+Port Moresby
+Port of Spain
+Porto-Novo
+Port Vila
+Prague
+Praia
+Pretoria
+Priština
+Putrajaya
+Pyongyang
+Quito
+Rabat
+Ramallah
+Reykjavík
+Riga
+Riyadh
+Road Town
+Rome
+Roseau
+Saint-Denis
+Saint Helier
+Saint-Pierre
+Saipan
+Sanaa
+San Juan
+San Marino
+San Salvador
+Santiago
+Sant José
+Santo Domingo
+São Tomé
+Sarajevo
+Seoul
+Singapore
+Skopje
+Sofia
+Stanley
+Stepanakert
+St. George's
+St. John's
+Stockholm
+St Peter Port
+Sucre
+Sukhumi
+Suva
+Taipei
+Tallinn
+Tarawa
+Tashkent
+Tbilisi
+Tegucigalpa
+Tehran
+The Settlement
+The Valley
+Thimphu
+Tirana
+Tiraspol
+Tokyo
+Tórshavn
+Tripoli
+Tskhinvali
+Tunis
+Ulaanbaatar
+Vaduz
+Valletta
+Valparaíso­so
+Vatican City
+Victoria
+Vienna
+Vientiane
+Vilnius
+Vitoria-Gasteiz
+Warsaw
+Washington, D.C.
+Wellington
+West Island
+Willemstad
+Windhoek
+Yamoussoukro
+Yaoundé
+Yaren
+Yerevan
+Zagreb
