@@ -87,7 +87,7 @@ impl BufferView {
 }
 
 impl View for BufferView {
-    fn draw(&mut self, printer: &Printer, _: bool) {
+    fn draw(&mut self, printer: &Printer) {
         // Before drawing, we'll want to update the buffer
         self.update();
 
