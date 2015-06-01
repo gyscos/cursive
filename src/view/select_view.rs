@@ -1,6 +1,8 @@
 use std::cmp::min;
+use std::rc::Rc;
 
 use color;
+use ::Cursive;
 use view::{View,IdView,SizeRequest,DimensionRequest};
 use event::{Event,EventResult,Key};
 use vec::Vec2;
@@ -9,14 +11,14 @@ use super::scroll::ScrollBase;
 
 struct Item<T> {
     label: String,
-    value: T,
+    value: Rc<T>,
 }
 
 impl <T> Item<T> {
     fn new(label: &str, value: T) -> Self {
         Item {
             label: label.to_string(),
-            value: value,
+            value: Rc::new(value),
         }
     }
 }
@@ -28,21 +30,32 @@ pub struct SelectView<T=String> {
     items: Vec<Item<T>>,
     focus: usize,
     scrollbase: ScrollBase,
+    select_cb: Option<Rc<Box<Fn(&mut Cursive,&T)>>>,
 }
 
-impl <T> SelectView<T> {
+impl <T: 'static> SelectView<T> {
     /// Creates a new empty SelectView.
     pub fn new() -> Self {
         SelectView {
             items: Vec::new(),
             focus: 0,
             scrollbase: ScrollBase::new(),
+            select_cb: None,
         }
     }
 
+    /// Sets a function to be called when an item is selected (when ENTER is pressed).
+    pub fn on_select<F>(mut self, cb: F) -> Self
+        where F: Fn(&mut Cursive,&T) + 'static
+    {
+        self.select_cb = Some(Rc::new(Box::new(cb)));
+
+        self
+    }
+
     /// Returns the value of the currently selected item. Panics if the list is empty.
-    pub fn selection(&self) -> &T {
-        &self.items[self.focus].value
+    pub fn selection(&self) -> Rc<T> {
+        self.items[self.focus].value.clone()
     }
 
     /// Adds a item to the list, with given label and value.
@@ -76,7 +89,7 @@ impl SelectView<String> {
 
 }
 
-impl <T> View for SelectView<T> {
+impl <T: 'static> View for SelectView<T> {
     fn draw(&mut self, printer: &Printer) {
 
         self.scrollbase.draw(printer, |printer,i| {
@@ -115,6 +128,13 @@ impl <T> View for SelectView<T> {
             Event::KeyEvent(Key::PageDown) => self.focus = min(self.focus+10,self.items.len()-1),
             Event::KeyEvent(Key::Home) => self.focus = 0,
             Event::KeyEvent(Key::End) => self.focus = self.items.len()-1,
+            Event::KeyEvent(Key::Enter) if self.select_cb.is_some() => {
+                if let Some(ref cb) = self.select_cb {
+                    let cb = cb.clone();
+                    let v = self.selection();
+                    return EventResult::Consumed(Some(Rc::new(Box::new(move |s| cb(s, &*v)))));
+                }
+            },
             Event::CharEvent(c) => {
                 // Starting from the current focus, find the first item that match the char.
                 // Cycle back to the beginning of the list when we reach the end.
