@@ -117,11 +117,15 @@ impl <T> View for SelectView<T> {
             Event::KeyEvent(Key::End) => self.focus = self.items.len()-1,
             Event::CharEvent(c) => {
                 // Starting from the current focus, find the first item that match the char.
-                if let Some((i,_)) = self.items.iter().enumerate()
+                // Cycle back to the beginning of the list when we reach the end.
+                // This is achieved by chaining twice the iterator
+                let iter = self.items.iter().chain(self.items.iter());
+                if let Some((i,_)) = iter.enumerate()
                     .skip(self.focus+1)
                     .find(|&(_,item)| item.label.starts_with(c))
                 {
-                    self.focus = i;
+                    // Apply modulo in case we have a hit from the chained iterator
+                    self.focus = i % self.items.len();
                 }
             },
             _ => return EventResult::Ignored,
