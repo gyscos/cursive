@@ -17,9 +17,10 @@ use cursive::Cursive;
 use cursive::view::{Dialog,TextView};
 
 fn main() {
+	// Creates the cursive root - required for every application.
     let mut siv = Cursive::new();
 
-    // Create a popup window with a "Ok" button that quits the application
+    // Create a popup window with a button that quits the application
     siv.add_layer(Dialog::new(TextView::new("Hello Dialog!"))
                     .title("Cursive")
                     .button("Quit", |s| s.quit()));
