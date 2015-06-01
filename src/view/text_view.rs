@@ -242,7 +242,7 @@ impl View for TextView {
         // Compute the text rows.
         self.rows = LinesIterator::new(&self.content, size.x).collect();
         if self.rows.len() > size.y {
-            self.rows = LinesIterator::new(&self.content, size.x - 1).collect();
+            self.rows = LinesIterator::new(&self.content, size.x - 2).collect();
         }
         self.scrollbase.set_heights(size.y, self.rows.len());
     }

@@ -99,7 +99,11 @@ impl <T: 'static> View for SelectView<T> {
             } else {
                 color::PRIMARY
             };
-            printer.with_color(style, |printer| printer.print((0,0), &self.items[i].label));
+            printer.with_color(style, |printer| {
+                printer.print((0,0), &self.items[i].label);
+                let x:usize = self.items[i].label.chars().count();
+                printer.print_hline((x,0), printer.size.x-x, ' ' as u64);
+            });
         });
     }
 
@@ -115,7 +119,8 @@ impl <T: 'static> View for SelectView<T> {
             false
         };
 
-        let w = if scrolling { w + 1 } else { w };
+        // Add 2 spaces for the scrollbar if we need
+        let w = if scrolling { w + 2 } else { w };
 
         Vec2::new(w,h)
     }

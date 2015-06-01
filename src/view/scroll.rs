@@ -95,10 +95,11 @@ impl ScrollBase {
     {
         // Print the content in a sub_printer
         let max_y = min(self.view_height, self.content_height - self.start_line);
+        let w = if self.scrollable() { printer.size.x - 2 } else { printer.size.x };
         for y in 0..max_y {
             // Y is the actual coordinate of the line.
             // The item ID is then Y + self.start_line
-            line_drawer(&printer.sub_printer(Vec2::new(0,y),printer.size,true), y+self.start_line);
+            line_drawer(&printer.sub_printer(Vec2::new(0,y),Vec2::new(w,1),true), y+self.start_line);
         }
 
 
