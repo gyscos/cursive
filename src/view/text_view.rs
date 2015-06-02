@@ -4,6 +4,7 @@ use vec::Vec2;
 use view::{View,DimensionRequest,SizeRequest};
 use div::*;
 use printer::Printer;
+use align::*;
 use event::*;
 use super::scroll::ScrollBase;
 
@@ -11,6 +12,8 @@ use super::scroll::ScrollBase;
 pub struct TextView {
     content: String,
     rows: Vec<Row>,
+
+    align: Align,
 
     scrollbase: ScrollBase,
 }
@@ -56,7 +59,26 @@ impl TextView {
             content: content.to_string(),
             rows: Vec::new(),
             scrollbase: ScrollBase::new(),
+            align: Align::top_left(),
         }
+    }
+
+    pub fn h_align(mut self, h: HAlign) -> Self {
+        self.align.h = h;
+
+        self
+    }
+
+    pub fn v_align(mut self, v: VAlign) -> Self {
+        self.align.v = v;
+
+        self
+    }
+
+    pub fn align(mut self, a: Align) -> Self {
+        self.align = a;
+
+        self
     }
 
     /// Replace the text in this view.
@@ -182,9 +204,25 @@ impl <'a> Iterator for LinesIterator<'a> {
 
 impl View for TextView {
     fn draw(&mut self, printer: &Printer) {
+
+        let h = self.rows.len();
+        let offset = match self.align.v {
+            VAlign::Top => 0,
+            VAlign::Center => (printer.size.y - h)/2,
+            VAlign::Bottom => printer.size.y - h,
+        };
+        let printer = &printer.sub_printer(Vec2::new(0,offset), printer.size, true);
+
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
-            printer.print((0,0), &self.content[row.start..row.end]);
+            let text = &self.content[row.start..row.end];
+            let l = text.chars().count();
+            let x = match self.align.h {
+                HAlign::Left => 0,
+                HAlign::Center => (printer.size.x-l)/2,
+                HAlign::Right => printer.size.x-l,
+            };
+            printer.print((x,0), text);
         });
     }
 

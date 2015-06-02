@@ -28,6 +28,7 @@ pub mod view;
 pub mod printer;
 pub mod vec;
 pub mod color;
+pub mod align;
 
 mod div;
 mod utf8;
