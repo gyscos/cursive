@@ -10,6 +10,8 @@ It is designed to be safe and easy to use:
 git = "https://github.com/Gyscos/cursive"
 ```
 
+(You will also need ncurses installed - if it isn't already, check in your package manager.
+
 ```rust
 extern crate cursive;
 
