@@ -4,13 +4,14 @@ use std::fs::File;
 use std::io::{BufReader,BufRead};
 
 use cursive::Cursive;
+use cursive::align::HAlign;
 use cursive::view::{Dialog,SelectView,TextView,BoxView};
 
 fn main() {
     // To keep things simple, little error management is done here.
     // If you have an error, be sure to run this from the crate root, not from a sub directory.
 
-    let mut select = SelectView::new();
+    let mut select = SelectView::new().h_align(HAlign::Center);
 
     // Read the list of cities from separate file, and fill the view with it.
     let file = File::open("assets/cities.txt").unwrap();

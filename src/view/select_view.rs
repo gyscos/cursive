@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use color;
 use ::Cursive;
+use align::*;
 use view::{View,IdView,SizeRequest,DimensionRequest};
 use event::{Event,EventResult,Key};
 use vec::Vec2;
@@ -31,6 +32,7 @@ pub struct SelectView<T=String> {
     focus: usize,
     scrollbase: ScrollBase,
     select_cb: Option<Rc<Box<Fn(&mut Cursive,&T)>>>,
+    align: Align,
 }
 
 impl <T: 'static> SelectView<T> {
@@ -41,6 +43,7 @@ impl <T: 'static> SelectView<T> {
             focus: 0,
             scrollbase: ScrollBase::new(),
             select_cb: None,
+            align: Align::top_left(),
         }
     }
 
@@ -49,6 +52,24 @@ impl <T: 'static> SelectView<T> {
         where F: Fn(&mut Cursive,&T) + 'static
     {
         self.select_cb = Some(Rc::new(Box::new(cb)));
+
+        self
+    }
+
+    pub fn align(mut self, align: Align) -> Self {
+        self.align = align;
+
+        self
+    }
+
+    pub fn v_align(mut self, v: VAlign) -> Self {
+        self.align.v = v;
+
+        self
+    }
+
+    pub fn h_align(mut self, h: HAlign) -> Self {
+        self.align.h = h;
 
         self
     }
@@ -92,6 +113,10 @@ impl SelectView<String> {
 impl <T: 'static> View for SelectView<T> {
     fn draw(&mut self, printer: &Printer) {
 
+        let h = self.items.len();
+        let offset = self.align.v.get_offset(h, printer.size.y);
+        let printer = &printer.sub_printer(Vec2::new(0,offset), printer.size, true);
+
         self.scrollbase.draw(printer, |printer,i| {
             let style = if i == self.focus {
                 if printer.focused { color::HIGHLIGHT }
@@ -100,9 +125,11 @@ impl <T: 'static> View for SelectView<T> {
                 color::PRIMARY
             };
             printer.with_color(style, |printer| {
-                printer.print((0,0), &self.items[i].label);
-                let x:usize = self.items[i].label.chars().count();
-                printer.print_hline((x,0), printer.size.x-x, ' ' as u64);
+                let l = self.items[i].label.chars().count();
+                let x = self.align.h.get_offset(l, printer.size.x);
+                printer.print_hline((0,0), x, ' ' as u64);
+                printer.print((x,0), &self.items[i].label);
+                printer.print_hline((x+l,0), printer.size.x-l-x, ' ' as u64);
             });
         });
     }

@@ -206,22 +206,14 @@ impl View for TextView {
     fn draw(&mut self, printer: &Printer) {
 
         let h = self.rows.len();
-        let offset = match self.align.v {
-            VAlign::Top => 0,
-            VAlign::Center => (printer.size.y - h)/2,
-            VAlign::Bottom => printer.size.y - h,
-        };
+        let offset = self.align.v.get_offset(h, printer.size.y);
         let printer = &printer.sub_printer(Vec2::new(0,offset), printer.size, true);
 
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
             let text = &self.content[row.start..row.end];
             let l = text.chars().count();
-            let x = match self.align.h {
-                HAlign::Left => 0,
-                HAlign::Center => (printer.size.x-l)/2,
-                HAlign::Right => printer.size.x-l,
-            };
+            let x = self.align.h.get_offset(l, printer.size.x);
             printer.print((x,0), text);
         });
     }
