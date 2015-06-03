@@ -115,11 +115,12 @@ impl ScrollBase {
             // Now
             let start = steps * self.start_line / (1 + self.content_height - self.view_height);
 
-            printer.with_color(
-                if printer.focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE },
-                |printer| {
-                    printer.print_vline((printer.size.x-1, start), height, ' ' as u64);
-                });
+            let color = if printer.focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
+
+            printer.print_vline((printer.size.x-1,0), printer.size.y, '|' as u64);
+            printer.with_color(color, |printer| {
+                printer.print_vline((printer.size.x-1, start), height, ' ' as u64);
+            });
         }
     }
 }
