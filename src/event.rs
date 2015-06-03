@@ -68,6 +68,7 @@ pub enum Key {
 }
 
 impl Key {
+    /// Returns the Key enum corresponding to the given ncurses event.
     pub fn from_ncurses(ch: i32) -> Self {
         match ch {
             // Tab is '\t'
@@ -173,6 +174,7 @@ pub enum Event {
     KeyEvent(Key),
 }
 
+/// Generic trait to convert a value to an event.
 pub trait ToEvent {
     fn to_event(self) -> Event;
 }

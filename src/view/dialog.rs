@@ -62,12 +62,16 @@ impl Dialog {
         self
     }
 
+    /// Sets the horizontal alignment for the buttons, if any.
+    /// Only works if the buttons are as a row at the bottom of the dialog.
     pub fn h_align(mut self, h: HAlign) -> Self {
         self.align.h = h;
 
         self
     }
 
+    /// Sets the vertical alignment for the buttons, if any.
+    /// Only works if the buttons are as a column to the right of the dialog.
     pub fn v_align(mut self, v: VAlign) -> Self {
         self.align.v = v;
 

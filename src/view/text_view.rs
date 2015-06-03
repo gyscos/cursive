@@ -63,18 +63,21 @@ impl TextView {
         }
     }
 
+    /// Sets the horizontal alignment for this view.
     pub fn h_align(mut self, h: HAlign) -> Self {
         self.align.h = h;
 
         self
     }
 
+    /// Sets the vertical alignment for this view.
     pub fn v_align(mut self, v: VAlign) -> Self {
         self.align.v = v;
 
         self
     }
 
+    /// Sets the alignment for this view.
     pub fn align(mut self, a: Align) -> Self {
         self.align = a;
 

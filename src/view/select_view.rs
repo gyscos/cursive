@@ -56,18 +56,22 @@ impl <T: 'static> SelectView<T> {
         self
     }
 
+    /// Sets the alignment for this view.
     pub fn align(mut self, align: Align) -> Self {
         self.align = align;
 
         self
     }
 
+    /// Sets the vertical alignment for this view.
+    /// (If the ciew is given too much space vertically.)
     pub fn v_align(mut self, v: VAlign) -> Self {
         self.align.v = v;
 
         self
     }
 
+    /// Sets the horizontal alignment for this view.
     pub fn h_align(mut self, h: HAlign) -> Self {
         self.align.h = h;
 
