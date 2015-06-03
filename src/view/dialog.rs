@@ -3,6 +3,7 @@ use std::any::Any;
 
 use color;
 use ::{Cursive};
+use align::*;
 use event::*;
 use view::{View,SizeRequest,DimensionRequest,Selector};
 use view::{Button,SizedView};
@@ -32,6 +33,8 @@ pub struct Dialog {
     borders: Vec4,
 
     focus: Focus,
+
+    align: Align,
 }
 
 impl Dialog {
@@ -44,6 +47,7 @@ impl Dialog {
             focus: Focus::Content,
             padding: Vec4::new(1,1,0,0),
             borders: Vec4::new(1,1,1,1),
+            align: Align::top_right(),
         }
     }
 
@@ -54,6 +58,18 @@ impl Dialog {
         where F: Fn(&mut Cursive) + 'static
     {
         self.buttons.push(SizedView::new(Button::new(label, cb)));
+
+        self
+    }
+
+    pub fn h_align(mut self, h: HAlign) -> Self {
+        self.align.h = h;
+
+        self
+    }
+
+    pub fn v_align(mut self, v: VAlign) -> Self {
+        self.align.v = v;
 
         self
     }
@@ -85,14 +101,19 @@ impl View for Dialog {
         // This will be the height used by the buttons.
         let mut height = 0;
         // Current horizontal position of the next button we'll draw.
-        let mut x = 0;
-        for (i,button) in self.buttons.iter_mut().enumerate().rev() {
+
+        let width = self.buttons.len() + self.buttons.iter().map(|button| button.size.x).fold(0, |a,b| a+b);
+        let overhead = self.padding + self.borders;
+        let mut offset = overhead.left + self.align.h.get_offset(width, printer.size.x - overhead.horizontal());
+        let y = printer.size.y - self.padding.bottom - self.borders.bottom - 1;
+
+        for (i,button) in self.buttons.iter_mut().enumerate() {
             let size = button.size;
-            let offset = printer.size - self.borders.bot_right() - self.padding.bot_right() - size - Vec2::new(x, 0);
+            // let offset = printer.size - self.borders.bot_right() - self.padding.bot_right() - size - Vec2::new(x, 0);
             // Add some special effect to the focused button
-            button.draw(&printer.sub_printer(offset, size, self.focus == Focus::Button(i)));
+            button.draw(&printer.sub_printer(Vec2::new(offset, y), size, self.focus == Focus::Button(i)));
             // Keep 1 blank between two buttons
-            x += size.x + 1;
+            offset += size.x + 1;
             // Also keep 1 blank above the buttons
             height = max(height, size.y+1);
         }

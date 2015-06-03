@@ -17,6 +17,18 @@ impl Align {
         Align::new(HAlign::Left, VAlign::Top)
     }
 
+    pub fn top_right() -> Self {
+        Align::new(HAlign::Right, VAlign::Top)
+    }
+
+    pub fn bot_left() -> Self {
+        Align::new(HAlign::Left, VAlign::Bottom)
+    }
+
+    pub fn bot_right() -> Self {
+        Align::new(HAlign::Right, VAlign::Top)
+    }
+
     pub fn center() -> Self {
         Align::new(HAlign::Center, VAlign::Center)
     }

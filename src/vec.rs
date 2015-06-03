@@ -124,6 +124,7 @@ impl Mul<usize> for Vec2 {
 }
 
 /// Four values representing each direction.
+#[derive(Clone,Copy)]
 pub struct Vec4 {
     /// Left margin
     pub left: usize,
@@ -193,3 +194,61 @@ impl ToVec4 for (i32,i32,i32,i32) {
         Vec4::new(self.0 as usize, self.1 as usize, self.2 as usize, self.3 as usize)
     }
 }
+
+impl <T: ToVec4> Add<T> for Vec4 {
+    type Output = Vec4;
+
+    fn add(self, other: T) -> Vec4 {
+        let ov = other.to_vec4();
+
+        Vec4 {
+            left: self.left + ov.left,
+            right: self.right + ov.right,
+            top: self.top + ov.top,
+            bottom: self.bottom + ov.bottom,
+        }
+    }
+}
+
+impl <T: ToVec4> Sub<T> for Vec4 {
+    type Output = Vec4;
+
+    fn sub(self, other: T) -> Vec4 {
+        let ov = other.to_vec4();
+
+        Vec4 {
+            left: self.left - ov.left,
+            right: self.right - ov.right,
+            top: self.top - ov.top,
+            bottom: self.bottom - ov.bottom,
+        }
+    }
+}
+
+
+impl Div<usize> for Vec4 {
+    type Output = Vec4;
+
+    fn div(self, other: usize) -> Vec4 {
+        Vec4 {
+            left: self.left / other,
+            right: self.right / other,
+            top: self.top / other,
+            bottom: self.bottom / other,
+        }
+    }
+}
+
+impl Mul<usize> for Vec4 {
+    type Output = Vec4;
+
+    fn mul(self, other: usize) -> Vec4 {
+        Vec4 {
+            left: self.left * other,
+            right: self.right * other,
+            top: self.top * other,
+            bottom: self.bottom * other,
+        }
+    }
+}
+
