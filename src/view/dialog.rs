@@ -21,7 +21,8 @@ enum Focus {
 /// # Examples
 ///
 /// ```
-/// let dialog = Dialog::new(TextView::new("Hello!")).button("Ok", |s,_| s.quit());
+/// # use cursive::view::{Dialog,TextView};
+/// let dialog = Dialog::new(TextView::new("Hello!")).button("Ok", |s| s.quit());
 /// ```
 pub struct Dialog {
     title: String,

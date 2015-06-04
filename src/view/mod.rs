@@ -33,6 +33,7 @@ pub use self::id_view::IdView;
 pub use self::shadow_view::ShadowView;
 pub use self::edit_view::EditView;
 pub use self::select_view::SelectView;
+pub use self::scroll::ScrollBase;
 
 use event::{Event,EventResult};
 use vec::{Vec2,ToVec2};

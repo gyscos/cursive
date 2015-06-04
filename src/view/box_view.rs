@@ -14,8 +14,9 @@ impl BoxView {
     /// # Example
     ///
     /// ```
+    /// # use cursive::view::{BoxView,TextView};
     /// // Creates a 20x4 BoxView with a TextView content.
-    /// let box = BoxView::new((20,4), TextView::new("Hello!"))
+    /// let view = BoxView::new((20,4), TextView::new("Hello!"));
     /// ```
     pub fn new<S: ToVec2, V: View + 'static>(size: S, view: V) -> Self {
         BoxView {

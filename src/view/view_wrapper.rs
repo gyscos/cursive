@@ -77,26 +77,33 @@ impl <T: ViewWrapper> View for T {
 ///
 /// If the wrapped view is in a box, just name it in the macro:
 ///
-/// ```
+/// ```rust
+/// # #[macro_use] extern crate cursive;
+/// # use cursive::view::{View,ViewWrapper};
 /// struct BoxFooView {
 ///     content: Box<View>,
 /// }
 ///
-/// impl ViewWrapper for FooView {
+/// impl ViewWrapper for BoxFooView {
 ///     wrap_impl!(self.content);
 /// }
+///
+/// # fn main() { }
 /// ```
 ///
 /// If the content is directly a view, reference it:
 ///
 /// ```
+/// # #[macro_use] extern crate cursive;
+/// # use cursive::view::{View,ViewWrapper};
 /// struct FooView<T: View> {
 ///     view: T,
 /// }
 ///
-/// impl <T> ViewWrapper for FooView<T> {
+/// impl <T: View> ViewWrapper for FooView<T> {
 ///     wrap_impl!(&self.view);
 /// }
+/// # fn main() { }
 /// ```
 #[macro_export]
 macro_rules! wrap_impl {
@@ -121,3 +128,4 @@ macro_rules! wrap_impl {
         }
     };
 }
+

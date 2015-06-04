@@ -73,6 +73,9 @@ impl Printer {
     /// # Examples
     ///
     /// ```
+    /// # use cursive::printer::Printer;
+    /// # use cursive::color;
+    /// # let printer = Printer::new((6,4));
     /// printer.with_color(color::HIGHLIGHT, |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
@@ -103,6 +106,8 @@ impl Printer {
     /// # Examples
     ///
     /// ```
+    /// # use cursive::printer::Printer;
+    /// # let printer = Printer::new((6,4));
     /// printer.print_box((0,0), (6,4));
     /// ```
     pub fn print_box<T: ToVec2>(&self, start: T, size: T) {

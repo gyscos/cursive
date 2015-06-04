@@ -4,7 +4,7 @@
 //! It allows to easily build layouts for text-based applications.
 //!
 //! ## Example
-//! ```
+//! ```no_run
 //! extern crate cursive;
 //!
 //! use cursive::Cursive;
@@ -15,7 +15,7 @@
 //!
 //!     siv.add_layer(TextView::new("Hello World!\nPress q to quit."));
 //!
-//!     siv.add_global_callback('q' as i32, |s| s.quit());
+//!     siv.add_global_callback('q', |s| s.quit());
 //!
 //!     siv.run();
 //! }

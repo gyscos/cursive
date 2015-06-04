@@ -293,7 +293,7 @@ impl From<io::Error> for Error {
 ///
 /// Here is an example file:
 ///
-/// ```
+/// ```text
 /// background = "#5555FF"
 /// shadow     = "#000000"
 /// view       = "#888888"
