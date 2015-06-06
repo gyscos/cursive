@@ -48,6 +48,27 @@ A few notes :
 * The library is single-threaded. Thus, callback methods are blocking - careful what you're doing in there! Feel free to use threads on your side, though.
 * This goal is _not_ to have an equivalent to every ncurses function. You _can_ access the underlying ncurses window when creating your own custom views, so you can do what you want with that, but the main library will probably only use a subset of the ncurses features.
 
+Compatibility
+-------------
+
+First off, terminals are messy. A small set of features is standard, but beyond that, almost every terminal has its own implementation.
+
+I mostly test VTE-based terminals (Gnome & Xfce), with the occasional Konsole and xterm checks.
+
+### Output
+
+* **Colors**: the basic 8-colors palette should be broadly supported. User-defined colors is not supported in the raw linux TTY, but should work in most terminals, although it's still kinda experimental.
+* **UTF-8**: Currently Cursive really expects a UTF-8 locale. It may eventually get patched to support window borders on other locales, but it's not a priority.
+Also, Cursive currently expects every codepoint to be a one-column character, so some things may break with exotic characters...
+
+### Input
+
+The `key_codes` example can be a useful tool to see how the library reacts to various key presses.
+* **Basic set**: All simple key press (without shift, alt or ctrl pressed) should work in all terminals.
+* **Shift+keypress**: All characters keys (letters, numbers and punctuation) should work as expected.
+* **UTF-8**: UTF-8 input should work fine in a unicode-enabled terminal emulator, but raw linux TTY may be more capricious.
+* **Control codes**: 
+
 Contribute
 ----------
 
