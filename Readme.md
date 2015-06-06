@@ -63,11 +63,28 @@ Also, Cursive currently expects every codepoint to be a one-column character, so
 
 ### Input
 
-The `key_codes` example can be a useful tool to see how the library reacts to various key presses.
-* **Basic set**: All simple key press (without shift, alt or ctrl pressed) should work in all terminals.
-* **Shift+keypress**: All characters keys (letters, numbers and punctuation) should work as expected.
-* **UTF-8**: UTF-8 input should work fine in a unicode-enabled terminal emulator, but raw linux TTY may be more capricious.
-* **Control codes**: 
+* The `key_codes` example can be a useful tool to see how the library reacts to various key presses.
+* Keep in mind that if the terminal has shortcuts registered, they probably won't be transmitted to the app.
+* UTF-8 input should work fine in a unicode-enabled terminal emulator, but raw linux TTY may be more capricious.
+
+Here is the support table for input keys (All means Linux TTY and terminal emulators):
+
+|                          | Key  | Shift+Key              | Ctrl+Key                   | Shift+Ctrl+Key  |
+|--------------------------|:----:|:----------------------:|:--------------------------:|:---------------:|
+| Letters                  | All  | All                    | All (except c,z,q,s,i,h,m) | None            |
+| Numbers                  | All  | All                    | None (can crash the app)   | None            |
+| Punctuation              | All  | All                    | None (can crash the app)   | None            |
+| Enter, Esc               | All  | None                   | None                       | None            |
+| Left, Right arrow keys   | All  | VTE+Xterm              | VTE+Xterm                  | VTE+Xterm       |
+| Up, Down arrow keys      | All  | Xterm                  | VTE+Xterm                  | Xterm           |
+| Ins                      | All  | None (paste clipboard) | Xterm                      | None            |
+| Del                      | All  | VTE+Xterm              | VTE+Xterm                  | VTE+Xterm       |
+| Home, End                | All  | Xterm                  | Xterm                      | Xterm           |
+| PageUp, PageDown         | All  | None                   | Xterm                      | None            |
+| Fn keys: F1-F4           | All  | None (WIP)             | None (WIP)                 | None (WIP)      |
+| Fn keys: F5-F12          | All  | VTE+Xterm (WIP)        | VTE+Xterm (WIP)            | VTE+Xterm (WIP) |
+| PrtScn, ScrollLock       | None | None                   | None                       | None            |
+| Window, Menu             | None | None                   | None                       | None            |
 
 Contribute
 ----------
