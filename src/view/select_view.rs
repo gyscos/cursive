@@ -1,7 +1,7 @@
 use std::cmp::min;
 use std::rc::Rc;
 
-use color;
+use theme::ColorPair;
 use ::Cursive;
 use align::*;
 use view::{View,IdView,SizeRequest,DimensionRequest};
@@ -123,10 +123,10 @@ impl <T: 'static> View for SelectView<T> {
 
         self.scrollbase.draw(printer, |printer,i| {
             let style = if i == self.focus {
-                if printer.focused { color::HIGHLIGHT }
-                else { color::HIGHLIGHT_INACTIVE }
+                if printer.focused { ColorPair::Highlight }
+                else { ColorPair::HighlightInactive }
             } else {
-                color::PRIMARY
+                ColorPair::Primary
             };
             printer.with_color(style, |printer| {
                 let l = self.items[i].label.chars().count();

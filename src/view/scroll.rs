@@ -1,6 +1,6 @@
 use std::cmp::{min,max};
 
-use color;
+use theme::ColorPair;
 use vec::Vec2;
 use printer::Printer;
 
@@ -88,8 +88,9 @@ impl ScrollBase {
     /// ```
     /// # use cursive::view::ScrollBase;
     /// # use cursive::printer::Printer;
+    /// # use cursive::theme;
     /// # let scrollbase = ScrollBase::new();
-    /// # let printer = Printer::new((5,1));
+    /// # let printer = Printer::new((5,1), theme::load_default());
     /// # let printer = &printer;
     /// let lines = ["Line 1", "Line number 2"];
     /// scrollbase.draw(printer, |printer, i| {
@@ -121,7 +122,7 @@ impl ScrollBase {
             // Now
             let start = steps * self.start_line / (1 + self.content_height - self.view_height);
 
-            let color = if printer.focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
+            let color = if printer.focused { ColorPair::Highlight } else { ColorPair::HighlightInactive };
 
             printer.print_vline((printer.size.x-1,0), printer.size.y, '|' as u64);
             printer.with_color(color, |printer| {

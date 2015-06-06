@@ -1,10 +1,10 @@
 use std::cmp::max;
 use std::any::Any;
 
-use color;
 use ::{Cursive};
 use align::*;
 use event::*;
+use theme::ColorPair;
 use view::{View,SizeRequest,DimensionRequest,Selector};
 use view::{Button,SizedView};
 use vec::{Vec2,Vec4,ToVec4};
@@ -139,7 +139,7 @@ impl View for Dialog {
             printer.print((x-2,0), "┤ ");
             printer.print((x+len,0), " ├");
 
-            printer.with_color(color::TITLE_PRIMARY, |p| p.print((x,0), &self.title));
+            printer.with_color(ColorPair::TitlePrimary, |p| p.print((x,0), &self.title));
         }
 
     }

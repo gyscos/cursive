@@ -1,7 +1,7 @@
 use view::{View,ViewWrapper,SizeRequest};
 use printer::Printer;
 use vec::Vec2;
-use color;
+use theme::ColorPair;
 
 /// Wrapper view that adds a shadow.
 ///
@@ -33,7 +33,7 @@ impl <T: View> ViewWrapper for ShadowView<T> {
 
     fn wrap_draw(&mut self, printer: &Printer) {
 
-        printer.with_color(color::PRIMARY, |printer| {
+        printer.with_color(ColorPair::Primary, |printer| {
             // Draw the view background
             for y in 1..printer.size.y-1 {
                 printer.print_hline((1,y), printer.size.x-2, ' ' as u64);
@@ -46,7 +46,7 @@ impl <T: View> ViewWrapper for ShadowView<T> {
         let h = printer.size.y-1;
         let w = printer.size.x-1;
 
-        printer.with_color(color::SHADOW, |printer| {
+        printer.with_color(ColorPair::Shadow, |printer| {
             printer.print_hline((2,h), w-1, ' ' as u64);
             printer.print_vline((w,2), h-1, ' ' as u64);
         });

@@ -48,3 +48,7 @@ path = "examples/key_codes.rs"
 [[example]]
 name = "select"
 path = "examples/select.rs"
+
+[[example]]
+name = "theme"
+path = "examples/theme.rs"

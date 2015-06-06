@@ -4,7 +4,7 @@ use std::cmp::min;
 
 use ncurses;
 
-use color;
+use theme::{ColorPair,Theme};
 use vec::{Vec2,ToVec2};
 
 /// Convenient interface to draw on a subset of the screen.
@@ -15,15 +15,18 @@ pub struct Printer {
     pub size: Vec2,
     /// Whether the view to draw is currently focused or not.
     pub focused: bool,
+    /// Currently used theme
+    pub theme: Theme,
 }
 
 impl Printer {
     /// Creates a new printer on the given window.
-    pub fn new<T: ToVec2>(size: T) -> Self {
+    pub fn new<T: ToVec2>(size: T, theme: Theme) -> Self {
         Printer {
             offset: Vec2::zero(),
             size: size.to_vec2(),
             focused: true,
+            theme: theme,
         }
     }
 
@@ -74,19 +77,17 @@ impl Printer {
     ///
     /// ```
     /// # use cursive::printer::Printer;
-    /// # use cursive::color;
-    /// # let printer = Printer::new((6,4));
-    /// printer.with_color(color::HIGHLIGHT, |printer| {
+    /// # use cursive::theme;
+    /// # let printer = Printer::new((6,4), theme::load_default());
+    /// printer.with_color(theme::ColorPair::Highlight, |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
     /// ```
-    pub fn with_color<'a, F>(&'a self, c: color::ThemeColor, f: F)
+    pub fn with_color<'a, F>(&'a self, c: ColorPair, f: F)
         where F: Fn(&Printer)
     {
-        ncurses::attron(ncurses::COLOR_PAIR(c));
-        f(self);
-        ncurses::attroff(ncurses::COLOR_PAIR(c));
-        ncurses::attron(ncurses::COLOR_PAIR(color::PRIMARY));
+        self.with_style(ncurses::COLOR_PAIR(c.ncurses_id()), f);
+        ncurses::attron(ncurses::COLOR_PAIR(ColorPair::Primary.ncurses_id()));
     }
 
     /// Same as `with_color`, but apply a ncurses style instead,
@@ -107,7 +108,8 @@ impl Printer {
     ///
     /// ```
     /// # use cursive::printer::Printer;
-    /// # let printer = Printer::new((6,4));
+    /// # use cursive::theme;
+    /// # let printer = Printer::new((6,4), theme::load_default());
     /// printer.print_box((0,0), (6,4));
     /// ```
     pub fn print_box<T: ToVec2>(&self, start: T, size: T) {
@@ -133,6 +135,7 @@ impl Printer {
             // We can't be larger than what remains
             size: Vec2::min(self.size - offset_v, size.to_vec2()),
             focused: self.focused && focused,
+            theme: self.theme.clone(),
         }
     }
 }

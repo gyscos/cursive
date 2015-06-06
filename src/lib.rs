@@ -27,7 +27,7 @@ pub mod event;
 pub mod view;
 pub mod printer;
 pub mod vec;
-pub mod color;
+pub mod theme;
 pub mod align;
 
 mod div;
@@ -36,6 +36,7 @@ mod utf8;
 use std::any::Any;
 use std::rc::Rc;
 use std::collections::HashMap;
+use std::path::Path;
 
 use vec::Vec2;
 use view::View;
@@ -62,6 +63,8 @@ pub struct Cursive {
     running: bool,
 
     global_callbacks: HashMap<Event, Rc<Callback>>,
+
+    theme: theme::Theme,
 }
 
 impl Cursive {
@@ -76,22 +79,38 @@ impl Cursive {
         ncurses::cbreak();
         ncurses::start_color();
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-        color::load_legacy();
-        // color::load_default();
-        // color::load_theme("assets/style.toml").ok().unwrap();
+        let theme = theme::load_default();
+        // let theme = theme::load_theme("assets/style.toml").unwrap();
 
-        ncurses::wbkgd(ncurses::stdscr, ncurses::COLOR_PAIR(color::BACKGROUND));
+        ncurses::wbkgd(ncurses::stdscr, ncurses::COLOR_PAIR(theme::ColorPair::Background.ncurses_id()));
 
         let mut res = Cursive {
             screens: Vec::new(),
             active_screen: 0,
             running: true,
             global_callbacks: HashMap::new(),
+            theme: theme,
         };
 
         res.screens.push(StackView::new());
 
         res
+    }
+
+    /// Returns the currently used theme
+    pub fn current_theme(&self) -> &theme::Theme {
+        &self.theme
+    }
+
+    /// Loads a theme from the given file.
+    ///
+    /// Returns TRUE if the theme was successfully loaded.
+    pub fn load_theme<P: AsRef<Path>>(&mut self, filename: P) -> bool {
+        match theme::load_theme(filename) {
+            Err(err) => return false,
+            Ok(theme) => self.theme = theme,
+        }
+        true
     }
 
     /// Regularly redraws everything, even when no input is given. Between 0 and 1000.
@@ -193,7 +212,7 @@ impl Cursive {
     }
 
     fn draw(&mut self) {
-        let printer = Printer::new(self.screen_size());
+        let printer = Printer::new(self.screen_size(), self.theme.clone());
         self.screen_mut().draw(&printer);
         ncurses::refresh();
     }

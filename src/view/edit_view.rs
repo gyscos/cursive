@@ -1,6 +1,6 @@
 use ncurses;
 
-use color;
+use theme::ColorPair;
 use vec::Vec2;
 use view::{View,SizeRequest};
 use event::*;
@@ -60,7 +60,7 @@ impl View for EditView {
     fn draw(&mut self, printer: &Printer) {
         // let style = if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
         let len = self.content.chars().count();
-        printer.with_color(color::SECONDARY, |printer| {
+        printer.with_color(ColorPair::Secondary, |printer| {
             printer.with_style(ncurses::A_REVERSE(), |printer| {
                 printer.print((0,0), &self.content);
                 printer.print_hline((len,0), printer.size.x-len, '_' as u64);
