@@ -168,7 +168,7 @@ pub struct ColorStyle {
 
 impl ColorStyle {
     fn load(&mut self, table: &toml::Table) {
-        let mut new_id = 8;
+        let mut new_id = 16;
 
         self.background.load(table, "background", &mut new_id);
         self.shadow.load(table, "shadow", &mut new_id);
@@ -273,6 +273,10 @@ impl Color {
             return None;
         }
 
+        if *new_id >= ncurses::COLORS as i16 {
+            return None;
+        }
+
         let s = &value[1..];
         let (l,max) = match s.len() {
             6 => (2,255),
@@ -320,13 +324,6 @@ impl Color {
 }
 
 
-/// Loads the default theme, and returns its representation.
-pub fn load_default() -> Theme {
-    let theme = Theme::default();
-    theme.apply();
-    theme
-}
-
 /// Loads a theme file, and returns its representation if everything worked well.
 ///
 /// The file should be a toml file. All fields are optional. Here is are the possible entries:
@@ -335,7 +332,7 @@ pub fn load_default() -> Theme {
 /// # Every field in a theme file is optional.
 /// 
 /// shadow = false
-/// borders = "simple", # Alternatives are "none" and "outset"
+/// borders = "simple" # Alternatives are "none" and "outset"
 /// 
 /// # Base colors are red, green, blue,
 /// # cyan, magenta, yellow, white and black.
@@ -381,6 +378,13 @@ pub fn load_theme<P: AsRef<Path>>(filename: P) -> Result<Theme,Error> {
     theme.apply();
 
     Ok(theme)
+}
+
+/// Loads the default theme, and returns its representation.
+pub fn load_default() -> Theme {
+    let theme = Theme::default();
+    theme.apply();
+    theme
 }
 
 /// Loads a hexadecimal code

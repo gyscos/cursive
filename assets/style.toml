@@ -6,11 +6,11 @@ borders = "simple" # Alternatives are "none" and "outset"
 # Base colors are red, green, blue,
 # cyan, magenta, yellow, white and black.
 [colors]
-	background = "#123456"
+	background = ["#923456", "magenta"]
 	# If the value is an array, the first valid color will be used.
 	# If the terminal doesn't support custom color,
 	# non-base colors will be skipped.
-	shadow     = ["#222222", "black"]
+	shadow     = ["#222222", "blue"]
 	view       = "#888888"
 
 	# Array and simple values have the same effect.
