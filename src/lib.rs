@@ -107,7 +107,7 @@ impl Cursive {
     /// Returns TRUE if the theme was successfully loaded.
     pub fn load_theme<P: AsRef<Path>>(&mut self, filename: P) -> bool {
         match theme::load_theme(filename) {
-            Err(err) => return false,
+            Err(_) => return false,
             Ok(theme) => self.theme = theme,
         }
         true
