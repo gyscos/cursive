@@ -47,16 +47,21 @@ pub enum Key {
     ShiftDel,
     CtrlDel,
     CtrlShiftDel,
-    /// Insert key
+    /// Insert key.
     Ins,
+    /// Insert key while ctrl is pressed.
     CtrlIns,
-    /// Escape key. Often buffered by the terminal,
-    /// may appear with a delay or along with the next key.
+    /// Escape key.
     Esc,
-    // Left arrow while shift is pressed
+    /// The 5 in the center of the keypad, when numlock is disabled.
+    NumpadCenter,
     CtrlPageUp,
     CtrlPageDown,
+    ShiftUp,
+    ShiftDown,
+    /// Left arrow while shift is pressed.
     ShiftLeft,
+    /// Right arrow while shift is pressed.
     ShiftRight,
     CtrlShiftLeft,
     CtrlShiftRight,
@@ -105,6 +110,7 @@ impl Key {
             557 => Key::CtrlShiftRight,
             562 => Key::CtrlUp,
             563 => Key::CtrlShiftUp,
+            ncurses::KEY_B2 => Key::NumpadCenter,
             ncurses::KEY_DC => Key::Del,
             ncurses::KEY_IC => Key::Ins,
             ncurses::KEY_BTAB => Key::ShiftTab,
@@ -114,6 +120,8 @@ impl Key {
             ncurses::KEY_RIGHT => Key::Right,
             ncurses::KEY_UP => Key::Up,
             ncurses::KEY_DOWN => Key::Down,
+            ncurses::KEY_SR => Key::ShiftUp,
+            ncurses::KEY_SF => Key::ShiftDown,
             ncurses::KEY_PPAGE => Key::PageUp,
             ncurses::KEY_NPAGE => Key::PageDown,
             ncurses::KEY_HOME => Key::Home,
@@ -146,6 +154,7 @@ impl fmt::Display for Key {
             Key::CtrlF(n) => write!(f, "Ctrl-F{}", n),
             Key::CtrlShiftF(n) => write!(f, "Ctrl-Shift-F{}", n),
             key => write!(f, "{}", match key {
+                Key::NumpadCenter => "Numpad center",
                 Key::Left => "Left",
                 Key::Right => "Right",
                 Key::Down => "Down",
@@ -154,6 +163,8 @@ impl fmt::Display for Key {
                 Key::CtrlShiftRight => "Ctrl-Shift-Right",
                 Key::CtrlShiftUp => "Ctrl-Shift-Up",
                 Key::CtrlShiftDown => "Ctrl-Shift-Down",
+                Key::ShiftUp => "Shift-Up",
+                Key::ShiftDown => "Shift-Down",
                 Key::ShiftLeft => "Shift-Left",
                 Key::ShiftRight => "Shift-Right",
                 Key::ShiftDel => "Shift-Del",
