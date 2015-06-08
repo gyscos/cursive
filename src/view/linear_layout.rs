@@ -110,8 +110,8 @@ impl View for LinearLayout {
     fn draw(&mut self, printer: &Printer) {
         // Use pre-computed sizes
         let mut offset = Vec2::zero();
-        for child in self.children.iter_mut() {
-            child.view.draw(&printer.sub_printer(offset, child.size, true));
+        for (i,child) in self.children.iter_mut().enumerate() {
+            child.view.draw(&printer.sub_printer(offset, child.size, i == self.focus));
 
             *self.orientation.get_ref(&mut offset) += self.orientation.get(&child.size);
         }
