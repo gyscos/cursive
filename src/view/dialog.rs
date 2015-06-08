@@ -107,7 +107,8 @@ impl View for Dialog {
         let mut height = 0;
         // Current horizontal position of the next button we'll draw.
 
-        let width = self.buttons.len() + self.buttons.iter().map(|button| button.size.x).fold(0, |a,b| a+b);
+        // Sum of the sizes + len-1 for margins
+        let width = self.buttons.iter().map(|button| button.size.x).fold(0, |a,b| a+b) + self.buttons.len() - 1;
         let overhead = self.padding + self.borders;
         let mut offset = overhead.left + self.align.h.get_offset(width, printer.size.x - overhead.horizontal());
         let y = printer.size.y - self.padding.bottom - self.borders.bottom - 1;
