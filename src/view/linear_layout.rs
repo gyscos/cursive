@@ -2,6 +2,7 @@ use view::{View,SizeRequest,DimensionRequest};
 use vec::Vec2;
 use printer::Printer;
 use orientation::Orientation;
+use event::{Event,EventResult,Key};
 
 struct Child {
     view: Box<View>,
@@ -12,6 +13,7 @@ struct Child {
 pub struct LinearLayout {
     children: Vec<Child>,
     orientation: Orientation,
+    focus: usize,
 }
 
 
@@ -20,6 +22,7 @@ impl LinearLayout {
         LinearLayout {
             children: Vec::new(),
             orientation: orientation,
+            focus: 0,
         }
     }
 
@@ -153,5 +156,38 @@ impl View for LinearLayout {
         // Could we squash him a little?
 
         // Find out who's fluid, if any.
+    }
+
+    fn on_event(&mut self, event: Event) -> EventResult {
+        match self.children[self.focus].view.on_event(event) {
+            EventResult::Ignored => match event {
+                Event::KeyEvent(Key::Tab) if self.focus > 0 => {
+                    self.focus -= 1;
+                    EventResult::Consumed(None)
+                },
+                Event::KeyEvent(Key::ShiftTab) if self.focus+1 < self.children.len() => {
+                    self.focus += 1;
+                    EventResult::Consumed(None)
+                }
+                Event::KeyEvent(Key::Left) if self.orientation == Orientation::Horizontal && self.focus > 0 => {
+                    self.focus -= 1;
+                    EventResult::Consumed(None)
+                },
+                Event::KeyEvent(Key::Up) if self.orientation == Orientation::Vertical && self.focus > 0 => {
+                    self.focus -= 1;
+                    EventResult::Consumed(None)
+                },
+                Event::KeyEvent(Key::Right) if self.orientation == Orientation::Horizontal && self.focus+1 < self.children.len() => {
+                    self.focus += 1;
+                    EventResult::Consumed(None)
+                },
+                Event::KeyEvent(Key::Down) if self.orientation == Orientation::Vertical && self.focus+1 < self.children.len() => {
+                    self.focus += 1;
+                    EventResult::Consumed(None)
+                },
+                _ => EventResult::Ignored,
+            },
+            res => res,
+        }
     }
 }

@@ -1,5 +1,6 @@
 use vec::Vec2;
 
+#[derive(Clone,Copy,PartialEq)]
 pub enum Orientation {
     Horizontal,
     Vertical,
