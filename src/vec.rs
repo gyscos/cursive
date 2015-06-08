@@ -4,7 +4,7 @@ use std::ops::{Add, Sub, Mul, Div};
 use std::cmp::{min,max,Ordering};
 
 /// Simple 2D size, in characters.
-#[derive(Clone,Copy,PartialEq)]
+#[derive(Clone,Copy,PartialEq,Debug)]
 pub struct Vec2 {
     /// X coordinate (column), from left to right.
     pub x: usize,

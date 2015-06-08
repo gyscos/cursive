@@ -29,6 +29,7 @@ pub mod printer;
 pub mod vec;
 pub mod theme;
 pub mod align;
+pub mod orientation;
 
 mod div;
 mod utf8;

@@ -1,6 +1,7 @@
 use view::{View,SizeRequest,DimensionRequest};
 use vec::Vec2;
 use printer::Printer;
+use orientation::Orientation;
 
 struct Child {
     view: Box<View>,
@@ -13,40 +14,6 @@ pub struct LinearLayout {
     orientation: Orientation,
 }
 
-pub enum Orientation {
-    Horizontal,
-    Vertical,
-}
-
-impl Orientation {
-    fn get(&self, v: &Vec2) -> usize {
-        match *self {
-            Orientation::Horizontal => v.x,
-            Orientation::Vertical => v.y,
-        }
-    }
-
-    fn swap(&self) -> Self {
-        match *self {
-            Orientation::Horizontal => Orientation::Vertical,
-            Orientation::Vertical => Orientation::Horizontal,
-        }
-    }
-
-    fn get_ref<'a,'b>(&'a self, v: &'b mut Vec2) -> &'b mut usize {
-        match *self {
-            Orientation::Horizontal => &mut v.x,
-            Orientation::Vertical => &mut v.y,
-        }
-    }
-
-    fn stack<'a,T: Iterator<Item=&'a Vec2>>(&self, iter: T) -> Vec2 {
-        match *self {
-            Orientation::Horizontal => iter.fold(Vec2::zero(), |a,b| a.stack_horizontal(&b)),
-            Orientation::Vertical => iter.fold(Vec2::zero(), |a,b| a.stack_vertical(&b)),
-        }
-    }
-}
 
 impl LinearLayout {
     pub fn new(orientation: Orientation) -> Self {
@@ -126,6 +93,7 @@ impl View for LinearLayout {
         // Use pre-computed sizes
         let mut offset = Vec2::zero();
         for child in self.children.iter_mut() {
+            println!("Drawing at {:?} for {:?}", offset, child.size);
             child.view.draw(&printer.sub_printer(offset, child.size, true));
 
             *self.orientation.get_ref(&mut offset) += self.orientation.get(&child.size);
@@ -133,6 +101,7 @@ impl View for LinearLayout {
     }
 
     fn layout(&mut self, size: Vec2) {
+        println!("LAYOUT!!");
         // Compute the very minimal required size
         let req = SizeRequest{
             w: DimensionRequest::AtMost(size.x),
@@ -145,6 +114,7 @@ impl View for LinearLayout {
         // (default comparison on Vec2 is strict)
         if !(min_size < size+(1,1)) {
             // Error! Not enough space! Emergency procedures!
+            println!("Min: {:?}, size: {:?}", min_size, size);
             return
         }
 
@@ -156,7 +126,10 @@ impl View for LinearLayout {
             share(space, self.children.iter().map(|child| child.weight).collect())
         };
 
+        println!("Sizes: {}, {}, {}", self.children.len(), min_sizes.len(), extras.len());
+
         for (child,(child_size,extra)) in self.children.iter_mut().zip(min_sizes.iter().zip(extras.iter())) {
+            println!("Child size: {:?}", child_size);
             let mut child_size = *child_size;
             *self.orientation.get_ref(&mut child_size) += *extra;
             *self.orientation.swap().get_ref(&mut child_size) = self.orientation.swap().get(&size);
@@ -168,6 +141,7 @@ impl View for LinearLayout {
     fn get_min_size(&self, req: SizeRequest) -> Vec2 {
         // First, make a naive scenario: everything will work fine.
         let sizes: Vec<Vec2> = self.children.iter().map(|view| view.view.get_min_size(req)).collect();
+        println!("Views size: {:?}", sizes);
         self.orientation.stack(sizes.iter())
 
 

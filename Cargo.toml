@@ -52,3 +52,7 @@ path = "examples/select.rs"
 [[example]]
 name = "theme"
 path = "examples/theme.rs"
+
+[[example]]
+name = "linear"
+path = "examples/linear.rs"
