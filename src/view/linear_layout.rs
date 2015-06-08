@@ -4,20 +4,21 @@ use printer::Printer;
 use orientation::Orientation;
 use event::{Event,EventResult,Key};
 
-struct Child {
-    view: Box<View>,
-    size: Vec2,
-    weight: usize,
-}
-
+/// Arranges its children linearly according to its orientation.
 pub struct LinearLayout {
     children: Vec<Child>,
     orientation: Orientation,
     focus: usize,
 }
 
+struct Child {
+    view: Box<View>,
+    size: Vec2,
+    weight: usize,
+}
 
 impl LinearLayout {
+    /// Creates a new layout with the given orientation.
     pub fn new(orientation: Orientation) -> Self {
         LinearLayout {
             children: Vec::new(),
@@ -26,12 +27,16 @@ impl LinearLayout {
         }
     }
 
+    /// Modifies the weight of the last child added.
+    ///
+    /// It is an error to call this before adding a child (and it will panic).
     pub fn weight(mut self, weight: usize) -> Self {
         self.children.last_mut().unwrap().weight = weight;
 
         self
     }
 
+    /// Adds a child to the layout.
     pub fn child<V: View + 'static>(mut self, view: V) -> Self {
         self.children.push(Child {
             view: Box::new(view),
@@ -42,14 +47,19 @@ impl LinearLayout {
         self
     }
 
+    /// Creates a new vertical layout.
     pub fn vertical() -> Self {
         LinearLayout::new(Orientation::Vertical)
     }
+
+    /// Creates a new horizontal layout.
     pub fn horizontal() -> Self {
         LinearLayout::new(Orientation::Horizontal)
     }
 }
 
+/// Returns the index of the maximum element.
+/// WTF isn't it part of standard library??
 fn find_max(list: &Vec<usize>) -> usize {
     let mut max_value = 0;
     let mut max = 0;
@@ -62,7 +72,12 @@ fn find_max(list: &Vec<usize>) -> usize {
     max
 }
 
+/// Given a total number of points and a list of weights,
+/// try to share the points according to the weight,
+/// rounding properly and conserving the sum of points.
 fn share(total: usize, weights: Vec<usize>) -> Vec<usize> {
+    // It first give a base value to everyone, which is their truncated share.
+    // Then, it gives the rest to the most deserving.
     if weights.len() == 0 { return Vec::new(); }
 
     let sum_weight = weights.iter().fold(0,|a,b| a+b);
@@ -96,7 +111,6 @@ impl View for LinearLayout {
         // Use pre-computed sizes
         let mut offset = Vec2::zero();
         for child in self.children.iter_mut() {
-            println!("Drawing at {:?} for {:?}", offset, child.size);
             child.view.draw(&printer.sub_printer(offset, child.size, true));
 
             *self.orientation.get_ref(&mut offset) += self.orientation.get(&child.size);
@@ -104,7 +118,6 @@ impl View for LinearLayout {
     }
 
     fn layout(&mut self, size: Vec2) {
-        println!("LAYOUT!!");
         // Compute the very minimal required size
         let req = SizeRequest{
             w: DimensionRequest::AtMost(size.x),
@@ -117,7 +130,6 @@ impl View for LinearLayout {
         // (default comparison on Vec2 is strict)
         if !(min_size < size+(1,1)) {
             // Error! Not enough space! Emergency procedures!
-            println!("Min: {:?}, size: {:?}", min_size, size);
             return
         }
 
@@ -129,10 +141,8 @@ impl View for LinearLayout {
             share(space, self.children.iter().map(|child| child.weight).collect())
         };
 
-        println!("Sizes: {}, {}, {}", self.children.len(), min_sizes.len(), extras.len());
 
         for (child,(child_size,extra)) in self.children.iter_mut().zip(min_sizes.iter().zip(extras.iter())) {
-            println!("Child size: {:?}", child_size);
             let mut child_size = *child_size;
             *self.orientation.get_ref(&mut child_size) += *extra;
             *self.orientation.swap().get_ref(&mut child_size) = self.orientation.swap().get(&size);
@@ -144,7 +154,6 @@ impl View for LinearLayout {
     fn get_min_size(&self, req: SizeRequest) -> Vec2 {
         // First, make a naive scenario: everything will work fine.
         let sizes: Vec<Vec2> = self.children.iter().map(|view| view.view.get_min_size(req)).collect();
-        println!("Views size: {:?}", sizes);
         self.orientation.stack(sizes.iter())
 
 

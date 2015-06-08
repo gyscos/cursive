@@ -20,6 +20,7 @@ pub enum EventResult {
     Consumed(Option<Rc<Callback>>),
 }
 
+/// Represents a key, or a combination of keys.
 #[derive(PartialEq,Eq,Clone,Copy,Hash)]
 pub enum Key {
     /// Both Enter and numpad Enter
@@ -200,9 +201,13 @@ impl fmt::Display for Key {
     }
 }
 
+/// Represents an event as seen by the application.
+///
 #[derive(PartialEq,Eq,Clone,Copy,Hash)]
 pub enum Event {
+    /// A text character was entered.
     CharEvent(char),
+    /// A key was pressed.
     KeyEvent(Key),
 }
 
