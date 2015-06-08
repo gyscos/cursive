@@ -39,8 +39,8 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use vec::Vec2;
-use view::View;
 use printer::Printer;
+use view::View;
 use view::{StackView,Selector};
 
 use event::{Event,ToEvent,Key,EventResult,Callback};

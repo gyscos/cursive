@@ -1,15 +1,24 @@
 //! Points on the 2D character grid.
 
 use std::ops::{Add, Sub, Mul, Div};
-use std::cmp::{min,max};
+use std::cmp::{min,max,Ordering};
 
 /// Simple 2D size, in characters.
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,PartialEq)]
 pub struct Vec2 {
     /// X coordinate (column), from left to right.
     pub x: usize,
     /// Y coordinate (row), from top to bottom.
     pub y: usize,
+}
+
+impl PartialOrd for Vec2 {
+    fn partial_cmp(&self, other: &Vec2) -> Option<Ordering> {
+        if self == other { Some(Ordering::Equal) }
+        else if self.x < other.x && self.y < other.y { Some(Ordering::Less) }
+        else if self.x > other.x && self.y > other.y { Some(Ordering::Greater) }
+        else { None }
+    }
 }
 
 impl Vec2 {
@@ -44,6 +53,16 @@ impl Vec2 {
     /// Alias for Vec::new(0,0).
     pub fn zero() -> Self {
         Vec2::new(0,0)
+    }
+
+    /// Returns (max(self.x,other.x), self.y+other.y)
+    pub fn stack_vertical(&self, other: &Vec2) -> Vec2 {
+        Vec2::new(max(self.x, other.x), self.y + other.y)
+    }
+
+    /// Returns (self.x+other.x, max(self.y,other.y))
+    pub fn stack_horizontal(&self, other: &Vec2) -> Vec2 {
+        Vec2::new(self.x + other.x, max(self.y, other.y))
     }
 }
 
