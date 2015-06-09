@@ -151,9 +151,10 @@ impl View for Dialog {
         let content_size = self.content.get_min_size(content_req);
 
         let mut buttons_size = Vec2::new(0,0);
+        if !self.buttons.is_empty() { buttons_size.x += self.buttons.len() - 1; }
         for button in self.buttons.iter() {
             let s = button.view.get_min_size(req);
-            buttons_size.x += s.x + 1;
+            buttons_size.x += s.x;
             buttons_size.y = max(buttons_size.y, s.y + 1);
         }
 
@@ -234,7 +235,7 @@ impl View for Dialog {
                         self.focus = Focus::Button(i+1);
                         EventResult::Consumed(None)
                     },
-                    Event::KeyEvent(Key::Right) if i > 0 => {
+                    Event::KeyEvent(Key::Left) if i > 0 => {
                         self.focus = Focus::Button(i-1);
                         EventResult::Consumed(None)
                     },
