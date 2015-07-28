@@ -47,11 +47,17 @@ impl <T: 'static> SelectView<T> {
         }
     }
 
-    /// Sets a function to be called when an item is selected (when ENTER is pressed).
-    pub fn on_select<F>(mut self, cb: F) -> Self
-        where F: Fn(&mut Cursive,&T) + 'static
+    pub fn set_on_select<F>(&mut self, cb: F)
+        where F: Fn(&mut Cursive, &T) + 'static
     {
         self.select_cb = Some(Rc::new(Box::new(cb)));
+    }
+
+    /// Sets a function to be called when an item is selected (when ENTER is pressed).
+    pub fn on_select<F>(mut self, cb: F) -> Self
+        where F: Fn(&mut Cursive, &T) + 'static
+    {
+        self.set_on_select(cb);
 
         self
     }

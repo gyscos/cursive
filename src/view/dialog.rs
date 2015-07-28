@@ -108,14 +108,22 @@ impl View for Dialog {
         // Current horizontal position of the next button we'll draw.
 
         // Sum of the sizes + len-1 for margins
-        let width = self.buttons.iter().map(|button| button.size.x).fold(0, |a,b| a+b) + self.buttons.len() - 1;
+        let width = if self.buttons.is_empty() {
+            0
+        } else {
+            self.buttons.iter()
+                .map(|button| button.size.x)
+                .fold(0, |a,b| a+b) +
+                self.buttons.len() - 1
+        };
         let overhead = self.padding + self.borders;
-        let mut offset = overhead.left + self.align.h.get_offset(width, printer.size.x - overhead.horizontal());
+        let mut offset = overhead.left +
+            self.align.h.get_offset(width, printer.size.x -
+                                    overhead.horizontal());
         let y = printer.size.y - self.padding.bottom - self.borders.bottom - 1;
 
         for (i,button) in self.buttons.iter_mut().enumerate() {
             let size = button.size;
-            // let offset = printer.size - self.borders.bot_right() - self.padding.bot_right() - size - Vec2::new(x, 0);
             // Add some special effect to the focused button
             button.draw(&printer.sub_printer(Vec2::new(offset, y), size, self.focus == Focus::Button(i)));
             // Keep 1 blank between two buttons
@@ -130,7 +138,10 @@ impl View for Dialog {
             - self.borders.combined()
             - self.padding.combined();
 
-        self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(), inner_size, self.focus == Focus::Content));
+        self.content.draw(&printer.sub_printer(self.borders.top_left() +
+                                               self.padding.top_left(),
+                                               inner_size,
+                                               self.focus == Focus::Content));
 
         printer.print_box(Vec2::new(0,0), printer.size);
 
@@ -140,18 +151,22 @@ impl View for Dialog {
             printer.print((x-2,0), "┤ ");
             printer.print((x+len,0), " ├");
 
-            printer.with_color(ColorPair::TitlePrimary, |p| p.print((x,0), &self.title));
+            printer.with_color(ColorPair::TitlePrimary,
+                               |p| p.print((x,0), &self.title));
         }
 
     }
 
     fn get_min_size(&self, req: SizeRequest) -> Vec2 {
         // Padding and borders are not available for kids.
-        let content_req = req.reduced(self.padding.combined() + self.borders.combined());
+        let content_req = req.reduced(self.padding.combined() +
+                                      self.borders.combined());
         let content_size = self.content.get_min_size(content_req);
 
         let mut buttons_size = Vec2::new(0,0);
-        if !self.buttons.is_empty() { buttons_size.x += self.buttons.len() - 1; }
+        if !self.buttons.is_empty() {
+            buttons_size.x += self.buttons.len() - 1;
+        }
         for button in self.buttons.iter() {
             let s = button.view.get_min_size(req);
             buttons_size.x += s.x;
