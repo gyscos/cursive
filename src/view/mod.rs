@@ -29,12 +29,12 @@ use printer::Printer;
 pub use self::request::{DimensionRequest,SizeRequest};
 pub use self::scroll::ScrollBase;
 
+pub use self::id_view::IdView;
 pub use self::box_view::BoxView;
 pub use self::button::Button;
 pub use self::dialog::Dialog;
 pub use self::edit_view::EditView;
 pub use self::full_view::FullView;
-pub use self::id_view::IdView;
 pub use self::key_event_view::KeyEventView;
 pub use self::linear_layout::LinearLayout;
 pub use self::view_path::ViewPath;

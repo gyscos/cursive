@@ -168,6 +168,11 @@ impl Cursive {
         }
     }
 
+    /// Convenient method to use `find` with a `Selector::Id`.
+    pub fn find_id<V: View + Any>(&mut self, id: &str) -> Option<&mut V> {
+        self.find(&Selector::Id(id))
+    }
+
     /// Adds a global callback, triggered on the given key press when no view catches it.
     pub fn add_global_callback<F,E: ToEvent>(&mut self, event: E, cb: F)
         where F: Fn(&mut Cursive) + 'static

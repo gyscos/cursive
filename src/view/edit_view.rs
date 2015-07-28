@@ -2,7 +2,7 @@ use ncurses;
 
 use theme::ColorPair;
 use vec::Vec2;
-use view::{View,SizeRequest};
+use view::{View,IdView,SizeRequest};
 use event::*;
 use printer::Printer;
 
@@ -45,6 +45,11 @@ impl EditView {
         self.min_length = min_length;
 
         self
+    }
+
+    /// Wraps this view into an IdView with the given id.
+    pub fn with_id(self, label: &str) -> IdView<Self> {
+        IdView::new(label, self)
     }
 }
 
