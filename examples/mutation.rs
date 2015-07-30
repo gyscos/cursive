@@ -1,14 +1,14 @@
 extern crate cursive;
 
 use cursive::Cursive;
-use cursive::view::{IdView,TextView,Dialog,Selector,KeyEventView};
+use cursive::view::{IdView,TextView,Dialog,KeyEventView};
 
 fn show_popup(siv: &mut Cursive) {
 
     siv.add_layer(Dialog::new(TextView::new("Tak!"))
                   .button("Change", |s| {
                       // Look for a view tagged "text". We _know_ it's there, so unwrap it.
-                      let view = s.find::<TextView>(&Selector::Id("text")).unwrap();
+                      let view = s.find_id::<TextView>("text").unwrap();
                       let content: String = view.get_content().chars().rev().collect();
                       view.set_content(&content);
                   })

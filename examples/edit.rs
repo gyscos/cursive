@@ -12,13 +12,16 @@ fn main() {
                   .title("Enter your name")
                   .button("Ok", |s| {
                       // When the button is clicked, read the text and print it in a new dialog.
-                      let content = {
-                          let name = s.find_id::<EditView>("edit").unwrap().get_content();
-                          format!("Hello {}!", name)
-                      };
-                      s.pop_layer();
-                      s.add_layer(Dialog::new(TextView::new(&content))
-                                  .button("Quit", |s| s.quit()));
+                      let name = s.find_id::<EditView>("edit").unwrap().get_content().to_string();
+                      if name.is_empty() {
+                          s.add_layer(Dialog::new(TextView::new("Please enter a name!"))
+                                      .dismiss_button("Ok"));
+                      } else {
+                          let content = format!("Hello {}!", name);
+                          s.pop_layer();
+                          s.add_layer(Dialog::new(TextView::new(&content))
+                                      .button("Quit", |s| s.quit()));
+                      }
                   }));
 
     siv.run();
