@@ -1,21 +1,16 @@
 [package]
-name = "cursive"
-version = "0.1.0"
 authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
 description = "A TUI library based on ncurses-rs"
-license = "MIT"
-repository = "https://github.com/Gyscos/cursive"
-readme = "Readme.md"
 keywords = ["ncurses", "TUI"]
-
-[lib]
+license = "MIT"
 name = "cursive"
+readme = "Readme.md"
+repository = "https://github.com/Gyscos/cursive"
+version = "0.1.0"
 
 [dependencies]
-toml = "0.1"
-
-[dependencies.ncurses]
-git = "https://github.com/jeaye/ncurses-rs"
+ncurses = "5.80.0"
+toml = "0.1.25"
 
 [[example]]
 name = "hello_world"
@@ -56,3 +51,6 @@ path = "examples/theme.rs"
 [[example]]
 name = "linear"
 path = "examples/linear.rs"
+
+[lib]
+name = "cursive"
