@@ -3,9 +3,10 @@
 use std::cmp::min;
 
 use ncurses;
+use ncurses::chtype;
 
-use theme::{ColorPair,Theme};
-use vec::{Vec2,ToVec2};
+use theme::{ColorPair, Theme};
+use vec::{Vec2, ToVec2};
 
 /// Convenient interface to draw on a subset of the screen.
 pub struct Printer {
@@ -33,12 +34,14 @@ impl Printer {
     /// Prints some text at the given position relative to the window.
     pub fn print<S: ToVec2>(&self, pos: S, text: &str) {
         let p = pos.to_vec2();
-        if p.y >= self.size.y || p.x >= self.size.x { return; }
+        if p.y >= self.size.y || p.x >= self.size.x {
+            return;
+        }
         // Do we have enough room for the entire line?
         let room = self.size.x - p.x;
         // We want the number of CHARACTERS, not bytes.
         let text = match text.char_indices().nth(room) {
-            Some((i,_)) => &text[..i],
+            Some((i, _)) => &text[..i],
             _ => text,
         };
 
@@ -51,9 +54,11 @@ impl Printer {
     }
 
     /// Prints a vertical line using the given character.
-    pub fn print_vline<T: ToVec2>(&self, start: T, len: usize, c: u64) {
+    pub fn print_vline<T: ToVec2>(&self, start: T, len: usize, c: chtype) {
         let p = start.to_vec2();
-        if p.y > self.size.y || p.x > self.size.x { return; }
+        if p.y > self.size.y || p.x > self.size.x {
+            return;
+        }
         let len = min(len, self.size.y - p.y);
 
         let p = p + self.offset;
@@ -61,9 +66,11 @@ impl Printer {
     }
 
     /// Prints a horizontal line using the given character.
-    pub fn print_hline<T: ToVec2>(&self, start: T, len: usize, c: u64) {
+    pub fn print_hline<T: ToVec2>(&self, start: T, len: usize, c: chtype) {
         let p = start.to_vec2();
-        if p.y > self.size.y || p.x > self.size.x { return; }
+        if p.y > self.size.y || p.x > self.size.x {
+            return;
+        }
         let len = min(len, self.size.x - p.x);
 
         let p = p + self.offset;
@@ -114,17 +121,21 @@ impl Printer {
     /// ```
     pub fn print_box<T: ToVec2>(&self, start: T, size: T) {
         let start_v = start.to_vec2();
-        let size_v = size.to_vec2() - (1,1);
+        let size_v = size.to_vec2() - (1, 1);
 
         self.print(start_v, "┌");
         self.print(start_v + size_v.keep_x(), "┐");
         self.print(start_v + size_v.keep_y(), "└");
         self.print(start_v + size_v, "┘");
 
-        self.print_hline(start_v + (1,0), size_v.x - 1, ncurses::ACS_HLINE());
-        self.print_vline(start_v + (0,1), size_v.y - 1, ncurses::ACS_VLINE());
-        self.print_hline(start_v + (1,0) + size_v.keep_y(), size_v.x - 1, ncurses::ACS_HLINE());
-        self.print_vline(start_v + (0,1) + size_v.keep_x(), size_v.y - 1, ncurses::ACS_VLINE());
+        self.print_hline(start_v + (1, 0), size_v.x - 1, ncurses::ACS_HLINE());
+        self.print_vline(start_v + (0, 1), size_v.y - 1, ncurses::ACS_VLINE());
+        self.print_hline(start_v + (1, 0) + size_v.keep_y(),
+                         size_v.x - 1,
+                         ncurses::ACS_HLINE());
+        self.print_vline(start_v + (0, 1) + size_v.keep_x(),
+                         size_v.y - 1,
+                         ncurses::ACS_VLINE());
     }
 
     /// Returns a printer on a subset of this one's area.

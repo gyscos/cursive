@@ -1,7 +1,7 @@
 //! Points on the 2D character grid.
 
 use std::ops::{Add, Sub, Mul, Div};
-use std::cmp::{min,max,Ordering};
+use std::cmp::{min, max, Ordering};
 
 /// Simple 2D size, in characters.
 #[derive(Clone,Copy,PartialEq,Debug)]
@@ -14,20 +14,22 @@ pub struct Vec2 {
 
 impl PartialOrd for Vec2 {
     fn partial_cmp(&self, other: &Vec2) -> Option<Ordering> {
-        if self == other { Some(Ordering::Equal) }
-        else if self.x < other.x && self.y < other.y { Some(Ordering::Less) }
-        else if self.x > other.x && self.y > other.y { Some(Ordering::Greater) }
-        else { None }
+        if self == other {
+            Some(Ordering::Equal)
+        } else if self.x < other.x && self.y < other.y {
+            Some(Ordering::Less)
+        } else if self.x > other.x && self.y > other.y {
+            Some(Ordering::Greater)
+        } else {
+            None
+        }
     }
 }
 
 impl Vec2 {
     /// Creates a new Vec2 from coordinates.
     pub fn new(x: usize, y: usize) -> Self {
-        Vec2 {
-            x: x,
-            y: y,
-        }
+        Vec2 { x: x, y: y }
     }
 
     /// Returns a new Vec2 that is a maximum per coordinate.
@@ -52,7 +54,7 @@ impl Vec2 {
 
     /// Alias for Vec::new(0,0).
     pub fn zero() -> Self {
-        Vec2::new(0,0)
+        Vec2::new(0, 0)
     }
 
     /// Returns (max(self.x,other.x), self.y+other.y)
@@ -199,7 +201,9 @@ pub trait ToVec4 {
 }
 
 impl ToVec4 for Vec4 {
-    fn to_vec4(self) -> Vec4 { self }
+    fn to_vec4(self) -> Vec4 {
+        self
+    }
 }
 
 impl ToVec4 for (usize,usize,usize,usize) {
@@ -210,7 +214,10 @@ impl ToVec4 for (usize,usize,usize,usize) {
 
 impl ToVec4 for (i32,i32,i32,i32) {
     fn to_vec4(self) -> Vec4 {
-        Vec4::new(self.0 as usize, self.1 as usize, self.2 as usize, self.3 as usize)
+        Vec4::new(self.0 as usize,
+                  self.1 as usize,
+                  self.2 as usize,
+                  self.3 as usize)
     }
 }
 
@@ -270,4 +277,3 @@ impl Mul<usize> for Vec4 {
         }
     }
 }
-

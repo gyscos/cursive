@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use view::{View,ViewWrapper,Selector};
+use view::{View, ViewWrapper, Selector};
 
 /// Wrapper view that allows to select its content with a fixed string id.
 pub struct IdView<T: View> {

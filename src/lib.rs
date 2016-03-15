@@ -42,9 +42,9 @@ use std::path::Path;
 use vec::Vec2;
 use printer::Printer;
 use view::View;
-use view::{StackView,Selector};
+use view::{StackView, Selector};
 
-use event::{Event,ToEvent,Key,EventResult,Callback};
+use event::{Event, ToEvent, Key, EventResult, Callback};
 
 /// Identifies a screen in the cursive ROOT.
 pub type ScreenId = usize;
@@ -83,7 +83,8 @@ impl Cursive {
         let theme = theme::load_default();
         // let theme = theme::load_theme("assets/style.toml").unwrap();
 
-        ncurses::wbkgd(ncurses::stdscr, ncurses::COLOR_PAIR(theme::ColorPair::Background.ncurses_id()));
+        ncurses::wbkgd(ncurses::stdscr,
+                       ncurses::COLOR_PAIR(theme::ColorPair::Background.ncurses_id()));
 
         let mut res = Cursive {
             screens: Vec::new(),
@@ -148,7 +149,9 @@ impl Cursive {
     /// Sets the active screen. Panics if no such screen exist.
     pub fn set_screen(&mut self, screen_id: ScreenId) {
         if screen_id >= self.screens.len() {
-            panic!("Tried to set an invalid screen ID: {}, but only {} screens present.", screen_id, self.screens.len());
+            panic!("Tried to set an invalid screen ID: {}, but only {} screens present.",
+                   screen_id,
+                   self.screens.len());
         }
         self.active_screen = screen_id;
     }
@@ -174,7 +177,7 @@ impl Cursive {
     }
 
     /// Adds a global callback, triggered on the given key press when no view catches it.
-    pub fn add_global_callback<F,E: ToEvent>(&mut self, event: E, cb: F)
+    pub fn add_global_callback<F, E: ToEvent>(&mut self, event: E, cb: F)
         where F: Fn(&mut Cursive) + 'static
     {
         self.global_callbacks.insert(event.to_event(), Rc::new(Box::new(cb)));
@@ -275,4 +278,3 @@ impl Drop for Cursive {
         ncurses::endwin();
     }
 }
-

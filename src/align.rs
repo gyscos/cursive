@@ -9,10 +9,7 @@ pub struct Align {
 impl Align {
     /// Creates a new Align object from the given horizontal and vertical alignments.
     pub fn new(h: HAlign, v: VAlign) -> Self {
-        Align {
-            h: h,
-            v: v,
-        }
+        Align { h: h, v: v }
     }
 
     /// Creates a top-left alignment.
@@ -61,7 +58,7 @@ impl HAlign {
     pub fn get_offset(&self, content: usize, container: usize) -> usize {
         match *self {
             HAlign::Left => 0,
-            HAlign::Center => (container - content)/2,
+            HAlign::Center => (container - content) / 2,
             HAlign::Right => (container - content),
         }
     }
@@ -73,7 +70,7 @@ impl VAlign {
     pub fn get_offset(&self, content: usize, container: usize) -> usize {
         match *self {
             VAlign::Top => 0,
-            VAlign::Center => (container - content)/2,
+            VAlign::Center => (container - content) / 2,
             VAlign::Bottom => (container - content),
         }
     }

@@ -1,13 +1,13 @@
 use std::cmp::max;
 use std::any::Any;
 
-use ::{Cursive};
+use Cursive;
 use align::*;
 use event::*;
 use theme::ColorPair;
-use view::{View,SizeRequest,DimensionRequest,Selector};
-use view::{Button,SizedView};
-use vec::{Vec2,Vec4,ToVec4};
+use view::{View, SizeRequest, DimensionRequest, Selector};
+use view::{Button, SizedView};
+use vec::{Vec2, Vec4, ToVec4};
 use printer::Printer;
 
 #[derive(PartialEq)]
@@ -46,8 +46,8 @@ impl Dialog {
             buttons: Vec::new(),
             title: String::new(),
             focus: Focus::Content,
-            padding: Vec4::new(1,1,0,0),
-            borders: Vec4::new(1,1,1,1),
+            padding: Vec4::new(1, 1, 0, 0),
+            borders: Vec4::new(1, 1, 1, 1),
             align: Align::top_right(),
         }
     }
@@ -111,59 +111,55 @@ impl View for Dialog {
         let width = if self.buttons.is_empty() {
             0
         } else {
-            self.buttons.iter()
+            self.buttons
+                .iter()
                 .map(|button| button.size.x)
-                .fold(0, |a,b| a+b) +
-                self.buttons.len() - 1
+                .fold(0, |a, b| a + b) + self.buttons.len() - 1
         };
         let overhead = self.padding + self.borders;
         let mut offset = overhead.left +
-            self.align.h.get_offset(width, printer.size.x -
-                                    overhead.horizontal());
+                         self.align.h.get_offset(width, printer.size.x - overhead.horizontal());
         let y = printer.size.y - self.padding.bottom - self.borders.bottom - 1;
 
-        for (i,button) in self.buttons.iter_mut().enumerate() {
+        for (i, button) in self.buttons.iter_mut().enumerate() {
             let size = button.size;
             // Add some special effect to the focused button
-            button.draw(&printer.sub_printer(Vec2::new(offset, y), size, self.focus == Focus::Button(i)));
+            button.draw(&printer.sub_printer(Vec2::new(offset, y),
+                                             size,
+                                             self.focus == Focus::Button(i)));
             // Keep 1 blank between two buttons
             offset += size.x + 1;
             // Also keep 1 blank above the buttons
-            height = max(height, size.y+1);
+            height = max(height, size.y + 1);
         }
 
         // What do we have left?
-        let inner_size = printer.size
-            - Vec2::new(0, height)
-            - self.borders.combined()
-            - self.padding.combined();
+        let inner_size = printer.size - Vec2::new(0, height) - self.borders.combined() -
+                         self.padding.combined();
 
-        self.content.draw(&printer.sub_printer(self.borders.top_left() +
-                                               self.padding.top_left(),
+        self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(),
                                                inner_size,
                                                self.focus == Focus::Content));
 
-        printer.print_box(Vec2::new(0,0), printer.size);
+        printer.print_box(Vec2::new(0, 0), printer.size);
 
         if self.title.len() > 0 {
             let len = self.title.chars().count();
             let x = (printer.size.x - len) / 2;
-            printer.print((x-2,0), "┤ ");
-            printer.print((x+len,0), " ├");
+            printer.print((x - 2, 0), "┤ ");
+            printer.print((x + len, 0), " ├");
 
-            printer.with_color(ColorPair::TitlePrimary,
-                               |p| p.print((x,0), &self.title));
+            printer.with_color(ColorPair::TitlePrimary, |p| p.print((x, 0), &self.title));
         }
 
     }
 
     fn get_min_size(&self, req: SizeRequest) -> Vec2 {
         // Padding and borders are not available for kids.
-        let content_req = req.reduced(self.padding.combined() +
-                                      self.borders.combined());
+        let content_req = req.reduced(self.padding.combined() + self.borders.combined());
         let content_size = self.content.get_min_size(content_req);
 
-        let mut buttons_size = Vec2::new(0,0);
+        let mut buttons_size = Vec2::new(0, 0);
         if !self.buttons.is_empty() {
             buttons_size.x += self.buttons.len() - 1;
         }
@@ -176,8 +172,9 @@ impl View for Dialog {
         // On the Y axis, we add buttons and content.
         // On the X axis, we take the max.
         let mut inner_size = Vec2::new(max(content_size.x, buttons_size.x),
-                                   content_size.y + buttons_size.y)
-                        + self.padding.combined() + self.borders.combined();
+                                       content_size.y + buttons_size.y) +
+                             self.padding.combined() +
+                             self.borders.combined();
 
         if self.title.len() > 0 {
             // If we have a title, we have to fit it too!
@@ -199,7 +196,7 @@ impl View for Dialog {
         let mut buttons_height = 0;
         for button in self.buttons.iter_mut().rev() {
             let size = button.get_min_size(req);
-            buttons_height = max(buttons_height, size.y+1);
+            buttons_height = max(buttons_height, size.y + 1);
             button.layout(size);
         }
 
@@ -216,7 +213,7 @@ impl View for Dialog {
                         // Default to leftmost button when going down.
                         self.focus = Focus::Button(0);
                         EventResult::Consumed(None)
-                    },
+                    }
                     Event::KeyEvent(Key::Tab) | Event::KeyEvent(Key::ShiftTab) => {
                         self.focus = Focus::Button(0);
                         EventResult::Consumed(None)
@@ -236,7 +233,7 @@ impl View for Dialog {
                         } else {
                             EventResult::Ignored
                         }
-                    },
+                    }
                     Event::KeyEvent(Key::Tab) | Event::KeyEvent(Key::ShiftTab) => {
                         if self.content.take_focus() {
                             self.focus = Focus::Content;
@@ -244,16 +241,16 @@ impl View for Dialog {
                         } else {
                             EventResult::Ignored
                         }
-                    },
+                    }
                     // Left and Right move to other buttons
-                    Event::KeyEvent(Key::Right) if i+1 < self.buttons.len() => {
-                        self.focus = Focus::Button(i+1);
+                    Event::KeyEvent(Key::Right) if i + 1 < self.buttons.len() => {
+                        self.focus = Focus::Button(i + 1);
                         EventResult::Consumed(None)
-                    },
+                    }
                     Event::KeyEvent(Key::Left) if i > 0 => {
-                        self.focus = Focus::Button(i-1);
+                        self.focus = Focus::Button(i - 1);
                         EventResult::Consumed(None)
-                    },
+                    }
                     _ => EventResult::Ignored,
                 },
                 res => res,

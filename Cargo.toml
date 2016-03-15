@@ -10,7 +10,7 @@ version = "0.1.0"
 
 [dependencies]
 ncurses = "5.80.0"
-toml = "0.1.25"
+toml = "0.1"
 
 [[example]]
 name = "hello_world"

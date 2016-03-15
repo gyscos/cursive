@@ -3,7 +3,7 @@ use vec::Vec2;
 use view::ViewWrapper;
 
 /// Wrapper around a view that remembers its size.
-pub struct SizedView <T: View> {
+pub struct SizedView<T: View> {
     /// Wrapped view.
     pub view: T,
     /// Cached size from the last layout() call.

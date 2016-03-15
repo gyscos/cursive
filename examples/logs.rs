@@ -2,6 +2,7 @@ extern crate cursive;
 
 use std::sync::mpsc;
 use std::thread;
+use std::time::Duration;
 
 use cursive::Cursive;
 use cursive::printer::Printer;
@@ -42,7 +43,7 @@ fn generate_logs(tx: mpsc::Sender<String>) {
             Err(_) => return,
             Ok(_) => (),
         }
-        thread::sleep_ms(30);
+        thread::sleep(Duration::from_millis(30));
     }
 }
 

@@ -1,6 +1,6 @@
 //! Defines various views to use when creating the layout.
 
-#[macro_use] mod view_wrapper;
+#[macro_use]mod view_wrapper;
 
 mod box_view;
 mod button;
@@ -22,11 +22,11 @@ mod view_path;
 
 use std::any::Any;
 
-use event::{Event,EventResult};
+use event::{Event, EventResult};
 use vec::Vec2;
 use printer::Printer;
 
-pub use self::request::{DimensionRequest,SizeRequest};
+pub use self::request::{DimensionRequest, SizeRequest};
 pub use self::scroll::ScrollBase;
 
 pub use self::id_view::IdView;
@@ -49,24 +49,33 @@ pub use self::view_wrapper::ViewWrapper;
 /// Main trait defining a view behaviour.
 pub trait View {
     /// Called when a key was pressed. Default implementation just ignores it.
-    fn on_event(&mut self, Event) -> EventResult { EventResult::Ignored }
+    fn on_event(&mut self, Event) -> EventResult {
+        EventResult::Ignored
+    }
 
     /// Returns the minimum size the view requires under the given restrictions.
-    fn get_min_size(&self, SizeRequest) -> Vec2 { Vec2::new(1,1) }
+    fn get_min_size(&self, SizeRequest) -> Vec2 {
+        Vec2::new(1, 1)
+    }
 
     /// Called once the size for this view has been decided, so it can
     /// propagate the information to its children.
-    fn layout(&mut self, Vec2) { }
+    fn layout(&mut self, Vec2) {
+    }
 
     /// Draws the view with the given printer (includes bounds) and focus.
     fn draw(&mut self, printer: &Printer);
 
     /// Finds the view pointed to by the given path.
     /// Returns None if the path doesn't lead to a view.
-    fn find(&mut self, &Selector) -> Option<&mut Any> { None }
+    fn find(&mut self, &Selector) -> Option<&mut Any> {
+        None
+    }
 
     /// This view is offered focus. Will it take it?
-    fn take_focus(&mut self) -> bool { false }
+    fn take_focus(&mut self) -> bool {
+        false
+    }
 }
 
 /// Selects a single view (if any) in the tree.
@@ -76,4 +85,3 @@ pub enum Selector<'a> {
     /// Selects a view from its path
     Path(&'a ViewPath),
 }
-

@@ -1,10 +1,10 @@
-use ncurses;
+use ncurses::{self, chtype};
 
 use std::cmp::min;
 
 use theme::ColorPair;
 use vec::Vec2;
-use view::{View,IdView,SizeRequest};
+use view::{View, IdView, SizeRequest};
 use event::*;
 use printer::Printer;
 
@@ -20,9 +20,8 @@ pub struct EditView {
     /// When the content is too long for the display, offset it
     offset: usize,
     /// Last display length, to know the possible offset range
-    last_length: usize,
-    // scrollable: bool,
-    // TODO: add a max text length?
+    last_length: usize, /* scrollable: bool,
+                         * TODO: add a max text length? */
 }
 
 impl EditView {
@@ -33,8 +32,7 @@ impl EditView {
             cursor: 0,
             offset: 0,
             min_length: 1,
-            last_length: 0,
-            // scrollable: false,
+            last_length: 0, /* scrollable: false, */
         }
     }
 
@@ -71,7 +69,7 @@ impl EditView {
 
 fn remove_char(s: &mut String, cursor: usize) {
     let i = match s.char_indices().nth(cursor) {
-        Some((i,_)) => i,
+        Some((i, _)) => i,
         None => return,
     };
     s.remove(i);
@@ -84,15 +82,15 @@ impl View for EditView {
         printer.with_color(ColorPair::Secondary, |printer| {
             printer.with_style(ncurses::A_REVERSE(), |printer| {
                 if len < self.last_length {
-                    printer.print((0,0), &self.content);
-                    printer.print_hline((len,0), printer.size.x-len, '_' as u64);
+                    printer.print((0, 0), &self.content);
+                    printer.print_hline((len, 0), printer.size.x - len, '_' as chtype);
                 } else {
                     let visible_end = min(self.content.len(), self.offset + self.last_length);
 
                     let content = &self.content[self.offset..visible_end];
-                    printer.print((0,0), content);
+                    printer.print((0, 0), content);
                     if visible_end - self.offset < printer.size.x {
-                        printer.print((printer.size.x-1,0), "_");
+                        printer.print((printer.size.x - 1, 0), "_");
                     }
                 }
             });
@@ -103,9 +101,14 @@ impl View for EditView {
                     '_'
                 } else {
                     // Get the char from the string... Is it so hard?
-                    self.content.chars().nth(self.cursor).expect(&format!("Found no char at cursor {} in {}", self.cursor, self.content))
+                    self.content
+                        .chars()
+                        .nth(self.cursor)
+                        .expect(&format!("Found no char at cursor {} in {}",
+                                         self.cursor,
+                                         self.content))
                 };
-                printer.print_hline((self.cursor-self.offset, 0), 1, c as u64);
+                printer.print_hline((self.cursor - self.offset, 0), 1, c as chtype);
             }
         });
     }
@@ -130,18 +133,23 @@ impl View for EditView {
 
                 match self.content.char_indices().nth(self.cursor) {
                     None => self.content.push(ch),
-                    Some((i,_)) => self.content.insert(i, ch),
+                    Some((i, _)) => self.content.insert(i, ch),
                 }
                 // TODO: handle wide (CJK) chars
                 self.cursor += 1;
-            },
+            }
             Event::KeyEvent(key) => match key {
                 Key::Home => self.cursor = 0,
                 Key::End => self.cursor = self.content.chars().count(),
                 Key::Left if self.cursor > 0 => self.cursor -= 1,
                 Key::Right if self.cursor < self.content.chars().count() => self.cursor += 1,
-                Key::Backspace if self.cursor > 0 => { self.cursor -= 1; remove_char(&mut self.content, self.cursor); },
-                Key::Del if self.cursor < self.content.chars().count() => { remove_char(&mut self.content, self.cursor); },
+                Key::Backspace if self.cursor > 0 => {
+                    self.cursor -= 1;
+                    remove_char(&mut self.content, self.cursor);
+                }
+                Key::Del if self.cursor < self.content.chars().count() => {
+                    remove_char(&mut self.content, self.cursor);
+                }
                 _ => return EventResult::Ignored,
             },
         }
@@ -154,8 +162,8 @@ impl View for EditView {
         } else if self.cursor < self.offset {
             self.offset = self.cursor;
         }
-        if self.offset + self.last_length > self.content.len() + 1{
-            
+        if self.offset + self.last_length > self.content.len() + 1 {
+
             self.offset = if self.content.len() > self.last_length {
                 self.content.len() - self.last_length + 1
             } else {

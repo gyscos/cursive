@@ -1,7 +1,7 @@
 use std::cmp::max;
 
 use vec::Vec2;
-use view::{View,DimensionRequest,SizeRequest};
+use view::{View, DimensionRequest, SizeRequest};
 use div::*;
 use printer::Printer;
 use align::*;
@@ -98,7 +98,8 @@ impl TextView {
     /// Returns the number of lines required to display the content
     /// with the given width.
     fn get_num_lines(&self, max_width: usize) -> usize {
-        self.content.split("\n")
+        self.content
+            .split("\n")
             .map(|line| get_line_span(line, max_width))
             .fold(0, |sum, x| sum + x)
     }
@@ -161,7 +162,7 @@ impl <'a> Iterator for LinesIterator<'a> {
             if content[..next].chars().count() <= self.width {
                 // We found a newline before the allowed limit.
                 // Break early.
-                self.start += next+1;
+                self.start += next + 1;
                 return Some(Row {
                     start: start,
                     end: next + start,
@@ -173,22 +174,22 @@ impl <'a> Iterator for LinesIterator<'a> {
         if content_len <= self.width {
             // I thought it would be longer! -- that's what she said :(
             self.start += content.len();
-            return Some(Row{
+            return Some(Row {
                 start: start,
                 end: start + content.len(),
             });
         }
 
-        let i = if content_len == self.width+1 {
+        let i = if content_len == self.width + 1 {
             // We can't look at the index if we're looking at the end of the string
             content.len()
         } else {
-            content.char_indices().nth(self.width+1).unwrap().0
+            content.char_indices().nth(self.width + 1).unwrap().0
         };
         let substr = &content[..i];
         if let Some(i) = substr.rfind(" ") {
             // If we have to break, try to find a whitespace for that.
-            self.start += i+1;
+            self.start += i + 1;
             return Some(Row {
                 start: start,
                 end: i + start,
@@ -210,14 +211,14 @@ impl View for TextView {
 
         let h = self.rows.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.sub_printer(Vec2::new(0,offset), printer.size, true);
+        let printer = &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
 
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
             let text = &self.content[row.start..row.end];
             let l = text.chars().count();
             let x = self.align.h.get_offset(l, printer.size.x);
-            printer.print((x,0), text);
+            printer.print((x, 0), text);
         });
     }
 
@@ -229,8 +230,10 @@ impl View for TextView {
         match event {
             Event::KeyEvent(Key::Home) => self.scrollbase.scroll_top(),
             Event::KeyEvent(Key::End) => self.scrollbase.scroll_bottom(),
-            Event::KeyEvent(Key::Up) if self.scrollbase.can_scroll_up() => self.scrollbase.scroll_up(1),
-            Event::KeyEvent(Key::Down) if self.scrollbase.can_scroll_down() => self.scrollbase.scroll_down(1),
+            Event::KeyEvent(Key::Up) if self.scrollbase.can_scroll_up() =>
+                self.scrollbase.scroll_up(1),
+            Event::KeyEvent(Key::Down) if self.scrollbase.can_scroll_down() =>
+                self.scrollbase.scroll_down(1),
             Event::KeyEvent(Key::PageDown) => self.scrollbase.scroll_down(10),
             Event::KeyEvent(Key::PageUp) => self.scrollbase.scroll_up(10),
             _ => return EventResult::Ignored,
@@ -240,19 +243,19 @@ impl View for TextView {
     }
 
     fn get_min_size(&self, size: SizeRequest) -> Vec2 {
-        match (size.w,size.h) {
+        match (size.w, size.h) {
             // If we have no directive, ask for a single big line.
             // TODO: what if the text has newlines??
             (DimensionRequest::Unknown, DimensionRequest::Unknown) => self.get_ideal_size(),
-            (DimensionRequest::Fixed(w),_) => {
+            (DimensionRequest::Fixed(w), _) => {
                 let h = self.get_num_lines(w);
                 Vec2::new(w, h)
-            },
-            (_,DimensionRequest::Fixed(h)) => {
+            }
+            (_, DimensionRequest::Fixed(h)) => {
                 let w = self.get_num_cols(h);
                 Vec2::new(w, h)
-            },
-            (DimensionRequest::AtMost(w),_) => {
+            }
+            (DimensionRequest::AtMost(w), _) => {
                 // Don't _force_ the max width, but take it if we have to.
                 let ideal = self.get_ideal_size();
 
@@ -262,7 +265,7 @@ impl View for TextView {
                     let h = self.get_num_lines(w);
                     Vec2::new(w, h)
                 }
-            },
+            }
             _ => unreachable!(),
         }
     }

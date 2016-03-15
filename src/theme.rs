@@ -100,15 +100,29 @@ impl Theme {
     }
 
     fn apply(&self) {
-        Theme::apply_color(ColorPair::Background, &self.colors.background, &self.colors.background);
+        Theme::apply_color(ColorPair::Background,
+                           &self.colors.background,
+                           &self.colors.background);
         Theme::apply_color(ColorPair::Shadow, &self.colors.shadow, &self.colors.shadow);
         Theme::apply_color(ColorPair::Primary, &self.colors.primary, &self.colors.view);
-        Theme::apply_color(ColorPair::Secondary, &self.colors.secondary, &self.colors.view);
-        Theme::apply_color(ColorPair::Tertiary, &self.colors.tertiary, &self.colors.view);
-        Theme::apply_color(ColorPair::TitlePrimary, &self.colors.title_primary, &self.colors.view);
-        Theme::apply_color(ColorPair::TitleSecondary, &self.colors.title_secondary, &self.colors.view);
-        Theme::apply_color(ColorPair::Highlight, &self.colors.view, &self.colors.highlight);
-        Theme::apply_color(ColorPair::HighlightInactive, &self.colors.view, &self.colors.highlight_inactive);
+        Theme::apply_color(ColorPair::Secondary,
+                           &self.colors.secondary,
+                           &self.colors.view);
+        Theme::apply_color(ColorPair::Tertiary,
+                           &self.colors.tertiary,
+                           &self.colors.view);
+        Theme::apply_color(ColorPair::TitlePrimary,
+                           &self.colors.title_primary,
+                           &self.colors.view);
+        Theme::apply_color(ColorPair::TitleSecondary,
+                           &self.colors.title_secondary,
+                           &self.colors.view);
+        Theme::apply_color(ColorPair::Highlight,
+                           &self.colors.view,
+                           &self.colors.highlight);
+        Theme::apply_color(ColorPair::HighlightInactive,
+                           &self.colors.view,
+                           &self.colors.highlight_inactive);
     }
 
     fn apply_color(pair: ColorPair, front: &Color, back: &Color) {
@@ -192,12 +206,12 @@ pub struct Color {
 
 impl Color {
     /// Return the rgb values used by the color.
-    pub fn rgb(&self) -> (i16,i16,i16) {
-        let (mut r, mut g, mut b) = (0,0,0);
+    pub fn rgb(&self) -> (i16, i16, i16) {
+        let (mut r, mut g, mut b) = (0, 0, 0);
 
         ncurses::color_content(self.id, &mut r, &mut g, &mut b);
 
-        (r,g,b)
+        (r, g, b)
     }
 }
 
@@ -244,10 +258,14 @@ impl Color {
 
     fn load(&mut self, table: &toml::Table, key: &str, new_id: &mut i16) {
         match table.get(key) {
-            Some(&toml::Value::String(ref value)) => { self.load_value(value, new_id); },
+            Some(&toml::Value::String(ref value)) => {
+                self.load_value(value, new_id);
+            }
             Some(&toml::Value::Array(ref array)) => for color in array.iter() {
                 match color {
-                    &toml::Value::String(ref color) => if self.load_value(color, new_id) { return; },
+                    &toml::Value::String(ref color) => if self.load_value(color, new_id) {
+                        return;
+                    },
                     _ => (),
                 }
             },
@@ -278,15 +296,15 @@ impl Color {
         }
 
         let s = &value[1..];
-        let (l,max) = match s.len() {
-            6 => (2,255),
-            3 => (1,15),
+        let (l, max) = match s.len() {
+            6 => (2, 255),
+            3 => (1, 15),
             _ => panic!("Cannot parse color: {}", s),
         };
 
-        let r = (load_hex(&s[0*l..1*l]) as i32 * 1000 / max) as i16;
-        let g = (load_hex(&s[1*l..2*l]) as i32 * 1000 / max) as i16;
-        let b = (load_hex(&s[2*l..3*l]) as i32 * 1000 / max) as i16;
+        let r = (load_hex(&s[0 * l..1 * l]) as i32 * 1000 / max) as i16;
+        let g = (load_hex(&s[1 * l..2 * l]) as i32 * 1000 / max) as i16;
+        let b = (load_hex(&s[2 * l..3 * l]) as i32 * 1000 / max) as i16;
 
         ncurses::init_color(*new_id, r, g, b);
 
@@ -330,10 +348,10 @@ impl Color {
 ///
 /// ```text
 /// # Every field in a theme file is optional.
-/// 
+///
 /// shadow = false
 /// borders = "simple" # Alternatives are "none" and "outset"
-/// 
+///
 /// # Base colors are red, green, blue,
 /// # cyan, magenta, yellow, white and black.
 /// [colors]
@@ -343,23 +361,23 @@ impl Color {
 /// 	# non-base colors will be skipped.
 /// 	shadow     = ["#000000", "black"]
 /// 	view       = "#d3d7cf"
-/// 
+///
 /// 	# Array and simple values have the same effect.
 /// 	primary   = ["#111111"]
 /// 	secondary = "#EEEEEE"
 /// 	tertiary  = "#444444"
-/// 
+///
 /// 	# Hex values can use lower or uppercase.
 /// 	# (base color MUST be lowercase)
 /// 	title_primary   = "#ff5555"
 /// 	title_secondary = "#ffff55"
-/// 
+///
 /// 	# Lower precision values can use only 3 digits.
 /// 	highlight          = "#F00"
 /// 	highlight_inactive = "#5555FF"
 /// ```
 
-pub fn load_theme<P: AsRef<Path>>(filename: P) -> Result<Theme,Error> {
+pub fn load_theme<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
     let content = {
         let mut content = String::new();
         let mut file = try!(File::open(filename));

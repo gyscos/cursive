@@ -3,18 +3,18 @@ use std::char::from_u32;
 /// Reads a char from a first byte, and a function to fetch next bytes as required.
 ///
 /// Returns an error if the stream is invalid utf-8.
-pub fn read_char<F>(first: u8, next: F) -> Result<char,String>
+pub fn read_char<F>(first: u8, next: F) -> Result<char, String>
     where F: Fn() -> u8
 {
     if first < 0x80 {
-        return Ok(first as char)
+        return Ok(first as char);
     }
 
     // Number of leading 1s determines the number of bytes we'll have to read
     let n_bytes = match (!first).leading_zeros() {
         n @ 2 ... 6 => n as usize,
         1 => return Err("First byte is continuation byte.".to_string()),
-        7 ... 8 => return Err("WTF is this byte??".to_string()),
+        7...8 => return Err("WTF is this byte??".to_string()),
         _ => unreachable!(),
     };
 

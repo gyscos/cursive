@@ -1,4 +1,5 @@
-use std::cmp::{min,max};
+use std::cmp::{min, max};
+use ncurses::chtype;
 
 use theme::ColorPair;
 use vec::Vec2;
@@ -68,7 +69,7 @@ impl ScrollBase {
 
     /// Scroll down by the given number of line, never going further than the bottom of the view.
     pub fn scroll_down(&mut self, n: usize) {
-        self.start_line = min(self.start_line+n, self.content_height - self.view_height);
+        self.start_line = min(self.start_line + n, self.content_height - self.view_height);
     }
 
     /// Scroll up by the given number of lines, never going above the top of the view.
@@ -98,15 +99,20 @@ impl ScrollBase {
     /// });
     /// ```
     pub fn draw<F>(&self, printer: &Printer, line_drawer: F)
-        where F: Fn(&Printer,usize)
+        where F: Fn(&Printer, usize)
     {
         // Print the content in a sub_printer
         let max_y = min(self.view_height, self.content_height - self.start_line);
-        let w = if self.scrollable() { printer.size.x - 2 } else { printer.size.x };
+        let w = if self.scrollable() {
+            printer.size.x - 2
+        } else {
+            printer.size.x
+        };
         for y in 0..max_y {
             // Y is the actual coordinate of the line.
             // The item ID is then Y + self.start_line
-            line_drawer(&printer.sub_printer(Vec2::new(0,y),Vec2::new(w,1),true), y+self.start_line);
+            line_drawer(&printer.sub_printer(Vec2::new(0, y), Vec2::new(w, 1), true),
+                        y + self.start_line);
         }
 
 
@@ -115,18 +121,22 @@ impl ScrollBase {
             // We directly compute the size of the scrollbar (this allow use to avoid using floats).
             // (ratio) * max_height
             // Where ratio is ({start or end} / content.height)
-            let height = max(1,self.view_height * self.view_height / self.content_height);
+            let height = max(1, self.view_height * self.view_height / self.content_height);
             // Number of different possible positions
             let steps = self.view_height - height + 1;
 
             // Now
             let start = steps * self.start_line / (1 + self.content_height - self.view_height);
 
-            let color = if printer.focused { ColorPair::Highlight } else { ColorPair::HighlightInactive };
+            let color = if printer.focused {
+                ColorPair::Highlight
+            } else {
+                ColorPair::HighlightInactive
+            };
 
-            printer.print_vline((printer.size.x-1,0), printer.size.y, '|' as u64);
+            printer.print_vline((printer.size.x - 1, 0), printer.size.y, '|' as chtype);
             printer.with_color(color, |printer| {
-                printer.print_vline((printer.size.x-1, start), height, ' ' as u64);
+                printer.print_vline((printer.size.x - 1, start), height, ' ' as chtype);
             });
         }
     }

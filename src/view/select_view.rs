@@ -1,11 +1,12 @@
 use std::cmp::min;
 use std::rc::Rc;
+use ncurses::chtype;
 
 use theme::ColorPair;
-use ::Cursive;
+use Cursive;
 use align::*;
-use view::{View,IdView,SizeRequest,DimensionRequest};
-use event::{Event,EventResult,Key};
+use view::{View, IdView, SizeRequest, DimensionRequest};
+use event::{Event, EventResult, Key};
 use vec::Vec2;
 use printer::Printer;
 use super::scroll::ScrollBase;
@@ -27,11 +28,11 @@ impl <T> Item<T> {
 /// View to select an item among a list.
 ///
 /// It contains a list of values of type T, with associated labels.
-pub struct SelectView<T=String> {
+pub struct SelectView<T = String> {
     items: Vec<Item<T>>,
     focus: usize,
     scrollbase: ScrollBase,
-    select_cb: Option<Rc<Box<Fn(&mut Cursive,&T)>>>,
+    select_cb: Option<Rc<Box<Fn(&mut Cursive, &T)>>>,
     align: Align,
 }
 
@@ -91,7 +92,7 @@ impl <T: 'static> SelectView<T> {
 
     /// Adds a item to the list, with given label and value.
     pub fn add_item(&mut self, label: &str, value: T) {
-        self.items.push(Item::new(label,value));
+        self.items.push(Item::new(label, value));
     }
 
     /// Chainable variant of add_item
@@ -125,21 +126,24 @@ impl <T: 'static> View for SelectView<T> {
 
         let h = self.items.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.sub_printer(Vec2::new(0,offset), printer.size, true);
+        let printer = &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
 
-        self.scrollbase.draw(printer, |printer,i| {
+        self.scrollbase.draw(printer, |printer, i| {
             let style = if i == self.focus {
-                if printer.focused { ColorPair::Highlight }
-                else { ColorPair::HighlightInactive }
+                if printer.focused {
+                    ColorPair::Highlight
+                } else {
+                    ColorPair::HighlightInactive
+                }
             } else {
                 ColorPair::Primary
             };
             printer.with_color(style, |printer| {
                 let l = self.items[i].label.chars().count();
                 let x = self.align.h.get_offset(l, printer.size.x);
-                printer.print_hline((0,0), x, ' ' as u64);
-                printer.print((x,0), &self.items[i].label);
-                printer.print_hline((x+l,0), printer.size.x-l-x, ' ' as u64);
+                printer.print_hline((0, 0), x, ' ' as chtype);
+                printer.print((x, 0), &self.items[i].label);
+                printer.print_hline((x + l, 0), printer.size.x - l - x, ' ' as chtype);
             });
         });
     }
@@ -157,39 +161,43 @@ impl <T: 'static> View for SelectView<T> {
         };
 
         // Add 2 spaces for the scrollbar if we need
-        let w = if scrolling { w + 2 } else { w };
+        let w = if scrolling {
+            w + 2
+        } else {
+            w
+        };
 
-        Vec2::new(w,h)
+        Vec2::new(w, h)
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
             Event::KeyEvent(Key::Up) if self.focus > 0 => self.focus -= 1,
             Event::KeyEvent(Key::Down) if self.focus + 1 < self.items.len() => self.focus += 1,
-            Event::KeyEvent(Key::PageUp) => self.focus -= min(self.focus,10),
-            Event::KeyEvent(Key::PageDown) => self.focus = min(self.focus+10,self.items.len()-1),
+            Event::KeyEvent(Key::PageUp) => self.focus -= min(self.focus, 10),
+            Event::KeyEvent(Key::PageDown) =>
+                self.focus = min(self.focus + 10, self.items.len() - 1),
             Event::KeyEvent(Key::Home) => self.focus = 0,
-            Event::KeyEvent(Key::End) => self.focus = self.items.len()-1,
+            Event::KeyEvent(Key::End) => self.focus = self.items.len() - 1,
             Event::KeyEvent(Key::Enter) if self.select_cb.is_some() => {
                 if let Some(ref cb) = self.select_cb {
                     let cb = cb.clone();
                     let v = self.selection();
                     return EventResult::Consumed(Some(Rc::new(Box::new(move |s| cb(s, &*v)))));
                 }
-            },
+            }
             Event::CharEvent(c) => {
                 // Starting from the current focus, find the first item that match the char.
                 // Cycle back to the beginning of the list when we reach the end.
                 // This is achieved by chaining twice the iterator
                 let iter = self.items.iter().chain(self.items.iter());
-                if let Some((i,_)) = iter.enumerate()
-                    .skip(self.focus+1)
-                    .find(|&(_,item)| item.label.starts_with(c))
-                {
+                if let Some((i, _)) = iter.enumerate()
+                                          .skip(self.focus + 1)
+                                          .find(|&(_, item)| item.label.starts_with(c)) {
                     // Apply modulo in case we have a hit from the chained iterator
                     self.focus = i % self.items.len();
                 }
-            },
+            }
             _ => return EventResult::Ignored,
         }
 

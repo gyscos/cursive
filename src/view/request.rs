@@ -49,5 +49,3 @@ impl SizeRequest {
         }
     }
 }
-
-

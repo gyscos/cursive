@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use ::Cursive;
-use event::{Event,EventResult,ToEvent,Callback};
-use super::{View,ViewWrapper};
+use Cursive;
+use event::{Event, EventResult, ToEvent, Callback};
+use super::{View, ViewWrapper};
 
 /// A simple wrapper view that catches some ignored event from its child.
 ///
@@ -23,7 +23,7 @@ impl KeyEventView {
     }
 
     /// Registers a callback when the given key is ignored by the child.
-    pub fn register<F,E: ToEvent>(mut self, event: E, cb: F) -> Self
+    pub fn register<F, E: ToEvent>(mut self, event: E, cb: F) -> Self
         where F: Fn(&mut Cursive) + 'static
     {
         self.callbacks.insert(event.to_event(), Rc::new(Box::new(cb)));

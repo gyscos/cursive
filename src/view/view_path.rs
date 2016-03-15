@@ -8,9 +8,7 @@ pub struct ViewPath {
 impl ViewPath {
     /// Creates a new empty path.
     pub fn new() -> Self {
-        ViewPath {
-            path: Vec::new(),
-        }
+        ViewPath { path: Vec::new() }
     }
 
     /// Creates a path from the given item.
@@ -27,8 +25,6 @@ pub trait ToPath {
 
 impl <'a> ToPath for &'a [usize] {
     fn to_path(self) -> ViewPath {
-        ViewPath {
-            path: self.to_owned(),
-        }
+        ViewPath { path: self.to_owned() }
     }
 }

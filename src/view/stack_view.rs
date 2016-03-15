@@ -1,9 +1,8 @@
-use std::cmp::max;
 use std::any::Any;
 
 use vec::Vec2;
-use view::{View,SizeRequest,DimensionRequest,Selector,ShadowView};
-use event::{Event,EventResult};
+use view::{View, SizeRequest, DimensionRequest, Selector, ShadowView};
+use event::{Event, EventResult};
 use printer::Printer;
 
 /// Simple stack of views.
@@ -22,16 +21,14 @@ struct Layer {
 impl StackView {
     /// Creates a new empty StackView
     pub fn new() -> Self {
-        StackView {
-            layers: Vec::new(),
-        }
+        StackView { layers: Vec::new() }
     }
 
     /// Add new view on top of the stack.
     pub fn add_layer<T: 'static + View>(&mut self, view: T) {
         self.layers.push(Layer {
             view: Box::new(ShadowView::new(view)),
-            size: Vec2::new(0,0),
+            size: Vec2::new(0, 0),
             virgin: true,
         });
     }
@@ -45,12 +42,12 @@ impl StackView {
 impl View for StackView {
     fn draw(&mut self, printer: &Printer) {
         let last = self.layers.len();
-        for (i,v) in self.layers.iter_mut().enumerate() {
+        for (i, v) in self.layers.iter_mut().enumerate() {
             // Center the view
             let size = v.size;
             let offset = (printer.size - size) / 2;
             // TODO: only draw focus for the top view
-            v.view.draw(&printer.sub_printer(offset, size, i+1 == last));
+            v.view.draw(&printer.sub_printer(offset, size, i + 1 == last));
         }
     }
 
@@ -78,7 +75,7 @@ impl View for StackView {
 
     fn get_min_size(&self, size: SizeRequest) -> Vec2 {
         // The min size is the max of all children's
-        let mut s = Vec2::new(1,1);
+        let mut s = Vec2::new(1, 1);
 
         for layer in self.layers.iter() {
             let vs = layer.view.get_min_size(size);
@@ -91,7 +88,7 @@ impl View for StackView {
     fn take_focus(&mut self) -> bool {
         match self.layers.last_mut() {
             None => false,
-            Some(mut v) => v.view.take_focus()
+            Some(mut v) => v.view.take_focus(),
         }
     }
 

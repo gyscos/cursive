@@ -1,9 +1,9 @@
 use std::any::Any;
 
 use vec::Vec2;
-use view::{View,SizeRequest,Selector};
+use view::{View, SizeRequest, Selector};
 use printer::Printer;
-use event::{Event,EventResult};
+use event::{Event, EventResult};
 
 /// Generic wrapper around a view.
 ///
@@ -127,4 +127,3 @@ macro_rules! wrap_impl {
         }
     };
 }
-

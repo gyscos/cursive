@@ -1,4 +1,4 @@
-use view::{View,ViewWrapper,SizeRequest,DimensionRequest};
+use view::{View, ViewWrapper, SizeRequest, DimensionRequest};
 use vec::Vec2;
 
 /// Simple wrapper view that asks for all the space it can get.
@@ -9,9 +9,7 @@ pub struct FullView<T: View> {
 impl <T: View> FullView<T> {
     /// Wraps the given view into a new FullView.
     pub fn new(view: T) -> Self {
-        FullView {
-            view: view,
-        }
+        FullView { view: view }
     }
 }
 
@@ -30,6 +28,6 @@ impl <T: View> ViewWrapper for FullView<T> {
             DimensionRequest::Unknown => self.view.get_min_size(req).y,
         };
 
-        Vec2::new(w,h)
+        Vec2::new(w, h)
     }
 }

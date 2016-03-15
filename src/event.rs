@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use ncurses;
 
-use ::Cursive;
+use Cursive;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
@@ -136,10 +136,10 @@ impl Key {
             f @ 293 ... 303 => Key::CtrlF((f - 293 + 5) as u8),
             f @ 305 ... 315 => Key::CtrlShiftF((f - 305 + 5) as u8),
             // Shift and Ctrl F{1-4} need escape sequences...
-
+            //
             // TODO: shift and ctrl Fn keys
             // Avoids 8-10 (H,I,J), they are used by other commands.
-            c @ 1 ... 7 | c @ 11 ... 25 => Key::CtrlChar(('a' as u8 + (c-1) as u8) as char),
+            c @ 1 ... 7 | c @ 11 ... 25 => Key::CtrlChar(('a' as u8 + (c - 1) as u8) as char),
             _ => Key::Unknown(ch),
         }
     }
@@ -154,49 +154,51 @@ impl fmt::Display for Key {
             Key::ShiftF(n) => write!(f, "Shift-F{}", n),
             Key::CtrlF(n) => write!(f, "Ctrl-F{}", n),
             Key::CtrlShiftF(n) => write!(f, "Ctrl-Shift-F{}", n),
-            key => write!(f, "{}", match key {
-                Key::NumpadCenter => "Numpad center",
-                Key::Left => "Left",
-                Key::Right => "Right",
-                Key::Down => "Down",
-                Key::Up => "Up",
-                Key::CtrlShiftLeft => "Ctrl-Shift-Left",
-                Key::CtrlShiftRight => "Ctrl-Shift-Right",
-                Key::CtrlShiftUp => "Ctrl-Shift-Up",
-                Key::CtrlShiftDown => "Ctrl-Shift-Down",
-                Key::ShiftUp => "Shift-Up",
-                Key::ShiftDown => "Shift-Down",
-                Key::ShiftLeft => "Shift-Left",
-                Key::ShiftRight => "Shift-Right",
-                Key::ShiftDel => "Shift-Del",
-                Key::CtrlDel => "Ctrl-Del",
-                Key::CtrlShiftDel => "Ctrl-Shift-Del",
-                Key::CtrlLeft => "Ctrl-Left",
-                Key::CtrlRight => "Ctrl-Right",
-                Key::CtrlUp => "Ctrl-Up",
-                Key::CtrlDown => "Ctrl-Down",
-                Key::CtrlPageUp => "Ctrl-PageUp",
-                Key::CtrlPageDown => "Ctrl-PageDown",
-                Key::PageUp => "PageUp",
-                Key::PageDown => "PageDown",
-                Key::Home => "Home",
-                Key::ShiftHome => "Shift-Home",
-                Key::CtrlHome => "Ctrl-Home",
-                Key::CtrlShiftHome => "Ctrl-Shift-Home",
-                Key::End => "End",
-                Key::ShiftEnd => "Shift-End",
-                Key::CtrlEnd => "Ctrl-End",
-                Key::CtrlShiftEnd => "Ctrl-Shift-End",
-                Key::Backspace => "Backspace",
-                Key::Del => "Del",
-                Key::Enter => "Enter",
-                Key::ShiftTab => "Shift-Tab",
-                Key::Tab => "Tab",
-                Key::Ins => "Ins",
-                Key::CtrlIns => "Ctrl-Ins",
-                Key::Esc => "Esc",
-                _ => "Missing key label",
-            }),
+            key => write!(f,
+                          "{}",
+                          match key {
+                              Key::NumpadCenter => "Numpad center",
+                              Key::Left => "Left",
+                              Key::Right => "Right",
+                              Key::Down => "Down",
+                              Key::Up => "Up",
+                              Key::CtrlShiftLeft => "Ctrl-Shift-Left",
+                              Key::CtrlShiftRight => "Ctrl-Shift-Right",
+                              Key::CtrlShiftUp => "Ctrl-Shift-Up",
+                              Key::CtrlShiftDown => "Ctrl-Shift-Down",
+                              Key::ShiftUp => "Shift-Up",
+                              Key::ShiftDown => "Shift-Down",
+                              Key::ShiftLeft => "Shift-Left",
+                              Key::ShiftRight => "Shift-Right",
+                              Key::ShiftDel => "Shift-Del",
+                              Key::CtrlDel => "Ctrl-Del",
+                              Key::CtrlShiftDel => "Ctrl-Shift-Del",
+                              Key::CtrlLeft => "Ctrl-Left",
+                              Key::CtrlRight => "Ctrl-Right",
+                              Key::CtrlUp => "Ctrl-Up",
+                              Key::CtrlDown => "Ctrl-Down",
+                              Key::CtrlPageUp => "Ctrl-PageUp",
+                              Key::CtrlPageDown => "Ctrl-PageDown",
+                              Key::PageUp => "PageUp",
+                              Key::PageDown => "PageDown",
+                              Key::Home => "Home",
+                              Key::ShiftHome => "Shift-Home",
+                              Key::CtrlHome => "Ctrl-Home",
+                              Key::CtrlShiftHome => "Ctrl-Shift-Home",
+                              Key::End => "End",
+                              Key::ShiftEnd => "Shift-End",
+                              Key::CtrlEnd => "Ctrl-End",
+                              Key::CtrlShiftEnd => "Ctrl-Shift-End",
+                              Key::Backspace => "Backspace",
+                              Key::Del => "Del",
+                              Key::Enter => "Enter",
+                              Key::ShiftTab => "Shift-Tab",
+                              Key::Tab => "Tab",
+                              Key::Ins => "Ins",
+                              Key::CtrlIns => "Ctrl-Ins",
+                              Key::Esc => "Esc",
+                              _ => "Missing key label",
+                          }),
         }
     }
 }
