@@ -1,5 +1,4 @@
-Cursive
-=======
+# Cursive
 
 Cursive is a ncurses-based TUI (Text User Interface) library for rust. It is based on jeaye's [ncurses-rs](https://github.com/jeaye/ncurses-rs).
 
@@ -36,20 +35,22 @@ fn main() {
 
 _(Colors may depend on your terminal configuration.)_
 
+## Goals
 
-The goal is to be flexible enough, so that recreating these kind of tools would be - relatively - easy (at least on the layout front):
+* **Ease of use.** Simle apps should be simple. Complex apps should be manageable.
+* **Linux TTY Compatibility.** Colors may suffer, and UTF-8 may be too much, but most features *must* work properly on a Linux TTY.
+* **Flexibility.** This library should be able to handle simple UI scripts, complex real-time applications, or even games.
+    * In particular, it tries to have enough features to recreate these kind of tools:
+        * [menuconfig](http://en.wikipedia.org/wiki/Menuconfig#/media/File:Linux_x86_3.10.0-rc2_Kernel_Configuration.png)
+        * [nmtui](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/sec-Configure_a_Network_Team_Using_the_Text_User_Interface_nmtui.html)
 
-* [menuconfig](http://en.wikipedia.org/wiki/Menuconfig#/media/File:Linux_x86_3.10.0-rc2_Kernel_Configuration.png)
-* [nmtui](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/sec-Configure_a_Network_Team_Using_the_Text_User_Interface_nmtui.html)
+## _Non_-goals
 
-A few notes :
+* **Extreme performance.** This is a simple layout library, guys, not [compiz](https://www.google.com/search?q=compiz&tbm=isch) piped into [libcaca](https://www.google.com/search?q=libcaca&tbm=isch). Unless you are running it on your microwave's microcontroller, it's not going to be slow.
+* **Multi-threaded UI.** Callback methods are blocking - careful what you're doing in there! Feel free to use threads on your side, though.
+* **Complete ncurses equivalent.** You _can_ access the underlying ncurses window when creating your own custom views, so you can do what you want with that, but the main library will probably only use a subset of the ncurses features.
 
-* The main focus point is _not_ performance. This is a simple layout library, guys, not [compiz](https://www.google.com/search?q=compiz&tbm=isch) piped into [libcaca](https://www.google.com/search?q=libcaca&tbm=isch). Unless you are running it on your microwave's microcontroller, it's not going to be slow.
-* The library is single-threaded. Thus, callback methods are blocking - careful what you're doing in there! Feel free to use threads on your side, though.
-* This goal is _not_ to have an equivalent to every ncurses function. You _can_ access the underlying ncurses window when creating your own custom views, so you can do what you want with that, but the main library will probably only use a subset of the ncurses features.
-
-Compatibility
--------------
+## Compatibility
 
 First off, terminals are messy. A small set of features is standard, but beyond that, almost every terminal has its own implementation.
 
@@ -86,8 +87,7 @@ Here is the support table for input keys (All means Linux TTY and terminal emula
 | PrtScn, ScrollLock       | None | None                   | None                       | None            |
 | Window, Menu             | None | None                   | None                       | None            |
 
-Contribute
-----------
+## Contribute
 
 You want to help? Great! Here is a non-exhaustive list of things you could do:
 
