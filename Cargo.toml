@@ -2,11 +2,12 @@
 authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
 description = "A TUI library based on ncurses-rs"
 keywords = ["ncurses", "TUI"]
+documentation = "https://gyscos.github.io/Cursive/cursive/index.html"
 license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/Gyscos/cursive"
-version = "0.1.0"
+version = "0.0.1"
 
 [dependencies]
 ncurses = "5.80.0"
