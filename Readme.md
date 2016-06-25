@@ -5,6 +5,8 @@
 
 Cursive is a ncurses-based TUI (Text User Interface) library for rust. It is based on jeaye's [ncurses-rs](https://github.com/jeaye/ncurses-rs).
 
+# [Documentation](http://gyscos.github.io/Cursive/cursive/index.html)
+
 It is designed to be safe and easy to use:
 
 ```
