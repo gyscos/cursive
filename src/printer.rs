@@ -62,7 +62,10 @@ impl Printer {
         let len = min(len, self.size.y - p.y);
 
         let p = p + self.offset;
-        ncurses::mvvline(p.y as i32, p.x as i32, c, len as i32);
+        for y in 0..len {
+            ncurses::mvaddstr((p.y + y) as i32, p.x as i32, "│");
+            // ncurses::mvaddstr(p.y as i32, p.x as i32, "┌");
+        }
     }
 
     /// Prints a horizontal line using the given character.
