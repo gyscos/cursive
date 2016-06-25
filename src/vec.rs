@@ -80,25 +80,25 @@ impl ToVec2 for Vec2 {
     }
 }
 
-impl ToVec2 for (i32,i32) {
+impl ToVec2 for (i32, i32) {
     fn to_vec2(self) -> Vec2 {
         (self.0 as usize, self.1 as usize).to_vec2()
     }
 }
 
-impl ToVec2 for (usize,usize) {
+impl ToVec2 for (usize, usize) {
     fn to_vec2(self) -> Vec2 {
         Vec2::new(self.0, self.1)
     }
 }
 
-impl ToVec2 for (u32,u32) {
+impl ToVec2 for (u32, u32) {
     fn to_vec2(self) -> Vec2 {
         Vec2::new(self.0 as usize, self.1 as usize)
     }
 }
 
-impl <T: ToVec2> Add<T> for Vec2 {
+impl<T: ToVec2> Add<T> for Vec2 {
     type Output = Vec2;
 
     fn add(self, other: T) -> Vec2 {
@@ -110,7 +110,7 @@ impl <T: ToVec2> Add<T> for Vec2 {
     }
 }
 
-impl <T: ToVec2> Sub<T> for Vec2 {
+impl<T: ToVec2> Sub<T> for Vec2 {
     type Output = Vec2;
 
     fn sub(self, other: T) -> Vec2 {
@@ -206,13 +206,13 @@ impl ToVec4 for Vec4 {
     }
 }
 
-impl ToVec4 for (usize,usize,usize,usize) {
+impl ToVec4 for (usize, usize, usize, usize) {
     fn to_vec4(self) -> Vec4 {
         Vec4::new(self.0, self.1, self.2, self.3)
     }
 }
 
-impl ToVec4 for (i32,i32,i32,i32) {
+impl ToVec4 for (i32, i32, i32, i32) {
     fn to_vec4(self) -> Vec4 {
         Vec4::new(self.0 as usize,
                   self.1 as usize,
@@ -221,7 +221,7 @@ impl ToVec4 for (i32,i32,i32,i32) {
     }
 }
 
-impl <T: ToVec4> Add<T> for Vec4 {
+impl<T: ToVec4> Add<T> for Vec4 {
     type Output = Vec4;
 
     fn add(self, other: T) -> Vec4 {
@@ -236,7 +236,7 @@ impl <T: ToVec4> Add<T> for Vec4 {
     }
 }
 
-impl <T: ToVec4> Sub<T> for Vec4 {
+impl<T: ToVec4> Sub<T> for Vec4 {
     type Output = Vec4;
 
     fn sub(self, other: T) -> Vec4 {

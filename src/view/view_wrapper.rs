@@ -45,7 +45,7 @@ pub trait ViewWrapper {
     }
 }
 
-impl <T: ViewWrapper> View for T {
+impl<T: ViewWrapper> View for T {
     fn draw(&mut self, printer: &Printer) {
         self.wrap_draw(printer);
     }

@@ -180,37 +180,39 @@ impl View for LinearLayout {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match self.children[self.focus].view.on_event(event) {
-            EventResult::Ignored => match event {
-                Event::KeyEvent(Key::Tab) if self.focus > 0 => {
-                    self.focus -= 1;
-                    EventResult::Consumed(None)
+            EventResult::Ignored => {
+                match event {
+                    Event::KeyEvent(Key::Tab) if self.focus > 0 => {
+                        self.focus -= 1;
+                        EventResult::Consumed(None)
+                    }
+                    Event::KeyEvent(Key::ShiftTab) if self.focus + 1 < self.children.len() => {
+                        self.focus += 1;
+                        EventResult::Consumed(None)
+                    }
+                    Event::KeyEvent(Key::Left) if self.orientation == Orientation::Horizontal &&
+                                                  self.focus > 0 => {
+                        self.focus -= 1;
+                        EventResult::Consumed(None)
+                    }
+                    Event::KeyEvent(Key::Up) if self.orientation == Orientation::Vertical &&
+                                                self.focus > 0 => {
+                        self.focus -= 1;
+                        EventResult::Consumed(None)
+                    }
+                    Event::KeyEvent(Key::Right) if self.orientation == Orientation::Horizontal &&
+                                                   self.focus + 1 < self.children.len() => {
+                        self.focus += 1;
+                        EventResult::Consumed(None)
+                    }
+                    Event::KeyEvent(Key::Down) if self.orientation == Orientation::Vertical &&
+                                                  self.focus + 1 < self.children.len() => {
+                        self.focus += 1;
+                        EventResult::Consumed(None)
+                    }
+                    _ => EventResult::Ignored,
                 }
-                Event::KeyEvent(Key::ShiftTab) if self.focus + 1 < self.children.len() => {
-                    self.focus += 1;
-                    EventResult::Consumed(None)
-                }
-                Event::KeyEvent(Key::Left) if self.orientation == Orientation::Horizontal &&
-                                              self.focus > 0 => {
-                    self.focus -= 1;
-                    EventResult::Consumed(None)
-                }
-                Event::KeyEvent(Key::Up) if self.orientation == Orientation::Vertical &&
-                                            self.focus > 0 => {
-                    self.focus -= 1;
-                    EventResult::Consumed(None)
-                }
-                Event::KeyEvent(Key::Right) if self.orientation == Orientation::Horizontal &&
-                                               self.focus + 1 < self.children.len() => {
-                    self.focus += 1;
-                    EventResult::Consumed(None)
-                }
-                Event::KeyEvent(Key::Down) if self.orientation == Orientation::Vertical &&
-                                              self.focus + 1 < self.children.len() => {
-                    self.focus += 1;
-                    EventResult::Consumed(None)
-                }
-                _ => EventResult::Ignored,
-            },
+            }
             res => res,
         }
     }

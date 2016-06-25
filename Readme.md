@@ -59,8 +59,6 @@ _(Colors may depend on your terminal configuration.)_
 
 First off, terminals are messy. A small set of features is standard, but beyond that, almost every terminal has its own implementation.
 
-I mostly test VTE-based terminals (Gnome & Xfce), with the occasional Konsole and xterm checks.
-
 ### Output
 
 * **Colors**: the basic 8-colors palette should be broadly supported. User-defined colors is not supported in the raw linux TTY, but should work in most terminals, although it's still kinda experimental.
@@ -73,7 +71,7 @@ Also, Cursive currently expects every codepoint to be a one-column character, so
 * Keep in mind that if the terminal has shortcuts registered, they probably won't be transmitted to the app.
 * UTF-8 input should work fine in a unicode-enabled terminal emulator, but raw linux TTY may be more capricious.
 
-Here is the support table for input keys (All means Linux TTY and terminal emulators):
+Here is the support table for input keys. Tested terminals are mostly Gnome terminal and Linux TTY, xterm, and a few others now and then.
 
 |                          | Key  | Shift+Key              | Ctrl+Key                   | Shift+Ctrl+Key  |
 |--------------------------|:----:|:----------------------:|:--------------------------:|:---------------:|
@@ -86,9 +84,10 @@ Here is the support table for input keys (All means Linux TTY and terminal emula
 | Ins                      | All  | None (paste clipboard) | Xterm                      | None            |
 | Del                      | All  | VTE+Xterm              | VTE+Xterm                  | VTE+Xterm       |
 | Home, End                | All  | Xterm                  | Xterm                      | Xterm           |
-| PageUp, PageDown         | All  | None                   | Xterm                      | None            |
-| Fn keys: F1-F4           | All  | None (WIP)             | None (WIP)                 | None (WIP)      |
-| Fn keys: F5-F12          | All  | VTE+Xterm (WIP)        | VTE+Xterm (WIP)            | VTE+Xterm (WIP) |
+| PageUp, PageDown         | All  | All                    | All                        | None            |
+| Fn keys: F1-F4           | All  | All except Konsole     | Gnome+XTerm                | Gnome+Xterm     |
+| Fn keys: F5-F8           | All  | All                    | All except TTY             | All except TTY  |
+| Fn keys: F9-F12          | All  | All except TTY         | All except TTY             | All except TTY  |
 | PrtScn, ScrollLock       | None | None                   | None                       | None            |
 | Window, Menu             | None | None                   | None                       | None            |
 
@@ -97,5 +96,6 @@ Here is the support table for input keys (All means Linux TTY and terminal emula
 You want to help? Great! Here is a non-exhaustive list of things you could do:
 
 * Provide example use-case: a good idea of application for existing or new components.
+* Check compatibility: run the `key_codes` example on your favorite terminal, and report the results!
 * Test and reports issues: a bug won't get fixed if we don't know it's there.
 * Hack the code! If you feel confident with rust, pick an issue you like and hack away!

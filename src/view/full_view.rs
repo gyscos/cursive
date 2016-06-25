@@ -6,14 +6,14 @@ pub struct FullView<T: View> {
     view: T,
 }
 
-impl <T: View> FullView<T> {
+impl<T: View> FullView<T> {
     /// Wraps the given view into a new FullView.
     pub fn new(view: T) -> Self {
         FullView { view: view }
     }
 }
 
-impl <T: View> ViewWrapper for FullView<T> {
+impl<T: View> ViewWrapper for FullView<T> {
     wrap_impl!(&self.view);
 
     fn wrap_get_min_size(&self, req: SizeRequest) -> Vec2 {

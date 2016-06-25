@@ -134,7 +134,7 @@ struct LinesIterator<'a> {
     width: usize,
 }
 
-impl <'a> LinesIterator<'a> {
+impl<'a> LinesIterator<'a> {
     // Start an iterator on the given content.
     fn new(content: &'a str, width: usize) -> Self {
         LinesIterator {
@@ -145,8 +145,7 @@ impl <'a> LinesIterator<'a> {
     }
 }
 
-impl <'a> Iterator for LinesIterator<'a> {
-
+impl<'a> Iterator for LinesIterator<'a> {
     type Item = Row;
 
     fn next(&mut self) -> Option<Row> {
@@ -230,10 +229,12 @@ impl View for TextView {
         match event {
             Event::KeyEvent(Key::Home) => self.scrollbase.scroll_top(),
             Event::KeyEvent(Key::End) => self.scrollbase.scroll_bottom(),
-            Event::KeyEvent(Key::Up) if self.scrollbase.can_scroll_up() =>
-                self.scrollbase.scroll_up(1),
-            Event::KeyEvent(Key::Down) if self.scrollbase.can_scroll_down() =>
-                self.scrollbase.scroll_down(1),
+            Event::KeyEvent(Key::Up) if self.scrollbase.can_scroll_up() => {
+                self.scrollbase.scroll_up(1)
+            }
+            Event::KeyEvent(Key::Down) if self.scrollbase.can_scroll_down() => {
+                self.scrollbase.scroll_down(1)
+            }
             Event::KeyEvent(Key::PageDown) => self.scrollbase.scroll_down(10),
             Event::KeyEvent(Key::PageUp) => self.scrollbase.scroll_up(10),
             _ => return EventResult::Ignored,

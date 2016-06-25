@@ -7,7 +7,7 @@ pub struct BoxView<T: View> {
     view: T,
 }
 
-impl <T: View> BoxView<T> {
+impl<T: View> BoxView<T> {
     /// Creates a new BoxView with the given minimum size and content
     ///
     /// # Example
@@ -25,8 +25,7 @@ impl <T: View> BoxView<T> {
     }
 }
 
-impl <T: View> ViewWrapper for BoxView<T> {
-
+impl<T: View> ViewWrapper for BoxView<T> {
     wrap_impl!(&self.view);
 
     fn wrap_get_min_size(&self, mut req: SizeRequest) -> Vec2 {

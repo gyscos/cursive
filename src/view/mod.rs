@@ -60,8 +60,7 @@ pub trait View {
 
     /// Called once the size for this view has been decided, so it can
     /// propagate the information to its children.
-    fn layout(&mut self, Vec2) {
-    }
+    fn layout(&mut self, Vec2) {}
 
     /// Draws the view with the given printer (includes bounds) and focus.
     fn draw(&mut self, printer: &Printer);

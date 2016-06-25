@@ -86,10 +86,12 @@ impl Theme {
         }
 
         match table.get("borders") {
-            Some(&toml::Value::String(ref borders)) => match BorderStyle::from(borders) {
-                Some(borders) => self.borders = borders,
-                None => (),
-            },
+            Some(&toml::Value::String(ref borders)) => {
+                match BorderStyle::from(borders) {
+                    Some(borders) => self.borders = borders,
+                    None => (),
+                }
+            }
             _ => (),
         }
 
@@ -261,14 +263,18 @@ impl Color {
             Some(&toml::Value::String(ref value)) => {
                 self.load_value(value, new_id);
             }
-            Some(&toml::Value::Array(ref array)) => for color in array.iter() {
-                match color {
-                    &toml::Value::String(ref color) => if self.load_value(color, new_id) {
-                        return;
-                    },
-                    _ => (),
+            Some(&toml::Value::Array(ref array)) => {
+                for color in array.iter() {
+                    match color {
+                        &toml::Value::String(ref color) => {
+                            if self.load_value(color, new_id) {
+                                return;
+                            }
+                        }
+                        _ => (),
+                    }
                 }
-            },
+            }
             _ => (),
         }
     }
@@ -411,9 +417,9 @@ fn load_hex(s: &str) -> i16 {
     for c in s.chars() {
         sum *= 16;
         sum += match c {
-            n @ '0' ... '9' => n as i16 - '0' as i16,
-            n @ 'a' ... 'f' => n as i16 - 'a' as i16 + 10,
-            n @ 'A' ... 'F' => n as i16 - 'A' as i16 + 10,
+            n @ '0'...'9' => n as i16 - '0' as i16,
+            n @ 'a'...'f' => n as i16 - 'a' as i16 + 10,
+            n @ 'A'...'F' => n as i16 - 'A' as i16 + 10,
             _ => 0,
         };
     }

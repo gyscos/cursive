@@ -18,7 +18,7 @@ impl<T: View> IdView<T> {
     }
 }
 
-impl <T: View + Any> ViewWrapper for IdView<T> {
+impl<T: View + Any> ViewWrapper for IdView<T> {
     wrap_impl!(&self.view);
 
     fn wrap_find(&mut self, selector: &Selector) -> Option<&mut Any> {

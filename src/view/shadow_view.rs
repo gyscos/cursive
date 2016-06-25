@@ -11,15 +11,14 @@ pub struct ShadowView<T: View> {
     view: T,
 }
 
-impl <T: View> ShadowView<T> {
+impl<T: View> ShadowView<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
         ShadowView { view: view }
     }
 }
 
-impl <T: View> ViewWrapper for ShadowView<T> {
-
+impl<T: View> ViewWrapper for ShadowView<T> {
     wrap_impl!(&self.view);
 
     fn wrap_get_min_size(&self, req: SizeRequest) -> Vec2 {

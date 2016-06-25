@@ -32,7 +32,7 @@ impl EditView {
             cursor: 0,
             offset: 0,
             min_length: 1,
-            last_length: 0, /* scrollable: false, */
+            last_length: 0, // scrollable: false,
         }
     }
 
@@ -138,20 +138,22 @@ impl View for EditView {
                 // TODO: handle wide (CJK) chars
                 self.cursor += 1;
             }
-            Event::KeyEvent(key) => match key {
-                Key::Home => self.cursor = 0,
-                Key::End => self.cursor = self.content.chars().count(),
-                Key::Left if self.cursor > 0 => self.cursor -= 1,
-                Key::Right if self.cursor < self.content.chars().count() => self.cursor += 1,
-                Key::Backspace if self.cursor > 0 => {
-                    self.cursor -= 1;
-                    remove_char(&mut self.content, self.cursor);
+            Event::KeyEvent(key) => {
+                match key {
+                    Key::Home => self.cursor = 0,
+                    Key::End => self.cursor = self.content.chars().count(),
+                    Key::Left if self.cursor > 0 => self.cursor -= 1,
+                    Key::Right if self.cursor < self.content.chars().count() => self.cursor += 1,
+                    Key::Backspace if self.cursor > 0 => {
+                        self.cursor -= 1;
+                        remove_char(&mut self.content, self.cursor);
+                    }
+                    Key::Del if self.cursor < self.content.chars().count() => {
+                        remove_char(&mut self.content, self.cursor);
+                    }
+                    _ => return EventResult::Ignored,
                 }
-                Key::Del if self.cursor < self.content.chars().count() => {
-                    remove_char(&mut self.content, self.cursor);
-                }
-                _ => return EventResult::Ignored,
-            },
+            }
         }
 
         // Keep cursor in [offset, offset+last_length] by changing offset

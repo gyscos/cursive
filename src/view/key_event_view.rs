@@ -33,17 +33,17 @@ impl KeyEventView {
 }
 
 impl ViewWrapper for KeyEventView {
-
     wrap_impl!(self.content);
 
     fn wrap_on_event(&mut self, event: Event) -> EventResult {
         match self.content.on_event(event) {
-            EventResult::Ignored => match self.callbacks.get(&event) {
-                None => EventResult::Ignored,
-                Some(cb) => EventResult::Consumed(Some(cb.clone())),
-            },
+            EventResult::Ignored => {
+                match self.callbacks.get(&event) {
+                    None => EventResult::Ignored,
+                    Some(cb) => EventResult::Consumed(Some(cb.clone())),
+                }
+            }
             res => res,
         }
     }
-
 }

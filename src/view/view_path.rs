@@ -23,7 +23,7 @@ pub trait ToPath {
     fn to_path(self) -> ViewPath;
 }
 
-impl <'a> ToPath for &'a [usize] {
+impl<'a> ToPath for &'a [usize] {
     fn to_path(self) -> ViewPath {
         ViewPath { path: self.to_owned() }
     }

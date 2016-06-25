@@ -16,7 +16,7 @@ struct Item<T> {
     value: Rc<T>,
 }
 
-impl <T> Item<T> {
+impl<T> Item<T> {
     fn new(label: &str, value: T) -> Self {
         Item {
             label: label.to_string(),
@@ -36,7 +36,7 @@ pub struct SelectView<T = String> {
     align: Align,
 }
 
-impl <T: 'static> SelectView<T> {
+impl<T: 'static> SelectView<T> {
     /// Creates a new empty SelectView.
     pub fn new() -> Self {
         SelectView {
@@ -118,10 +118,9 @@ impl SelectView<String> {
     pub fn item_str(self, label: &str) -> Self {
         self.item(label, label.to_string())
     }
-
 }
 
-impl <T: 'static> View for SelectView<T> {
+impl<T: 'static> View for SelectView<T> {
     fn draw(&mut self, printer: &Printer) {
 
         let h = self.items.len();
@@ -175,8 +174,9 @@ impl <T: 'static> View for SelectView<T> {
             Event::KeyEvent(Key::Up) if self.focus > 0 => self.focus -= 1,
             Event::KeyEvent(Key::Down) if self.focus + 1 < self.items.len() => self.focus += 1,
             Event::KeyEvent(Key::PageUp) => self.focus -= min(self.focus, 10),
-            Event::KeyEvent(Key::PageDown) =>
-                self.focus = min(self.focus + 10, self.items.len() - 1),
+            Event::KeyEvent(Key::PageDown) => {
+                self.focus = min(self.focus + 10, self.items.len() - 1)
+            }
             Event::KeyEvent(Key::Home) => self.focus = 0,
             Event::KeyEvent(Key::End) => self.focus = self.items.len() - 1,
             Event::KeyEvent(Key::Enter) if self.select_cb.is_some() => {

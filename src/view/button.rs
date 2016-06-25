@@ -27,7 +27,6 @@ impl Button {
 }
 
 impl View for Button {
-
     fn draw(&mut self, printer: &Printer) {
         let style = if !printer.focused {
             ColorPair::Primary
