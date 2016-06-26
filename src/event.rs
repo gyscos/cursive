@@ -30,6 +30,11 @@ pub enum Key {
     ShiftTab,
     Backspace,
 
+    /// Indicates the window was resized
+    ///
+    /// (Not really a key)
+    Resize,
+
     /// Escape key.
     Esc,
     /// The 5 in the center of the keypad, when numlock is disabled.
@@ -117,8 +122,9 @@ pub enum Key {
     CtrlAltIns,
 
     F(u8),
-    CtrlF(u8),
     ShiftF(u8),
+    AltF(u8),
+    CtrlF(u8),
     CtrlShiftF(u8),
     CtrlChar(char),
     Unknown(i32),
@@ -128,6 +134,8 @@ impl Key {
     /// Returns the Key enum corresponding to the given ncurses event.
     pub fn from_ncurses(ch: i32) -> Self {
         match ch {
+            // Values under 256 are chars and control values
+
             // Tab is '\t'
             9 => Key::Tab,
             // Treat '\n' and the numpad Enter the same
@@ -137,7 +145,8 @@ impl Key {
             27 => Key::Esc,
             // `Backspace` sends 127, but Ctrl-H sends `Backspace`
             127 | ncurses::KEY_BACKSPACE => Key::Backspace,
-            // Values under 256 are chars.
+
+            410 => Key::Resize,
 
             // Values 512 and above are probably extensions
             // Those keys don't seem to be documented...
@@ -227,9 +236,10 @@ impl Key {
             ncurses::KEY_SPREVIOUS => Key::ShiftPageUp,
             // All Fn keys use the same enum with associated number
             f @ ncurses::KEY_F1...ncurses::KEY_F12 => Key::F((f - ncurses::KEY_F0) as u8),
-            f @ 277...288 => Key::ShiftF((f - 281 + 5) as u8),
-            f @ 289...300 => Key::CtrlF((f - 293 + 5) as u8),
-            f @ 301...312 => Key::CtrlShiftF((f - 305 + 5) as u8),
+            f @ 277...288 => Key::ShiftF((f - 277) as u8),
+            f @ 289...300 => Key::CtrlF((f - 289) as u8),
+            f @ 301...312 => Key::CtrlShiftF((f - 300) as u8),
+            f @ 313...324 => Key::AltF((f - 313) as u8),
             // Shift and Ctrl F{1-4} need escape sequences...
             //
             // TODO: shift and ctrl Fn keys
@@ -247,12 +257,14 @@ impl fmt::Display for Key {
             Key::CtrlChar(ch) => write!(f, "Ctrl-{}", ch),
             Key::F(n) => write!(f, "F{}", n),
             Key::ShiftF(n) => write!(f, "Shift-F{}", n),
+            Key::AltF(n) => write!(f, "Alt-F{}", n),
             Key::CtrlF(n) => write!(f, "Ctrl-F{}", n),
             Key::CtrlShiftF(n) => write!(f, "Ctrl-Shift-F{}", n),
             key => {
                 write!(f,
                        "{}",
                        match key {
+                           Key::Resize => "Screen resize",
                            Key::NumpadCenter => "Numpad center",
                            Key::Backspace => "Backspace",
                            Key::Enter => "Enter",
