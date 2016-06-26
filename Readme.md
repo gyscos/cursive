@@ -43,7 +43,7 @@ _(Colors may depend on your terminal configuration.)_
 
 ## Goals
 
-* **Ease of use.** Simle apps should be simple. Complex apps should be manageable.
+* **Ease of use.** Simple apps should be simple. Complex apps should be manageable.
 * **Linux TTY Compatibility.** Colors may suffer, and UTF-8 may be too much, but most features *must* work properly on a Linux TTY.
 * **Flexibility.** This library should be able to handle simple UI scripts, complex real-time applications, or even games.
     * In particular, it tries to have enough features to recreate these kind of tools:
