@@ -12,7 +12,7 @@ It is designed to be safe and easy to use:
 
 ```
 [dependencies]
-cursive = "0.0.1"
+cursive = "0.0.2"
 ```
 
 (You will also need ncurses installed - if it isn't already, check in your package manager.)
