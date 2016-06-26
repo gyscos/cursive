@@ -2,14 +2,14 @@ extern crate cursive;
 
 use cursive::Cursive;
 
-use cursive::view::{View,BoxView};
+use cursive::view::{View, BoxView};
 use cursive::printer::Printer;
-use cursive::event::{EventResult,Event};
+use cursive::event::{EventResult, Event};
 
 fn main() {
     let mut siv = Cursive::new();
 
-    siv.add_layer(BoxView::new((30,10), KeyCodeView::new(10)));
+    siv.add_layer(BoxView::new((30, 10), KeyCodeView::new(10)));
 
     siv.run();
 }
@@ -30,8 +30,8 @@ impl KeyCodeView {
 
 impl View for KeyCodeView {
     fn draw(&mut self, printer: &Printer) {
-        for (y,line) in self.history.iter().enumerate() {
-            printer.print((0,y), &line);
+        for (y, line) in self.history.iter().enumerate() {
+            printer.print((0, y), &line);
         }
     }
 
@@ -49,4 +49,3 @@ impl View for KeyCodeView {
         EventResult::Consumed(None)
     }
 }
-

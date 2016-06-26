@@ -1,11 +1,11 @@
 extern crate cursive;
 
 use std::fs::File;
-use std::io::{BufReader,BufRead};
+use std::io::{BufReader, BufRead};
 
 use cursive::Cursive;
 use cursive::align::HAlign;
-use cursive::view::{Dialog,SelectView,TextView,BoxView};
+use cursive::view::{Dialog, SelectView, TextView, BoxView};
 
 fn main() {
     // To keep things simple, little error management is done here.
@@ -24,8 +24,8 @@ fn main() {
     let mut siv = Cursive::new();
 
     // Let's add a BoxView to keep the list at a reasonable size - it can scroll anyway.
-    siv.add_layer(Dialog::new(BoxView::new((20,10), select))
-                  .title("Where are you from?"));
+    siv.add_layer(Dialog::new(BoxView::new((20, 10), select))
+                      .title("Where are you from?"));
 
     siv.run();
 }
@@ -34,5 +34,5 @@ fn main() {
 fn show_next_window(siv: &mut Cursive, city: &String) {
     siv.pop_layer();
     siv.add_layer(Dialog::new(TextView::new(&format!("{} is a great city!", city)))
-                .button("Quit", |s| s.quit()));
+                      .button("Quit", |s| s.quit()));
 }

@@ -21,16 +21,16 @@ cursive = "0.0.1"
 extern crate cursive;
 
 use cursive::Cursive;
-use cursive::view::{Dialog,TextView};
+use cursive::view::{TextView, Dialog};
 
 fn main() {
-	// Creates the cursive root - required for every application.
+    // Creates the cursive root - required for every application.
     let mut siv = Cursive::new();
 
-    // Create a popup window with a button that quits the application
+    // Creates a dialog with a single "Quit" button
     siv.add_layer(Dialog::new(TextView::new("Hello Dialog!"))
-                    .title("Cursive")
-                    .button("Quit", |s| s.quit()));
+                      .title("Cursive")
+                      .button("Quit", |s| s.quit()));
 
     // Starts the event loop.
     siv.run();
