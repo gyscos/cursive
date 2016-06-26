@@ -71,7 +71,7 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Sets the vertical alignment for this view.
-    /// (If the ciew is given too much space vertically.)
+    /// (If the view is given too much space vertically.)
     pub fn v_align(mut self, v: VAlign) -> Self {
         self.align.v = v;
 
