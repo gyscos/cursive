@@ -22,6 +22,7 @@
 //! ```
 extern crate ncurses;
 extern crate toml;
+extern crate unicode_segmentation;
 
 pub mod event;
 pub mod view;

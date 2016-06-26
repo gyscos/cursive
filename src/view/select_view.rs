@@ -1,6 +1,5 @@
 use std::cmp::min;
 use std::rc::Rc;
-use ncurses::chtype;
 
 use theme::ColorPair;
 use Cursive;
@@ -140,9 +139,9 @@ impl<T: 'static> View for SelectView<T> {
             printer.with_color(style, |printer| {
                 let l = self.items[i].label.chars().count();
                 let x = self.align.h.get_offset(l, printer.size.x);
-                printer.print_hline((0, 0), x, ' ' as chtype);
+                printer.print_hline((0, 0), x, " ");
                 printer.print((x, 0), &self.items[i].label);
-                printer.print_hline((x + l, 0), printer.size.x - l - x, ' ' as chtype);
+                printer.print_hline((x + l, 0), printer.size.x - l - x, " ");
             });
         });
     }

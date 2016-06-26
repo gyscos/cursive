@@ -1,5 +1,4 @@
 use std::cmp::{min, max};
-use ncurses::chtype;
 
 use theme::ColorPair;
 use vec::Vec2;
@@ -134,9 +133,9 @@ impl ScrollBase {
                 ColorPair::HighlightInactive
             };
 
-            printer.print_vline((printer.size.x - 1, 0), printer.size.y, '|' as chtype);
+            printer.print_vline((printer.size.x - 1, 0), printer.size.y, "|");
             printer.with_color(color, |printer| {
-                printer.print_vline((printer.size.x - 1, start), height, ' ' as chtype);
+                printer.print_vline((printer.size.x - 1, start), height, " ");
             });
         }
     }

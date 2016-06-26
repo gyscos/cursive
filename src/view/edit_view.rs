@@ -1,4 +1,5 @@
-use ncurses::{self, chtype};
+use ncurses;
+use unicode_segmentation::UnicodeSegmentation;
 
 use std::cmp::min;
 
@@ -83,7 +84,7 @@ impl View for EditView {
             printer.with_style(ncurses::A_REVERSE(), |printer| {
                 if len < self.last_length {
                     printer.print((0, 0), &self.content);
-                    printer.print_hline((len, 0), printer.size.x - len, '_' as chtype);
+                    printer.print_hline((len, 0), printer.size.x - len, "_");
                 } else {
                     let visible_end = min(self.content.len(), self.offset + self.last_length);
 
@@ -98,17 +99,17 @@ impl View for EditView {
             // Now print cursor
             if printer.focused {
                 let c = if self.cursor == len {
-                    '_'
+                    "_"
                 } else {
                     // Get the char from the string... Is it so hard?
                     self.content
-                        .chars()
+                        .graphemes(true)
                         .nth(self.cursor)
                         .expect(&format!("Found no char at cursor {} in {}",
                                          self.cursor,
                                          self.content))
                 };
-                printer.print_hline((self.cursor - self.offset, 0), 1, c as chtype);
+                printer.print_hline((self.cursor - self.offset, 0), 1, c);
             }
         });
     }

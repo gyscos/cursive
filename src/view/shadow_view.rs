@@ -1,4 +1,3 @@
-use ncurses::chtype;
 use view::{View, ViewWrapper, SizeRequest};
 use printer::Printer;
 use vec::Vec2;
@@ -34,7 +33,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         printer.with_color(ColorPair::Primary, |printer| {
             // Draw the view background
             for y in 1..printer.size.y - 1 {
-                printer.print_hline((1, y), printer.size.x - 2, ' ' as chtype);
+                printer.print_hline((1, y), printer.size.x - 2, " ");
             }
         });
 
@@ -44,8 +43,8 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         let w = printer.size.x - 1;
 
         printer.with_color(ColorPair::Shadow, |printer| {
-            printer.print_hline((2, h), w - 1, ' ' as chtype);
-            printer.print_vline((w, 2), h - 1, ' ' as chtype);
+            printer.print_hline((2, h), w - 1, " ");
+            printer.print_vline((w, 2), h - 1, " ");
         });
     }
 }

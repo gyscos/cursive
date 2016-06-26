@@ -1,8 +1,8 @@
 [package]
 authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
 description = "A TUI library based on ncurses-rs"
-keywords = ["ncurses", "TUI"]
 documentation = "https://gyscos.github.io/Cursive/cursive/index.html"
+keywords = ["ncurses", "TUI"]
 license = "MIT"
 name = "cursive"
 readme = "Readme.md"
@@ -12,6 +12,7 @@ version = "0.0.2"
 [dependencies]
 ncurses = "5.80.0"
 toml = "0.1"
+unicode-segmentation = "0.1.2"
 
 [[example]]
 name = "hello_world"

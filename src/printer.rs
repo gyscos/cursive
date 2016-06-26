@@ -3,7 +3,6 @@
 use std::cmp::min;
 
 use ncurses;
-use ncurses::chtype;
 
 use theme::{ColorPair, Theme};
 use vec::{Vec2, ToVec2};
@@ -54,7 +53,7 @@ impl Printer {
     }
 
     /// Prints a vertical line using the given character.
-    pub fn print_vline<T: ToVec2>(&self, start: T, len: usize, c: chtype) {
+    pub fn print_vline<T: ToVec2>(&self, start: T, len: usize, c: &str) {
         let p = start.to_vec2();
         if p.y > self.size.y || p.x > self.size.x {
             return;
@@ -63,13 +62,12 @@ impl Printer {
 
         let p = p + self.offset;
         for y in 0..len {
-            ncurses::mvaddstr((p.y + y) as i32, p.x as i32, "│");
-            // ncurses::mvaddstr(p.y as i32, p.x as i32, "┌");
+            ncurses::mvaddstr((p.y + y) as i32, p.x as i32, c);
         }
     }
 
     /// Prints a horizontal line using the given character.
-    pub fn print_hline<T: ToVec2>(&self, start: T, len: usize, c: chtype) {
+    pub fn print_hline<T: ToVec2>(&self, start: T, len: usize, c: &str) {
         let p = start.to_vec2();
         if p.y > self.size.y || p.x > self.size.x {
             return;
@@ -77,7 +75,9 @@ impl Printer {
         let len = min(len, self.size.x - p.x);
 
         let p = p + self.offset;
-        ncurses::mvhline(p.y as i32, p.x as i32, c, len as i32);
+        for x in 0..len {
+            ncurses::mvaddstr(p.y as i32, (p.x + x) as i32, c);
+        }
     }
 
     /// Call the given closure with a colored printer,
@@ -131,14 +131,10 @@ impl Printer {
         self.print(start_v + size_v.keep_y(), "└");
         self.print(start_v + size_v, "┘");
 
-        self.print_hline(start_v + (1, 0), size_v.x - 1, ncurses::ACS_HLINE());
-        self.print_vline(start_v + (0, 1), size_v.y - 1, ncurses::ACS_VLINE());
-        self.print_hline(start_v + (1, 0) + size_v.keep_y(),
-                         size_v.x - 1,
-                         ncurses::ACS_HLINE());
-        self.print_vline(start_v + (0, 1) + size_v.keep_x(),
-                         size_v.y - 1,
-                         ncurses::ACS_VLINE());
+        self.print_hline(start_v + (1, 0), size_v.x - 1, "─");
+        self.print_vline(start_v + (0, 1), size_v.y - 1, "│");
+        self.print_hline(start_v + (1, 0) + size_v.keep_y(), size_v.x - 1, "─");
+        self.print_vline(start_v + (0, 1) + size_v.keep_x(), size_v.y - 1, "│");
     }
 
     /// Returns a printer on a subset of this one's area.
