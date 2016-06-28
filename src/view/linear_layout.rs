@@ -60,7 +60,7 @@ impl LinearLayout {
 
 /// Returns the index of the maximum element.
 /// WTF isn't it part of standard library??
-fn find_max(list: &Vec<usize>) -> usize {
+fn find_max(list: &[usize]) -> usize {
     let mut max_value = 0;
     let mut max = 0;
     for (i, &x) in list.iter().enumerate() {
@@ -78,7 +78,7 @@ fn find_max(list: &Vec<usize>) -> usize {
 fn share(total: usize, weights: Vec<usize>) -> Vec<usize> {
     // It first give a base value to everyone, which is their truncated share.
     // Then, it gives the rest to the most deserving.
-    if weights.len() == 0 {
+    if weights.is_empty() {
         return Vec::new();
     }
 
@@ -91,7 +91,7 @@ fn share(total: usize, weights: Vec<usize>) -> Vec<usize> {
     let mut rest = Vec::with_capacity(weights.len());
     let mut extra = total;
 
-    for weight in weights.iter() {
+    for weight in &weights {
         let b = total * weight / sum_weight;
         extra -= b;
         base.push(b);
@@ -190,35 +190,35 @@ impl View for LinearLayout {
         match self.children[self.focus].view.on_event(event) {
             EventResult::Ignored => {
                 match event {
-                    Event::KeyEvent(Key::Tab) if self.focus > 0 => {
+                    Event::Key(Key::Tab) if self.focus > 0 => {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::ShiftTab) if self.focus + 1 <
+                    Event::Key(Key::ShiftTab) if self.focus + 1 <
                                                       self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::Left) if self.orientation ==
+                    Event::Key(Key::Left) if self.orientation ==
                                                   Orientation::Horizontal &&
                                                   self.focus > 0 => {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::Up) if self.orientation ==
+                    Event::Key(Key::Up) if self.orientation ==
                                                 Orientation::Vertical &&
                                                 self.focus > 0 => {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::Right) if self.orientation ==
+                    Event::Key(Key::Right) if self.orientation ==
                                                    Orientation::Horizontal &&
                                                    self.focus + 1 <
                                                    self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::Down) if self.orientation ==
+                    Event::Key(Key::Down) if self.orientation ==
                                                   Orientation::Vertical &&
                                                   self.focus + 1 <
                                                   self.children.len() => {

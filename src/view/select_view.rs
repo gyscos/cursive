@@ -180,23 +180,23 @@ impl<T: 'static> View for SelectView<T> {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::KeyEvent(Key::Up) if self.focus > 0 => self.focus -= 1,
-            Event::KeyEvent(Key::Down) if self.focus + 1 <
+            Event::Key(Key::Up) if self.focus > 0 => self.focus -= 1,
+            Event::Key(Key::Down) if self.focus + 1 <
                                           self.items.len() => self.focus += 1,
-            Event::KeyEvent(Key::PageUp) => self.focus -= min(self.focus, 10),
-            Event::KeyEvent(Key::PageDown) => {
+            Event::Key(Key::PageUp) => self.focus -= min(self.focus, 10),
+            Event::Key(Key::PageDown) => {
                 self.focus = min(self.focus + 10, self.items.len() - 1)
             }
-            Event::KeyEvent(Key::Home) => self.focus = 0,
-            Event::KeyEvent(Key::End) => self.focus = self.items.len() - 1,
-            Event::KeyEvent(Key::Enter) if self.select_cb.is_some() => {
+            Event::Key(Key::Home) => self.focus = 0,
+            Event::Key(Key::End) => self.focus = self.items.len() - 1,
+            Event::Key(Key::Enter) if self.select_cb.is_some() => {
                 let cb = self.select_cb.as_ref().unwrap().clone();
                 let v = self.selection();
                 // We return a Rc<Box<Callback>>
                 // With callback being |s| cb(s, &*v)
                 return EventResult::Consumed(Some(Rc::new(Box::new(move |s| cb(s, &*v)))));
             }
-            Event::CharEvent(c) => {
+            Event::Char(c) => {
                 // Starting from the current focus,
                 // find the first item that match the char.
                 // Cycle back to the beginning of

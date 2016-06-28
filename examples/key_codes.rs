@@ -37,8 +37,8 @@ impl View for KeyCodeView {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         let line = match event {
-            Event::CharEvent(c) => format!("Char: {}", c),
-            Event::KeyEvent(key) => format!("Key: {}", key),
+            Event::Char(c) => format!("Char: {}", c),
+            Event::Key(key) => format!("Key: {}", key),
         };
         self.history.push(line);
 

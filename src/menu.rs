@@ -50,8 +50,8 @@ impl MenuTree {
 
     pub fn new_subtree(&mut self, title: &str) -> &mut Box<MenuTree> {
         self.add_subtree(title, MenuTree::new());
-        match self.children.last_mut().unwrap() {
-            &mut MenuItem::Subtree(_, ref mut tree) => tree,
+        match *self.children.last_mut().unwrap() {
+            MenuItem::Subtree(_, ref mut tree) => tree,
             _ => panic!("??"),
         }
     }

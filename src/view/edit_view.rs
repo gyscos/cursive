@@ -25,6 +25,12 @@ pub struct EditView {
                          * TODO: add a max text length? */
 }
 
+impl Default for EditView {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EditView {
     /// Creates a new, empty edit view.
     pub fn new() -> Self {
@@ -38,7 +44,7 @@ impl EditView {
     }
 
     /// Replace the entire content of the view with the given one.
-    pub fn set_content<'a>(&mut self, content: &'a str) {
+    pub fn set_content(&mut self, content: &str) {
         self.offset = 0;
         self.content = content.to_string();
     }
@@ -49,7 +55,7 @@ impl EditView {
     }
 
     /// Sets the current content to the given value. Convenient chainable method.
-    pub fn content<'a>(mut self, content: &'a str) -> Self {
+    pub fn content(mut self, content: &str) -> Self {
         self.set_content(content);
         self
     }
@@ -130,7 +136,7 @@ impl View for EditView {
     fn on_event(&mut self, event: Event) -> EventResult {
 
         match event {
-            Event::CharEvent(ch) => {
+            Event::Char(ch) => {
                 // Find the byte index of the char at self.cursor
 
                 match self.content.char_indices().nth(self.cursor) {
@@ -140,7 +146,7 @@ impl View for EditView {
                 // TODO: handle wide (CJK) chars
                 self.cursor += 1;
             }
-            Event::KeyEvent(key) => {
+            Event::Key(key) => {
                 match key {
                     Key::Home => self.cursor = 0,
                     Key::End => self.cursor = self.content.chars().count(),

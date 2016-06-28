@@ -48,7 +48,7 @@ impl Printer {
         };
 
         let p = p + self.offset;
-        if text.contains("%") {
+        if text.contains('%') {
             ncurses::mvprintw(p.y as i32,
                               p.x as i32,
                               &text.replace("%", "%%"));
@@ -98,7 +98,7 @@ impl Printer {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
     /// ```
-    pub fn with_color<'a, F>(&'a self, c: ColorPair, f: F)
+    pub fn with_color<F>(&self, c: ColorPair, f: F)
         where F: Fn(&Printer)
     {
         self.with_style(ncurses::COLOR_PAIR(c.ncurses_id()), f);
@@ -109,7 +109,7 @@ impl Printer {
     /// like `ncurses::A_BOLD()` or `ncurses::A_REVERSE()`.
     ///
     /// Will probably use a cursive enum some day.
-    pub fn with_style<'a, F>(&'a self, style: ncurses::attr_t, f: F)
+    pub fn with_style<F>(&self, style: ncurses::attr_t, f: F)
         where F: Fn(&Printer)
     {
         ncurses::attron(style);

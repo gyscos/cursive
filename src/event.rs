@@ -245,7 +245,7 @@ impl Key {
             // TODO: shift and ctrl Fn keys
             // Avoids 8-10 (H,I,J), they are used by other commands.
             c @ 1...7 | c @ 11...25 => {
-                Key::CtrlChar(('a' as u8 + (c - 1) as u8) as char)
+                Key::CtrlChar((b'a' + (c - 1) as u8) as char)
             }
             _ => Key::Unknown(ch),
         }
@@ -362,9 +362,9 @@ impl fmt::Display for Key {
 #[derive(PartialEq,Eq,Clone,Copy,Hash)]
 pub enum Event {
     /// A text character was entered.
-    CharEvent(char),
+    Char(char),
     /// A key was pressed.
-    KeyEvent(Key),
+    Key(Key),
 }
 
 /// Generic trait to convert a value to an event.
@@ -374,13 +374,13 @@ pub trait ToEvent {
 
 impl ToEvent for char {
     fn to_event(self) -> Event {
-        Event::CharEvent(self)
+        Event::Char(self)
     }
 }
 
 impl ToEvent for Key {
     fn to_event(self) -> Event {
-        Event::KeyEvent(self)
+        Event::Key(self)
     }
 }
 

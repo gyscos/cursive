@@ -18,6 +18,12 @@ struct Layer {
     virgin: bool,
 }
 
+impl Default for StackView {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StackView {
     /// Creates a new empty StackView
     pub fn new() -> Self {
@@ -63,7 +69,7 @@ impl View for StackView {
             w: DimensionRequest::AtMost(size.x),
             h: DimensionRequest::AtMost(size.y),
         };
-        for layer in self.layers.iter_mut() {
+        for layer in &mut self.layers {
             layer.size = Vec2::min(size, layer.view.get_min_size(req));
             layer.view.layout(layer.size);
             // We do it here instead of when adding a new layer because...?
@@ -78,7 +84,7 @@ impl View for StackView {
         // The min size is the max of all children's
         let mut s = Vec2::new(1, 1);
 
-        for layer in self.layers.iter() {
+        for layer in &self.layers {
             let vs = layer.view.get_min_size(size);
             s = Vec2::max(s, vs);
         }
@@ -94,7 +100,7 @@ impl View for StackView {
     }
 
     fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
-        for layer in self.layers.iter_mut() {
+        for layer in &mut self.layers {
             if let Some(any) = layer.view.find(selector) {
                 return Some(any);
             }

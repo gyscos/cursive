@@ -18,12 +18,12 @@ impl<T: View> ViewWrapper for FullView<T> {
 
     fn wrap_get_min_size(&self, req: SizeRequest) -> Vec2 {
         let w = match req.w {
-            DimensionRequest::Fixed(w) => w,
+            DimensionRequest::Fixed(w) |
             DimensionRequest::AtMost(w) => w,
             DimensionRequest::Unknown => self.view.get_min_size(req).x,
         };
         let h = match req.h {
-            DimensionRequest::Fixed(h) => h,
+            DimensionRequest::Fixed(h) |
             DimensionRequest::AtMost(h) => h,
             DimensionRequest::Unknown => self.view.get_min_size(req).y,
         };

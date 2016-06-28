@@ -41,7 +41,7 @@ fn get_line_span(line: &str, max_width: usize) -> usize {
     // (Or use a common function? Better!)
     let mut lines = 1;
     let mut length = 0;
-    for l in line.split(" ").map(|word| word.chars().count()) {
+    for l in line.split(' ').map(|word| word.chars().count()) {
         length += l;
         if length > max_width {
             length = l;
@@ -100,7 +100,7 @@ impl TextView {
     /// with the given width.
     fn get_num_lines(&self, max_width: usize) -> usize {
         self.content
-            .split("\n")
+            .split('\n')
             .map(|line| get_line_span(line, max_width))
             .fold(0, |sum, x| sum + x)
     }
@@ -119,7 +119,7 @@ impl TextView {
         let mut max_width = 0;
         let mut height = 0;
 
-        for line in self.content.split("\n") {
+        for line in self.content.split('\n') {
             height += 1;
             max_width = max(max_width, line.chars().count());
         }
@@ -159,7 +159,7 @@ impl<'a> Iterator for LinesIterator<'a> {
         let start = self.start;
         let content = &self.content[self.start..];
 
-        if let Some(next) = content.find("\n") {
+        if let Some(next) = content.find('\n') {
             if content[..next].chars().count() <= self.width {
                 // We found a newline before the allowed limit.
                 // Break early.
@@ -189,7 +189,7 @@ impl<'a> Iterator for LinesIterator<'a> {
             content.char_indices().nth(self.width + 1).unwrap().0
         };
         let substr = &content[..i];
-        if let Some(i) = substr.rfind(" ") {
+        if let Some(i) = substr.rfind(' ') {
             // If we have to break, try to find a whitespace for that.
             self.start += i + 1;
             return Some(Row {
@@ -201,10 +201,11 @@ impl<'a> Iterator for LinesIterator<'a> {
         // Meh, no whitespace, so just cut in this mess.
         // TODO: look for ponctuation instead?
         self.start += self.width;
-        return Some(Row {
+
+        Some(Row {
             start: start,
             end: start + self.width,
-        });
+        })
     }
 }
 
@@ -232,21 +233,21 @@ impl View for TextView {
         }
 
         match event {
-            Event::KeyEvent(Key::Home) => self.scrollbase.scroll_top(),
-            Event::KeyEvent(Key::End) => self.scrollbase.scroll_bottom(),
-            Event::KeyEvent(Key::Up) if self.scrollbase.can_scroll_up() => {
+            Event::Key(Key::Home) => self.scrollbase.scroll_top(),
+            Event::Key(Key::End) => self.scrollbase.scroll_bottom(),
+            Event::Key(Key::Up) if self.scrollbase.can_scroll_up() => {
                 self.scrollbase.scroll_up(1)
             }
-            Event::KeyEvent(Key::Down) if self.scrollbase
+            Event::Key(Key::Down) if self.scrollbase
                                               .can_scroll_down() => {
                 self.scrollbase.scroll_down(1)
             }
-            Event::KeyEvent(Key::PageDown) => self.scrollbase.scroll_down(10),
-            Event::KeyEvent(Key::PageUp) => self.scrollbase.scroll_up(10),
+            Event::Key(Key::PageDown) => self.scrollbase.scroll_down(10),
+            Event::Key(Key::PageUp) => self.scrollbase.scroll_up(10),
             _ => return EventResult::Ignored,
         }
 
-        return EventResult::Consumed(None);
+        EventResult::Consumed(None)
     }
 
     fn get_min_size(&self, size: SizeRequest) -> Vec2 {

@@ -5,6 +5,12 @@ pub struct ViewPath {
     pub path: Vec<usize>,
 }
 
+impl Default for ViewPath {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ViewPath {
     /// Creates a new empty path.
     pub fn new() -> Self {
@@ -17,7 +23,7 @@ impl ViewPath {
     }
 }
 
-/// Generic trait for elements that can be converted into a ViewPath.
+/// Generic trait for elements that can be converted into a `ViewPath`.
 pub trait ToPath {
     /// Creates a path from the element.
     fn to_path(self) -> ViewPath;

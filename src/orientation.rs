@@ -45,10 +45,10 @@ impl Orientation {
     pub fn stack<'a, T: Iterator<Item = &'a Vec2>>(&self, iter: T) -> Vec2 {
         match *self {
             Orientation::Horizontal => {
-                iter.fold(Vec2::zero(), |a, b| a.stack_horizontal(&b))
+                iter.fold(Vec2::zero(), |a, b| a.stack_horizontal(b))
             }
             Orientation::Vertical => {
-                iter.fold(Vec2::zero(), |a, b| a.stack_vertical(&b))
+                iter.fold(Vec2::zero(), |a, b| a.stack_vertical(b))
             }
         }
     }

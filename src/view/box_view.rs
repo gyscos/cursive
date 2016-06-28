@@ -1,14 +1,14 @@
 use vec::{ToVec2, Vec2};
 use super::{DimensionRequest, SizeRequest, View, ViewWrapper};
 
-/// BoxView is a wrapper around an other view, with a given minimum size.
+/// `BoxView` is a wrapper around an other view, with a given minimum size.
 pub struct BoxView<T: View> {
     size: Vec2,
     view: T,
 }
 
 impl<T: View> BoxView<T> {
-    /// Creates a new BoxView with the given minimum size and content
+    /// Creates a new `BoxView` with the given minimum size and content
     ///
     /// # Example
     ///

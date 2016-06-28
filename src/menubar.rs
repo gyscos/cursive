@@ -30,6 +30,7 @@ impl Menubar {
     }
 
     pub fn on_event(&mut self, event: Event) -> Option<Rc<Callback>> {
+        let _ = &event;
         None
     }
 }

@@ -80,24 +80,18 @@ impl Theme {
     }
 
     fn load(&mut self, table: &toml::Table) {
-        match table.get("shadow") {
-            Some(&toml::Value::Boolean(shadow)) => self.shadow = shadow,
-            _ => (),
+        if let Some(&toml::Value::Boolean(shadow)) = table.get("shadow") {
+            self.shadow = shadow;
         }
 
-        match table.get("borders") {
-            Some(&toml::Value::String(ref borders)) => {
-                match BorderStyle::from(borders) {
-                    Some(borders) => self.borders = borders,
-                    None => (),
-                }
+        if let Some(&toml::Value::String(ref borders)) = table.get("borders") {
+            if let Some(borders) = BorderStyle::from(borders) {
+                self.borders = borders;
             }
-            _ => (),
         }
 
-        match table.get("colors") {
-            Some(&toml::Value::Table(ref table)) => self.colors.load(table),
-            _ => (),
+        if let Some(&toml::Value::Table(ref table)) = table.get("colors") {
+            self.colors.load(table);
         }
     }
 
@@ -225,14 +219,14 @@ impl Color {
 #[derive(Debug)]
 pub enum Error {
     /// An error occured when reading the file.
-    IoError(io::Error),
+    Io(io::Error),
     /// An error occured when parsing the toml content.
-    ParseError,
+    Parse,
 }
 
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
-        Error::IoError(err)
+        Error::Io(err)
     }
 }
 
@@ -269,13 +263,10 @@ impl Color {
             }
             Some(&toml::Value::Array(ref array)) => {
                 for color in array.iter() {
-                    match color {
-                        &toml::Value::String(ref color) => {
-                            if self.load_value(color, new_id) {
-                                return;
-                            }
+                    if let toml::Value::String(ref color) = *color {
+                        if self.load_value(color, new_id) {
+                            return;
                         }
-                        _ => (),
                     }
                 }
             }
@@ -297,7 +288,7 @@ impl Color {
             return None;
         }
 
-        if !value.starts_with("#") {
+        if !value.starts_with('#') {
             return None;
         }
 
@@ -398,7 +389,7 @@ pub fn load_theme<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
     let mut parser = toml::Parser::new(&content);
     let table = match parser.parse() {
         Some(value) => value,
-        None => return Err(Error::ParseError),
+        None => return Err(Error::Parse),
     };
 
     let mut theme = Theme::default();

@@ -59,7 +59,7 @@ impl Dialog {
     /// Adds a button to the dialog with the given label and callback.
     ///
     /// Consumes and returns self for easy chaining.
-    pub fn button<'a, F>(mut self, label: &'a str, cb: F) -> Self
+    pub fn button<F>(mut self, label: &str, cb: F) -> Self
         where F: Fn(&mut Cursive) + 'static
     {
         self.buttons.push(SizedView::new(Button::new(label, cb)));
@@ -84,7 +84,7 @@ impl Dialog {
     }
 
     /// Shortcut method to add a button that will dismiss the dialog.
-    pub fn dismiss_button<'a>(self, label: &'a str) -> Self {
+    pub fn dismiss_button(self, label: &str) -> Self {
         self.button(label, |s| s.screen_mut().pop_layer())
     }
 
@@ -150,7 +150,7 @@ impl View for Dialog {
 
         printer.print_box(Vec2::new(0, 0), printer.size);
 
-        if self.title.len() > 0 {
+        if !self.title.is_empty() {
             let len = self.title.chars().count();
             let x = (printer.size.x - len) / 2;
             printer.print((x - 2, 0), "┤ ");
@@ -172,7 +172,7 @@ impl View for Dialog {
         if !self.buttons.is_empty() {
             buttons_size.x += self.buttons.len() - 1;
         }
-        for button in self.buttons.iter() {
+        for button in &self.buttons {
             let s = button.view.get_min_size(req);
             buttons_size.x += s.x;
             buttons_size.y = max(buttons_size.y, s.y + 1);
@@ -185,7 +185,7 @@ impl View for Dialog {
                              self.padding.combined() +
                              self.borders.combined();
 
-        if self.title.len() > 0 {
+        if !self.title.is_empty() {
             // If we have a title, we have to fit it too!
             inner_size.x = max(inner_size.x, self.title.chars().count() + 6);
         }
@@ -220,13 +220,10 @@ impl View for Dialog {
                 match self.content.on_event(event) {
                     EventResult::Ignored if !self.buttons.is_empty() => {
                         match event {
-                            Event::KeyEvent(Key::Down) => {
+                            Event::Key(Key::Down) |
+                            Event::Key(Key::Tab) |
+                            Event::Key(Key::ShiftTab) => {
                                 // Default to leftmost button when going down.
-                                self.focus = Focus::Button(0);
-                                EventResult::Consumed(None)
-                            }
-                            Event::KeyEvent(Key::Tab) |
-                            Event::KeyEvent(Key::ShiftTab) => {
                                 self.focus = Focus::Button(0);
                                 EventResult::Consumed(None)
                             }
@@ -242,16 +239,9 @@ impl View for Dialog {
                     EventResult::Ignored => {
                         match event {
                             // Up goes back to the content
-                            Event::KeyEvent(Key::Up) => {
-                                if self.content.take_focus() {
-                                    self.focus = Focus::Content;
-                                    EventResult::Consumed(None)
-                                } else {
-                                    EventResult::Ignored
-                                }
-                            }
-                            Event::KeyEvent(Key::Tab) |
-                            Event::KeyEvent(Key::ShiftTab) => {
+                            Event::Key(Key::Up) |
+                            Event::Key(Key::Tab) |
+                            Event::Key(Key::ShiftTab) => {
                                 if self.content.take_focus() {
                                     self.focus = Focus::Content;
                                     EventResult::Consumed(None)
@@ -260,13 +250,13 @@ impl View for Dialog {
                                 }
                             }
                             // Left and Right move to other buttons
-                            Event::KeyEvent(Key::Right) if i + 1 <
+                            Event::Key(Key::Right) if i + 1 <
                                                            self.buttons
                                                                .len() => {
                                 self.focus = Focus::Button(i + 1);
                                 EventResult::Consumed(None)
                             }
-                            Event::KeyEvent(Key::Left) if i > 0 => {
+                            Event::Key(Key::Left) if i > 0 => {
                                 self.focus = Focus::Button(i - 1);
                                 EventResult::Consumed(None)
                             }
