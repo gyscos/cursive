@@ -48,10 +48,10 @@ impl MenuTree {
         self
     }
 
-    pub fn new_subtree(&mut self, title: &str) -> &mut Box<MenuTree> {
+    pub fn new_subtree(&mut self, title: &str) -> &mut MenuTree {
         self.add_subtree(title, MenuTree::new());
         match *self.children.last_mut().unwrap() {
-            MenuItem::Subtree(_, ref mut tree) => tree,
+            MenuItem::Subtree(_, ref mut tree) => &mut *tree,
             _ => panic!("??"),
         }
     }
