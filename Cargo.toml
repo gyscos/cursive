@@ -14,45 +14,5 @@ ncurses = "5.80.0"
 toml = "0.1"
 unicode-segmentation = "0.1.2"
 
-[[example]]
-name = "hello_world"
-path = "examples/hello_world.rs"
-
-[[example]]
-name = "lorem"
-path = "examples/lorem.rs"
-
-[[example]]
-name = "dialog"
-path = "examples/dialog.rs"
-
-[[example]]
-name = "logs"
-path = "examples/logs.rs"
-
-[[example]]
-name = "mutation"
-path = "examples/mutation.rs"
-
-[[example]]
-name = "edit"
-path = "examples/edit.rs"
-
-[[example]]
-name = "key_codes"
-path = "examples/key_codes.rs"
-
-[[example]]
-name = "select"
-path = "examples/select.rs"
-
-[[example]]
-name = "theme"
-path = "examples/theme.rs"
-
-[[example]]
-name = "linear"
-path = "examples/linear.rs"
-
 [lib]
 name = "cursive"
