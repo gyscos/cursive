@@ -31,6 +31,10 @@ pub mod vec;
 pub mod theme;
 pub mod align;
 pub mod orientation;
+pub mod menu;
+
+// This probably doesn't need to be public?
+mod menubar;
 
 mod div;
 mod utf8;
@@ -43,9 +47,9 @@ use std::path::Path;
 use vec::Vec2;
 use printer::Printer;
 use view::View;
-use view::{StackView, Selector};
+use view::{Selector, StackView};
 
-use event::{Event, ToEvent, Key, EventResult, Callback};
+use event::{Callback, Event, EventResult, Key, ToEvent};
 
 /// Identifies a screen in the cursive ROOT.
 pub type ScreenId = usize;
@@ -58,15 +62,14 @@ pub type ScreenId = usize;
 ///
 /// It uses a list of screen, with one screen active at a time.
 pub struct Cursive {
+    theme: theme::Theme,
     screens: Vec<StackView>,
+    global_callbacks: HashMap<Event, Rc<Callback>>,
+    menu: menubar::Menubar,
 
     active_screen: ScreenId,
 
     running: bool,
-
-    global_callbacks: HashMap<Event, Rc<Callback>>,
-
-    theme: theme::Theme,
 }
 
 impl Cursive {
@@ -88,16 +91,35 @@ impl Cursive {
                        ncurses::COLOR_PAIR(theme::ColorPair::Background.ncurses_id()));
 
         let mut res = Cursive {
+            theme: theme,
             screens: Vec::new(),
+            global_callbacks: HashMap::new(),
+            menu: menubar::Menubar::new(),
             active_screen: 0,
             running: true,
-            global_callbacks: HashMap::new(),
-            theme: theme,
         };
 
         res.screens.push(StackView::new());
 
         res
+    }
+
+    /// Selects the menubar
+    pub fn select_menu(&mut self) {
+        self.menu.selected = true;
+    }
+
+    /// Sets the menubar autohide_menubar feature.
+    ///
+    /// * When enabled, the menu is only visible when selected.
+    /// * When disabled, the menu is always visible and reserves the top row.
+    pub fn set_autohide_menu(&mut self, autohide: bool) {
+        self.menu.autohide = autohide;
+    }
+
+    /// Retrieve the menu tree used by the menubar.
+    pub fn menu(&mut self) -> &mut menu::MenuTree {
+        &mut self.menu.menu
     }
 
     /// Returns the currently used theme
@@ -150,7 +172,8 @@ impl Cursive {
     /// Sets the active screen. Panics if no such screen exist.
     pub fn set_screen(&mut self, screen_id: ScreenId) {
         if screen_id >= self.screens.len() {
-            panic!("Tried to set an invalid screen ID: {}, but only {} screens present.",
+            panic!("Tried to set an invalid screen ID: {}, but only {} \
+                    screens present.",
                    screen_id,
                    self.screens.len());
         }
@@ -222,8 +245,28 @@ impl Cursive {
     }
 
     fn draw(&mut self) {
+        // TODO: don't clone the theme
+        // Reference it or something
         let printer = Printer::new(self.screen_size(), self.theme.clone());
-        self.screen_mut().draw(&printer);
+
+        // Draw the currently active screen
+        // If the menubar is active, nothing else can be.
+        let offset = if self.menu.autohide {
+            1
+        } else {
+            0
+        };
+        let selected = self.menu.selected;
+        self.screen_mut()
+            .draw(&printer.sub_printer(Vec2::new(0, offset),
+                                       printer.size,
+                                       !selected));
+
+        // Draw the menubar?
+        if self.menu.selected || !self.menu.autohide {
+            self.menu.draw(&printer);
+        }
+
         ncurses::refresh();
     }
 
@@ -232,13 +275,16 @@ impl Cursive {
 
         // Is it a UTF-8 starting point?
         if 32 <= ch && ch < 0x100 && ch != 127 {
-            Event::CharEvent(utf8::read_char(ch as u8, || ncurses::getch() as u8).unwrap())
+            Event::CharEvent(utf8::read_char(ch as u8,
+                                             || ncurses::getch() as u8)
+                                 .unwrap())
         } else {
             Event::KeyEvent(Key::from_ncurses(ch))
         }
     }
 
     /// Runs the event loop.
+    ///
     /// It will wait for user input (key presses) and trigger callbacks accordingly.
     /// Blocks until quit() is called.
     pub fn run(&mut self) {
@@ -259,11 +305,22 @@ impl Cursive {
             // (If set_fps was called, this returns -1 now and then)
             let event = Cursive::poll_event();
 
-            match self.screen_mut().on_event(event) {
-                // If the event was ignored, it is our turn to play with it.
-                EventResult::Ignored => self.on_event(event),
-                EventResult::Consumed(None) => (),
-                EventResult::Consumed(Some(cb)) => cb(self),
+            // Event dispatch order:
+            // * Focused element:
+            //     * Menubar (if active)
+            //     * Current screen (top layer)
+            // * Global callbacks
+            if self.menu.selected {
+                if let Some(cb) = self.menu.on_event(event) {
+                    cb(self);
+                }
+            } else {
+                match self.screen_mut().on_event(event) {
+                    // If the event was ignored, it is our turn to play with it.
+                    EventResult::Ignored => self.on_event(event),
+                    EventResult::Consumed(None) => (),
+                    EventResult::Consumed(Some(cb)) => cb(self),
+                }
             }
         }
     }
