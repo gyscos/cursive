@@ -135,7 +135,7 @@ impl Key {
     pub fn from_ncurses(ch: i32) -> Self {
         match ch {
             // Values under 256 are chars and control values
-
+            //
             // Tab is '\t'
             9 => Key::Tab,
             // Treat '\n' and the numpad Enter the same
@@ -155,9 +155,8 @@ impl Key {
             521 => Key::CtrlDel,
             522 => Key::CtrlShiftDel,
             // 523: CtrlAltDel?
-
+            //
             // 524?
-
             525 => Key::AltDown,
             526 => Key::AltShiftDown,
             527 => Key::CtrlDown,
@@ -206,7 +205,6 @@ impl Key {
             563 => Key::CtrlShiftRight,
             564 => Key::CtrlAltRight,
             // 565?
-
             566 => Key::AltUp,
             567 => Key::AltShiftUp,
             568 => Key::CtrlUp,
@@ -235,7 +233,9 @@ impl Key {
             ncurses::KEY_SNEXT => Key::ShiftPageDown,
             ncurses::KEY_SPREVIOUS => Key::ShiftPageUp,
             // All Fn keys use the same enum with associated number
-            f @ ncurses::KEY_F1...ncurses::KEY_F12 => Key::F((f - ncurses::KEY_F0) as u8),
+            f @ ncurses::KEY_F1...ncurses::KEY_F12 => {
+                Key::F((f - ncurses::KEY_F0) as u8)
+            }
             f @ 277...288 => Key::ShiftF((f - 277) as u8),
             f @ 289...300 => Key::CtrlF((f - 289) as u8),
             f @ 301...312 => Key::CtrlShiftF((f - 300) as u8),
@@ -244,7 +244,9 @@ impl Key {
             //
             // TODO: shift and ctrl Fn keys
             // Avoids 8-10 (H,I,J), they are used by other commands.
-            c @ 1...7 | c @ 11...25 => Key::CtrlChar(('a' as u8 + (c - 1) as u8) as char),
+            c @ 1...7 | c @ 11...25 => {
+                Key::CtrlChar(('a' as u8 + (c - 1) as u8) as char)
+            }
             _ => Key::Unknown(ch),
         }
     }

@@ -14,7 +14,6 @@ pub enum MenuItem {
 }
 
 impl MenuTree {
-
     pub fn new() -> Self {
         Self::default()
     }
@@ -38,7 +37,8 @@ impl MenuTree {
 
     pub fn leaf<F: 'static + Fn(&mut Cursive)>(&mut self, title: &str, cb: F)
                                                -> &mut Self {
-        self.children.push(MenuItem::Leaf(title.to_string(), Rc::new(Box::new(cb))));
+        self.children
+            .push(MenuItem::Leaf(title.to_string(), Rc::new(Box::new(cb))));
         self
     }
 

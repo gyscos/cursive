@@ -3,7 +3,7 @@ use std::rc::Rc;
 use theme::ColorPair;
 use Cursive;
 use vec::Vec2;
-use view::{View, SizeRequest};
+use view::{SizeRequest, View};
 use event::*;
 use printer::Printer;
 
@@ -50,7 +50,9 @@ impl View for Button {
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
             // 10 is the ascii code for '\n', that is the return key
-            Event::KeyEvent(Key::Enter) => EventResult::Consumed(Some(self.callback.clone())),
+            Event::KeyEvent(Key::Enter) => {
+                EventResult::Consumed(Some(self.callback.clone()))
+            }
             _ => EventResult::Ignored,
         }
     }

@@ -1,4 +1,4 @@
-use view::{View, ViewWrapper, SizeRequest, DimensionRequest};
+use view::{DimensionRequest, SizeRequest, View, ViewWrapper};
 use vec::Vec2;
 
 /// Simple wrapper view that asks for all the space it can get.

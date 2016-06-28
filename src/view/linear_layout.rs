@@ -1,4 +1,4 @@
-use view::{View, SizeRequest, DimensionRequest};
+use view::{DimensionRequest, SizeRequest, View};
 use vec::Vec2;
 use printer::Printer;
 use orientation::Orientation;
@@ -113,9 +113,12 @@ impl View for LinearLayout {
         // Use pre-computed sizes
         let mut offset = Vec2::zero();
         for (i, child) in self.children.iter_mut().enumerate() {
-            child.view.draw(&printer.sub_printer(offset, child.size, i == self.focus));
+            child.view.draw(&printer.sub_printer(offset,
+                                                 child.size,
+                                                 i == self.focus));
 
-            *self.orientation.get_ref(&mut offset) += self.orientation.get(&child.size);
+            *self.orientation.get_ref(&mut offset) += self.orientation
+                                                          .get(&child.size);
         }
     }
 
@@ -127,7 +130,9 @@ impl View for LinearLayout {
         };
         let min_sizes: Vec<Vec2> = self.children
                                        .iter()
-                                       .map(|child| child.view.get_min_size(req))
+                                       .map(|child| {
+                                           child.view.get_min_size(req)
+                                       })
                                        .collect();
         let min_size = self.orientation.stack(min_sizes.iter());
 
@@ -148,12 +153,14 @@ impl View for LinearLayout {
         };
 
 
-        for (child, (child_size, extra)) in self.children
-                                                .iter_mut()
-                                                .zip(min_sizes.iter().zip(extras.iter())) {
+        for (child, (child_size, extra)) in
+            self.children
+                .iter_mut()
+                .zip(min_sizes.iter().zip(extras.iter())) {
             let mut child_size = *child_size;
             *self.orientation.get_ref(&mut child_size) += *extra;
-            *self.orientation.swap().get_ref(&mut child_size) = self.orientation.swap().get(&size);
+            *self.orientation.swap().get_ref(&mut child_size) =
+                self.orientation.swap().get(&size);
             child.size = child_size;
             child.view.layout(child_size);
         }
@@ -171,9 +178,10 @@ impl View for LinearLayout {
         // Did it work? Champagne!
 
 
-        // Ok, so maybe it didn't.
+        // TODO: Ok, so maybe it didn't.
         // Last chance: did someone lie about his needs?
         // Could we squash him a little?
+        // (Maybe he'll just scroll and it'll be fine?)
 
         // Find out who's fluid, if any.
     }
@@ -186,27 +194,34 @@ impl View for LinearLayout {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::ShiftTab) if self.focus + 1 < self.children.len() => {
+                    Event::KeyEvent(Key::ShiftTab) if self.focus + 1 <
+                                                      self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::Left) if self.orientation == Orientation::Horizontal &&
+                    Event::KeyEvent(Key::Left) if self.orientation ==
+                                                  Orientation::Horizontal &&
                                                   self.focus > 0 => {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::Up) if self.orientation == Orientation::Vertical &&
+                    Event::KeyEvent(Key::Up) if self.orientation ==
+                                                Orientation::Vertical &&
                                                 self.focus > 0 => {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::Right) if self.orientation == Orientation::Horizontal &&
-                                                   self.focus + 1 < self.children.len() => {
+                    Event::KeyEvent(Key::Right) if self.orientation ==
+                                                   Orientation::Horizontal &&
+                                                   self.focus + 1 <
+                                                   self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)
                     }
-                    Event::KeyEvent(Key::Down) if self.orientation == Orientation::Vertical &&
-                                                  self.focus + 1 < self.children.len() => {
+                    Event::KeyEvent(Key::Down) if self.orientation ==
+                                                  Orientation::Vertical &&
+                                                  self.focus + 1 <
+                                                  self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)
                     }

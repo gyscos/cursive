@@ -27,7 +27,9 @@ pub fn read_char<F>(first: u8, next: F) -> Result<char, String>
     for _ in 1..n_bytes {
         let byte = next();
         if byte & 0xC0 != 0x80 {
-            return Err(format!("Found non-continuation byte after leading: {}", byte));
+            return Err(format!("Found non-continuation byte after leading: \
+                                {}",
+                               byte));
         }
         // We have 6 fresh new bits to read, make room.
         res <<= 6;

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use Cursive;
-use event::{Event, EventResult, ToEvent, Callback};
+use event::{Callback, Event, EventResult, ToEvent};
 use super::{View, ViewWrapper};
 
 /// A simple wrapper view that catches some ignored event from its child.

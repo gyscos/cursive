@@ -5,7 +5,7 @@ use std::cmp::min;
 
 use theme::ColorPair;
 use vec::Vec2;
-use view::{View, IdView, SizeRequest};
+use view::{IdView, SizeRequest, View};
 use event::*;
 use printer::Printer;
 
@@ -86,7 +86,8 @@ impl View for EditView {
                     printer.print((0, 0), &self.content);
                     printer.print_hline((len, 0), printer.size.x - len, "_");
                 } else {
-                    let visible_end = min(self.content.len(), self.offset + self.last_length);
+                    let visible_end = min(self.content.len(),
+                                          self.offset + self.last_length);
 
                     let content = &self.content[self.offset..visible_end];
                     printer.print((0, 0), content);
@@ -144,7 +145,10 @@ impl View for EditView {
                     Key::Home => self.cursor = 0,
                     Key::End => self.cursor = self.content.chars().count(),
                     Key::Left if self.cursor > 0 => self.cursor -= 1,
-                    Key::Right if self.cursor < self.content.chars().count() => self.cursor += 1,
+                    Key::Right if self.cursor <
+                                  self.content.chars().count() => {
+                        self.cursor += 1
+                    }
                     Key::Backspace if self.cursor > 0 => {
                         self.cursor -= 1;
                         remove_char(&mut self.content, self.cursor);

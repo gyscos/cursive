@@ -105,8 +105,12 @@ impl Theme {
         Theme::apply_color(ColorPair::Background,
                            &self.colors.background,
                            &self.colors.background);
-        Theme::apply_color(ColorPair::Shadow, &self.colors.shadow, &self.colors.shadow);
-        Theme::apply_color(ColorPair::Primary, &self.colors.primary, &self.colors.view);
+        Theme::apply_color(ColorPair::Shadow,
+                           &self.colors.shadow,
+                           &self.colors.shadow);
+        Theme::apply_color(ColorPair::Primary,
+                           &self.colors.primary,
+                           &self.colors.view);
         Theme::apply_color(ColorPair::Secondary,
                            &self.colors.secondary,
                            &self.colors.view);

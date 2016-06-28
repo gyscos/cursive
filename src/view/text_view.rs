@@ -1,7 +1,7 @@
 use std::cmp::max;
 
 use vec::Vec2;
-use view::{View, DimensionRequest, SizeRequest};
+use view::{DimensionRequest, SizeRequest, View};
 use div::*;
 use printer::Printer;
 use align::*;
@@ -15,6 +15,7 @@ pub struct TextView {
 
     align: Align,
 
+    // ScrollBase make many scrolling-related things easier
     scrollbase: ScrollBase,
 }
 
@@ -104,7 +105,8 @@ impl TextView {
             .fold(0, |sum, x| sum + x)
     }
 
-    // Given the specified height, how many columns do we need to properly display?
+    // Given the specified height,
+    // how many columns do we need to properly display?
     fn get_num_cols(&self, max_height: usize) -> usize {
         let len = self.content.chars().count();
         (div_up_usize(len, max_height)..len)
@@ -180,7 +182,8 @@ impl<'a> Iterator for LinesIterator<'a> {
         }
 
         let i = if content_len == self.width + 1 {
-            // We can't look at the index if we're looking at the end of the string
+            // We can't look at the index
+            // if we're looking at the end of the string
             content.len()
         } else {
             content.char_indices().nth(self.width + 1).unwrap().0
@@ -210,7 +213,9 @@ impl View for TextView {
 
         let h = self.rows.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
+        let printer = &printer.sub_printer(Vec2::new(0, offset),
+                                           printer.size,
+                                           true);
 
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
@@ -232,7 +237,8 @@ impl View for TextView {
             Event::KeyEvent(Key::Up) if self.scrollbase.can_scroll_up() => {
                 self.scrollbase.scroll_up(1)
             }
-            Event::KeyEvent(Key::Down) if self.scrollbase.can_scroll_down() => {
+            Event::KeyEvent(Key::Down) if self.scrollbase
+                                              .can_scroll_down() => {
                 self.scrollbase.scroll_down(1)
             }
             Event::KeyEvent(Key::PageDown) => self.scrollbase.scroll_down(10),
@@ -247,8 +253,11 @@ impl View for TextView {
         match (size.w, size.h) {
             // If we have no directive, ask for a single big line.
             // TODO: what if the text has newlines??
-            (DimensionRequest::Unknown, DimensionRequest::Unknown) => self.get_ideal_size(),
+            (DimensionRequest::Unknown, DimensionRequest::Unknown) => {
+                self.get_ideal_size()
+            }
             (DimensionRequest::Fixed(w), _) => {
+                // In a BoxView or something.
                 let h = self.get_num_lines(w);
                 Vec2::new(w, h)
             }
@@ -261,8 +270,10 @@ impl View for TextView {
                 let ideal = self.get_ideal_size();
 
                 if w >= ideal.x {
+                    // This is the cheap path
                     ideal
                 } else {
+                    // This is the expensive one :(
                     let h = self.get_num_lines(w);
                     Vec2::new(w, h)
                 }
@@ -279,7 +290,8 @@ impl View for TextView {
         // Compute the text rows.
         self.rows = LinesIterator::new(&self.content, size.x).collect();
         if self.rows.len() > size.y {
-            self.rows = LinesIterator::new(&self.content, size.x - 2).collect();
+            self.rows = LinesIterator::new(&self.content, size.x - 2)
+                            .collect();
         }
         self.scrollbase.set_heights(size.y, self.rows.len());
     }

@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use vec::Vec2;
-use view::{View, SizeRequest, Selector};
+use view::{Selector, SizeRequest, View};
 use printer::Printer;
 use event::{Event, EventResult};
 

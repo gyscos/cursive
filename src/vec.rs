@@ -1,7 +1,7 @@
 //! Points on the 2D character grid.
 
-use std::ops::{Add, Sub, Mul, Div};
-use std::cmp::{min, max, Ordering};
+use std::ops::{Add, Div, Mul, Sub};
+use std::cmp::{Ordering, max, min};
 
 /// Simple 2D size, in characters.
 #[derive(Clone,Copy,PartialEq,Debug)]

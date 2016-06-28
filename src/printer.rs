@@ -5,7 +5,7 @@ use std::cmp::min;
 use ncurses;
 
 use theme::{ColorPair, Theme};
-use vec::{Vec2, ToVec2};
+use vec::{ToVec2, Vec2};
 
 /// Convenient interface to draw on a subset of the screen.
 pub struct Printer {
@@ -30,6 +30,8 @@ impl Printer {
         }
     }
 
+    // TODO: use &mut self? We don't *need* it, but it may make sense.
+    // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position relative to the window.
     pub fn print<S: ToVec2>(&self, pos: S, text: &str) {
         let p = pos.to_vec2();
@@ -39,6 +41,7 @@ impl Printer {
         // Do we have enough room for the entire line?
         let room = self.size.x - p.x;
         // We want the number of CHARACTERS, not bytes.
+        // (Actually we want the "width" of the string, see unicode-width)
         let text = match text.char_indices().nth(room) {
             Some((i, _)) => &text[..i],
             _ => text,
@@ -46,7 +49,9 @@ impl Printer {
 
         let p = p + self.offset;
         if text.contains("%") {
-            ncurses::mvprintw(p.y as i32, p.x as i32, &text.replace("%", "%%"));
+            ncurses::mvprintw(p.y as i32,
+                              p.x as i32,
+                              &text.replace("%", "%%"));
         } else {
             ncurses::mvprintw(p.y as i32, p.x as i32, text);
         }
@@ -133,12 +138,24 @@ impl Printer {
 
         self.print_hline(start_v + (1, 0), size_v.x - 1, "─");
         self.print_vline(start_v + (0, 1), size_v.y - 1, "│");
-        self.print_hline(start_v + (1, 0) + size_v.keep_y(), size_v.x - 1, "─");
-        self.print_vline(start_v + (0, 1) + size_v.keep_x(), size_v.y - 1, "│");
+        self.print_hline(start_v + (1, 0) + size_v.keep_y(),
+                         size_v.x - 1,
+                         "─");
+        self.print_vline(start_v + (0, 1) + size_v.keep_x(),
+                         size_v.y - 1,
+                         "│");
+    }
+
+    pub fn print_hdelim<T: ToVec2>(&self, start: T, len: usize) {
+        let start = start.to_vec2();
+        self.print(start, "├");
+        self.print_hline(start + (1, 0), len - 2, "─");
+        self.print(start + (len - 1, 0), "┤");
     }
 
     /// Returns a printer on a subset of this one's area.
-    pub fn sub_printer<S: ToVec2>(&self, offset: S, size: S, focused: bool) -> Printer {
+    pub fn sub_printer<S: ToVec2>(&self, offset: S, size: S, focused: bool)
+                                  -> Printer {
         let offset_v = offset.to_vec2();
         Printer {
             offset: self.offset + offset_v,

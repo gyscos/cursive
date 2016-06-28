@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use vec::Vec2;
-use view::{View, SizeRequest, DimensionRequest, Selector, ShadowView};
+use view::{DimensionRequest, Selector, ShadowView, SizeRequest, View};
 use event::{Event, EventResult};
 use printer::Printer;
 
@@ -66,6 +66,7 @@ impl View for StackView {
         for layer in self.layers.iter_mut() {
             layer.size = Vec2::min(size, layer.view.get_min_size(req));
             layer.view.layout(layer.size);
+            // We do it here instead of when adding a new layer because...?
             if layer.virgin {
                 layer.view.take_focus();
                 layer.virgin = false;

@@ -1,4 +1,4 @@
-use view::{View, ViewWrapper, SizeRequest};
+use view::{SizeRequest, View, ViewWrapper};
 use printer::Printer;
 use vec::Vec2;
 use theme::ColorPair;
@@ -37,7 +37,9 @@ impl<T: View> ViewWrapper for ShadowView<T> {
             }
         });
 
-        self.view.draw(&printer.sub_printer(Vec2::new(1, 1), printer.size - (2, 2), true));
+        self.view.draw(&printer.sub_printer(Vec2::new(1, 1),
+                                            printer.size - (2, 2),
+                                            true));
 
         let h = printer.size.y - 1;
         let w = printer.size.x - 1;

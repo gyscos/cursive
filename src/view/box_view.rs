@@ -1,5 +1,5 @@
-use vec::{Vec2, ToVec2};
-use super::{View, ViewWrapper, SizeRequest, DimensionRequest};
+use vec::{ToVec2, Vec2};
+use super::{DimensionRequest, SizeRequest, View, ViewWrapper};
 
 /// BoxView is a wrapper around an other view, with a given minimum size.
 pub struct BoxView<T: View> {
