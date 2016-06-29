@@ -29,8 +29,8 @@ fn main() {
 
     // Creates a dialog with a single "Quit" button
     siv.add_layer(Dialog::new(TextView::new("Hello Dialog!"))
-                      .title("Cursive")
-                      .button("Quit", |s| s.quit()));
+                         .title("Cursive")
+                         .button("Quit", |s| s.quit()));
 
     // Starts the event loop.
     siv.run();
