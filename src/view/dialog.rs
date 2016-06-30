@@ -121,9 +121,7 @@ impl View for Dialog {
         };
         let overhead = self.padding + self.borders;
         let mut offset = overhead.left +
-                         self.align.h.get_offset(width,
-                                                 printer.size.x -
-                                                 overhead.horizontal());
+                         self.align.h.get_offset(width, printer.size.x - overhead.horizontal());
         let y = printer.size.y - self.padding.bottom - self.borders.bottom - 1;
 
         for (i, button) in self.buttons.iter_mut().enumerate() {
@@ -139,12 +137,10 @@ impl View for Dialog {
         }
 
         // What do we have left?
-        let inner_size = printer.size - Vec2::new(0, height) -
-                         self.borders.combined() -
+        let inner_size = printer.size - Vec2::new(0, height) - self.borders.combined() -
                          self.padding.combined();
 
-        self.content.draw(&printer.sub_printer(self.borders.top_left() +
-                                               self.padding.top_left(),
+        self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(),
                                                inner_size,
                                                self.focus == Focus::Content));
 
@@ -156,16 +152,14 @@ impl View for Dialog {
             printer.print((x - 2, 0), "┤ ");
             printer.print((x + len, 0), " ├");
 
-            printer.with_color(ColorPair::TitlePrimary,
-                               |p| p.print((x, 0), &self.title));
+            printer.with_color(ColorPair::TitlePrimary, |p| p.print((x, 0), &self.title));
         }
 
     }
 
     fn get_min_size(&self, req: SizeRequest) -> Vec2 {
         // Padding and borders are not available for kids.
-        let content_req = req.reduced(self.padding.combined() +
-                                      self.borders.combined());
+        let content_req = req.reduced(self.padding.combined() + self.borders.combined());
         let content_size = self.content.get_min_size(content_req);
 
         let mut buttons_size = Vec2::new(0, 0);
@@ -251,8 +245,8 @@ impl View for Dialog {
                             }
                             // Left and Right move to other buttons
                             Event::Key(Key::Right) if i + 1 <
-                                                           self.buttons
-                                                               .len() => {
+                                                      self.buttons
+                                                          .len() => {
                                 self.focus = Focus::Button(i + 1);
                                 EventResult::Consumed(None)
                             }

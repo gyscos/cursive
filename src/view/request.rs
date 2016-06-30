@@ -16,9 +16,7 @@ impl DimensionRequest {
     pub fn reduced(self, offset: usize) -> Self {
         match self {
             DimensionRequest::Fixed(w) => DimensionRequest::Fixed(w - offset),
-            DimensionRequest::AtMost(w) => {
-                DimensionRequest::AtMost(w - offset)
-            }
+            DimensionRequest::AtMost(w) => DimensionRequest::AtMost(w - offset),
             DimensionRequest::Unknown => DimensionRequest::Unknown,
         }
     }

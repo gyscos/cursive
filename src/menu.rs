@@ -35,8 +35,7 @@ impl MenuTree {
         self
     }
 
-    pub fn leaf<F: 'static + Fn(&mut Cursive)>(&mut self, title: &str, cb: F)
-                                               -> &mut Self {
+    pub fn leaf<F: 'static + Fn(&mut Cursive)>(&mut self, title: &str, cb: F) -> &mut Self {
         self.children
             .push(MenuItem::Leaf(title.to_string(), Rc::new(Box::new(cb))));
         self

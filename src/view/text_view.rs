@@ -214,9 +214,7 @@ impl View for TextView {
 
         let h = self.rows.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.sub_printer(Vec2::new(0, offset),
-                                           printer.size,
-                                           true);
+        let printer = &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
 
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
@@ -235,13 +233,9 @@ impl View for TextView {
         match event {
             Event::Key(Key::Home) => self.scrollbase.scroll_top(),
             Event::Key(Key::End) => self.scrollbase.scroll_bottom(),
-            Event::Key(Key::Up) if self.scrollbase.can_scroll_up() => {
-                self.scrollbase.scroll_up(1)
-            }
+            Event::Key(Key::Up) if self.scrollbase.can_scroll_up() => self.scrollbase.scroll_up(1),
             Event::Key(Key::Down) if self.scrollbase
-                                              .can_scroll_down() => {
-                self.scrollbase.scroll_down(1)
-            }
+                                         .can_scroll_down() => self.scrollbase.scroll_down(1),
             Event::Key(Key::PageDown) => self.scrollbase.scroll_down(10),
             Event::Key(Key::PageUp) => self.scrollbase.scroll_up(10),
             _ => return EventResult::Ignored,
@@ -254,9 +248,7 @@ impl View for TextView {
         match (size.w, size.h) {
             // If we have no directive, ask for a single big line.
             // TODO: what if the text has newlines??
-            (DimensionRequest::Unknown, DimensionRequest::Unknown) => {
-                self.get_ideal_size()
-            }
+            (DimensionRequest::Unknown, DimensionRequest::Unknown) => self.get_ideal_size(),
             (DimensionRequest::Fixed(w), _) => {
                 // In a BoxView or something.
                 let h = self.get_num_lines(w);
@@ -291,8 +283,7 @@ impl View for TextView {
         // Compute the text rows.
         self.rows = LinesIterator::new(&self.content, size.x).collect();
         if self.rows.len() > size.y {
-            self.rows = LinesIterator::new(&self.content, size.x - 2)
-                            .collect();
+            self.rows = LinesIterator::new(&self.content, size.x - 2).collect();
         }
         self.scrollbase.set_heights(size.y, self.rows.len());
     }

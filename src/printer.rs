@@ -2,9 +2,11 @@
 
 use std::cmp::min;
 
-use ncurses;
+use backend::Backend;
 
-use theme::{ColorPair, Theme};
+use B;
+
+use theme::{ColorPair, Theme, Effect};
 use vec::{ToVec2, Vec2};
 
 /// Convenient interface to draw on a subset of the screen.
@@ -49,11 +51,9 @@ impl Printer {
 
         let p = p + self.offset;
         if text.contains('%') {
-            ncurses::mvprintw(p.y as i32,
-                              p.x as i32,
-                              &text.replace("%", "%%"));
+            B::print_at((p.x, p.y), &text.replace("%", "%%"));
         } else {
-            ncurses::mvprintw(p.y as i32, p.x as i32, text);
+            B::print_at((p.x, p.y), text);
         }
     }
 
@@ -67,7 +67,7 @@ impl Printer {
 
         let p = p + self.offset;
         for y in 0..len {
-            ncurses::mvaddstr((p.y + y) as i32, p.x as i32, c);
+            B::print_at((p.x, (p.y + y)), c);
         }
     }
 
@@ -81,7 +81,7 @@ impl Printer {
 
         let p = p + self.offset;
         for x in 0..len {
-            ncurses::mvaddstr(p.y as i32, (p.x + x) as i32, c);
+            B::print_at((p.x + x, p.y), c);
         }
     }
 
@@ -99,22 +99,19 @@ impl Printer {
     /// });
     /// ```
     pub fn with_color<F>(&self, c: ColorPair, f: F)
-        where F: Fn(&Printer)
+        where F: FnOnce(&Printer)
     {
-        self.with_style(ncurses::COLOR_PAIR(c.ncurses_id()), f);
-        ncurses::attron(ncurses::COLOR_PAIR(ColorPair::Primary.ncurses_id()));
+        B::with_color(c, || f(self));
     }
 
     /// Same as `with_color`, but apply a ncurses style instead,
     /// like `ncurses::A_BOLD()` or `ncurses::A_REVERSE()`.
     ///
     /// Will probably use a cursive enum some day.
-    pub fn with_style<F>(&self, style: ncurses::attr_t, f: F)
-        where F: Fn(&Printer)
+    pub fn with_effect<F>(&self, effect: Effect, f: F)
+        where F: FnOnce(&Printer)
     {
-        ncurses::attron(style);
-        f(self);
-        ncurses::attroff(style);
+        B::with_effect(effect, || f(self));
     }
 
     /// Prints a rectangular box.
@@ -138,12 +135,8 @@ impl Printer {
 
         self.print_hline(start_v + (1, 0), size_v.x - 1, "─");
         self.print_vline(start_v + (0, 1), size_v.y - 1, "│");
-        self.print_hline(start_v + (1, 0) + size_v.keep_y(),
-                         size_v.x - 1,
-                         "─");
-        self.print_vline(start_v + (0, 1) + size_v.keep_x(),
-                         size_v.y - 1,
-                         "│");
+        self.print_hline(start_v + (1, 0) + size_v.keep_y(), size_v.x - 1, "─");
+        self.print_vline(start_v + (0, 1) + size_v.keep_x(), size_v.y - 1, "│");
     }
 
     pub fn print_hdelim<T: ToVec2>(&self, start: T, len: usize) {
@@ -154,8 +147,7 @@ impl Printer {
     }
 
     /// Returns a printer on a subset of this one's area.
-    pub fn sub_printer<S: ToVec2>(&self, offset: S, size: S, focused: bool)
-                                  -> Printer {
+    pub fn sub_printer<S: ToVec2>(&self, offset: S, size: S, focused: bool) -> Printer {
         let offset_v = offset.to_vec2();
         Printer {
             offset: self.offset + offset_v,

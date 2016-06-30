@@ -3,8 +3,6 @@
 use std::fmt;
 use std::rc::Rc;
 
-use ncurses;
-
 use Cursive;
 
 /// Callback is a function that can be triggered by an event.
@@ -128,128 +126,6 @@ pub enum Key {
     CtrlShiftF(u8),
     CtrlChar(char),
     Unknown(i32),
-}
-
-impl Key {
-    /// Returns the Key enum corresponding to the given ncurses event.
-    pub fn from_ncurses(ch: i32) -> Self {
-        match ch {
-            // Values under 256 are chars and control values
-            //
-            // Tab is '\t'
-            9 => Key::Tab,
-            // Treat '\n' and the numpad Enter the same
-            10 | ncurses::KEY_ENTER => Key::Enter,
-            // This is the escape key when pressed by itself.
-            // When used for control sequences, it should have been caught earlier.
-            27 => Key::Esc,
-            // `Backspace` sends 127, but Ctrl-H sends `Backspace`
-            127 | ncurses::KEY_BACKSPACE => Key::Backspace,
-
-            410 => Key::Resize,
-
-            // Values 512 and above are probably extensions
-            // Those keys don't seem to be documented...
-            519 => Key::AltDel,
-            520 => Key::AltShiftDel,
-            521 => Key::CtrlDel,
-            522 => Key::CtrlShiftDel,
-            // 523: CtrlAltDel?
-            //
-            // 524?
-            525 => Key::AltDown,
-            526 => Key::AltShiftDown,
-            527 => Key::CtrlDown,
-            528 => Key::CtrlShiftDown,
-            529 => Key::CtrlAltDown,
-
-            530 => Key::AltEnd,
-            531 => Key::AltShiftEnd,
-            532 => Key::CtrlEnd,
-            533 => Key::CtrlShiftEnd,
-            534 => Key::CtrlAltEnd,
-
-            535 => Key::AltHome,
-            536 => Key::AltShiftHome,
-            537 => Key::CtrlHome,
-            538 => Key::CtrlShiftHome,
-            539 => Key::CtrlAltHome,
-
-            540 => Key::AltIns,
-            // 541: AltShiftIns?
-            542 => Key::CtrlIns,
-            // 543: CtrlShiftIns?
-            544 => Key::CtrlAltIns,
-
-            545 => Key::AltLeft,
-            546 => Key::AltShiftLeft,
-            547 => Key::CtrlLeft,
-            548 => Key::CtrlShiftLeft,
-            549 => Key::CtrlAltLeft,
-
-            550 => Key::AltPageDown,
-            551 => Key::AltShiftPageDown,
-            552 => Key::CtrlPageDown,
-            553 => Key::CtrlShiftPageDown,
-            554 => Key::CtrlAltPageDown,
-
-            555 => Key::AltPageUp,
-            556 => Key::AltShiftPageUp,
-            557 => Key::CtrlPageUp,
-            558 => Key::CtrlShiftPageUp,
-            559 => Key::CtrlAltPageUp,
-
-            560 => Key::AltRight,
-            561 => Key::AltShiftRight,
-            562 => Key::CtrlRight,
-            563 => Key::CtrlShiftRight,
-            564 => Key::CtrlAltRight,
-            // 565?
-            566 => Key::AltUp,
-            567 => Key::AltShiftUp,
-            568 => Key::CtrlUp,
-            569 => Key::CtrlShiftUp,
-            570 => Key::CtrlAltUp,
-
-            ncurses::KEY_B2 => Key::NumpadCenter,
-            ncurses::KEY_DC => Key::Del,
-            ncurses::KEY_IC => Key::Ins,
-            ncurses::KEY_BTAB => Key::ShiftTab,
-            ncurses::KEY_SLEFT => Key::ShiftLeft,
-            ncurses::KEY_SRIGHT => Key::ShiftRight,
-            ncurses::KEY_LEFT => Key::Left,
-            ncurses::KEY_RIGHT => Key::Right,
-            ncurses::KEY_UP => Key::Up,
-            ncurses::KEY_DOWN => Key::Down,
-            ncurses::KEY_SR => Key::ShiftUp,
-            ncurses::KEY_SF => Key::ShiftDown,
-            ncurses::KEY_PPAGE => Key::PageUp,
-            ncurses::KEY_NPAGE => Key::PageDown,
-            ncurses::KEY_HOME => Key::Home,
-            ncurses::KEY_END => Key::End,
-            ncurses::KEY_SHOME => Key::ShiftHome,
-            ncurses::KEY_SEND => Key::ShiftEnd,
-            ncurses::KEY_SDC => Key::ShiftDel,
-            ncurses::KEY_SNEXT => Key::ShiftPageDown,
-            ncurses::KEY_SPREVIOUS => Key::ShiftPageUp,
-            // All Fn keys use the same enum with associated number
-            f @ ncurses::KEY_F1...ncurses::KEY_F12 => {
-                Key::F((f - ncurses::KEY_F0) as u8)
-            }
-            f @ 277...288 => Key::ShiftF((f - 277) as u8),
-            f @ 289...300 => Key::CtrlF((f - 289) as u8),
-            f @ 301...312 => Key::CtrlShiftF((f - 300) as u8),
-            f @ 313...324 => Key::AltF((f - 313) as u8),
-            // Shift and Ctrl F{1-4} need escape sequences...
-            //
-            // TODO: shift and ctrl Fn keys
-            // Avoids 8-10 (H,I,J), they are used by other commands.
-            c @ 1...7 | c @ 11...25 => {
-                Key::CtrlChar((b'a' + (c - 1) as u8) as char)
-            }
-            _ => Key::Unknown(ch),
-        }
-    }
 }
 
 impl fmt::Display for Key {

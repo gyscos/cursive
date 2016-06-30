@@ -8,6 +8,11 @@ use std::path::Path;
 use ncurses;
 use toml;
 
+pub enum Effect {
+    Simple,
+    Reverse,
+}
+
 /// Represents the color of a character and its background.
 #[derive(Clone,Copy)]
 pub enum ColorPair {
@@ -97,14 +102,10 @@ impl Theme {
 
     fn apply(&self) {
         Theme::apply_color(ColorPair::Background,
-                           &self.colors.background,
+                           &self.colors.view,
                            &self.colors.background);
-        Theme::apply_color(ColorPair::Shadow,
-                           &self.colors.shadow,
-                           &self.colors.shadow);
-        Theme::apply_color(ColorPair::Primary,
-                           &self.colors.primary,
-                           &self.colors.view);
+        Theme::apply_color(ColorPair::Shadow, &self.colors.shadow, &self.colors.shadow);
+        Theme::apply_color(ColorPair::Primary, &self.colors.primary, &self.colors.view);
         Theme::apply_color(ColorPair::Secondary,
                            &self.colors.secondary,
                            &self.colors.view);

@@ -4,6 +4,7 @@ use vec::Vec2;
 use view::{DimensionRequest, Selector, ShadowView, SizeRequest, View};
 use event::{Event, EventResult};
 use printer::Printer;
+use theme::ColorPair;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -48,13 +49,15 @@ impl StackView {
 impl View for StackView {
     fn draw(&mut self, printer: &Printer) {
         let last = self.layers.len();
-        for (i, v) in self.layers.iter_mut().enumerate() {
-            // Center the view
-            let size = v.size;
-            let offset = (printer.size - size) / 2;
-            // TODO: only draw focus for the top view
-            v.view.draw(&printer.sub_printer(offset, size, i + 1 == last));
-        }
+        printer.with_color(ColorPair::Primary, |printer| {
+            for (i, v) in self.layers.iter_mut().enumerate() {
+                // Center the view
+                let size = v.size;
+                let offset = (printer.size - size) / 2;
+                // TODO: only draw focus for the top view
+                v.view.draw(&printer.sub_printer(offset, size, i + 1 == last));
+            }
+        });
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {

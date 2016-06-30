@@ -50,9 +50,7 @@ impl View for Button {
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
             // 10 is the ascii code for '\n', that is the return key
-            Event::Key(Key::Enter) => {
-                EventResult::Consumed(Some(self.callback.clone()))
-            }
+            Event::Key(Key::Enter) => EventResult::Consumed(Some(self.callback.clone())),
             _ => EventResult::Ignored,
         }
     }

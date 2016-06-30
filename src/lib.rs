@@ -39,6 +39,10 @@ mod menubar;
 mod div;
 mod utf8;
 
+mod backend;
+
+use backend::{Backend, NcursesBackend};
+
 use std::any::Any;
 use std::rc::Rc;
 use std::collections::HashMap;
@@ -49,7 +53,7 @@ use printer::Printer;
 use view::View;
 use view::{Selector, StackView};
 
-use event::{Callback, Event, EventResult, Key, ToEvent};
+use event::{Callback, Event, EventResult, ToEvent};
 
 /// Identifies a screen in the cursive ROOT.
 pub type ScreenId = usize;
@@ -78,23 +82,20 @@ impl Default for Cursive {
     }
 }
 
+// Use the Ncurses backend.
+// TODO: make this feature-driven
+type B = NcursesBackend;
+
 impl Cursive {
     /// Creates a new Cursive root, and initialize ncurses.
     pub fn new() -> Self {
         // Default delay is way too long. 25 is imperceptible yet works fine.
         std::env::set_var("ESCDELAY", "25");
-        ncurses::setlocale(ncurses::LcCategory::all, "");
-        ncurses::initscr();
-        ncurses::keypad(ncurses::stdscr, true);
-        ncurses::noecho();
-        ncurses::cbreak();
-        ncurses::start_color();
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+        B::init();
+
         let theme = theme::load_default();
         // let theme = theme::load_theme("assets/style.toml").unwrap();
 
-        ncurses::wbkgd(ncurses::stdscr,
-                       ncurses::COLOR_PAIR(theme::ColorPair::Background.ncurses_id()));
 
         let mut res = Cursive {
             theme: theme,
@@ -148,11 +149,7 @@ impl Cursive {
     ///
     /// Call with fps=0 to disable (default value).
     pub fn set_fps(&self, fps: u32) {
-        if fps == 0 {
-            ncurses::timeout(-1);
-        } else {
-            ncurses::timeout(1000 / fps as i32);
-        }
+        B::set_refresh_rate(fps)
     }
 
     /// Returns a mutable reference to the currently active screen.
@@ -235,9 +232,7 @@ impl Cursive {
 
     /// Returns the size of the screen, in characters.
     pub fn screen_size(&self) -> Vec2 {
-        let mut x: i32 = 0;
-        let mut y: i32 = 0;
-        ncurses::getmaxyx(ncurses::stdscr, &mut y, &mut x);
+        let (x, y) = B::screen_size();
 
         Vec2 {
             x: x as usize,
@@ -258,35 +253,20 @@ impl Cursive {
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
         let offset = if self.menu.autohide {
-            1
-        } else {
             0
+        } else {
+            1
         };
         let selected = self.menu.selected;
         self.screen_mut()
-            .draw(&printer.sub_printer(Vec2::new(0, offset),
-                                       printer.size,
-                                       !selected));
+            .draw(&printer.sub_printer(Vec2::new(0, offset), printer.size, !selected));
 
         // Draw the menubar?
         if self.menu.selected || !self.menu.autohide {
             self.menu.draw(&printer);
         }
 
-        ncurses::refresh();
-    }
-
-    fn poll_event() -> Event {
-        let ch: i32 = ncurses::getch();
-
-        // Is it a UTF-8 starting point?
-        if 32 <= ch && ch < 0x100 && ch != 127 {
-            Event::Char(utf8::read_char(ch as u8,
-                                             || ncurses::getch() as u8)
-                                 .unwrap())
-        } else {
-            Event::Key(Key::from_ncurses(ch))
-        }
+        B::refresh();
     }
 
     /// Runs the event loop.
@@ -300,7 +280,7 @@ impl Cursive {
             // Do we need to redraw everytime?
             // Probably, actually.
             // TODO: Do we actually need to clear everytime?
-            ncurses::clear();
+            B::clear();
             // TODO: Do we need to re-layout everytime?
             self.layout();
             // TODO: Do we need to redraw every view every time?
@@ -309,7 +289,7 @@ impl Cursive {
 
             // Wait for next event.
             // (If set_fps was called, this returns -1 now and then)
-            let event = Cursive::poll_event();
+            let event = B::poll_event();
 
             // Event dispatch order:
             // * Focused element:
@@ -339,6 +319,6 @@ impl Cursive {
 
 impl Drop for Cursive {
     fn drop(&mut self) {
-        ncurses::endwin();
+        B::finish();
     }
 }
