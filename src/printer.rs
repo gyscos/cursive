@@ -90,7 +90,7 @@ impl Printer {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # use cursive::printer::Printer;
     /// # use cursive::theme;
     /// # let printer = Printer::new((6,4), theme::load_default());
