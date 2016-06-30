@@ -79,7 +79,6 @@ impl Backend for NcursesBackend {
     }
 
     fn print_at((x, y): (usize, usize), text: &str) {
-        println!("{} {}", x, y);
         ncurses::mvaddstr(y as i32, x as i32, text);
     }
 
