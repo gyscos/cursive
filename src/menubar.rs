@@ -1,5 +1,5 @@
 use menu::*;
-use theme::ColorPair;
+use theme::ColorStyle;
 use printer::Printer;
 use event::*;
 
@@ -22,7 +22,7 @@ impl Menubar {
 
     pub fn draw(&mut self, printer: &Printer) {
         // Draw the bar at the top
-        printer.with_color(ColorPair::Primary, |printer| {
+        printer.with_color(ColorStyle::Primary, |printer| {
             printer.print_hline((0, 0), printer.size.x, " ");
         });
 

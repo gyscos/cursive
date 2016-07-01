@@ -6,24 +6,24 @@ borders = "simple" # Alternatives are "none" and "outset"
 # Base colors are red, green, blue,
 # cyan, magenta, yellow, white and black.
 [colors]
-	background = ["#923456", "magenta"]
+	background = ["454", "#923456", "401", "magenta"]
 	# If the value is an array, the first valid color will be used.
 	# If the terminal doesn't support custom color,
 	# non-base colors will be skipped.
-	shadow     = ["#222222", "blue"]
-	view       = "#888888"
+	shadow     = ["#222288", "blue"]
+	view       = "111"
 
 	# Array and simple values have the same effect.
-	primary   = ["#111111"]
+	primary   = ["white"]
 	secondary = "#EEEEEE"
 	tertiary  = "#444444"
 
 	# Hex values can use lower or uppercase.
 	# (base color MUST be lowercase)
-	title_primary   = "#883333"
+	title_primary   = "yellow"
 	title_secondary = "#ffff55"
 
 	# Lower precision values can use only 3 digits.
-	highlight          = "#833"
+	highlight          = "#F88"
 	highlight_inactive = "#5555FF"
 

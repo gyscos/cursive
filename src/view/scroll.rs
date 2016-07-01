@@ -1,6 +1,6 @@
 use std::cmp::{max, min};
 
-use theme::ColorPair;
+use theme::ColorStyle;
 use vec::Vec2;
 use printer::Printer;
 
@@ -129,9 +129,9 @@ impl ScrollBase {
             let start = steps * self.start_line / (1 + self.content_height - self.view_height);
 
             let color = if printer.focused {
-                ColorPair::Highlight
+                ColorStyle::Highlight
             } else {
-                ColorPair::HighlightInactive
+                ColorStyle::HighlightInactive
             };
 
             printer.print_vline((printer.size.x - 1, 0), printer.size.y, "|");

@@ -5,17 +5,24 @@ use std::io::Read;
 use std::fs::File;
 use std::path::Path;
 
-use ncurses;
+use backend::Backend;
+
 use toml;
+
+use B;
 
 pub enum Effect {
     Simple,
     Reverse,
 }
 
-/// Represents the color of a character and its background.
+/// Possible color style for a cell.
+///
+/// Represents a color pair role to use when printing something.
+///
+/// The current theme will assign each role a foreground and background color.
 #[derive(Clone,Copy)]
-pub enum ColorPair {
+pub enum ColorStyle {
     /// Application background, where no view is present.
     Background,
     /// Color used by view shadows. Only background matters.
@@ -36,19 +43,19 @@ pub enum ColorPair {
     HighlightInactive,
 }
 
-impl ColorPair {
+impl ColorStyle {
     /// Returns the ncurses pair ID associated with this color pair.
-    pub fn ncurses_id(self) -> i16 {
+    pub fn id(self) -> i16 {
         match self {
-            ColorPair::Background => 1,
-            ColorPair::Shadow => 2,
-            ColorPair::Primary => 3,
-            ColorPair::Secondary => 4,
-            ColorPair::Tertiary => 5,
-            ColorPair::TitlePrimary => 6,
-            ColorPair::TitleSecondary => 7,
-            ColorPair::Highlight => 8,
-            ColorPair::HighlightInactive => 9,
+            ColorStyle::Background => 1,
+            ColorStyle::Shadow => 2,
+            ColorStyle::Primary => 3,
+            ColorStyle::Secondary => 4,
+            ColorStyle::Tertiary => 5,
+            ColorStyle::TitlePrimary => 6,
+            ColorStyle::TitleSecondary => 7,
+            ColorStyle::Highlight => 8,
+            ColorStyle::HighlightInactive => 9,
         }
     }
 }
@@ -61,29 +68,31 @@ pub struct Theme {
     /// How view borders should be drawn.
     pub borders: BorderStyle,
     /// What colors should be used through the application?
-    pub colors: ColorStyle,
+    pub colors: Palette,
 }
 
-impl Theme {
-    fn default() -> Theme {
+impl Default for Theme {
+    fn default() -> Self {
         Theme {
             shadow: true,
             borders: BorderStyle::Simple,
-            colors: ColorStyle {
-                background: Color::blue(),
-                shadow: Color::black(),
-                view: Color::white(),
-                primary: Color::black(),
-                secondary: Color::blue(),
-                tertiary: Color::white(),
-                title_primary: Color::red(),
-                title_secondary: Color::yellow(),
-                highlight: Color::red(),
-                highlight_inactive: Color::blue(),
+            colors: Palette {
+                background: Color::Blue,
+                shadow: Color::Black,
+                view: Color::White,
+                primary: Color::Black,
+                secondary: Color::Blue,
+                tertiary: Color::White,
+                title_primary: Color::Red,
+                title_secondary: Color::Yellow,
+                highlight: Color::Red,
+                highlight_inactive: Color::Blue,
             },
         }
     }
+}
 
+impl Theme {
     fn load(&mut self, table: &toml::Table) {
         if let Some(&toml::Value::Boolean(shadow)) = table.get("shadow") {
             self.shadow = shadow;
@@ -100,45 +109,48 @@ impl Theme {
         }
     }
 
-    fn apply(&self) {
-        Theme::apply_color(ColorPair::Background,
-                           &self.colors.view,
-                           &self.colors.background);
-        Theme::apply_color(ColorPair::Shadow, &self.colors.shadow, &self.colors.shadow);
-        Theme::apply_color(ColorPair::Primary, &self.colors.primary, &self.colors.view);
-        Theme::apply_color(ColorPair::Secondary,
-                           &self.colors.secondary,
-                           &self.colors.view);
-        Theme::apply_color(ColorPair::Tertiary,
-                           &self.colors.tertiary,
-                           &self.colors.view);
-        Theme::apply_color(ColorPair::TitlePrimary,
-                           &self.colors.title_primary,
-                           &self.colors.view);
-        Theme::apply_color(ColorPair::TitleSecondary,
-                           &self.colors.title_secondary,
-                           &self.colors.view);
-        Theme::apply_color(ColorPair::Highlight,
-                           &self.colors.view,
-                           &self.colors.highlight);
-        Theme::apply_color(ColorPair::HighlightInactive,
-                           &self.colors.view,
-                           &self.colors.highlight_inactive);
-    }
-
-    fn apply_color(pair: ColorPair, front: &Color, back: &Color) {
-        ncurses::init_pair(pair.ncurses_id(), front.id, back.id);
+    fn activate(&self) {
+        // Initialize each color with the backend
+        B::init_color_style(ColorStyle::Background,
+                    &self.colors.view,
+                    &self.colors.background);
+        B::init_color_style(ColorStyle::Shadow,
+                    &self.colors.shadow,
+                    &self.colors.shadow);
+        B::init_color_style(ColorStyle::Primary,
+                    &self.colors.primary,
+                    &self.colors.view);
+        B::init_color_style(ColorStyle::Secondary,
+                    &self.colors.secondary,
+                    &self.colors.view);
+        B::init_color_style(ColorStyle::Tertiary,
+                    &self.colors.tertiary,
+                    &self.colors.view);
+        B::init_color_style(ColorStyle::TitlePrimary,
+                    &self.colors.title_primary,
+                    &self.colors.view);
+        B::init_color_style(ColorStyle::TitleSecondary,
+                    &self.colors.title_secondary,
+                    &self.colors.view);
+        B::init_color_style(ColorStyle::Highlight,
+                    &self.colors.view,
+                    &self.colors.highlight);
+        B::init_color_style(ColorStyle::HighlightInactive,
+                    &self.colors.view,
+                    &self.colors.highlight_inactive);
     }
 }
 
-/// Specifies how View borders should be drawn.
+/// Specifies how some borders should be drawn.
+///
+/// Borders are used around Dialogs, select popups, and panels.
 #[derive(Clone,Copy,Debug)]
 pub enum BorderStyle {
     /// Don't draw any border.
     NoBorder,
     /// Simple borders.
     Simple,
-    /// Outset borders with a 3d effect.
+    /// Outset borders with a simple 3d effect.
     Outset,
 }
 
@@ -156,9 +168,11 @@ impl BorderStyle {
     }
 }
 
-/// Represents the colors the application will use in various situations.
+/// Color configuration for the application.
+///
+/// Assign each color role an actual color.
 #[derive(Clone,Debug)]
-pub struct ColorStyle {
+pub struct Palette {
     /// Color used for the application background.
     pub background: Color,
     /// Color used for View shadows.
@@ -181,39 +195,57 @@ pub struct ColorStyle {
     pub highlight_inactive: Color,
 }
 
-impl ColorStyle {
+impl Palette {
     fn load(&mut self, table: &toml::Table) {
-        let mut new_id = 16;
 
-        self.background.load(table, "background", &mut new_id);
-        self.shadow.load(table, "shadow", &mut new_id);
-        self.view.load(table, "view", &mut new_id);
-        self.primary.load(table, "primary", &mut new_id);
-        self.secondary.load(table, "secondary", &mut new_id);
-        self.tertiary.load(table, "tertiary", &mut new_id);
-        self.title_primary.load(table, "title_primary", &mut new_id);
-        self.title_secondary.load(table, "title_secondary", &mut new_id);
-        self.highlight.load(table, "highlight", &mut new_id);
-        self.highlight_inactive.load(table, "highlight_inactive", &mut new_id);
+        load_color(&mut self.background, table.get("background"));
+        load_color(&mut self.shadow, table.get("shadow"));
+        load_color(&mut self.view, table.get("view"));
+        load_color(&mut self.primary, table.get("primary"));
+        load_color(&mut self.secondary, table.get("secondary"));
+        load_color(&mut self.tertiary, table.get("tertiary"));
+        load_color(&mut self.title_primary, table.get("title_primary"));
+        load_color(&mut self.title_secondary, table.get("title_secondary"));
+        load_color(&mut self.highlight, table.get("highlight"));
+        load_color(&mut self.highlight_inactive, table.get("highlight_inactive"));
+    }
+}
+
+fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
+    if let Some(value) = value {
+        match *value {
+            toml::Value::String(ref value) => if let Some(color) = Color::parse(value) {
+                *target = color;
+                true
+            } else {
+                false
+            },
+            toml::Value::Array(ref array) => array.iter().any(|item| load_color(target, Some(item))),
+            _ => false,
+        }
+    } else {
+        false
     }
 }
 
 /// Represents a color used by the theme.
 #[derive(Clone,Debug)]
-pub struct Color {
+pub enum Color {
     /// Color ID used by ncurses.
-    pub id: i16,
+    Black,
+    Red,
+    Green,
+    Yellow,
+    Blue,
+    Magenta,
+    Cyan,
+    White,
+    // 24-bit color
+    Rgb(u8, u8, u8),
+    RgbLowRes(u8, u8, u8),
 }
 
 impl Color {
-    /// Return the rgb values used by the color.
-    pub fn rgb(&self) -> (i16, i16, i16) {
-        let (mut r, mut g, mut b) = (0, 0, 0);
-
-        ncurses::color_content(self.id, &mut r, &mut g, &mut b);
-
-        (r, g, b)
-    }
 }
 
 /// Possible error returned when loading a theme.
@@ -232,114 +264,46 @@ impl From<io::Error> for Error {
 }
 
 impl Color {
-    fn parse(value: &str, new_id: &mut i16) -> Option<Self> {
-        let color = if value == "black" {
-            Color::black()
-        } else if value == "red" {
-            Color::red()
-        } else if value == "green" {
-            Color::green()
-        } else if value == "yellow" {
-            Color::yellow()
-        } else if value == "blue" {
-            Color::blue()
-        } else if value == "magenta" {
-            Color::magenta()
-        } else if value == "cyan" {
-            Color::cyan()
-        } else if value == "white" {
-            Color::white()
+    fn parse(value: &str) -> Option<Self> {
+        Some(match value {
+            "black" => Color::Black,
+            "red" => Color::Red,
+            "green" => Color::Green,
+            "yellow" => Color::Yellow,
+            "blue" => Color::Blue,
+            "magenta" => Color::Magenta,
+            "cyan" => Color::Cyan,
+            "white" => Color::White,
+            value => return Color::parse_special(value),
+        })
+    }
+
+    fn parse_special(value: &str) -> Option<Color> {
+        if value.starts_with('#') {
+
+            let value = &value[1..];
+            // Compute per-color length, and amplitude
+            let (l, multiplier) = match value.len() {
+                6 => (2, 1),
+                3 => (1, 17),
+                _ => panic!("Cannot parse color: {}", value),
+            };
+            let r = load_hex(&value[0 * l..1 * l]) * multiplier;
+            let g = load_hex(&value[1 * l..2 * l]) * multiplier;
+            let b = load_hex(&value[2 * l..3 * l]) * multiplier;
+            Some(Color::Rgb(r as u8, g as u8, b as u8))
+        } else if value.len() == 3 {
+            // RGB values between 0 and 5 maybe?
+            let rgb: Vec<_> = value.chars().map(|c| c as i16 - '0' as i16).collect();
+            println!("{:?}", rgb);
+            if rgb.iter().all(|&i| i >= 0 && i < 6) {
+                Some(Color::RgbLowRes(rgb[0] as u8, rgb[1] as u8, rgb[2] as u8))
+            } else {
+                None
+            }
         } else {
-            // Let's make a new color
-            return Color::make_new(value, new_id);
-        };
-
-        Some(color)
-    }
-
-    fn load(&mut self, table: &toml::Table, key: &str, new_id: &mut i16) {
-        match table.get(key) {
-            Some(&toml::Value::String(ref value)) => {
-                self.load_value(value, new_id);
-            }
-            Some(&toml::Value::Array(ref array)) => {
-                for color in array.iter() {
-                    if let toml::Value::String(ref color) = *color {
-                        if self.load_value(color, new_id) {
-                            return;
-                        }
-                    }
-                }
-            }
-            _ => (),
+            None
         }
-    }
-
-    fn load_value(&mut self, value: &str, new_id: &mut i16) -> bool {
-        match Color::parse(value, new_id) {
-            Some(color) => self.id = color.id,
-            None => return false,
-        }
-        true
-    }
-
-    fn make_new(value: &str, new_id: &mut i16) -> Option<Self> {
-        // if !ncurses::can_change_color() {
-        if !ncurses::has_colors() {
-            return None;
-        }
-
-        if !value.starts_with('#') {
-            return None;
-        }
-
-        if *new_id >= ncurses::COLORS as i16 {
-            return None;
-        }
-
-        let s = &value[1..];
-        let (l, max) = match s.len() {
-            6 => (2, 255),
-            3 => (1, 15),
-            _ => panic!("Cannot parse color: {}", s),
-        };
-
-        let r = (load_hex(&s[0 * l..1 * l]) as i32 * 1000 / max) as i16;
-        let g = (load_hex(&s[1 * l..2 * l]) as i32 * 1000 / max) as i16;
-        let b = (load_hex(&s[2 * l..3 * l]) as i32 * 1000 / max) as i16;
-
-        ncurses::init_color(*new_id, r, g, b);
-
-        let color = Color { id: *new_id };
-        *new_id += 1;
-
-        Some(color)
-    }
-
-
-    pub fn black() -> Self {
-        Color { id: 0 }
-    }
-    pub fn red() -> Self {
-        Color { id: 1 }
-    }
-    pub fn green() -> Self {
-        Color { id: 2 }
-    }
-    pub fn yellow() -> Self {
-        Color { id: 3 }
-    }
-    pub fn blue() -> Self {
-        Color { id: 4 }
-    }
-    pub fn magenta() -> Self {
-        Color { id: 5 }
-    }
-    pub fn cyan() -> Self {
-        Color { id: 6 }
-    }
-    pub fn white() -> Self {
-        Color { id: 7 }
     }
 }
 
@@ -379,6 +343,7 @@ impl Color {
 /// 	highlight_inactive = "#5555FF"
 /// ```
 
+/// Loads a theme and sets it as active.
 pub fn load_theme<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
     let content = {
         let mut content = String::new();
@@ -395,7 +360,7 @@ pub fn load_theme<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
 
     let mut theme = Theme::default();
     theme.load(&table);
-    theme.apply();
+    theme.activate();
 
     Ok(theme)
 }
@@ -403,12 +368,12 @@ pub fn load_theme<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
 /// Loads the default theme, and returns its representation.
 pub fn load_default() -> Theme {
     let theme = Theme::default();
-    theme.apply();
+    theme.activate();
     theme
 }
 
 /// Loads a hexadecimal code
-fn load_hex(s: &str) -> i16 {
+fn load_hex(s: &str) -> u16 {
     let mut sum = 0;
     for c in s.chars() {
         sum *= 16;
@@ -420,5 +385,5 @@ fn load_hex(s: &str) -> i16 {
         };
     }
 
-    sum
+    sum as u16
 }

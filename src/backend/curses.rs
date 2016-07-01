@@ -1,31 +1,15 @@
+use backend;
 use event;
 use theme;
 use utf8;
 
 use ncurses;
 
-pub trait Backend {
-    fn init();
-    fn finish();
-
-    fn clear();
-    fn refresh();
-
-    fn print_at((usize, usize), &str);
-
-    fn poll_event() -> event::Event;
-    fn set_refresh_rate(fps: u32);
-    fn screen_size() -> (usize, usize);
-
-    fn with_color<F: FnOnce()>(color: theme::ColorPair, f: F);
-    fn with_effect<F: FnOnce()>(effect: theme::Effect, f: F);
-}
-
-
 pub struct NcursesBackend;
 
-impl Backend for NcursesBackend {
+impl backend::Backend for NcursesBackend {
     fn init() {
+        ::std::env::set_var("ESCDELAY", "25");
         ncurses::setlocale(ncurses::LcCategory::all, "");
         ncurses::initscr();
         ncurses::keypad(ncurses::stdscr, true);
@@ -34,7 +18,7 @@ impl Backend for NcursesBackend {
         ncurses::start_color();
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
         ncurses::wbkgd(ncurses::stdscr,
-                       ncurses::COLOR_PAIR(theme::ColorPair::Background.ncurses_id()));
+                       ncurses::COLOR_PAIR(theme::ColorStyle::Background.id()));
     }
 
     fn screen_size() -> (usize, usize) {
@@ -44,16 +28,31 @@ impl Backend for NcursesBackend {
         (x as usize, y as usize)
     }
 
+    fn has_colors() -> bool {
+        ncurses::has_colors()
+    }
+
     fn finish() {
         ncurses::endwin();
     }
 
-    fn with_color<F: FnOnce()>(color: theme::ColorPair, f: F) {
+
+    fn init_color_style(style: theme::ColorStyle,
+                        foreground: &theme::Color,
+                        background: &theme::Color) {
+        // TODO: build the color on the spot
+
+        ncurses::init_pair(style.id(),
+                           find_closest(foreground) as i16,
+                           find_closest(background) as i16);
+    }
+
+    fn with_color<F: FnOnce()>(color: theme::ColorStyle, f: F) {
         let mut current_style: ncurses::attr_t = 0;
         let mut current_color: i16 = 0;
         ncurses::attr_get(&mut current_style, &mut current_color);
 
-        let style = ncurses::COLOR_PAIR(color.ncurses_id());
+        let style = ncurses::COLOR_PAIR(color.id());
         ncurses::attron(style);
         f();
         // ncurses::attroff(style);
@@ -216,5 +215,27 @@ fn parse_ncurses_char(ch: i32) -> event::Key {
         // Avoids 8-10 (H,I,J), they are used by other commands.
         c @ 1...7 | c @ 11...25 => event::Key::CtrlChar((b'a' + (c - 1) as u8) as char),
         _ => event::Key::Unknown(ch),
+    }
+}
+
+fn find_closest(color: &theme::Color) -> u8 {
+    match *color {
+        theme::Color::Black => 0,
+        theme::Color::Red => 1,
+        theme::Color::Green => 2,
+        theme::Color::Yellow => 3,
+        theme::Color::Blue => 4,
+        theme::Color::Magenta => 5,
+        theme::Color::Cyan => 6,
+        theme::Color::White => 7,
+        theme::Color::Rgb(r, g, b) => {
+            let r = 6 * r as u16 / 256;
+            let g = 6 * g as u16 / 256;
+            let b = 6 * b as u16 / 256;
+            (16 + 36 * r + 6 * g + b) as u8
+        }
+        theme::Color::RgbLowRes(r, g, b) => {
+            (16 + 36 * r + 6 * g + b) as u8
+        }
     }
 }

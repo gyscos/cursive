@@ -2,7 +2,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use std::cmp::min;
 
-use theme::{ColorPair, Effect};
+use theme::{ColorStyle, Effect};
 use vec::Vec2;
 use view::{IdView, SizeRequest, View};
 use event::*;
@@ -85,7 +85,7 @@ impl View for EditView {
     fn draw(&mut self, printer: &Printer) {
         // let style = if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
         let len = self.content.chars().count();
-        printer.with_color(ColorPair::Secondary, |printer| {
+        printer.with_color(ColorStyle::Secondary, |printer| {
             printer.with_effect(Effect::Reverse, |printer| {
                 if len < self.last_length {
                     printer.print((0, 0), &self.content);

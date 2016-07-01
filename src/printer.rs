@@ -6,7 +6,7 @@ use backend::Backend;
 
 use B;
 
-use theme::{ColorPair, Theme, Effect};
+use theme::{ColorStyle, Theme, Effect};
 use vec::{ToVec2, Vec2};
 
 /// Convenient interface to draw on a subset of the screen.
@@ -94,11 +94,11 @@ impl Printer {
     /// # use cursive::printer::Printer;
     /// # use cursive::theme;
     /// # let printer = Printer::new((6,4), theme::load_default());
-    /// printer.with_color(theme::ColorPair::Highlight, |printer| {
+    /// printer.with_color(theme::ColorStyle::Highlight, |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
     /// ```
-    pub fn with_color<F>(&self, c: ColorPair, f: F)
+    pub fn with_color<F>(&self, c: ColorStyle, f: F)
         where F: FnOnce(&Printer)
     {
         B::with_color(c, || f(self));

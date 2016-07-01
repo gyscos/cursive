@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use theme::ColorPair;
+use theme::ColorStyle;
 use Cursive;
 use vec::Vec2;
 use view::{SizeRequest, View};
@@ -29,9 +29,9 @@ impl Button {
 impl View for Button {
     fn draw(&mut self, printer: &Printer) {
         let style = if !printer.focused {
-            ColorPair::Primary
+            ColorStyle::Primary
         } else {
-            ColorPair::Highlight
+            ColorStyle::Highlight
         };
         let x = printer.size.x - 1;
 

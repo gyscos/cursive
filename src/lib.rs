@@ -90,12 +90,10 @@ impl Cursive {
     /// Creates a new Cursive root, and initialize ncurses.
     pub fn new() -> Self {
         // Default delay is way too long. 25 is imperceptible yet works fine.
-        std::env::set_var("ESCDELAY", "25");
         B::init();
 
         let theme = theme::load_default();
         // let theme = theme::load_theme("assets/style.toml").unwrap();
-
 
         let mut res = Cursive {
             theme: theme,

@@ -4,7 +4,7 @@ use std::any::Any;
 use Cursive;
 use align::*;
 use event::*;
-use theme::ColorPair;
+use theme::ColorStyle;
 use view::{DimensionRequest, Selector, SizeRequest, TextView, View};
 use view::{Button, SizedView};
 use vec::{ToVec4, Vec2, Vec4};
@@ -152,7 +152,7 @@ impl View for Dialog {
             printer.print((x - 2, 0), "┤ ");
             printer.print((x + len, 0), " ├");
 
-            printer.with_color(ColorPair::TitlePrimary, |p| p.print((x, 0), &self.title));
+            printer.with_color(ColorStyle::TitlePrimary, |p| p.print((x, 0), &self.title));
         }
 
     }

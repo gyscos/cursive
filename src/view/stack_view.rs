@@ -4,7 +4,7 @@ use vec::Vec2;
 use view::{DimensionRequest, Selector, ShadowView, SizeRequest, View};
 use event::{Event, EventResult};
 use printer::Printer;
-use theme::ColorPair;
+use theme::ColorStyle;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -49,7 +49,7 @@ impl StackView {
 impl View for StackView {
     fn draw(&mut self, printer: &Printer) {
         let last = self.layers.len();
-        printer.with_color(ColorPair::Primary, |printer| {
+        printer.with_color(ColorStyle::Primary, |printer| {
             for (i, v) in self.layers.iter_mut().enumerate() {
                 // Center the view
                 let size = v.size;
