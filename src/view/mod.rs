@@ -2,6 +2,15 @@
 
 #[macro_use]mod view_wrapper;
 
+// Essentials components
+mod position;
+mod request;
+mod view_path;
+
+// Helper bases
+mod scroll;
+
+// Views
 mod box_view;
 mod button;
 mod dialog;
@@ -10,14 +19,11 @@ mod full_view;
 mod id_view;
 mod key_event_view;
 mod linear_layout;
-mod request;
 mod shadow_view;
-mod scroll;
 mod select_view;
 mod sized_view;
 mod stack_view;
 mod text_view;
-mod view_path;
 
 
 use std::any::Any;
@@ -25,6 +31,8 @@ use std::any::Any;
 use event::{Event, EventResult};
 use vec::Vec2;
 use printer::Printer;
+
+pub use self::position::{Position, Offset};
 
 pub use self::request::{DimensionRequest, SizeRequest};
 pub use self::scroll::ScrollBase;

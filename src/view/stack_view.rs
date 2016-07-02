@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use vec::Vec2;
-use view::{DimensionRequest, Selector, ShadowView, SizeRequest, View};
+use view::{DimensionRequest, Selector, ShadowView, SizeRequest, View, Position};
 use event::{Event, EventResult};
 use printer::Printer;
 use theme::ColorStyle;
@@ -15,6 +15,7 @@ pub struct StackView {
 struct Layer {
     view: Box<View>,
     size: Vec2,
+    position: Position,
     // Has it received the gift yet?
     virgin: bool,
 }
@@ -31,11 +32,17 @@ impl StackView {
         StackView { layers: Vec::new() }
     }
 
-    /// Add new view on top of the stack.
+    /// Adds new view on top of the stack in the center of the screen.
     pub fn add_layer<T: 'static + View>(&mut self, view: T) {
+        self.add_layer_at(Position::center(), view);
+    }
+
+    /// Adds a view on top of the stack.
+    pub fn add_layer_at<T: 'static + View>(&mut self, position: Position, view: T) {
         self.layers.push(Layer {
             view: Box::new(ShadowView::new(view)),
             size: Vec2::new(0, 0),
+            position: position,
             virgin: true,
         });
     }
@@ -49,13 +56,14 @@ impl StackView {
 impl View for StackView {
     fn draw(&mut self, printer: &Printer) {
         let last = self.layers.len();
+        let mut previous = Vec2::zero();
         printer.with_color(ColorStyle::Primary, |printer| {
             for (i, v) in self.layers.iter_mut().enumerate() {
+                // Place the view
                 // Center the view
-                let size = v.size;
-                let offset = (printer.size - size) / 2;
-                // TODO: only draw focus for the top view
-                v.view.draw(&printer.sub_printer(offset, size, i + 1 == last));
+                let offset = v.position.compute_offset(v.size, printer.size, previous);
+                previous = offset;
+                v.view.draw(&printer.sub_printer(offset, v.size, i + 1 == last));
             }
         });
     }
@@ -68,14 +76,20 @@ impl View for StackView {
     }
 
     fn layout(&mut self, size: Vec2) {
+        // The call has been made, we can't ask for more space anymore.
+        // Let's make do with what we have.
         let req = SizeRequest {
             w: DimensionRequest::AtMost(size.x),
             h: DimensionRequest::AtMost(size.y),
         };
+
         for layer in &mut self.layers {
+            // Give each guy what he asks for, within the budget constraints.
             layer.size = Vec2::min(size, layer.view.get_min_size(req));
             layer.view.layout(layer.size);
+
             // We do it here instead of when adding a new layer because...?
+            // (TODO: try to make it during layer addition)
             if layer.virgin {
                 layer.view.take_focus();
                 layer.virgin = false;

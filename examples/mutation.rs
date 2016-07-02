@@ -1,18 +1,21 @@
 extern crate cursive;
 
 use cursive::Cursive;
-use cursive::view::{IdView, TextView, Dialog, KeyEventView};
+use cursive::view::{IdView, TextView, Dialog, KeyEventView, Position, Offset};
 
 fn show_popup(siv: &mut Cursive) {
 
-    siv.add_layer(Dialog::new(TextView::new("Tak!"))
-                      .button("Change", |s| {
-                          // Look for a view tagged "text". We _know_ it's there, so unwrap it.
-                          let view = s.find_id::<TextView>("text").unwrap();
-                          let content: String = view.get_content().chars().rev().collect();
-                          view.set_content(&content);
-                      })
-                      .dismiss_button("Ok"));
+    // Let's center the popup horizontally, but offset it down a few rows
+    siv.screen_mut()
+       .add_layer_at(Position::new(Offset::Center, Offset::Parent(3)),
+                     Dialog::new(TextView::new("Tak!"))
+                         .button("Change", |s| {
+                             // Look for a view tagged "text". We _know_ it's there, so unwrap it.
+                             let view = s.find_id::<TextView>("text").unwrap();
+                             let content: String = view.get_content().chars().rev().collect();
+                             view.set_content(&content);
+                         })
+                         .dismiss_button("Ok"));
 
 }
 
