@@ -13,9 +13,23 @@ pub enum MenuItem {
     Delimiter,
 }
 
+impl MenuItem {
+    pub fn label(&self) -> &str {
+        match *self {
+            MenuItem::Delimiter => "",
+            MenuItem::Leaf(ref label, _) |
+            MenuItem::Subtree(ref label, _) => label,
+        }
+    }
+}
+
 impl MenuTree {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn len(&self) -> usize {
+        self.children.len()
     }
 
     pub fn clear(&mut self) {

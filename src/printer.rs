@@ -139,6 +139,18 @@ impl Printer {
         self.print_vline(start_v + (0, 1) + size_v.keep_x(), size_v.y - 1, "│");
     }
 
+    pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
+        self.with_color(if selection {
+            if self.focused {
+                ColorStyle::Highlight
+            } else {
+                ColorStyle::HighlightInactive
+            }
+        } else {
+            ColorStyle::Primary
+        }, f);
+    }
+
     pub fn print_hdelim<T: ToVec2>(&self, start: T, len: usize) {
         let start = start.to_vec2();
         self.print(start, "├");

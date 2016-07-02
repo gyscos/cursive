@@ -23,6 +23,7 @@
 extern crate ncurses;
 extern crate toml;
 extern crate unicode_segmentation;
+extern crate unicode_width;
 
 pub mod event;
 pub mod view;

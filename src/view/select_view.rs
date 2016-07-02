@@ -1,14 +1,13 @@
 use std::cmp::min;
 use std::rc::Rc;
 
-use theme::ColorStyle;
 use Cursive;
-use align::*;
 use view::{IdView, View};
+use align::{Align, HAlign, VAlign};
+use view::scroll::ScrollBase;
 use event::{Event, EventResult, Key};
 use vec::Vec2;
 use printer::Printer;
-use super::scroll::ScrollBase;
 
 struct Item<T> {
     label: String,
@@ -128,19 +127,12 @@ impl<T: 'static> View for SelectView<T> {
 
         let h = self.items.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
+        let printer = &printer.sub_printer(Vec2::new(0, offset),
+                                           printer.size,
+                                           true);
 
         self.scrollbase.draw(printer, |printer, i| {
-            let style = if i == self.focus {
-                if printer.focused {
-                    ColorStyle::Highlight
-                } else {
-                    ColorStyle::HighlightInactive
-                }
-            } else {
-                ColorStyle::Primary
-            };
-            printer.with_color(style, |printer| {
+            printer.with_selection(i == self.focus, |printer| {
                 let l = self.items[i].label.chars().count();
                 let x = self.align.h.get_offset(l, printer.size.x);
                 printer.print_hline((0, 0), x, " ");
@@ -176,9 +168,13 @@ impl<T: 'static> View for SelectView<T> {
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
             Event::Key(Key::Up) if self.focus > 0 => self.focus -= 1,
-            Event::Key(Key::Down) if self.focus + 1 < self.items.len() => self.focus += 1,
+            Event::Key(Key::Down) if self.focus + 1 < self.items.len() => {
+                self.focus += 1
+            }
             Event::Key(Key::PageUp) => self.focus -= min(self.focus, 10),
-            Event::Key(Key::PageDown) => self.focus = min(self.focus + 10, self.items.len() - 1),
+            Event::Key(Key::PageDown) => {
+                self.focus = min(self.focus + 10, self.items.len() - 1)
+            }
             Event::Key(Key::Home) => self.focus = 0,
             Event::Key(Key::End) => self.focus = self.items.len() - 1,
             Event::Key(Key::Enter) if self.select_cb.is_some() => {
@@ -197,7 +193,9 @@ impl<T: 'static> View for SelectView<T> {
                 let iter = self.items.iter().chain(self.items.iter());
                 if let Some((i, _)) = iter.enumerate()
                                           .skip(self.focus + 1)
-                                          .find(|&(_, item)| item.label.starts_with(c)) {
+                                          .find(|&(_, item)| {
+                                              item.label.starts_with(c)
+                                          }) {
                     // Apply modulo in case we have a hit
                     // from the chained iterator
                     self.focus = i % self.items.len();
