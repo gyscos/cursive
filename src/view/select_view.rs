@@ -30,7 +30,8 @@ pub struct SelectView<T = String> {
     items: Vec<Item<T>>,
     focus: usize,
     scrollbase: ScrollBase,
-    select_cb: Option<Rc<Box<Fn(&mut Cursive, &T)>>>,
+    // This is a custom callback to include a &T
+    select_cb: Option<Rc<Fn(&mut Cursive, &T)>>,
     align: Align,
 }
 
@@ -49,7 +50,7 @@ impl<T: 'static> SelectView<T> {
     pub fn set_on_select<F>(&mut self, cb: F)
         where F: Fn(&mut Cursive, &T) + 'static
     {
-        self.select_cb = Some(Rc::new(Box::new(cb)));
+        self.select_cb = Some(Rc::new(cb));
     }
 
     /// Sets a function to be called when an item is selected.
@@ -180,9 +181,8 @@ impl<T: 'static> View for SelectView<T> {
             Event::Key(Key::Enter) if self.select_cb.is_some() => {
                 let cb = self.select_cb.as_ref().unwrap().clone();
                 let v = self.selection();
-                // We return a Rc<Box<Callback>>
-                // With callback being |s| cb(s, &*v)
-                return EventResult::Consumed(Some(Rc::new(Box::new(move |s| cb(s, &*v)))));
+                // We return a Callback Rc<|s| cb(s, &*v)>
+                return EventResult::Consumed(Some(Rc::new(move |s| cb(s, &*v))));
             }
             Event::Char(c) => {
                 // Starting from the current focus,

@@ -10,7 +10,7 @@ use super::{View, ViewWrapper};
 /// Events ignored by its child without a callback will stay ignored.
 pub struct KeyEventView {
     content: Box<View>,
-    callbacks: HashMap<Event, Rc<Callback>>,
+    callbacks: HashMap<Event, Callback>,
 }
 
 impl KeyEventView {
@@ -26,7 +26,7 @@ impl KeyEventView {
     pub fn register<F, E: ToEvent>(mut self, event: E, cb: F) -> Self
         where F: Fn(&mut Cursive) + 'static
     {
-        self.callbacks.insert(event.to_event(), Rc::new(Box::new(cb)));
+        self.callbacks.insert(event.to_event(), Rc::new(cb));
 
         self
     }

@@ -10,6 +10,7 @@ use theme::{ColorStyle, Theme, Effect};
 use vec::{ToVec2, Vec2};
 
 /// Convenient interface to draw on a subset of the screen.
+#[derive(Clone)]
 pub struct Printer {
     /// Offset into the window this printer should start drawing at.
     pub offset: Vec2,

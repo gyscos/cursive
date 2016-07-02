@@ -7,7 +7,7 @@ use Cursive;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
-pub type Callback = Box<Fn(&mut Cursive)>;
+pub type Callback = Rc<Fn(&mut Cursive)>;
 
 /// Answer to an event notification.
 /// The event can be consumed or ignored.
@@ -15,7 +15,13 @@ pub enum EventResult {
     /// The event was ignored. The parent can keep handling it.
     Ignored,
     /// The event was consumed. An optionnal callback to run is attached.
-    Consumed(Option<Rc<Callback>>),
+    Consumed(Option<Callback>),
+}
+
+impl EventResult {
+    pub fn with_cb<F: 'static + Fn(&mut Cursive)>(f: F) -> Self {
+        EventResult::Consumed(Some(Rc::new(f)))
+    }
 }
 
 /// Represents a key, or a combination of keys.

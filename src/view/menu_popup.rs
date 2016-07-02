@@ -2,12 +2,15 @@ use std::rc::Rc;
 
 use unicode_width::UnicodeWidthStr;
 
+use Cursive;
 use menu::{MenuItem, MenuTree};
 use printer::Printer;
 use view::View;
+use view::Position;
 use view::scroll::ScrollBase;
 use align::Align;
 use vec::Vec2;
+use event::{Callback, Event, EventResult, Key};
 
 /// fd
 pub struct MenuPopup {
@@ -15,6 +18,8 @@ pub struct MenuPopup {
     focus: usize,
     scrollbase: ScrollBase,
     align: Align,
+    on_dismiss: Option<Callback>,
+    on_action: Option<Callback>,
 }
 
 impl MenuPopup {
@@ -24,6 +29,8 @@ impl MenuPopup {
             focus: 0,
             scrollbase: ScrollBase::new(),
             align: Align::top_left(),
+            on_dismiss: None,
+            on_action: None,
         }
     }
 
@@ -31,6 +38,16 @@ impl MenuPopup {
     pub fn align(mut self, align: Align) -> Self {
         self.align = align;
 
+        self
+    }
+
+    pub fn on_dismiss<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
+        self.on_dismiss = Some(Rc::new(f));
+        self
+    }
+
+    pub fn on_action<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
+        self.on_action = Some(Rc::new(f));
         self
     }
 }
@@ -60,7 +77,8 @@ impl View for MenuPopup {
                     }
                     MenuItem::Subtree(ref label, _) |
                     MenuItem::Leaf(ref label, _) => {
-                        printer.print((2, 0), label)
+                        printer.print_hline((1, 0), printer.size.x - 2, " ");
+                        printer.print((2, 0), label);
                     }
                 }
 
@@ -70,13 +88,14 @@ impl View for MenuPopup {
 
     fn get_min_size(&self, req: Vec2) -> Vec2 {
         // We can't really shrink our items here, so it's not flexible.
-        let w = self.menu
+        let w = 2 +
+                self.menu
                     .children
                     .iter()
-                    .map(|item| item.label().width())
+                    .map(|item| 2 + item.label().width())
                     .max()
                     .unwrap_or(1);
-        let h = self.menu.children.len();
+        let h = 2 + self.menu.children.len();
 
 
         let scrolling = req.y < h;
@@ -88,5 +107,61 @@ impl View for MenuPopup {
         };
 
         Vec2::new(w, h)
+    }
+
+    fn on_event(&mut self, event: Event) -> EventResult {
+        match event {
+            Event::Key(Key::Esc) => {
+                let dismiss_cb = self.on_dismiss.clone();
+                return EventResult::with_cb(move |s| {
+                    if let Some(ref cb) = dismiss_cb {
+                        cb.clone()(s);
+                    }
+                    s.pop_layer();
+                });
+            }
+            Event::Key(Key::Up) if self.focus > 0 => self.focus -= 1,
+            Event::Key(Key::Down) if self.focus + 1 <
+                                     self.menu.children.len() => {
+                self.focus += 1
+            }
+            Event::Key(Key::Enter) if !self.menu.children[self.focus]
+                                          .is_delimiter() => {
+                return match self.menu.children[self.focus] {
+                    MenuItem::Leaf(_, ref cb) => {
+
+                        let cb = cb.clone();
+                        let action_cb = self.on_action.clone();
+                        EventResult::with_cb(move |s| {
+                            if let Some(ref action_cb) = action_cb {
+                                action_cb.clone()(s);
+                            }
+                            s.pop_layer();
+                            cb.clone()(s);
+                        })
+                    }
+                    MenuItem::Subtree(_, ref tree) => {
+                        let tree = tree.clone();
+                        let offset = Vec2::new(10, self.focus + 1);
+                        EventResult::with_cb(move |s| {
+                            s.screen_mut()
+                             .add_layer_at(Position::parent(offset),
+                                           MenuPopup::new(tree.clone()));
+                        })
+                    }
+                    _ => panic!("No delimiter here"),
+                };
+            }
+
+            _ => return EventResult::Ignored,
+        }
+
+        self.scrollbase.scroll_to(self.focus);
+
+        EventResult::Consumed(None)
+    }
+
+    fn layout(&mut self, size: Vec2) {
+        self.scrollbase.set_heights(size.y, self.menu.children.len());
     }
 }

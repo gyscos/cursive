@@ -1,23 +1,59 @@
-use menu::*;
+use menu::MenuTree;
+use view::MenuPopup;
 use theme::ColorStyle;
 use printer::Printer;
+use view::Position;
 use event::*;
 
 use std::rc::Rc;
 
+/// Current state of the menubar
+#[derive(PartialEq, Debug)]
+enum State {
+    /// The menubar is inactive.
+    Inactive,
+    /// The menubar is actively selected.
+    ///
+    /// It will receive input.
+    Selected,
+    /// The menubar is still visible, but a submenu is open.
+    ///
+    /// It will not receive input.
+    Submenu,
+}
+
 pub struct Menubar {
-    pub menu: MenuTree,
+    pub menus: Vec<(String, Rc<MenuTree>)>,
     pub autohide: bool,
-    pub selected: bool,
+    pub focus: usize,
+    state: State,
 }
 
 impl Menubar {
     pub fn new() -> Self {
         Menubar {
-            menu: MenuTree::new(),
+            menus: Vec::new(),
             autohide: true,
-            selected: false,
+            state: State::Inactive,
+            focus: 0,
         }
+    }
+
+    pub fn take_focus(&mut self) {
+        self.state = State::Selected;
+    }
+
+    pub fn receive_events(&self) -> bool {
+        self.state == State::Selected
+    }
+
+    pub fn visible(&self) -> bool {
+        !self.autohide || self.state != State::Inactive
+    }
+
+    pub fn add(&mut self, title: &str, menu: MenuTree) -> &mut Self {
+        self.menus.push((title.to_string(), Rc::new(menu)));
+        self
     }
 
     pub fn draw(&mut self, printer: &Printer) {
@@ -27,10 +63,50 @@ impl Menubar {
         });
 
         // TODO: draw the rest
+        let mut offset = 1;
+        for (i, &(ref title, _)) in self.menus.iter().enumerate() {
+            // We don't want to show HighlightInactive when we're not selected,
+            // because it's ugly on the menubar.
+            let selected = (self.state != State::Inactive) &&
+                           (i == self.focus);
+            printer.with_selection(selected, |printer| {
+                printer.print((offset, 0), &format!(" {} ", title));
+                offset += title.len() + 2;
+            });
+        }
     }
 
-    pub fn on_event(&mut self, event: Event) -> Option<Rc<Callback>> {
-        let _ = &event;
+    pub fn on_event(&mut self, event: Event) -> Option<Callback> {
+        match event {
+            Event::Key(Key::Esc) => self.state = State::Inactive,
+            Event::Key(Key::Left) if self.focus > 0 => self.focus -= 1,
+            Event::Key(Key::Right) if self.focus + 1 < self.menus.len() => self.focus += 1,
+            Event::Key(Key::Enter) => {
+                // First, we need a new Rc to send the callback,
+                // since we don't know when it will be called.
+                let menu = self.menus[self.focus].1.clone();
+                self.state = State::Submenu;
+                let offset = (self.menus[..self.focus]
+                                  .iter()
+                                  .map(|&(ref title, _)| title.len() + 2)
+                                  .fold(1, |a, b| a + b),
+                              if self.autohide {
+                    1
+                } else {
+                    0
+                });
+                return Some(Rc::new(move |s| {
+                    // Since the closure will be called multiple times,
+                    // we also need a new Rc on every call.
+                    s.screen_mut()
+                     .add_layer_at(Position::absolute(offset),
+                                   MenuPopup::new(menu.clone())
+                                       .on_dismiss(|s| s.select_menubar())
+                                       .on_action(|s| s.menubar().state = State::Inactive));
+                }));
+            }
+            _ => (),
+        }
         None
     }
 }

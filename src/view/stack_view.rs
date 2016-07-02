@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use vec::Vec2;
-use view::{Selector, ShadowView, View, Position};
+use view::{Position, Selector, ShadowView, View};
 use event::{Event, EventResult};
 use printer::Printer;
 use theme::ColorStyle;
@@ -38,9 +38,10 @@ impl StackView {
     }
 
     /// Adds a view on top of the stack.
-    pub fn add_layer_at<T: 'static + View>(&mut self, position: Position, view: T) {
+    pub fn add_layer_at<T: 'static + View>(&mut self, position: Position,
+                                           view: T) {
         self.layers.push(Layer {
-            view: Box::new(ShadowView::new(view)),
+            view: Box::new(ShadowView::new(view).no_topleft_padding()),
             size: Vec2::new(0, 0),
             position: position,
             virgin: true,
@@ -61,9 +62,11 @@ impl View for StackView {
             for (i, v) in self.layers.iter_mut().enumerate() {
                 // Place the view
                 // Center the view
-                let offset = v.position.compute_offset(v.size, printer.size, previous);
+                let offset = v.position
+                              .compute_offset(v.size, printer.size, previous);
                 previous = offset;
-                v.view.draw(&printer.sub_printer(offset, v.size, i + 1 == last));
+                v.view
+                 .draw(&printer.sub_printer(offset, v.size, i + 1 == last));
             }
         });
     }

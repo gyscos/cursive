@@ -69,8 +69,8 @@ pub type ScreenId = usize;
 pub struct Cursive {
     theme: theme::Theme,
     screens: Vec<StackView>,
-    global_callbacks: HashMap<Event, Rc<Callback>>,
-    menu: menubar::Menubar,
+    global_callbacks: HashMap<Event, Callback>,
+    menubar: menubar::Menubar,
 
     active_screen: ScreenId,
 
@@ -100,7 +100,7 @@ impl Cursive {
             theme: theme,
             screens: Vec::new(),
             global_callbacks: HashMap::new(),
-            menu: menubar::Menubar::new(),
+            menubar: menubar::Menubar::new(),
             active_screen: 0,
             running: true,
         };
@@ -111,8 +111,8 @@ impl Cursive {
     }
 
     /// Selects the menubar
-    pub fn select_menu(&mut self) {
-        self.menu.selected = true;
+    pub fn select_menubar(&mut self) {
+        self.menubar.take_focus();
     }
 
     /// Sets the menubar autohide_menubar feature.
@@ -120,12 +120,12 @@ impl Cursive {
     /// * When enabled, the menu is only visible when selected.
     /// * When disabled, the menu is always visible and reserves the top row.
     pub fn set_autohide_menu(&mut self, autohide: bool) {
-        self.menu.autohide = autohide;
+        self.menubar.autohide = autohide;
     }
 
     /// Retrieve the menu tree used by the menubar.
-    pub fn menu(&mut self) -> &mut menu::MenuTree {
-        &mut self.menu.menu
+    pub fn menubar(&mut self) -> &mut menubar::Menubar {
+        &mut self.menubar
     }
 
     /// Returns the currently used theme
@@ -206,7 +206,7 @@ impl Cursive {
     pub fn add_global_callback<F, E: ToEvent>(&mut self, event: E, cb: F)
         where F: Fn(&mut Cursive) + 'static
     {
-        self.global_callbacks.insert(event.to_event(), Rc::new(Box::new(cb)));
+        self.global_callbacks.insert(event.to_event(), Rc::new(cb));
     }
 
     /// Convenient method to add a layer to the current screen.
@@ -251,18 +251,18 @@ impl Cursive {
 
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
-        let offset = if self.menu.autohide {
+        let offset = if self.menubar.autohide {
             0
         } else {
             1
         };
-        let selected = self.menu.selected;
+        let selected = self.menubar.receive_events();
         self.screen_mut()
             .draw(&printer.sub_printer(Vec2::new(0, offset), printer.size, !selected));
 
         // Draw the menubar?
-        if self.menu.selected || !self.menu.autohide {
-            self.menu.draw(&printer);
+        if self.menubar.visible() {
+            self.menubar.draw(&printer);
         }
 
         B::refresh();
@@ -295,8 +295,8 @@ impl Cursive {
             //     * Menubar (if active)
             //     * Current screen (top layer)
             // * Global callbacks
-            if self.menu.selected {
-                if let Some(cb) = self.menu.on_event(event) {
+            if self.menubar.receive_events() {
+                if let Some(cb) = self.menubar.on_event(event) {
                     cb(self);
                 }
             } else {

@@ -11,7 +11,7 @@ use printer::Printer;
 /// A button shows its content in a single line and has a fixed size.
 pub struct Button {
     label: String,
-    callback: Rc<Callback>,
+    callback: Callback,
 }
 
 impl Button {
@@ -21,7 +21,7 @@ impl Button {
     {
         Button {
             label: label.to_string(),
-            callback: Rc::new(Box::new(cb)),
+            callback: Rc::new(cb),
         }
     }
 }
