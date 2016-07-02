@@ -1,4 +1,4 @@
-use view::{DimensionRequest, SizeRequest, View};
+use view::View;
 use vec::Vec2;
 use printer::Printer;
 use orientation::Orientation;
@@ -115,6 +115,8 @@ impl View for LinearLayout {
         for (i, child) in self.children.iter_mut().enumerate() {
             child.view.draw(&printer.sub_printer(offset, child.size, i == self.focus));
 
+            // On the axis given by the orientation,
+            // add the child size to the offset.
             *self.orientation.get_ref(&mut offset) += self.orientation
                                                           .get(&child.size);
         }
@@ -122,18 +124,16 @@ impl View for LinearLayout {
 
     fn layout(&mut self, size: Vec2) {
         // Compute the very minimal required size
-        let req = SizeRequest {
-            w: DimensionRequest::AtMost(size.x),
-            h: DimensionRequest::AtMost(size.y),
-        };
+        // Look how mean we are: we offer the whole size to every child.
+        // As if they could get it all.
         let min_sizes: Vec<Vec2> = self.children
                                        .iter()
-                                       .map(|child| child.view.get_min_size(req))
+                                       .map(|child| Vec2::min(size, child.view.get_min_size(size)))
                                        .collect();
         let min_size = self.orientation.stack(min_sizes.iter());
 
         // Emulate 'non-strict inequality' on integers
-        // (default comparison on Vec2 is strict)
+        // (default comparison on Vec2 is strict, and (0,1).cmp((1,1)) is undefined)
         if !(min_size < size + (1, 1)) {
             // Error! Not enough space! Emergency procedures!
             return;
@@ -160,7 +160,7 @@ impl View for LinearLayout {
         }
     }
 
-    fn get_min_size(&self, req: SizeRequest) -> Vec2 {
+    fn get_min_size(&self, req: Vec2) -> Vec2 {
         // First, make a naive scenario: everything will work fine.
         let sizes: Vec<Vec2> = self.children
                                    .iter()

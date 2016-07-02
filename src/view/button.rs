@@ -3,7 +3,7 @@ use std::rc::Rc;
 use theme::ColorStyle;
 use Cursive;
 use vec::Vec2;
-use view::{SizeRequest, View};
+use view::{View};
 use event::*;
 use printer::Printer;
 
@@ -42,7 +42,7 @@ impl View for Button {
         });
     }
 
-    fn get_min_size(&self, _: SizeRequest) -> Vec2 {
+    fn get_min_size(&self, _: Vec2) -> Vec2 {
         // Meh. Fixed size we are.
         Vec2::new(2 + self.label.chars().count(), 1)
     }

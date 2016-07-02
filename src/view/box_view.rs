@@ -1,5 +1,7 @@
+use std::cmp;
+
 use vec::{ToVec2, Vec2};
-use super::{DimensionRequest, SizeRequest, View, ViewWrapper};
+use super::{View, ViewWrapper};
 
 /// `BoxView` is a wrapper around an other view, with a given minimum size.
 pub struct BoxView<T: View> {
@@ -28,16 +30,18 @@ impl<T: View> BoxView<T> {
 impl<T: View> ViewWrapper for BoxView<T> {
     wrap_impl!(&self.view);
 
-    fn wrap_get_min_size(&self, mut req: SizeRequest) -> Vec2 {
+    fn wrap_get_min_size(&self, mut req: Vec2) -> Vec2 {
         if self.size.x > 0 {
-            req.w = DimensionRequest::AtMost(self.size.x);
+            req.x = cmp::min(self.size.x, req.x);
         }
         if self.size.y > 0 {
-            req.h = DimensionRequest::AtMost(self.size.y);
+            req.y = cmp::min(self.size.y, req.y);
         }
 
         let mut size = self.view.get_min_size(req);
 
+        // Did he think he got to decide?
+        // Of course we have the last word here.
         if self.size.x > 0 {
             size.x = self.size.x;
         }

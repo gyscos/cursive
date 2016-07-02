@@ -5,7 +5,7 @@ use Cursive;
 use align::*;
 use event::*;
 use theme::ColorStyle;
-use view::{DimensionRequest, Selector, SizeRequest, TextView, View};
+use view::{Selector, TextView, View};
 use view::{Button, SizedView};
 use vec::{ToVec4, Vec2, Vec4};
 use printer::Printer;
@@ -157,9 +157,9 @@ impl View for Dialog {
 
     }
 
-    fn get_min_size(&self, req: SizeRequest) -> Vec2 {
+    fn get_min_size(&self, req: Vec2) -> Vec2 {
         // Padding and borders are not available for kids.
-        let content_req = req.reduced(self.padding.combined() + self.borders.combined());
+        let content_req = req - (self.padding.combined() + self.borders.combined());
         let content_size = self.content.get_min_size(content_req);
 
         let mut buttons_size = Vec2::new(0, 0);
@@ -189,16 +189,13 @@ impl View for Dialog {
 
     fn layout(&mut self, mut size: Vec2) {
         // Padding and borders are taken, sorry.
+        // TODO: handle border-less themes?
         size = size - (self.borders.combined() + self.padding.combined());
-        let req = SizeRequest {
-            w: DimensionRequest::AtMost(size.x),
-            h: DimensionRequest::AtMost(size.y),
-        };
 
         // Buttons are kings, we give them everything they want.
         let mut buttons_height = 0;
         for button in self.buttons.iter_mut().rev() {
-            let size = button.get_min_size(req);
+            let size = button.get_min_size(size);
             buttons_height = max(buttons_height, size.y + 1);
             button.layout(size);
         }

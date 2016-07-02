@@ -4,7 +4,7 @@ use std::rc::Rc;
 use theme::ColorStyle;
 use Cursive;
 use align::*;
-use view::{DimensionRequest, IdView, SizeRequest, View};
+use view::{IdView, View};
 use event::{Event, EventResult, Key};
 use vec::Vec2;
 use printer::Printer;
@@ -150,7 +150,10 @@ impl<T: 'static> View for SelectView<T> {
         });
     }
 
-    fn get_min_size(&self, req: SizeRequest) -> Vec2 {
+    fn get_min_size(&self, req: Vec2) -> Vec2 {
+        // Items here are not compressible.
+        // So no matter what the horizontal requirements are,
+        // we'll still return our longest item.
         let w = self.items
                     .iter()
                     .map(|item| item.label.len())
@@ -158,13 +161,7 @@ impl<T: 'static> View for SelectView<T> {
                     .unwrap_or(1);
         let h = self.items.len();
 
-        let scrolling = if let DimensionRequest::Fixed(r_h) = req.h {
-            r_h < h
-        } else if let DimensionRequest::AtMost(r_h) = req.h {
-            r_h < h
-        } else {
-            false
-        };
+        let scrolling = req.y < h;
 
         // Add 2 spaces for the scrollbar if we need
         let w = if scrolling {

@@ -1,8 +1,7 @@
 use std::cmp::max;
 
 use vec::Vec2;
-use view::{DimensionRequest, SizeRequest, View};
-use div::*;
+use view::View;
 use printer::Printer;
 use align::*;
 use event::*;
@@ -103,15 +102,6 @@ impl TextView {
             .split('\n')
             .map(|line| get_line_span(line, max_width))
             .fold(0, |sum, x| sum + x)
-    }
-
-    // Given the specified height,
-    // how many columns do we need to properly display?
-    fn get_num_cols(&self, max_height: usize) -> usize {
-        let len = self.content.chars().count();
-        (div_up_usize(len, max_height)..len)
-            .find(|w| self.get_num_lines(*w) <= max_height)
-            .unwrap()
     }
 
     // In the absence of any constraint, what size would we like?
@@ -244,34 +234,19 @@ impl View for TextView {
         EventResult::Consumed(None)
     }
 
-    fn get_min_size(&self, size: SizeRequest) -> Vec2 {
-        match (size.w, size.h) {
-            // If we have no directive, ask for a single big line.
-            // TODO: what if the text has newlines??
-            (DimensionRequest::Unknown, DimensionRequest::Unknown) => self.get_ideal_size(),
-            (DimensionRequest::Fixed(w), _) => {
-                // In a BoxView or something.
-                let h = self.get_num_lines(w);
-                Vec2::new(w, h)
-            }
-            (_, DimensionRequest::Fixed(h)) => {
-                let w = self.get_num_cols(h);
-                Vec2::new(w, h)
-            }
-            (DimensionRequest::AtMost(w), _) => {
-                // Don't _force_ the max width, but take it if we have to.
-                let ideal = self.get_ideal_size();
+    fn get_min_size(&self, size: Vec2) -> Vec2 {
+        // If we have no directive, ask for a single big line.
+        // TODO: what if the text has newlines??
+        // Don't _force_ the max width, but take it if we have to.
+        let ideal = self.get_ideal_size();
 
-                if w >= ideal.x {
-                    // This is the cheap path
-                    ideal
-                } else {
-                    // This is the expensive one :(
-                    let h = self.get_num_lines(w);
-                    Vec2::new(w, h)
-                }
-            }
-            _ => unreachable!(),
+        if size.x >= ideal.x {
+            ideal
+        } else {
+            // Ok, se we have less width than we'd like.
+            // Take everything we can, and plan our height accordingly.
+            let h = self.get_num_lines(size.x);
+            Vec2::new(size.x, h)
         }
     }
 

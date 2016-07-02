@@ -1,4 +1,4 @@
-use view::{SizeRequest, View, ViewWrapper};
+use view::{View, ViewWrapper};
 use printer::Printer;
 use vec::Vec2;
 use theme::ColorStyle;
@@ -20,8 +20,8 @@ impl<T: View> ShadowView<T> {
 impl<T: View> ViewWrapper for ShadowView<T> {
     wrap_impl!(&self.view);
 
-    fn wrap_get_min_size(&self, req: SizeRequest) -> Vec2 {
-        self.view.get_min_size(req.reduced((2, 2))) + (2, 2)
+    fn wrap_get_min_size(&self, req: Vec2) -> Vec2 {
+        self.view.get_min_size(req - (2, 2)) + (2, 2)
     }
 
     fn wrap_layout(&mut self, size: Vec2) {

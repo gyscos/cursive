@@ -4,7 +4,7 @@ use std::cmp::min;
 
 use theme::{ColorStyle, Effect};
 use vec::Vec2;
-use view::{IdView, SizeRequest, View};
+use view::{IdView, View};
 use event::*;
 use printer::Printer;
 
@@ -123,7 +123,7 @@ impl View for EditView {
         self.last_length = size.x;
     }
 
-    fn get_min_size(&self, _: SizeRequest) -> Vec2 {
+    fn get_min_size(&self, _: Vec2) -> Vec2 {
         Vec2::new(self.min_length, 1)
     }
 

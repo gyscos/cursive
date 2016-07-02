@@ -5,7 +5,6 @@ mod view_wrapper;
 
 // Essentials components
 mod position;
-mod request;
 mod view_path;
 
 // Helper bases
@@ -36,7 +35,6 @@ use printer::Printer;
 
 pub use self::position::{Position, Offset};
 
-pub use self::request::{DimensionRequest, SizeRequest};
 pub use self::scroll::ScrollBase;
 
 pub use self::id_view::IdView;
@@ -65,7 +63,7 @@ pub trait View {
     }
 
     /// Returns the minimum size the view requires under the given restrictions.
-    fn get_min_size(&self, SizeRequest) -> Vec2 {
+    fn get_min_size(&self, Vec2) -> Vec2 {
         Vec2::new(1, 1)
     }
 

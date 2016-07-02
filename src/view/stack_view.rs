@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use vec::Vec2;
-use view::{DimensionRequest, Selector, ShadowView, SizeRequest, View, Position};
+use view::{Selector, ShadowView, View, Position};
 use event::{Event, EventResult};
 use printer::Printer;
 use theme::ColorStyle;
@@ -78,14 +78,10 @@ impl View for StackView {
     fn layout(&mut self, size: Vec2) {
         // The call has been made, we can't ask for more space anymore.
         // Let's make do with what we have.
-        let req = SizeRequest {
-            w: DimensionRequest::AtMost(size.x),
-            h: DimensionRequest::AtMost(size.y),
-        };
 
         for layer in &mut self.layers {
             // Give each guy what he asks for, within the budget constraints.
-            layer.size = Vec2::min(size, layer.view.get_min_size(req));
+            layer.size = Vec2::min(size, layer.view.get_min_size(size));
             layer.view.layout(layer.size);
 
             // We do it here instead of when adding a new layer because...?
@@ -97,16 +93,13 @@ impl View for StackView {
         }
     }
 
-    fn get_min_size(&self, size: SizeRequest) -> Vec2 {
+    fn get_min_size(&self, size: Vec2) -> Vec2 {
         // The min size is the max of all children's
-        let mut s = Vec2::new(1, 1);
 
-        for layer in &self.layers {
-            let vs = layer.view.get_min_size(size);
-            s = Vec2::max(s, vs);
-        }
-
-        s
+        self.layers
+            .iter()
+            .map(|layer| layer.view.get_min_size(size))
+            .fold(Vec2::new(1, 1), Vec2::max)
     }
 
     fn take_focus(&mut self) -> bool {

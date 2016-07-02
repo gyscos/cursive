@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use vec::Vec2;
-use view::{Selector, SizeRequest, View};
+use view::{Selector, View};
 use printer::Printer;
 use event::{Event, EventResult};
 
@@ -21,7 +21,7 @@ pub trait ViewWrapper {
     }
 
     /// Wraps the get_min_size method.
-    fn wrap_get_min_size(&self, req: SizeRequest) -> Vec2 {
+    fn wrap_get_min_size(&self, req: Vec2) -> Vec2 {
         self.get_view().get_min_size(req)
     }
 
@@ -50,7 +50,7 @@ impl<T: ViewWrapper> View for T {
         self.wrap_draw(printer);
     }
 
-    fn get_min_size(&self, req: SizeRequest) -> Vec2 {
+    fn get_min_size(&self, req: Vec2) -> Vec2 {
         self.wrap_get_min_size(req)
     }
 
