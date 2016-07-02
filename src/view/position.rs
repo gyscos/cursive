@@ -1,4 +1,4 @@
-use ::vec::{ToVec2, Vec2};
+use vec::{ToVec2, Vec2};
 
 /// Location of the view on screen
 pub struct Position {
@@ -8,10 +8,7 @@ pub struct Position {
 
 impl Position {
     pub fn new(x: Offset, y: Offset) -> Self {
-        Position {
-            x: x,
-            y: y,
-        }
+        Position { x: x, y: y }
     }
 
     pub fn center() -> Self {

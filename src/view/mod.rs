@@ -1,6 +1,7 @@
 //! Defines various views to use when creating the layout.
 
-#[macro_use]mod view_wrapper;
+#[macro_use]
+mod view_wrapper;
 
 // Essentials components
 mod position;
@@ -24,6 +25,7 @@ mod select_view;
 mod sized_view;
 mod stack_view;
 mod text_view;
+mod tracked_view;
 
 
 use std::any::Any;
@@ -50,6 +52,7 @@ pub use self::select_view::SelectView;
 pub use self::shadow_view::ShadowView;
 pub use self::stack_view::StackView;
 pub use self::text_view::TextView;
+pub use self::tracked_view::TrackedView;
 pub use self::sized_view::SizedView;
 pub use self::view_wrapper::ViewWrapper;
 
