@@ -14,19 +14,17 @@ fn main() {
        .add("File",
             MenuTree::new()
                 .leaf("New", |s| s.add_layer(Dialog::info("New file!")))
-                .subtree("Recent",
-                         MenuTree::new()
-                             .leaf("Item 1", |_| ())
-                             .leaf("Item 1", |_| ())
-                             .leaf("Item 1", |_| ())
-                             .leaf("Item 1", |_| ()))
+                .subtree("Recent", MenuTree::new().with(|tree| {
+                    for i in 1..6 {
+                        tree.add_leaf(&format!("Item {}", i), |_| ())
+                    }
+                }))
                 .delimiter()
-                .leaf("Item 1", |_| ())
-                .leaf("Item 1", |_| ())
-                .leaf("Item 1", |_| ())
-                .leaf("Item 1", |_| ())
-                .leaf("Item 1", |_| ())
-                .leaf("Item 1", |_| ())
+                .with(|tree| {
+                    for i in 1..10 {
+                        tree.add_leaf(&format!("Option {}", i), |_| ());
+                    }
+                })
                 .delimiter()
                 .leaf("Quit", |s| s.quit()))
        .add("Help",

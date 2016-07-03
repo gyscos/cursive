@@ -54,20 +54,34 @@ impl MenuTree {
         self.children.is_empty()
     }
 
-    pub fn delimiter(mut self) -> Self {
+    pub fn add_delimiter(&mut self) {
         self.children.push(MenuItem::Delimiter);
-        self
     }
 
-    pub fn leaf<F: 'static + Fn(&mut Cursive)>(mut self, title: &str, cb: F) -> Self {
+    pub fn delimiter(self) -> Self {
+        self.with(|menu| menu.add_delimiter())
+    }
+
+    pub fn add_leaf<F: 'static + Fn(&mut Cursive)>(&mut self, title: &str, cb: F) {
         self.children
             .push(MenuItem::Leaf(title.to_string(), Rc::new(cb)));
-        self
     }
 
-    pub fn subtree(mut self, title: &str, tree: MenuTree) -> Self {
+    pub fn leaf<F: 'static + Fn(&mut Cursive)>(self, title: &str, cb: F) -> Self {
+        self.with(|menu| menu.add_leaf(title, cb))
+    }
+
+    pub fn add_subtree(&mut self, title: &str, tree: MenuTree) {
         self.children
             .push(MenuItem::Subtree(title.to_string(), Rc::new(tree)));
+    }
+
+    pub fn subtree(self, title: &str, tree: MenuTree) -> Self {
+        self.with(|menu| menu.add_subtree(title, tree))
+    }
+
+    pub fn with<F: FnOnce(&mut Self)>(mut self, f: F) -> Self {
+        f(&mut self);
         self
     }
 }
