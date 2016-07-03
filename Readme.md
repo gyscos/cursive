@@ -15,6 +15,13 @@ It is designed to be safe and easy to use:
 cursive = "0.0.2"
 ```
 
+Or to use the latest git version:
+
+```
+[dependencies]
+cursive = { git = "https://github.com/gyscos/Cursive" }
+```
+
 (You will also need ncurses installed - if it isn't already, check in your package manager.)
 
 ```rust
