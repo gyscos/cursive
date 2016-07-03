@@ -30,6 +30,12 @@ pub struct Menubar {
     state: State,
 }
 
+impl Default for Menubar {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Menubar {
     pub fn new() -> Self {
         Menubar {
