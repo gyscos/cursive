@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use view::{View, ViewWrapper};
 use printer::Printer;
 use vec::Vec2;
@@ -10,7 +8,8 @@ use theme::ColorStyle;
 /// It reserves a 1 pixel border on each side.
 pub struct ShadowView<T: View> {
     view: T,
-    topleft_padding: bool,
+    top_padding: bool,
+    left_padding: bool,
 }
 
 impl<T: View> ShadowView<T> {
@@ -18,20 +17,22 @@ impl<T: View> ShadowView<T> {
     pub fn new(view: T) -> Self {
         ShadowView {
             view: view,
-            topleft_padding: true,
+            top_padding: true,
+            left_padding: true,
         }
     }
 
     fn padding(&self) -> (usize, usize) {
-        if self.topleft_padding {
-            (2, 2)
-        } else {
-            (1, 1)
-        }
+        (1 + self.left_padding as usize,
+         1 + self.top_padding as usize)
     }
 
-    pub fn no_topleft_padding(mut self) -> Self {
-        self.topleft_padding = false;
+    pub fn left_padding(mut self, value: bool) -> Self {
+        self.left_padding = value;
+        self
+    }
+    pub fn top_padding(mut self, value: bool) -> Self {
+        self.top_padding = value;
         self
     }
 
@@ -53,11 +54,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
     fn wrap_draw(&mut self, printer: &Printer) {
 
         // Skip the first row/column
-        let printer = if self.topleft_padding {
-            Cow::Owned(printer.sub_printer(Vec2::new(1, 1), printer.size, true))
-        } else {
-            Cow::Borrowed(printer)
-        };
+        let printer = &printer.sub_printer(Vec2::new(self.left_padding as usize, self.top_padding as usize), printer.size, true);
 
         // Draw the view background
         for y in 0..printer.size.y - 1 {

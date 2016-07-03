@@ -2,6 +2,7 @@ use std::cmp::min;
 use vec::{ToVec2, Vec2};
 
 /// Location of the view on screen
+#[derive(PartialEq,Debug,Clone)]
 pub struct Position {
     pub x: Offset,
     pub y: Offset,
@@ -32,6 +33,7 @@ impl Position {
     }
 }
 
+#[derive(PartialEq,Debug,Clone)]
 pub enum Offset {
     /// In the center of the screen
     Center,
