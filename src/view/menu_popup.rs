@@ -43,6 +43,37 @@ impl MenuPopup {
         }
     }
 
+    fn scroll_up(&mut self, mut n: usize, cycle: bool) {
+        while n > 0 {
+            if self.focus > 0 {
+                self.focus -= 1;
+            } else if cycle {
+                self.focus = self.menu.children.len() - 1;
+            } else {
+                break;
+            }
+
+            if !self.menu.children[self.focus].is_delimiter() {
+                n -= 1;
+            }
+        }
+    }
+
+    fn scroll_down(&mut self, mut n: usize, cycle: bool) {
+        while n > 0 {
+            if self.focus + 1 < self.menu.children.len() {
+                self.focus += 1;
+            } else if cycle {
+                self.focus = 0;
+            } else {
+                break;
+            }
+            if !self.menu.children[self.focus].is_delimiter() {
+                n -= 1;
+            }
+        }
+    }
+
 
     /// Sets the alignment for this view.
     pub fn align(mut self, align: Align) -> Self {
@@ -163,30 +194,14 @@ impl View for MenuPopup {
                     s.pop_layer();
                 });
             }
-            Event::Key(Key::Up) => {
-                loop {
-                    if self.focus > 0 {
-                        self.focus -= 1;
-                    } else {
-                        self.focus = self.menu.children.len() - 1;
-                    }
-                    if !self.menu.children[self.focus].is_delimiter() {
-                        break;
-                    }
-                }
-            }
-            Event::Key(Key::Down) => {
-                loop {
-                    if self.focus + 1 < self.menu.children.len() {
-                        self.focus += 1;
-                    } else {
-                        self.focus = 0;
-                    }
-                    if !self.menu.children[self.focus].is_delimiter() {
-                        break;
-                    }
-                }
-            }
+            Event::Key(Key::Up) => self.scroll_up(1, true),
+            Event::Key(Key::PageUp) => self.scroll_up(5, false),
+            Event::Key(Key::Down) => self.scroll_down(1, true),
+            Event::Key(Key::PageDown) => self.scroll_down(5, false),
+
+            Event::Key(Key::Home) => self.focus = 0,
+            Event::Key(Key::End) => self.focus = self.menu.children.len() - 1,
+
             Event::Key(Key::Right) if self.menu.children[self.focus]
                                           .is_subtree() => {
                 return match self.menu.children[self.focus] {

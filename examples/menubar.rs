@@ -15,7 +15,7 @@ fn main() {
             MenuTree::new()
                 .leaf("New", |s| s.add_layer(Dialog::info("New file!")))
                 .subtree("Recent", MenuTree::new().with(|tree| {
-                    for i in 1..6 {
+                    for i in 1..100 {
                         tree.add_leaf(&format!("Item {}", i), |_| ())
                     }
                 }))
