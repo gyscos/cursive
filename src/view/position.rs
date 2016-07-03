@@ -1,3 +1,4 @@
+use std::cmp::min;
 use vec::{ToVec2, Vec2};
 
 /// Location of the view on screen
@@ -47,8 +48,8 @@ impl Offset {
     pub fn compute_offset(&self, size: usize, available: usize, parent: usize) -> usize {
         match *self {
             Offset::Center => (available - size) / 2,
-            Offset::Absolute(offset) => offset,
-            Offset::Parent(offset) => parent + offset,
+            Offset::Absolute(offset) => min(offset, available - size),
+            Offset::Parent(offset) => min(parent + offset, available - size),
         }
     }
 }

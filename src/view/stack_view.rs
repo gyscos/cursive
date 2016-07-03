@@ -62,8 +62,9 @@ impl View for StackView {
             for (i, v) in self.layers.iter_mut().enumerate() {
                 // Place the view
                 // Center the view
-                let offset = v.position
+                let mut offset = v.position
                               .compute_offset(v.size, printer.size, previous);
+
                 previous = offset;
                 v.view
                  .draw(&printer.sub_printer(offset, v.size, i + 1 == last));

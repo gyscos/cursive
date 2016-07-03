@@ -28,6 +28,13 @@ impl MenuItem {
             _ => false,
         }
     }
+
+    pub fn is_subtree(&self) -> bool {
+        match *self {
+            MenuItem::Subtree(_,_) => true,
+            _ => false,
+        }
+    }
 }
 
 impl MenuTree {

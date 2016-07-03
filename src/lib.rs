@@ -256,14 +256,16 @@ impl Cursive {
         } else {
             1
         };
-        let selected = self.menubar.receive_events();
-        self.screen_mut()
-            .draw(&printer.sub_printer(Vec2::new(0, offset), printer.size, !selected));
-
         // Draw the menubar?
         if self.menubar.visible() {
+            let printer = printer.sub_printer(Vec2::zero(), printer.size, self.menubar.receive_events());
             self.menubar.draw(&printer);
         }
+
+        let selected = self.menubar.receive_events();
+
+        self.screen_mut()
+            .draw(&printer.sub_printer(Vec2::new(0, offset), printer.size, !selected));
 
         B::refresh();
     }

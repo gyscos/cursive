@@ -7,6 +7,7 @@ use menu::{MenuItem, MenuTree};
 use printer::Printer;
 use view::View;
 use view::Position;
+use view::KeyEventView;
 use view::scroll::ScrollBase;
 use align::Align;
 use vec::Vec2;
@@ -27,12 +28,21 @@ impl MenuPopup {
         MenuPopup {
             menu: menu,
             focus: 0,
-            scrollbase: ScrollBase::new(),
+            scrollbase: ScrollBase::new().bar_padding(1),
             align: Align::top_left(),
             on_dismiss: None,
             on_action: None,
         }
     }
+
+    fn item_width(item: &MenuItem) -> usize {
+        match *item {
+            MenuItem::Delimiter => 1,
+            MenuItem::Leaf(ref title, _) => title.width(),
+            MenuItem::Subtree(ref title, _) => title.width() + 3,
+        }
+    }
+
 
     /// Sets the alignment for this view.
     pub fn align(mut self, align: Align) -> Self {
@@ -49,6 +59,35 @@ impl MenuPopup {
     pub fn on_action<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
         self.on_action = Some(Rc::new(f));
         self
+    }
+
+    fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
+        let tree = tree.clone();
+        let max_width = 4 +
+                        self.menu
+                            .children
+                            .iter()
+                            .map(Self::item_width)
+                            .max()
+                            .unwrap_or(1);
+        let offset = Vec2::new(max_width, self.focus);
+        let action_cb = self.on_action.clone();
+        EventResult::with_cb(move |s| {
+            let action_cb = action_cb.clone();
+            s.screen_mut()
+             .add_layer_at(Position::parent(offset),
+                           KeyEventView::new(MenuPopup::new(tree.clone())
+                                             .on_action(move |s| {
+                                                 // This will happen when the subtree popup
+                                                 // activates something;
+                                                 // First, remove ourselve.
+                                                 s.pop_layer();
+                            if let Some(ref action_cb) = action_cb {
+                                action_cb.clone()(s);
+                            }
+                                             }))
+                               .register(Key::Left, |s| s.pop_layer()));
+        })
     }
 }
 
@@ -75,7 +114,11 @@ impl View for MenuPopup {
                     MenuItem::Delimiter => {
                         printer.print_hdelim((0, 0), printer.size.x)
                     }
-                    MenuItem::Subtree(ref label, _) |
+                    MenuItem::Subtree(ref label, _) => {
+                        printer.print_hline((1, 0), printer.size.x - 2, " ");
+                        printer.print((2, 0), label);
+                        printer.print((printer.size.x - 4, 0), ">>");
+                    }
                     MenuItem::Leaf(ref label, _) => {
                         printer.print_hline((1, 0), printer.size.x - 2, " ");
                         printer.print((2, 0), label);
@@ -88,11 +131,11 @@ impl View for MenuPopup {
 
     fn get_min_size(&self, req: Vec2) -> Vec2 {
         // We can't really shrink our items here, so it's not flexible.
-        let w = 2 +
+        let w = 4 +
                 self.menu
                     .children
                     .iter()
-                    .map(|item| 2 + item.label().width())
+                    .map(Self::item_width)
                     .max()
                     .unwrap_or(1);
         let h = 2 + self.menu.children.len();
@@ -101,7 +144,7 @@ impl View for MenuPopup {
         let scrolling = req.y < h;
 
         let w = if scrolling {
-            w + 2
+            w + 1
         } else {
             w
         };
@@ -120,34 +163,60 @@ impl View for MenuPopup {
                     s.pop_layer();
                 });
             }
-            Event::Key(Key::Up) if self.focus > 0 => self.focus -= 1,
-            Event::Key(Key::Down) if self.focus + 1 <
-                                     self.menu.children.len() => {
-                self.focus += 1
+            Event::Key(Key::Up) => {
+                loop {
+                    if self.focus > 0 {
+                        self.focus -= 1;
+                    } else {
+                        self.focus = self.menu.children.len() - 1;
+                    }
+                    if !self.menu.children[self.focus].is_delimiter() {
+                        break;
+                    }
+                }
+            }
+            Event::Key(Key::Down) => {
+                loop {
+                    if self.focus + 1 < self.menu.children.len() {
+                        self.focus += 1;
+                    } else {
+                        self.focus = 0;
+                    }
+                    if !self.menu.children[self.focus].is_delimiter() {
+                        break;
+                    }
+                }
+            }
+            Event::Key(Key::Right) if self.menu.children[self.focus]
+                                          .is_subtree() => {
+                return match self.menu.children[self.focus] {
+                    MenuItem::Subtree(_, ref tree) => {
+                        self.make_subtree_cb(tree)
+                    }
+                    _ => panic!("Not a subtree???"),
+
+                };
             }
             Event::Key(Key::Enter) if !self.menu.children[self.focus]
-                                          .is_delimiter() => {
+                                           .is_delimiter() => {
                 return match self.menu.children[self.focus] {
                     MenuItem::Leaf(_, ref cb) => {
 
                         let cb = cb.clone();
                         let action_cb = self.on_action.clone();
                         EventResult::with_cb(move |s| {
+                            // Remove ourselves from the face of the earth
+                            s.pop_layer();
+                            // If we had prior orders, do it now.
                             if let Some(ref action_cb) = action_cb {
                                 action_cb.clone()(s);
                             }
-                            s.pop_layer();
+                            // And transmit his last words.
                             cb.clone()(s);
                         })
                     }
                     MenuItem::Subtree(_, ref tree) => {
-                        let tree = tree.clone();
-                        let offset = Vec2::new(10, self.focus + 1);
-                        EventResult::with_cb(move |s| {
-                            s.screen_mut()
-                             .add_layer_at(Position::parent(offset),
-                                           MenuPopup::new(tree.clone()));
-                        })
+                        self.make_subtree_cb(tree)
                     }
                     _ => panic!("No delimiter here"),
                 };
@@ -162,6 +231,6 @@ impl View for MenuPopup {
     }
 
     fn layout(&mut self, size: Vec2) {
-        self.scrollbase.set_heights(size.y, self.menu.children.len());
+        self.scrollbase.set_heights(size.y - 2, self.menu.children.len());
     }
 }

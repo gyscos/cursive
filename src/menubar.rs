@@ -1,5 +1,6 @@
 use menu::MenuTree;
 use view::MenuPopup;
+use view::KeyEventView;
 use theme::ColorStyle;
 use printer::Printer;
 use view::Position;
@@ -79,8 +80,21 @@ impl Menubar {
     pub fn on_event(&mut self, event: Event) -> Option<Callback> {
         match event {
             Event::Key(Key::Esc) => self.state = State::Inactive,
-            Event::Key(Key::Left) if self.focus > 0 => self.focus -= 1,
-            Event::Key(Key::Right) if self.focus + 1 < self.menus.len() => self.focus += 1,
+            Event::Key(Key::Left) => {
+                if self.focus > 0 {
+                    self.focus -= 1
+                } else {
+                    self.focus = self.menus.len() - 1
+                }
+            }
+            Event::Key(Key::Right) => {
+                if self.focus + 1 < self.menus.len() {
+                    self.focus += 1
+                } else {
+                    self.focus = 0
+                }
+            }
+            Event::Key(Key::Down) |
             Event::Key(Key::Enter) => {
                 // First, we need a new Rc to send the callback,
                 // since we don't know when it will be called.
@@ -89,7 +103,7 @@ impl Menubar {
                 let offset = (self.menus[..self.focus]
                                   .iter()
                                   .map(|&(ref title, _)| title.len() + 2)
-                                  .fold(1, |a, b| a + b),
+                                  .fold(0, |a, b| a + b),
                               if self.autohide {
                     1
                 } else {
@@ -100,9 +114,29 @@ impl Menubar {
                     // we also need a new Rc on every call.
                     s.screen_mut()
                      .add_layer_at(Position::absolute(offset),
-                                   MenuPopup::new(menu.clone())
+                                   KeyEventView::new(MenuPopup::new(menu.clone())
                                        .on_dismiss(|s| s.select_menubar())
-                                       .on_action(|s| s.menubar().state = State::Inactive));
+                                       .on_action(|s| {
+                                           s.menubar().state = State::Inactive
+                                       }))
+                                   .register(Key::Right, |s| {
+                                       s.pop_layer();
+                                       // Act as if we sent "Left" then "Enter"
+                                       s.select_menubar();
+                                       s.menubar().on_event(Event::Key(Key::Right));
+                                       if let Some(cb) = s.menubar().on_event(Event::Key(Key::Down)) {
+                                           cb(s);
+                                       }
+                                   })
+                                   .register(Key::Left, |s| {
+                                       s.pop_layer();
+                                       // Act as if we sent "Left" then "Enter"
+                                       s.select_menubar();
+                                       s.menubar().on_event(Event::Key(Key::Left));
+                                       if let Some(cb) = s.menubar().on_event(Event::Key(Key::Down)) {
+                                           cb(s);
+                                       }
+                                   }));
                 }));
             }
             _ => (),

@@ -10,6 +10,7 @@ pub struct ScrollBase {
     pub start_line: usize,
     pub content_height: usize,
     pub view_height: usize,
+    pub scrollbar_padding: usize,
 }
 
 impl ScrollBase {
@@ -18,7 +19,13 @@ impl ScrollBase {
             start_line: 0,
             content_height: 0,
             view_height: 0,
+            scrollbar_padding: 0,
         }
+    }
+
+    pub fn bar_padding(mut self, padding: usize) -> Self {
+        self.scrollbar_padding = padding;
+        self
     }
 
     /// Call this method whem the content or the view changes.
@@ -104,7 +111,7 @@ impl ScrollBase {
         // Print the content in a sub_printer
         let max_y = min(self.view_height, self.content_height - self.start_line);
         let w = if self.scrollable() {
-            printer.size.x - 2
+            printer.size.x - 1 // TODO: 2
         } else {
             printer.size.x
         };
@@ -134,9 +141,11 @@ impl ScrollBase {
                 ColorStyle::HighlightInactive
             };
 
-            printer.print_vline((printer.size.x - 1, 0), printer.size.y, "|");
+            // TODO: use 1 instead of 2
+            let scrollbar_x = printer.size.x - 1 - self.scrollbar_padding;
+            printer.print_vline((scrollbar_x, 0), printer.size.y, "|");
             printer.with_color(color, |printer| {
-                printer.print_vline((printer.size.x - 1, start), height, " ");
+                printer.print_vline((scrollbar_x, start), height, " ");
             });
         }
     }
