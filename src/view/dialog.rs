@@ -10,6 +10,8 @@ use view::{Button, SizedView};
 use vec::{ToVec4, Vec2, Vec4};
 use printer::Printer;
 
+use unicode_width::UnicodeWidthStr;
+
 #[derive(PartialEq)]
 enum Focus {
     Content,
@@ -147,7 +149,7 @@ impl View for Dialog {
         printer.print_box(Vec2::new(0, 0), printer.size);
 
         if !self.title.is_empty() {
-            let len = self.title.chars().count();
+            let len = self.title.width();
             let x = (printer.size.x - len) / 2;
             printer.print((x - 2, 0), "┤ ");
             printer.print((x + len, 0), " ├");
@@ -181,7 +183,7 @@ impl View for Dialog {
 
         if !self.title.is_empty() {
             // If we have a title, we have to fit it too!
-            inner_size.x = max(inner_size.x, self.title.chars().count() + 6);
+            inner_size.x = max(inner_size.x, self.title.width() + 6);
         }
 
         inner_size

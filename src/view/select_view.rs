@@ -9,6 +9,8 @@ use event::{Event, EventResult, Key};
 use vec::Vec2;
 use printer::Printer;
 
+use unicode_width::UnicodeWidthStr;
+
 struct Item<T> {
     label: String,
     value: Rc<T>,
@@ -134,7 +136,7 @@ impl<T: 'static> View for SelectView<T> {
 
         self.scrollbase.draw(printer, |printer, i| {
             printer.with_selection(i == self.focus, |printer| {
-                let l = self.items[i].label.chars().count();
+                let l = self.items[i].label.width();
                 let x = self.align.h.get_offset(l, printer.size.x);
                 printer.print_hline((0, 0), x, " ");
                 printer.print((x, 0), &self.items[i].label);
@@ -149,7 +151,7 @@ impl<T: 'static> View for SelectView<T> {
         // we'll still return our longest item.
         let w = self.items
                     .iter()
-                    .map(|item| item.label.len())
+                    .map(|item| item.label.width())
                     .max()
                     .unwrap_or(1);
         let h = self.items.len();

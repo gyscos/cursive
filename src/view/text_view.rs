@@ -7,6 +7,8 @@ use align::*;
 use event::*;
 use super::scroll::ScrollBase;
 
+use unicode_width::UnicodeWidthStr;
+
 /// A simple view showing a fixed text
 pub struct TextView {
     content: String,
@@ -40,7 +42,7 @@ fn get_line_span(line: &str, max_width: usize) -> usize {
     // (Or use a common function? Better!)
     let mut lines = 1;
     let mut length = 0;
-    for l in line.split(' ').map(|word| word.chars().count()) {
+    for l in line.split(' ').map(|word| word.width()) {
         length += l;
         if length > max_width {
             length = l;
@@ -111,7 +113,7 @@ impl TextView {
 
         for line in self.content.split('\n') {
             height += 1;
-            max_width = max(max_width, line.chars().count());
+            max_width = max(max_width, line.width());
         }
 
         Vec2::new(max_width, height)
@@ -150,7 +152,7 @@ impl<'a> Iterator for LinesIterator<'a> {
         let content = &self.content[self.start..];
 
         if let Some(next) = content.find('\n') {
-            if content[..next].chars().count() <= self.width {
+            if content[..next].width() <= self.width {
                 // We found a newline before the allowed limit.
                 // Break early.
                 self.start += next + 1;
@@ -161,7 +163,7 @@ impl<'a> Iterator for LinesIterator<'a> {
             }
         }
 
-        let content_len = content.chars().count();
+        let content_len = content.width();
         if content_len <= self.width {
             // I thought it would be longer! -- that's what she said :(
             self.start += content.len();
@@ -209,7 +211,7 @@ impl View for TextView {
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
             let text = &self.content[row.start..row.end];
-            let l = text.chars().count();
+            let l = text.width();
             let x = self.align.h.get_offset(l, printer.size.x);
             printer.print((x, 0), text);
         });

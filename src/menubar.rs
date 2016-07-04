@@ -8,6 +8,8 @@ use event::*;
 
 use std::rc::Rc;
 
+use unicode_width::UnicodeWidthStr;
+
 /// Current state of the menubar
 #[derive(PartialEq, Debug)]
 enum State {
@@ -78,7 +80,7 @@ impl Menubar {
                            (i == self.focus);
             printer.with_selection(selected, |printer| {
                 printer.print((offset, 0), &format!(" {} ", title));
-                offset += title.len() + 2;
+                offset += title.width() + 2;
             });
         }
     }
@@ -108,7 +110,7 @@ impl Menubar {
                 self.state = State::Submenu;
                 let offset = (self.menus[..self.focus]
                                   .iter()
-                                  .map(|&(ref title, _)| title.len() + 2)
+                                  .map(|&(ref title, _)| title.width() + 2)
                                   .fold(0, |a, b| a + b),
                               if self.autohide {
                     1

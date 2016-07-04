@@ -28,6 +28,7 @@ Bangui
 Banjul
 Basseterre
 Beijing
+北京
 Beirut
 Belgrade
 Belmopan
@@ -227,6 +228,7 @@ Thimphu
 Tirana
 Tiraspol
 Tokyo
+東京
 Tórshavn
 Tripoli
 Tskhinvali
@@ -234,7 +236,7 @@ Tunis
 Ulaanbaatar
 Vaduz
 Valletta
-Valparaíso­so
+Valparaíso
 Vatican City
 Victoria
 Vienna

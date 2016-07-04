@@ -1,4 +1,5 @@
 use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 use std::cmp::min;
 
@@ -8,16 +9,19 @@ use view::{IdView, View};
 use event::*;
 use printer::Printer;
 
+
 /// Input box where the user can enter and edit text.
 pub struct EditView {
-    /// Current content
+    /// Current content.
     content: String,
-    /// Cursor position in the content
+    /// Cursor position in the content, in bytes.
     cursor: usize,
-    /// Minimum layout length asked to the parent
+    /// Minimum layout length asked to the parent.
     min_length: usize,
 
-    /// When the content is too long for the display, offset it
+    /// Number of bytes to skip at the beginning of the content.
+    ///
+    /// (When the content is too long for the display, we hide part of it)
     offset: usize,
     /// Last display length, to know the possible offset range
     last_length: usize, /* scrollable: bool,
@@ -73,48 +77,62 @@ impl EditView {
     }
 }
 
-fn remove_char(s: &mut String, cursor: usize) {
-    let i = match s.char_indices().nth(cursor) {
-        Some((i, _)) => i,
-        None => return,
-    };
-    s.remove(i);
-}
-
 impl View for EditView {
     fn draw(&mut self, printer: &Printer) {
         // let style = if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
-        let len = self.content.chars().count();
+        assert!(printer.size.x == self.last_length);
+
+        let width = self.content.width();
         printer.with_color(ColorStyle::Secondary, |printer| {
             printer.with_effect(Effect::Reverse, |printer| {
-                if len < self.last_length {
+                if width < self.last_length {
+                    // No problem, everything fits.
                     printer.print((0, 0), &self.content);
-                    printer.print_hline((len, 0), printer.size.x - len, "_");
+                    printer.print_hline((width, 0),
+                                        printer.size.x - width,
+                                        "_");
                 } else {
-                    let visible_end = min(self.content.len(), self.offset + self.last_length);
+                    let content = &self.content[self.offset..];
+                    let display_bytes = content.graphemes(true)
+                                               .scan(0, |w, g| {
+                                                   *w += g.width();
+                                                   if *w > self.last_length {
+                                                       None
+                                                   } else {
+                                                       Some(g)
+                                                   }
+                                               })
+                                               .map(|g| g.len())
+                                               .fold(0, |a, b| a + b);
 
-                    let content = &self.content[self.offset..visible_end];
+                    let content = &content[..display_bytes];
+
                     printer.print((0, 0), content);
-                    if visible_end - self.offset < printer.size.x {
-                        printer.print((printer.size.x - 1, 0), "_");
+                    let width = content.width();
+
+                    if width < self.last_length {
+                        printer.print_hline((width, 0),
+                                            self.last_length - width,
+                                            "_");
                     }
                 }
             });
 
             // Now print cursor
             if printer.focused {
-                let c = if self.cursor == len {
+                let c = if self.cursor == self.content.len() {
                     "_"
                 } else {
                     // Get the char from the string... Is it so hard?
-                    self.content
+                    self.content[self.cursor..]
                         .graphemes(true)
-                        .nth(self.cursor)
+                        .next()
                         .expect(&format!("Found no char at cursor {} in {}",
                                          self.cursor,
                                          self.content))
                 };
-                printer.print_hline((self.cursor - self.offset, 0), 1, c);
+                let offset = self.content[self.offset..self.cursor].width();
+                printer.print((offset, 0), c);
             }
         });
     }
@@ -137,25 +155,41 @@ impl View for EditView {
             Event::Char(ch) => {
                 // Find the byte index of the char at self.cursor
 
-                match self.content.char_indices().nth(self.cursor) {
-                    None => self.content.push(ch),
-                    Some((i, _)) => self.content.insert(i, ch),
-                }
+                self.content.insert(self.cursor, ch);
                 // TODO: handle wide (CJK) chars
-                self.cursor += 1;
+                self.cursor += ch.len_utf8();
             }
             Event::Key(key) => {
                 match key {
                     Key::Home => self.cursor = 0,
-                    Key::End => self.cursor = self.content.chars().count(),
-                    Key::Left if self.cursor > 0 => self.cursor -= 1,
-                    Key::Right if self.cursor < self.content.chars().count() => self.cursor += 1,
-                    Key::Backspace if self.cursor > 0 => {
-                        self.cursor -= 1;
-                        remove_char(&mut self.content, self.cursor);
+                    Key::End => self.cursor = self.content.len(),
+                    Key::Left if self.cursor > 0 => {
+                        let len = self.content[..self.cursor]
+                                      .graphemes(true)
+                                      .last()
+                                      .unwrap()
+                                      .len();
+                        self.cursor -= len;
                     }
-                    Key::Del if self.cursor < self.content.chars().count() => {
-                        remove_char(&mut self.content, self.cursor);
+                    Key::Right if self.cursor < self.content.len() => {
+                        let len = self.content[self.cursor..]
+                                      .graphemes(true)
+                                      .next()
+                                      .unwrap()
+                                      .len();
+                        self.cursor += len;
+                    }
+                    Key::Backspace if self.cursor > 0 => {
+                        let len = self.content[..self.cursor]
+                                      .graphemes(true)
+                                      .last()
+                                      .unwrap()
+                                      .len();
+                        self.cursor -= len;
+                        self.content.remove(self.cursor);
+                    }
+                    Key::Del if self.cursor < self.content.len() => {
+                        self.content.remove(self.cursor);
                     }
                     _ => return EventResult::Ignored,
                 }
@@ -165,20 +199,51 @@ impl View for EditView {
         // Keep cursor in [offset, offset+last_length] by changing offset
         // So keep offset in [last_length-cursor,cursor]
         // Also call this on resize, but right now it is an event like any other
-        if self.cursor >= self.offset + self.last_length {
-            self.offset = self.cursor - self.last_length + 1;
-        } else if self.cursor < self.offset {
+        if self.cursor < self.offset {
             self.offset = self.cursor;
-        }
-        if self.offset + self.last_length > self.content.len() + 1 {
+        } else {
+            // So we're against the right wall.
+            // Let's find how much space will be taken by the selection (either a char, or _)
+            let c_len = self.content[self.cursor..]
+                            .graphemes(true)
+                            .map(|g| g.width())
+                            .next()
+                            .unwrap_or(1);
+            // Now, we have to fit self.content[..self.cursor] into self.last_length - c_len.
+            let available = self.last_length - c_len;
+            // Look at the content before the cursor (we will print its tail).
+            // From the end, count the length until we reach `available`.
+            // Then sum the byte lengths.
+            let tail_bytes =
+                tail_bytes(&self.content[self.offset..self.cursor], available);
+            self.offset = self.cursor - tail_bytes;
+            assert!(self.cursor >= self.offset);
 
-            self.offset = if self.content.len() > self.last_length {
-                self.content.len() - self.last_length + 1
-            } else {
-                0
-            };
+        }
+
+        // If we have too much space
+        if self.content[self.offset..].width() < self.last_length {
+            let tail_bytes = tail_bytes(&self.content, self.last_length - 1);
+            self.offset = self.content.len() - tail_bytes;
         }
 
         EventResult::Consumed(None)
     }
+}
+
+// Return the number of bytes, from the end of text,
+// which constitute the longest tail that fits in the given width.
+fn tail_bytes(text: &str, width: usize) -> usize {
+    text.graphemes(true)
+        .rev()
+        .scan(0, |w, g| {
+            *w += g.width();
+            if *w > width {
+                None
+            } else {
+                Some(g)
+            }
+        })
+        .map(|g| g.len())
+        .fold(0, |a, b| a + b)
 }

@@ -6,6 +6,7 @@ use vec::Vec2;
 use view::{View};
 use event::*;
 use printer::Printer;
+use unicode_width::UnicodeWidthStr;
 
 /// Simple text label with a callback when ENTER is pressed.
 /// A button shows its content in a single line and has a fixed size.
@@ -44,7 +45,7 @@ impl View for Button {
 
     fn get_min_size(&self, _: Vec2) -> Vec2 {
         // Meh. Fixed size we are.
-        Vec2::new(2 + self.label.chars().count(), 1)
+        Vec2::new(2 + self.label.width(), 1)
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
