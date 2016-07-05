@@ -8,6 +8,7 @@ use event::*;
 use super::scroll::ScrollBase;
 
 use unicode_width::UnicodeWidthStr;
+use unicode_segmentation::UnicodeSegmentation;
 
 /// A simple view showing a fixed text
 pub struct TextView {
@@ -163,40 +164,17 @@ impl<'a> Iterator for LinesIterator<'a> {
             }
         }
 
-        let content_len = content.width();
-        if content_len <= self.width {
-            // I thought it would be longer! -- that's what she said :(
-            self.start += content.len();
-            return Some(Row {
-                start: start,
-                end: start + content.len(),
-            });
-        }
-
-        let i = if content_len == self.width + 1 {
-            // We can't look at the index
-            // if we're looking at the end of the string
-            content.len()
-        } else {
-            content.char_indices().nth(self.width + 1).unwrap().0
+        // Keep adding indivisible tokens
+        let head_bytes = match head_bytes(content.split(' '), self.width, " ") {
+            0 => head_bytes(content.graphemes(true), self.width, ""),
+            other => { self.start += 1; other },
         };
-        let substr = &content[..i];
-        if let Some(i) = substr.rfind(' ') {
-            // If we have to break, try to find a whitespace for that.
-            self.start += i + 1;
-            return Some(Row {
-                start: start,
-                end: i + start,
-            });
-        }
 
-        // Meh, no whitespace, so just cut in this mess.
-        // TODO: look for ponctuation instead?
-        self.start += self.width;
+        self.start += head_bytes;
 
         Some(Row {
             start: start,
-            end: start + self.width,
+            end: start + head_bytes,
         })
     }
 }
@@ -206,7 +184,9 @@ impl View for TextView {
 
         let h = self.rows.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
+        let printer = &printer.sub_printer(Vec2::new(0, offset),
+                                           printer.size,
+                                           true);
 
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
@@ -225,9 +205,13 @@ impl View for TextView {
         match event {
             Event::Key(Key::Home) => self.scrollbase.scroll_top(),
             Event::Key(Key::End) => self.scrollbase.scroll_bottom(),
-            Event::Key(Key::Up) if self.scrollbase.can_scroll_up() => self.scrollbase.scroll_up(1),
+            Event::Key(Key::Up) if self.scrollbase.can_scroll_up() => {
+                self.scrollbase.scroll_up(1)
+            }
             Event::Key(Key::Down) if self.scrollbase
-                                         .can_scroll_down() => self.scrollbase.scroll_down(1),
+                                         .can_scroll_down() => {
+                self.scrollbase.scroll_down(1)
+            }
             Event::Key(Key::PageDown) => self.scrollbase.scroll_down(10),
             Event::Key(Key::PageUp) => self.scrollbase.scroll_up(10),
             _ => return EventResult::Ignored,
@@ -260,8 +244,36 @@ impl View for TextView {
         // Compute the text rows.
         self.rows = LinesIterator::new(&self.content, size.x).collect();
         if self.rows.len() > size.y {
-            self.rows = LinesIterator::new(&self.content, size.x - 2).collect();
+            self.rows = LinesIterator::new(&self.content, size.x - 2)
+                            .collect();
         }
         self.scrollbase.set_heights(size.y, self.rows.len());
+    }
+}
+
+fn head_bytes<'a, I: Iterator<Item=&'a str>>(iter: I, width: usize, overhead: &str)
+                                        -> usize {
+    let overhead_width = overhead.width();
+    let overhead_len = overhead.len();
+
+    let sum = iter.scan(0, |w, token| {
+                      *w += token.width();
+                      if *w > width {
+                          None
+                      } else {
+                          // Add a space
+                          *w += overhead_width;
+                          Some(token)
+                      }
+                  })
+                  .map(|token| token.len() + overhead_len)
+                  .fold(0, |a, b| a + b);
+
+    // We counted overhead_len once too many times,
+    // but only if the iterator was non empty.
+    if sum == 0 {
+        sum
+    } else {
+        sum - overhead_len
     }
 }

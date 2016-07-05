@@ -1,8 +1,6 @@
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-use std::cmp::min;
-
 use theme::{ColorStyle, Effect};
 use vec::Vec2;
 use view::{IdView, View};
