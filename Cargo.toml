@@ -7,7 +7,7 @@ license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/Gyscos/cursive"
-version = "0.0.2"
+version = "0.0.3"
 
 [dependencies]
 ncurses = "5.80.0"
