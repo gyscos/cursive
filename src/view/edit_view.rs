@@ -55,7 +55,9 @@ impl EditView {
         &self.content
     }
 
-    /// Sets the current content to the given value. Convenient chainable method.
+    /// Sets the current content to the given value.
+    ///
+    /// Convenient chainable method.
     pub fn content(mut self, content: &str) -> Self {
         self.set_content(content);
         self
@@ -77,7 +79,6 @@ impl EditView {
 
 impl View for EditView {
     fn draw(&mut self, printer: &Printer) {
-        // let style = if focused { color::HIGHLIGHT } else { color::HIGHLIGHT_INACTIVE };
         assert!(printer.size.x == self.last_length);
 
         let width = self.content.width();
@@ -92,16 +93,16 @@ impl View for EditView {
                 } else {
                     let content = &self.content[self.offset..];
                     let display_bytes = content.graphemes(true)
-                                               .scan(0, |w, g| {
-                                                   *w += g.width();
-                                                   if *w > self.last_length {
-                                                       None
-                                                   } else {
-                                                       Some(g)
-                                                   }
-                                               })
-                                               .map(|g| g.len())
-                                               .fold(0, |a, b| a + b);
+                        .scan(0, |w, g| {
+                            *w += g.width();
+                            if *w > self.last_length {
+                                None
+                            } else {
+                                Some(g)
+                            }
+                        })
+                        .map(|g| g.len())
+                        .fold(0, |a, b| a + b);
 
                     let content = &content[..display_bytes];
 
@@ -163,26 +164,26 @@ impl View for EditView {
                     Key::End => self.cursor = self.content.len(),
                     Key::Left if self.cursor > 0 => {
                         let len = self.content[..self.cursor]
-                                      .graphemes(true)
-                                      .last()
-                                      .unwrap()
-                                      .len();
+                            .graphemes(true)
+                            .last()
+                            .unwrap()
+                            .len();
                         self.cursor -= len;
                     }
                     Key::Right if self.cursor < self.content.len() => {
                         let len = self.content[self.cursor..]
-                                      .graphemes(true)
-                                      .next()
-                                      .unwrap()
-                                      .len();
+                            .graphemes(true)
+                            .next()
+                            .unwrap()
+                            .len();
                         self.cursor += len;
                     }
                     Key::Backspace if self.cursor > 0 => {
                         let len = self.content[..self.cursor]
-                                      .graphemes(true)
-                                      .last()
-                                      .unwrap()
-                                      .len();
+                            .graphemes(true)
+                            .last()
+                            .unwrap()
+                            .len();
                         self.cursor -= len;
                         self.content.remove(self.cursor);
                     }
@@ -196,18 +197,21 @@ impl View for EditView {
 
         // Keep cursor in [offset, offset+last_length] by changing offset
         // So keep offset in [last_length-cursor,cursor]
-        // Also call this on resize, but right now it is an event like any other
+        // Also call this on resize,
+        // but right now it is an event like any other
         if self.cursor < self.offset {
             self.offset = self.cursor;
         } else {
             // So we're against the right wall.
-            // Let's find how much space will be taken by the selection (either a char, or _)
+            // Let's find how much space will be taken by the selection
+            // (either a char, or _)
             let c_len = self.content[self.cursor..]
-                            .graphemes(true)
-                            .map(|g| g.width())
-                            .next()
-                            .unwrap_or(1);
-            // Now, we have to fit self.content[..self.cursor] into self.last_length - c_len.
+                .graphemes(true)
+                .map(|g| g.width())
+                .next()
+                .unwrap_or(1);
+            // Now, we have to fit self.content[..self.cursor]
+            // into self.last_length - c_len.
             let available = self.last_length - c_len;
             // Look at the content before the cursor (we will print its tail).
             // From the end, count the length until we reach `available`.

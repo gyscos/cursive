@@ -3,7 +3,7 @@ use std::rc::Rc;
 use theme::ColorStyle;
 use Cursive;
 use vec::Vec2;
-use view::{View};
+use view::View;
 use event::*;
 use printer::Printer;
 use unicode_width::UnicodeWidthStr;
@@ -51,7 +51,9 @@ impl View for Button {
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
             // 10 is the ascii code for '\n', that is the return key
-            Event::Key(Key::Enter) => EventResult::Consumed(Some(self.callback.clone())),
+            Event::Key(Key::Enter) => {
+                EventResult::Consumed(Some(self.callback.clone()))
+            }
             _ => EventResult::Ignored,
         }
     }

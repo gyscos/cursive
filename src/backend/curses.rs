@@ -37,8 +37,7 @@ impl backend::Backend for NcursesBackend {
     }
 
 
-    fn init_color_style(style: theme::ColorStyle,
-                        foreground: &theme::Color,
+    fn init_color_style(style: theme::ColorStyle, foreground: &theme::Color,
                         background: &theme::Color) {
         // TODO: build the color on the spot
 
@@ -86,7 +85,9 @@ impl backend::Backend for NcursesBackend {
 
         // Is it a UTF-8 starting point?
         if 32 <= ch && ch < 0x100 && ch != 127 {
-            event::Event::Char(utf8::read_char(ch as u8, || ncurses::getch() as u8).unwrap())
+            event::Event::Char(utf8::read_char(ch as u8,
+                                               || ncurses::getch() as u8)
+                .unwrap())
         } else {
             event::Event::Key(parse_ncurses_char(ch))
         }
@@ -110,12 +111,14 @@ fn parse_ncurses_char(ch: i32) -> event::Key {
         // Tab is '\t'
         9 => event::Key::Tab,
         // Treat '\n' and the numpad Enter the same
-        10 | ncurses::KEY_ENTER => event::Key::Enter,
+        10 |
+        ncurses::KEY_ENTER => event::Key::Enter,
         // This is the escape key when pressed by itself.
         // When used for control sequences, it should have been caught earlier.
         27 => event::Key::Esc,
         // `Backspace` sends 127, but Ctrl-H sends `Backspace`
-        127 | ncurses::KEY_BACKSPACE => event::Key::Backspace,
+        127 |
+        ncurses::KEY_BACKSPACE => event::Key::Backspace,
 
         410 => event::Key::Resize,
 
@@ -204,7 +207,9 @@ fn parse_ncurses_char(ch: i32) -> event::Key {
         ncurses::KEY_SNEXT => event::Key::ShiftPageDown,
         ncurses::KEY_SPREVIOUS => event::Key::ShiftPageUp,
         // All Fn keys use the same enum with associated number
-        f @ ncurses::KEY_F1...ncurses::KEY_F12 => event::Key::F((f - ncurses::KEY_F0) as u8),
+        f @ ncurses::KEY_F1...ncurses::KEY_F12 => {
+            event::Key::F((f - ncurses::KEY_F0) as u8)
+        }
         f @ 277...288 => event::Key::ShiftF((f - 277) as u8),
         f @ 289...300 => event::Key::CtrlF((f - 289) as u8),
         f @ 301...312 => event::Key::CtrlShiftF((f - 300) as u8),
@@ -213,7 +218,9 @@ fn parse_ncurses_char(ch: i32) -> event::Key {
         //
         // TODO: shift and ctrl Fn keys
         // Avoids 8-10 (H,I,J), they are used by other commands.
-        c @ 1...7 | c @ 11...25 => event::Key::CtrlChar((b'a' + (c - 1) as u8) as char),
+        c @ 1...7 | c @ 11...25 => {
+            event::Key::CtrlChar((b'a' + (c - 1) as u8) as char)
+        }
         _ => event::Key::Unknown(ch),
     }
 }
@@ -234,8 +241,6 @@ fn find_closest(color: &theme::Color) -> u8 {
             let b = 6 * b as u16 / 256;
             (16 + 36 * r + 6 * g + b) as u8
         }
-        theme::Color::RgbLowRes(r, g, b) => {
-            (16 + 36 * r + 6 * g + b) as u8
-        }
+        theme::Color::RgbLowRes(r, g, b) => (16 + 36 * r + 6 * g + b) as u8,
     }
 }

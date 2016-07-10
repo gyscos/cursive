@@ -96,28 +96,28 @@ impl MenuPopup {
         let tree = tree.clone();
         let max_width = 4 +
                         self.menu
-                            .children
-                            .iter()
-                            .map(Self::item_width)
-                            .max()
-                            .unwrap_or(1);
+            .children
+            .iter()
+            .map(Self::item_width)
+            .max()
+            .unwrap_or(1);
         let offset = Vec2::new(max_width, self.focus);
         let action_cb = self.on_action.clone();
         EventResult::with_cb(move |s| {
             let action_cb = action_cb.clone();
             s.screen_mut()
-             .add_layer_at(Position::parent(offset),
-                           KeyEventView::new(MenuPopup::new(tree.clone())
-                                             .on_action(move |s| {
-                                                 // This will happen when the subtree popup
-                                                 // activates something;
-                                                 // First, remove ourselve.
-                                                 s.pop_layer();
+                .add_layer_at(Position::parent(offset),
+                              KeyEventView::new(MenuPopup::new(tree.clone())
+                                      .on_action(move |s| {
+                            // This will happen when the subtree popup
+                            // activates something;
+                            // First, remove ourselve.
+                            s.pop_layer();
                             if let Some(ref action_cb) = action_cb {
                                 action_cb.clone()(s);
                             }
-                                             }))
-                               .register(Key::Left, |s| s.pop_layer()));
+                        }))
+                                  .register(Key::Left, |s| s.pop_layer()));
         })
     }
 }
@@ -126,9 +126,8 @@ impl View for MenuPopup {
     fn draw(&mut self, printer: &Printer) {
         let h = self.menu.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.sub_printer(Vec2::new(0, offset),
-                                           printer.size,
-                                           true);
+        let printer =
+            &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
 
         // Start with a box
         printer.print_box(Vec2::new(0, 0), printer.size);
@@ -164,11 +163,11 @@ impl View for MenuPopup {
         // We can't really shrink our items here, so it's not flexible.
         let w = 4 +
                 self.menu
-                    .children
-                    .iter()
-                    .map(Self::item_width)
-                    .max()
-                    .unwrap_or(1);
+            .children
+            .iter()
+            .map(Self::item_width)
+            .max()
+            .unwrap_or(1);
         let h = 2 + self.menu.children.len();
 
 
@@ -203,7 +202,7 @@ impl View for MenuPopup {
             Event::Key(Key::End) => self.focus = self.menu.children.len() - 1,
 
             Event::Key(Key::Right) if self.menu.children[self.focus]
-                                          .is_subtree() => {
+                .is_subtree() => {
                 return match self.menu.children[self.focus] {
                     MenuItem::Subtree(_, ref tree) => {
                         self.make_subtree_cb(tree)
@@ -213,7 +212,7 @@ impl View for MenuPopup {
                 };
             }
             Event::Key(Key::Enter) if !self.menu.children[self.focus]
-                                           .is_delimiter() => {
+                .is_delimiter() => {
                 return match self.menu.children[self.focus] {
                     MenuItem::Leaf(_, ref cb) => {
 

@@ -118,7 +118,7 @@ impl View for LinearLayout {
             // On the axis given by the orientation,
             // add the child size to the offset.
             *self.orientation.get_ref(&mut offset) += self.orientation
-                                                          .get(&child.size);
+                .get(&child.size);
         }
     }
 
@@ -127,9 +127,9 @@ impl View for LinearLayout {
         // Look how mean we are: we offer the whole size to every child.
         // As if they could get it all.
         let min_sizes: Vec<Vec2> = self.children
-                                       .iter_mut()
-                                       .map(|child| Vec2::min(size, child.view.get_min_size(size)))
-                                       .collect();
+            .iter_mut()
+            .map(|child| Vec2::min(size, child.view.get_min_size(size)))
+            .collect();
         let min_size = self.orientation.stack(min_sizes.iter());
 
         // Emulate 'non-strict inequality' on integers
@@ -150,11 +150,12 @@ impl View for LinearLayout {
 
 
         for (child, (child_size, extra)) in self.children
-                                                .iter_mut()
-                                                .zip(min_sizes.iter().zip(extras.iter())) {
+            .iter_mut()
+            .zip(min_sizes.iter().zip(extras.iter())) {
             let mut child_size = *child_size;
             *self.orientation.get_ref(&mut child_size) += *extra;
-            *self.orientation.swap().get_ref(&mut child_size) = self.orientation.swap().get(&size);
+            *self.orientation.swap().get_ref(&mut child_size) =
+                self.orientation.swap().get(&size);
             child.size = child_size;
             child.view.layout(child_size);
         }
@@ -163,9 +164,9 @@ impl View for LinearLayout {
     fn get_min_size(&mut self, req: Vec2) -> Vec2 {
         // First, make a naive scenario: everything will work fine.
         let sizes: Vec<Vec2> = self.children
-                                   .iter_mut()
-                                   .map(|view| view.view.get_min_size(req))
-                                   .collect();
+            .iter_mut()
+            .map(|view| view.view.get_min_size(req))
+            .collect();
         self.orientation.stack(sizes.iter())
 
 
@@ -188,27 +189,34 @@ impl View for LinearLayout {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::ShiftTab) if self.focus + 1 < self.children.len() => {
+                    Event::Key(Key::ShiftTab) if self.focus + 1 <
+                                                 self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Left) if self.orientation == Orientation::Horizontal &&
+                    Event::Key(Key::Left) if self.orientation ==
+                                             Orientation::Horizontal &&
                                              self.focus > 0 => {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Up) if self.orientation == Orientation::Vertical &&
+                    Event::Key(Key::Up) if self.orientation ==
+                                           Orientation::Vertical &&
                                            self.focus > 0 => {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Right) if self.orientation == Orientation::Horizontal &&
-                                              self.focus + 1 < self.children.len() => {
+                    Event::Key(Key::Right) if self.orientation ==
+                                              Orientation::Horizontal &&
+                                              self.focus + 1 <
+                                              self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Down) if self.orientation == Orientation::Vertical &&
-                                             self.focus + 1 < self.children.len() => {
+                    Event::Key(Key::Down) if self.orientation ==
+                                             Orientation::Vertical &&
+                                             self.focus + 1 <
+                                             self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)
                     }

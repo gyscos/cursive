@@ -44,8 +44,8 @@ impl StackView {
         self.layers.push(Layer {
             // Skip padding for absolute/parent-placed views
             view: Box::new(ShadowView::new(view)
-                               .top_padding(position.y == Offset::Center)
-                               .left_padding(position.x == Offset::Center)),
+                .top_padding(position.y == Offset::Center)
+                .left_padding(position.x == Offset::Center)),
             size: Vec2::new(0, 0),
             position: position,
             virgin: true,
@@ -68,11 +68,11 @@ impl View for StackView {
                 // Place the view
                 // Center the view
                 let offset = v.position
-                              .compute_offset(v.size, printer.size, previous);
+                    .compute_offset(v.size, printer.size, previous);
 
                 previous = offset;
                 v.view
-                 .draw(&printer.sub_printer(offset, v.size, i + 1 == last));
+                    .draw(&printer.sub_printer(offset, v.size, i + 1 == last));
             }
         });
     }

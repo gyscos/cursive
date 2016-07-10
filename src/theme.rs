@@ -112,32 +112,32 @@ impl Theme {
     fn activate(&self) {
         // Initialize each color with the backend
         B::init_color_style(ColorStyle::Background,
-                    &self.colors.view,
-                    &self.colors.background);
+                            &self.colors.view,
+                            &self.colors.background);
         B::init_color_style(ColorStyle::Shadow,
-                    &self.colors.shadow,
-                    &self.colors.shadow);
+                            &self.colors.shadow,
+                            &self.colors.shadow);
         B::init_color_style(ColorStyle::Primary,
-                    &self.colors.primary,
-                    &self.colors.view);
+                            &self.colors.primary,
+                            &self.colors.view);
         B::init_color_style(ColorStyle::Secondary,
-                    &self.colors.secondary,
-                    &self.colors.view);
+                            &self.colors.secondary,
+                            &self.colors.view);
         B::init_color_style(ColorStyle::Tertiary,
-                    &self.colors.tertiary,
-                    &self.colors.view);
+                            &self.colors.tertiary,
+                            &self.colors.view);
         B::init_color_style(ColorStyle::TitlePrimary,
-                    &self.colors.title_primary,
-                    &self.colors.view);
+                            &self.colors.title_primary,
+                            &self.colors.view);
         B::init_color_style(ColorStyle::TitleSecondary,
-                    &self.colors.title_secondary,
-                    &self.colors.view);
+                            &self.colors.title_secondary,
+                            &self.colors.view);
         B::init_color_style(ColorStyle::Highlight,
-                    &self.colors.view,
-                    &self.colors.highlight);
+                            &self.colors.view,
+                            &self.colors.highlight);
         B::init_color_style(ColorStyle::HighlightInactive,
-                    &self.colors.view,
-                    &self.colors.highlight_inactive);
+                            &self.colors.view,
+                            &self.colors.highlight_inactive);
     }
 }
 
@@ -207,20 +207,25 @@ impl Palette {
         load_color(&mut self.title_primary, table.get("title_primary"));
         load_color(&mut self.title_secondary, table.get("title_secondary"));
         load_color(&mut self.highlight, table.get("highlight"));
-        load_color(&mut self.highlight_inactive, table.get("highlight_inactive"));
+        load_color(&mut self.highlight_inactive,
+                   table.get("highlight_inactive"));
     }
 }
 
 fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
     if let Some(value) = value {
         match *value {
-            toml::Value::String(ref value) => if let Some(color) = Color::parse(value) {
-                *target = color;
-                true
-            } else {
-                false
-            },
-            toml::Value::Array(ref array) => array.iter().any(|item| load_color(target, Some(item))),
+            toml::Value::String(ref value) => {
+                if let Some(color) = Color::parse(value) {
+                    *target = color;
+                    true
+                } else {
+                    false
+                }
+            }
+            toml::Value::Array(ref array) => {
+                array.iter().any(|item| load_color(target, Some(item)))
+            }
             _ => false,
         }
     } else {
@@ -245,8 +250,7 @@ pub enum Color {
     RgbLowRes(u8, u8, u8),
 }
 
-impl Color {
-}
+impl Color {}
 
 /// Possible error returned when loading a theme.
 #[derive(Debug)]
@@ -294,9 +298,12 @@ impl Color {
             Some(Color::Rgb(r as u8, g as u8, b as u8))
         } else if value.len() == 3 {
             // RGB values between 0 and 5 maybe?
-            let rgb: Vec<_> = value.chars().map(|c| c as i16 - '0' as i16).collect();
+            let rgb: Vec<_> =
+                value.chars().map(|c| c as i16 - '0' as i16).collect();
             if rgb.iter().all(|&i| i >= 0 && i < 6) {
-                Some(Color::RgbLowRes(rgb[0] as u8, rgb[1] as u8, rgb[2] as u8))
+                Some(Color::RgbLowRes(rgb[0] as u8,
+                                      rgb[1] as u8,
+                                      rgb[2] as u8))
             } else {
                 None
             }

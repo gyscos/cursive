@@ -7,7 +7,7 @@ pub struct TrackedView<T: View> {
     pub offset: Vec2,
 }
 
-impl <T: View> TrackedView<T> {
+impl<T: View> TrackedView<T> {
     pub fn new(view: T) -> Self {
         TrackedView {
             view: view,

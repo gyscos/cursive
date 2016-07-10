@@ -6,7 +6,7 @@ use backend::Backend;
 
 use B;
 
-use theme::{ColorStyle, Theme, Effect};
+use theme::{ColorStyle, Effect, Theme};
 use vec::{ToVec2, Vec2};
 
 /// Convenient interface to draw on a subset of the screen.
@@ -136,20 +136,25 @@ impl Printer {
 
         self.print_hline(start_v + (1, 0), size_v.x - 1, "─");
         self.print_vline(start_v + (0, 1), size_v.y - 1, "│");
-        self.print_hline(start_v + (1, 0) + size_v.keep_y(), size_v.x - 1, "─");
-        self.print_vline(start_v + (0, 1) + size_v.keep_x(), size_v.y - 1, "│");
+        self.print_hline(start_v + (1, 0) + size_v.keep_y(),
+                         size_v.x - 1,
+                         "─");
+        self.print_vline(start_v + (0, 1) + size_v.keep_x(),
+                         size_v.y - 1,
+                         "│");
     }
 
     pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
         self.with_color(if selection {
-            if self.focused {
-                ColorStyle::Highlight
-            } else {
-                ColorStyle::HighlightInactive
-            }
-        } else {
-            ColorStyle::Primary
-        }, f);
+                            if self.focused {
+                                ColorStyle::Highlight
+                            } else {
+                                ColorStyle::HighlightInactive
+                            }
+                        } else {
+                            ColorStyle::Primary
+                        },
+                        f);
     }
 
     pub fn print_hdelim<T: ToVec2>(&self, start: T, len: usize) {
@@ -160,7 +165,8 @@ impl Printer {
     }
 
     /// Returns a printer on a subset of this one's area.
-    pub fn sub_printer<S: ToVec2>(&self, offset: S, size: S, focused: bool) -> Printer {
+    pub fn sub_printer<S: ToVec2>(&self, offset: S, size: S, focused: bool)
+                                  -> Printer {
         let offset_v = offset.to_vec2();
         Printer {
             offset: self.offset + offset_v,

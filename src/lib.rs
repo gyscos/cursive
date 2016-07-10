@@ -153,8 +153,10 @@ impl Cursive {
         true
     }
 
-    /// Regularly redraws everything, even when no input is given. Between 0 and 1000.
+    /// Sets the refresh rate, in frames per second.
     ///
+    /// Regularly redraws everything, even when no input is given.
+    /// Between 0 and 1000.
     /// Call with fps=0 to disable (default value).
     pub fn set_fps(&self, fps: u32) {
         B::set_refresh_rate(fps)
@@ -199,8 +201,8 @@ impl Cursive {
     /// Tries to find the view pointed to by the given path.
     /// If the view is not found, or if it is not of the asked type,
     /// it returns None.
-    pub fn find<V: View + Any>(&mut self, selector: &Selector) -> Option<&mut V> {
-        match self.find_any(selector) {
+    pub fn find<V: View + Any>(&mut self, sel: &Selector) -> Option<&mut V> {
+        match self.find_any(sel) {
             None => None,
             Some(b) => b.downcast_mut::<V>(),
         }
@@ -211,7 +213,9 @@ impl Cursive {
         self.find(&Selector::Id(id))
     }
 
-    /// Adds a global callback, triggered on the given key press when no view catches it.
+    /// Adds a global callback.
+    ///
+    /// Will be triggered on the given key press when no view catches it.
     pub fn add_global_callback<F, E: ToEvent>(&mut self, event: E, cb: F)
         where F: Fn(&mut Cursive) + 'static
     {
@@ -267,21 +271,26 @@ impl Cursive {
         };
         // Draw the menubar?
         if self.menubar.visible() {
-            let printer = printer.sub_printer(Vec2::zero(), printer.size, self.menubar.receive_events());
+            let printer = printer.sub_printer(Vec2::zero(),
+                                              printer.size,
+                                              self.menubar.receive_events());
             self.menubar.draw(&printer);
         }
 
         let selected = self.menubar.receive_events();
 
-        self.screen_mut()
-            .draw(&printer.sub_printer(Vec2::new(0, offset), printer.size, !selected));
+        let printer =
+            printer.sub_printer(Vec2::new(0, offset), printer.size, !selected);
+        self.screen_mut().draw(&printer);
 
         B::refresh();
     }
 
     /// Runs the event loop.
     ///
-    /// It will wait for user input (key presses) and trigger callbacks accordingly.
+    /// It will wait for user input (key presses)
+    /// and trigger callbacks accordingly.
+    ///
     /// Blocks until quit() is called.
     pub fn run(&mut self) {
 
@@ -315,7 +324,8 @@ impl Cursive {
                 }
             } else {
                 match self.screen_mut().on_event(event) {
-                    // If the event was ignored, it is our turn to play with it.
+                    // If the event was ignored,
+                    // it is our turn to play with it.
                     EventResult::Ignored => self.on_event(event),
                     EventResult::Consumed(None) => (),
                     EventResult::Consumed(Some(cb)) => cb(self),

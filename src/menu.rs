@@ -31,7 +31,7 @@ impl MenuItem {
 
     pub fn is_subtree(&self) -> bool {
         match *self {
-            MenuItem::Subtree(_,_) => true,
+            MenuItem::Subtree(_, _) => true,
             _ => false,
         }
     }
@@ -62,7 +62,8 @@ impl MenuTree {
         self.with(|menu| menu.add_delimiter())
     }
 
-    pub fn add_leaf<F: 'static + Fn(&mut Cursive)>(&mut self, title: &str, cb: F) {
+    pub fn add_leaf<F: 'static + Fn(&mut Cursive)>(&mut self, title: &str,
+                                                   cb: F) {
         self.children
             .push(MenuItem::Leaf(title.to_string(), Rc::new(cb)));
     }

@@ -130,9 +130,8 @@ impl<T: 'static> View for SelectView<T> {
 
         let h = self.items.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.sub_printer(Vec2::new(0, offset),
-                                           printer.size,
-                                           true);
+        let printer =
+            &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
 
         self.scrollbase.draw(printer, |printer, i| {
             printer.with_selection(i == self.focus, |printer| {
@@ -150,10 +149,10 @@ impl<T: 'static> View for SelectView<T> {
         // So no matter what the horizontal requirements are,
         // we'll still return our longest item.
         let w = self.items
-                    .iter()
-                    .map(|item| item.label.width())
-                    .max()
-                    .unwrap_or(1);
+            .iter()
+            .map(|item| item.label.width())
+            .max()
+            .unwrap_or(1);
         let h = self.items.len();
 
         let scrolling = req.y < h;
@@ -184,7 +183,9 @@ impl<T: 'static> View for SelectView<T> {
                 let cb = self.select_cb.as_ref().unwrap().clone();
                 let v = self.selection();
                 // We return a Callback Rc<|s| cb(s, &*v)>
-                return EventResult::Consumed(Some(Rc::new(move |s| cb(s, &*v))));
+                return EventResult::Consumed(Some(Rc::new(move |s| {
+                    cb(s, &*v)
+                })));
             }
             Event::Char(c) => {
                 // Starting from the current focus,
@@ -194,10 +195,8 @@ impl<T: 'static> View for SelectView<T> {
                 // This is achieved by chaining twice the iterator
                 let iter = self.items.iter().chain(self.items.iter());
                 if let Some((i, _)) = iter.enumerate()
-                                          .skip(self.focus + 1)
-                                          .find(|&(_, item)| {
-                                              item.label.starts_with(c)
-                                          }) {
+                    .skip(self.focus + 1)
+                    .find(|&(_, item)| item.label.starts_with(c)) {
                     // Apply modulo in case we have a hit
                     // from the chained iterator
                     self.focus = i % self.items.len();

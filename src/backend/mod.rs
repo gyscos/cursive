@@ -7,7 +7,6 @@ mod curses;
 pub use self::curses::NcursesBackend;
 
 pub trait Backend {
-
     fn init();
     fn finish();
 
@@ -16,8 +15,7 @@ pub trait Backend {
 
     fn has_colors() -> bool;
 
-    fn init_color_style(style: theme::ColorStyle,
-                        foreground: &theme::Color,
+    fn init_color_style(style: theme::ColorStyle, foreground: &theme::Color,
                         background: &theme::Color);
 
     fn print_at((usize, usize), &str);

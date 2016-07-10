@@ -1,3 +1,4 @@
+use Cursive;
 use menu::MenuTree;
 use view::MenuPopup;
 use view::KeyEventView;
@@ -109,46 +110,53 @@ impl Menubar {
                 let menu = self.menus[self.focus].1.clone();
                 self.state = State::Submenu;
                 let offset = (self.menus[..self.focus]
-                                  .iter()
-                                  .map(|&(ref title, _)| title.width() + 2)
-                                  .fold(0, |a, b| a + b),
+                    .iter()
+                    .map(|&(ref title, _)| title.width() + 2)
+                    .fold(0, |a, b| a + b),
                               if self.autohide {
                     1
                 } else {
                     0
                 });
+                // Since the closure will be called multiple times,
+                // we also need a new Rc on every call.
                 return Some(Rc::new(move |s| {
-                    // Since the closure will be called multiple times,
-                    // we also need a new Rc on every call.
-                    s.screen_mut()
-                     .add_layer_at(Position::absolute(offset),
-                                   KeyEventView::new(MenuPopup::new(menu.clone())
-                                       .on_dismiss(|s| s.select_menubar())
-                                       .on_action(|s| {
-                                           s.menubar().state = State::Inactive
-                                       }))
-                                   .register(Key::Right, |s| {
-                                       s.pop_layer();
-                                       // Act as if we sent "Left" then "Enter"
-                                       s.select_menubar();
-                                       s.menubar().on_event(Event::Key(Key::Right));
-                                       if let Some(cb) = s.menubar().on_event(Event::Key(Key::Down)) {
-                                           cb(s);
-                                       }
-                                   })
-                                   .register(Key::Left, |s| {
-                                       s.pop_layer();
-                                       // Act as if we sent "Left" then "Enter"
-                                       s.select_menubar();
-                                       s.menubar().on_event(Event::Key(Key::Left));
-                                       if let Some(cb) = s.menubar().on_event(Event::Key(Key::Down)) {
-                                           cb(s);
-                                       }
-                                   }));
+                    show_child(s, offset, menu.clone())
                 }));
             }
             _ => (),
         }
         None
     }
+}
+
+fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
+    s.screen_mut()
+        .add_layer_at(Position::absolute(offset),
+                      KeyEventView::new(MenuPopup::new(menu)
+                              .on_dismiss(|s| s.select_menubar())
+                              .on_action(|s| {
+                                  s.menubar().state = State::Inactive
+                              }))
+                          .register(Key::Right, |s| {
+                s.pop_layer();
+                // Act as if we sent "Left" then "Enter"
+                s.select_menubar();
+                s.menubar().on_event(Event::Key(Key::Right));
+                if let Some(cb) = s.menubar()
+                    .on_event(Event::Key(Key::Down)) {
+                    cb(s);
+                }
+            })
+                          .register(Key::Left, |s| {
+                s.pop_layer();
+                // Act as if we sent "Left" then "Enter"
+                s.select_menubar();
+                s.menubar().on_event(Event::Key(Key::Left));
+                if let Some(cb) = s.menubar()
+                    .on_event(Event::Key(Key::Down)) {
+                    cb(s);
+                }
+            }));
+
 }

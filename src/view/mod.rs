@@ -34,7 +34,7 @@ use event::{Event, EventResult};
 use vec::Vec2;
 use printer::Printer;
 
-pub use self::position::{Position, Offset};
+pub use self::position::{Offset, Position};
 
 pub use self::scroll::ScrollBase;
 
@@ -64,7 +64,7 @@ pub trait View {
         EventResult::Ignored
     }
 
-    /// Returns the minimum size the view requires under the given restrictions.
+    /// Returns the minimum size the view requires with the given restrictions.
     fn get_min_size(&mut self, Vec2) -> Vec2 {
         Vec2::new(1, 1)
     }

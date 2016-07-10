@@ -27,7 +27,8 @@ impl Position {
         Position::new(Offset::Parent(offset.x), Offset::Parent(offset.y))
     }
 
-    pub fn compute_offset(&self, size: Vec2, available: Vec2, parent: Vec2) -> Vec2 {
+    pub fn compute_offset(&self, size: Vec2, available: Vec2, parent: Vec2)
+                          -> Vec2 {
         Vec2::new(self.x.compute_offset(size.x, available.x, parent.x),
                   self.y.compute_offset(size.y, available.y, parent.y))
     }
@@ -40,14 +41,15 @@ pub enum Offset {
     /// Place top-left corner at the given absolute coordinates
     Absolute(usize),
 
-    /// Place top-left corner at the given offset from the previous layer's top-left corner.
+    /// Offset from the previous layer's top-left corner.
     ///
     /// If this is the first layer, behaves like `Absolute`.
     Parent(usize), // TODO: use a signed vec for negative offset?
 }
 
 impl Offset {
-    pub fn compute_offset(&self, size: usize, available: usize, parent: usize) -> usize {
+    pub fn compute_offset(&self, size: usize, available: usize, parent: usize)
+                          -> usize {
         match *self {
             Offset::Center => (available - size) / 2,
             Offset::Absolute(offset) => min(offset, available - size),
