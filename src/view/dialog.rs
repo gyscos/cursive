@@ -24,7 +24,8 @@ enum Focus {
 ///
 /// ```
 /// # use cursive::view::{Dialog,TextView};
-/// let dialog = Dialog::new(TextView::new("Hello!")).button("Ok", |s| s.quit());
+/// let dialog = Dialog::new(TextView::new("Hello!"))
+///                     .button("Ok", |s| s.quit());
 /// ```
 pub struct Dialog {
     title: String,
@@ -108,8 +109,8 @@ impl Dialog {
 impl View for Dialog {
     fn draw(&mut self, printer: &Printer) {
 
-        // This will be the height used by the buttons.
-        let mut height = 0;
+        // This will be the buttons_height used by the buttons.
+        let mut buttons_height = 0;
         // Current horizontal position of the next button we'll draw.
 
         // Sum of the sizes + len-1 for margins
@@ -123,7 +124,9 @@ impl View for Dialog {
         };
         let overhead = self.padding + self.borders;
         let mut offset = overhead.left +
-                         self.align.h.get_offset(width, printer.size.x - overhead.horizontal());
+                         self.align
+            .h
+            .get_offset(width, printer.size.x - overhead.horizontal());
         let y = printer.size.y - self.padding.bottom - self.borders.bottom - 1;
 
         for (i, button) in self.buttons.iter_mut().enumerate() {
@@ -135,16 +138,19 @@ impl View for Dialog {
             // Keep 1 blank between two buttons
             offset += size.x + 1;
             // Also keep 1 blank above the buttons
-            height = max(height, size.y + 1);
+            buttons_height = max(buttons_height, size.y + 1);
         }
 
         // What do we have left?
-        let inner_size = printer.size - Vec2::new(0, height) - self.borders.combined() -
+        let inner_size = printer.size - Vec2::new(0, buttons_height) -
+                         self.borders.combined() -
                          self.padding.combined();
 
-        self.content.draw(&printer.sub_printer(self.borders.top_left() + self.padding.top_left(),
-                                               inner_size,
-                                               self.focus == Focus::Content));
+        self.content
+            .draw(&printer.sub_printer(self.borders.top_left() +
+                                       self.padding.top_left(),
+                                       inner_size,
+                                       self.focus == Focus::Content));
 
         printer.print_box(Vec2::new(0, 0), printer.size);
 
@@ -154,16 +160,17 @@ impl View for Dialog {
             printer.print((x - 2, 0), "┤ ");
             printer.print((x + len, 0), " ├");
 
-            printer.with_color(ColorStyle::TitlePrimary, |p| p.print((x, 0), &self.title));
+            printer.with_color(ColorStyle::TitlePrimary,
+                               |p| p.print((x, 0), &self.title));
         }
 
     }
 
     fn get_min_size(&mut self, req: Vec2) -> Vec2 {
         // Padding and borders are not available for kids.
-        let content_req = req - (self.padding.combined() + self.borders.combined());
-        let content_size = self.content.get_min_size(content_req);
+        let nomans_land = self.padding.combined() + self.borders.combined();
 
+        // Buttons are not flexible, so their size doesn't depend on ours.
         let mut buttons_size = Vec2::new(0, 0);
         if !self.buttons.is_empty() {
             buttons_size.x += self.buttons.len() - 1;
@@ -173,6 +180,10 @@ impl View for Dialog {
             buttons_size.x += s.x;
             buttons_size.y = max(buttons_size.y, s.y + 1);
         }
+
+        // We also remove one row for the buttons.
+        let content_req = req - (nomans_land + Vec2::new(0, buttons_size.y));
+        let content_size = self.content.get_min_size(content_req);
 
         // On the Y axis, we add buttons and content.
         // On the X axis, we take the max.
@@ -245,7 +256,7 @@ impl View for Dialog {
                             // Left and Right move to other buttons
                             Event::Key(Key::Right) if i + 1 <
                                                       self.buttons
-                                                          .len() => {
+                                .len() => {
                                 self.focus = Focus::Button(i + 1);
                                 EventResult::Consumed(None)
                             }

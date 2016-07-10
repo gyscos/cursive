@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use vec::Vec2;
 use view::View;
 use printer::Printer;
@@ -37,24 +35,6 @@ fn strip_last_newline(content: &str) -> &str {
     } else {
         content
     }
-}
-
-/// Returns the number of lines required to display the given text with the
-/// specified maximum line width.
-fn get_line_span(line: &str, max_width: usize) -> usize {
-    // TODO: this method is stupid. Look at LinesIterator and do the same
-    // (Or use a common function? Better!)
-    let mut lines = 1;
-    let mut length = 0;
-    for l in line.split(' ').map(|word| word.width()) {
-        length += l;
-        if length > max_width {
-            length = l;
-            lines += 1;
-        }
-        length += 1;
-    }
-    lines
 }
 
 impl TextView {
@@ -104,36 +84,16 @@ impl TextView {
         &self.content
     }
 
-    /// Returns the number of lines required to display the content
-    /// with the given width.
-    fn get_num_lines(&self, max_width: usize) -> usize {
-        self.content
-            .split('\n')
-            .map(|line| get_line_span(line, max_width))
-            .fold(0, |sum, x| sum + x)
-    }
-
-    // In the absence of any constraint, what size would we like?
-    fn get_ideal_size(&self) -> Vec2 {
-        let mut max_width = 0;
-        let mut height = 0;
-
-        for line in self.content.split('\n') {
-            height += 1;
-            max_width = max(max_width, line.width());
-        }
-
-        Vec2::new(max_width, height)
-    }
-
     fn is_cache_valid(&self, size: Vec2) -> bool {
         match self.last_size {
             None => false,
-            Some(last) => if last.x != size.x {
-                false
-            } else {
-                (last.y < self.rows.len()) == (size.y < self.rows.len())
-            },
+            Some(last) => {
+                if last.x != size.x {
+                    false
+                } else {
+                    (last.y < self.rows.len()) == (size.y < self.rows.len())
+                }
+            }
         }
     }
 
@@ -145,11 +105,16 @@ impl TextView {
             if self.rows.len() > size.y {
                 scrollbar = 2;
                 // If we're too high, include a scrollbar
-                self.rows = LinesIterator::new(&self.content, size.x - scrollbar)
+                self.rows = LinesIterator::new(&self.content,
+                                               size.x - scrollbar)
                     .collect();
             }
 
-            self.width = self.rows.iter().map(|row| row.width).max().map(|w| w + scrollbar);
+            self.width = self.rows
+                .iter()
+                .map(|row| row.width)
+                .max()
+                .map(|w| w + scrollbar);
 
             self.last_size = Some(size);
         }
@@ -208,10 +173,14 @@ impl<'a> Iterator for LinesIterator<'a> {
         }
 
         // Keep adding indivisible tokens
-        let head_bytes = match head_bytes(content.split(' '), self.width, " ") {
-            0 => head_bytes(content.graphemes(true), self.width, ""),
-            other => { self.start += 1; other },
-        };
+        let head_bytes =
+            match head_bytes(content.split(' '), self.width, " ") {
+                0 => head_bytes(content.graphemes(true), self.width, ""),
+                other => {
+                    self.start += 1;
+                    other
+                }
+            };
 
         self.start += head_bytes;
 
@@ -228,9 +197,8 @@ impl View for TextView {
 
         let h = self.rows.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.sub_printer(Vec2::new(0, offset),
-                                           printer.size,
-                                           true);
+        let printer =
+            &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
 
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
@@ -253,9 +221,7 @@ impl View for TextView {
                 self.scrollbase.scroll_up(1)
             }
             Event::Key(Key::Down) if self.scrollbase
-                                         .can_scroll_down() => {
-                self.scrollbase.scroll_down(1)
-            }
+                .can_scroll_down() => self.scrollbase.scroll_down(1),
             Event::Key(Key::PageDown) => self.scrollbase.scroll_down(10),
             Event::Key(Key::PageUp) => self.scrollbase.scroll_up(10),
             _ => return EventResult::Ignored,
@@ -284,23 +250,24 @@ impl View for TextView {
     }
 }
 
-fn head_bytes<'a, I: Iterator<Item=&'a str>>(iter: I, width: usize, overhead: &str)
-                                        -> usize {
+fn head_bytes<'a, I: Iterator<Item = &'a str>>(iter: I, width: usize,
+                                               overhead: &str)
+                                               -> usize {
     let overhead_width = overhead.width();
     let overhead_len = overhead.len();
 
     let sum = iter.scan(0, |w, token| {
-                      *w += token.width();
-                      if *w > width {
-                          None
-                      } else {
-                          // Add a space
-                          *w += overhead_width;
-                          Some(token)
-                      }
-                  })
-                  .map(|token| token.len() + overhead_len)
-                  .fold(0, |a, b| a + b);
+            *w += token.width();
+            if *w > width {
+                None
+            } else {
+                // Add a space
+                *w += overhead_width;
+                Some(token)
+            }
+        })
+        .map(|token| token.len() + overhead_len)
+        .fold(0, |a, b| a + b);
 
     // We counted overhead_len once too many times,
     // but only if the iterator was non empty.
