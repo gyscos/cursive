@@ -127,7 +127,7 @@ impl View for LinearLayout {
         // Look how mean we are: we offer the whole size to every child.
         // As if they could get it all.
         let min_sizes: Vec<Vec2> = self.children
-                                       .iter()
+                                       .iter_mut()
                                        .map(|child| Vec2::min(size, child.view.get_min_size(size)))
                                        .collect();
         let min_size = self.orientation.stack(min_sizes.iter());
@@ -160,10 +160,10 @@ impl View for LinearLayout {
         }
     }
 
-    fn get_min_size(&self, req: Vec2) -> Vec2 {
+    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
         // First, make a naive scenario: everything will work fine.
         let sizes: Vec<Vec2> = self.children
-                                   .iter()
+                                   .iter_mut()
                                    .map(|view| view.view.get_min_size(req))
                                    .collect();
         self.orientation.stack(sizes.iter())

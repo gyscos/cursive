@@ -65,7 +65,7 @@ pub trait View {
     }
 
     /// Returns the minimum size the view requires under the given restrictions.
-    fn get_min_size(&self, Vec2) -> Vec2 {
+    fn get_min_size(&mut self, Vec2) -> Vec2 {
         Vec2::new(1, 1)
     }
 

@@ -100,11 +100,11 @@ impl View for StackView {
         }
     }
 
-    fn get_min_size(&self, size: Vec2) -> Vec2 {
+    fn get_min_size(&mut self, size: Vec2) -> Vec2 {
         // The min size is the max of all children's
 
         self.layers
-            .iter()
+            .iter_mut()
             .map(|layer| layer.view.get_min_size(size))
             .fold(Vec2::new(1, 1), Vec2::max)
     }

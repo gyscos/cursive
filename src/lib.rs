@@ -25,6 +25,15 @@ extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
 
+macro_rules! println_stderr(
+    ($($arg:tt)*) => { {
+        use ::std::io::Write;
+        let r = writeln!(&mut ::std::io::stderr(), $($arg)*);
+        r.expect("failed printing to stderr");
+    } }
+);
+
+
 pub mod event;
 pub mod view;
 pub mod printer;

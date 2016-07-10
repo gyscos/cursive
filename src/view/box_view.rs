@@ -30,7 +30,7 @@ impl<T: View> BoxView<T> {
 impl<T: View> ViewWrapper for BoxView<T> {
     wrap_impl!(&self.view);
 
-    fn wrap_get_min_size(&self, mut req: Vec2) -> Vec2 {
+    fn wrap_get_min_size(&mut self, mut req: Vec2) -> Vec2 {
         if self.size.x > 0 {
             req.x = cmp::min(self.size.x, req.x);
         }

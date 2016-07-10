@@ -21,8 +21,8 @@ pub trait ViewWrapper {
     }
 
     /// Wraps the get_min_size method.
-    fn wrap_get_min_size(&self, req: Vec2) -> Vec2 {
-        self.get_view().get_min_size(req)
+    fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
+        self.get_view_mut().get_min_size(req)
     }
 
     /// Wraps the on_event method.
@@ -50,7 +50,7 @@ impl<T: ViewWrapper> View for T {
         self.wrap_draw(printer);
     }
 
-    fn get_min_size(&self, req: Vec2) -> Vec2 {
+    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
         self.wrap_get_min_size(req)
     }
 

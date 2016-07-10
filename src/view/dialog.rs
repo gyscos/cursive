@@ -159,7 +159,7 @@ impl View for Dialog {
 
     }
 
-    fn get_min_size(&self, req: Vec2) -> Vec2 {
+    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
         // Padding and borders are not available for kids.
         let content_req = req - (self.padding.combined() + self.borders.combined());
         let content_size = self.content.get_min_size(content_req);
@@ -168,7 +168,7 @@ impl View for Dialog {
         if !self.buttons.is_empty() {
             buttons_size.x += self.buttons.len() - 1;
         }
-        for button in &self.buttons {
+        for button in &mut self.buttons {
             let s = button.view.get_min_size(req);
             buttons_size.x += s.x;
             buttons_size.y = max(buttons_size.y, s.y + 1);

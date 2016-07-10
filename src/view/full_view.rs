@@ -16,7 +16,7 @@ impl<T: View> FullView<T> {
 impl<T: View> ViewWrapper for FullView<T> {
     wrap_impl!(&self.view);
 
-    fn wrap_get_min_size(&self, req: Vec2) -> Vec2 {
+    fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
         req
     }
 }

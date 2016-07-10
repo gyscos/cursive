@@ -160,7 +160,7 @@ impl View for MenuPopup {
         });
     }
 
-    fn get_min_size(&self, req: Vec2) -> Vec2 {
+    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
         // We can't really shrink our items here, so it's not flexible.
         let w = 4 +
                 self.menu

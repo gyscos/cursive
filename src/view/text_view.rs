@@ -19,12 +19,15 @@ pub struct TextView {
 
     // ScrollBase make many scrolling-related things easier
     scrollbase: ScrollBase,
+    last_size: Option<Vec2>,
+    width: Option<usize>,
 }
 
 // Subset of the main content representing a row on the display.
 struct Row {
     start: usize,
     end: usize,
+    width: usize,
 }
 
 // If the last character is a newline, strip it.
@@ -63,6 +66,8 @@ impl TextView {
             rows: Vec::new(),
             scrollbase: ScrollBase::new(),
             align: Align::top_left(),
+            last_size: None,
+            width: None,
         }
     }
 
@@ -119,6 +124,35 @@ impl TextView {
 
         Vec2::new(max_width, height)
     }
+
+    fn is_cache_valid(&self, size: Vec2) -> bool {
+        match self.last_size {
+            None => false,
+            Some(last) => if last.x != size.x {
+                false
+            } else {
+                (last.y < self.rows.len()) == (size.y < self.rows.len())
+            },
+        }
+    }
+
+    fn compute_rows(&mut self, size: Vec2) {
+        if !self.is_cache_valid(size) {
+            // Recompute
+            self.rows = LinesIterator::new(&self.content, size.x).collect();
+            let mut scrollbar = 0;
+            if self.rows.len() > size.y {
+                scrollbar = 2;
+                // If we're too high, include a scrollbar
+                self.rows = LinesIterator::new(&self.content, size.x - scrollbar)
+                    .collect();
+            }
+
+            self.width = self.rows.iter().map(|row| row.width).max().map(|w| w + scrollbar);
+
+            self.last_size = Some(size);
+        }
+    }
 }
 
 // Given a multiline string, and a given maximum width,
@@ -152,16 +186,19 @@ impl<'a> Iterator for LinesIterator<'a> {
         let start = self.start;
         let content = &self.content[self.start..];
 
-        if let Some(next) = content.find('\n') {
-            if content[..next].width() <= self.width {
-                // We found a newline before the allowed limit.
-                // Break early.
-                self.start += next + 1;
-                return Some(Row {
-                    start: start,
-                    end: next + start,
-                });
-            }
+        let next = content.find('\n').unwrap_or(content.len());
+        let content = &content[..next];
+
+        let line_width = content.width();
+        if line_width <= self.width {
+            // We found a newline before the allowed limit.
+            // Break early.
+            self.start += next + 1;
+            return Some(Row {
+                start: start,
+                end: next + start,
+                width: line_width,
+            });
         }
 
         // Keep adding indivisible tokens
@@ -175,6 +212,7 @@ impl<'a> Iterator for LinesIterator<'a> {
         Some(Row {
             start: start,
             end: start + head_bytes,
+            width: self.width,
         })
     }
 }
@@ -220,20 +258,13 @@ impl View for TextView {
         EventResult::Consumed(None)
     }
 
-    fn get_min_size(&self, size: Vec2) -> Vec2 {
+    fn get_min_size(&mut self, size: Vec2) -> Vec2 {
         // If we have no directive, ask for a single big line.
         // TODO: what if the text has newlines??
         // Don't _force_ the max width, but take it if we have to.
-        let ideal = self.get_ideal_size();
 
-        if size.x >= ideal.x {
-            ideal
-        } else {
-            // Ok, se we have less width than we'd like.
-            // Take everything we can, and plan our height accordingly.
-            let h = self.get_num_lines(size.x);
-            Vec2::new(size.x, h)
-        }
+        self.compute_rows(size);
+        Vec2::new(self.width.unwrap_or(0), self.rows.len())
     }
 
     fn take_focus(&mut self) -> bool {
@@ -242,11 +273,7 @@ impl View for TextView {
 
     fn layout(&mut self, size: Vec2) {
         // Compute the text rows.
-        self.rows = LinesIterator::new(&self.content, size.x).collect();
-        if self.rows.len() > size.y {
-            self.rows = LinesIterator::new(&self.content, size.x - 2)
-                            .collect();
-        }
+        self.compute_rows(size);
         self.scrollbase.set_heights(size.y, self.rows.len());
     }
 }

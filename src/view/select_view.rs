@@ -145,7 +145,7 @@ impl<T: 'static> View for SelectView<T> {
         });
     }
 
-    fn get_min_size(&self, req: Vec2) -> Vec2 {
+    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
         // Items here are not compressible.
         // So no matter what the horizontal requirements are,
         // we'll still return our longest item.

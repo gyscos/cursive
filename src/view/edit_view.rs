@@ -139,7 +139,7 @@ impl View for EditView {
         self.last_length = size.x;
     }
 
-    fn get_min_size(&self, _: Vec2) -> Vec2 {
+    fn get_min_size(&mut self, _: Vec2) -> Vec2 {
         Vec2::new(self.min_length, 1)
     }
 
