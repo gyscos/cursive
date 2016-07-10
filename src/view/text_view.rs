@@ -96,6 +96,7 @@ impl TextView {
     pub fn set_content(&mut self, content: &str) {
         let content = strip_last_newline(content);
         self.content = content.to_string();
+        self.invalidate();
     }
 
     /// Returns the current text in this view.
@@ -152,6 +153,11 @@ impl TextView {
 
             self.last_size = Some(size);
         }
+    }
+
+    // Invalidates the cache, so next call will recompute everything.
+    fn invalidate(&mut self) {
+        self.last_size = None;
     }
 }
 
