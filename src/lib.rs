@@ -289,10 +289,9 @@ impl Cursive {
         while self.running {
             // Do we need to redraw everytime?
             // Probably, actually.
-            // TODO: Do we actually need to clear everytime?
-            B::clear();
             // TODO: Do we need to re-layout everytime?
             self.layout();
+
             // TODO: Do we need to redraw every view every time?
             // (Is this getting repetitive? :p)
             self.draw();
@@ -300,6 +299,10 @@ impl Cursive {
             // Wait for next event.
             // (If set_fps was called, this returns -1 now and then)
             let event = B::poll_event();
+            if event == Event::Key(event::Key::Resize) {
+                B::clear();
+                continue;
+            }
 
             // Event dispatch order:
             // * Focused element:

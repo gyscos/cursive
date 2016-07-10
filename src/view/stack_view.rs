@@ -1,5 +1,6 @@
 use std::any::Any;
 
+use backend::Backend;
 use vec::Vec2;
 use view::{Offset, Position, Selector, ShadowView, View};
 use event::{Event, EventResult};
@@ -54,6 +55,7 @@ impl StackView {
     /// Remove the top-most layer.
     pub fn pop_layer(&mut self) {
         self.layers.pop();
+        ::B::clear();
     }
 }
 
