@@ -1,6 +1,5 @@
 //! User-input events and their effects.
 
-use std::fmt;
 use std::rc::Rc;
 
 use Cursive;
@@ -24,250 +23,137 @@ impl EventResult {
     }
 }
 
-/// Represents a key, or a combination of keys.
-#[derive(PartialEq,Eq,Clone,Copy,Hash)]
+/// A non-character key on the keyboard
+#[derive(PartialEq,Eq,Clone,Copy,Hash,Debug)]
 pub enum Key {
-    /// Both Enter and numpad Enter
+    /// Both Enter (or Return) and numpad Enter
     Enter,
     /// Tabulation key
     Tab,
-    ShiftTab,
+    /// Backspace key
     Backspace,
-
-    /// Indicates the window was resized
-    ///
-    /// (Not really a key)
-    Resize,
-
-    /// Escape key.
+    /// Escape key
     Esc,
+
+    /// Left arrow
+    Left,
+    /// Right arrow
+    Right,
+    /// Up arrow
+    Up,
+    /// Down arrow
+    Down,
+
+    /// Insert key
+    Ins,
+    /// Delete key
+    Del,
+    /// Home key
+    Home,
+    /// End key
+    End,
+    /// Page Up key
+    PageUp,
+    /// Page Down key
+    PageDown,
+
     /// The 5 in the center of the keypad, when numlock is disabled.
     NumpadCenter,
 
-    Left,
-    /// Left arrow while shift is pressed.
-    ShiftLeft,
-    AltLeft,
-    AltShiftLeft,
-    CtrlLeft,
-    CtrlShiftLeft,
-    CtrlAltLeft,
-
-    Right,
-    /// Right arrow while shift is pressed.
-    ShiftRight,
-    AltRight,
-    AltShiftRight,
-    CtrlRight,
-    CtrlShiftRight,
-    CtrlAltRight,
-
-    Up,
-    ShiftUp,
-    AltUp,
-    AltShiftUp,
-    CtrlUp,
-    CtrlShiftUp,
-    CtrlAltUp,
-
-    Down,
-    ShiftDown,
-    AltDown,
-    AltShiftDown,
-    CtrlDown,
-    CtrlShiftDown,
-    CtrlAltDown,
-
-    PageUp,
-    ShiftPageUp,
-    AltPageUp,
-    AltShiftPageUp,
-    CtrlPageUp,
-    CtrlShiftPageUp,
-    CtrlAltPageUp,
-
-    PageDown,
-    ShiftPageDown,
-    AltPageDown,
-    AltShiftPageDown,
-    CtrlPageDown,
-    CtrlShiftPageDown,
-    CtrlAltPageDown,
-
-    Home,
-    ShiftHome,
-    AltHome,
-    AltShiftHome,
-    CtrlHome,
-    CtrlShiftHome,
-    CtrlAltHome,
-
-    End,
-    ShiftEnd,
-    AltEnd,
-    AltShiftEnd,
-    CtrlEnd,
-    CtrlShiftEnd,
-    CtrlAltEnd,
-
-    /// Delete key
-    Del,
-    ShiftDel,
-    AltDel,
-    AltShiftDel,
-    CtrlDel,
-    CtrlShiftDel,
-
-    /// Insert key.
-    Ins,
-    /// Insert key while ctrl is pressed.
-    CtrlIns,
-    AltIns,
-    CtrlAltIns,
-
-    F(u8),
-    ShiftF(u8),
-    AltF(u8),
-    CtrlF(u8),
-    CtrlShiftF(u8),
-    CtrlChar(char),
-    Unknown(i32),
+    /// F1 key
+    F1,
+    /// F2 key
+    F2,
+    /// F3 key
+    F3,
+    /// F4 key
+    F4,
+    /// F5 key
+    F5,
+    /// F6 key
+    F6,
+    /// F7 key
+    F7,
+    /// F8 key
+    F8,
+    /// F9 key
+    F9,
+    /// F10 key
+    F10,
+    /// F11 key
+    F11,
+    /// F12 key
+    F12,
 }
 
-impl fmt::Display for Key {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Key::Unknown(ch) => write!(f, "Unknown: {}", ch),
-            Key::CtrlChar(ch) => write!(f, "Ctrl-{}", ch),
-            Key::F(n) => write!(f, "F{}", n),
-            Key::ShiftF(n) => write!(f, "Shift-F{}", n),
-            Key::AltF(n) => write!(f, "Alt-F{}", n),
-            Key::CtrlF(n) => write!(f, "Ctrl-F{}", n),
-            Key::CtrlShiftF(n) => write!(f, "Ctrl-Shift-F{}", n),
-            key => {
-                write!(f,
-                       "{}",
-                       match key {
-                           Key::Resize => "Screen resize",
-                           Key::NumpadCenter => "Numpad center",
-                           Key::Backspace => "Backspace",
-                           Key::Enter => "Enter",
-                           Key::Tab => "Tab",
-                           Key::ShiftTab => "Shift-Tab",
-
-                           Key::PageUp => "PageUp",
-                           Key::ShiftPageUp => "Shift-PageUp",
-                           Key::AltPageUp => "Alt-PageUp",
-                           Key::AltShiftPageUp => "Alt-Shift-PageUp",
-                           Key::CtrlPageUp => "Ctrl-PageUp",
-                           Key::CtrlShiftPageUp => "Ctrl-Shift-PageUp",
-                           Key::CtrlAltPageUp => "Ctrl-Alt-PageUp",
-
-                           Key::PageDown => "PageDown",
-                           Key::ShiftPageDown => "Shift-PageDown",
-                           Key::AltPageDown => "Alt-PageDown",
-                           Key::AltShiftPageDown => "Alt-Shift-PageDown",
-                           Key::CtrlPageDown => "Ctrl-PageDown",
-                           Key::CtrlShiftPageDown => "Ctrl-Shift-PageDown",
-                           Key::CtrlAltPageDown => "Ctrl-Alt-PageDown",
-
-                           Key::Left => "Left",
-                           Key::ShiftLeft => "Shift-Left",
-                           Key::AltLeft => "Alt-Left",
-                           Key::AltShiftLeft => "Alt-Shift-Left",
-                           Key::CtrlLeft => "Ctrl-Left",
-                           Key::CtrlShiftLeft => "Ctrl-Shift-Left",
-                           Key::CtrlAltLeft => "Ctrl-Alt-Left",
-
-                           Key::Right => "Right",
-                           Key::ShiftRight => "Shift-Right",
-                           Key::AltRight => "Alt-Right",
-                           Key::AltShiftRight => "Alt-Shift-Right",
-                           Key::CtrlRight => "Ctrl-Right",
-                           Key::CtrlShiftRight => "Ctrl-Shift-Right",
-                           Key::CtrlAltRight => "Ctrl-Alt-Right",
-
-                           Key::Down => "Down",
-                           Key::ShiftDown => "Shift-Down",
-                           Key::AltDown => "Alt-Down",
-                           Key::AltShiftDown => "Alt-Shift-Down",
-                           Key::CtrlDown => "Ctrl-Down",
-                           Key::CtrlShiftDown => "Ctrl-Shift-Down",
-                           Key::CtrlAltDown => "Ctrl-Alt-Down",
-
-                           Key::Up => "Up",
-                           Key::ShiftUp => "Shift-Up",
-                           Key::AltUp => "Alt-Up",
-                           Key::AltShiftUp => "Alt-Shift-Up",
-                           Key::CtrlUp => "Ctrl-Up",
-                           Key::CtrlShiftUp => "Ctrl-Shift-Up",
-                           Key::CtrlAltUp => "Ctrl-Alt-Up",
-
-                           Key::Del => "Del",
-                           Key::ShiftDel => "Shift-Del",
-                           Key::AltDel => "Alt-Del",
-                           Key::AltShiftDel => "Alt-Shift-Del",
-                           Key::CtrlDel => "Ctrl-Del",
-                           Key::CtrlShiftDel => "Ctrl-Shift-Del",
-
-                           Key::Home => "Home",
-                           Key::ShiftHome => "Shift-Home",
-                           Key::AltHome => "Alt-Home",
-                           Key::AltShiftHome => "Alt-Shift-Home",
-                           Key::CtrlHome => "Ctrl-Home",
-                           Key::CtrlShiftHome => "Ctrl-Shift-Home",
-                           Key::CtrlAltHome => "Ctrl-Alt-Home",
-
-                           Key::End => "End",
-                           Key::ShiftEnd => "Shift-End",
-                           Key::AltEnd => "Alt-End",
-                           Key::AltShiftEnd => "Alt-Shift-End",
-                           Key::CtrlEnd => "Ctrl-End",
-                           Key::CtrlShiftEnd => "Ctrl-Shift-End",
-                           Key::CtrlAltEnd => "Ctrl-Alt-End",
-
-                           Key::Ins => "Ins",
-                           Key::AltIns => "Alt-Ins",
-                           Key::CtrlIns => "Ctrl-Ins",
-                           Key::CtrlAltIns => "Ctrl-Alt-Ins",
-
-                           Key::Esc => "Esc",
-                           _ => "Missing key label",
-                       })
-            }
+impl Key {
+    /// Returns the function key corresponding to the given number
+    ///
+    /// 1 -> F1, etc...
+    ///
+    /// # Panics
+    ///
+    /// If `n == 0 || n > 12`
+    pub fn from_f(n: u8) -> Key {
+        match n {
+            1 => Key::F1,
+            2 => Key::F2,
+            3 => Key::F3,
+            4 => Key::F4,
+            5 => Key::F5,
+            6 => Key::F6,
+            7 => Key::F7,
+            8 => Key::F8,
+            9 => Key::F9,
+            10 => Key::F10,
+            11 => Key::F11,
+            12 => Key::F12,
+            _ => panic!("unknown function key: F{}", n),
         }
     }
 }
 
 /// Represents an event as seen by the application.
-///
-#[derive(PartialEq,Eq,Clone,Copy,Hash)]
+#[derive(PartialEq,Eq,Clone,Copy,Hash,Debug)]
 pub enum Event {
-    /// A text character was entered.
+    /// Event fired when the window is resized
+    WindowResize,
+
+    /// A character was entered (includes numbers, punctuation, ...)
     Char(char),
-    /// A key was pressed.
+    /// A character was entered with the Ctrl key pressed
+    CtrlChar(char),
+    /// A character was entered with the Alt key pressed
+    AltChar(char),
+
+    /// A non-character key was pressed
     Key(Key),
+    /// A non-character key was pressed with the Shift key pressed
+    Shift(Key),
+    /// A non-character key was pressed with the Alt key pressed
+    Alt(Key),
+    /// A non-character key was pressed with the Shift and Alt keys pressed
+    AltShift(Key),
+    /// A non-character key was pressed with the Ctrl key pressed
+    Ctrl(Key),
+    /// A non-character key was pressed with the Ctrl and Shift keys pressed
+    CtrlShift(Key),
+    /// A non-character key was pressed with the Ctrl and Alt keys pressed
+    CtrlAlt(Key),
+
+
+    /// An unknown event was received.
+    Unknown(i32),
 }
 
-/// Generic trait to convert a value to an event.
-pub trait ToEvent {
-    fn to_event(self) -> Event;
-}
-
-impl ToEvent for char {
-    fn to_event(self) -> Event {
-        Event::Char(self)
+impl From<char> for Event {
+    fn from(c: char) -> Event {
+        Event::Char(c)
     }
 }
 
-impl ToEvent for Key {
-    fn to_event(self) -> Event {
-        Event::Key(self)
-    }
-}
-
-impl ToEvent for Event {
-    fn to_event(self) -> Event {
-        self
+impl From<Key> for Event {
+    fn from(k: Key) -> Event {
+        Event::Key(k)
     }
 }

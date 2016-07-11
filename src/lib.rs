@@ -65,7 +65,7 @@ use printer::Printer;
 use view::View;
 use view::{Selector, StackView};
 
-use event::{Callback, Event, EventResult, ToEvent};
+use event::{Callback, Event, EventResult};
 
 /// Identifies a screen in the cursive ROOT.
 pub type ScreenId = usize;
@@ -218,10 +218,10 @@ impl Cursive {
     /// Adds a global callback.
     ///
     /// Will be triggered on the given key press when no view catches it.
-    pub fn add_global_callback<F, E: ToEvent>(&mut self, event: E, cb: F)
+    pub fn add_global_callback<F, E: Into<Event>>(&mut self, event: E, cb: F)
         where F: Fn(&mut Cursive) + 'static
     {
-        self.global_callbacks.insert(event.to_event(), Rc::new(cb));
+        self.global_callbacks.insert(event.into(), Rc::new(cb));
     }
 
     /// Convenient method to add a layer to the current screen.
@@ -310,9 +310,8 @@ impl Cursive {
             // Wait for next event.
             // (If set_fps was called, this returns -1 now and then)
             let event = B::poll_event();
-            if event == Event::Key(event::Key::Resize) {
+            if event == Event::WindowResize {
                 B::clear();
-                continue;
             }
 
             // Event dispatch order:

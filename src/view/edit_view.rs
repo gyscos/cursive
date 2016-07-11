@@ -155,44 +155,40 @@ impl View for EditView {
                 // Find the byte index of the char at self.cursor
 
                 self.content.insert(self.cursor, ch);
-                // TODO: handle wide (CJK) chars
                 self.cursor += ch.len_utf8();
             }
-            Event::Key(key) => {
-                match key {
-                    Key::Home => self.cursor = 0,
-                    Key::End => self.cursor = self.content.len(),
-                    Key::Left if self.cursor > 0 => {
-                        let len = self.content[..self.cursor]
-                            .graphemes(true)
-                            .last()
-                            .unwrap()
-                            .len();
-                        self.cursor -= len;
-                    }
-                    Key::Right if self.cursor < self.content.len() => {
-                        let len = self.content[self.cursor..]
-                            .graphemes(true)
-                            .next()
-                            .unwrap()
-                            .len();
-                        self.cursor += len;
-                    }
-                    Key::Backspace if self.cursor > 0 => {
-                        let len = self.content[..self.cursor]
-                            .graphemes(true)
-                            .last()
-                            .unwrap()
-                            .len();
-                        self.cursor -= len;
-                        self.content.remove(self.cursor);
-                    }
-                    Key::Del if self.cursor < self.content.len() => {
-                        self.content.remove(self.cursor);
-                    }
-                    _ => return EventResult::Ignored,
-                }
+            // TODO: handle ctrl-key?
+            Event::Key(Key::Home) => self.cursor = 0,
+            Event::Key(Key::End) => self.cursor = self.content.len(),
+            Event::Key(Key::Left) if self.cursor > 0 => {
+                let len = self.content[..self.cursor]
+                    .graphemes(true)
+                    .last()
+                    .unwrap()
+                    .len();
+                self.cursor -= len;
             }
+            Event::Key(Key::Right) if self.cursor < self.content.len() => {
+                let len = self.content[self.cursor..]
+                    .graphemes(true)
+                    .next()
+                    .unwrap()
+                    .len();
+                self.cursor += len;
+            }
+            Event::Key(Key::Backspace) if self.cursor > 0 => {
+                let len = self.content[..self.cursor]
+                    .graphemes(true)
+                    .last()
+                    .unwrap()
+                    .len();
+                self.cursor -= len;
+                self.content.remove(self.cursor);
+            }
+            Event::Key(Key::Del) if self.cursor < self.content.len() => {
+                self.content.remove(self.cursor);
+            }
+            _ => return EventResult::Ignored,
         }
 
         // Keep cursor in [offset, offset+last_length] by changing offset

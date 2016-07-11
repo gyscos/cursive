@@ -1,5 +1,5 @@
 use backend;
-use event;
+use event::{Event, Key};
 use theme;
 use utf8;
 
@@ -80,16 +80,16 @@ impl backend::Backend for NcursesBackend {
         ncurses::mvaddstr(y as i32, x as i32, text);
     }
 
-    fn poll_event() -> event::Event {
+    fn poll_event() -> Event {
         let ch: i32 = ncurses::getch();
 
         // Is it a UTF-8 starting point?
         if 32 <= ch && ch < 0x100 && ch != 127 {
-            event::Event::Char(utf8::read_char(ch as u8,
+            Event::Char(utf8::read_char(ch as u8,
                                                || ncurses::getch() as u8)
                 .unwrap())
         } else {
-            event::Event::Key(parse_ncurses_char(ch))
+            parse_ncurses_char(ch)
         }
     }
 
@@ -103,125 +103,122 @@ impl backend::Backend for NcursesBackend {
 }
 
 /// Returns the Key enum corresponding to the given ncurses event.
-fn parse_ncurses_char(ch: i32) -> event::Key {
+fn parse_ncurses_char(ch: i32) -> Event {
 
     match ch {
         // Values under 256 are chars and control values
         //
         // Tab is '\t'
-        9 => event::Key::Tab,
+        9 => Event::Key(Key::Tab),
         // Treat '\n' and the numpad Enter the same
         10 |
-        ncurses::KEY_ENTER => event::Key::Enter,
+        ncurses::KEY_ENTER => Event::Key(Key::Enter),
         // This is the escape key when pressed by itself.
         // When used for control sequences, it should have been caught earlier.
-        27 => event::Key::Esc,
+        27 => Event::Key(Key::Esc),
         // `Backspace` sends 127, but Ctrl-H sends `Backspace`
         127 |
-        ncurses::KEY_BACKSPACE => event::Key::Backspace,
+        ncurses::KEY_BACKSPACE => Event::Key(Key::Backspace),
 
-        410 => event::Key::Resize,
+        410 => Event::WindowResize,
 
         // Values 512 and above are probably extensions
         // Those keys don't seem to be documented...
-        519 => event::Key::AltDel,
-        520 => event::Key::AltShiftDel,
-        521 => event::Key::CtrlDel,
-        522 => event::Key::CtrlShiftDel,
+        519 => Event::Alt(Key::Del),
+        520 => Event::AltShift(Key::Del),
+        521 => Event::Ctrl(Key::Del),
+        522 => Event::CtrlShift(Key::Del),
         // 523: CtrlAltDel?
         //
         // 524?
-        525 => event::Key::AltDown,
-        526 => event::Key::AltShiftDown,
-        527 => event::Key::CtrlDown,
-        528 => event::Key::CtrlShiftDown,
-        529 => event::Key::CtrlAltDown,
+        525 => Event::Alt(Key::Down),
+        526 => Event::AltShift(Key::Down),
+        527 => Event::Ctrl(Key::Down),
+        528 => Event::CtrlShift(Key::Down),
+        529 => Event::CtrlAlt(Key::Down),
 
-        530 => event::Key::AltEnd,
-        531 => event::Key::AltShiftEnd,
-        532 => event::Key::CtrlEnd,
-        533 => event::Key::CtrlShiftEnd,
-        534 => event::Key::CtrlAltEnd,
+        530 => Event::Alt(Key::End),
+        531 => Event::AltShift(Key::End),
+        532 => Event::Ctrl(Key::End),
+        533 => Event::CtrlShift(Key::End),
+        534 => Event::CtrlAlt(Key::End),
 
-        535 => event::Key::AltHome,
-        536 => event::Key::AltShiftHome,
-        537 => event::Key::CtrlHome,
-        538 => event::Key::CtrlShiftHome,
-        539 => event::Key::CtrlAltHome,
+        535 => Event::Alt(Key::Home),
+        536 => Event::AltShift(Key::Home),
+        537 => Event::Ctrl(Key::Home),
+        538 => Event::CtrlShift(Key::Home),
+        539 => Event::CtrlAlt(Key::Home),
 
-        540 => event::Key::AltIns,
+        540 => Event::Alt(Key::Ins),
         // 541: AltShiftIns?
-        542 => event::Key::CtrlIns,
+        542 => Event::Ctrl(Key::Ins),
         // 543: CtrlShiftIns?
-        544 => event::Key::CtrlAltIns,
+        544 => Event::CtrlAlt(Key::Ins),
 
-        545 => event::Key::AltLeft,
-        546 => event::Key::AltShiftLeft,
-        547 => event::Key::CtrlLeft,
-        548 => event::Key::CtrlShiftLeft,
-        549 => event::Key::CtrlAltLeft,
+        545 => Event::Alt(Key::Left),
+        546 => Event::AltShift(Key::Left),
+        547 => Event::Ctrl(Key::Left),
+        548 => Event::CtrlShift(Key::Left),
+        549 => Event::CtrlAlt(Key::Left),
 
-        550 => event::Key::AltPageDown,
-        551 => event::Key::AltShiftPageDown,
-        552 => event::Key::CtrlPageDown,
-        553 => event::Key::CtrlShiftPageDown,
-        554 => event::Key::CtrlAltPageDown,
+        550 => Event::Alt(Key::PageDown),
+        551 => Event::AltShift(Key::PageDown),
+        552 => Event::Ctrl(Key::PageDown),
+        553 => Event::CtrlShift(Key::PageDown),
+        554 => Event::CtrlAlt(Key::PageDown),
 
-        555 => event::Key::AltPageUp,
-        556 => event::Key::AltShiftPageUp,
-        557 => event::Key::CtrlPageUp,
-        558 => event::Key::CtrlShiftPageUp,
-        559 => event::Key::CtrlAltPageUp,
+        555 => Event::Alt(Key::PageUp),
+        556 => Event::AltShift(Key::PageUp),
+        557 => Event::Ctrl(Key::PageUp),
+        558 => Event::CtrlShift(Key::PageUp),
+        559 => Event::CtrlAlt(Key::PageUp),
 
-        560 => event::Key::AltRight,
-        561 => event::Key::AltShiftRight,
-        562 => event::Key::CtrlRight,
-        563 => event::Key::CtrlShiftRight,
-        564 => event::Key::CtrlAltRight,
+        560 => Event::Alt(Key::Right),
+        561 => Event::AltShift(Key::Right),
+        562 => Event::Ctrl(Key::Right),
+        563 => Event::CtrlShift(Key::Right),
+        564 => Event::CtrlAlt(Key::Right),
         // 565?
-        566 => event::Key::AltUp,
-        567 => event::Key::AltShiftUp,
-        568 => event::Key::CtrlUp,
-        569 => event::Key::CtrlShiftUp,
-        570 => event::Key::CtrlAltUp,
+        566 => Event::Alt(Key::Up),
+        567 => Event::AltShift(Key::Up),
+        568 => Event::Ctrl(Key::Up),
+        569 => Event::CtrlShift(Key::Up),
+        570 => Event::CtrlAlt(Key::Up),
 
-        ncurses::KEY_B2 => event::Key::NumpadCenter,
-        ncurses::KEY_DC => event::Key::Del,
-        ncurses::KEY_IC => event::Key::Ins,
-        ncurses::KEY_BTAB => event::Key::ShiftTab,
-        ncurses::KEY_SLEFT => event::Key::ShiftLeft,
-        ncurses::KEY_SRIGHT => event::Key::ShiftRight,
-        ncurses::KEY_LEFT => event::Key::Left,
-        ncurses::KEY_RIGHT => event::Key::Right,
-        ncurses::KEY_UP => event::Key::Up,
-        ncurses::KEY_DOWN => event::Key::Down,
-        ncurses::KEY_SR => event::Key::ShiftUp,
-        ncurses::KEY_SF => event::Key::ShiftDown,
-        ncurses::KEY_PPAGE => event::Key::PageUp,
-        ncurses::KEY_NPAGE => event::Key::PageDown,
-        ncurses::KEY_HOME => event::Key::Home,
-        ncurses::KEY_END => event::Key::End,
-        ncurses::KEY_SHOME => event::Key::ShiftHome,
-        ncurses::KEY_SEND => event::Key::ShiftEnd,
-        ncurses::KEY_SDC => event::Key::ShiftDel,
-        ncurses::KEY_SNEXT => event::Key::ShiftPageDown,
-        ncurses::KEY_SPREVIOUS => event::Key::ShiftPageUp,
+        ncurses::KEY_B2 => Event::Key(Key::NumpadCenter),
+        ncurses::KEY_DC => Event::Key(Key::Del),
+        ncurses::KEY_IC => Event::Key(Key::Ins),
+        ncurses::KEY_BTAB => Event::Shift(Key::Tab),
+        ncurses::KEY_SLEFT => Event::Shift(Key::Left),
+        ncurses::KEY_SRIGHT => Event::Shift(Key::Right),
+        ncurses::KEY_LEFT => Event::Key(Key::Left),
+        ncurses::KEY_RIGHT => Event::Key(Key::Right),
+        ncurses::KEY_UP => Event::Key(Key::Up),
+        ncurses::KEY_DOWN => Event::Key(Key::Down),
+        ncurses::KEY_SR => Event::Shift(Key::Up),
+        ncurses::KEY_SF => Event::Shift(Key::Down),
+        ncurses::KEY_PPAGE => Event::Key(Key::PageUp),
+        ncurses::KEY_NPAGE => Event::Key(Key::PageDown),
+        ncurses::KEY_HOME => Event::Key(Key::Home),
+        ncurses::KEY_END => Event::Key(Key::End),
+        ncurses::KEY_SHOME => Event::Shift(Key::Home),
+        ncurses::KEY_SEND => Event::Shift(Key::End),
+        ncurses::KEY_SDC => Event::Shift(Key::Del),
+        ncurses::KEY_SNEXT => Event::Shift(Key::PageDown),
+        ncurses::KEY_SPREVIOUS => Event::Shift(Key::PageUp),
         // All Fn keys use the same enum with associated number
         f @ ncurses::KEY_F1...ncurses::KEY_F12 => {
-            event::Key::F((f - ncurses::KEY_F0) as u8)
+            Event::Key(Key::from_f((f - ncurses::KEY_F0) as u8))
         }
-        f @ 277...288 => event::Key::ShiftF((f - 277) as u8),
-        f @ 289...300 => event::Key::CtrlF((f - 289) as u8),
-        f @ 301...312 => event::Key::CtrlShiftF((f - 300) as u8),
-        f @ 313...324 => event::Key::AltF((f - 313) as u8),
-        // Shift and Ctrl F{1-4} need escape sequences...
-        //
-        // TODO: shift and ctrl Fn keys
-        // Avoids 8-10 (H,I,J), they are used by other commands.
-        c @ 1...7 | c @ 11...25 => {
-            event::Key::CtrlChar((b'a' + (c - 1) as u8) as char)
+        f @ 277...288 => Event::Shift(Key::from_f((f - 276) as u8)),
+        f @ 289...300 => Event::Ctrl(Key::from_f((f - 288) as u8)),
+        f @ 301...312 => Event::CtrlShift(Key::from_f((f - 300) as u8)),
+        f @ 313...324 => Event::Alt(Key::from_f((f - 312) as u8)),
+        // Values 8-10 (H,I,J) are used by other commands, so we won't receive them.
+        c @ 1...25 => {
+            Event::CtrlChar((b'a' + (c - 1) as u8) as char)
         }
-        _ => event::Key::Unknown(ch),
+        _ => Event::Unknown(ch),
     }
 }
 

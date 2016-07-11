@@ -207,7 +207,7 @@ impl View for LinearLayout {
                         self.focus -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::ShiftTab) if self.focus + 1 <
+                    Event::Shift(Key::Tab) if self.focus + 1 <
                                                  self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)

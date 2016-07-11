@@ -226,7 +226,7 @@ impl View for Dialog {
                         match event {
                             Event::Key(Key::Down) |
                             Event::Key(Key::Tab) |
-                            Event::Key(Key::ShiftTab) => {
+                            Event::Shift(Key::Tab) => {
                                 // Default to leftmost button when going down.
                                 self.focus = Focus::Button(0);
                                 EventResult::Consumed(None)
@@ -245,7 +245,7 @@ impl View for Dialog {
                             // Up goes back to the content
                             Event::Key(Key::Up) |
                             Event::Key(Key::Tab) |
-                            Event::Key(Key::ShiftTab) => {
+                            Event::Shift(Key::Tab) => {
                                 if self.content.take_focus() {
                                     self.focus = Focus::Content;
                                     EventResult::Consumed(None)
