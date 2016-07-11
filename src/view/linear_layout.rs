@@ -9,6 +9,8 @@ pub struct LinearLayout {
     children: Vec<Child>,
     orientation: Orientation,
     focus: usize,
+
+    last_size: Option<Vec2>,
 }
 
 struct Child {
@@ -24,6 +26,7 @@ impl LinearLayout {
             children: Vec::new(),
             orientation: orientation,
             focus: 0,
+            last_size: None,
         }
     }
 
@@ -43,6 +46,7 @@ impl LinearLayout {
             size: Vec2::zero(),
             weight: 0,
         });
+        self.last_size = None;
 
         self
     }
@@ -120,6 +124,20 @@ impl View for LinearLayout {
             *self.orientation.get_ref(&mut offset) += self.orientation
                 .get(&child.size);
         }
+    }
+
+    fn needs_relayout(&self) -> bool {
+        if self.last_size == None {
+            return true;
+        }
+
+        for child in &self.children {
+            if child.view.needs_relayout() {
+                return true;
+            }
+        }
+
+        false
     }
 
     fn layout(&mut self, size: Vec2) {

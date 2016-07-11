@@ -43,6 +43,10 @@ pub trait ViewWrapper {
     fn wrap_find(&mut self, selector: &Selector) -> Option<&mut Any> {
         self.get_view_mut().find(selector)
     }
+
+    fn wrap_needs_relayout(&self) -> bool {
+        self.get_view().needs_relayout()
+    }
 }
 
 impl<T: ViewWrapper> View for T {
@@ -68,6 +72,10 @@ impl<T: ViewWrapper> View for T {
 
     fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
         self.wrap_find(selector)
+    }
+
+    fn needs_relayout(&self) -> bool {
+        self.wrap_needs_relayout()
     }
 }
 

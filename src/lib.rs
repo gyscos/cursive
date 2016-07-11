@@ -20,6 +20,8 @@
 //!     siv.run();
 //! }
 //! ```
+// #![deny(missing_docs)]
+
 extern crate ncurses;
 extern crate toml;
 extern crate unicode_segmentation;

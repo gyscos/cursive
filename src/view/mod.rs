@@ -69,14 +69,31 @@ pub trait View {
         Vec2::new(1, 1)
     }
 
-    /// Called once the size for this view has been decided, so it can
-    /// propagate the information to its children.
+    /// Returns `true` if the view content changed since last layout phase.
+    ///
+    /// This is mostly an optimisation for views where the layout phase is
+    /// expensive.
+    ///
+    /// * Views can ignore it and always return true (default implementation).
+    ///   They will always be assumed to have changed.
+    /// * View Groups can ignore it and always re-layout their children.
+    ///     * If they call `get_min_size` or `layout` with stable parameters,
+    ///       the children may cache the result themselves and speed up the
+    ///       process anyway.
+    fn needs_relayout(&self) -> bool {
+        true
+    }
+
+    /// Called once the size for this view has been decided,
+    ///
+    /// View groups should propagate the information to their children.
     fn layout(&mut self, Vec2) {}
 
     /// Draws the view with the given printer (includes bounds) and focus.
     fn draw(&mut self, printer: &Printer);
 
     /// Finds the view pointed to by the given path.
+    ///
     /// Returns None if the path doesn't lead to a view.
     fn find(&mut self, &Selector) -> Option<&mut Any> {
         None

@@ -230,6 +230,10 @@ impl View for TextView {
         EventResult::Consumed(None)
     }
 
+    fn needs_relayout(&self) -> bool {
+        self.last_size == None
+    }
+
     fn get_min_size(&mut self, size: Vec2) -> Vec2 {
         // If we have no directive, ask for a single big line.
         // TODO: what if the text has newlines??
