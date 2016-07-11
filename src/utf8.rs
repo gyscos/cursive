@@ -1,6 +1,9 @@
 use std::char::from_u32;
 
-/// Reads a char from a first byte, and a function to fetch next bytes as required.
+/// Reads a potentially multi-bytes utf8 codepoint.
+///
+/// Reads the given first byte, and uses the given
+/// function to get more if needed.
 ///
 /// Returns an error if the stream is invalid utf-8.
 pub fn read_char<F>(first: u8, next: F) -> Result<char, String>

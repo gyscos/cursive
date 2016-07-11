@@ -1,6 +1,6 @@
 use backend;
 use event::{Event, Key};
-use theme;
+use theme::{Color, ColorStyle, Effect};
 use utf8;
 
 use ncurses;
@@ -18,7 +18,7 @@ impl backend::Backend for NcursesBackend {
         ncurses::start_color();
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
         ncurses::wbkgd(ncurses::stdscr,
-                       ncurses::COLOR_PAIR(theme::ColorStyle::Background.id()));
+                       ncurses::COLOR_PAIR(ColorStyle::Background.id()));
     }
 
     fn screen_size() -> (usize, usize) {
@@ -37,8 +37,8 @@ impl backend::Backend for NcursesBackend {
     }
 
 
-    fn init_color_style(style: theme::ColorStyle, foreground: &theme::Color,
-                        background: &theme::Color) {
+    fn init_color_style(style: ColorStyle, foreground: &Color,
+                        background: &Color) {
         // TODO: build the color on the spot
 
         ncurses::init_pair(style.id(),
@@ -46,7 +46,7 @@ impl backend::Backend for NcursesBackend {
                            find_closest(background) as i16);
     }
 
-    fn with_color<F: FnOnce()>(color: theme::ColorStyle, f: F) {
+    fn with_color<F: FnOnce()>(color: ColorStyle, f: F) {
         let mut current_style: ncurses::attr_t = 0;
         let mut current_color: i16 = 0;
         ncurses::attr_get(&mut current_style, &mut current_color);
@@ -58,10 +58,10 @@ impl backend::Backend for NcursesBackend {
         ncurses::attron(current_style);
     }
 
-    fn with_effect<F: FnOnce()>(effect: theme::Effect, f: F) {
+    fn with_effect<F: FnOnce()>(effect: Effect, f: F) {
         let style = match effect {
-            theme::Effect::Reverse => ncurses::A_REVERSE(),
-            theme::Effect::Simple => ncurses::A_NORMAL(),
+            Effect::Reverse => ncurses::A_REVERSE(),
+            Effect::Simple => ncurses::A_NORMAL(),
         };
         ncurses::attron(style);
         f();
@@ -84,9 +84,8 @@ impl backend::Backend for NcursesBackend {
         let ch: i32 = ncurses::getch();
 
         // Is it a UTF-8 starting point?
-        if 32 <= ch && ch < 0x100 && ch != 127 {
-            Event::Char(utf8::read_char(ch as u8,
-                                               || ncurses::getch() as u8)
+        if 32 <= ch && ch <= 255 && ch != 127 {
+            Event::Char(utf8::read_char(ch as u8, || ncurses::getch() as u8)
                 .unwrap())
         } else {
             parse_ncurses_char(ch)
@@ -214,30 +213,29 @@ fn parse_ncurses_char(ch: i32) -> Event {
         f @ 289...300 => Event::Ctrl(Key::from_f((f - 288) as u8)),
         f @ 301...312 => Event::CtrlShift(Key::from_f((f - 300) as u8)),
         f @ 313...324 => Event::Alt(Key::from_f((f - 312) as u8)),
-        // Values 8-10 (H,I,J) are used by other commands, so we won't receive them.
-        c @ 1...25 => {
-            Event::CtrlChar((b'a' + (c - 1) as u8) as char)
-        }
+        // Values 8-10 (H,I,J) are used by other commands,
+        // so we probably won't receive them. Meh~
+        c @ 1...25 => Event::CtrlChar((b'a' + (c - 1) as u8) as char),
         _ => Event::Unknown(ch),
     }
 }
 
-fn find_closest(color: &theme::Color) -> u8 {
+fn find_closest(color: &Color) -> u8 {
     match *color {
-        theme::Color::Black => 0,
-        theme::Color::Red => 1,
-        theme::Color::Green => 2,
-        theme::Color::Yellow => 3,
-        theme::Color::Blue => 4,
-        theme::Color::Magenta => 5,
-        theme::Color::Cyan => 6,
-        theme::Color::White => 7,
-        theme::Color::Rgb(r, g, b) => {
+        Color::Black => 0,
+        Color::Red => 1,
+        Color::Green => 2,
+        Color::Yellow => 3,
+        Color::Blue => 4,
+        Color::Magenta => 5,
+        Color::Cyan => 6,
+        Color::White => 7,
+        Color::Rgb(r, g, b) => {
             let r = 6 * r as u16 / 256;
             let g = 6 * g as u16 / 256;
             let b = 6 * b as u16 / 256;
             (16 + 36 * r + 6 * g + b) as u8
         }
-        theme::Color::RgbLowRes(r, g, b) => (16 + 36 * r + 6 * g + b) as u8,
+        Color::RgbLowRes(r, g, b) => (16 + 36 * r + 6 * g + b) as u8,
     }
 }

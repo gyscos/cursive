@@ -7,7 +7,7 @@ pub struct Align {
 }
 
 impl Align {
-    /// Creates a new Align object from the given horizontal and vertical alignments.
+    /// Creates a new Align object from the given alignments.
     pub fn new(h: HAlign, v: VAlign) -> Self {
         Align { h: h, v: v }
     }
@@ -53,8 +53,11 @@ pub enum VAlign {
 }
 
 impl HAlign {
-    /// To draw a view with size `content` in a printer with size `container`, this returns the
-    /// offset to start printing the view at.
+    /// Returns the offset required to position a view.
+    ///
+    /// When drawing a view with size `content` when the available size is
+    /// `container`, printing at the resulting offset will align the view as
+    /// desired.
     pub fn get_offset(&self, content: usize, container: usize) -> usize {
         match *self {
             HAlign::Left => 0,
@@ -65,8 +68,11 @@ impl HAlign {
 }
 
 impl VAlign {
-    /// To draw a view with size `content` in a printer with size `container`, this returns the
-    /// offset to start printing the view at.
+    /// Returns the offset required to position a view.
+    ///
+    /// When drawing a view with size `content` when the available size is
+    /// `container`, printing at the resulting offset will align the view as
+    /// desired.
     pub fn get_offset(&self, content: usize, container: usize) -> usize {
         match *self {
             VAlign::Top => 0,

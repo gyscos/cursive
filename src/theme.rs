@@ -314,9 +314,11 @@ impl Color {
 }
 
 
-/// Loads a theme file, and returns its representation if everything worked well.
+/// Loads a theme file, and returns its representation.
 ///
-/// The file should be a toml file. All fields are optional. Here is are the possible entries:
+/// The file should be a toml file. All fields are optional.
+///
+/// Here are the possible entries:
 ///
 /// ```text
 /// # Every field in a theme file is optional.

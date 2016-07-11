@@ -117,7 +117,9 @@ impl View for LinearLayout {
         // Use pre-computed sizes
         let mut offset = Vec2::zero();
         for (i, child) in self.children.iter_mut().enumerate() {
-            child.view.draw(&printer.sub_printer(offset, child.size, i == self.focus));
+            let printer =
+                &printer.sub_printer(offset, child.size, i == self.focus);
+            child.view.draw(printer);
 
             // On the axis given by the orientation,
             // add the child size to the offset.
@@ -151,7 +153,8 @@ impl View for LinearLayout {
         let min_size = self.orientation.stack(min_sizes.iter());
 
         // Emulate 'non-strict inequality' on integers
-        // (default comparison on Vec2 is strict, and (0,1).cmp((1,1)) is undefined)
+        // (default comparison on Vec2 is strict,
+        // and (0,1).cmp((1,1)) is undefined)
         if !(min_size < size + (1, 1)) {
             // Error! Not enough space! Emergency procedures!
             return;
@@ -208,7 +211,7 @@ impl View for LinearLayout {
                         EventResult::Consumed(None)
                     }
                     Event::Shift(Key::Tab) if self.focus + 1 <
-                                                 self.children.len() => {
+                                              self.children.len() => {
                         self.focus += 1;
                         EventResult::Consumed(None)
                     }

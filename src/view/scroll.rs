@@ -75,13 +75,17 @@ impl ScrollBase {
         self.start_line = self.content_height - self.view_height;
     }
 
-    /// Scroll down by the given number of line, never going further than the bottom of the view.
+    /// Scroll down by the given number of line.
+    ///
+    /// Never further than the bottom of the view.
     pub fn scroll_down(&mut self, n: usize) {
         self.start_line = min(self.start_line + n,
                               self.content_height - self.view_height);
     }
 
-    /// Scroll up by the given number of lines, never going above the top of the view.
+    /// Scroll up by the given number of lines.
+    ///
+    /// Never above the top of the view.
     pub fn scroll_up(&mut self, n: usize) {
         self.start_line -= min(self.start_line, n);
     }
@@ -130,7 +134,8 @@ impl ScrollBase {
 
         // And draw the scrollbar if needed
         if self.view_height < self.content_height {
-            // We directly compute the size of the scrollbar (this allow use to avoid using floats).
+            // We directly compute the size of the scrollbar
+            // (that way we avoid using floats).
             // (ratio) * max_height
             // Where ratio is ({start or end} / content.height)
             let height = max(1,

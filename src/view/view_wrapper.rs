@@ -10,9 +10,10 @@ use event::{Event, EventResult};
 /// Default implementation forwards all calls to the child view.
 /// Overrides some methods as desired.
 pub trait ViewWrapper {
-    /// Get an immutable reference to the wrapped view, so that we can forward some calls to it.
+    /// Get an immutable reference to the wrapped view.
     fn get_view(&self) -> &View;
-    /// Get a mutable reference to the wrapped view, for the mutable methods.
+
+    /// Get a mutable reference to the wrapped view.
     fn get_view_mut(&mut self) -> &mut View;
 
     /// Wraps the draw method.
@@ -79,7 +80,7 @@ impl<T: ViewWrapper> View for T {
     }
 }
 
-/// Convenient macro to implement to two methods required for the ViewWrapper trait.
+/// Convenient macro to implement the ViewWrapper trait.
 ///
 /// # Examples
 ///

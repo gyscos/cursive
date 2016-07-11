@@ -11,8 +11,10 @@ pub enum Orientation {
 }
 
 impl Orientation {
-    /// Returns the component of the given vector corresponding to this orientation.
-    /// (Horizontal will return the x value, and Vertical will return the y value.)
+    /// Returns the component of `v` corresponding to this orientation.
+    ///
+    /// (`Horizontal` will return the x value,
+    /// and `Vertical` will return the y value.)
     pub fn get(&self, v: &Vec2) -> usize {
         match *self {
             Orientation::Horizontal => v.x,

@@ -141,7 +141,6 @@ pub enum Event {
     /// A non-character key was pressed with the Ctrl and Alt keys pressed
     CtrlAlt(Key),
 
-
     /// An unknown event was received.
     Unknown(i32),
 }
