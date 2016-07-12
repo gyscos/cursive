@@ -6,7 +6,7 @@ keywords = ["ncurses", "TUI"]
 license = "MIT"
 name = "cursive"
 readme = "Readme.md"
-repository = "https://github.com/Gyscos/cursive"
+repository = "https://github.com/gyscos/Cursive"
 version = "0.0.3"
 
 [dependencies]
