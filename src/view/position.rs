@@ -1,5 +1,5 @@
 use std::cmp::min;
-use vec::{ToVec2, Vec2};
+use vec::Vec2;
 
 /// Location of the view on screen
 #[derive(PartialEq,Debug,Clone)]
@@ -17,13 +17,13 @@ impl Position {
         Position::new(Offset::Center, Offset::Center)
     }
 
-    pub fn absolute<T: ToVec2>(offset: T) -> Self {
-        let offset = offset.to_vec2();
+    pub fn absolute<T: Into<Vec2>>(offset: T) -> Self {
+        let offset = offset.into();
         Position::new(Offset::Absolute(offset.x), Offset::Absolute(offset.y))
     }
 
-    pub fn parent<T: ToVec2>(offset: T) -> Self {
-        let offset = offset.to_vec2();
+    pub fn parent<T: Into<Vec2>>(offset: T) -> Self {
+        let offset = offset.into();
         Position::new(Offset::Parent(offset.x), Offset::Parent(offset.y))
     }
 

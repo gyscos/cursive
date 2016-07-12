@@ -7,7 +7,7 @@ use event::*;
 use theme::ColorStyle;
 use view::{Selector, TextView, View};
 use view::{Button, SizedView};
-use vec::{ToVec4, Vec2, Vec4};
+use vec::{Vec2, Vec4};
 use printer::Printer;
 
 use unicode_width::UnicodeWidthStr;
@@ -99,8 +99,8 @@ impl Dialog {
     }
 
     /// Sets the padding in the dialog (around content and buttons).
-    pub fn padding<T: ToVec4>(mut self, padding: T) -> Self {
-        self.padding = padding.to_vec4();
+    pub fn padding<T: Into<Vec4>>(mut self, padding: T) -> Self {
+        self.padding = padding.into();
 
         self
     }

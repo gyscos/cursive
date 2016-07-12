@@ -68,41 +68,30 @@ impl Vec2 {
     }
 }
 
-/// A generic trait for converting a value into a 2D vector.
-pub trait ToVec2 {
-    /// Converts self into a Vec2.
-    fn to_vec2(self) -> Vec2;
-}
-
-impl ToVec2 for Vec2 {
-    fn to_vec2(self) -> Vec2 {
-        self
+impl From<(usize, usize)> for Vec2 {
+    fn from((x, y): (usize, usize)) -> Self {
+        Vec2::new(x, y)
     }
 }
 
-impl ToVec2 for (i32, i32) {
-    fn to_vec2(self) -> Vec2 {
-        (self.0 as usize, self.1 as usize).to_vec2()
+impl From<(i32, i32)> for Vec2 {
+    fn from((x, y): (i32, i32)) -> Self {
+        (x as usize, y as usize).into()
     }
 }
 
-impl ToVec2 for (usize, usize) {
-    fn to_vec2(self) -> Vec2 {
-        Vec2::new(self.0, self.1)
+impl From<(u32, u32)> for Vec2 {
+    fn from((x, y): (u32, u32)) -> Self {
+        (x as usize, y as usize).into()
     }
 }
 
-impl ToVec2 for (u32, u32) {
-    fn to_vec2(self) -> Vec2 {
-        Vec2::new(self.0 as usize, self.1 as usize)
-    }
-}
 
-impl<T: ToVec2> Add<T> for Vec2 {
+impl<T: Into<Vec2>> Add<T> for Vec2 {
     type Output = Vec2;
 
     fn add(self, other: T) -> Vec2 {
-        let ov = other.to_vec2();
+        let ov = other.into();
         Vec2 {
             x: self.x + ov.x,
             y: self.y + ov.y,
@@ -110,11 +99,11 @@ impl<T: ToVec2> Add<T> for Vec2 {
     }
 }
 
-impl<T: ToVec2> Sub<T> for Vec2 {
+impl<T: Into<Vec2>> Sub<T> for Vec2 {
     type Output = Vec2;
 
     fn sub(self, other: T) -> Vec2 {
-        let ov = other.to_vec2();
+        let ov = other.into();
         Vec2 {
             x: self.x - ov.x,
             y: self.y - ov.y,
@@ -194,38 +183,23 @@ impl Vec4 {
     }
 }
 
-/// Generic trait for converting a value into a Vec4.
-pub trait ToVec4 {
-    /// Converts self to a Vec4.
-    fn to_vec4(self) -> Vec4;
-}
-
-impl ToVec4 for Vec4 {
-    fn to_vec4(self) -> Vec4 {
-        self
+impl From<(usize, usize, usize, usize)> for Vec4 {
+    fn from((left, right, top, bottom): (usize, usize, usize, usize)) -> Vec4 {
+        Vec4::new(left, right, top, bottom)
     }
 }
 
-impl ToVec4 for (usize, usize, usize, usize) {
-    fn to_vec4(self) -> Vec4 {
-        Vec4::new(self.0, self.1, self.2, self.3)
+impl From<(i32, i32, i32, i32)> for Vec4 {
+    fn from((left, right, top, bottom): (i32, i32, i32, i32)) -> Vec4 {
+        (left as usize, right as usize, top as usize, bottom as usize).into()
     }
 }
 
-impl ToVec4 for (i32, i32, i32, i32) {
-    fn to_vec4(self) -> Vec4 {
-        Vec4::new(self.0 as usize,
-                  self.1 as usize,
-                  self.2 as usize,
-                  self.3 as usize)
-    }
-}
-
-impl<T: ToVec4> Add<T> for Vec4 {
+impl<T: Into<Vec4>> Add<T> for Vec4 {
     type Output = Vec4;
 
     fn add(self, other: T) -> Vec4 {
-        let ov = other.to_vec4();
+        let ov = other.into();
 
         Vec4 {
             left: self.left + ov.left,
@@ -236,11 +210,11 @@ impl<T: ToVec4> Add<T> for Vec4 {
     }
 }
 
-impl<T: ToVec4> Sub<T> for Vec4 {
+impl<T: Into<Vec4>> Sub<T> for Vec4 {
     type Output = Vec4;
 
     fn sub(self, other: T) -> Vec4 {
-        let ov = other.to_vec4();
+        let ov = other.into();
 
         Vec4 {
             left: self.left - ov.left,

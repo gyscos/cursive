@@ -9,7 +9,7 @@ use cursive::event::{EventResult, Event};
 fn main() {
     let mut siv = Cursive::new();
 
-    siv.add_layer(BoxView::new((30, 10), KeyCodeView::new(10)));
+    siv.add_layer(BoxView::fixed_size((30, 10), KeyCodeView::new(10)));
 
     siv.run();
 }

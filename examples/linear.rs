@@ -17,7 +17,7 @@ fn main() {
             .child(TextView::new("Title").h_align(HAlign::Center))
             // Box the textview, so it doesn't get too wide.
             // A 0 height value means it will be unconstrained.
-            .child(BoxView::new((30,0), TextView::new(text))))
+            .child(BoxView::fixed_width(30, TextView::new(text))))
         .button("Quit", |s| s.quit())
         .h_align(HAlign::Center));
 

@@ -24,7 +24,7 @@ fn main() {
     let mut siv = Cursive::new();
 
     // Let's add a BoxView to keep the list at a reasonable size - it can scroll anyway.
-    siv.add_layer(Dialog::new(BoxView::new((20, 10), select))
+    siv.add_layer(Dialog::new(BoxView::fixed_size((20, 10), select))
                       .title("Where are you from?"));
 
     siv.run();

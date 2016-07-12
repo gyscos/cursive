@@ -7,7 +7,7 @@ use backend::Backend;
 use B;
 
 use theme::{ColorStyle, Effect, Theme};
-use vec::{ToVec2, Vec2};
+use vec::Vec2;
 
 /// Convenient interface to draw on a subset of the screen.
 #[derive(Clone)]
@@ -24,10 +24,10 @@ pub struct Printer {
 
 impl Printer {
     /// Creates a new printer on the given window.
-    pub fn new<T: ToVec2>(size: T, theme: Theme) -> Self {
+    pub fn new<T: Into<Vec2>>(size: T, theme: Theme) -> Self {
         Printer {
             offset: Vec2::zero(),
-            size: size.to_vec2(),
+            size: size.into(),
             focused: true,
             theme: theme,
         }
@@ -36,8 +36,8 @@ impl Printer {
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position relative to the window.
-    pub fn print<S: ToVec2>(&self, pos: S, text: &str) {
-        let p = pos.to_vec2();
+    pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) {
+        let p = pos.into();
         if p.y >= self.size.y || p.x >= self.size.x {
             return;
         }
@@ -59,8 +59,8 @@ impl Printer {
     }
 
     /// Prints a vertical line using the given character.
-    pub fn print_vline<T: ToVec2>(&self, start: T, len: usize, c: &str) {
-        let p = start.to_vec2();
+    pub fn print_vline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
+        let p = start.into();
         if p.y > self.size.y || p.x > self.size.x {
             return;
         }
@@ -73,8 +73,8 @@ impl Printer {
     }
 
     /// Prints a horizontal line using the given character.
-    pub fn print_hline<T: ToVec2>(&self, start: T, len: usize, c: &str) {
-        let p = start.to_vec2();
+    pub fn print_hline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
+        let p = start.into();
         if p.y > self.size.y || p.x > self.size.x {
             return;
         }
@@ -125,9 +125,9 @@ impl Printer {
     /// # let printer = Printer::new((6,4), theme::load_default());
     /// printer.print_box((0,0), (6,4));
     /// ```
-    pub fn print_box<T: ToVec2>(&self, start: T, size: T) {
-        let start_v = start.to_vec2();
-        let size_v = size.to_vec2() - (1, 1);
+    pub fn print_box<T: Into<Vec2>>(&self, start: T, size: T) {
+        let start_v = start.into();
+        let size_v = size.into() - (1, 1);
 
         self.print(start_v, "┌");
         self.print(start_v + size_v.keep_x(), "┐");
@@ -157,21 +157,21 @@ impl Printer {
                         f);
     }
 
-    pub fn print_hdelim<T: ToVec2>(&self, start: T, len: usize) {
-        let start = start.to_vec2();
+    pub fn print_hdelim<T: Into<Vec2>>(&self, start: T, len: usize) {
+        let start = start.into();
         self.print(start, "├");
         self.print_hline(start + (1, 0), len - 2, "─");
         self.print(start + (len - 1, 0), "┤");
     }
 
     /// Returns a printer on a subset of this one's area.
-    pub fn sub_printer<S: ToVec2>(&self, offset: S, size: S, focused: bool)
-                                  -> Printer {
-        let offset_v = offset.to_vec2();
+    pub fn sub_printer<S: Into<Vec2>>(&self, offset: S, size: S, focused: bool)
+                                      -> Printer {
+        let offset_v = offset.into();
         Printer {
             offset: self.offset + offset_v,
             // We can't be larger than what remains
-            size: Vec2::min(self.size - offset_v, size.to_vec2()),
+            size: Vec2::min(self.size - offset_v, size.into()),
             focused: self.focused && focused,
             theme: self.theme.clone(),
         }
