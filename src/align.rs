@@ -2,7 +2,9 @@
 
 /// Specifies the alignment along both horizontal and vertical directions.
 pub struct Align {
+    /// Horizontal alignment policy
     pub h: HAlign,
+    /// Vertical alignment policy
     pub v: VAlign,
 }
 
@@ -40,15 +42,21 @@ impl Align {
 
 /// Horizontal alignment
 pub enum HAlign {
+    /// Place the element to the left of available space
     Left,
+    /// Place the element horizontally in the center of available space
     Center,
+    /// Place the element to the right of available space
     Right,
 }
 
 /// Vertical alignment
 pub enum VAlign {
+    /// Place the element at the top of available space
     Top,
+    /// Place the element vertically in the center of available space
     Center,
+    /// Place the element at the bottom of available space
     Bottom,
 }
 

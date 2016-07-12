@@ -18,6 +18,7 @@ pub enum EventResult {
 }
 
 impl EventResult {
+    /// Convenient method to create `Consumed(Some(f))`
     pub fn with_cb<F: 'static + Fn(&mut Cursive)>(f: F) -> Self {
         EventResult::Consumed(Some(Rc::new(f)))
     }

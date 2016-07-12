@@ -8,15 +8,10 @@ pub struct FullView<T: View> {
     orientation: Option<Orientation>,
 }
 
-#[derive(Debug, PartialEq)]
-enum Type {
-    FullWidth,
-    FullHeight,
-    FullScreen,
-}
-
 impl<T: View> FullView<T> {
     /// Wraps the given view into a new FullView.
+    ///
+    /// It will always take the entire space available.
     pub fn new(view: T) -> Self {
         FullView {
             view: view,
@@ -24,6 +19,9 @@ impl<T: View> FullView<T> {
         }
     }
 
+    /// Creates a new wrapper around `view` with full width.
+    ///
+    /// It will always take the maximum width available.
     pub fn full_width(view: T) -> Self {
         FullView {
             view: view,
@@ -31,6 +29,9 @@ impl<T: View> FullView<T> {
         }
     }
 
+    /// Creates a new wrapper around `view` with full height.
+    ///
+    /// It will always take the maximum height available.
     pub fn full_height(view: T) -> Self {
         FullView {
             view: view,

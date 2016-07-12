@@ -11,8 +11,11 @@ use toml;
 
 use B;
 
+/// Text effect
 pub enum Effect {
+    /// No effect
     Simple,
+    /// Reverses foreground and background colors
     Reverse,
 }
 
@@ -236,17 +239,45 @@ fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
 /// Represents a color used by the theme.
 #[derive(Clone,Debug)]
 pub enum Color {
-    /// Color ID used by ncurses.
+    /// Black color
+    ///
+    /// Color #0
     Black,
+    /// Red color
+    ///
+    /// Color #1
     Red,
+    /// Green color
+    ///
+    /// Color #2
     Green,
+    /// Yellow color (Red + Green)
+    ///
+    /// Color #3
     Yellow,
+    /// Blue color
+    ///
+    /// Color #4
     Blue,
+    /// Magenta color (Red + Blue)
+    ///
+    /// Color #5
     Magenta,
+    /// Cyan color (Green + Blue)
+    ///
+    /// Color #6
     Cyan,
+    /// White color (Red + Green + Blue)
+    ///
+    /// Color #7
     White,
-    // 24-bit color
+    /// True-color, 24-bit.
     Rgb(u8, u8, u8),
+    /// Low-resolution
+    ///
+    /// Each value should be `<= 5` (you'll get panics otherwise).
+    ///
+    /// These 216 possible colors are part of the default color palette.
     RgbLowRes(u8, u8, u8),
 }
 

@@ -26,10 +26,17 @@ impl<T: View> ShadowView<T> {
         (1 + self.left_padding as usize, 1 + self.top_padding as usize)
     }
 
+    /// If set, adds an empty column to the left of the view.
+    ///
+    /// Default to true.
     pub fn left_padding(mut self, value: bool) -> Self {
         self.left_padding = value;
         self
     }
+
+    /// If set, adds an empty row at the top of the view.
+    ///
+    /// Default to true.
     pub fn top_padding(mut self, value: bool) -> Self {
         self.top_padding = value;
         self

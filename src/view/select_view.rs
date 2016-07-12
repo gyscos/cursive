@@ -49,15 +49,20 @@ impl<T: 'static> SelectView<T> {
         }
     }
 
+    /// Sets a callback to be used when an item is selected.
+    ///
+    /// (When ENTER is pressed on an item).
     pub fn set_on_select<F>(&mut self, cb: F)
         where F: Fn(&mut Cursive, &T) + 'static
     {
         self.select_cb = Some(Rc::new(cb));
     }
 
-    /// Sets a function to be called when an item is selected.
+    /// Sets a callback to be used when an item is selected.
     ///
-    /// (When ENTER is pressed).
+    /// (When ENTER is pressed on an item).
+    ///
+    /// Chainable variant.
     pub fn on_select<F>(mut self, cb: F) -> Self
         where F: Fn(&mut Cursive, &T) + 'static
     {

@@ -2,12 +2,16 @@ use view::{IdView, View, ViewWrapper};
 use printer::Printer;
 use vec::Vec2;
 
+/// Wrapper around a view that remembers its position.
 pub struct TrackedView<T: View> {
+    /// Wrapped view.
     pub view: T,
+    /// Last position the view was located.
     pub offset: Vec2,
 }
 
 impl<T: View> TrackedView<T> {
+    /// Creates a new `TrackedView` around `view`.
     pub fn new(view: T) -> Self {
         TrackedView {
             view: view,
@@ -15,6 +19,7 @@ impl<T: View> TrackedView<T> {
         }
     }
 
+    /// Wraps itself in a `IdView` for easy retrieval.
     pub fn with_id(self, id: &str) -> IdView<Self> {
         IdView::new(id, self)
     }

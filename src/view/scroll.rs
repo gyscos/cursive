@@ -7,13 +7,24 @@ use printer::Printer;
 /// Provide scrolling functionalities to a view.
 #[derive(Default)]
 pub struct ScrollBase {
+    /// First line visible
     pub start_line: usize,
+    /// Content height
     pub content_height: usize,
+    /// Number of lines displayed
     pub view_height: usize,
+    /// Padding for the scrollbar
+    ///
+    /// If present, the scrollbar will be shifted
+    /// `scrollbar_padding` columns to the left.
+    ///
+    /// (Useful when each item includes its own side borders,
+    /// to draw the scrollbar inside.)
     pub scrollbar_padding: usize,
 }
 
 impl ScrollBase {
+    /// Creates a new, uninitialized scrollbar.
     pub fn new() -> Self {
         ScrollBase {
             start_line: 0,
@@ -23,6 +34,11 @@ impl ScrollBase {
         }
     }
 
+    /// Shifts the scrollbar toward the inside of the view.
+    ///
+    /// Used by views that draw their side borders in the children.
+    /// Pushing the scrollbar to the left allows it to stay inside
+    /// the borders.
     pub fn bar_padding(mut self, padding: usize) -> Self {
         self.scrollbar_padding = padding;
         self

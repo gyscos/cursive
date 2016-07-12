@@ -55,6 +55,9 @@ impl Dialog {
         }
     }
 
+    /// Convenient method to create an infobox.
+    ///
+    /// It will contain the given text and a `Ok` dismiss button.
     pub fn info(text: &str) -> Self {
         Self::new(TextView::new(text)).dismiss_button("Ok")
     }

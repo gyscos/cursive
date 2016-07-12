@@ -144,6 +144,13 @@ impl Printer {
                          "│");
     }
 
+    /// Apply a selection style and call the given function.
+    ///
+    /// * If `selection` is `false`, simply uses `ColorStyle::Primary`.
+    /// * If `selection` is `true`:
+    ///     * If the printer currently has the focus,
+    ///       uses `ColorStyle::Highlight`.
+    ///     * Otherwise, uses `ColorStyle::HighlightInactive`.
     pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
         self.with_color(if selection {
                             if self.focused {
@@ -157,6 +164,7 @@ impl Printer {
                         f);
     }
 
+    /// Prints a horizontal delimiter with side border `├` and `┤`.
     pub fn print_hdelim<T: Into<Vec2>>(&self, start: T, len: usize) {
         let start = start.into();
         self.print(start, "├");

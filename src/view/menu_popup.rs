@@ -13,7 +13,7 @@ use align::Align;
 use vec::Vec2;
 use event::{Callback, Event, EventResult, Key};
 
-/// fd
+/// Popup that shows a list of items.
 pub struct MenuPopup {
     menu: Rc<MenuTree>,
     focus: usize,
@@ -24,6 +24,7 @@ pub struct MenuPopup {
 }
 
 impl MenuPopup {
+    /// Creates a new `MenuPopup` using the given menu tree.
     pub fn new(menu: Rc<MenuTree>) -> Self {
         MenuPopup {
             menu: menu,
@@ -82,11 +83,19 @@ impl MenuPopup {
         self
     }
 
+    /// Sets a callback to be used when this view is actively dismissed.
+    ///
+    /// (When the user hits <ESC>)
     pub fn on_dismiss<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
         self.on_dismiss = Some(Rc::new(f));
         self
     }
 
+    /// Sets a callback to be used when a leaf is activated.
+    ///
+    /// Will also be called if a leaf from a subtree is activated.
+    ///
+    /// Usually used to hide the parent view.
     pub fn on_action<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
         self.on_action = Some(Rc::new(f));
         self
@@ -103,6 +112,7 @@ impl MenuPopup {
             .unwrap_or(1);
         let offset = Vec2::new(max_width, self.focus);
         let action_cb = self.on_action.clone();
+
         EventResult::with_cb(move |s| {
             let action_cb = action_cb.clone();
             s.screen_mut()

@@ -16,35 +16,37 @@ pub trait ViewWrapper {
     /// Get a mutable reference to the wrapped view.
     fn get_view_mut(&mut self) -> &mut View;
 
-    /// Wraps the draw method.
+    /// Wraps the `draw` method.
     fn wrap_draw(&mut self, printer: &Printer) {
         self.get_view_mut().draw(printer);
     }
 
-    /// Wraps the get_min_size method.
+    /// Wraps the `get_min_size` method.
     fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
         self.get_view_mut().get_min_size(req)
     }
 
-    /// Wraps the on_event method.
+    /// Wraps the `on_event` method.
     fn wrap_on_event(&mut self, ch: Event) -> EventResult {
         self.get_view_mut().on_event(ch)
     }
 
-    /// Wraps the layout method
+    /// Wraps the `layout` method.
     fn wrap_layout(&mut self, size: Vec2) {
         self.get_view_mut().layout(size);
     }
 
-    /// Wraps the take_focus method
+    /// Wraps the `take_focus` method.
     fn wrap_take_focus(&mut self) -> bool {
         self.get_view_mut().take_focus()
     }
 
+    /// Wraps the `find` method.
     fn wrap_find(&mut self, selector: &Selector) -> Option<&mut Any> {
         self.get_view_mut().find(selector)
     }
 
+    /// Wraps the `needs_relayout` method.
     fn wrap_needs_relayout(&self) -> bool {
         self.get_view().needs_relayout()
     }
