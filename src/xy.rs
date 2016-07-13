@@ -9,13 +9,10 @@ pub struct XY<T> {
     pub y: T,
 }
 
-impl <T> XY<T> {
+impl<T> XY<T> {
     /// Creates a new `XY` from the given values.
     pub fn new(x: T, y: T) -> Self {
-        XY {
-            x: x,
-            y: y,
-        }
+        XY { x: x, y: y }
     }
 
     /// Destructure self into a pair.
@@ -34,14 +31,14 @@ impl <T> XY<T> {
     }
 }
 
-impl <T: Copy> XY<T> {
+impl<T: Copy> XY<T> {
     /// Creates a `XY` with both `x` and `y` set to `value`.
     pub fn both(value: T) -> Self {
         XY::new(value, value)
     }
 }
 
-impl <T> From<(T, T)> for XY<T> {
+impl<T> From<(T, T)> for XY<T> {
     fn from((x, y): (T, T)) -> Self {
         XY::new(x, y)
     }
