@@ -68,6 +68,6 @@ impl<T: View> ViewWrapper for BoxView<T> {
 
             Vec2::new(self.size.x.unwrap_or(child_size.x),
                       self.size.y.unwrap_or(child_size.y))
-        }
+        }.or_min(req)
     }
 }

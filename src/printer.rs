@@ -175,11 +175,11 @@ impl Printer {
     /// Returns a printer on a subset of this one's area.
     pub fn sub_printer<S: Into<Vec2>>(&self, offset: S, size: S, focused: bool)
                                       -> Printer {
-        let offset_v = offset.into();
+        let offset = offset.into().or_min(self.size);
         Printer {
-            offset: self.offset + offset_v,
+            offset: self.offset + offset,
             // We can't be larger than what remains
-            size: Vec2::min(self.size - offset_v, size.into()),
+            size: Vec2::min(self.size - offset, size.into()),
             focused: self.focused && focused,
             theme: self.theme.clone(),
         }

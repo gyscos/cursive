@@ -1,8 +1,12 @@
+use XY;
 use view::View;
+use view::SizeCache;
 use vec::Vec2;
 use printer::Printer;
 use orientation::Orientation;
 use event::{Event, EventResult, Key};
+
+use std::cmp::min;
 
 /// Arranges its children linearly according to its orientation.
 pub struct LinearLayout {
@@ -10,13 +14,20 @@ pub struct LinearLayout {
     orientation: Orientation,
     focus: usize,
 
-    last_size: Option<Vec2>,
+    cache: Option<XY<SizeCache>>,
 }
 
 struct Child {
     view: Box<View>,
     size: Vec2,
     weight: usize,
+}
+
+impl Child {
+    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
+        self.size = self.view.get_min_size(req);
+        self.size
+    }
 }
 
 impl LinearLayout {
@@ -26,7 +37,7 @@ impl LinearLayout {
             children: Vec::new(),
             orientation: orientation,
             focus: 0,
-            last_size: None,
+            cache: None,
         }
     }
 
@@ -46,9 +57,14 @@ impl LinearLayout {
             size: Vec2::zero(),
             weight: 0,
         });
-        self.last_size = None;
+        self.invalidate();
 
         self
+    }
+
+    // Invalidate the view, to request a layout next time
+    fn invalidate(&mut self) {
+        self.cache = None;
     }
 
     /// Creates a new vertical layout.
@@ -59,6 +75,31 @@ impl LinearLayout {
     /// Creates a new horizontal layout.
     pub fn horizontal() -> Self {
         LinearLayout::new(Orientation::Horizontal)
+    }
+
+    // If the cache can be used, return the cached size.
+    // Otherwise, return None.
+    fn get_cache(&self, req: Vec2) -> Option<Vec2> {
+        match self.cache {
+            None => None,
+            Some(ref cache) => {
+                // Is our cache even valid?
+                // Also, is any child invalidating the layout?
+                if cache.x.accept(req.x) && cache.y.accept(req.y) &&
+                   self.children_are_sleeping() {
+                    Some(cache.map(|s| s.value))
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
+    fn children_are_sleeping(&self) -> bool {
+        !self.children
+            .iter()
+            .map(|c| &*c.view)
+            .any(View::needs_relayout)
     }
 }
 
@@ -129,23 +170,29 @@ impl View for LinearLayout {
     }
 
     fn needs_relayout(&self) -> bool {
-        if self.last_size == None {
+        if self.cache.is_none() {
             return true;
         }
 
-        for child in &self.children {
-            if child.view.needs_relayout() {
-                return true;
-            }
-        }
-
-        false
+        !self.children_are_sleeping()
     }
 
     fn layout(&mut self, size: Vec2) {
-        // Compute the very minimal required size
-        // Look how mean we are: we offer the whole size to every child.
-        // As if they could get it all.
+        // If we can get away without breaking a sweat, you can bet we will.
+        if self.get_cache(size).is_none() {
+            self.get_min_size(size);
+        }
+
+        for child in &mut self.children {
+            // println_stderr!("Child size: {:?}", child.size);
+            child.view.layout(child.size);
+        }
+
+        /*
+
+        // Need to compute things again...
+        self.get_min_size(size);
+
         let min_sizes: Vec<Vec2> = self.children
             .iter_mut()
             .map(|child| Vec2::min(size, child.view.get_min_size(size)))
@@ -180,26 +227,104 @@ impl View for LinearLayout {
             child.size = child_size;
             child.view.layout(child_size);
         }
+        */
     }
 
     fn get_min_size(&mut self, req: Vec2) -> Vec2 {
+        // Did anything change since last time?
+        if let Some(size) = self.get_cache(req) {
+            return size;
+        }
+
         // First, make a naive scenario: everything will work fine.
         let sizes: Vec<Vec2> = self.children
             .iter_mut()
-            .map(|view| view.view.get_min_size(req))
+            .map(|c| c.get_min_size(req))
             .collect();
-        self.orientation.stack(sizes.iter())
+        // println_stderr!("Ideal sizes: {:?}", sizes);
+        let ideal = self.orientation.stack(sizes.iter());
+        // println_stderr!("Ideal result: {:?}", ideal);
 
 
-        // Did it work? Champagne!
+        // Does it fit?
+        if ideal.fits_in(req) {
+            // Champagne!
+            self.cache = Some(SizeCache::build(ideal, req));
+            return ideal;
+        }
+
+        // Ok, so maybe it didn't.
+        // Budget cuts, everyone.
+        let budget_req = req.with(self.orientation, 1);
+        // println_stderr!("Budget req: {:?}", budget_req);
+
+        let min_sizes: Vec<Vec2> = self.children
+            .iter_mut()
+            .map(|c| c.get_min_size(budget_req))
+            .collect();
+        let desperate = self.orientation.stack(min_sizes.iter());
+        // println_stderr!("Min sizes: {:?}", min_sizes);
+        // println_stderr!("Desperate: {:?}", desperate);
+
+        // I really hope it fits this time...
+        if !desperate.fits_in(req) {
+            // Just give up...
+            // println_stderr!("Seriously? {:?} > {:?}???", desperate, req);
+            self.cache = Some(SizeCache::build(desperate, req));
+            return desperate;
+        }
+
+        // This here is how much we're generously offered
+        let mut available = self.orientation.get(&(req - desperate));
+        // println_stderr!("Available: {:?}", available);
+
+        // Here, we have to make a compromise between the ideal
+        // and the desperate solutions.
+        let mut overweight: Vec<(usize, usize)> = sizes.iter()
+            .map(|v| self.orientation.get(v))
+            .zip(min_sizes.iter().map(|v| self.orientation.get(v)))
+            .map(|(a, b)| a - b)
+            .enumerate()
+            .collect();
+        // println_stderr!("Overweight: {:?}", overweight);
+
+        // So... distribute `available` to reduce the overweight...
+        // TODO: use child weight in the distribution...
+        overweight.sort_by_key(|&(_, weight)| weight);
+        let mut allocations = vec![0; overweight.len()];
+
+        for (i, &(j, weight)) in overweight.iter().enumerate() {
+            let remaining = overweight.len() - i;
+            let budget = available / remaining;
+            let spent = min(budget, weight);
+            allocations[j] = spent;
+            available -= spent;
+        }
+        // println_stderr!("Allocations: {:?}", allocations);
+
+        // Final lengths are the minimum ones + allocations
+        let final_lengths: Vec<Vec2> = min_sizes.iter()
+            .map(|v| self.orientation.get(v))
+            .zip(allocations.iter())
+            .map(|(a, b)| a + b)
+            .map(|l| req.with(self.orientation, l))
+            .collect();
+        // println_stderr!("Final sizes: {:?}", final_lengths);
+
+        let final_sizes: Vec<Vec2> = self.children
+            .iter_mut()
+            .enumerate()
+            .map(|(i, c)| {
+                c.get_min_size(final_lengths[i])
+            })
+            .collect();
+        // println_stderr!("Final sizes2: {:?}", final_sizes);
 
 
-        // TODO: Ok, so maybe it didn't.
-        // Last chance: did someone lie about his needs?
-        // Could we squash him a little?
-        // (Maybe he'll just scroll and it'll be fine?)
+        let compromise = self.orientation.stack(final_sizes.iter());
+        self.cache = Some(SizeCache::build(compromise, req));
 
-        // Find out who's fluid, if any.
+        compromise
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {

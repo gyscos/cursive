@@ -1,6 +1,7 @@
 use XY;
 use vec::Vec2;
 use view::View;
+use view::SizeCache;
 use printer::Printer;
 use align::*;
 use event::*;
@@ -9,38 +10,6 @@ use super::scroll::ScrollBase;
 use unicode_width::UnicodeWidthStr;
 use unicode_segmentation::UnicodeSegmentation;
 
-#[derive(PartialEq, Debug, Clone)]
-struct SizeCache {
-    value: usize,
-    // If unconstrained, any request larger than this value
-    // would return the same size.
-    constrained: bool,
-}
-
-impl SizeCache {
-    fn new(value: usize, constrained: bool) -> Self {
-        SizeCache {
-            value: value,
-            constrained: constrained,
-        }
-    }
-
-    fn accept(&self, size: usize) -> bool {
-        if size < self.value {
-            false
-        } else if size == self.value {
-            true
-        } else {
-            !self.constrained
-        }
-    }
-}
-
-fn cache_size(size: Vec2, req: Vec2) -> XY<SizeCache> {
-    XY::new(SizeCache::new(size.x, size.x == req.x),
-            SizeCache::new(size.y, size.y == req.y))
-
-}
 
 /// A simple view showing a fixed text
 pub struct TextView {
@@ -147,7 +116,7 @@ impl TextView {
             // Our resulting size.
             let my_size =
                 size.or_min((self.width.unwrap_or(0), self.rows.len()));
-            self.last_size = Some(cache_size(my_size, size));
+            self.last_size = Some(SizeCache::build(my_size, size));
         }
     }
 
@@ -267,7 +236,7 @@ impl View for TextView {
 
     fn get_min_size(&mut self, size: Vec2) -> Vec2 {
         self.compute_rows(size);
-        Vec2::new(self.width.unwrap_or(0), self.rows.len())
+        size.or_min((self.width.unwrap_or(0), self.rows.len()))
     }
 
     fn take_focus(&mut self) -> bool {

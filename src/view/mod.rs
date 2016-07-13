@@ -30,6 +30,7 @@ mod tracked_view;
 
 use std::any::Any;
 
+use XY;
 use event::{Event, EventResult};
 use vec::Vec2;
 use printer::Printer;
@@ -104,6 +105,49 @@ pub trait View {
         false
     }
 }
+
+/// Cache around a one-dimensional layout result
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub struct SizeCache {
+    /// Cached value
+    pub value: usize,
+    /// `true` if the last size was constrained.
+    ///
+    /// If unconstrained, any request larger than this value
+    /// would return the same size.
+    pub constrained: bool,
+}
+
+impl SizeCache {
+    /// Creates a new sized cache
+    pub fn new(value: usize, constrained: bool) -> Self {
+        SizeCache {
+            value: value,
+            constrained: constrained,
+        }
+    }
+
+    /// Returns `true` if `self` is still valid for the given `request`.
+    pub fn accept(&self, request: usize) -> bool {
+        if request < self.value {
+            false
+        } else if request == self.value {
+            true
+        } else {
+            !self.constrained
+        }
+    }
+
+    /// Creates a new bi-dimensional cache.
+    ///
+    /// * `size` must fit inside `req`.
+    /// * for each dimension, `constrained = (size == req)`
+    fn build(size: Vec2, req: Vec2) -> XY<Self> {
+        XY::new(SizeCache::new(size.x, size.x == req.x),
+        SizeCache::new(size.y, size.y == req.y))
+    }
+}
+
 
 /// Selects a single view (if any) in the tree.
 pub enum Selector<'a> {

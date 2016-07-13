@@ -1,5 +1,6 @@
 //! Points on the 2D character grid.
 use XY;
+use orientation::Orientation;
 
 use std::ops::{Add, Div, Mul, Sub};
 use std::cmp::{Ordering, max, min};
@@ -69,6 +70,21 @@ impl Vec2 {
     /// Returns (self.x+other.x, max(self.y,other.y))
     pub fn stack_horizontal(&self, other: &Vec2) -> Vec2 {
         Vec2::new(self.x + other.x, max(self.y, other.y))
+    }
+
+    /// Returns `true` if `self` could fit inside `other`.
+    ///
+    /// Shortcut for `self.x <= other.x && self.y <= other.y`.
+    pub fn fits_in<T: Into<Vec2>>(&self, other: T) -> bool {
+        let other = other.into();
+        self.x <= other.x && self.y <= other.y
+    }
+
+    /// Returns a new `Vec2` with the axis `o` set to `value`.
+    pub fn with(&self, o: Orientation, value: usize) -> Self {
+        let mut other = self.clone();
+        *o.get_ref(&mut other) = value;
+        other
     }
 }
 

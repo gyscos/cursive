@@ -54,4 +54,11 @@ impl Orientation {
             }
         }
     }
+
+    /// Creates a new `Vec2` with `value` in `self`'s axis.
+    pub fn make_vec(&self, value: usize) -> Vec2 {
+        let mut result = Vec2::zero();
+        *self.get_ref(&mut result) = value;
+        result
+    }
 }
