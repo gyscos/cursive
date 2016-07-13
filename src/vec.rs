@@ -249,3 +249,19 @@ impl Mul<usize> for Vec4 {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Vec2;
+
+    #[test]
+    fn test_from() {
+        let vi32 = Vec2::from((4i32, 5i32));
+        let vu32 = Vec2::from((4u32, 5u32));
+
+        let vusize = Vec2::from((4usize, 5usize));
+        let vvec = Vec2::from(Vec2::new(4, 5));
+
+        assert_eq!(vi32 - vu32, vusize - vvec);
+    }
+}
