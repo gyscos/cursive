@@ -1,21 +1,11 @@
 use std::cmp::min;
+use XY;
 use vec::Vec2;
 
 /// Location of the view on screen
-#[derive(PartialEq,Debug,Clone)]
-pub struct Position {
-    /// Horizontal offset
-    pub x: Offset,
-    /// Vertical offset
-    pub y: Offset,
-}
+pub type Position = XY<Offset>;
 
 impl Position {
-    /// Creates a new position with the given offsets.
-    pub fn new(x: Offset, y: Offset) -> Self {
-        Position { x: x, y: y }
-    }
-
     /// Returns a position centered on both axis.
     pub fn center() -> Self {
         Position::new(Offset::Center, Offset::Center)

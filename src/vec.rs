@@ -1,16 +1,11 @@
 //! Points on the 2D character grid.
+use XY;
 
 use std::ops::{Add, Div, Mul, Sub};
 use std::cmp::{Ordering, max, min};
 
 /// Simple 2D size, in characters.
-#[derive(Clone,Copy,PartialEq,Debug)]
-pub struct Vec2 {
-    /// X coordinate (column), from left to right.
-    pub x: usize,
-    /// Y coordinate (row), from top to bottom.
-    pub y: usize,
-}
+pub type Vec2 = XY<usize>;
 
 impl PartialOrd for Vec2 {
     fn partial_cmp(&self, other: &Vec2) -> Option<Ordering> {
@@ -27,19 +22,28 @@ impl PartialOrd for Vec2 {
 }
 
 impl Vec2 {
-    /// Creates a new Vec2 from coordinates.
-    pub fn new(x: usize, y: usize) -> Self {
-        Vec2 { x: x, y: y }
-    }
-
     /// Returns a new Vec2 that is a maximum per coordinate.
-    pub fn max(a: Self, b: Self) -> Self {
+    pub fn max<A: Into<Vec2>, B: Into<Vec2>>(a: A, b: B) -> Self {
+        let a = a.into();
+        let b = b.into();
         Vec2::new(max(a.x, b.x), max(a.y, b.y))
     }
 
     /// Returns a new Vec2 that is no larger than any input in both dimensions.
-    pub fn min(a: Self, b: Self) -> Self {
+    pub fn min<A: Into<Vec2>, B: Into<Vec2>>(a: A, b: B) -> Self {
+        let a = a.into();
+        let b = b.into();
         Vec2::new(min(a.x, b.x), min(a.y, b.y))
+    }
+
+    /// Returns the minimum of `self` and `other`.
+    pub fn or_min<T: Into<Vec2>>(self, other: T) -> Self {
+        Vec2::min(self, other)
+    }
+
+    /// Returns the maximum of `self` and `other`.
+    pub fn or_max<T: Into<Vec2>>(self, other: T) -> Self {
+        Vec2::max(self, other)
     }
 
     /// Returns a vector with the X component of self, and y=0.
@@ -65,12 +69,6 @@ impl Vec2 {
     /// Returns (self.x+other.x, max(self.y,other.y))
     pub fn stack_horizontal(&self, other: &Vec2) -> Vec2 {
         Vec2::new(self.x + other.x, max(self.y, other.y))
-    }
-}
-
-impl From<(usize, usize)> for Vec2 {
-    fn from((x, y): (usize, usize)) -> Self {
-        Vec2::new(x, y)
     }
 }
 

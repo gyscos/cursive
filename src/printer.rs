@@ -125,7 +125,7 @@ impl Printer {
     /// # let printer = Printer::new((6,4), theme::load_default());
     /// printer.print_box((0,0), (6,4));
     /// ```
-    pub fn print_box<T: Into<Vec2>>(&self, start: T, size: T) {
+    pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S) {
         let start_v = start.into();
         let size_v = size.into() - (1, 1);
 

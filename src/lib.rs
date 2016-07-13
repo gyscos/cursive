@@ -47,11 +47,14 @@ pub mod menu;
 
 // This probably doesn't need to be public?
 mod menubar;
+mod xy;
 
 mod div;
 mod utf8;
 
 mod backend;
+
+pub use xy::XY;
 
 use backend::{Backend, NcursesBackend};
 

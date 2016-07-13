@@ -1,3 +1,4 @@
+use XY;
 use vec::Vec2;
 use view::View;
 use printer::Printer;
@@ -8,6 +9,39 @@ use super::scroll::ScrollBase;
 use unicode_width::UnicodeWidthStr;
 use unicode_segmentation::UnicodeSegmentation;
 
+#[derive(PartialEq, Debug, Clone)]
+struct SizeCache {
+    value: usize,
+    // If unconstrained, any request larger than this value
+    // would return the same size.
+    constrained: bool,
+}
+
+impl SizeCache {
+    fn new(value: usize, constrained: bool) -> Self {
+        SizeCache {
+            value: value,
+            constrained: constrained,
+        }
+    }
+
+    fn accept(&self, size: usize) -> bool {
+        if size < self.value {
+            false
+        } else if size == self.value {
+            true
+        } else {
+            !self.constrained
+        }
+    }
+}
+
+fn cache_size(size: Vec2, req: Vec2) -> XY<SizeCache> {
+    XY::new(SizeCache::new(size.x, size.x == req.x),
+            SizeCache::new(size.y, size.y == req.y))
+
+}
+
 /// A simple view showing a fixed text
 pub struct TextView {
     content: String,
@@ -17,7 +51,7 @@ pub struct TextView {
 
     // ScrollBase make many scrolling-related things easier
     scrollbase: ScrollBase,
-    last_size: Option<Vec2>,
+    last_size: Option<XY<SizeCache>>,
     width: Option<usize>,
 }
 
@@ -87,13 +121,7 @@ impl TextView {
     fn is_cache_valid(&self, size: Vec2) -> bool {
         match self.last_size {
             None => false,
-            Some(last) => {
-                if last.x != size.x {
-                    false
-                } else {
-                    (last.y < self.rows.len()) == (size.y < self.rows.len())
-                }
-            }
+            Some(ref last) => last.x.accept(size.x) && last.y.accept(size.y),
         }
     }
 
@@ -116,7 +144,10 @@ impl TextView {
                 .max()
                 .map(|w| w + scrollbar);
 
-            self.last_size = Some(size);
+            // Our resulting size.
+            let my_size =
+                size.or_min((self.width.unwrap_or(0), self.rows.len()));
+            self.last_size = Some(cache_size(my_size, size));
         }
     }
 
@@ -231,14 +262,10 @@ impl View for TextView {
     }
 
     fn needs_relayout(&self) -> bool {
-        self.last_size == None
+        self.last_size.is_none()
     }
 
     fn get_min_size(&mut self, size: Vec2) -> Vec2 {
-        // If we have no directive, ask for a single big line.
-        // TODO: what if the text has newlines??
-        // Don't _force_ the max width, but take it if we have to.
-
         self.compute_rows(size);
         Vec2::new(self.width.unwrap_or(0), self.rows.len())
     }

@@ -1,5 +1,6 @@
 use std::cmp;
 
+use XY;
 use vec::Vec2;
 use super::{View, ViewWrapper};
 
@@ -13,8 +14,7 @@ use super::{View, ViewWrapper};
 /// let view = BoxView::fixed_size((20,4), TextView::new("Hello!"));
 /// ```
 pub struct BoxView<T: View> {
-    width: Option<usize>,
-    height: Option<usize>,
+    size: XY<Option<usize>>,
     view: T,
 }
 
@@ -31,8 +31,7 @@ impl<T: View> BoxView<T> {
     /// `None` values will use the wrapped view's preferences.
     pub fn new(width: Option<usize>, height: Option<usize>, view: T) -> Self {
         BoxView {
-            width: width,
-            height: height,
+            size: (width, height).into(),
             view: view,
         }
     }
@@ -60,15 +59,15 @@ impl<T: View> ViewWrapper for BoxView<T> {
 
     fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
 
-        if let (Some(w), Some(h)) = (self.width, self.height) {
+        if let (Some(w), Some(h)) = self.size.pair() {
             Vec2::new(w, h)
         } else {
-            let req = Vec2::new(min(req.x, self.width),
-            min(req.y, self.height));
+            let req = Vec2::new(min(req.x, self.size.x),
+                                min(req.y, self.size.y));
             let child_size = self.view.get_min_size(req);
 
-            Vec2::new(self.width.unwrap_or(child_size.x),
-            self.height.unwrap_or(child_size.y))
+            Vec2::new(self.size.x.unwrap_or(child_size.x),
+                      self.size.y.unwrap_or(child_size.y))
         }
     }
 }
