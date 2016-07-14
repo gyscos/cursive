@@ -9,6 +9,7 @@ use std::cmp::{Ordering, max, min};
 pub type Vec2 = XY<usize>;
 
 impl PartialOrd for Vec2 {
+    /// `a < b` <=> `a.x < b.x && a.y < b.y`
     fn partial_cmp(&self, other: &Vec2) -> Option<Ordering> {
         if self == other {
             Some(Ordering::Equal)
@@ -27,14 +28,14 @@ impl Vec2 {
     pub fn max<A: Into<Vec2>, B: Into<Vec2>>(a: A, b: B) -> Self {
         let a = a.into();
         let b = b.into();
-        Vec2::new(max(a.x, b.x), max(a.y, b.y))
+        a.zip_map(b, max)
     }
 
     /// Returns a new Vec2 that is no larger than any input in both dimensions.
     pub fn min<A: Into<Vec2>, B: Into<Vec2>>(a: A, b: B) -> Self {
         let a = a.into();
         let b = b.into();
-        Vec2::new(min(a.x, b.x), min(a.y, b.y))
+        a.zip_map(b, min)
     }
 
     /// Returns the minimum of `self` and `other`.
@@ -105,11 +106,7 @@ impl<T: Into<Vec2>> Add<T> for Vec2 {
     type Output = Vec2;
 
     fn add(self, other: T) -> Vec2 {
-        let ov = other.into();
-        Vec2 {
-            x: self.x + ov.x,
-            y: self.y + ov.y,
-        }
+        self.zip_map(other.into(), Add::add)
     }
 }
 
@@ -117,11 +114,7 @@ impl<T: Into<Vec2>> Sub<T> for Vec2 {
     type Output = Vec2;
 
     fn sub(self, other: T) -> Vec2 {
-        let ov = other.into();
-        Vec2 {
-            x: self.x - ov.x,
-            y: self.y - ov.y,
-        }
+        self.zip_map(other.into(), Sub::sub)
     }
 }
 
@@ -129,10 +122,7 @@ impl Div<usize> for Vec2 {
     type Output = Vec2;
 
     fn div(self, other: usize) -> Vec2 {
-        Vec2 {
-            x: self.x / other,
-            y: self.y / other,
-        }
+        self.map(|s| s / other)
     }
 }
 
@@ -140,10 +130,7 @@ impl Mul<usize> for Vec2 {
     type Output = Vec2;
 
     fn mul(self, other: usize) -> Vec2 {
-        Vec2 {
-            x: self.x * other,
-            y: self.y * other,
-        }
+        self.map(|s| s * other)
     }
 }
 

@@ -60,9 +60,21 @@ impl <T> XY<Option<T>> {
     }
 }
 
+impl XY<bool> {
+    /// Returns `true` if any of `x` or `y` is `true`.
+    pub fn any(&self) -> bool {
+        self.x || self.y
+    }
+
+    /// Returns `true` if both `x` and `y` are `true`.
+    pub fn both(&self) -> bool {
+        self.x && self.y
+    }
+}
+
 impl<T: Copy> XY<T> {
     /// Creates a `XY` with both `x` and `y` set to `value`.
-    pub fn both(value: T) -> Self {
+    pub fn both_from(value: T) -> Self {
         XY::new(value, value)
     }
 }

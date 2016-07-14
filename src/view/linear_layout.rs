@@ -28,6 +28,14 @@ impl Child {
         self.size = self.view.get_min_size(req);
         self.size
     }
+
+    fn as_ref(&self) -> &View {
+        &*self.view
+    }
+
+    fn as_mut(&mut self) -> &mut View {
+        &mut *self.view
+    }
 }
 
 impl LinearLayout {
@@ -85,7 +93,7 @@ impl LinearLayout {
             Some(ref cache) => {
                 // Is our cache even valid?
                 // Also, is any child invalidating the layout?
-                if cache.x.accept(req.x) && cache.y.accept(req.y) &&
+                if cache.zip_map(req, SizeCache::accept).both() &&
                    self.children_are_sleeping() {
                     Some(cache.map(|s| s.value))
                 } else {
@@ -98,8 +106,35 @@ impl LinearLayout {
     fn children_are_sleeping(&self) -> bool {
         !self.children
             .iter()
-            .map(|c| &*c.view)
+            .map(Child::as_ref)
             .any(View::needs_relayout)
+    }
+
+    fn focus_prev(&mut self) -> EventResult {
+        if let Some(i) = self.children[..self.focus]
+            .iter_mut()
+            .rev()
+            .map(Child::as_mut)
+            .position(View::take_focus) {
+
+            self.focus = i;
+            EventResult::Consumed(None)
+        } else {
+            EventResult::Ignored
+        }
+    }
+
+    fn focus_next(&mut self) -> EventResult {
+        if let Some(i) = self.children[(self.focus + 1)..]
+            .iter_mut()
+            .rev()
+            .map(Child::as_mut)
+            .position(View::take_focus) {
+            self.focus = i;
+            EventResult::Consumed(None)
+        } else {
+            EventResult::Ignored
+        }
     }
 }
 
@@ -166,6 +201,7 @@ impl View for LinearLayout {
         let budget_req = req.with(self.orientation, 1);
         // println_stderr!("Budget req: {:?}", budget_req);
 
+        // See how they like it that way
         let min_sizes: Vec<Vec2> = self.children
             .iter_mut()
             .map(|c| c.get_min_size(budget_req))
@@ -174,9 +210,10 @@ impl View for LinearLayout {
         // println_stderr!("Min sizes: {:?}", min_sizes);
         // println_stderr!("Desperate: {:?}", desperate);
 
-        // I really hope it fits this time...
+        // This is the lowest we'll ever go. It better fit at least.
         if !desperate.fits_in(req) {
             // Just give up...
+            // TODO: print some error message or something
             // println_stderr!("Seriously? {:?} > {:?}???", desperate, req);
             self.cache = Some(SizeCache::build(desperate, req));
             return desperate;
@@ -198,19 +235,25 @@ impl View for LinearLayout {
 
         // So... distribute `available` to reduce the overweight...
         // TODO: use child weight in the distribution...
+
+        // We'll give everyone his share of what we have left,
+        // starting with those who ask the least.
         overweight.sort_by_key(|&(_, weight)| weight);
         let mut allocations = vec![0; overweight.len()];
 
         for (i, &(j, weight)) in overweight.iter().enumerate() {
+            // This is the number of people we still have to feed.
             let remaining = overweight.len() - i;
+            // How much we can spare on each one
             let budget = available / remaining;
+            // Maybe he doesn't even need that much?
             let spent = min(budget, weight);
             allocations[j] = spent;
             available -= spent;
         }
         // println_stderr!("Allocations: {:?}", allocations);
 
-        // Final lengths are the minimum ones + allocations
+        // Final lengths are the minimum ones + generous allocations
         let final_lengths: Vec<Vec2> = min_sizes.iter()
             .map(|v| self.orientation.get(v))
             .zip(allocations.iter())
@@ -219,60 +262,66 @@ impl View for LinearLayout {
             .collect();
         // println_stderr!("Final sizes: {:?}", final_lengths);
 
+        // Let's ask everyone one last time. Everyone should be happy.
+        // (But they may ask more on the other axis.)
         let final_sizes: Vec<Vec2> = self.children
             .iter_mut()
             .enumerate()
-            .map(|(i, c)| {
-                c.get_min_size(final_lengths[i])
-            })
+            .map(|(i, c)| c.get_min_size(final_lengths[i]))
             .collect();
         // println_stderr!("Final sizes2: {:?}", final_sizes);
 
-
+        // Let's stack everything to see what it looks like.
         let compromise = self.orientation.stack(final_sizes.iter());
+
+        // Phew, that was a lot of work! I'm not doing it again.
         self.cache = Some(SizeCache::build(compromise, req));
 
         compromise
+    }
+
+    fn take_focus(&mut self) -> bool {
+        if let Some(i) = self.children
+            .iter_mut()
+            .map(Child::as_mut)
+            .position(View::take_focus) {
+            self.focus = i;
+            true
+        } else {
+            false
+        }
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match self.children[self.focus].view.on_event(event) {
             EventResult::Ignored => {
                 match event {
-                    Event::Key(Key::Tab) if self.focus > 0 => {
-                        self.focus -= 1;
-                        EventResult::Consumed(None)
+                    Event::Shift(Key::Tab) if self.focus > 0 => {
+                        self.focus_prev()
                     }
-                    Event::Shift(Key::Tab) if self.focus + 1 <
-                                              self.children.len() => {
-                        self.focus += 1;
-                        EventResult::Consumed(None)
+                    Event::Key(Key::Tab) if self.focus + 1 <
+                                            self.children.len() => {
+                        self.focus_next()
                     }
                     Event::Key(Key::Left) if self.orientation ==
                                              Orientation::Horizontal &&
                                              self.focus > 0 => {
-                        self.focus -= 1;
-                        EventResult::Consumed(None)
+                        self.focus_prev()
                     }
                     Event::Key(Key::Up) if self.orientation ==
                                            Orientation::Vertical &&
-                                           self.focus > 0 => {
-                        self.focus -= 1;
-                        EventResult::Consumed(None)
-                    }
+                                           self.focus > 0 => self.focus_prev(),
                     Event::Key(Key::Right) if self.orientation ==
                                               Orientation::Horizontal &&
                                               self.focus + 1 <
                                               self.children.len() => {
-                        self.focus += 1;
-                        EventResult::Consumed(None)
+                        self.focus_next()
                     }
                     Event::Key(Key::Down) if self.orientation ==
                                              Orientation::Vertical &&
                                              self.focus + 1 <
                                              self.children.len() => {
-                        self.focus += 1;
-                        EventResult::Consumed(None)
+                        self.focus_next()
                     }
                     _ => EventResult::Ignored,
                 }

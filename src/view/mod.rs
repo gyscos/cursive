@@ -162,7 +162,7 @@ impl SizeCache {
     }
 
     /// Returns `true` if `self` is still valid for the given `request`.
-    pub fn accept(&self, request: usize) -> bool {
+    pub fn accept(self, request: usize) -> bool {
         if request < self.value {
             false
         } else if request == self.value {
