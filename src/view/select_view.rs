@@ -7,7 +7,7 @@ use align::{Align, HAlign, VAlign};
 use view::scroll::ScrollBase;
 use event::{Event, EventResult, Key};
 use vec::Vec2;
-use printer::Printer;
+use Printer;
 
 use unicode_width::UnicodeWidthStr;
 

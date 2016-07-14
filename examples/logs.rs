@@ -5,7 +5,7 @@ use std::thread;
 use std::time::Duration;
 
 use cursive::Cursive;
-use cursive::printer::Printer;
+use cursive::Printer;
 use cursive::view::{View, FullView};
 
 fn main() {

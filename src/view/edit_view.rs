@@ -5,7 +5,7 @@ use theme::{ColorStyle, Effect};
 use vec::Vec2;
 use view::{IdView, View};
 use event::*;
-use printer::Printer;
+use Printer;
 
 
 /// Input box where the user can enter and edit text.

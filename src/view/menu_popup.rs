@@ -4,7 +4,7 @@ use unicode_width::UnicodeWidthStr;
 
 use Cursive;
 use menu::{MenuItem, MenuTree};
-use printer::Printer;
+use Printer;
 use view::View;
 use view::Position;
 use view::KeyEventView;

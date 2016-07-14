@@ -3,7 +3,7 @@ extern crate cursive;
 use cursive::Cursive;
 
 use cursive::view::{View, BoxView};
-use cursive::printer::Printer;
+use cursive::Printer;
 use cursive::event::{EventResult, Event};
 
 fn main() {

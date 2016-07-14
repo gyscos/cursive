@@ -2,7 +2,7 @@ use XY;
 use vec::Vec2;
 use view::View;
 use view::SizeCache;
-use printer::Printer;
+use Printer;
 use align::*;
 use event::*;
 use super::scroll::ScrollBase;

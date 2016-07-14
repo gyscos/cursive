@@ -5,7 +5,7 @@ use Cursive;
 use vec::Vec2;
 use view::View;
 use event::*;
-use printer::Printer;
+use Printer;
 use unicode_width::UnicodeWidthStr;
 
 /// Simple text label with a callback when ENTER is pressed.

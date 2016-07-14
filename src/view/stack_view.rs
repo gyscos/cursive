@@ -4,7 +4,7 @@ use backend::Backend;
 use vec::Vec2;
 use view::{Offset, Position, Selector, ShadowView, View};
 use event::{Event, EventResult};
-use printer::Printer;
+use Printer;
 use theme::ColorStyle;
 
 /// Simple stack of views.

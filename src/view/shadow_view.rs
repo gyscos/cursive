@@ -1,5 +1,5 @@
 use view::{View, ViewWrapper};
-use printer::Printer;
+use Printer;
 use vec::Vec2;
 use theme::ColorStyle;
 

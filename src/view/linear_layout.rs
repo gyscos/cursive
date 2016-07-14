@@ -2,7 +2,7 @@ use XY;
 use view::View;
 use view::SizeCache;
 use vec::Vec2;
-use printer::Printer;
+use Printer;
 use orientation::Orientation;
 use event::{Event, EventResult, Key};
 

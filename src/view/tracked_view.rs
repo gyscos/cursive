@@ -1,5 +1,5 @@
 use view::{IdView, View, ViewWrapper};
-use printer::Printer;
+use Printer;
 use vec::Vec2;
 
 /// Wrapper around a view that remembers its position.

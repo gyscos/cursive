@@ -67,7 +67,7 @@ use std::any::Any;
 use XY;
 use event::{Event, EventResult};
 use vec::Vec2;
-use printer::Printer;
+use Printer;
 
 pub use self::position::{Offset, Position};
 

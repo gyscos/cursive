@@ -3,7 +3,7 @@ use menu::MenuTree;
 use view::MenuPopup;
 use view::KeyEventView;
 use theme::ColorStyle;
-use printer::Printer;
+use Printer;
 use view::Position;
 use event::*;
 

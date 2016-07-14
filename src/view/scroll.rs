@@ -2,7 +2,7 @@ use std::cmp::{max, min};
 
 use theme::ColorStyle;
 use vec::Vec2;
-use printer::Printer;
+use Printer;
 
 /// Provide scrolling functionalities to a view.
 #[derive(Default)]
@@ -117,7 +117,7 @@ impl ScrollBase {
     ///
     /// ```
     /// # use cursive::view::ScrollBase;
-    /// # use cursive::printer::Printer;
+    /// # use cursive::Printer;
     /// # use cursive::theme;
     /// # let scrollbase = ScrollBase::new();
     /// # let printer = Printer::new((5,1), theme::load_default());

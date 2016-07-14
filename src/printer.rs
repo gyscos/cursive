@@ -92,7 +92,7 @@ impl Printer {
     /// # Examples
     ///
     /// ```no_run
-    /// # use cursive::printer::Printer;
+    /// # use cursive::Printer;
     /// # use cursive::theme;
     /// # let printer = Printer::new((6,4), theme::load_default());
     /// printer.with_color(theme::ColorStyle::Highlight, |printer| {
@@ -120,7 +120,7 @@ impl Printer {
     /// # Examples
     ///
     /// ```
-    /// # use cursive::printer::Printer;
+    /// # use cursive::Printer;
     /// # use cursive::theme;
     /// # let printer = Printer::new((6,4), theme::load_default());
     /// printer.print_box((0,0), (6,4));

@@ -8,7 +8,7 @@ use theme::ColorStyle;
 use view::{Selector, TextView, View};
 use view::{Button, SizedView};
 use vec::{Vec2, Vec4};
-use printer::Printer;
+use Printer;
 
 use unicode_width::UnicodeWidthStr;
 
