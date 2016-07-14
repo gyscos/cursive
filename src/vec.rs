@@ -5,10 +5,16 @@ use orientation::Orientation;
 use std::ops::{Add, Div, Mul, Sub};
 use std::cmp::{Ordering, max, min};
 
-/// Simple 2D size, in characters.
+/// Simple 2D size, in cells.
+///
+/// Note: due to a bug in rustdoc ([#32077]), the documentation for `Vec2` is
+/// currently shown on the [`XY`] page.
+///
+/// [#32077]: https://github.com/rust-lang/rust/issues/32077
+/// [`XY`]: ../struct.XY.html
 pub type Vec2 = XY<usize>;
 
-impl PartialOrd for Vec2 {
+impl PartialOrd for XY<usize> {
     /// `a < b` <=> `a.x < b.x && a.y < b.y`
     fn partial_cmp(&self, other: &Vec2) -> Option<Ordering> {
         if self == other {
@@ -23,7 +29,7 @@ impl PartialOrd for Vec2 {
     }
 }
 
-impl Vec2 {
+impl XY<usize> {
     /// Returns a new Vec2 that is a maximum per coordinate.
     pub fn max<A: Into<Vec2>, B: Into<Vec2>>(a: A, b: B) -> Self {
         let a = a.into();
@@ -89,20 +95,20 @@ impl Vec2 {
     }
 }
 
-impl From<(i32, i32)> for Vec2 {
+impl From<(i32, i32)> for XY<usize> {
     fn from((x, y): (i32, i32)) -> Self {
         (x as usize, y as usize).into()
     }
 }
 
-impl From<(u32, u32)> for Vec2 {
+impl From<(u32, u32)> for XY<usize> {
     fn from((x, y): (u32, u32)) -> Self {
         (x as usize, y as usize).into()
     }
 }
 
 
-impl<T: Into<Vec2>> Add<T> for Vec2 {
+impl<T: Into<Vec2>> Add<T> for XY<usize> {
     type Output = Vec2;
 
     fn add(self, other: T) -> Vec2 {
@@ -110,7 +116,7 @@ impl<T: Into<Vec2>> Add<T> for Vec2 {
     }
 }
 
-impl<T: Into<Vec2>> Sub<T> for Vec2 {
+impl<T: Into<Vec2>> Sub<T> for XY<usize> {
     type Output = Vec2;
 
     fn sub(self, other: T) -> Vec2 {
@@ -118,7 +124,7 @@ impl<T: Into<Vec2>> Sub<T> for Vec2 {
     }
 }
 
-impl Div<usize> for Vec2 {
+impl Div<usize> for XY<usize> {
     type Output = Vec2;
 
     fn div(self, other: usize) -> Vec2 {
@@ -126,7 +132,7 @@ impl Div<usize> for Vec2 {
     }
 }
 
-impl Mul<usize> for Vec2 {
+impl Mul<usize> for XY<usize> {
     type Output = Vec2;
 
     fn mul(self, other: usize) -> Vec2 {

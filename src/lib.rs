@@ -1,7 +1,17 @@
 //! # Cursive
 //!
-//! Cursive is a TUI library built on top of ncurses-rs.
+//! [Cursive](https://github.com/gyscos/Cursive) is a TUI library built on top
+//! of ncurses-rs.
 //! It allows to easily build layouts for text-based applications.
+//!
+//! ## Getting started
+//!
+//! * Every application should start with a [`Cursive`](struct.Cursive.html)
+//!   object. It is the main entry-point to the library.
+//! * A declarative phase then describes the structure of the UI by adding
+//!   views and configuring their behaviours.
+//! * Finally, the event loop is started by calling
+//!   [`Cursive::run(&mut self)`](struct.Cursive.html#method.run).
 //!
 //! ## Example
 //! ```no_run
@@ -38,16 +48,16 @@ macro_rules! println_stderr(
 
 pub mod event;
 pub mod view;
-pub mod printer;
 pub mod vec;
 pub mod theme;
 pub mod align;
-pub mod orientation;
 pub mod menu;
 
 // This probably doesn't need to be public?
+mod printer;
 mod menubar;
 mod xy;
+mod orientation;
 
 mod div;
 mod utf8;
@@ -55,6 +65,8 @@ mod utf8;
 mod backend;
 
 pub use xy::XY;
+pub use orientation::Orientation;
+pub use printer::Printer;
 
 use backend::{Backend, NcursesBackend};
 
@@ -64,7 +76,6 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use vec::Vec2;
-use printer::Printer;
 use view::View;
 use view::{Selector, StackView};
 
