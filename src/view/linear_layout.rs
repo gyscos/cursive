@@ -103,56 +103,6 @@ impl LinearLayout {
     }
 }
 
-/// Returns the index of the maximum element.
-/// WTF isn't it part of standard library??
-fn find_max(list: &[usize]) -> usize {
-    let mut max_value = 0;
-    let mut max = 0;
-    for (i, &x) in list.iter().enumerate() {
-        if x > max_value {
-            max_value = x;
-            max = i;
-        }
-    }
-    max
-}
-
-/// Given a total number of points and a list of weights,
-/// try to share the points according to the weight,
-/// rounding properly and conserving the sum of points.
-fn share(total: usize, weights: Vec<usize>) -> Vec<usize> {
-    // It first give a base value to everyone, which is their truncated share.
-    // Then, it gives the rest to the most deserving.
-    if weights.is_empty() {
-        return Vec::new();
-    }
-
-    let sum_weight = weights.iter().fold(0, |a, b| a + b);
-    if sum_weight == 0 {
-        return (0..weights.len()).map(|_| 0).collect();
-    }
-
-    let mut base = Vec::with_capacity(weights.len());
-    let mut rest = Vec::with_capacity(weights.len());
-    let mut extra = total;
-
-    for weight in &weights {
-        let b = total * weight / sum_weight;
-        extra -= b;
-        base.push(b);
-        rest.push(total * weight - b * sum_weight);
-    }
-
-    // TODO: better to sort (base,rest) as one array and pick the extra first.
-    for _ in 0..extra {
-        let i = find_max(&rest);
-        rest[i] = 0;
-        base[i] += 1;
-    }
-
-    base
-}
-
 impl View for LinearLayout {
     fn draw(&mut self, printer: &Printer) {
         // Use pre-computed sizes
@@ -184,50 +134,8 @@ impl View for LinearLayout {
         }
 
         for child in &mut self.children {
-            // println_stderr!("Child size: {:?}", child.size);
             child.view.layout(child.size);
         }
-
-        /*
-
-        // Need to compute things again...
-        self.get_min_size(size);
-
-        let min_sizes: Vec<Vec2> = self.children
-            .iter_mut()
-            .map(|child| Vec2::min(size, child.view.get_min_size(size)))
-            .collect();
-        let min_size = self.orientation.stack(min_sizes.iter());
-
-        // Emulate 'non-strict inequality' on integers
-        // (default comparison on Vec2 is strict,
-        // and (0,1).cmp((1,1)) is undefined)
-        if !(min_size < size + (1, 1)) {
-            // Error! Not enough space! Emergency procedures!
-            return;
-        }
-
-        // Now share this extra space among everyone
-
-        let extras = {
-            let extra = size - min_size;
-            let space = self.orientation.get(&extra);
-            share(space,
-                  self.children.iter().map(|child| child.weight).collect())
-        };
-
-
-        for (child, (child_size, extra)) in self.children
-            .iter_mut()
-            .zip(min_sizes.iter().zip(extras.iter())) {
-            let mut child_size = *child_size;
-            *self.orientation.get_ref(&mut child_size) += *extra;
-            *self.orientation.swap().get_ref(&mut child_size) =
-                self.orientation.swap().get(&size);
-            child.size = child_size;
-            child.view.layout(child_size);
-        }
-        */
     }
 
     fn get_min_size(&mut self, req: Vec2) -> Vec2 {

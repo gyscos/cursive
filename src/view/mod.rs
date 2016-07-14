@@ -1,4 +1,38 @@
 //! Defines various views to use when creating the layout.
+//!
+//! Views are the main building blocks of your UI.
+//!
+//! A view can delegate part or all of its responsabilities to child views,
+//! forming a view tree. The root of this tree is a `StackView` handled
+//! directly by the `Cursive` element.
+//!
+//! # Layout
+//!
+//! The layout phase is when the size and location of each view is computed.
+//!
+//! Each view is given an area of the screen by the `View::layout()` method.
+//! With this, the view is free to plan its content, including calling
+//! `View::layout()` on its own children.
+//!
+//! In order to determine how much space should be given each child, parents
+//! can use `View::get_min_size()` on them.
+//!
+//!
+//! ### Contracts
+//!
+//! When building new Views, you should respect these contracts:
+//!
+//! * By default, `View::layout()` should be called before any call to
+//!   `View::draw()` with the same available size. The only exceptions is
+//!   when both following conditions are met:
+//!     * The available size has not changed since the last call to `View::layout()`
+//!     * `View::needs_relayout()` returns `false`
+//!
+//!   In this case, it is safe to omit the call to `View::layout()`.
+//!
+//! * The value returned by `get_min_size` should be an actually viable size,
+//!   no matter what the request is. This means calling `View::layout()` with
+//!   a size returned by `get_min_size` is **never** an error.
 
 #[macro_use]
 mod view_wrapper;
