@@ -1,3 +1,5 @@
+use orientation::Orientation;
+
 use std::iter;
 
 /// A generic structure with a value for each axis.
@@ -33,6 +35,28 @@ impl<T> XY<T> {
     /// Creates an iterator that returns references to `x`, then `y`.
     pub fn iter(&self) -> iter::Chain<iter::Once<&T>, iter::Once<&T>> {
         iter::once(&self.x).chain(iter::once(&self.y))
+    }
+
+    /// Returns a reference to the value on the given axis.
+    pub fn get(&self, o: Orientation) -> &T {
+        match o {
+            Orientation::Horizontal => &self.x,
+            Orientation::Vertical => &self.y,
+        }
+    }
+
+    /// Returns a new XY by calling `f` on `self` and `other` for each axis.
+    pub fn zip_map<U,V,F: Fn(T,U) -> V>(self, other: XY<U>, f: F) -> XY<V> {
+        XY::new(f(self.x, other.x),
+                f(self.y, other.y))
+    }
+}
+
+impl <T> XY<Option<T>> {
+
+    /// Returns a new XY by calling `unwrap_or` on each axis.
+    pub fn unwrap_or(self, other: XY<T>) -> XY<T> {
+        self.zip_map(other, |s, o| s.unwrap_or(o))
     }
 }
 

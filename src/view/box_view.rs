@@ -4,9 +4,17 @@ use XY;
 use vec::Vec2;
 use super::{View, ViewWrapper};
 
-/// `BoxView` is a wrapper around an other view, with a given minimum size.
+/// Wrapper around another view, with a fixed size.
 ///
-/// # Example
+/// Each axis can be enabled independantly.
+///
+/// * If both axis are fixed, the view always asks for this size.
+/// * If both axis are left free, the wrapper has no effect and the underlying
+///   view is directly queried.
+/// * If only one axis is fixed, it will override the size request when
+///   querying the wrapped view.
+///
+/// # Examples
 ///
 /// ```
 /// # use cursive::view::{BoxView,TextView};
@@ -19,7 +27,7 @@ pub struct BoxView<T: View> {
 }
 
 impl<T: View> BoxView<T> {
-    /// Wraps `view` in a neww `BoxView` with the given size.
+    /// Wraps `view` in a new `BoxView` with the given size.
     pub fn fixed_size<S: Into<Vec2>>(size: S, view: T) -> Self {
         let size = size.into();
 
@@ -60,14 +68,23 @@ impl<T: View> ViewWrapper for BoxView<T> {
     fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
 
         if let (Some(w), Some(h)) = self.size.pair() {
+            // If we know everything already, no need to ask
             Vec2::new(w, h)
         } else {
-            let req = Vec2::new(min(req.x, self.size.x),
-                                min(req.y, self.size.y));
+            // If req < self.size in any axis, we're screwed.
+            // TODO: handle insufficient space
+            // (should probably show an error message or a blank canvas)
+
+            // From now on, we assume req >= self.size.
+
+            // Override the request on the restricted axis
+            let req = req.zip_map(self.size, min);
+
+            // Back in my time, we didn't ask kids for their opinions!
             let child_size = self.view.get_min_size(req);
 
-            Vec2::new(self.size.x.unwrap_or(child_size.x),
-                      self.size.y.unwrap_or(child_size.y))
+            // This calls unwrap_or on each axis
+            self.size.unwrap_or(child_size)
         }
     }
 }

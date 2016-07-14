@@ -16,10 +16,7 @@ impl Orientation {
     /// (`Horizontal` will return the x value,
     /// and `Vertical` will return the y value.)
     pub fn get(&self, v: &Vec2) -> usize {
-        match *self {
-            Orientation::Horizontal => v.x,
-            Orientation::Vertical => v.y,
-        }
+        *v.get(*self)
     }
 
     /// Returns the other orientation.
