@@ -117,7 +117,8 @@ impl LinearLayout {
             .map(Child::as_mut)
             .position(View::take_focus) {
 
-            self.focus = i;
+            // We're looking at the list in reverse
+            self.focus -= i+1;
             EventResult::Consumed(None)
         } else {
             EventResult::Ignored
@@ -130,7 +131,8 @@ impl LinearLayout {
             .rev()
             .map(Child::as_mut)
             .position(View::take_focus) {
-            self.focus = i;
+            // Our slice doesn't start at 0
+            self.focus += i + 1;
             EventResult::Consumed(None)
         } else {
             EventResult::Ignored
