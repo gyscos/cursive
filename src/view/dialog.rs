@@ -2,7 +2,7 @@ use std::cmp::max;
 use std::any::Any;
 
 use Cursive;
-use direction;
+use direction::Direction;
 use align::*;
 use event::*;
 use theme::ColorStyle;
@@ -249,7 +249,7 @@ impl View for Dialog {
                             // Up goes back to the content
                             Event::Key(Key::Up) => {
                                 if self.content
-                                    .take_focus(direction::Direction::down()) {
+                                    .take_focus(Direction::down()) {
                                     self.focus = Focus::Content;
                                     EventResult::Consumed(None)
                                 } else {
@@ -258,7 +258,7 @@ impl View for Dialog {
                             }
                             Event::Shift(Key::Tab) => {
                                 if self.content
-                                    .take_focus(direction::Direction::back()) {
+                                    .take_focus(Direction::back()) {
                                     self.focus = Focus::Content;
                                     EventResult::Consumed(None)
                                 } else {
@@ -267,13 +267,12 @@ impl View for Dialog {
                             }
                             Event::Key(Key::Tab) => {
                                 if self.content
-                                    .take_focus(direction::Direction::front()) {
+                                    .take_focus(Direction::front()) {
                                     self.focus = Focus::Content;
                                     EventResult::Consumed(None)
                                 } else {
                                     EventResult::Ignored
                                 }
-
                             }
                             // Left and Right move to other buttons
                             Event::Key(Key::Right) if i + 1 <
@@ -295,7 +294,7 @@ impl View for Dialog {
         }
     }
 
-    fn take_focus(&mut self, source: direction::Direction) -> bool {
+    fn take_focus(&mut self, source: Direction) -> bool {
         // Dialogs aren't meant to be used in layouts, so...
         // Let's be super lazy and not even care about the focus source.
         if self.content.take_focus(source) {

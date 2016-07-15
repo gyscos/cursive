@@ -29,12 +29,8 @@ impl Child {
         self.size
     }
 
-    fn as_ref(&self) -> &View {
+    fn as_view(&self) -> &View {
         &*self.view
-    }
-
-    fn as_mut(&mut self) -> &mut View {
-        &mut *self.view
     }
 }
 
@@ -106,14 +102,14 @@ impl LinearLayout {
     fn children_are_sleeping(&self) -> bool {
         !self.children
             .iter()
-            .map(Child::as_ref)
+            .map(Child::as_view)
             .any(View::needs_relayout)
     }
 
     /// Returns a cyclic mutable iterator starting with the child in focus
     fn iter_mut<'a>(&'a mut self, from_focus: bool,
                     direction: direction::Relative)
-                    -> Box<Iterator<Item = (usize, &'a mut Child)> + 'a> {
+                    -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
 
         match direction {
             direction::Relative::Front => {
@@ -153,35 +149,6 @@ impl LinearLayout {
         };
         self.focus = i;
         EventResult::Consumed(None)
-    }
-
-    fn focus_prev(&mut self) -> EventResult {
-        if let Some(i) = self.children[..self.focus]
-            .iter_mut()
-            .rev()
-            .map(Child::as_mut)
-            .position(|v| v.take_focus(direction::Direction::back())) {
-
-            // We're looking at the list in reverse
-            self.focus -= i + 1;
-            EventResult::Consumed(None)
-        } else {
-            EventResult::Ignored
-        }
-    }
-
-    fn focus_next(&mut self) -> EventResult {
-        if let Some(i) = self.children[(self.focus + 1)..]
-            .iter_mut()
-            .rev()
-            .map(Child::as_mut)
-            .position(|v| v.take_focus(direction::Direction::front())) {
-            // Our slice doesn't start at 0
-            self.focus += i + 1;
-            EventResult::Consumed(None)
-        } else {
-            EventResult::Ignored
-        }
     }
 }
 

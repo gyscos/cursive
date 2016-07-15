@@ -323,8 +323,8 @@ impl Color {
                 3 => (1, 17),
                 _ => panic!("Cannot parse color: {}", value),
             };
-            let r = load_hex(&value[0 * l..1 * l]) * multiplier;
-            let g = load_hex(&value[1 * l..2 * l]) * multiplier;
+            let r = load_hex(&value[0..l]) * multiplier;
+            let g = load_hex(&value[l..2 * l]) * multiplier;
             let b = load_hex(&value[2 * l..3 * l]) * multiplier;
             Some(Color::Rgb(r as u8, g as u8, b as u8))
         } else if value.len() == 3 {
