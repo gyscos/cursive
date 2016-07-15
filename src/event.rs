@@ -1,4 +1,17 @@
 //! User-input events and their effects.
+//!
+//! * Every user input the application receives is converted to an
+//!   [`Event`](./enum.Event.html).
+//! * Each event is then given to the root, and descends the view tree down to
+//!   the view currently in focus, through the
+//!   [`on_event`](../view/trait.View.html#method.on_event) method.
+//!     * If the view consumes the event, it may return a callback to be
+//!       executed.
+//!     * Otherwise, it ignores the event, and the view parent can in turn
+//!       choose to consume it or not.
+//! * If no view consumes the event, the
+//!   [global callback](../struct.Cursive.html#method.add_global_callback)
+//!   table is checked.
 
 use std::rc::Rc;
 
