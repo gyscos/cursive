@@ -12,7 +12,7 @@ It is designed to be safe and easy to use:
 
 ```
 [dependencies]
-cursive = "0.0.3"
+cursive = "0.0.4"
 ```
 
 Or to use the latest git version:
