@@ -1,4 +1,4 @@
-use orientation::Orientation;
+use direction::Orientation;
 
 use std::iter;
 
@@ -46,14 +46,12 @@ impl<T> XY<T> {
     }
 
     /// Returns a new XY by calling `f` on `self` and `other` for each axis.
-    pub fn zip_map<U,V,F: Fn(T,U) -> V>(self, other: XY<U>, f: F) -> XY<V> {
-        XY::new(f(self.x, other.x),
-                f(self.y, other.y))
+    pub fn zip_map<U, V, F: Fn(T, U) -> V>(self, other: XY<U>, f: F) -> XY<V> {
+        XY::new(f(self.x, other.x), f(self.y, other.y))
     }
 }
 
-impl <T> XY<Option<T>> {
-
+impl<T> XY<Option<T>> {
     /// Returns a new XY by calling `unwrap_or` on each axis.
     pub fn unwrap_or(self, other: XY<T>) -> XY<T> {
         self.zip_map(other, |s, o| s.unwrap_or(o))

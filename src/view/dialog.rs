@@ -2,6 +2,7 @@ use std::cmp::max;
 use std::any::Any;
 
 use Cursive;
+use direction;
 use align::*;
 use event::*;
 use theme::ColorStyle;
@@ -246,15 +247,33 @@ impl View for Dialog {
                     EventResult::Ignored => {
                         match event {
                             // Up goes back to the content
-                            Event::Key(Key::Up) |
-                            Event::Key(Key::Tab) |
-                            Event::Shift(Key::Tab) => {
-                                if self.content.take_focus() {
+                            Event::Key(Key::Up) => {
+                                if self.content
+                                    .take_focus(direction::Direction::down()) {
                                     self.focus = Focus::Content;
                                     EventResult::Consumed(None)
                                 } else {
                                     EventResult::Ignored
                                 }
+                            }
+                            Event::Shift(Key::Tab) => {
+                                if self.content
+                                    .take_focus(direction::Direction::back()) {
+                                    self.focus = Focus::Content;
+                                    EventResult::Consumed(None)
+                                } else {
+                                    EventResult::Ignored
+                                }
+                            }
+                            Event::Key(Key::Tab) => {
+                                if self.content
+                                    .take_focus(direction::Direction::front()) {
+                                    self.focus = Focus::Content;
+                                    EventResult::Consumed(None)
+                                } else {
+                                    EventResult::Ignored
+                                }
+
                             }
                             // Left and Right move to other buttons
                             Event::Key(Key::Right) if i + 1 <
@@ -276,9 +295,10 @@ impl View for Dialog {
         }
     }
 
-    fn take_focus(&mut self) -> bool {
-        // TODO: add a direction to the focus. Meanwhile, takes button first.
-        if self.content.take_focus() {
+    fn take_focus(&mut self, source: direction::Direction) -> bool {
+        // Dialogs aren't meant to be used in layouts, so...
+        // Let's be super lazy and not even care about the focus source.
+        if self.content.take_focus(source) {
             self.focus = Focus::Content;
             true
         } else if !self.buttons.is_empty() {

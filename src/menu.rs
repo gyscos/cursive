@@ -89,7 +89,9 @@ impl MenuTree {
     }
 
     /// Adds a actionnable leaf to the end of this tree - chainable variant.
-    pub fn leaf<F: 'static + Fn(&mut Cursive)>(self, title: &str, cb: F) -> Self {
+    pub fn leaf<F>(self, title: &str, cb: F) -> Self
+        where F: 'static + Fn(&mut Cursive)
+    {
         self.with(|menu| menu.add_leaf(title, cb))
     }
 

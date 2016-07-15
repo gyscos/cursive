@@ -1,5 +1,6 @@
 use std::any::Any;
 
+use direction::Direction;
 use backend::Backend;
 use vec::Vec2;
 use view::{Offset, Position, Selector, ShadowView, View};
@@ -96,7 +97,7 @@ impl View for StackView {
             // We do it here instead of when adding a new layer because...?
             // (TODO: try to make it during layer addition)
             if layer.virgin {
-                layer.view.take_focus();
+                layer.view.take_focus(Direction::none());
                 layer.virgin = false;
             }
         }
@@ -111,10 +112,10 @@ impl View for StackView {
             .fold(Vec2::new(1, 1), Vec2::max)
     }
 
-    fn take_focus(&mut self) -> bool {
+    fn take_focus(&mut self, source: Direction) -> bool {
         match self.layers.last_mut() {
             None => false,
-            Some(mut v) => v.view.take_focus(),
+            Some(mut v) => v.view.take_focus(source),
         }
     }
 

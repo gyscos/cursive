@@ -1,6 +1,7 @@
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
+use direction::Direction;
 use theme::{ColorStyle, Effect};
 use vec::Vec2;
 use view::{IdView, View};
@@ -144,7 +145,7 @@ impl View for EditView {
         Vec2::new(self.min_length, 1)
     }
 
-    fn take_focus(&mut self) -> bool {
+    fn take_focus(&mut self, _: Direction) -> bool {
         true
     }
 

@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use direction::Direction;
 use theme::ColorStyle;
 use Cursive;
 use vec::Vec2;
@@ -58,7 +59,7 @@ impl View for Button {
         }
     }
 
-    fn take_focus(&mut self) -> bool {
+    fn take_focus(&mut self, _: Direction) -> bool {
         true
     }
 }

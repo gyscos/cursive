@@ -1,4 +1,5 @@
 use XY;
+use direction::Direction;
 use vec::Vec2;
 use view::View;
 use view::SizeCache;
@@ -239,7 +240,7 @@ impl View for TextView {
         size.or_min((self.width.unwrap_or(0), self.rows.len()))
     }
 
-    fn take_focus(&mut self) -> bool {
+    fn take_focus(&mut self, _: Direction) -> bool {
         self.scrollbase.scrollable()
     }
 

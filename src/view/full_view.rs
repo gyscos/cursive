@@ -1,5 +1,5 @@
 use view::{View, ViewWrapper};
-use orientation::Orientation;
+use direction::Orientation;
 use vec::Vec2;
 
 /// Simple wrapper view that asks for all the space it can get.

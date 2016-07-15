@@ -2,6 +2,7 @@ use std::cmp::min;
 use std::rc::Rc;
 
 use Cursive;
+use direction::Direction;
 use view::{IdView, View};
 use align::{Align, HAlign, VAlign};
 use view::scroll::ScrollBase;
@@ -215,7 +216,7 @@ impl<T: 'static> View for SelectView<T> {
         EventResult::Consumed(None)
     }
 
-    fn take_focus(&mut self) -> bool {
+    fn take_focus(&mut self, _: Direction) -> bool {
         true
     }
 

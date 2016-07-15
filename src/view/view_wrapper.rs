@@ -1,5 +1,6 @@
 use std::any::Any;
 
+use direction::Direction;
 use vec::Vec2;
 use view::{Selector, View};
 use Printer;
@@ -37,8 +38,8 @@ pub trait ViewWrapper {
     }
 
     /// Wraps the `take_focus` method.
-    fn wrap_take_focus(&mut self) -> bool {
-        self.get_view_mut().take_focus()
+    fn wrap_take_focus(&mut self, source: Direction) -> bool {
+        self.get_view_mut().take_focus(source)
     }
 
     /// Wraps the `find` method.
@@ -69,8 +70,8 @@ impl<T: ViewWrapper> View for T {
         self.wrap_layout(size);
     }
 
-    fn take_focus(&mut self) -> bool {
-        self.wrap_take_focus()
+    fn take_focus(&mut self, source: Direction) -> bool {
+        self.wrap_take_focus(source)
     }
 
     fn find(&mut self, selector: &Selector) -> Option<&mut Any> {

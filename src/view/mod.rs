@@ -25,7 +25,8 @@
 //! * By default, `View::layout()` should be called before any call to
 //!   `View::draw()` with the same available size. The only exceptions is
 //!   when both following conditions are met:
-//!     * The available size has not changed since the last call to `View::layout()`
+//!     * The available size has not changed since the last call to
+//!       `View::layout()`
 //!     * `View::needs_relayout()` returns `false`
 //!
 //!   In this case, it is safe to omit the call to `View::layout()`.
@@ -65,6 +66,7 @@ mod tracked_view;
 use std::any::Any;
 
 use XY;
+use direction::Direction;
 use event::{Event, EventResult};
 use vec::Vec2;
 use Printer;
@@ -135,7 +137,11 @@ pub trait View {
     }
 
     /// This view is offered focus. Will it take it?
-    fn take_focus(&mut self) -> bool {
+    ///
+    /// `source` indicates where the focus comes from.
+    /// When the source is unclear, `Front` is usually used.
+    fn take_focus(&mut self, source: Direction) -> bool {
+        let _ = source;
         false
     }
 }
@@ -178,7 +184,7 @@ impl SizeCache {
     /// * for each dimension, `constrained = (size == req)`
     fn build(size: Vec2, req: Vec2) -> XY<Self> {
         XY::new(SizeCache::new(size.x, size.x == req.x),
-        SizeCache::new(size.y, size.y == req.y))
+                SizeCache::new(size.y, size.y == req.y))
     }
 }
 

@@ -52,12 +52,12 @@ pub mod vec;
 pub mod theme;
 pub mod align;
 pub mod menu;
+pub mod direction;
 
 // This probably doesn't need to be public?
 mod printer;
 mod menubar;
 mod xy;
-mod orientation;
 
 mod div;
 mod utf8;
@@ -65,7 +65,6 @@ mod utf8;
 mod backend;
 
 pub use xy::XY;
-pub use orientation::Orientation;
 pub use printer::Printer;
 
 use backend::{Backend, NcursesBackend};
