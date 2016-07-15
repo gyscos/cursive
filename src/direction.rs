@@ -10,6 +10,7 @@
 //! ### Direction
 //!
 //! `Direction` is a bit more complex, and can be of two kinds:
+//!
 //! * Absolute direction: left, up, right, or down
 //! * Relative direction: front or back.
 //!   Its actual direction depends on the orientation.
@@ -182,7 +183,9 @@ pub enum Absolute {
     /// Down
     Down,
 
-    /// No real direction
+    /// No real direction.
+    ///
+    /// Used when the "direction" is accross layers for instance.
     None,
 }
 
