@@ -64,7 +64,7 @@ impl XY<usize> {
         Vec2::new(0, self.y)
     }
 
-    /// Alias for Vec::new(0,0).
+    /// Alias for `Vec2::new(0,0)`.
     pub fn zero() -> Self {
         Vec2::new(0, 0)
     }

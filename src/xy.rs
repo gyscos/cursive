@@ -27,7 +27,7 @@ impl<T> XY<T> {
         (self.x, self.y)
     }
 
-    /// Return a XY with references to this one's values.
+    /// Return a `XY` with references to this one's values.
     pub fn as_ref(&self) -> XY<&T> {
         XY::new(&self.x, &self.y)
     }
@@ -45,14 +45,14 @@ impl<T> XY<T> {
         }
     }
 
-    /// Returns a new XY by calling `f` on `self` and `other` for each axis.
+    /// Returns a new `XY` by calling `f` on `self` and `other` for each axis.
     pub fn zip_map<U, V, F: Fn(T, U) -> V>(self, other: XY<U>, f: F) -> XY<V> {
         XY::new(f(self.x, other.x), f(self.y, other.y))
     }
 }
 
 impl<T> XY<Option<T>> {
-    /// Returns a new XY by calling `unwrap_or` on each axis.
+    /// Returns a new `XY` by calling `unwrap_or` on each axis.
     pub fn unwrap_or(self, other: XY<T>) -> XY<T> {
         self.zip_map(other, |s, o| s.unwrap_or(o))
     }
