@@ -80,7 +80,10 @@ impl EditView {
 
 impl View for EditView {
     fn draw(&self, printer: &Printer) {
-        assert!(printer.size.x == self.last_length, "Was promised {}, received {}", self.last_length, printer.size.x);
+        assert!(printer.size.x == self.last_length,
+                "Was promised {}, received {}",
+                self.last_length,
+                printer.size.x);
 
         let width = self.content.width();
         printer.with_color(ColorStyle::Secondary, |printer| {

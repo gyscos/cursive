@@ -8,4 +8,4 @@ pub trait With: Sized {
     }
 }
 
-impl <T: Sized> With for T {}
+impl<T: Sized> With for T {}
