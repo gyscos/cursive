@@ -61,11 +61,11 @@ impl StackView {
 }
 
 impl View for StackView {
-    fn draw(&mut self, printer: &Printer) {
+    fn draw(&self, printer: &Printer) {
         let last = self.layers.len();
         let mut previous = Vec2::zero();
         printer.with_color(ColorStyle::Primary, |printer| {
-            for (i, v) in self.layers.iter_mut().enumerate() {
+            for (i, v) in self.layers.iter().enumerate() {
                 // Place the view
                 // Center the view
                 let offset = v.position

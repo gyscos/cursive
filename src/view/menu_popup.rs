@@ -133,7 +133,7 @@ impl MenuPopup {
 }
 
 impl View for MenuPopup {
-    fn draw(&mut self, printer: &Printer) {
+    fn draw(&self, printer: &Printer) {
         let h = self.menu.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
         let printer =

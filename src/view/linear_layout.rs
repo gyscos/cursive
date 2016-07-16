@@ -162,10 +162,10 @@ fn try_focus((i, child): (usize, &mut Child), source: direction::Direction)
 }
 
 impl View for LinearLayout {
-    fn draw(&mut self, printer: &Printer) {
+    fn draw(&self, printer: &Printer) {
         // Use pre-computed sizes
         let mut offset = Vec2::zero();
-        for (i, child) in self.children.iter_mut().enumerate() {
+        for (i, child) in self.children.iter().enumerate() {
             let printer =
                 &printer.sub_printer(offset, child.size, i == self.focus);
             child.view.draw(printer);

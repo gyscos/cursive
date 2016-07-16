@@ -194,7 +194,7 @@ impl<'a> Iterator for LinesIterator<'a> {
 }
 
 impl View for TextView {
-    fn draw(&mut self, printer: &Printer) {
+    fn draw(&self, printer: &Printer) {
 
         let h = self.rows.len();
         let offset = self.align.v.get_offset(h, printer.size.y);

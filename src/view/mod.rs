@@ -127,7 +127,7 @@ pub trait View {
     fn layout(&mut self, Vec2) {}
 
     /// Draws the view with the given printer (includes bounds) and focus.
-    fn draw(&mut self, printer: &Printer);
+    fn draw(&self, printer: &Printer);
 
     /// Finds the view pointed to by the given path.
     ///

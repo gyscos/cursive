@@ -111,7 +111,7 @@ impl Dialog {
 }
 
 impl View for Dialog {
-    fn draw(&mut self, printer: &Printer) {
+    fn draw(&self, printer: &Printer) {
 
         // This will be the buttons_height used by the buttons.
         let mut buttons_height = 0;
@@ -133,7 +133,7 @@ impl View for Dialog {
             .get_offset(width, printer.size.x - overhead.horizontal());
         let y = printer.size.y - self.padding.bottom - self.borders.bottom - 1;
 
-        for (i, button) in self.buttons.iter_mut().enumerate() {
+        for (i, button) in self.buttons.iter().enumerate() {
             let size = button.size;
             // Add some special effect to the focused button
             button.draw(&printer.sub_printer(Vec2::new(offset, y),

@@ -18,8 +18,8 @@ pub trait ViewWrapper {
     fn get_view_mut(&mut self) -> &mut View;
 
     /// Wraps the `draw` method.
-    fn wrap_draw(&mut self, printer: &Printer) {
-        self.get_view_mut().draw(printer);
+    fn wrap_draw(&self, printer: &Printer) {
+        self.get_view().draw(printer);
     }
 
     /// Wraps the `get_min_size` method.
@@ -54,7 +54,7 @@ pub trait ViewWrapper {
 }
 
 impl<T: ViewWrapper> View for T {
-    fn draw(&mut self, printer: &Printer) {
+    fn draw(&self, printer: &Printer) {
         self.wrap_draw(printer);
     }
 

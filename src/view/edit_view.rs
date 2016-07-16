@@ -79,7 +79,7 @@ impl EditView {
 }
 
 impl View for EditView {
-    fn draw(&mut self, printer: &Printer) {
+    fn draw(&self, printer: &Printer) {
         assert!(printer.size.x == self.last_length);
 
         let width = self.content.width();

@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use view::{IdView, View, ViewWrapper};
 use Printer;
 use vec::Vec2;
@@ -7,7 +9,14 @@ pub struct TrackedView<T: View> {
     /// Wrapped view.
     pub view: T,
     /// Last position the view was located.
-    pub offset: Vec2,
+    offset: Cell<Vec2>,
+}
+
+impl<T: View> TrackedView<T> {
+    /// Return the last offset at which the view was drawn.
+    pub fn offset(&self) -> Vec2 {
+        self.offset.get()
+    }
 }
 
 impl<T: View> TrackedView<T> {
@@ -15,7 +24,7 @@ impl<T: View> TrackedView<T> {
     pub fn new(view: T) -> Self {
         TrackedView {
             view: view,
-            offset: Vec2::zero(),
+            offset: Cell::new(Vec2::zero()),
         }
     }
 
@@ -28,8 +37,8 @@ impl<T: View> TrackedView<T> {
 impl<T: View> ViewWrapper for TrackedView<T> {
     wrap_impl!(&self.view);
 
-    fn wrap_draw(&mut self, printer: &Printer) {
-        self.offset = printer.offset;
+    fn wrap_draw(&self, printer: &Printer) {
+        self.offset.set(printer.offset);
         self.view.draw(printer);
     }
 }

@@ -56,7 +56,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         self.view.layout(size - offset);
     }
 
-    fn wrap_draw(&mut self, printer: &Printer) {
+    fn wrap_draw(&self, printer: &Printer) {
 
         // Skip the first row/column
         let printer =

@@ -132,7 +132,7 @@ impl SelectView<String> {
 }
 
 impl<T: 'static> View for SelectView<T> {
-    fn draw(&mut self, printer: &Printer) {
+    fn draw(&self, printer: &Printer) {
 
         let h = self.items.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
