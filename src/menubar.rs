@@ -1,5 +1,6 @@
 use Cursive;
 use menu::MenuTree;
+use backend::Backend;
 use view::MenuPopup;
 use view::KeyEventView;
 use theme::ColorStyle;
@@ -49,6 +50,11 @@ impl Menubar {
         }
     }
 
+    fn hide(&mut self) {
+        self.state = State::Inactive;
+        ::B::clear();
+    }
+
     pub fn take_focus(&mut self) {
         self.state = State::Selected;
     }
@@ -88,7 +94,7 @@ impl Menubar {
 
     pub fn on_event(&mut self, event: Event) -> Option<Callback> {
         match event {
-            Event::Key(Key::Esc) => self.state = State::Inactive,
+            Event::Key(Key::Esc) => self.hide(),
             Event::Key(Key::Left) => {
                 if self.focus > 0 {
                     self.focus -= 1
