@@ -5,6 +5,7 @@ use std::thread;
 use std::time::Duration;
 
 use cursive::Cursive;
+use cursive::vec::Vec2;
 use cursive::Printer;
 use cursive::view::{View, FullView};
 
@@ -91,9 +92,12 @@ impl BufferView {
 }
 
 impl View for BufferView {
-    fn draw(&mut self, printer: &Printer) {
+    fn layout(&mut self, _: Vec2) {
         // Before drawing, we'll want to update the buffer
         self.update();
+    }
+
+    fn draw(&self, printer: &Printer) {
 
         // If the buffer is large enough, we'll discard the beginning and keep the end.
         // If the buffer is too small, only print a part of it with an offset.
