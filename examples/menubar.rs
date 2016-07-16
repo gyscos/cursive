@@ -1,6 +1,7 @@
 extern crate cursive;
 
 use cursive::Cursive;
+use cursive::With;
 use cursive::menu::MenuTree;
 use cursive::view::Dialog;
 use cursive::view::TextView;

@@ -74,6 +74,7 @@ pub mod direction;
 mod printer;
 mod menubar;
 mod xy;
+mod with;
 
 mod div;
 mod utf8;
@@ -81,6 +82,7 @@ mod utf8;
 mod backend;
 
 pub use xy::XY;
+pub use with::With;
 pub use printer::Printer;
 
 use backend::{Backend, NcursesBackend};

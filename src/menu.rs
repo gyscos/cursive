@@ -1,5 +1,6 @@
 //! Module to build menus.
 
+use With;
 use Cursive;
 use std::rc::Rc;
 use event::Callback;
@@ -104,13 +105,5 @@ impl MenuTree {
     /// Adds a submenu to the end of this tree - chainable variant.
     pub fn subtree(self, title: &str, tree: MenuTree) -> Self {
         self.with(|menu| menu.add_subtree(title, tree))
-    }
-
-    /// Calls the given closure on `self`.
-    ///
-    /// Useful in a function chain.
-    pub fn with<F: FnOnce(&mut Self)>(mut self, f: F) -> Self {
-        f(&mut self);
-        self
     }
 }

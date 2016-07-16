@@ -108,10 +108,10 @@ impl LinearLayout {
 
     /// Returns a cyclic mutable iterator starting with the child in focus
     fn iter_mut<'a>(&'a mut self, from_focus: bool,
-                    direction: direction::Relative)
+                    source: direction::Relative)
                     -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
 
-        match direction {
+        match source {
             direction::Relative::Front => {
                 let start = if from_focus {
                     self.focus

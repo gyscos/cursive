@@ -35,6 +35,14 @@ impl EventResult {
     pub fn with_cb<F: 'static + Fn(&mut Cursive)>(f: F) -> Self {
         EventResult::Consumed(Some(Rc::new(f)))
     }
+
+    /// Returns `true` if `self` is `EventResult::Consumed`.
+    pub fn is_consumed(&self) -> bool {
+        match *self {
+            EventResult::Consumed(_) => true,
+            EventResult::Ignored => false,
+        }
+    }
 }
 
 /// A non-character key on the keyboard
