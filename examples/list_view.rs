@@ -10,10 +10,15 @@ fn main() {
     siv.add_layer(Dialog::new(ListView::new()
                               .child("Name", EditView::new().min_length(10))
                               .child("Email", LinearLayout::horizontal()
-                                    .child(EditView::new().min_length(15))
+                                    .child(EditView::new().min_length(15).disabled().with_id("email1"))
                                     .child(TextView::new("@"))
-                                    .child(EditView::new().min_length(10)))
-                              .child("Receive spam?", Checkbox::new())
+                                    .child(EditView::new().min_length(10).disabled().with_id("email2")))
+                              .child("Receive spam?", Checkbox::new().on_change(|s, checked| {
+                                  for name in &["email1", "email2"] {
+                                    let view: &mut EditView = s.find_id(name).unwrap();
+                                    view.set_enabled(checked);
+                                  }
+                              }))
                               .delimiter()
                               .with(|list| {
                                   for i in 0..50 {

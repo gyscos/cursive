@@ -1,11 +1,12 @@
 use XY;
 use direction;
 use view::View;
-use view::SizeCache;
+use view::{Selector, SizeCache};
 use vec::Vec2;
 use Printer;
 use event::{Event, EventResult, Key};
 
+use std::any::Any;
 use std::cmp::min;
 
 /// Arranges its children linearly according to its orientation.
@@ -365,5 +366,9 @@ impl View for LinearLayout {
             }
             res => res,
         }
+    }
+
+    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.children.iter_mut().filter_map(|c| c.view.find(selector)).next()
     }
 }

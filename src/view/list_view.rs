@@ -2,9 +2,12 @@ use Printer;
 use With;
 use vec::Vec2;
 use view::View;
+use view::Selector;
 use direction;
 use view::scroll::ScrollBase;
 use event::{Event, EventResult, Key};
+
+use std::any::Any;
 
 enum Child {
     Row(String, Box<View>),
@@ -260,5 +263,9 @@ impl View for ListView {
         self.focus = i;
         self.scrollbase.scroll_to(self.focus);
         true
+    }
+
+    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.children.iter_mut().filter_map(Child::view).filter_map(|v| v.find(selector)).next()
     }
 }

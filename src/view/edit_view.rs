@@ -1,6 +1,7 @@
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
+use With;
 use direction::Direction;
 use theme::{ColorStyle, Effect};
 use vec::Vec2;
@@ -23,8 +24,9 @@ pub struct EditView {
     /// (When the content is too long for the display, we hide part of it)
     offset: usize,
     /// Last display length, to know the possible offset range
-    last_length: usize, /* scrollable: bool,
-                         * TODO: add a max text length? */
+    last_length: usize,
+
+    enabled: bool,
 }
 
 new_default!(EditView);
@@ -38,7 +40,37 @@ impl EditView {
             offset: 0,
             min_length: 1,
             last_length: 0, // scrollable: false,
+            enabled: true,
         }
+    }
+
+    /// Disables this view.
+    ///
+    /// A disabled view cannot be selected.
+    pub fn disable(&mut self) {
+        self.enabled = false;
+    }
+
+    /// Disables this view.
+    ///
+    /// Chainable variant.
+    pub fn disabled(self) -> Self {
+        self.with(Self::disable)
+    }
+
+    /// Re-enables this view.
+    pub fn enable(&mut self) {
+        self.enabled = true;
+    }
+
+    /// Enable or disable this view.
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+    }
+
+    /// Returns `true` if this view is enabled.
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
     }
 
     /// Replace the entire content of the view with the given one.
@@ -83,7 +115,12 @@ impl View for EditView {
 
         let width = self.content.width();
         printer.with_color(ColorStyle::Secondary, |printer| {
-            printer.with_effect(Effect::Reverse, |printer| {
+            let effect = if self.enabled {
+                Effect::Reverse
+            } else {
+                Effect::Simple
+            };
+            printer.with_effect(effect, |printer| {
                 if width < self.last_length {
                     // No problem, everything fits.
                     printer.print((0, 0), &self.content);
@@ -145,7 +182,7 @@ impl View for EditView {
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {
-        true
+        self.enabled
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
