@@ -1,4 +1,5 @@
 use XY;
+use With;
 use direction::Direction;
 use vec::Vec2;
 use view::View;
@@ -18,6 +19,9 @@ pub struct TextView {
     rows: Vec<Row>,
 
     align: Align,
+
+    // If `false`, disable scrolling.
+    scrollable: bool,
 
     // ScrollBase make many scrolling-related things easier
     scrollbase: ScrollBase,
@@ -48,11 +52,30 @@ impl TextView {
         TextView {
             content: content.to_string(),
             rows: Vec::new(),
+            scrollable: true,
             scrollbase: ScrollBase::new(),
             align: Align::top_left(),
             last_size: None,
             width: None,
         }
+    }
+
+    /// Enable or disable the view's scrolling capabilities.
+    ///
+    /// When disabled, the view will never attempt to scroll
+    /// (and will always ask for the full height).
+    pub fn set_scrollable(&mut self, scrollable: bool) {
+        self.scrollable = scrollable;
+    }
+
+    /// Enable or disable the view's scrolling capabilities.
+    ///
+    /// When disabled, the view will never attempt to scroll
+    /// (and will always ask for the full height).
+    ///
+    /// Chainable variant.
+    pub fn scrollable(self, scrollable: bool) -> Self {
+        self.with(|s| s.set_scrollable(scrollable))
     }
 
     /// Sets the horizontal alignment for this view.
@@ -100,7 +123,7 @@ impl TextView {
             // Recompute
             self.rows = LinesIterator::new(&self.content, size.x).collect();
             let mut scrollbar = 0;
-            if self.rows.len() > size.y {
+            if self.scrollable && self.rows.len() > size.y {
                 scrollbar = 2;
                 // If we're too high, include a scrollbar
                 self.rows = LinesIterator::new(&self.content,
@@ -108,6 +131,7 @@ impl TextView {
                     .collect();
             }
 
+            // Desired width, including the scrollbar.
             self.width = self.rows
                 .iter()
                 .map(|row| row.width)
@@ -115,8 +139,15 @@ impl TextView {
                 .map(|w| w + scrollbar);
 
             // Our resulting size.
-            let my_size =
-                size.or_min((self.width.unwrap_or(0), self.rows.len()));
+            // We can't go lower, width-wise.
+
+            let mut my_size = Vec2::new(self.width.unwrap_or(0),
+                                        self.rows.len());
+
+            if self.scrollable && my_size.y > size.y {
+                my_size.y = size.y;
+            }
+
             self.last_size = Some(SizeCache::build(my_size, size));
         }
     }
@@ -237,7 +268,15 @@ impl View for TextView {
 
     fn get_min_size(&mut self, size: Vec2) -> Vec2 {
         self.compute_rows(size);
-        size.or_min((self.width.unwrap_or(0), self.rows.len()))
+
+        // This is what we'd like
+        let mut ideal = Vec2::new(self.width.unwrap_or(0), self.rows.len());
+
+        if self.scrollable && ideal.y > size.y {
+            ideal.y = size.y;
+        }
+
+        ideal
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {
