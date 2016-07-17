@@ -134,6 +134,10 @@ impl MenuPopup {
 
 impl View for MenuPopup {
     fn draw(&self, printer: &Printer) {
+        if printer.size.x < 2 || printer.size.y < 2 {
+            return;
+        }
+
         let h = self.menu.len();
         let offset = self.align.v.get_offset(h, printer.size.y);
         let printer =
@@ -155,11 +159,13 @@ impl View for MenuPopup {
                         printer.print_hdelim((0, 0), printer.size.x)
                     }
                     MenuItem::Subtree(ref label, _) => {
+                        if printer.size.x < 4  { return; }
                         printer.print_hline((1, 0), printer.size.x - 2, " ");
                         printer.print((2, 0), label);
                         printer.print((printer.size.x - 4, 0), ">>");
                     }
                     MenuItem::Leaf(ref label, _) => {
+                        if printer.size.x < 2  { return; }
                         printer.print_hline((1, 0), printer.size.x - 2, " ");
                         printer.print((2, 0), label);
                     }

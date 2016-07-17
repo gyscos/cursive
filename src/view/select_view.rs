@@ -156,7 +156,9 @@ impl<T: 'static> SelectView<T> {
         let x = self.align.h.get_offset(l, printer.size.x);
         printer.print_hline((0, 0), x, " ");
         printer.print((x, 0), &self.items[i].label);
-        printer.print_hline((x + l, 0), printer.size.x - l - x, " ");
+        if l < printer.size.x {
+            printer.print_hline((x + l, 0), printer.size.x - l - x, " ");
+        }
     }
 }
 

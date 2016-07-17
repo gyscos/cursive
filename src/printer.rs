@@ -126,21 +126,25 @@ impl Printer {
     /// printer.print_box((0,0), (6,4));
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S) {
-        let start_v = start.into();
-        let size_v = size.into() - (1, 1);
+        let start = start.into();
+        let size = size.into();
+        if size.x < 2 || size.y < 2 {
+            return;
+        }
+        let size = size - (1, 1);
 
-        self.print(start_v, "┌");
-        self.print(start_v + size_v.keep_x(), "┐");
-        self.print(start_v + size_v.keep_y(), "└");
-        self.print(start_v + size_v, "┘");
+        self.print(start, "┌");
+        self.print(start + size.keep_x(), "┐");
+        self.print(start + size.keep_y(), "└");
+        self.print(start + size, "┘");
 
-        self.print_hline(start_v + (1, 0), size_v.x - 1, "─");
-        self.print_vline(start_v + (0, 1), size_v.y - 1, "│");
-        self.print_hline(start_v + (1, 0) + size_v.keep_y(),
-                         size_v.x - 1,
+        self.print_hline(start + (1, 0), size.x - 1, "─");
+        self.print_vline(start + (0, 1), size.y - 1, "│");
+        self.print_hline(start + (1, 0) + size.keep_y(),
+                         size.x - 1,
                          "─");
-        self.print_vline(start_v + (0, 1) + size_v.keep_x(),
-                         size_v.y - 1,
+        self.print_vline(start + (0, 1) + size.keep_x(),
+                         size.y - 1,
                          "│");
     }
 
@@ -176,11 +180,12 @@ impl Printer {
     pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(&self, offset: S,
                                                      size: T, focused: bool)
                                                      -> Printer {
+        let size = size.into();
         let offset = offset.into().or_min(self.size);
         Printer {
             offset: self.offset + offset,
             // We can't be larger than what remains
-            size: Vec2::min(self.size - offset, size.into()),
+            size: Vec2::min(self.size - offset, size),
             focused: self.focused && focused,
             theme: self.theme.clone(),
         }

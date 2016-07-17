@@ -63,6 +63,10 @@ impl Button {
 impl View for Button {
     fn draw(&self, printer: &Printer) {
 
+        if printer.size.x == 0 {
+            return;
+        }
+
         let style = if !self.enabled {
             ColorStyle::Secondary
         } else if !printer.focused {

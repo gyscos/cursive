@@ -172,6 +172,9 @@ impl View for Dialog {
 
         if !self.title.is_empty() {
             let len = self.title.width();
+            if len + 4 > printer.size.x {
+                return;
+            }
             let x = (printer.size.x - len) / 2;
             printer.print((x - 2, 0), "┤ ");
             printer.print((x + len, 0), " ├");
