@@ -61,6 +61,16 @@ macro_rules! println_stderr(
     } }
 );
 
+macro_rules! new_default(
+    ($c:ident) => {
+        impl Default for $c {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
+    }
+    );
+
 
 pub mod event;
 pub mod view;
@@ -119,11 +129,7 @@ pub struct Cursive {
     running: bool,
 }
 
-impl Default for Cursive {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+new_default!(Cursive);
 
 // Use the Ncurses backend.
 // TODO: make this feature-driven

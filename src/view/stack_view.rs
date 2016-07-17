@@ -22,11 +22,7 @@ struct Layer {
     virgin: bool,
 }
 
-impl Default for StackView {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+new_default!(StackView);
 
 impl StackView {
     /// Creates a new empty StackView

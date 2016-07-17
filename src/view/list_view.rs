@@ -44,11 +44,7 @@ pub struct ListView {
     focus: usize,
 }
 
-impl Default for ListView {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+new_default!(ListView);
 
 impl ListView {
     /// Creates a new, empty `ListView`.

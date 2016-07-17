@@ -5,11 +5,7 @@ pub struct ViewPath {
     pub path: Vec<usize>,
 }
 
-impl Default for ViewPath {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+new_default!(ViewPath);
 
 impl ViewPath {
     /// Creates a new empty path.

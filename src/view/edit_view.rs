@@ -27,11 +27,7 @@ pub struct EditView {
                          * TODO: add a max text length? */
 }
 
-impl Default for EditView {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+new_default!(EditView);
 
 impl EditView {
     /// Creates a new, empty edit view.

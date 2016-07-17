@@ -12,12 +12,12 @@ pub struct Checkbox {
     checked: bool,
 }
 
+new_default!(Checkbox);
+
 impl Checkbox {
     /// Creates a new, unchecked checkbox.
     pub fn new() -> Self {
-        Checkbox {
-            checked: false,
-        }
+        Checkbox { checked: false }
     }
 
     /// Toggles the checkbox state.
@@ -66,7 +66,7 @@ impl View for Checkbox {
 
     fn draw(&self, printer: &Printer) {
         printer.with_selection(printer.focused, |printer| {
-            printer.print((0,0), "[ ]");
+            printer.print((0, 0), "[ ]");
             if self.checked {
                 printer.print((1, 0), "X");
             }
