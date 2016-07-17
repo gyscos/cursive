@@ -2,6 +2,7 @@ use With;
 use Cursive;
 use Printer;
 use vec::Vec2;
+use theme::ColorStyle;
 use view::View;
 use event::{Event, EventResult, Key};
 use direction::Direction;
@@ -12,6 +13,7 @@ use std::rc::Rc;
 /// Checkable box.
 pub struct Checkbox {
     checked: bool,
+    enabled: bool,
 
     on_change: Option<Rc<Fn(&mut Cursive, bool)>>,
 }
@@ -23,19 +25,51 @@ impl Checkbox {
     pub fn new() -> Self {
         Checkbox {
             checked: false,
+            enabled: true,
             on_change: None,
         }
     }
 
+    /// Disables this view.
+    ///
+    /// A disabled view cannot be selected.
+    pub fn disable(&mut self) {
+        self.enabled = false;
+    }
+
+    /// Disables this view.
+    ///
+    /// Chainable variant.
+    pub fn disabled(self) -> Self {
+        self.with(Self::disable)
+    }
+
+    /// Re-enables this view.
+    pub fn enable(&mut self) {
+        self.enabled = true;
+    }
+
+    /// Enable or disable this view.
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+    }
+
+    /// Returns `true` if this view is enabled.
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+
     /// Sets a callback to be used when the state changes.
-    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(&mut self, on_change: F) {
+    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(&mut self,
+                                                              on_change: F) {
         self.on_change = Some(Rc::new(on_change));
     }
 
     /// Sets a callback to be used when the state changes.
     ///
     /// Chainable variant.
-    pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(self, on_change: F) -> Self {
+    pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(self, on_change: F)
+                                                          -> Self {
         self.with(|s| s.set_on_change(on_change))
     }
 
@@ -54,7 +88,9 @@ impl Checkbox {
     ///
     /// Chainable variant.
     pub fn checked(self) -> Self {
-        self.with(|s| {s.check();})
+        self.with(|s| {
+            s.check();
+        })
     }
 
     /// Returns `true` if the checkbox is checked.
@@ -71,7 +107,9 @@ impl Checkbox {
     ///
     /// Chainable variant.
     pub fn unchecked(self) -> Self {
-        self.with(|s| { s.uncheck(); })
+        self.with(|s| {
+            s.uncheck();
+        })
     }
 
     /// Sets the checkbox state.
@@ -84,6 +122,13 @@ impl Checkbox {
             EventResult::Consumed(None)
         }
     }
+
+    fn draw_internal(&self, printer: &Printer) {
+        printer.print((0, 0), "[ ]");
+        if self.checked {
+            printer.print((1, 0), "X");
+        }
+    }
 }
 
 impl View for Checkbox {
@@ -92,16 +137,17 @@ impl View for Checkbox {
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {
-        true
+        self.enabled
     }
 
     fn draw(&self, printer: &Printer) {
-        printer.with_selection(printer.focused, |printer| {
-            printer.print((0, 0), "[ ]");
-            if self.checked {
-                printer.print((1, 0), "X");
-            }
-        });
+        if self.enabled {
+            printer.with_selection(printer.focused,
+                                   |printer| self.draw_internal(printer));
+        } else {
+            printer.with_color(ColorStyle::Secondary,
+                               |printer| self.draw_internal(printer));
+        }
 
     }
 
