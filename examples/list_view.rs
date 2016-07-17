@@ -2,7 +2,7 @@ extern crate cursive;
 
 use cursive::Cursive;
 use cursive::With;
-use cursive::view::{ListView, Dialog, EditView, TextView, LinearLayout};
+use cursive::view::{ListView, Checkbox, Dialog, EditView, TextView, LinearLayout};
 
 fn main() {
     let mut siv = Cursive::new();
@@ -13,6 +13,7 @@ fn main() {
                                     .child(EditView::new().min_length(15))
                                     .child(TextView::new("@"))
                                     .child(EditView::new().min_length(10)))
+                              .child("Receive spam?", Checkbox::new())
                               .delimiter()
                               .with(|list| {
                                   for i in 0..50 {

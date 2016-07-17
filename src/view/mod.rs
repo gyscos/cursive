@@ -48,6 +48,7 @@ mod scroll;
 // Views
 mod box_view;
 mod button;
+mod checkbox;
 mod dialog;
 mod edit_view;
 mod full_view;
@@ -79,6 +80,7 @@ pub use self::scroll::ScrollBase;
 pub use self::id_view::IdView;
 pub use self::box_view::BoxView;
 pub use self::button::Button;
+pub use self::checkbox::Checkbox;
 pub use self::dialog::Dialog;
 pub use self::edit_view::EditView;
 pub use self::full_view::FullView;
