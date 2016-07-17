@@ -3,6 +3,7 @@ use std::rc::Rc;
 use direction::Direction;
 use theme::ColorStyle;
 use Cursive;
+use With;
 use vec::Vec2;
 use view::View;
 use event::*;
@@ -14,6 +15,7 @@ use unicode_width::UnicodeWidthStr;
 pub struct Button {
     label: String,
     callback: Callback,
+    enabled: bool,
 }
 
 impl Button {
@@ -24,13 +26,46 @@ impl Button {
         Button {
             label: label.to_string(),
             callback: Rc::new(cb),
+            enabled: true,
         }
+    }
+
+    /// Disables this view.
+    ///
+    /// A disabled view cannot be selected.
+    pub fn disable(&mut self) {
+        self.enabled = false;
+    }
+
+    /// Disables this view.
+    ///
+    /// Chainable variant.
+    pub fn disabled(self) -> Self {
+        self.with(Self::disable)
+    }
+
+    /// Re-enables this view.
+    pub fn enable(&mut self) {
+        self.enabled = true;
+    }
+
+    /// Enable or disable this view.
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+    }
+
+    /// Returns `true` if this view is enabled.
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
     }
 }
 
 impl View for Button {
     fn draw(&self, printer: &Printer) {
-        let style = if !printer.focused {
+
+        let style = if !self.enabled {
+            ColorStyle::Secondary
+        } else if !printer.focused {
             ColorStyle::Primary
         } else {
             ColorStyle::Highlight
@@ -60,6 +95,6 @@ impl View for Button {
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {
-        true
+        self.enabled
     }
 }
