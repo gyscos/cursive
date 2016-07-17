@@ -2,11 +2,13 @@ use std::cmp::min;
 use std::rc::Rc;
 
 use Cursive;
+use With;
 use direction::Direction;
 use view::{IdView, View};
 use align::{Align, HAlign, VAlign};
 use view::scroll::ScrollBase;
 use event::{Event, EventResult, Key};
+use theme::ColorStyle;
 use vec::Vec2;
 use Printer;
 
@@ -31,6 +33,7 @@ impl<T> Item<T> {
 /// It contains a list of values of type T, with associated labels.
 pub struct SelectView<T = String> {
     items: Vec<Item<T>>,
+    enabled: bool,
     focus: usize,
     scrollbase: ScrollBase,
     // This is a custom callback to include a &T
@@ -43,11 +46,41 @@ impl<T: 'static> SelectView<T> {
     pub fn new() -> Self {
         SelectView {
             items: Vec::new(),
+            enabled: true,
             focus: 0,
             scrollbase: ScrollBase::new(),
             select_cb: None,
             align: Align::top_left(),
         }
+    }
+
+    /// Disables this view.
+    ///
+    /// A disabled view cannot be selected.
+    pub fn disable(&mut self) {
+        self.enabled = false;
+    }
+
+    /// Disables this view.
+    ///
+    /// Chainable variant.
+    pub fn disabled(self) -> Self {
+        self.with(Self::disable)
+    }
+
+    /// Re-enables this view.
+    pub fn enable(&mut self) {
+        self.enabled = true;
+    }
+
+    /// Enable or disable this view.
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+    }
+
+    /// Returns `true` if this view is enabled.
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
     }
 
     /// Sets a callback to be used when an item is selected.
@@ -117,6 +150,14 @@ impl<T: 'static> SelectView<T> {
     pub fn with_id(self, label: &str) -> IdView<Self> {
         IdView::new(label, self)
     }
+
+    fn draw_item(&self, printer: &Printer, i: usize) {
+        let l = self.items[i].label.width();
+        let x = self.align.h.get_offset(l, printer.size.x);
+        printer.print_hline((0, 0), x, " ");
+        printer.print((x, 0), &self.items[i].label);
+        printer.print_hline((x + l, 0), printer.size.x - l - x, " ");
+    }
 }
 
 impl SelectView<String> {
@@ -141,11 +182,12 @@ impl<T: 'static> View for SelectView<T> {
 
         self.scrollbase.draw(printer, |printer, i| {
             printer.with_selection(i == self.focus, |printer| {
-                let l = self.items[i].label.width();
-                let x = self.align.h.get_offset(l, printer.size.x);
-                printer.print_hline((0, 0), x, " ");
-                printer.print((x, 0), &self.items[i].label);
-                printer.print_hline((x + l, 0), printer.size.x - l - x, " ");
+                if i != self.focus && !self.enabled {
+                    printer.with_color(ColorStyle::Secondary,
+                                       |printer| self.draw_item(printer, i));
+                } else {
+                    self.draw_item(printer, i);
+                }
             });
         });
     }
@@ -217,7 +259,7 @@ impl<T: 'static> View for SelectView<T> {
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {
-        true
+        self.enabled && !self.items.is_empty()
     }
 
     fn layout(&mut self, size: Vec2) {
