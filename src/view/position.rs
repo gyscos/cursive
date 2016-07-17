@@ -54,10 +54,16 @@ impl Offset {
     /// Computes a single-dimension offset requred to draw a view.
     pub fn compute_offset(&self, size: usize, available: usize, parent: usize)
                           -> usize {
-        match *self {
-            Offset::Center => (available - size) / 2,
-            Offset::Absolute(offset) => min(offset, available - size),
-            Offset::Parent(offset) => min(parent + offset, available - size),
+        if size > available {
+            0
+        } else {
+            match *self {
+                Offset::Center => (available - size) / 2,
+                Offset::Absolute(offset) => min(offset, available - size),
+                Offset::Parent(offset) => {
+                    min(parent + offset, available - size)
+                }
+            }
         }
     }
 }

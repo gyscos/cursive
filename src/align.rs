@@ -67,10 +67,14 @@ impl HAlign {
     /// `container`, printing at the resulting offset will align the view as
     /// desired.
     pub fn get_offset(&self, content: usize, container: usize) -> usize {
-        match *self {
-            HAlign::Left => 0,
-            HAlign::Center => (container - content) / 2,
-            HAlign::Right => (container - content),
+        if container < content {
+            0
+        } else {
+            match *self {
+                HAlign::Left => 0,
+                HAlign::Center => (container - content) / 2,
+                HAlign::Right => (container - content),
+            }
         }
     }
 }
@@ -82,10 +86,14 @@ impl VAlign {
     /// `container`, printing at the resulting offset will align the view as
     /// desired.
     pub fn get_offset(&self, content: usize, container: usize) -> usize {
-        match *self {
-            VAlign::Top => 0,
-            VAlign::Center => (container - content) / 2,
-            VAlign::Bottom => (container - content),
+        if container < content {
+            0
+        } else {
+            match *self {
+                VAlign::Top => 0,
+                VAlign::Center => (container - content) / 2,
+                VAlign::Bottom => (container - content),
+            }
         }
     }
 }

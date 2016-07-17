@@ -127,11 +127,19 @@ impl View for Dialog {
                 .fold(0, |a, b| a + b) + self.buttons.len() - 1
         };
         let overhead = self.padding + self.borders;
+        if printer.size.x < overhead.horizontal() {
+            return;
+        }
         let mut offset = overhead.left +
                          self.align
             .h
             .get_offset(width, printer.size.x - overhead.horizontal());
-        let y = printer.size.y - self.padding.bottom - self.borders.bottom - 1;
+
+        let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
+        if overhead_bottom > printer.size.y {
+            return;
+        }
+        let y = printer.size.y - overhead_bottom;
 
         for (i, button) in self.buttons.iter().enumerate() {
             let size = button.size;
@@ -146,9 +154,13 @@ impl View for Dialog {
         }
 
         // What do we have left?
-        let inner_size = printer.size - Vec2::new(0, buttons_height) -
-                         self.borders.combined() -
+        let taken = Vec2::new(0, buttons_height) +
+                         self.borders.combined() +
                          self.padding.combined();
+        if !taken.fits_in(printer.size) {
+            return;
+        }
+        let inner_size = printer.size - taken;
 
         self.content
             .draw(&printer.sub_printer(self.borders.top_left() +
@@ -186,7 +198,13 @@ impl View for Dialog {
         }
 
         // We also remove one row for the buttons.
-        let content_req = req - (nomans_land + Vec2::new(0, buttons_size.y));
+        let taken = nomans_land + Vec2::new(0, buttons_size.y);
+        if !taken.fits_in(req) {
+            // Bad!!
+            return taken;
+        }
+        let content_req = req - taken;
+
         let content_size = self.content.get_min_size(content_req);
 
         // On the Y axis, we add buttons and content.
@@ -207,7 +225,12 @@ impl View for Dialog {
     fn layout(&mut self, mut size: Vec2) {
         // Padding and borders are taken, sorry.
         // TODO: handle border-less themes?
-        size = size - (self.borders.combined() + self.padding.combined());
+        let taken = self.borders.combined() + self.padding.combined();
+        size = if taken.fits_in(size) {
+            size - taken
+        } else {
+            Vec2::zero()
+        };
 
         // Buttons are kings, we give them everything they want.
         let mut buttons_height = 0;
@@ -218,6 +241,9 @@ impl View for Dialog {
         }
 
         // Poor content will have to make do with what's left.
+        if buttons_height > size.y {
+            buttons_height = size.y;
+        }
         self.content.layout(size - Vec2::new(0, buttons_height));
     }
 

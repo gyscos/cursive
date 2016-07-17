@@ -120,15 +120,30 @@ impl TextView {
 
     fn compute_rows(&mut self, size: Vec2) {
         if !self.is_cache_valid(size) {
+            self.last_size = None;
             // Recompute
+
+            if size.x == 0 {
+                // Nothing we can do at this poing.
+                return;
+            }
+
             self.rows = LinesIterator::new(&self.content, size.x).collect();
             let mut scrollbar = 0;
             if self.scrollable && self.rows.len() > size.y {
                 scrollbar = 2;
+                if size.x < scrollbar {
+                    // Again, this is a lost cause.
+                    return;
+                }
+
                 // If we're too high, include a scrollbar
                 self.rows = LinesIterator::new(&self.content,
                                                size.x - scrollbar)
                     .collect();
+                if self.rows.is_empty() && !self.content.is_empty() {
+                    return;
+                }
             }
 
             // Desired width, including the scrollbar.
@@ -148,6 +163,8 @@ impl TextView {
                 my_size.y = size.y;
             }
 
+
+            // println_stderr!("my: {:?} | si: {:?}", my_size, size);
             self.last_size = Some(SizeCache::build(my_size, size));
         }
     }
@@ -213,6 +230,12 @@ impl<'a> Iterator for LinesIterator<'a> {
                     other
                 }
             };
+
+        if head_bytes == 0 {
+            // This mean we can't even get a single char?
+            // Sucks. Let's bail.
+            return None;
+        }
 
         self.start += head_bytes;
 

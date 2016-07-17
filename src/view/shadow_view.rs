@@ -22,8 +22,9 @@ impl<T: View> ShadowView<T> {
         }
     }
 
-    fn padding(&self) -> (usize, usize) {
-        (1 + self.left_padding as usize, 1 + self.top_padding as usize)
+    fn padding(&self) -> Vec2 {
+        Vec2::new(1 + self.left_padding as usize,
+                  1 + self.top_padding as usize)
     }
 
     /// If set, adds an empty column to the left of the view.
@@ -47,16 +48,22 @@ impl<T: View> ViewWrapper for ShadowView<T> {
     wrap_impl!(&self.view);
 
     fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
-        let offset = self.padding();
+        // Make sure req >= offset
+        let offset = self.padding().or_min(req);
         self.view.get_min_size(req - offset) + offset
     }
 
     fn wrap_layout(&mut self, size: Vec2) {
-        let offset = self.padding();
+        let offset = self.padding().or_min(size);
         self.view.layout(size - offset);
     }
 
     fn wrap_draw(&self, printer: &Printer) {
+
+        if printer.size.y == 0 || printer.size.x == 0 {
+            // Nothing to do if there's no place to draw.
+            return;
+        }
 
         // Skip the first row/column
         let printer =
