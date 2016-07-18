@@ -46,6 +46,15 @@ fn main() {
 
 ![Cursive dialog example](https://raw.githubusercontent.com/Gyscos/Cursive/master/doc/cursive_example.png)
 
+Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/examples) to get these results, and more:
+
+<img src="doc/examples/edit.png" alt="`edit` example", width="49%" />
+<img src="doc/examples/lorem.png" alt="`lorem` example", width="49%" />
+<img src="doc/examples/menubar.png" alt="`menubar` example", width="49%" />
+<img src="doc/examples/select.png" alt="`select` example", width="49%" />
+<img src="doc/examples/list_view.png" alt="`list_view` example", width="49%" />
+<img src="doc/examples/theme.png" alt="`theme` example", width="49%" />
+
 _(Colors may depend on your terminal configuration.)_
 
 ## Goals
