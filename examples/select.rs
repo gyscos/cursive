@@ -1,24 +1,20 @@
 extern crate cursive;
 
-use std::fs::File;
-use std::io::{BufReader, BufRead};
-
 use cursive::Cursive;
 use cursive::align::HAlign;
 use cursive::view::{Dialog, SelectView, TextView, BoxView};
 
 fn main() {
-    // To keep things simple, little error management is done here.
-    // If you have an error, be sure to run this from the crate root, not from a sub directory.
-
     let mut select = SelectView::new().h_align(HAlign::Center);
 
     // Read the list of cities from separate file, and fill the view with it.
-    let file = File::open("assets/cities.txt").unwrap();
-    let reader = BufReader::new(file);
-    for line in reader.lines() {
-        select.add_item_str(&line.unwrap());
+    // (We include the file at compile-time to avoid runtime read errors.)
+    let content = include_str!("../assets/cities.txt");
+    for line in content.split('\n') {
+        select.add_item_str(line);
     }
+
+    // Sets the callback for when "Enter" is pressed.
     select.set_on_select(show_next_window);
 
     let mut siv = Cursive::new();
