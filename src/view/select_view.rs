@@ -1,7 +1,10 @@
 use std::cmp::min;
 use std::rc::Rc;
+use std::cell::Cell;
 
 use Cursive;
+use menu::MenuTree;
+use view::MenuPopup;
 use With;
 use direction::Direction;
 use view::{IdView, View};
@@ -34,11 +37,14 @@ impl<T> Item<T> {
 pub struct SelectView<T = String> {
     items: Vec<Item<T>>,
     enabled: bool,
-    focus: usize,
+    // the focus needs to be manipulable from callbacks
+    focus: Rc<Cell<usize>>,
     scrollbase: ScrollBase,
     // This is a custom callback to include a &T
     select_cb: Option<Rc<Fn(&mut Cursive, &T)>>,
     align: Align,
+    // `true` if we show a one-line view, with popup on selection.
+    popup: bool,
 }
 
 impl<T: 'static> SelectView<T> {
@@ -47,11 +53,24 @@ impl<T: 'static> SelectView<T> {
         SelectView {
             items: Vec::new(),
             enabled: true,
-            focus: 0,
+            focus: Rc::new(Cell::new(0)),
             scrollbase: ScrollBase::new(),
             select_cb: None,
             align: Align::top_left(),
+            popup: false,
         }
+    }
+
+    /// Turns `self` into a popup select view.
+    ///
+    /// Chainable variant.
+    pub fn popup(self) -> Self {
+        self.with(|s| s.set_popup(true))
+    }
+
+    /// Turns `self` into a popup select view.
+    pub fn set_popup(&mut self, popup: bool) {
+        self.popup = popup;
     }
 
     /// Disables this view.
@@ -131,7 +150,7 @@ impl<T: 'static> SelectView<T> {
     ///
     /// Panics if the list is empty.
     pub fn selection(&self) -> Rc<T> {
-        self.items[self.focus].value.clone()
+        self.items[self.focus()].value.clone()
     }
 
     /// Adds a item to the list, with given label and value.
@@ -160,6 +179,21 @@ impl<T: 'static> SelectView<T> {
             printer.print_hline((x + l, 0), printer.size.x - l - x, " ");
         }
     }
+
+    fn focus(&self) -> usize {
+        self.focus.get()
+    }
+
+    fn focus_up(&mut self, n: usize) {
+        let focus = self.focus();
+        let n = min(focus, n);
+        self.focus.set(focus - n);
+    }
+
+    fn focus_down(&mut self, n: usize) {
+        let focus = min(self.focus() + n, self.items.len());
+        self.focus.set(focus);
+    }
 }
 
 impl SelectView<String> {
@@ -176,22 +210,50 @@ impl SelectView<String> {
 
 impl<T: 'static> View for SelectView<T> {
     fn draw(&self, printer: &Printer) {
+        if self.popup {
+            let style = if !self.enabled {
+                ColorStyle::Secondary
+            } else if !printer.focused {
+                ColorStyle::Primary
+            } else {
+                ColorStyle::Highlight
+            };
+            let x = printer.size.x - 1;
 
-        let h = self.items.len();
-        let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer =
-            &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
 
-        self.scrollbase.draw(printer, |printer, i| {
-            printer.with_selection(i == self.focus, |printer| {
-                if i != self.focus && !self.enabled {
-                    printer.with_color(ColorStyle::Secondary,
-                                       |printer| self.draw_item(printer, i));
-                } else {
-                    self.draw_item(printer, i);
-                }
+            printer.with_color(style, |printer| {
+                // Prepare the entire background
+                printer.print_hline((0, 0), x, " ");
+                // Draw the borders
+                printer.print((0, 0), "<");
+                printer.print((x, 0), ">");
+
+                let label = &self.items[self.focus()].label;
+
+                // And center the text?
+                let offset = HAlign::Center.get_offset(label.len(), x);
+
+                printer.print((offset, 0), label);
             });
-        });
+        } else {
+
+            let h = self.items.len();
+            let offset = self.align.v.get_offset(h, printer.size.y);
+            let printer =
+                &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
+
+            self.scrollbase.draw(printer, |printer, i| {
+                printer.with_selection(i == self.focus(), |printer| {
+                    if i != self.focus() && !self.enabled {
+                        printer.with_color(ColorStyle::Secondary, |printer| {
+                            self.draw_item(printer, i)
+                        });
+                    } else {
+                        self.draw_item(printer, i);
+                    }
+                });
+            });
+        }
     }
 
     fn get_min_size(&mut self, req: Vec2) -> Vec2 {
@@ -203,61 +265,88 @@ impl<T: 'static> View for SelectView<T> {
             .map(|item| item.label.width())
             .max()
             .unwrap_or(1);
-        let h = self.items.len();
-
-        let scrolling = req.y < h;
-
-        // Add 2 spaces for the scrollbar if we need
-        let w = if scrolling {
-            w + 2
+        if self.popup {
+            Vec2::new(w + 2, 1)
         } else {
-            w
-        };
+            let h = self.items.len();
 
-        Vec2::new(w, h)
+            let scrolling = req.y < h;
+
+            // Add 2 spaces for the scrollbar if we need
+            let w = if scrolling {
+                w + 2
+            } else {
+                w
+            };
+
+            Vec2::new(w, h)
+        }
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        match event {
-            Event::Key(Key::Up) if self.focus > 0 => self.focus -= 1,
-            Event::Key(Key::Down) if self.focus + 1 < self.items.len() => {
-                self.focus += 1
-            }
-            Event::Key(Key::PageUp) => self.focus -= min(self.focus, 10),
-            Event::Key(Key::PageDown) => {
-                self.focus = min(self.focus + 10, self.items.len() - 1)
-            }
-            Event::Key(Key::Home) => self.focus = 0,
-            Event::Key(Key::End) => self.focus = self.items.len() - 1,
-            Event::Key(Key::Enter) if self.select_cb.is_some() => {
-                let cb = self.select_cb.as_ref().unwrap().clone();
-                let v = self.selection();
-                // We return a Callback Rc<|s| cb(s, &*v)>
-                return EventResult::Consumed(Some(Rc::new(move |s| {
-                    cb(s, &*v)
-                })));
-            }
-            Event::Char(c) => {
-                // Starting from the current focus,
-                // find the first item that match the char.
-                // Cycle back to the beginning of
-                // the list when we reach the end.
-                // This is achieved by chaining twice the iterator
-                let iter = self.items.iter().chain(self.items.iter());
-                if let Some((i, _)) = iter.enumerate()
-                    .skip(self.focus + 1)
-                    .find(|&(_, item)| item.label.starts_with(c)) {
-                    // Apply modulo in case we have a hit
-                    // from the chained iterator
-                    self.focus = i % self.items.len();
+        if self.popup {
+            match event {
+                Event::Key(Key::Enter) => {
+                    let mut tree = MenuTree::new();
+                    for (i, item) in self.items.iter().enumerate() {
+                        let focus = self.focus.clone();
+                        let select_cb = self.select_cb.as_ref().cloned();
+                        let value = item.value.clone();
+                        tree.add_leaf(&item.label, move |s| {
+                            focus.set(i);
+                            if let Some(ref select_cb) = select_cb {
+                                select_cb(s, &value);
+                            }
+                        });
+                    }
+                    let tree = Rc::new(tree);
+                    EventResult::with_cb(move |s| {
+                        let tree = tree.clone();
+                        s.add_layer(MenuPopup::new(tree));
+                    })
                 }
+                _ => EventResult::Ignored,
             }
-            _ => return EventResult::Ignored,
+        } else {
+            match event {
+                Event::Key(Key::Up) if self.focus() > 0 => self.focus_up(1),
+                Event::Key(Key::Down) if self.focus() + 1 <
+                                         self.items.len() => {
+                    self.focus_down(1)
+                }
+                Event::Key(Key::PageUp) => self.focus_up(10),
+                Event::Key(Key::PageDown) => self.focus_down(10),
+                Event::Key(Key::Home) => self.focus.set(0),
+                Event::Key(Key::End) => self.focus.set(self.items.len() - 1),
+                Event::Key(Key::Enter) if self.select_cb.is_some() => {
+                    let cb = self.select_cb.as_ref().unwrap().clone();
+                    let v = self.selection();
+                    // We return a Callback Rc<|s| cb(s, &*v)>
+                    return EventResult::Consumed(Some(Rc::new(move |s| {
+                        cb(s, &*v)
+                    })));
+                }
+                Event::Char(c) => {
+                    // Starting from the current focus,
+                    // find the first item that match the char.
+                    // Cycle back to the beginning of
+                    // the list when we reach the end.
+                    // This is achieved by chaining twice the iterator
+                    let iter = self.items.iter().chain(self.items.iter());
+                    if let Some((i, _)) = iter.enumerate()
+                        .skip(self.focus() + 1)
+                        .find(|&(_, item)| item.label.starts_with(c)) {
+                        // Apply modulo in case we have a hit
+                        // from the chained iterator
+                        self.focus.set(i % self.items.len());
+                    }
+                }
+                _ => return EventResult::Ignored,
+            }
+            let focus = self.focus();
+            self.scrollbase.scroll_to(focus);
+            EventResult::Consumed(None)
         }
-
-        self.scrollbase.scroll_to(self.focus);
-
-        EventResult::Consumed(None)
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {
@@ -265,6 +354,8 @@ impl<T: 'static> View for SelectView<T> {
     }
 
     fn layout(&mut self, size: Vec2) {
-        self.scrollbase.set_heights(size.y, self.items.len());
+        if !self.popup {
+            self.scrollbase.set_heights(size.y, self.items.len());
+        }
     }
 }
