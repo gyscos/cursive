@@ -12,6 +12,7 @@ use theme::ColorStyle;
 /// Only the top-most view is active and can receive input.
 pub struct StackView {
     layers: Vec<Layer>,
+    last_size: Vec2,
 }
 
 struct Layer {
@@ -27,7 +28,10 @@ new_default!(StackView);
 impl StackView {
     /// Creates a new empty StackView
     pub fn new() -> Self {
-        StackView { layers: Vec::new() }
+        StackView {
+            layers: Vec::new(),
+            last_size: Vec2::zero(),
+        }
     }
 
     /// Adds new view on top of the stack in the center of the screen.
@@ -53,6 +57,17 @@ impl StackView {
     pub fn pop_layer(&mut self) {
         self.layers.pop();
         ::B::clear();
+    }
+
+    /// Computes the offset of the current top view.
+    pub fn offset(&self) -> Vec2 {
+        let mut previous = Vec2::zero();
+        for layer in &self.layers {
+            let offset = layer.position
+                .compute_offset(layer.size, self.last_size, previous);
+            previous = offset;
+        }
+        previous
     }
 }
 
@@ -82,6 +97,8 @@ impl View for StackView {
     }
 
     fn layout(&mut self, size: Vec2) {
+        self.last_size = size;
+
         // The call has been made, we can't ask for more space anymore.
         // Let's make do with what we have.
 

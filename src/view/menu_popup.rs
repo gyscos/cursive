@@ -1,8 +1,10 @@
 use std::rc::Rc;
+use std::cmp::min;
 
 use unicode_width::UnicodeWidthStr;
 
 use Cursive;
+use With;
 use menu::{MenuItem, MenuTree};
 use Printer;
 use view::View;
@@ -34,6 +36,18 @@ impl MenuPopup {
             on_dismiss: None,
             on_action: None,
         }
+    }
+
+    /// Sets the currently focused element.
+    pub fn set_focus(&mut self, focus: usize) {
+        self.focus = min(focus, self.menu.len());
+    }
+
+    /// Sets the currently focused element.
+    ///
+    /// Chainable variant.
+    pub fn focus(self, focus: usize) -> Self {
+        self.with(|s| s.set_focus(focus))
     }
 
     fn item_width(item: &MenuItem) -> usize {

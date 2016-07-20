@@ -200,6 +200,12 @@ impl Cursive {
         B::set_refresh_rate(fps)
     }
 
+    /// Returns a reference to the currently active screen.
+    pub fn screen(&self) -> &StackView {
+        let id = self.active_screen;
+        &self.screens[id]
+    }
+
     /// Returns a mutable reference to the currently active screen.
     pub fn screen_mut(&mut self) -> &mut StackView {
         let id = self.active_screen;

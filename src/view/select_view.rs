@@ -7,6 +7,7 @@ use menu::MenuTree;
 use view::MenuPopup;
 use With;
 use direction::Direction;
+use view::position::Position;
 use view::{IdView, View};
 use align::{Align, HAlign, VAlign};
 use view::scroll::ScrollBase;
@@ -45,6 +46,10 @@ pub struct SelectView<T = String> {
     align: Align,
     // `true` if we show a one-line view, with popup on selection.
     popup: bool,
+    // We need the last offset to place the popup window
+    // We "cache" it during the draw, so we need interior mutability.
+    last_offset: Cell<Vec2>,
+    last_size: Vec2,
 }
 
 impl<T: 'static> SelectView<T> {
@@ -58,6 +63,8 @@ impl<T: 'static> SelectView<T> {
             select_cb: None,
             align: Align::top_left(),
             popup: false,
+            last_offset: Cell::new(Vec2::zero()),
+            last_size: Vec2::zero(),
         }
     }
 
@@ -210,6 +217,8 @@ impl SelectView<String> {
 
 impl<T: 'static> View for SelectView<T> {
     fn draw(&self, printer: &Printer) {
+        self.last_offset.set(printer.offset);
+
         if self.popup {
             let style = if !self.enabled {
                 ColorStyle::Secondary
@@ -218,15 +227,15 @@ impl<T: 'static> View for SelectView<T> {
             } else {
                 ColorStyle::Highlight
             };
-            let x = printer.size.x - 1;
+            let x = printer.size.x;
 
 
             printer.with_color(style, |printer| {
                 // Prepare the entire background
-                printer.print_hline((0, 0), x, " ");
+                printer.print_hline((1, 0), x - 1, " ");
                 // Draw the borders
                 printer.print((0, 0), "<");
-                printer.print((x, 0), ">");
+                printer.print((x-1, 0), ">");
 
                 let label = &self.items[self.focus()].label;
 
@@ -287,6 +296,8 @@ impl<T: 'static> View for SelectView<T> {
         if self.popup {
             match event {
                 Event::Key(Key::Enter) => {
+                    // Build a shallow menu tree to mimick the items array.
+                    // TODO: cache it?
                     let mut tree = MenuTree::new();
                     for (i, item) in self.items.iter().enumerate() {
                         let focus = self.focus.clone();
@@ -299,10 +310,38 @@ impl<T: 'static> View for SelectView<T> {
                             }
                         });
                     }
+                    // Let's keep the tree around,
+                    // the callback will want to use it.
                     let tree = Rc::new(tree);
+
+                    let focus = self.focus();
+                    // This is the offset for the label text.
+                    // We'll want to show the popup so that the text matches.
+                    // It'll be soo cool.
+                    let text_offset =
+                        (self.last_size.x - self.items[focus].label.len()) / 2;
+                    // The total offset for the window is:
+                    // * the last absolute offset at which we drew this view
+                    // * shifted to the top of the focus (so the line matches)
+                    // * shifted to the right of the text offset
+                    // * shifted top-left of the border+padding of the popup
+                    let offset = self.last_offset.get() - (0, focus) +
+                                 (text_offset, 0) -
+                                 (2, 1);
+                    // And now, we can return the callback.
                     EventResult::with_cb(move |s| {
+                        // The callback will want to work with a fresh Rc
                         let tree = tree.clone();
-                        s.add_layer(MenuPopup::new(tree));
+                        // We'll relativise the absolute position,
+                        // So that we are locked to the parent view.
+                        // A nice effect is that window resizes will keep both
+                        // layers together.
+                        let current_offset = s.screen().offset();
+                        let offset = offset - current_offset;
+                        // And finally, put the view in view!
+                        s.screen_mut()
+                            .add_layer_at(Position::parent(offset),
+                                          MenuPopup::new(tree).focus(focus));
                     })
                 }
                 _ => EventResult::Ignored,
@@ -354,6 +393,8 @@ impl<T: 'static> View for SelectView<T> {
     }
 
     fn layout(&mut self, size: Vec2) {
+        self.last_size = size;
+
         if !self.popup {
             self.scrollbase.set_heights(size.y, self.items.len());
         }
