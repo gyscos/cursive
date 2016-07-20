@@ -33,9 +33,9 @@ enum State {
 
 /// Shows a single-line list of items, with pop-up menus when one is selected.
 ///
-/// The [`Cursive`] root already includes a menubar that you just needs to configure.
+/// The [`Cursive`] root already includes a menubar that you just need to configure.
 ///
-/// [`Cursive`]: struct.Cursive.html#method.menubar
+/// [`Cursive`]: ../struct.Cursive.html#method.menubar
 pub struct Menubar {
     /// Menu items in this menubar.
     pub menus: Vec<(String, Rc<MenuTree>)>,
