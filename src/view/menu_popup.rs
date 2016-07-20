@@ -159,13 +159,17 @@ impl View for MenuPopup {
                         printer.print_hdelim((0, 0), printer.size.x)
                     }
                     MenuItem::Subtree(ref label, _) => {
-                        if printer.size.x < 4  { return; }
+                        if printer.size.x < 4 {
+                            return;
+                        }
                         printer.print_hline((1, 0), printer.size.x - 2, " ");
                         printer.print((2, 0), label);
                         printer.print((printer.size.x - 4, 0), ">>");
                     }
                     MenuItem::Leaf(ref label, _) => {
-                        if printer.size.x < 2  { return; }
+                        if printer.size.x < 2 {
+                            return;
+                        }
                         printer.print_hline((1, 0), printer.size.x - 2, " ");
                         printer.print((2, 0), label);
                     }

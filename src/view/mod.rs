@@ -56,6 +56,7 @@ mod id_view;
 mod key_event_view;
 mod linear_layout;
 mod list_view;
+mod menubar;
 mod menu_popup;
 mod shadow_view;
 mod select_view;
@@ -87,6 +88,7 @@ pub use self::full_view::FullView;
 pub use self::key_event_view::KeyEventView;
 pub use self::linear_layout::LinearLayout;
 pub use self::list_view::ListView;
+pub use self::menubar::Menubar;
 pub use self::menu_popup::MenuPopup;
 pub use self::view_path::ViewPath;
 pub use self::select_view::SelectView;
@@ -106,7 +108,12 @@ pub trait View {
     }
 
     /// Returns the minimum size the view requires with the given restrictions.
-    fn get_min_size(&mut self, Vec2) -> Vec2 {
+    ///
+    /// If the view is flexible (it has multiple size options), it can try
+    /// to return one that fits the given `constraint`.
+    /// It's also fine to ignore it and return a fixed value.
+    fn get_min_size(&mut self, constraint: Vec2) -> Vec2 {
+        let _ = constraint;
         Vec2::new(1, 1)
     }
 

@@ -137,7 +137,9 @@ impl ScrollBase {
         let max_y = min(self.view_height,
                         self.content_height - self.start_line);
         let w = if self.scrollable() {
-            if printer.size.x < 2 { return; }
+            if printer.size.x < 2 {
+                return;
+            }
             printer.size.x - 2 + self.scrollbar_padding // TODO: 2
         } else {
             printer.size.x

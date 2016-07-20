@@ -82,7 +82,6 @@ pub mod direction;
 
 // This probably doesn't need to be public?
 mod printer;
-mod menubar;
 mod xy;
 mod with;
 
@@ -94,7 +93,6 @@ mod backend;
 pub use xy::XY;
 pub use with::With;
 pub use printer::Printer;
-pub use menubar::Menubar;
 
 use backend::{Backend, NcursesBackend};
 
@@ -123,7 +121,7 @@ pub struct Cursive {
     theme: theme::Theme,
     screens: Vec<StackView>,
     global_callbacks: HashMap<Event, Callback>,
-    menubar: menubar::Menubar,
+    menubar: view::Menubar,
 
     active_screen: ScreenId,
 
@@ -149,7 +147,7 @@ impl Cursive {
             theme: theme,
             screens: Vec::new(),
             global_callbacks: HashMap::new(),
-            menubar: menubar::Menubar::new(),
+            menubar: view::Menubar::new(),
             active_screen: 0,
             running: true,
         };
@@ -161,7 +159,7 @@ impl Cursive {
 
     /// Selects the menubar
     pub fn select_menubar(&mut self) {
-        self.menubar.take_focus();
+        self.menubar.take_focus(direction::Direction::none());
     }
 
     /// Sets the menubar autohide_menubar feature.
@@ -173,7 +171,7 @@ impl Cursive {
     }
 
     /// Retrieve the menu tree used by the menubar.
-    pub fn menubar(&mut self) -> &mut menubar::Menubar {
+    pub fn menubar(&mut self) -> &mut view::Menubar {
         &mut self.menubar
     }
 
@@ -358,7 +356,8 @@ impl Cursive {
             //     * Current screen (top layer)
             // * Global callbacks
             if self.menubar.receive_events() {
-                if let Some(cb) = self.menubar.on_event(event) {
+                if let EventResult::Consumed(Some(cb)) = self.menubar
+                    .on_event(event) {
                     cb(self);
                 }
             } else {

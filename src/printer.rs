@@ -140,12 +140,8 @@ impl Printer {
 
         self.print_hline(start + (1, 0), size.x - 1, "─");
         self.print_vline(start + (0, 1), size.y - 1, "│");
-        self.print_hline(start + (1, 0) + size.keep_y(),
-                         size.x - 1,
-                         "─");
-        self.print_vline(start + (0, 1) + size.keep_x(),
-                         size.y - 1,
-                         "│");
+        self.print_hline(start + (1, 0) + size.keep_y(), size.x - 1, "─");
+        self.print_vline(start + (0, 1) + size.keep_x(), size.y - 1, "│");
     }
 
     /// Apply a selection style and call the given function.

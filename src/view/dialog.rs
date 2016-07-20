@@ -154,9 +154,8 @@ impl View for Dialog {
         }
 
         // What do we have left?
-        let taken = Vec2::new(0, buttons_height) +
-                         self.borders.combined() +
-                         self.padding.combined();
+        let taken = Vec2::new(0, buttons_height) + self.borders.combined() +
+                    self.padding.combined();
         if !taken.fits_in(printer.size) {
             return;
         }

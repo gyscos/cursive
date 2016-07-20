@@ -1,4 +1,8 @@
 use Cursive;
+use view::View;
+
+use vec::Vec2;
+use direction;
 use menu::MenuTree;
 use backend::Backend;
 use view::MenuPopup;
@@ -62,13 +66,6 @@ impl Menubar {
         ::B::clear();
     }
 
-    /// Takes the focus.
-    ///
-    /// TODO: impl View
-    pub fn take_focus(&mut self) {
-        self.state = State::Selected;
-    }
-
     /// True if we should be receiving events.
     pub fn receive_events(&self) -> bool {
         self.state == State::Selected
@@ -87,11 +84,47 @@ impl Menubar {
         self.menus.push((title.to_string(), Rc::new(menu)));
         self
     }
+}
 
-    /// Draws the view.
-    ///
-    /// TODO: impl View
-    pub fn draw(&mut self, printer: &Printer) {
+fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
+    // Adds a new layer located near the item title with the menu popup.
+    // Also adds two key callbacks on this new view, to handle `left` and
+    // `right` key presses.
+    // (If the view itself listens for a `left` or `right` press, it will
+    // consume it before our KeyEventView. This means sub-menus can properly
+    // be entered.)
+    s.screen_mut()
+        .add_layer_at(Position::absolute(offset),
+                      KeyEventView::new(MenuPopup::new(menu)
+                              .on_dismiss(|s| s.select_menubar())
+                              .on_action(|s| {
+                                  s.menubar().state = State::Inactive
+                              }))
+                          .register(Key::Right, |s| {
+                s.pop_layer();
+                s.select_menubar();
+                // Act as if we sent "Right" then "Down"
+                s.menubar().on_event(Event::Key(Key::Right));
+                if let EventResult::Consumed(Some(cb)) = s.menubar()
+                    .on_event(Event::Key(Key::Down)) {
+                    cb(s);
+                }
+            })
+                          .register(Key::Left, |s| {
+                s.pop_layer();
+                s.select_menubar();
+                // Act as if we sent "Left" then "Down"
+                s.menubar().on_event(Event::Key(Key::Left));
+                if let EventResult::Consumed(Some(cb)) = s.menubar()
+                    .on_event(Event::Key(Key::Down)) {
+                    cb(s);
+                }
+            }));
+
+}
+
+impl View for Menubar {
+    fn draw(&self, printer: &Printer) {
         // Draw the bar at the top
         printer.with_color(ColorStyle::Primary, |printer| {
             printer.print_hline((0, 0), printer.size.x, " ");
@@ -111,10 +144,7 @@ impl Menubar {
         }
     }
 
-    /// Reacts to event.
-    ///
-    /// TODO: impl View
-    pub fn on_event(&mut self, event: Event) -> Option<Callback> {
+    fn on_event(&mut self, event: Event) -> EventResult {
         match event {
             Event::Key(Key::Esc) => self.hide(),
             Event::Key(Key::Left) => {
@@ -148,49 +178,31 @@ impl Menubar {
                 });
                 // Since the closure will be called multiple times,
                 // we also need a new Rc on every call.
-                return Some(Rc::new(move |s| {
+                return EventResult::with_cb(move |s| {
                     show_child(s, offset, menu.clone())
-                }));
+                });
             }
-            _ => (),
+            _ => return EventResult::Ignored,
         }
-        None
+        EventResult::Consumed(None)
     }
-}
 
-fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
-    // Adds a new layer located near the item title with the menu popup.
-    // Also adds two key callbacks on this new view, to handle `left` and
-    // `right` key presses.
-    // (If the view itself listens for a `left` or `right` press, it will
-    // consume it before our KeyEventView. This means sub-menus can properly
-    // be entered.)
-    s.screen_mut()
-        .add_layer_at(Position::absolute(offset),
-                      KeyEventView::new(MenuPopup::new(menu)
-                              .on_dismiss(|s| s.select_menubar())
-                              .on_action(|s| {
-                                  s.menubar().state = State::Inactive
-                              }))
-                          .register(Key::Right, |s| {
-                s.pop_layer();
-                s.select_menubar();
-                // Act as if we sent "Right" then "Down"
-                s.menubar().on_event(Event::Key(Key::Right));
-                if let Some(cb) = s.menubar()
-                    .on_event(Event::Key(Key::Down)) {
-                    cb(s);
-                }
-            })
-                          .register(Key::Left, |s| {
-                s.pop_layer();
-                s.select_menubar();
-                // Act as if we sent "Left" then "Down"
-                s.menubar().on_event(Event::Key(Key::Left));
-                if let Some(cb) = s.menubar()
-                    .on_event(Event::Key(Key::Down)) {
-                    cb(s);
-                }
-            }));
+    fn take_focus(&mut self, _: direction::Direction) -> bool {
+        self.state = State::Selected;
+        true
+    }
 
+    fn get_min_size(&mut self, _: Vec2) -> Vec2 {
+        // TODO: scroll the options if the screen is too small?
+
+        // We add 2 to the length of every label for marin.
+        // Also, we add 1 at the beginning.
+        // (See the `draw()` method)
+        let width = self.menus
+            .iter()
+            .map(|&(ref title, _)| title.len() + 2)
+            .fold(1, |a, b| a + b);
+
+        Vec2::new(width, 1)
+    }
 }
