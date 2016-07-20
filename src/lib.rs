@@ -94,6 +94,7 @@ mod backend;
 pub use xy::XY;
 pub use with::With;
 pub use printer::Printer;
+pub use menubar::Menubar;
 
 use backend::{Backend, NcursesBackend};
 

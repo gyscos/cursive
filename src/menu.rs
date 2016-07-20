@@ -1,4 +1,16 @@
 //! Module to build menus.
+//!
+//! Menus are a way to arrange many actions in groups of more manageable size.
+//!
+//! A menu can be seen as a `MenuTree`. It has a list of children:
+//!
+//! * Leaf nodes are made of a label and a callback
+//! * Sub-trees are made of a label, and another `MenuTree`.
+//! * Delimiters are just there to separate groups of related children.
+//!
+//! The [menubar] is the main way to show menus.
+//!
+//! [menubar]: ../struct.Cursive.html#method.menubar
 
 use With;
 use Cursive;

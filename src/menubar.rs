@@ -27,16 +27,26 @@ enum State {
     Submenu,
 }
 
+/// Shows a single-line list of items, with pop-up menus when one is selected.
+///
+/// The [`Cursive`] root already includes a menubar that you just needs to configure.
+///
+/// [`Cursive`]: struct.Cursive.html#method.menubar
 pub struct Menubar {
+    /// Menu items in this menubar.
     pub menus: Vec<(String, Rc<MenuTree>)>,
+    /// TODO: move this out of this view.
     pub autohide: bool,
-    pub focus: usize,
+    focus: usize,
+
+    // TODO: make Menubar impl View and take out the State management
     state: State,
 }
 
 new_default!(Menubar);
 
 impl Menubar {
+    /// Creates a new, empty menubar.
     pub fn new() -> Self {
         Menubar {
             menus: Vec::new(),
@@ -46,28 +56,41 @@ impl Menubar {
         }
     }
 
+    /// Hides the menubar.
     fn hide(&mut self) {
         self.state = State::Inactive;
         ::B::clear();
     }
 
+    /// Takes the focus.
+    ///
+    /// TODO: impl View
     pub fn take_focus(&mut self) {
         self.state = State::Selected;
     }
 
+    /// True if we should be receiving events.
     pub fn receive_events(&self) -> bool {
         self.state == State::Selected
     }
 
+    /// Returns `true` if we should be drawn.
     pub fn visible(&self) -> bool {
         !self.autohide || self.state != State::Inactive
     }
 
+    /// Adds a new item to the menubar.
+    ///
+    /// The item will use the given title, and on selection, will open a
+    /// popup-menu with the given menu tree.
     pub fn add(&mut self, title: &str, menu: MenuTree) -> &mut Self {
         self.menus.push((title.to_string(), Rc::new(menu)));
         self
     }
 
+    /// Draws the view.
+    ///
+    /// TODO: impl View
     pub fn draw(&mut self, printer: &Printer) {
         // Draw the bar at the top
         printer.with_color(ColorStyle::Primary, |printer| {
@@ -88,6 +111,9 @@ impl Menubar {
         }
     }
 
+    /// Reacts to event.
+    ///
+    /// TODO: impl View
     pub fn on_event(&mut self, event: Event) -> Option<Callback> {
         match event {
             Event::Key(Key::Esc) => self.hide(),
@@ -133,6 +159,12 @@ impl Menubar {
 }
 
 fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
+    // Adds a new layer located near the item title with the menu popup.
+    // Also adds two key callbacks on this new view, to handle `left` and
+    // `right` key presses.
+    // (If the view itself listens for a `left` or `right` press, it will
+    // consume it before our KeyEventView. This means sub-menus can properly
+    // be entered.)
     s.screen_mut()
         .add_layer_at(Position::absolute(offset),
                       KeyEventView::new(MenuPopup::new(menu)
@@ -142,8 +174,8 @@ fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
                               }))
                           .register(Key::Right, |s| {
                 s.pop_layer();
-                // Act as if we sent "Left" then "Enter"
                 s.select_menubar();
+                // Act as if we sent "Right" then "Down"
                 s.menubar().on_event(Event::Key(Key::Right));
                 if let Some(cb) = s.menubar()
                     .on_event(Event::Key(Key::Down)) {
@@ -152,8 +184,8 @@ fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
             })
                           .register(Key::Left, |s| {
                 s.pop_layer();
-                // Act as if we sent "Left" then "Enter"
                 s.select_menubar();
+                // Act as if we sent "Left" then "Down"
                 s.menubar().on_event(Event::Key(Key::Left));
                 if let Some(cb) = s.menubar()
                     .on_event(Event::Key(Key::Down)) {
