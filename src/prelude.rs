@@ -8,7 +8,7 @@
 
 pub use {Cursive, Printer, With};
 pub use event::{Event, Key};
-pub use view::{BoxView, Checkbox, Dialog, EditView, FullView, IdView,
+pub use view::{BoxView, Button, Checkbox, Dialog, EditView, FullView, IdView,
                KeyEventView, LinearLayout, ListView, SelectView, Selector,
                TextView, View};
 pub use vec::Vec2;
