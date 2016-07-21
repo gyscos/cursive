@@ -157,7 +157,9 @@ pub trait View {
     }
 }
 
-/// Cache around a one-dimensional layout result
+/// Cache around a one-dimensional layout result.
+///
+/// This is not a View, but something to help you if you create your own Views.
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct SizeCache {
     /// Cached value

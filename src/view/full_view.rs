@@ -3,6 +3,13 @@ use direction::Orientation;
 use vec::Vec2;
 
 /// Simple wrapper view that asks for all the space it can get.
+///
+/// # Examples
+///
+/// ```
+/// # use cursive::prelude::*;
+/// let view = FullView::new(TextView::new("Big box for little text!"));
+/// ```
 pub struct FullView<T: View> {
     view: T,
     orientation: Option<Orientation>,

@@ -5,6 +5,9 @@ use vec::Vec2;
 use Printer;
 
 /// Provide scrolling functionalities to a view.
+///
+/// You're not supposed to use this directly,
+/// but it can be helpful if you create your own Views.
 #[derive(Default)]
 pub struct ScrollBase {
     /// First line visible

@@ -35,6 +35,32 @@ impl<T> Item<T> {
 /// View to select an item among a list.
 ///
 /// It contains a list of values of type T, with associated labels.
+///
+/// # Examples
+///
+/// ```
+/// # extern crate cursive;
+/// # use cursive::prelude::*;
+/// # use cursive::align::HAlign;
+/// # fn main() {
+/// let mut time_select = SelectView::new().h_align(HAlign::Center);
+/// time_select.add_item("Short", 1);
+/// time_select.add_item("Medium", 5);
+/// time_select.add_item("Long", 10);
+///
+/// time_select.set_on_select(|s, time| {
+///     s.pop_layer();
+///     let text = format!("You will wait for {} minutes...", time);
+///     s.add_layer(Dialog::new(TextView::new(&text))
+///                     .button("Quit", |s| s.quit()));
+/// });
+///
+/// let mut siv = Cursive::new();
+/// siv.add_layer(Dialog::new(time_select)
+///                 .title("How long is your wait?"));
+/// # }
+///
+/// ```
 pub struct SelectView<T = String> {
     items: Vec<Item<T>>,
     enabled: bool,

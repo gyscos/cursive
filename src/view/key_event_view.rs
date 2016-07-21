@@ -7,7 +7,16 @@ use super::{View, ViewWrapper};
 
 /// A simple wrapper view that catches some ignored event from its child.
 ///
-/// Events ignored by its child without a callback will stay ignored.
+/// If the event doesn't have a corresponding callback, it will stay ignored.
+///
+/// # Examples
+///
+/// ```
+/// # use cursive::prelude::*;
+/// let view = KeyEventView::new(TextView::new("This view has an event!"))
+///                         .register('q', |s| s.quit())
+///                         .register(Key::Esc, |s| s.quit());
+/// ```
 pub struct KeyEventView {
     content: Box<View>,
     callbacks: HashMap<Event, Callback>,

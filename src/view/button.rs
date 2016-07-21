@@ -10,8 +10,16 @@ use event::*;
 use Printer;
 use unicode_width::UnicodeWidthStr;
 
-/// Simple text label with a callback when ENTER is pressed.
+/// Simple text label with a callback when <Enter> is pressed.
+///
 /// A button shows its content in a single line and has a fixed size.
+///
+/// # Examples
+///
+/// ```
+/// # use cursive::prelude::*;
+/// let quit_button = Button::new("Quit", |s| s.quit());
+/// ```
 pub struct Button {
     label: String,
     callback: Callback,
