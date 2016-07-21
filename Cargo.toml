@@ -7,7 +7,7 @@ license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
-version = "0.1.0"
+version = "0.1.1"
 exclude = ["doc", "assets"]
 
 [dependencies]
