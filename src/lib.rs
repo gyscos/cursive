@@ -33,8 +33,7 @@
 //! ```no_run
 //! extern crate cursive;
 //!
-//! use cursive::Cursive;
-//! use cursive::view::TextView;
+//! use cursive::prelude::*;
 //!
 //! fn main() {
 //!     let mut siv = Cursive::new();
@@ -180,12 +179,7 @@ impl Cursive {
     /// ```
     /// # extern crate cursive;
     /// #
-    /// # use cursive::Cursive;
-    /// # use cursive::With;
-    /// # use cursive::menu::MenuTree;
-    /// # use cursive::view::Dialog;
-    /// # use cursive::view::TextView;
-    /// # use cursive::event::Key;
+    /// # use cursive::prelude::*;
     /// #
     /// # fn main() {
 
