@@ -1,8 +1,7 @@
 extern crate cursive;
 
-use cursive::Cursive;
+use cursive::prelude::*;
 use cursive::align::HAlign;
-use cursive::view::{TextView, Dialog};
 
 fn main() {
     // Read some long text from a file.

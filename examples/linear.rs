@@ -1,7 +1,6 @@
 extern crate cursive;
 
-use cursive::Cursive;
-use cursive::view::{BoxView, Dialog, LinearLayout, TextView};
+use cursive::prelude::*;
 use cursive::align::HAlign;
 
 fn main() {

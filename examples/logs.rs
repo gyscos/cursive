@@ -1,13 +1,10 @@
 extern crate cursive;
 
+use cursive::prelude::*;
+
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
-
-use cursive::Cursive;
-use cursive::vec::Vec2;
-use cursive::Printer;
-use cursive::view::{View, FullView};
 
 fn main() {
     // As usual, create the Cursive root

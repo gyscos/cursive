@@ -1,8 +1,7 @@
 extern crate cursive;
 
-use cursive::Cursive;
+use cursive::prelude::*;
 use cursive::align::HAlign;
-use cursive::view::{Dialog, SelectView, TextView, BoxView};
 
 fn main() {
     let mut select = SelectView::new().h_align(HAlign::Center);

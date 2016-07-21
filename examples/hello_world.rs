@@ -1,7 +1,6 @@
 extern crate cursive;
 
-use cursive::Cursive;
-use cursive::view::TextView;
+use cursive::prelude::*;
 
 fn main() {
     let mut siv = Cursive::new();

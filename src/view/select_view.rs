@@ -235,7 +235,7 @@ impl<T: 'static> View for SelectView<T> {
                 printer.print_hline((1, 0), x - 1, " ");
                 // Draw the borders
                 printer.print((0, 0), "<");
-                printer.print((x-1, 0), ">");
+                printer.print((x - 1, 0), ">");
 
                 let label = &self.items[self.focus()].label;
 

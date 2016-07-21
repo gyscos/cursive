@@ -71,6 +71,7 @@ macro_rules! new_default(
     }
     );
 
+pub mod prelude;
 
 pub mod event;
 pub mod view;
@@ -171,6 +172,58 @@ impl Cursive {
     }
 
     /// Retrieve the menu tree used by the menubar.
+    ///
+    /// This allows to add menu items to the menubar.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate cursive;
+    /// #
+    /// # use cursive::Cursive;
+    /// # use cursive::With;
+    /// # use cursive::menu::MenuTree;
+    /// # use cursive::view::Dialog;
+    /// # use cursive::view::TextView;
+    /// # use cursive::event::Key;
+    /// #
+    /// # fn main() {
+
+    /// let mut siv = Cursive::new();
+    ///
+    /// siv.menubar()
+    ///    .add("File",
+    ///         MenuTree::new()
+    ///             .leaf("New", |s| s.add_layer(Dialog::info("New file!")))
+    ///             .subtree("Recent", MenuTree::new().with(|tree| {
+    ///                 for i in 1..100 {
+    ///                     tree.add_leaf(&format!("Item {}", i), |_| ())
+    ///                 }
+    ///             }))
+    ///             .delimiter()
+    ///             .with(|tree| {
+    ///                 for i in 1..10 {
+    ///                     tree.add_leaf(&format!("Option {}", i), |_| ());
+    ///                 }
+    ///             })
+    ///             .delimiter()
+    ///             .leaf("Quit", |s| s.quit()))
+    ///    .add("Help",
+    ///         MenuTree::new()
+    ///             .subtree("Help",
+    ///                      MenuTree::new()
+    ///                          .leaf("General", |s| {
+    ///                              s.add_layer(Dialog::info("Help message!"))
+    ///                          })
+    ///                          .leaf("Online", |s| {
+    ///                              s.add_layer(Dialog::info("Online help?"))
+    ///                          }))
+    ///             .leaf("About",
+    ///                   |s| s.add_layer(Dialog::info("Cursive v0.0.0"))));
+    ///
+    /// siv.add_global_callback(Key::Esc, |s| s.select_menubar());
+    /// # }
+    /// ```
     pub fn menubar(&mut self) -> &mut view::Menubar {
         &mut self.menubar
     }
@@ -243,8 +296,27 @@ impl Cursive {
     }
 
     /// Tries to find the view pointed to by the given path.
+    ///
     /// If the view is not found, or if it is not of the asked type,
     /// it returns None.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate cursive;
+    /// # use cursive::prelude::*;
+    /// # fn main() {
+    /// let mut siv = Cursive::new();
+    ///
+    /// siv.add_layer(IdView::new("text", TextView::new("Text #1")));
+    ///
+    /// siv.add_global_callback('p', |s| {
+    ///     s.find::<TextView>(&Selector::Id("text"))
+    ///      .unwrap()
+    ///      .set_content("Text #2");
+    /// });
+    /// # }
+    /// ```
     pub fn find<V: View + Any>(&mut self, sel: &Selector) -> Option<&mut V> {
         match self.find_any(sel) {
             None => None,
@@ -253,6 +325,24 @@ impl Cursive {
     }
 
     /// Convenient method to use `find` with a `Selector::Id`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate cursive;
+    /// # use cursive::prelude::*;
+    /// # fn main() {
+    /// let mut siv = Cursive::new();
+    ///
+    /// siv.add_layer(IdView::new("text", TextView::new("Text #1")));
+    ///
+    /// siv.add_global_callback('p', |s| {
+    ///     s.find_id::<TextView>("text")
+    ///      .unwrap()
+    ///      .set_content("Text #2");
+    /// });
+    /// # }
+    /// ```
     pub fn find_id<V: View + Any>(&mut self, id: &str) -> Option<&mut V> {
         self.find(&Selector::Id(id))
     }
@@ -260,6 +350,18 @@ impl Cursive {
     /// Adds a global callback.
     ///
     /// Will be triggered on the given key press when no view catches it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate cursive;
+    /// # use cursive::prelude::*;
+    /// # fn main() {
+    /// let mut siv = Cursive::new();
+    ///
+    /// siv.add_global_callback('q', |s| s.quit());
+    /// # }
+    /// ```
     pub fn add_global_callback<F, E: Into<Event>>(&mut self, event: E, cb: F)
         where F: Fn(&mut Cursive) + 'static
     {
@@ -267,6 +369,18 @@ impl Cursive {
     }
 
     /// Convenient method to add a layer to the current screen.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate cursive;
+    /// # use cursive::prelude::*;
+    /// # fn main() {
+    /// let mut siv = Cursive::new();
+    ///
+    /// siv.add_layer(TextView::new("Hello world!"));
+    /// # }
+    /// ```
     pub fn add_layer<T: 'static + View>(&mut self, view: T) {
         self.screen_mut().add_layer(view);
     }

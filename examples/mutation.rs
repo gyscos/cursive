@@ -1,7 +1,7 @@
 extern crate cursive;
 
-use cursive::Cursive;
-use cursive::view::{IdView, TextView, Dialog, KeyEventView, Position, Offset};
+use cursive::prelude::*;
+use cursive::view::{Position, Offset};
 
 fn show_popup(siv: &mut Cursive) {
 
