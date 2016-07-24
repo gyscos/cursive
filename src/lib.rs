@@ -229,13 +229,18 @@ impl Cursive {
 
     /// Loads a theme from the given file.
     ///
-    /// Returns TRUE if the theme was successfully loaded.
-    pub fn load_theme<P: AsRef<Path>>(&mut self, filename: P) -> bool {
-        match theme::load_theme(filename) {
-            Err(_) => return false,
-            Ok(theme) => self.theme = theme,
-        }
-        true
+    /// `filename` must point to a valid toml file.
+    pub fn load_theme_file<P: AsRef<Path>>(&mut self, filename: P) -> Result<(), theme::Error> {
+        self.theme = try!(theme::load_theme_file(filename));
+        Ok(())
+    }
+
+    /// Loads a theme from the given string content.
+    ///
+    /// Content must be valid toml.
+    pub fn load_theme(&mut self, content: &str) -> Result<(), theme::Error> {
+        self.theme = try!(theme::load_theme(content));
+        Ok(())
     }
 
     /// Sets the refresh rate, in frames per second.

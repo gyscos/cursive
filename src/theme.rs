@@ -1,4 +1,118 @@
 //! Module to handle colors and themes in the UI.
+//!
+//! # Color palette
+//!
+//! To achieve a customizable, yet unified look, Cursive uses a configurable
+//! palette of colors to be used through the entire application.
+//!
+//! These colors are:
+//!
+//! * **`background`**: used to color the application background
+//!   (around views).
+//!   Defaults to **blue**.
+//! * **`shadow`**: used to color shadow around views.
+//!   Defaults to **black**.
+//! * **`view`**: used to color the background for views.
+//!   Defaults to **white**.
+//! * **`primary`**: used to print primary text.
+//!   Defaults to **black**.
+//! * **`secondary`**: used to print secondary text.
+//!   Defaults to **blue**.
+//! * **`tertiary`**: used to print tertiary text.
+//!   Defaults to **white**.
+//! * **`title_primary`**: used to print primary titles.
+//!   Defaults to **red**.
+//! * **`title_secondary`**: used to print secondary titles.
+//!   Defaults to **yellow**.
+//! * **`highlight`**: used to highlight selected items.
+//!   Defaults to **red**.
+//! * **`highlight_inactive`**: used to highlight selected but inactive items.
+//!   Defaults to **blue**.
+//!
+//! # Color Styles
+//!
+//! Each cell of the terminal uses two colors: *foreground* and *background*.
+//!
+//! Color styles are defined to easily refer to a pair of colors from the
+//! palette.
+//!
+//! * **`Background`**: style used to print the application background. 
+//!     * Its *background* color is `background`.
+//!     * Its *foreground* color is unimportant as no characters are ever
+//!       printed in the background.
+//! * **`Shadow`**: style used to print shadows behind views.
+//!     * Its *background* color is `shadow`.
+//!     * Here again, the *foreground* color is unimportant.
+//! * **`Primary`**: style used to print primary text.
+//!     * Its *background* color is `view`.
+//!     * Its *foreground* color is `primary`.
+//! * **`Secondary`**: style used to print secondary text.
+//!     * Its *background* color is `view`.
+//!     * Its *foreground* color is `secondary`.
+//! * **`Tertiary`**: style used to print tertiary text.
+//!     * Its *background* color is `view`.
+//!     * Its *foreground* color is `tertiary`.
+//! * **`TitlePrimary`**: style used to print titles.
+//!     * Its *background* color is `view`.
+//!     * Its *foreground* color is `title_primary`.
+//! * **`TitleSecondary`**: style used to print secondary titles.
+//!     * Its *background* color is `view`.
+//!     * Its *foreground* color is `title_secondary`.
+//! * **`Highlight`**: style used to print selected items.
+//!     * Its *background* color is `highlight`.
+//!     * Its *foreground* color is `view`.
+//! * **`HighlightInactive`**: style used to print selected,
+//!   but inactive items.
+//!     * Its *background* color is `highlight_inactive`.
+//!     * Its *foreground* color is `view`.
+//!
+//! Using one of these pairs when styling your application helps give it a
+//! coherent look.
+//!
+//! # Effects
+//!
+//! On top of a color style, some effects can be applied on cells: `Reverse`,
+//! for instance, swaps the foreground and background colors of a cell.
+//!
+//! # Themes
+//!
+//! A theme defines the color palette an application will use, as well as
+//! various options to style views.
+//!
+//! Themes are described in toml configuration files. All fields are optional.
+//!
+//! Here are the possible entries:
+//!
+//! ```toml
+//! # Every field in a theme file is optional.
+//!
+//! # First come some various options
+//! shadow = false  # Don't draw shadows around stacked views
+//! borders = "simple"  # Alternatives are "none" and "outset"
+//!
+//! # Here we define the color palette.
+//! [colors]
+//! 	background = "black"
+//! 	# If the value is an array, the first valid color will be used.
+//! 	# If the terminal doesn't support custom color,
+//! 	# non-base colors will be skipped.
+//! 	shadow     = ["#000000", "black"]
+//! 	view       = "#d3d7cf"
+//!
+//! 	# Array and simple values have the same effect.
+//! 	primary   = ["#111111"]
+//! 	secondary = "#EEEEEE"
+//! 	tertiary  = "#444444"
+//!
+//! 	# Hex values can use lower or uppercase.
+//! 	# (base color MUST be lowercase)
+//! 	title_primary   = "#ff5555"
+//! 	title_secondary = "#ffff55"
+//!
+//! 	# Lower precision values can use only 3 digits.
+//! 	highlight          = "#F00"
+//! 	highlight_inactive = "#5555FF"
+//! ```
 
 use std::io;
 use std::io::Read;
@@ -344,46 +458,8 @@ impl Color {
     }
 }
 
-
-/// Loads a theme file, and returns its representation.
-///
-/// The file should be a toml file. All fields are optional.
-///
-/// Here are the possible entries:
-///
-/// ```text
-/// # Every field in a theme file is optional.
-///
-/// shadow = false
-/// borders = "simple" # Alternatives are "none" and "outset"
-///
-/// # Base colors are red, green, blue,
-/// # cyan, magenta, yellow, white and black.
-/// [colors]
-/// 	background = "black"
-/// 	# If the value is an array, the first valid color will be used.
-/// 	# If the terminal doesn't support custom color,
-/// 	# non-base colors will be skipped.
-/// 	shadow     = ["#000000", "black"]
-/// 	view       = "#d3d7cf"
-///
-/// 	# Array and simple values have the same effect.
-/// 	primary   = ["#111111"]
-/// 	secondary = "#EEEEEE"
-/// 	tertiary  = "#444444"
-///
-/// 	# Hex values can use lower or uppercase.
-/// 	# (base color MUST be lowercase)
-/// 	title_primary   = "#ff5555"
-/// 	title_secondary = "#ffff55"
-///
-/// 	# Lower precision values can use only 3 digits.
-/// 	highlight          = "#F00"
-/// 	highlight_inactive = "#5555FF"
-/// ```
-
-/// Loads a theme and sets it as active.
-pub fn load_theme<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
+/// Loads a theme from file and sets it as active.
+pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
     let content = {
         let mut content = String::new();
         let mut file = try!(File::open(filename));
@@ -391,11 +467,13 @@ pub fn load_theme<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
         content
     };
 
-    let mut parser = toml::Parser::new(&content);
-    let table = match parser.parse() {
-        Some(value) => value,
-        None => return Err(Error::Parse),
-    };
+    load_theme(&content)
+}
+
+/// Loads a theme string and sets it as active.
+pub fn load_theme(content: &str) -> Result<Theme, Error> {
+    let mut parser = toml::Parser::new(content);
+    let table = try!(parser.parse().ok_or(Error::Parse));
 
     let mut theme = Theme::default();
     theme.load(&table);
