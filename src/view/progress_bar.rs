@@ -46,9 +46,7 @@ impl ProgressBar {
     /// Sets the callback to follow.
     ///
     /// Whenever `callback` is set, it will be called on the next event loop.
-    pub fn with_callback(mut self,
-                         callback: Arc<Mutex<CbPromise>>)
-                         -> Self {
+    pub fn with_callback(mut self, callback: Arc<Mutex<CbPromise>>) -> Self {
         self.callback = Some(callback);
         self
     }
@@ -88,7 +86,8 @@ impl View for ProgressBar {
         let available = printer.size.x;
 
         let value = self.value.load(Ordering::Relaxed);
-        let length = ((1 + available) * (value - self.min)) / (1 + self.max - self.min);
+        let length = ((1 + available) * (value - self.min)) /
+                     (1 + self.max - self.min);
         printer.with_color(ColorStyle::Highlight, |printer| {
             printer.print_hline((0, 0), length, " ");
         });

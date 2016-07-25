@@ -31,11 +31,10 @@ impl<T: View + Any> ViewWrapper for IdView<T> {
 
 /// Makes a view wrappable in an `IdView`.
 pub trait Identifiable: View + Sized {
-
     /// Wraps this view into an IdView with the given id.
     fn with_id(self, id: &str) -> IdView<Self> {
         IdView::new(id, self)
     }
 }
 
-impl <T: View> Identifiable for T {}
+impl<T: View> Identifiable for T {}

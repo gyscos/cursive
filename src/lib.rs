@@ -229,7 +229,8 @@ impl Cursive {
     /// Loads a theme from the given file.
     ///
     /// `filename` must point to a valid toml file.
-    pub fn load_theme_file<P: AsRef<Path>>(&mut self, filename: P) -> Result<(), theme::Error> {
+    pub fn load_theme_file<P: AsRef<Path>>(&mut self, filename: P)
+                                           -> Result<(), theme::Error> {
         self.theme = try!(theme::load_theme_file(filename));
         Ok(())
     }

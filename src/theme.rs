@@ -36,7 +36,7 @@
 //! Color styles are defined to easily refer to a pair of colors from the
 //! palette.
 //!
-//! * **`Background`**: style used to print the application background. 
+//! * **`Background`**: style used to print the application background.
 //!     * Its *background* color is `background`.
 //!     * Its *foreground* color is unimportant as no characters are ever
 //!       printed in the background.
