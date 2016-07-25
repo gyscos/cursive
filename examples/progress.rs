@@ -41,8 +41,7 @@ fn main() {
 
         }))
         .title("Progress bar example")
-        .padding_top(1)
-        .padding_bottom(1)
+        .padding((0,0,1,1))
         .with_id("dialog"));
 
     siv.set_fps(10);

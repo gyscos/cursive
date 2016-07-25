@@ -84,7 +84,7 @@ impl View for ProgressBar {
         let available = printer.size.x;
 
         let value = self.value.load(Ordering::Relaxed);
-        let length = (available * (value - self.min)) / (self.max - self.min);
+        let length = ((1 + available) * (value - self.min)) / (1 + self.max - self.min);
         printer.with_color(ColorStyle::Highlight, |printer| {
             printer.print_hline((0, 0), length, " ");
         });
