@@ -7,14 +7,18 @@ use event::*;
 use theme::ColorStyle;
 use view::View;
 
+pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
+
 /// Display progress.
 pub struct ProgressBar {
     min: usize,
     max: usize,
     value: Arc<AtomicUsize>,
     // TODO: use a Promise instead?
-    callback: Option<Arc<Mutex<Option<Box<Fn(&mut Cursive) + Send>>>>>,
+    callback: Option<Arc<Mutex<CbPromise>>>,
 }
+
+new_default!(ProgressBar);
 
 impl ProgressBar {
     /// Creates a new progress bar.
@@ -43,7 +47,7 @@ impl ProgressBar {
     ///
     /// Whenever `callback` is set, it will be called on the next event loop.
     pub fn with_callback(mut self,
-                         callback: Arc<Mutex<Option<Box<Fn(&mut Cursive) + Send>>>>)
+                         callback: Arc<Mutex<CbPromise>>)
                          -> Self {
         self.callback = Some(callback);
         self
