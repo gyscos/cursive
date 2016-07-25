@@ -17,12 +17,11 @@ fn main() {
 
             let n_max = 1000;
 
-            s.find_id::<Dialog>("dialog")
-                .unwrap()
-                .set_content(ProgressBar::new()
+            s.pop_layer();
+            s.add_layer(Panel::new(FullView::full_width(ProgressBar::new()
                     .range(0, n_max)
                     .with_value(value.clone())
-                    .with_callback(cb.clone()));
+                    .with_callback(cb.clone()))));
 
             // Spawn a thread to process things in the background.
             thread::spawn(move || {
@@ -41,10 +40,10 @@ fn main() {
 
         }))
         .title("Progress bar example")
-        .padding((0,0,1,1))
+        .padding((0, 0, 1, 1))
         .with_id("dialog"));
 
-    siv.set_fps(10);
+    siv.set_fps(30);
 
     siv.run();
 }
