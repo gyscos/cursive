@@ -14,12 +14,47 @@
 //!   table is checked.
 
 use std::rc::Rc;
+use std::ops::Deref;
 
 use Cursive;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
-pub type Callback = Rc<Fn(&mut Cursive)>;
+#[derive(Clone)]
+pub struct Callback(Rc<Box<Fn(&mut Cursive)>>);
+// TODO: remove the Box when Box<T: Sized> -> Rc<T> is possible
+
+impl Callback {
+    /// Wraps the given function into a `Callback` object.
+    pub fn from_fn<F: Fn(&mut Cursive) + 'static>(f: F) -> Self {
+        Callback(Rc::new(Box::new(f)))
+    }
+}
+
+impl Deref for Callback {
+    type Target = Box<Fn(&mut Cursive)>;
+    fn deref<'a>(&'a self) -> &'a Box<Fn(&mut Cursive)> {
+        &self.0
+    }
+}
+
+impl From<Rc<Box<Fn(&mut Cursive)>>> for Callback {
+    fn from(f: Rc<Box<Fn(&mut Cursive)>>) -> Self {
+        Callback(f)
+    }
+}
+
+impl From<Box<Fn(&mut Cursive) + Send>> for Callback {
+    fn from(f: Box<Fn(&mut Cursive) + Send>) -> Self {
+        Callback(Rc::new(f))
+    }
+}
+
+impl From<Box<Fn(&mut Cursive)>> for Callback {
+    fn from(f: Box<Fn(&mut Cursive)>) -> Self {
+        Callback(Rc::new(f))
+    }
+}
 
 /// Answer to an event notification.
 /// The event can be consumed or ignored.
@@ -27,13 +62,13 @@ pub enum EventResult {
     /// The event was ignored. The parent can keep handling it.
     Ignored,
     /// The event was consumed. An optionnal callback to run is attached.
-    Consumed(Option<Callback>),
+    Consumed(Option<Callback>), // TODO: make this a FnOnce?
 }
 
 impl EventResult {
     /// Convenient method to create `Consumed(Some(f))`
     pub fn with_cb<F: 'static + Fn(&mut Cursive)>(f: F) -> Self {
-        EventResult::Consumed(Some(Rc::new(f)))
+        EventResult::Consumed(Some(Callback::from_fn(f)))
     }
 
     /// Returns `true` if `self` is `EventResult::Consumed`.
@@ -138,29 +173,32 @@ impl Key {
 /// Represents an event as seen by the application.
 #[derive(PartialEq,Eq,Clone,Copy,Hash,Debug)]
 pub enum Event {
-    /// Event fired when the window is resized
+    /// Event fired when the window is resized.
     WindowResize,
 
-    /// A character was entered (includes numbers, punctuation, ...)
+    /// Event fired regularly when a auto-refresh is set.
+    Refresh,
+
+    /// A character was entered (includes numbers, punctuation, ...).
     Char(char),
-    /// A character was entered with the Ctrl key pressed
+    /// A character was entered with the Ctrl key pressed.
     CtrlChar(char),
-    /// A character was entered with the Alt key pressed
+    /// A character was entered with the Alt key pressed.
     AltChar(char),
 
-    /// A non-character key was pressed
+    /// A non-character key was pressed.
     Key(Key),
-    /// A non-character key was pressed with the Shift key pressed
+    /// A non-character key was pressed with the Shift key pressed.
     Shift(Key),
-    /// A non-character key was pressed with the Alt key pressed
+    /// A non-character key was pressed with the Alt key pressed.
     Alt(Key),
-    /// A non-character key was pressed with the Shift and Alt keys pressed
+    /// A non-character key was pressed with the Shift and Alt keys pressed.
     AltShift(Key),
-    /// A non-character key was pressed with the Ctrl key pressed
+    /// A non-character key was pressed with the Ctrl key pressed.
     Ctrl(Key),
-    /// A non-character key was pressed with the Ctrl and Shift keys pressed
+    /// A non-character key was pressed with the Ctrl and Shift keys pressed.
     CtrlShift(Key),
-    /// A non-character key was pressed with the Ctrl and Alt keys pressed
+    /// A non-character key was pressed with the Ctrl and Alt keys pressed.
     CtrlAlt(Key),
 
     /// An unknown event was received.

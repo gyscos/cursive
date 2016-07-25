@@ -101,7 +101,7 @@ impl MenuPopup {
     ///
     /// (When the user hits <ESC>)
     pub fn on_dismiss<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
-        self.on_dismiss = Some(Rc::new(f));
+        self.on_dismiss = Some(Callback::from_fn(f));
         self
     }
 
@@ -111,7 +111,7 @@ impl MenuPopup {
     ///
     /// Usually used to hide the parent view.
     pub fn on_action<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
-        self.on_action = Some(Rc::new(f));
+        self.on_action = Some(Callback::from_fn(f));
         self
     }
 

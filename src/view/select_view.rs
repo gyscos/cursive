@@ -11,7 +11,7 @@ use view::position::Position;
 use view::{IdView, View};
 use align::{Align, HAlign, VAlign};
 use view::scroll::ScrollBase;
-use event::{Event, EventResult, Key};
+use event::{Callback, Event, EventResult, Key};
 use theme::ColorStyle;
 use vec::Vec2;
 use Printer;
@@ -387,7 +387,7 @@ impl<T: 'static> View for SelectView<T> {
                     let cb = self.select_cb.as_ref().unwrap().clone();
                     let v = self.selection();
                     // We return a Callback Rc<|s| cb(s, &*v)>
-                    return EventResult::Consumed(Some(Rc::new(move |s| {
+                    return EventResult::Consumed(Some(Callback::from_fn(move |s| {
                         cb(s, &*v)
                     })));
                 }

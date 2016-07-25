@@ -56,6 +56,13 @@ impl Dialog {
         }
     }
 
+    /// Sets the content for this dialog.
+    ///
+    /// Previous content will be dropped.
+    pub fn set_content<V: View + 'static>(&mut self, view: V) {
+        self.content = Box::new(view);
+    }
+
     /// Convenient method to create an infobox.
     ///
     /// It will contain the given text and a `Ok` dismiss button.
@@ -106,6 +113,30 @@ impl Dialog {
     pub fn padding<T: Into<Vec4>>(mut self, padding: T) -> Self {
         self.padding = padding.into();
 
+        self
+    }
+
+    /// Sets the top padding in the dialog (under the title).
+    pub fn padding_top(mut self, padding: usize) -> Self {
+        self.padding.top = padding;
+        self
+    }
+
+    /// Sets the bottom padding in the dialog (under buttons).
+    pub fn padding_bottom(mut self, padding: usize) -> Self {
+        self.padding.bottom = padding;
+        self
+    }
+
+    /// Sets the left padding in the dialog.
+    pub fn padding_left(mut self, padding: usize) -> Self {
+        self.padding.left = padding;
+        self
+    }
+
+    /// Sets the right padding in the dialog.
+    pub fn padding_right(mut self, padding: usize) -> Self {
+        self.padding.right = padding;
         self
     }
 }

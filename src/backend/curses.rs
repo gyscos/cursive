@@ -105,6 +105,9 @@ impl backend::Backend for NcursesBackend {
 fn parse_ncurses_char(ch: i32) -> Event {
 
     match ch {
+        // Value sent by ncurses when nothing happens
+        -1 => Event::Refresh,
+
         // Values under 256 are chars and control values
         //
         // Tab is '\t'

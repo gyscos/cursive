@@ -5,7 +5,7 @@ use With;
 use direction::Direction;
 use theme::{ColorStyle, Effect};
 use vec::Vec2;
-use view::{IdView, View};
+use view::View;
 use event::*;
 use Printer;
 
@@ -134,11 +134,6 @@ impl EditView {
         self.min_length = min_length;
 
         self
-    }
-
-    /// Wraps this view into an IdView with the given id.
-    pub fn with_id(self, label: &str) -> IdView<Self> {
-        IdView::new(label, self)
     }
 }
 

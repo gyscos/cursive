@@ -58,6 +58,7 @@ mod linear_layout;
 mod list_view;
 mod menubar;
 mod menu_popup;
+mod progress_bar;
 mod shadow_view;
 mod select_view;
 mod sized_view;
@@ -78,7 +79,7 @@ pub use self::position::{Offset, Position};
 
 pub use self::scroll::ScrollBase;
 
-pub use self::id_view::IdView;
+pub use self::id_view::{IdView, Identifiable};
 pub use self::box_view::BoxView;
 pub use self::button::Button;
 pub use self::checkbox::Checkbox;
@@ -91,12 +92,13 @@ pub use self::list_view::ListView;
 pub use self::menubar::Menubar;
 pub use self::menu_popup::MenuPopup;
 pub use self::view_path::ViewPath;
+pub use self::progress_bar::ProgressBar;
 pub use self::select_view::SelectView;
 pub use self::shadow_view::ShadowView;
+pub use self::sized_view::SizedView;
 pub use self::stack_view::StackView;
 pub use self::text_view::TextView;
 pub use self::tracked_view::TrackedView;
-pub use self::sized_view::SizedView;
 pub use self::view_wrapper::ViewWrapper;
 
 

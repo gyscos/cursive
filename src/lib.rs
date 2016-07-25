@@ -97,7 +97,6 @@ pub use printer::Printer;
 use backend::{Backend, NcursesBackend};
 
 use std::any::Any;
-use std::rc::Rc;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -364,7 +363,7 @@ impl Cursive {
     pub fn add_global_callback<F, E: Into<Event>>(&mut self, event: E, cb: F)
         where F: Fn(&mut Cursive) + 'static
     {
-        self.global_callbacks.insert(event.into(), Rc::new(cb));
+        self.global_callbacks.insert(event.into(), Callback::from_fn(cb));
     }
 
     /// Convenient method to add a layer to the current screen.

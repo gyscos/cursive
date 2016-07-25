@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use Cursive;
 use event::{Callback, Event, EventResult};
@@ -35,7 +34,7 @@ impl KeyEventView {
     pub fn register<F, E: Into<Event>>(mut self, event: E, cb: F) -> Self
         where F: Fn(&mut Cursive) + 'static
     {
-        self.callbacks.insert(event.into(), Rc::new(cb));
+        self.callbacks.insert(event.into(), Callback::from_fn(cb));
 
         self
     }

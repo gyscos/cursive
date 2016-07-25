@@ -98,7 +98,7 @@ impl MenuTree {
     pub fn add_leaf<F: 'static + Fn(&mut Cursive)>(&mut self, title: &str,
                                                    cb: F) {
         self.children
-            .push(MenuItem::Leaf(title.to_string(), Rc::new(cb)));
+            .push(MenuItem::Leaf(title.to_string(), Callback::from_fn(cb)));
     }
 
     /// Adds a actionnable leaf to the end of this tree - chainable variant.

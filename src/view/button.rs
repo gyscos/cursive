@@ -1,14 +1,12 @@
-use std::rc::Rc;
+use unicode_width::UnicodeWidthStr;
 
+use {Cursive, Printer, With};
+use align::HAlign;
+use event::*;
 use direction::Direction;
 use theme::ColorStyle;
-use Cursive;
-use With;
 use vec::Vec2;
 use view::View;
-use event::*;
-use Printer;
-use unicode_width::UnicodeWidthStr;
 
 /// Simple text label with a callback when <Enter> is pressed.
 ///
@@ -33,7 +31,7 @@ impl Button {
     {
         Button {
             label: label.to_string(),
-            callback: Rc::new(cb),
+            callback: Callback::from_fn(cb),
             enabled: true,
         }
     }
@@ -82,12 +80,12 @@ impl View for Button {
         } else {
             ColorStyle::Highlight
         };
-        let x = printer.size.x - 1;
+
+        let offset =
+            HAlign::Center.get_offset(self.label.len() + 2, printer.size.x);
 
         printer.with_color(style, |printer| {
-            printer.print((1, 0), &self.label);
-            printer.print((0, 0), "<");
-            printer.print((x, 0), ">");
+            printer.print((offset, 0), &format!("<{}>", self.label));
         });
     }
 
