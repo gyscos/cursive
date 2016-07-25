@@ -80,18 +80,13 @@ impl ProgressBar {
 
 impl View for ProgressBar {
     fn draw(&self, printer: &Printer) {
-        // TODO: make the brackets an option
-        // (Or a theme property? Or both?)
-        printer.print((0, 0), "[");
-        printer.print((printer.size.x - 1, 0), "]");
-
         // Now, the bar itself...
-        let available = printer.size.x - 2;
+        let available = printer.size.x;
 
         let value = self.value.load(Ordering::Relaxed);
         let length = (available * (value - self.min)) / (self.max - self.min);
         printer.with_color(ColorStyle::Highlight, |printer| {
-            printer.print_hline((1, 0), length, " ");
+            printer.print_hline((0, 0), length, " ");
         });
     }
 
