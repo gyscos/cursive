@@ -192,8 +192,11 @@ impl View for LinearLayout {
             self.get_min_size(size);
         }
 
+        let o = self.orientation;
+
         for child in &mut self.children {
-            child.view.layout(child.size);
+            child.size.set_axis_from(o.swap(), &size);
+            child.view.layout(size.with_axis_from(o, &child.size));
         }
     }
 

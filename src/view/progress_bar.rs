@@ -3,9 +3,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use {Cursive, Printer};
-use vec::Vec2;
 use align::HAlign;
-use direction::Orientation;
 use theme::{ColorStyle, Effect};
 use view::View;
 
@@ -119,9 +117,5 @@ impl View for ProgressBar {
             printer.print_hline((0, 0), length, " ");
             printer.print((offset, 0), &label);
         });
-    }
-
-    fn get_min_size(&mut self, size: Vec2) -> Vec2 {
-        size.with_axis(Orientation::Vertical, 1)
     }
 }

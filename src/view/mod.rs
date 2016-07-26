@@ -207,6 +207,15 @@ impl SizeCache {
 
     /// Creates a new bi-dimensional cache.
     ///
+    /// It will stay valid for the same request, and compatible ones.
+    ///
+    /// A compatible request is one where, for each axis, either:
+    ///
+    /// * the request is equal to the cached size, or
+    /// * the request is larger than the cached size and the cache is unconstrained
+    ///
+    /// Notes:
+    ///
     /// * `size` must fit inside `req`.
     /// * for each dimension, `constrained = (size == req)`
     fn build(size: Vec2, req: Vec2) -> XY<Self> {
