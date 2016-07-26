@@ -222,7 +222,7 @@ impl View for LinearLayout {
 
         // Ok, so maybe it didn't.
         // Budget cuts, everyone.
-        let budget_req = req.with(self.orientation, 1);
+        let budget_req = req.with_axis(self.orientation, 1);
         // println_stderr!("Budget req: {:?}", budget_req);
 
         // See how they like it that way
@@ -288,7 +288,7 @@ impl View for LinearLayout {
             .map(|v| self.orientation.get(v))
             .zip(allocations.iter())
             .map(|(a, b)| a + b)
-            .map(|l| req.with(self.orientation, l))
+            .map(|l| req.with_axis(self.orientation, l))
             .collect();
         // println_stderr!("Final sizes: {:?}", final_lengths);
 

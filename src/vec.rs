@@ -88,7 +88,7 @@ impl XY<usize> {
     }
 
     /// Returns a new `Vec2` with the axis `o` set to `value`.
-    pub fn with(&self, o: Orientation, value: usize) -> Self {
+    pub fn with_axis(&self, o: Orientation, value: usize) -> Self {
         let mut other = *self;
         *o.get_ref(&mut other) = value;
         other

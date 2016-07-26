@@ -3,7 +3,9 @@ use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use {Cursive, Printer};
+use vec::Vec2;
 use align::HAlign;
+use direction::Orientation;
 use event::*;
 use theme::{ColorStyle, Effect};
 use view::View;
@@ -138,5 +140,9 @@ impl View for ProgressBar {
         }
 
         EventResult::Ignored
+    }
+
+    fn get_min_size(&mut self, size: Vec2) -> Vec2 {
+        size.with_axis(Orientation::Vertical, 1)
     }
 }
