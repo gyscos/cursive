@@ -5,7 +5,10 @@ use cursive::prelude::*;
 fn main() {
     let mut siv = Cursive::new();
 
-    siv.add_layer(Dialog::new(ListView::new()
+    siv.add_layer(Dialog::empty()
+        .title("Please fill out this form")
+        .button("Ok", |s| s.quit())
+        .content(ListView::new()
             .child("Name", EditView::new().min_length(10))
             .child("Email",
                    LinearLayout::horizontal()
@@ -27,7 +30,8 @@ fn main() {
                    }))
             .delimiter()
             .child("Age",
-                   SelectView::new().popup()
+                   SelectView::new()
+                       .popup()
                        .item_str("0-18")
                        .item_str("19-30")
                        .item_str("31-40")
@@ -36,9 +40,7 @@ fn main() {
                 for i in 0..50 {
                     list.add_child(&format!("Item {}", i), EditView::new());
                 }
-            }))
-        .title("Please fill out this form")
-        .button("Ok", |s| s.quit()));
+            })));
 
     siv.run();
 }

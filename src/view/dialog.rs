@@ -2,11 +2,12 @@ use std::cmp::max;
 use std::any::Any;
 
 use Cursive;
+use With;
 use direction::Direction;
 use align::*;
 use event::*;
 use theme::ColorStyle;
-use view::{Selector, TextView, View};
+use view::{DummyView, Selector, TextView, View};
 use view::{Button, SizedView};
 use vec::{Vec2, Vec4};
 use Printer;
@@ -43,7 +44,14 @@ pub struct Dialog {
 }
 
 impl Dialog {
-    /// Creates a new Dialog with the given content.
+    /// Creates a new `Dialog` with empty content.
+    ///
+    /// You should probably call `content()` next.
+    pub fn empty() -> Self {
+        Self::new(DummyView)
+    }
+
+    /// Creates a new `Dialog` with the given content.
     pub fn new<V: View + 'static>(view: V) -> Self {
         Dialog {
             content: Box::new(view),
@@ -54,6 +62,13 @@ impl Dialog {
             borders: Vec4::new(1, 1, 1, 1),
             align: Align::top_right(),
         }
+    }
+
+    /// Sets the content for this dialog.
+    ///
+    /// Chainable variant.
+    pub fn content<V: View + 'static>(self, view: V) -> Self {
+        self.with(|s| s.set_content(view))
     }
 
     /// Sets the content for this dialog.

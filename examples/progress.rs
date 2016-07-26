@@ -10,12 +10,15 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 fn main() {
     let mut siv = Cursive::new();
 
-    siv.add_layer(Dialog::new(Button::new("Start", |s| {
+    siv.add_layer(Dialog::empty()
+        .title("Progress bar example")
+        .padding((0, 0, 1, 1))
+        .content(Button::new("Start", |s| {
             // These two values will allow us to communicate.
             let value = Arc::new(AtomicUsize::new(0));
             let cb = Arc::new(Mutex::new(None));
 
-            let n_max = 1000;
+            let n_max = 100;
 
             s.pop_layer();
             s.add_layer(Panel::new(FullView::full_width(ProgressBar::new()
@@ -26,21 +29,19 @@ fn main() {
             // Spawn a thread to process things in the background.
             thread::spawn(move || {
                 for _ in 0..n_max {
-                    thread::sleep(Duration::from_millis(3));
+                    thread::sleep(Duration::from_millis(20));
                     value.fetch_add(1, Ordering::Relaxed);
                 }
                 *cb.lock().unwrap() = Some(Box::new(move |s| {
                     s.pop_layer();
-                    s.add_layer(Dialog::new(TextView::new("Phew, that was \
-                                                           a lot of work!"))
+                    s.add_layer(Dialog::empty()
                         .title("Work done!")
+                        .content(TextView::new("Phew, that was some work!"))
                         .button("Sure!", |s| s.quit()));
                 }));
             });
 
         }))
-        .title("Progress bar example")
-        .padding((0, 0, 1, 1))
         .with_id("dialog"));
 
     siv.set_fps(30);
