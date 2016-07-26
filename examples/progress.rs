@@ -4,7 +4,7 @@ use cursive::prelude::*;
 
 use std::thread;
 use std::time::Duration;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 fn main() {
@@ -16,15 +16,15 @@ fn main() {
         .content(Button::new("Start", |s| {
             // These two values will allow us to communicate.
             let value = Arc::new(AtomicUsize::new(0));
-            let cb = Arc::new(Mutex::new(None));
 
             let n_max = 1000;
 
             s.pop_layer();
             s.add_layer(Panel::new(FullView::full_width(ProgressBar::new()
                     .range(0, n_max)
-                    .with_value(value.clone())
-                    .with_callback(cb.clone()))));
+                    .with_value(value.clone()))));
+
+            let cb = s.cb_sink().clone();
 
             // Spawn a thread to process things in the background.
             thread::spawn(move || {
@@ -32,13 +32,15 @@ fn main() {
                     thread::sleep(Duration::from_millis(20));
                     value.fetch_add(1, Ordering::Relaxed);
                 }
-                *cb.lock().unwrap() = Some(Box::new(move |s| {
-                    s.pop_layer();
-                    s.add_layer(Dialog::empty()
-                        .title("Work done!")
-                        .content(TextView::new("Phew, that was some work!"))
-                        .button("Sure!", |s| s.quit()));
-                }));
+                cb.send(Box::new(move |s| {
+                        s.pop_layer();
+                        s.add_layer(Dialog::empty()
+                            .title("Work done!")
+                            .content(TextView::new("Phew, that was some \
+                                                    work!"))
+                            .button("Sure!", |s| s.quit()));
+                    }))
+                    .unwrap();
             });
 
         }))

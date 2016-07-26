@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -6,7 +6,6 @@ use {Cursive, Printer};
 use vec::Vec2;
 use align::HAlign;
 use direction::Orientation;
-use event::*;
 use theme::{ColorStyle, Effect};
 use view::View;
 
@@ -18,7 +17,6 @@ pub struct ProgressBar {
     max: usize,
     value: Arc<AtomicUsize>,
     // TODO: use a Promise instead?
-    callback: Option<Arc<Mutex<CbPromise>>>,
     label_maker: Box<Fn(usize, (usize, usize)) -> String>,
 }
 
@@ -42,7 +40,6 @@ impl ProgressBar {
             min: 0,
             max: 100,
             value: Arc::new(AtomicUsize::new(0)),
-            callback: None,
             label_maker: Box::new(make_percentage),
         }
     }
@@ -50,14 +47,6 @@ impl ProgressBar {
     /// Sets the value to follow.
     pub fn with_value(mut self, value: Arc<AtomicUsize>) -> Self {
         self.value = value;
-        self
-    }
-
-    /// Sets the callback to follow.
-    ///
-    /// Whenever `callback` is set, it will be called on the next event loop.
-    pub fn with_callback(mut self, callback: Arc<Mutex<CbPromise>>) -> Self {
-        self.callback = Some(callback);
         self
     }
 
@@ -130,16 +119,6 @@ impl View for ProgressBar {
             printer.print_hline((0, 0), length, " ");
             printer.print((offset, 0), &label);
         });
-    }
-
-    fn on_event(&mut self, _: Event) -> EventResult {
-        if let Some(ref cb) = self.callback {
-            if let Some(cb) = cb.lock().unwrap().take() {
-                return EventResult::Consumed(Some(cb.into()));
-            }
-        }
-
-        EventResult::Ignored
     }
 
     fn get_min_size(&mut self, size: Vec2) -> Vec2 {

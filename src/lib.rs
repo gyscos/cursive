@@ -97,6 +97,7 @@ pub use printer::Printer;
 
 use backend::{Backend, NcursesBackend};
 
+use std::sync::mpsc;
 use std::any::Any;
 use std::collections::HashMap;
 use std::path::Path;
@@ -126,6 +127,9 @@ pub struct Cursive {
     active_screen: ScreenId,
 
     running: bool,
+
+    cb_source: mpsc::Receiver<Box<Fn(&mut Cursive) + Send>>,
+    cb_sink: mpsc::Sender<Box<Fn(&mut Cursive) + Send>>,
 }
 
 new_default!(Cursive);
@@ -143,6 +147,8 @@ impl Cursive {
         let theme = theme::load_default();
         // let theme = theme::load_theme("assets/style.toml").unwrap();
 
+        let (tx, rx) = mpsc::channel();
+
         let mut res = Cursive {
             theme: theme,
             screens: Vec::new(),
@@ -150,11 +156,24 @@ impl Cursive {
             menubar: view::Menubar::new(),
             active_screen: 0,
             running: true,
+            cb_source: rx,
+            cb_sink: tx,
         };
 
         res.screens.push(StackView::new());
 
         res
+    }
+
+    /// Returns a sink for asynchronous callbacks.
+    ///
+    /// Returns the sender part of a channel, that allows to send
+    /// callbacks to `self` from other threads.
+    ///
+    /// Callbacks will be executed in the order
+    /// of arrival on the next event cycle.
+    pub fn cb_sink(&self) -> &mpsc::Sender<Box<Fn(&mut Cursive) + Send>> {
+        &self.cb_sink
     }
 
     /// Selects the menubar
@@ -454,6 +473,10 @@ impl Cursive {
 
         // And the big event loop begins!
         while self.running {
+            if let Ok(cb) = self.cb_source.try_recv() {
+                cb(self);
+            }
+
             // Do we need to redraw everytime?
             // Probably, actually.
             // TODO: Do we need to re-layout everytime?
