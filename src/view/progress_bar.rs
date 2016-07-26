@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use std::thread;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use {Cursive, Printer};
@@ -17,6 +18,8 @@ pub struct ProgressBar {
     // TODO: use a Promise instead?
     label_maker: Box<Fn(usize, (usize, usize)) -> String>,
 }
+
+pub type Ticker = Box<Fn(usize) + Send>;
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
     let percent = 101 * (value - min) / (1 + max - min);
@@ -43,8 +46,33 @@ impl ProgressBar {
     }
 
     /// Sets the value to follow.
+    ///
+    /// Use this to manually control the progress to display
+    /// by directly modifying the value pointed to by `value`.
     pub fn with_value(mut self, value: Arc<AtomicUsize>) -> Self {
         self.value = value;
+        self
+    }
+
+    /// Starts a function in a separate thread, and monitor the progress.
+    ///
+    /// `f` will be given a `Ticker` to increment the bar's progress.
+    pub fn start<F: FnOnce(Ticker) + Send + 'static>(&mut self, f: F) {
+        let value = self.value.clone();
+        let ticker: Ticker = Box::new(move |ticks| {
+            value.fetch_add(ticks, Ordering::Relaxed);
+        });
+
+        thread::spawn(move || {
+            f(ticker);
+        });
+    }
+
+    /// Starts a function in a separate thread, and monitor the progress.
+    ///
+    /// Chainable variant.
+    pub fn with_task<F: FnOnce(Ticker) + Send + 'static>(mut self, task: F) -> Self {
+        self.start(task);
         self
     }
 
