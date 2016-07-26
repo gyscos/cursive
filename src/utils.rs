@@ -1,19 +1,19 @@
 use unicode_width::UnicodeWidthStr;
 
-/// Computes a sub-string length that fits in the given `width`.
-///
-/// Takes non-breakable elements from `iter`, while keeping the
-/// string width under `width` (and adding the length of `delimiter`
-/// between each element).
-///
-/// Example:
-///
-/// ```
-/// let my_text = "blah...";
-/// // This returns the number of bytes for a prefix of `my_text` that
-/// // fits within 5 cells.
-/// head_bytes(my_text.graphemes(true), 5, "");
-/// ```
+// Computes a sub-string length that fits in the given `width`.
+//
+// Takes non-breakable elements from `iter`, while keeping the
+// string width under `width` (and adding the length of `delimiter`
+// between each element).
+//
+// Example:
+//
+// ```
+// let my_text = "blah...";
+// // This returns the number of bytes for a prefix of `my_text` that
+// // fits within 5 cells.
+// head_bytes(my_text.graphemes(true), 5, "");
+// ```
 pub fn head_bytes<'a, I: Iterator<Item = &'a str>>(iter: I, width: usize,
                                                delimiter: &str)
                                                -> usize {
