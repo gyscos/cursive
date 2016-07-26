@@ -68,7 +68,7 @@ macro_rules! new_default(
             }
         }
     }
-    );
+);
 
 pub mod prelude;
 
@@ -81,6 +81,7 @@ pub mod menu;
 pub mod direction;
 
 // This probably doesn't need to be public?
+mod utils;
 mod printer;
 mod xy;
 mod with;

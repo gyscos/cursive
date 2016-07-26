@@ -18,7 +18,7 @@ fn main() {
             let value = Arc::new(AtomicUsize::new(0));
             let cb = Arc::new(Mutex::new(None));
 
-            let n_max = 100;
+            let n_max = 1000;
 
             s.pop_layer();
             s.add_layer(Panel::new(FullView::full_width(ProgressBar::new()

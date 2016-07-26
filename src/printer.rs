@@ -1,7 +1,9 @@
 //! Makes drawing on ncurses windows easier.
 
 use std::cmp::min;
+use unicode_segmentation::UnicodeSegmentation;
 
+use utils::head_bytes;
 use backend::Backend;
 
 use B;
@@ -45,17 +47,11 @@ impl Printer {
         let room = self.size.x - p.x;
         // We want the number of CHARACTERS, not bytes.
         // (Actually we want the "width" of the string, see unicode-width)
-        let text = match text.char_indices().nth(room) {
-            Some((i, _)) => &text[..i],
-            _ => text,
-        };
+        let prefix_len = head_bytes(text.graphemes(true), room, "");
+        let text = &text[..prefix_len];
 
         let p = p + self.offset;
-        if text.contains('%') {
-            B::print_at((p.x, p.y), &text.replace("%", "%%"));
-        } else {
-            B::print_at((p.x, p.y), text);
-        }
+        B::print_at((p.x, p.y), text);
     }
 
     /// Prints a vertical line using the given character.

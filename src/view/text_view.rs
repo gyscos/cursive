@@ -9,6 +9,8 @@ use align::*;
 use event::*;
 use super::scroll::ScrollBase;
 
+use utils::head_bytes;
+
 use unicode_width::UnicodeWidthStr;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -310,33 +312,5 @@ impl View for TextView {
         // Compute the text rows.
         self.compute_rows(size);
         self.scrollbase.set_heights(size.y, self.rows.len());
-    }
-}
-
-fn head_bytes<'a, I: Iterator<Item = &'a str>>(iter: I, width: usize,
-                                               overhead: &str)
-                                               -> usize {
-    let overhead_width = overhead.width();
-    let overhead_len = overhead.len();
-
-    let sum = iter.scan(0, |w, token| {
-            *w += token.width();
-            if *w > width {
-                None
-            } else {
-                // Add a space
-                *w += overhead_width;
-                Some(token)
-            }
-        })
-        .map(|token| token.len() + overhead_len)
-        .fold(0, |a, b| a + b);
-
-    // We counted overhead_len once too many times,
-    // but only if the iterator was non empty.
-    if sum == 0 {
-        sum
-    } else {
-        sum - overhead_len
     }
 }

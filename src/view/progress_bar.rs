@@ -3,8 +3,9 @@ use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use {Cursive, Printer};
+use align::HAlign;
 use event::*;
-use theme::ColorStyle;
+use theme::{ColorStyle, Effect};
 use view::View;
 
 pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
@@ -16,6 +17,12 @@ pub struct ProgressBar {
     value: Arc<AtomicUsize>,
     // TODO: use a Promise instead?
     callback: Option<Arc<Mutex<CbPromise>>>,
+    label_maker: Box<Fn(usize, (usize, usize)) -> String>,
+}
+
+fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
+    let percent = 101 * (value - min) / (1 + max - min);
+    format!("{} %", percent)
 }
 
 new_default!(ProgressBar);
@@ -34,6 +41,7 @@ impl ProgressBar {
             max: 100,
             value: Arc::new(AtomicUsize::new(0)),
             callback: None,
+            label_maker: Box::new(make_percentage),
         }
     }
 
@@ -48,6 +56,26 @@ impl ProgressBar {
     /// Whenever `callback` is set, it will be called on the next event loop.
     pub fn with_callback(mut self, callback: Arc<Mutex<CbPromise>>) -> Self {
         self.callback = Some(callback);
+        self
+    }
+
+    /// Sets the label generator.
+    ///
+    /// The given function will be called with `(value, (min, max))`.
+    /// Its output will be used as the label to print inside the progress bar.
+    ///
+    /// The default one shows a percentage progress:
+    ///
+    /// ```
+    /// fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
+    ///     let percent = 101 * (value - min) / (1 + max - min);
+    ///     format!("{} %", percent)
+    /// }
+    /// ```
+    pub fn with_label<F: Fn(usize, (usize, usize)) -> String + 'static>
+        (mut self, label_maker: F)
+         -> Self {
+        self.label_maker = Box::new(label_maker);
         self
     }
 
@@ -88,8 +116,17 @@ impl View for ProgressBar {
         let value = self.value.load(Ordering::Relaxed);
         let length = ((1 + available) * (value - self.min)) /
                      (1 + self.max - self.min);
+
+        let label = (self.label_maker)(value, (self.min, self.max));
+        let offset = HAlign::Center.get_offset(label.len(), printer.size.x);
+
         printer.with_color(ColorStyle::Highlight, |printer| {
+            printer.with_effect(Effect::Reverse, |printer| {
+                printer.print((offset, 0), &label);
+            });
+            let printer = &printer.sub_printer((0, 0), (length, 1), true);
             printer.print_hline((0, 0), length, " ");
+            printer.print((offset, 0), &label);
         });
     }
 
