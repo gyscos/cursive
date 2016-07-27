@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use std::thread;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::cmp;
 
 use {Cursive, Printer};
 use align::HAlign;
@@ -44,8 +45,14 @@ pub struct ProgressBar {
 pub type Ticker = Box<Fn(usize) + Send>;
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
-    let percent = 101 * (value - min) / (1 + max - min);
-    format!("{} %", percent)
+    if value < min {
+        // ?? Negative progress?
+        let percent = 101 * (min - value) / (1 + max - min);
+        format!("-{} %", percent)
+    } else {
+        let percent = 101 * (value - min) / (1 + max - min);
+        format!("{} %", percent)
+    }
 }
 
 new_default!(ProgressBar);
@@ -125,22 +132,36 @@ impl ProgressBar {
     /// Sets the minimum value.
     ///
     /// When `value` equals `min`, the bar is at the minimum level.
+    ///
+    /// If `self.min > max`, `self.min` is set to `max`.
     pub fn min(mut self, min: usize) -> Self {
         self.min = min;
+        self.max = cmp::max(self.max, self.min);
+
         self
     }
 
     /// Sets the maximum value.
     ///
     /// When `value` equals `max`, the bar is at the maximum level.
+    ///
+    /// If `min > self.max`, `self.max` is set to `min`.
     pub fn max(mut self, max: usize) -> Self {
         self.max = max;
+        self.min = cmp::min(self.min, self.max);
+
         self
     }
 
     /// Sets the `min` and `max` range for the value.
+    ///
+    /// If `min > max`, swap the two values.
     pub fn range(self, min: usize, max: usize) -> Self {
-        self.min(min).max(max)
+        if min > max {
+            self.min(max).max(min)
+        } else {
+            self.min(min).max(max)
+        }
     }
 
     /// Sets the current value.
@@ -157,8 +178,15 @@ impl View for ProgressBar {
         let available = printer.size.x;
 
         let value = self.value.load(Ordering::Relaxed);
-        let length = ((1 + available) * (value - self.min)) /
-                     (1 + self.max - self.min);
+
+        // If we're under the minimum, don't draw anything.
+        // If we're over the maximum, we'll try to draw more, but the printer
+        // will crop us anyway, so it's not a big deal.
+        let length = if value < self.min {
+            0
+        } else {
+            ((1 + available) * (value - self.min)) / (1 + self.max - self.min)
+        };
 
         let label = (self.label_maker)(value, (self.min, self.max));
         let offset = HAlign::Center.get_offset(label.len(), printer.size.x);
