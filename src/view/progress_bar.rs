@@ -10,7 +10,29 @@ use view::View;
 
 pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
 
-/// Display progress.
+/// Animated bar showing a progress value.
+///
+/// This bar has an internal counter, and adapts the length of the displayed
+/// bar to the relative position of the counter between a minimum and maximum
+/// values.
+///
+/// It also prints a customizable text in the center of the bar, which
+/// defaults to the progression percentage.
+///
+/// # Example
+///
+/// ```
+/// # use cursive::prelude::*;
+/// let bar = ProgressBar::new()
+///                       .with_task(|ticker| {
+///                           // This closure is called in parallel.
+///                           for _ in 0..100 {
+///                               // Here we can communicate some
+///                               // advancement back to the bar.
+///                               ticker(1);
+///                           }
+///                       });
+/// ```
 pub struct ProgressBar {
     min: usize,
     max: usize,
@@ -57,6 +79,9 @@ impl ProgressBar {
     /// Starts a function in a separate thread, and monitor the progress.
     ///
     /// `f` will be given a `Ticker` to increment the bar's progress.
+    ///
+    /// This does not reset the value, so it can be called several times
+    /// to advance the progress in multiple sessions.
     pub fn start<F: FnOnce(Ticker) + Send + 'static>(&mut self, f: F) {
         let value = self.value.clone();
         let ticker: Ticker = Box::new(move |ticks| {
@@ -71,7 +96,8 @@ impl ProgressBar {
     /// Starts a function in a separate thread, and monitor the progress.
     ///
     /// Chainable variant.
-    pub fn with_task<F: FnOnce(Ticker) + Send + 'static>(mut self, task: F) -> Self {
+    pub fn with_task<F: FnOnce(Ticker) + Send + 'static>(mut self, task: F)
+                                                         -> Self {
         self.start(task);
         self
     }
