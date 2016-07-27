@@ -94,7 +94,7 @@ pub use self::menubar::Menubar;
 pub use self::menu_popup::MenuPopup;
 pub use self::view_path::ViewPath;
 pub use self::panel::Panel;
-pub use self::progress_bar::ProgressBar;
+pub use self::progress_bar::{Counter, ProgressBar, Ticker};
 pub use self::select_view::SelectView;
 pub use self::shadow_view::ShadowView;
 pub use self::sized_view::SizedView;

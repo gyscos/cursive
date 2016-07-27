@@ -11,6 +11,32 @@ use view::View;
 
 pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
 
+/// Atomic counter used by `ProgressBar`.
+#[derive(Clone)]
+pub struct Counter(pub Arc<AtomicUsize>);
+
+impl Counter {
+    /// Creates a new `Counter` starting with the given value.
+    pub fn new(value: usize) -> Self {
+        Counter(Arc::new(AtomicUsize::new(value)))
+    }
+
+    /// Retrieves the current progress value.
+    pub fn get(&self) -> usize {
+        self.0.load(Ordering::Relaxed)
+    }
+
+    /// Sets the current progress value.
+    pub fn set(&self, value: usize) {
+        self.0.store(value, Ordering::Relaxed);
+    }
+
+    /// Increase the current progress by `ticks`.
+    pub fn tick(&self, ticks: usize) {
+        self.0.fetch_add(ticks, Ordering::Relaxed);
+    }
+}
+
 /// Animated bar showing a progress value.
 ///
 /// This bar has an internal counter, and adapts the length of the displayed
@@ -37,12 +63,16 @@ pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
 pub struct ProgressBar {
     min: usize,
     max: usize,
-    value: Arc<AtomicUsize>,
+    value: Counter,
     // TODO: use a Promise instead?
     label_maker: Box<Fn(usize, (usize, usize)) -> String>,
 }
 
+/// Function used by tasks given to a `ProgressBar`.
+///
+/// This function will increment the progress bar counter by the given value.
 pub type Ticker = Box<Fn(usize) + Send>;
+
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
     if value < min {
@@ -69,7 +99,7 @@ impl ProgressBar {
         ProgressBar {
             min: 0,
             max: 100,
-            value: Arc::new(AtomicUsize::new(0)),
+            value: Counter::new(0),
             label_maker: Box::new(make_percentage),
         }
     }
@@ -78,7 +108,7 @@ impl ProgressBar {
     ///
     /// Use this to manually control the progress to display
     /// by directly modifying the value pointed to by `value`.
-    pub fn with_value(mut self, value: Arc<AtomicUsize>) -> Self {
+    pub fn with_value(mut self, value: Counter) -> Self {
         self.value = value;
         self
     }
@@ -92,7 +122,7 @@ impl ProgressBar {
     pub fn start<F: FnOnce(Ticker) + Send + 'static>(&mut self, f: F) {
         let value = self.value.clone();
         let ticker: Ticker = Box::new(move |ticks| {
-            value.fetch_add(ticks, Ordering::Relaxed);
+            value.tick(ticks);
         });
 
         thread::spawn(move || {
@@ -168,7 +198,7 @@ impl ProgressBar {
     ///
     /// Value is clamped between `min` and `max`.
     pub fn set_value(&mut self, value: usize) {
-        self.value.store(value, Ordering::Relaxed);
+        self.value.set(value);
     }
 }
 
@@ -177,7 +207,7 @@ impl View for ProgressBar {
         // Now, the bar itself...
         let available = printer.size.x;
 
-        let value = self.value.load(Ordering::Relaxed);
+        let value = self.value.get();
 
         // If we're under the minimum, don't draw anything.
         // If we're over the maximum, we'll try to draw more, but the printer
