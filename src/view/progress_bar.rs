@@ -51,12 +51,12 @@ impl Counter {
 /// ```
 /// # use cursive::prelude::*;
 /// let bar = ProgressBar::new()
-///                       .with_task(|ticker| {
+///                       .with_task(|counter| {
 ///                           // This closure is called in parallel.
 ///                           for _ in 0..100 {
 ///                               // Here we can communicate some
 ///                               // advancement back to the bar.
-///                               ticker(1);
+///                               counter.tick(1);
 ///                           }
 ///                       });
 /// ```
@@ -115,10 +115,10 @@ impl ProgressBar {
     /// This does not reset the value, so it can be called several times
     /// to advance the progress in multiple sessions.
     pub fn start<F: FnOnce(Counter) + Send + 'static>(&mut self, f: F) {
-        let ticker: Counter = self.value.clone();
+        let counter: Counter = self.value.clone();
 
         thread::spawn(move || {
-            f(ticker);
+            f(counter);
         });
     }
 
