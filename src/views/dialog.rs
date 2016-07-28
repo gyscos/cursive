@@ -7,8 +7,8 @@ use direction::Direction;
 use align::*;
 use event::*;
 use theme::ColorStyle;
-use view::{DummyView, Selector, TextView, View};
-use view::{Button, SizedView};
+use view::{DummyView, Selector, View};
+use views::{Button, SizedView, TextView};
 use vec::{Vec2, Vec4};
 use Printer;
 
@@ -25,7 +25,7 @@ enum Focus {
 /// # Examples
 ///
 /// ```
-/// # use cursive::view::{Dialog,TextView};
+/// # use cursive::views::{Dialog,TextView};
 /// let dialog = Dialog::new(TextView::new("Hello!"))
 ///                     .button("Ok", |s| s.quit());
 /// ```

@@ -2,7 +2,7 @@ use std::cmp;
 
 use XY;
 use vec::Vec2;
-use super::{View, ViewWrapper};
+use view::{View, ViewWrapper};
 
 /// Wrapper around another view, with a fixed size.
 ///
@@ -17,7 +17,7 @@ use super::{View, ViewWrapper};
 /// # Examples
 ///
 /// ```
-/// # use cursive::view::{BoxView,TextView};
+/// # use cursive::views::{BoxView,TextView};
 /// // Creates a 20x4 BoxView with a TextView content.
 /// let view = BoxView::fixed_size((20,4), TextView::new("Hello!"));
 /// ```

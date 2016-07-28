@@ -1,15 +1,12 @@
 use Cursive;
-use view::View;
-
+use view::{View, Position};
 use vec::Vec2;
 use direction;
 use menu::MenuTree;
 use backend::Backend;
-use view::MenuPopup;
-use view::KeyEventView;
+use views::{MenuPopup, KeyEventView};
 use theme::ColorStyle;
 use Printer;
-use view::Position;
 use event::*;
 
 use std::rc::Rc;

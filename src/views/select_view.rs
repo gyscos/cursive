@@ -3,14 +3,12 @@ use std::rc::Rc;
 use std::cell::Cell;
 
 use Cursive;
-use menu::MenuTree;
-use view::MenuPopup;
 use With;
+use menu::MenuTree;
 use direction::Direction;
-use view::position::Position;
-use view::{IdView, View};
+use view::{Position, ScrollBase, View};
+use views::{IdView, MenuPopup};
 use align::{Align, HAlign, VAlign};
-use view::scroll::ScrollBase;
 use event::{Callback, Event, EventResult, Key};
 use theme::ColorStyle;
 use vec::Vec2;

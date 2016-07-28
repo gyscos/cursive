@@ -2,12 +2,11 @@ use XY;
 use With;
 use direction::Direction;
 use vec::Vec2;
-use view::View;
-use view::SizeCache;
+use view::{View, SizeCache};
 use Printer;
 use align::*;
 use event::*;
-use super::scroll::ScrollBase;
+use view::ScrollBase;
 
 use utils::head_bytes;
 

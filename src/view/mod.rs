@@ -1,4 +1,4 @@
-//! Defines various views to use when creating the layout.
+//! Define the base elements required to build views.
 //!
 //! Views are the main building blocks of your UI.
 //!
@@ -46,26 +46,6 @@ mod view_path;
 mod scroll;
 
 // Views
-mod box_view;
-mod button;
-mod checkbox;
-mod dialog;
-mod edit_view;
-mod full_view;
-mod id_view;
-mod key_event_view;
-mod linear_layout;
-mod list_view;
-mod menubar;
-mod menu_popup;
-mod panel;
-mod progress_bar;
-mod shadow_view;
-mod select_view;
-mod sized_view;
-mod stack_view;
-mod text_view;
-mod tracked_view;
 
 
 use std::any::Any;
@@ -80,27 +60,7 @@ pub use self::position::{Offset, Position};
 
 pub use self::scroll::ScrollBase;
 
-pub use self::id_view::{IdView, Identifiable};
-pub use self::box_view::BoxView;
-pub use self::button::Button;
-pub use self::checkbox::Checkbox;
-pub use self::dialog::Dialog;
-pub use self::edit_view::EditView;
-pub use self::full_view::FullView;
-pub use self::key_event_view::KeyEventView;
-pub use self::linear_layout::LinearLayout;
-pub use self::list_view::ListView;
-pub use self::menubar::Menubar;
-pub use self::menu_popup::MenuPopup;
 pub use self::view_path::ViewPath;
-pub use self::panel::Panel;
-pub use self::progress_bar::{Counter, ProgressBar};
-pub use self::select_view::SelectView;
-pub use self::shadow_view::ShadowView;
-pub use self::sized_view::SizedView;
-pub use self::stack_view::StackView;
-pub use self::text_view::TextView;
-pub use self::tracked_view::TrackedView;
 pub use self::view_wrapper::ViewWrapper;
 
 
@@ -218,7 +178,7 @@ impl SizeCache {
     ///
     /// * `size` must fit inside `req`.
     /// * for each dimension, `constrained = (size == req)`
-    fn build(size: Vec2, req: Vec2) -> XY<Self> {
+    pub fn build(size: Vec2, req: Vec2) -> XY<Self> {
         XY::new(SizeCache::new(size.x, size.x >= req.x),
                 SizeCache::new(size.y, size.y >= req.y))
     }
@@ -232,3 +192,13 @@ pub enum Selector<'a> {
     /// Selects a view from its path.
     Path(&'a ViewPath),
 }
+
+/// Makes a view wrappable in an `IdView`.
+pub trait Identifiable: View + Sized {
+    /// Wraps this view into an IdView with the given id.
+    fn with_id(self, id: &str) -> ::views::IdView<Self> {
+        ::views::IdView::new(id, self)
+    }
+}
+
+impl<T: View> Identifiable for T {}

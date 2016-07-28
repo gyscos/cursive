@@ -4,7 +4,7 @@ extern crate rand;
 use rand::Rng;
 
 use cursive::prelude::*;
-use cursive::view::Counter;
+use cursive::views::Counter;
 
 use std::thread;
 use std::cmp::min;

@@ -73,7 +73,10 @@ macro_rules! new_default(
 pub mod prelude;
 
 pub mod event;
+#[macro_use]
 pub mod view;
+
+pub mod views;
 pub mod vec;
 pub mod theme;
 pub mod align;
@@ -104,7 +107,6 @@ use std::path::Path;
 
 use vec::Vec2;
 use view::View;
-use view::{Selector, StackView};
 
 use event::{Callback, Event, EventResult};
 
@@ -120,9 +122,9 @@ pub type ScreenId = usize;
 /// It uses a list of screen, with one screen active at a time.
 pub struct Cursive {
     theme: theme::Theme,
-    screens: Vec<StackView>,
+    screens: Vec<views::StackView>,
     global_callbacks: HashMap<Event, Callback>,
-    menubar: view::Menubar,
+    menubar: views::Menubar,
 
     active_screen: ScreenId,
 
@@ -153,14 +155,14 @@ impl Cursive {
             theme: theme,
             screens: Vec::new(),
             global_callbacks: HashMap::new(),
-            menubar: view::Menubar::new(),
+            menubar: views::Menubar::new(),
             active_screen: 0,
             running: true,
             cb_source: rx,
             cb_sink: tx,
         };
 
-        res.screens.push(StackView::new());
+        res.screens.push(views::StackView::new());
 
         res
     }
@@ -237,7 +239,7 @@ impl Cursive {
     /// siv.add_global_callback(Key::Esc, |s| s.select_menubar());
     /// # }
     /// ```
-    pub fn menubar(&mut self) -> &mut view::Menubar {
+    pub fn menubar(&mut self) -> &mut views::Menubar {
         &mut self.menubar
     }
 
@@ -273,13 +275,13 @@ impl Cursive {
     }
 
     /// Returns a reference to the currently active screen.
-    pub fn screen(&self) -> &StackView {
+    pub fn screen(&self) -> &views::StackView {
         let id = self.active_screen;
         &self.screens[id]
     }
 
     /// Returns a mutable reference to the currently active screen.
-    pub fn screen_mut(&mut self) -> &mut StackView {
+    pub fn screen_mut(&mut self) -> &mut views::StackView {
         let id = self.active_screen;
         self.screens.get_mut(id).unwrap()
     }
@@ -287,7 +289,7 @@ impl Cursive {
     /// Adds a new screen, and returns its ID.
     pub fn add_screen(&mut self) -> ScreenId {
         let res = self.screens.len();
-        self.screens.push(StackView::new());
+        self.screens.push(views::StackView::new());
         res
     }
 
@@ -309,7 +311,7 @@ impl Cursive {
         self.active_screen = screen_id;
     }
 
-    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
+    fn find_any(&mut self, selector: &view::Selector) -> Option<&mut Any> {
         // Internal find method that returns a Any object.
         self.screen_mut().find(selector)
     }
@@ -336,14 +338,14 @@ impl Cursive {
     /// });
     /// # }
     /// ```
-    pub fn find<V: View + Any>(&mut self, sel: &Selector) -> Option<&mut V> {
+    pub fn find<V: View + Any>(&mut self, sel: &view::Selector) -> Option<&mut V> {
         match self.find_any(sel) {
             None => None,
             Some(b) => b.downcast_mut::<V>(),
         }
     }
 
-    /// Convenient method to use `find` with a `Selector::Id`.
+    /// Convenient method to use `find` with a `view::Selector::Id`.
     ///
     /// # Examples
     ///
@@ -363,7 +365,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn find_id<V: View + Any>(&mut self, id: &str) -> Option<&mut V> {
-        self.find(&Selector::Id(id))
+        self.find(&view::Selector::Id(id))
     }
 
     /// Adds a global callback.

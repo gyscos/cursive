@@ -1,6 +1,7 @@
 use std::cell::Cell;
 
-use view::{IdView, View, ViewWrapper};
+use view::{View, ViewWrapper};
+use views::IdView;
 use Printer;
 use vec::Vec2;
 

@@ -4,7 +4,7 @@ use vec::Vec2;
 use view::View;
 use view::Selector;
 use direction;
-use view::scroll::ScrollBase;
+use view::ScrollBase;
 use event::{Event, EventResult, Key};
 
 use std::any::Any;
