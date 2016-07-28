@@ -68,11 +68,6 @@ pub struct ProgressBar {
     label_maker: Box<Fn(usize, (usize, usize)) -> String>,
 }
 
-/// Function used by tasks given to a `ProgressBar`.
-///
-/// This function will increment the progress bar counter by the given value.
-pub type Ticker = Box<Fn(usize) + Send>;
-
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
     if value < min {
@@ -115,15 +110,12 @@ impl ProgressBar {
 
     /// Starts a function in a separate thread, and monitor the progress.
     ///
-    /// `f` will be given a `Ticker` to increment the bar's progress.
+    /// `f` will be given a `Counter` to increment the bar's progress.
     ///
     /// This does not reset the value, so it can be called several times
     /// to advance the progress in multiple sessions.
-    pub fn start<F: FnOnce(Ticker) + Send + 'static>(&mut self, f: F) {
-        let value = self.value.clone();
-        let ticker: Ticker = Box::new(move |ticks| {
-            value.tick(ticks);
-        });
+    pub fn start<F: FnOnce(Counter) + Send + 'static>(&mut self, f: F) {
+        let ticker: Counter = self.value.clone();
 
         thread::spawn(move || {
             f(ticker);
@@ -133,8 +125,8 @@ impl ProgressBar {
     /// Starts a function in a separate thread, and monitor the progress.
     ///
     /// Chainable variant.
-    pub fn with_task<F: FnOnce(Ticker) + Send + 'static>(mut self, task: F)
-                                                         -> Self {
+    pub fn with_task<F: FnOnce(Counter) + Send + 'static>(mut self, task: F)
+                                                          -> Self {
         self.start(task);
         self
     }

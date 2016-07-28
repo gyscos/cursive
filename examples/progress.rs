@@ -4,7 +4,7 @@ extern crate rand;
 use rand::Rng;
 
 use cursive::prelude::*;
-use cursive::view::{Counter, Ticker};
+use cursive::view::Counter;
 
 use std::thread;
 use std::cmp::min;
@@ -26,11 +26,11 @@ fn main() {
 }
 
 // Function to simulate a long process.
-fn fake_load(n_max: usize, ticker: Ticker) {
+fn fake_load(n_max: usize, counter: Counter) {
     for _ in 0..n_max {
         thread::sleep(Duration::from_millis(5));
-        // The ticker method increases the progress value
-        ticker(1);
+        // The `counter.tick()` method increases the progress value
+        counter.tick(1);
     }
 }
 
@@ -46,9 +46,9 @@ fn phase_1(s: &mut Cursive) {
     s.pop_layer();
     s.add_layer(Panel::new(FullView::full_width(ProgressBar::new()
         .range(0, n_max)
-        .with_task(move |ticker| {
+        .with_task(move |counter| {
             // This closure will be called in a separate thread.
-            fake_load(n_max, ticker);
+            fake_load(n_max, counter);
 
             // When we're done, send a callback through the channel
             cb.send(Box::new(coffee_break)).unwrap();
