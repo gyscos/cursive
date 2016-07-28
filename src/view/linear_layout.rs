@@ -1,4 +1,5 @@
 use XY;
+use With;
 use direction;
 use view::View;
 use view::{Selector, SizeCache};
@@ -56,15 +57,20 @@ impl LinearLayout {
     }
 
     /// Adds a child to the layout.
-    pub fn child<V: View + 'static>(mut self, view: V) -> Self {
+    ///
+    /// Chainable variant.
+    pub fn child<V: View + 'static>(self, view: V) -> Self {
+        self.with(|s| s.add_child(view))
+    }
+
+    /// Adds a child to the layout.
+    pub fn add_child<V: View + 'static>(&mut self, view: V) {
         self.children.push(Child {
             view: Box::new(view),
             size: Vec2::zero(),
             weight: 0,
         });
         self.invalidate();
-
-        self
     }
 
     // Invalidate the view, to request a layout next time
