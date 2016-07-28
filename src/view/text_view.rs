@@ -101,6 +101,12 @@ impl TextView {
         self
     }
 
+    /// Center the text horizontally and vertically inside the view.
+    pub fn center(mut self) -> Self {
+        self.align = Align::center();
+        self
+    }
+
     /// Replace the text in this view.
     pub fn set_content(&mut self, content: &str) {
         let content = strip_last_newline(content);

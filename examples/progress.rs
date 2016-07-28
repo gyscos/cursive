@@ -60,7 +60,7 @@ fn coffee_break(s: &mut Cursive) {
     s.pop_layer();
     s.add_layer(Dialog::empty()
         .title("Preparation complete")
-        .content(TextView::new("Now, the real deal!"))
+        .content(TextView::new("Now, the real deal!").center())
         .button("Again??", phase_2));
 }
 
@@ -117,6 +117,7 @@ fn final_step(s: &mut Cursive) {
     s.add_layer(Dialog::empty()
         .title("Report")
         .content(TextView::new("Time travel was a success!\n\
-                               We went forward a few seconds!!"))
+                               We went forward a few seconds!!")
+                 .center())
         .button("That's it?", |s| s.quit()));
 }
