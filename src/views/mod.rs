@@ -1,4 +1,4 @@
-//! Defines various views to use when creating the layout.
+//! Various views to use when creating the layout.
 
 mod box_view;
 mod button;

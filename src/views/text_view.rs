@@ -2,16 +2,15 @@ use XY;
 use With;
 use direction::Direction;
 use vec::Vec2;
-use view::{View, SizeCache};
+use view::{SizeCache, View};
 use Printer;
 use align::*;
 use event::*;
 use view::ScrollBase;
 
-use utils::head_bytes;
+use utils::{Row, LinesIterator};
 
 use unicode_width::UnicodeWidthStr;
-use unicode_segmentation::UnicodeSegmentation;
 
 
 /// A simple view showing a fixed text
@@ -28,13 +27,6 @@ pub struct TextView {
     scrollbase: ScrollBase,
     last_size: Option<XY<SizeCache>>,
     width: Option<usize>,
-}
-
-// Subset of the main content representing a row on the display.
-struct Row {
-    start: usize,
-    end: usize,
-    width: usize,
 }
 
 // If the last character is a newline, strip it.
@@ -182,77 +174,6 @@ impl TextView {
     }
 }
 
-// Given a multiline string, and a given maximum width,
-// iterates on the computed rows.
-struct LinesIterator<'a> {
-    content: &'a str,
-    start: usize,
-    width: usize,
-}
-
-impl<'a> LinesIterator<'a> {
-    // Start an iterator on the given content.
-    fn new(content: &'a str, width: usize) -> Self {
-        LinesIterator {
-            content: content,
-            width: width,
-            start: 0,
-        }
-    }
-}
-
-impl<'a> Iterator for LinesIterator<'a> {
-    type Item = Row;
-
-    fn next(&mut self) -> Option<Row> {
-        if self.start >= self.content.len() {
-            // This is the end.
-            return None;
-        }
-
-        let start = self.start;
-        let content = &self.content[self.start..];
-
-        let next = content.find('\n').unwrap_or(content.len());
-        let content = &content[..next];
-
-        let line_width = content.width();
-        if line_width <= self.width {
-            // We found a newline before the allowed limit.
-            // Break early.
-            self.start += next + 1;
-            return Some(Row {
-                start: start,
-                end: next + start,
-                width: line_width,
-            });
-        }
-
-        // Keep adding indivisible tokens
-        let head_bytes =
-            match head_bytes(content.split(' '), self.width, " ") {
-                0 => head_bytes(content.graphemes(true), self.width, ""),
-                other => {
-                    self.start += 1;
-                    other
-                }
-            };
-
-        if head_bytes == 0 {
-            // This mean we can't even get a single char?
-            // Sucks. Let's bail.
-            return None;
-        }
-
-        self.start += head_bytes;
-
-        Some(Row {
-            start: start,
-            end: start + head_bytes,
-            width: self.width,
-        })
-    }
-}
 
 impl View for TextView {
     fn draw(&self, printer: &Printer) {

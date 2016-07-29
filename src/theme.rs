@@ -1,4 +1,4 @@
-//! Module to handle colors and themes in the UI.
+//! Handle colors and themes in the UI.
 //!
 //! # Color palette
 //!

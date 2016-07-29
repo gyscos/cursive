@@ -82,9 +82,9 @@ pub mod theme;
 pub mod align;
 pub mod menu;
 pub mod direction;
+pub mod utils;
 
 // This probably doesn't need to be public?
-mod utils;
 mod printer;
 mod xy;
 mod with;

@@ -1,4 +1,4 @@
-//! Define the base elements required to build views.
+//! Base elements required to build views.
 //!
 //! Views are the main building blocks of your UI.
 //!

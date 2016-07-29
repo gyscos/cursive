@@ -1,4 +1,4 @@
-//! Module to build menus.
+//! Build menu trees.
 //!
 //! Menus are a way to arrange many actions in groups of more manageable size.
 //!

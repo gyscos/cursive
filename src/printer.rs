@@ -3,7 +3,7 @@
 use std::cmp::min;
 use unicode_segmentation::UnicodeSegmentation;
 
-use utils::head_bytes;
+use utils::prefix_length;
 use backend::Backend;
 
 use B;
@@ -47,7 +47,7 @@ impl Printer {
         let room = self.size.x - p.x;
         // We want the number of CHARACTERS, not bytes.
         // (Actually we want the "width" of the string, see unicode-width)
-        let prefix_len = head_bytes(text.graphemes(true), room, "");
+        let prefix_len = prefix_length(text.graphemes(true), room, "");
         let text = &text[..prefix_len];
 
         let p = p + self.offset;
