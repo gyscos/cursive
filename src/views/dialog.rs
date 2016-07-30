@@ -7,8 +7,8 @@ use direction::Direction;
 use align::*;
 use event::*;
 use theme::ColorStyle;
-use view::{DummyView, Selector, View};
-use views::{Button, SizedView, TextView};
+use view::{Selector, View};
+use views::{Button, DummyView, SizedView, TextView};
 use vec::{Vec2, Vec4};
 use Printer;
 
