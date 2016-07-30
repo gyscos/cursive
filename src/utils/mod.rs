@@ -35,7 +35,7 @@ pub use self::reader::ProgressReader;
 /// # }
 /// ```
 pub fn prefix_length<'a, I>(iter: I, width: usize, delimiter: &str) -> usize
-    where I: Iterator<Item = &'s str>
+    where I: Iterator<Item = &'a str>
 {
     let delimiter_width = delimiter.width();
     let delimiter_len = delimiter.len();
