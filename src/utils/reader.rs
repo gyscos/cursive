@@ -25,6 +25,11 @@ impl<R: Read> ProgressReader<R> {
             counter: counter,
         }
     }
+
+    /// Unwraps this `ProgressReader`, returning the reader and counter.
+    pub fn deconstruct(self) -> (R, Counter) {
+        (self.reader, self.counter)
+    }
 }
 
 impl<R: Read> Read for ProgressReader<R> {
