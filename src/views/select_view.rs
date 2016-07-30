@@ -7,7 +7,7 @@ use With;
 use menu::MenuTree;
 use direction::Direction;
 use view::{Position, ScrollBase, View};
-use views::{IdView, MenuPopup};
+use views::MenuPopup;
 use align::{Align, HAlign, VAlign};
 use event::{Callback, Event, EventResult, Key};
 use theme::ColorStyle;
@@ -191,20 +191,33 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Adds a item to the list, with given label and value.
-    pub fn add_item(&mut self, label: &str, value: T) {
-        self.items.push(Item::new(label, value));
+    pub fn add_item<S: Into<String>>(&mut self, label: S, value: T) {
+        self.items.push(Item::new(label.into(), value));
     }
 
     /// Chainable variant of add_item
-    pub fn item(mut self, label: &str, value: T) -> Self {
-        self.add_item(label, value);
-
-        self
+    pub fn item<S: Into<String>>(self, label: S, value: T) -> Self {
+        self.with(|s| s.add_item(label, value))
     }
 
-    /// Wraps this view into an IdView with the given id.
-    pub fn with_id(self, label: &str) -> IdView<Self> {
-        IdView::new(label, self)
+    /// Adds all items from from an iterator.
+    pub fn add_all<S, I>(&mut self, iter: I)
+        where S: Into<String>,
+              I: IntoIterator<Item = (S, T)>
+    {
+        for (s, t) in iter {
+            self.add_item(s, t);
+        }
+    }
+
+    /// Adds all items from from an iterator.
+    ///
+    /// Chainable variant.
+    pub fn with_all<S, I>(self, iter: I) -> Self
+        where S: Into<String>,
+              I: IntoIterator<Item = (S, T)>
+    {
+        self.with(|s| s.add_all(iter))
     }
 
     fn draw_item(&self, printer: &Printer, i: usize) {
@@ -235,13 +248,42 @@ impl<T: 'static> SelectView<T> {
 
 impl SelectView<String> {
     /// Convenient method to use the label as value.
-    pub fn add_item_str(&mut self, label: &str) {
-        self.add_item(label, label.to_string());
+    pub fn add_item_str<S: Into<String>>(&mut self, label: S) {
+        let label = label.into();
+        self.add_item(label.clone(), label);
     }
 
     /// Chainable variant of add_item_str
-    pub fn item_str(self, label: &str) -> Self {
-        self.item(label, label.to_string())
+    pub fn item_str<S: Into<String>>(self, label: S) -> Self {
+        self.with(|s| s.add_item_str(label))
+    }
+
+    /// Adds all strings from an iterator.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cursive::views::SelectView;
+    /// let mut select_view = SelectView::new();
+    /// select_view.add_all_str(vec!["a", "b", "c"]);
+    /// ```
+    pub fn add_all_str<S, I>(&mut self, iter: I)
+        where S: Into<String>,
+              I: IntoIterator<Item = S>
+    {
+        for s in iter {
+            self.add_item_str(s);
+        }
+    }
+
+    /// Adds all strings from an iterator.
+    ///
+    /// Chainable variant.
+    pub fn with_all_str<S, I>(self, iter: I) -> Self
+        where S: Into<String>,
+              I: IntoIterator<Item = S>
+    {
+        self.with(|s| s.add_all_str(iter))
     }
 }
 
@@ -441,9 +483,9 @@ struct Item<T> {
 }
 
 impl<T> Item<T> {
-    fn new(label: &str, value: T) -> Self {
+    fn new(label: String, value: T) -> Self {
         Item {
-            label: label.to_string(),
+            label: label,
             value: Rc::new(value),
         }
     }
