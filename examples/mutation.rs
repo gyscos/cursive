@@ -13,7 +13,7 @@ fn show_popup(siv: &mut Cursive) {
                              // Look for a view tagged "text". We _know_ it's there, so unwrap it.
                              let view = s.find_id::<TextView>("text").unwrap();
                              let content: String = view.get_content().chars().rev().collect();
-                             view.set_content(&content);
+                             view.set_content(content);
                          })
                          .dismiss_button("Ok"));
 

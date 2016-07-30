@@ -14,7 +14,7 @@ fn main() {
 
     // The text is too long to fit on a line, so the view will wrap lines,
     // and will adapt to the terminal size.
-    siv.add_layer(Dialog::new(TextView::new(&content))
+    siv.add_layer(Dialog::new(TextView::new(content))
         .h_align(HAlign::Center)
         .button("Quit", |s| s.quit()));
     // Show a popup on top of the view.

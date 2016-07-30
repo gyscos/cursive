@@ -26,6 +26,6 @@ fn main() {
 // Let's put the callback in a separate function to keep it clean, but it's not required.
 fn show_next_window(siv: &mut Cursive, city: &String) {
     siv.pop_layer();
-    siv.add_layer(Dialog::new(TextView::new(&format!("{} is a great city!", city)))
+    siv.add_layer(Dialog::new(TextView::new(format!("{} is a great city!", city)))
                       .button("Quit", |s| s.quit()));
 }

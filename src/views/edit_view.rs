@@ -43,7 +43,7 @@ use utils::suffix_length;
 ///                       } else {
 ///                           let content = format!("Hello {}!", name);
 ///                           s.pop_layer();
-///                           s.add_layer(Dialog::new(TextView::new(&content))
+///                           s.add_layer(Dialog::new(TextView::new(content))
 ///                                           .button("Quit", |s| s.quit()));
 ///                       }
 ///                   }));
