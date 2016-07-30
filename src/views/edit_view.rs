@@ -70,6 +70,9 @@ pub struct EditView {
     /// Will be called with the current content and the cursor position
     on_edit: Option<Rc<Fn(&mut Cursive, &str, usize)>>,
 
+    /// Callback when <Enter> is pressed.
+    on_submit: Option<Rc<Fn(&mut Cursive, &str)>>,
+
     enabled: bool,
 }
 
@@ -85,6 +88,7 @@ impl EditView {
             min_length: 1,
             last_length: 0, // scrollable: false,
             on_edit: None,
+            on_submit: None,
             enabled: true,
         }
     }
@@ -114,6 +118,14 @@ impl EditView {
     /// content and the current cursor position.
     pub fn on_edit<F: Fn(&mut Cursive, &str, usize) + 'static>(mut self, callback: F) -> Self {
         self.on_edit = Some(Rc::new(callback));
+        self
+    }
+
+    /// Sets a callback to be called when `<Enter>` is pressed.
+    ///
+    /// `callback` will be given the content of the view.
+    pub fn on_submit<F: Fn(&mut Cursive, &str) + 'static>(mut self, callback: F) -> Self {
+        self.on_submit = Some(Rc::new(callback));
         self
     }
 
@@ -293,6 +305,13 @@ impl View for EditView {
                     .unwrap()
                     .len();
                 self.remove(len);
+            }
+            Event::Key(Key::Enter) if self.on_submit.is_some() => {
+                let cb = self.on_submit.clone().unwrap();
+                let content = self.content.clone();
+                return EventResult::with_cb(move |s| {
+                    cb(s, &content);
+                });
             }
             _ => return EventResult::Ignored,
         }
