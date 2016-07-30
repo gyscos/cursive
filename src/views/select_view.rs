@@ -32,7 +32,7 @@ use unicode_width::UnicodeWidthStr;
 /// time_select.add_item("Medium", 5);
 /// time_select.add_item("Long", 10);
 ///
-/// time_select.set_on_select(|s, time| {
+/// time_select.set_on_submit(|s, time| {
 ///     s.pop_layer();
 ///     let text = format!("You will wait for {} minutes...", time);
 ///     s.add_layer(Dialog::new(TextView::new(&text))
@@ -51,8 +51,11 @@ pub struct SelectView<T = String> {
     // the focus needs to be manipulable from callbacks
     focus: Rc<Cell<usize>>,
     scrollbase: ScrollBase,
-    // This is a custom callback to include a &T
-    select_cb: Option<Rc<Fn(&mut Cursive, &T)>>,
+    // This is a custom callback to include a &T.
+    // It will be called whenever "Enter" is pressed.
+    on_submit: Option<Rc<Fn(&mut Cursive, &T)>>,
+    // This callback is called when the selection is changed.
+    on_select: Option<Rc<Fn(&mut Cursive, &T)>>,
     align: Align,
     // `true` if we show a one-line view, with popup on selection.
     popup: bool,
@@ -70,7 +73,8 @@ impl<T: 'static> SelectView<T> {
             enabled: true,
             focus: Rc::new(Cell::new(0)),
             scrollbase: ScrollBase::new(),
-            select_cb: None,
+            on_select: None,
+            on_submit: None,
             align: Align::top_left(),
             popup: false,
             last_offset: Cell::new(Vec2::zero()),
@@ -120,26 +124,42 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Sets a callback to be used when an item is selected.
-    ///
-    /// (When ENTER is pressed on an item).
     pub fn set_on_select<F>(&mut self, cb: F)
         where F: Fn(&mut Cursive, &T) + 'static
     {
-        self.select_cb = Some(Rc::new(cb));
+        self.on_select = Some(Rc::new(cb));
     }
 
     /// Sets a callback to be used when an item is selected.
     ///
-    /// (When ENTER is pressed on an item).
     ///
     /// Chainable variant.
-    pub fn on_select<F>(mut self, cb: F) -> Self
+    pub fn on_select<F>(self, cb: F) -> Self
         where F: Fn(&mut Cursive, &T) + 'static
     {
-        self.set_on_select(cb);
-
-        self
+        self.with(|s| s.set_on_select(cb))
     }
+
+    /// Sets a callback to be used when `<Enter>` is pressed.
+    ///
+    /// The item currently selected will be given to the callback.
+    pub fn set_on_submit<F>(&mut self, cb: F)
+        where F: Fn(&mut Cursive, &T) + 'static
+    {
+        self.on_submit = Some(Rc::new(cb));
+    }
+
+    /// Sets a callback to be used when `<Enter>` is pressed.
+    ///
+    /// The item currently selected will be given to the callback.
+    ///
+    /// Chainable variant.
+    pub fn on_submit<F>(self, cb: F) -> Self
+        where F: Fn(&mut Cursive, &T) + 'static
+    {
+        self.with(|s| s.set_on_submit(cb))
+    }
+
 
     /// Sets the alignment for this view.
     pub fn align(mut self, align: Align) -> Self {
@@ -311,12 +331,12 @@ impl<T: 'static> View for SelectView<T> {
                     let mut tree = MenuTree::new();
                     for (i, item) in self.items.iter().enumerate() {
                         let focus = self.focus.clone();
-                        let select_cb = self.select_cb.as_ref().cloned();
+                        let on_submit = self.on_submit.as_ref().cloned();
                         let value = item.value.clone();
                         tree.add_leaf(&item.label, move |s| {
                             focus.set(i);
-                            if let Some(ref select_cb) = select_cb {
-                                select_cb(s, &value);
+                            if let Some(ref on_submit) = on_submit {
+                                on_submit(s, &value);
                             }
                         });
                     }
@@ -367,12 +387,12 @@ impl<T: 'static> View for SelectView<T> {
                 Event::Key(Key::PageDown) => self.focus_down(10),
                 Event::Key(Key::Home) => self.focus.set(0),
                 Event::Key(Key::End) => self.focus.set(self.items.len() - 1),
-                Event::Key(Key::Enter) if self.select_cb.is_some() => {
-                    let cb = self.select_cb.as_ref().unwrap().clone();
+                Event::Key(Key::Enter) if self.on_submit.is_some() => {
+                    let cb = self.on_submit.clone().unwrap();
                     let v = self.selection();
                     // We return a Callback Rc<|s| cb(s, &*v)>
                     return EventResult::Consumed(Some(Callback::from_fn(move |s| {
-                        cb(s, &*v)
+                        cb(s, &v)
                     })));
                 }
                 Event::Char(c) => {
@@ -394,7 +414,11 @@ impl<T: 'static> View for SelectView<T> {
             }
             let focus = self.focus();
             self.scrollbase.scroll_to(focus);
-            EventResult::Consumed(None)
+
+            EventResult::Consumed(self.on_select.clone().map(|cb| {
+                let v = self.selection();
+                Callback::from_fn(move |s| cb(s, &v))
+            }))
         }
     }
 
@@ -424,4 +448,3 @@ impl<T> Item<T> {
         }
     }
 }
-
