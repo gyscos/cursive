@@ -81,14 +81,14 @@ impl Dialog {
     /// Convenient method to create an infobox.
     ///
     /// It will contain the given text and a `Ok` dismiss button.
-    pub fn info(text: &str) -> Self {
+    pub fn info<S: Into<String>>(text: S) -> Self {
         Self::new(TextView::new(text)).dismiss_button("Ok")
     }
 
     /// Adds a button to the dialog with the given label and callback.
     ///
     /// Consumes and returns self for easy chaining.
-    pub fn button<F>(mut self, label: &str, cb: F) -> Self
+    pub fn button<F, S: Into<String>>(mut self, label: S, cb: F) -> Self
         where F: Fn(&mut Cursive) + 'static
     {
         self.buttons.push(SizedView::new(Button::new(label, cb)));
@@ -113,14 +113,14 @@ impl Dialog {
     }
 
     /// Shortcut method to add a button that will dismiss the dialog.
-    pub fn dismiss_button(self, label: &str) -> Self {
+    pub fn dismiss_button<S: Into<String>>(self, label: S) -> Self {
         self.button(label, |s| s.screen_mut().pop_layer())
     }
 
     /// Sets the title of the dialog.
     /// If not empty, it will be visible at the top.
-    pub fn title(mut self, label: &str) -> Self {
-        self.title = label.to_string();
+    pub fn title<S: Into<String>>(mut self, label: S) -> Self {
+        self.title = label.into();
         self
     }
 

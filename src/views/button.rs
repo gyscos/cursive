@@ -26,11 +26,11 @@ pub struct Button {
 
 impl Button {
     /// Creates a new button with the given content and callback.
-    pub fn new<F>(label: &str, cb: F) -> Self
+    pub fn new<F, S: Into<String>>(label: S, cb: F) -> Self
         where F: Fn(&mut Cursive) + 'static
     {
         Button {
-            label: label.to_string(),
+            label: label.into(),
             callback: Callback::from_fn(cb),
             enabled: true,
         }

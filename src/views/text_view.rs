@@ -30,20 +30,19 @@ pub struct TextView {
 }
 
 // If the last character is a newline, strip it.
-fn strip_last_newline(content: &str) -> &str {
-    if !content.is_empty() && content.chars().last().unwrap() == '\n' {
-        &content[..content.len() - 1]
-    } else {
-        content
+fn strip_last_newline(content: &mut String) {
+    if content.ends_with('\n') {
+        content.pop().unwrap();
     }
 }
 
 impl TextView {
     /// Creates a new TextView with the given content.
-    pub fn new(content: &str) -> Self {
-        let content = strip_last_newline(content);
+    pub fn new<S: Into<String>>(content: S) -> Self {
+        let mut content = content.into();
+        strip_last_newline(&mut content);
         TextView {
-            content: content.to_string(),
+            content: content,
             rows: Vec::new(),
             scrollable: true,
             scrollbase: ScrollBase::new(),
@@ -99,9 +98,10 @@ impl TextView {
     }
 
     /// Replace the text in this view.
-    pub fn set_content(&mut self, content: &str) {
-        let content = strip_last_newline(content);
-        self.content = content.to_string();
+    pub fn set_content<S: Into<String>>(&mut self, content: S) {
+        let mut content = content.into();
+        strip_last_newline(&mut content);
+        self.content = content;
         self.invalidate();
     }
 

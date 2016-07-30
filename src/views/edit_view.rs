@@ -167,8 +167,8 @@ impl EditView {
     }
 
     /// Get the current text.
-    pub fn get_content(&self) -> &str {
-        &&self.content
+    pub fn get_content(&self) -> Rc<String> {
+        self.content.clone()
     }
 
     /// Sets the current content to the given value.
@@ -231,7 +231,7 @@ impl View for EditView {
                     if self.secret {
                         printer.print_hline((0, 0), width, "*");
                     } else {
-                        printer.print((0, 0), self.get_content());
+                        printer.print((0, 0), &self.content);
                     }
                     printer.print_hline((width, 0),
                                         printer.size.x - width,
