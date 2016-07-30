@@ -1,6 +1,7 @@
 //! Toolbox to make text layout easier.
 
 use unicode_width::UnicodeWidthStr;
+use unicode_segmentation::UnicodeSegmentation;
 
 mod lines_iterator;
 mod reader;
@@ -8,7 +9,7 @@ mod reader;
 pub use self::lines_iterator::{LinesIterator, Row};
 pub use self::reader::ProgressReader;
 
-/// Computes a sub-string length that fits in the given `width`.
+/// Computes the length of a prefix that fits in the given `width`.
 ///
 /// Takes non-breakable elements from `iter`, while keeping the
 /// string width under `width` (and adding the length of `delimiter`
@@ -59,4 +60,23 @@ pub fn prefix_length<'a, I: Iterator<Item = &'a str>>(iter: I, width: usize,
     } else {
         sum - delimiter_len
     }
+}
+
+/// Computes the length of a suffix that fits in the given `width`.
+///
+/// Returns the number of bytes of the longest
+/// suffix from `text` that fits in `width`.
+pub fn suffix_length(text: &str, width: usize) -> usize {
+    text.graphemes(true)
+        .rev()
+        .scan(0, |w, g| {
+            *w += g.width();
+            if *w > width {
+                None
+            } else {
+                Some(g)
+            }
+        })
+        .map(|g| g.len())
+        .fold(0, |a, b| a + b)
 }

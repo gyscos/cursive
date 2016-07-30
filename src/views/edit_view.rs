@@ -3,14 +3,13 @@ use unicode_width::UnicodeWidthStr;
 
 use std::rc::Rc;
 
-use Cursive;
-use With;
+use {Cursive, Printer, With};
 use direction::Direction;
 use theme::{ColorStyle, Effect};
 use vec::Vec2;
 use view::View;
-use event::*;
-use Printer;
+use event::{Callback, Event, EventResult, Key};
+use utils::suffix_length;
 
 
 /// Input box where the user can enter and edit text.
@@ -73,6 +72,9 @@ pub struct EditView {
     /// Callback when <Enter> is pressed.
     on_submit: Option<Rc<Fn(&mut Cursive, &str)>>,
 
+    /// When `true`, only print `*` instead of the true content.
+    secret: bool,
+
     enabled: bool,
 }
 
@@ -89,8 +91,23 @@ impl EditView {
             last_length: 0, // scrollable: false,
             on_edit: None,
             on_submit: None,
+            secret: false,
             enabled: true,
         }
+    }
+
+    /// If `secret` is `true`, the content won't be displayed in clear.
+    ///
+    /// Only `*` will be shown.
+    pub fn set_secret(&mut self, secret: bool) {
+        self.secret = secret;
+    }
+
+    /// Hides the content of the view.
+    ///
+    /// Only `*` will be shown.
+    pub fn secret(self) -> Self {
+        self.with(|s| s.set_secret(true))
     }
 
     /// Disables this view.
@@ -116,7 +133,9 @@ impl EditView {
     ///
     /// `callback` will be called with the view
     /// content and the current cursor position.
-    pub fn on_edit<F: Fn(&mut Cursive, &str, usize) + 'static>(mut self, callback: F) -> Self {
+    pub fn on_edit<F: Fn(&mut Cursive, &str, usize) + 'static>(mut self,
+                                                               callback: F)
+                                                               -> Self {
         self.on_edit = Some(Rc::new(callback));
         self
     }
@@ -124,7 +143,9 @@ impl EditView {
     /// Sets a callback to be called when `<Enter>` is pressed.
     ///
     /// `callback` will be given the content of the view.
-    pub fn on_submit<F: Fn(&mut Cursive, &str) + 'static>(mut self, callback: F) -> Self {
+    pub fn on_submit<F: Fn(&mut Cursive, &str) + 'static>(mut self,
+                                                          callback: F)
+                                                          -> Self {
         self.on_submit = Some(Rc::new(callback));
         self
     }
@@ -182,6 +203,14 @@ impl EditView {
     }
 }
 
+/// Returns a `&str` with `length` characters `*`.
+///
+/// Only works for small `length` (1 or 2).
+/// Best used for single character replacement.
+fn make_small_stars(length: usize) -> &'static str {
+    &"****"[..length]
+}
+
 impl View for EditView {
     fn draw(&self, printer: &Printer) {
         assert!(printer.size.x == self.last_length,
@@ -199,7 +228,11 @@ impl View for EditView {
             printer.with_effect(effect, |printer| {
                 if width < self.last_length {
                     // No problem, everything fits.
-                    printer.print((0, 0), self.get_content());
+                    if self.secret {
+                        printer.print_hline((0, 0), width, "*");
+                    } else {
+                        printer.print((0, 0), self.get_content());
+                    }
                     printer.print_hline((width, 0),
                                         printer.size.x - width,
                                         "_");
@@ -218,9 +251,13 @@ impl View for EditView {
                         .fold(0, |a, b| a + b);
 
                     let content = &content[..display_bytes];
-
-                    printer.print((0, 0), content);
                     let width = content.width();
+
+                    if self.secret {
+                        printer.print_hline((0, 0), width, "*");
+                    } else {
+                        printer.print((0, 0), content);
+                    }
 
                     if width < self.last_length {
                         printer.print_hline((width, 0),
@@ -232,16 +269,21 @@ impl View for EditView {
 
             // Now print cursor
             if printer.focused {
-                let c = if self.cursor == self.content.len() {
+                let c: &str = if self.cursor == self.content.len() {
                     "_"
                 } else {
                     // Get the char from the string... Is it so hard?
-                    self.content[self.cursor..]
+                    let selected = self.content[self.cursor..]
                         .graphemes(true)
                         .next()
                         .expect(&format!("Found no char at cursor {} in {}",
                                          self.cursor,
-                                         &self.content))
+                                         &self.content));
+                    if self.secret {
+                        make_small_stars(selected.width())
+                    } else {
+                        selected
+                    }
                 };
                 let offset = self.content[self.offset..self.cursor].width();
                 printer.print((offset, 0), c);
@@ -337,17 +379,19 @@ impl View for EditView {
             // Look at the content before the cursor (we will print its tail).
             // From the end, count the length until we reach `available`.
             // Then sum the byte lengths.
-            let tail_bytes =
-                tail_bytes(&self.content[self.offset..self.cursor], available);
-            self.offset = self.cursor - tail_bytes;
+            let suffix_length =
+                suffix_length(&self.content[self.offset..self.cursor],
+                              available);
+            self.offset = self.cursor - suffix_length;
             assert!(self.cursor >= self.offset);
 
         }
 
         // If we have too much space
         if self.content[self.offset..].width() < self.last_length {
-            let tail_bytes = tail_bytes(&self.content, self.last_length - 1);
-            self.offset = self.content.len() - tail_bytes;
+            let suffix_length = suffix_length(&self.content,
+                                              self.last_length - 1);
+            self.offset = self.content.len() - suffix_length;
         }
 
         let cb = self.on_edit.clone().map(|cb| {
@@ -362,21 +406,4 @@ impl View for EditView {
         });
         EventResult::Consumed(cb)
     }
-}
-
-// Return the number of bytes, from the end of text,
-// which constitute the longest tail that fits in the given width.
-fn tail_bytes(text: &str, width: usize) -> usize {
-    text.graphemes(true)
-        .rev()
-        .scan(0, |w, g| {
-            *w += g.width();
-            if *w > width {
-                None
-            } else {
-                Some(g)
-            }
-        })
-        .map(|g| g.len())
-        .fold(0, |a, b| a + b)
 }
