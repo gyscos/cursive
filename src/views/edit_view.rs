@@ -1,6 +1,9 @@
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
+use std::rc::Rc;
+
+use Cursive;
 use With;
 use direction::Direction;
 use theme::{ColorStyle, Effect};
@@ -49,7 +52,7 @@ use Printer;
 /// ```
 pub struct EditView {
     /// Current content.
-    content: String,
+    content: Rc<String>,
     /// Cursor position in the content, in bytes.
     cursor: usize,
     /// Minimum layout length asked to the parent.
@@ -62,6 +65,11 @@ pub struct EditView {
     /// Last display length, to know the possible offset range
     last_length: usize,
 
+    /// Callback when the content is modified.
+    ///
+    /// Will be called with the current content and the cursor position
+    on_edit: Option<Rc<Fn(&mut Cursive, &str, usize)>>,
+
     enabled: bool,
 }
 
@@ -71,11 +79,12 @@ impl EditView {
     /// Creates a new, empty edit view.
     pub fn new() -> Self {
         EditView {
-            content: String::new(),
+            content: Rc::new(String::new()),
             cursor: 0,
             offset: 0,
             min_length: 1,
             last_length: 0, // scrollable: false,
+            on_edit: None,
             enabled: true,
         }
     }
@@ -99,6 +108,15 @@ impl EditView {
         self.enabled = true;
     }
 
+    /// Sets a callback to be called whenever the content is modified.
+    ///
+    /// `callback` will be called with the view
+    /// content and the current cursor position.
+    pub fn on_edit<F: Fn(&mut Cursive, &str, usize) + 'static>(mut self, callback: F) -> Self {
+        self.on_edit = Some(Rc::new(callback));
+        self
+    }
+
     /// Enable or disable this view.
     pub fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
@@ -112,12 +130,12 @@ impl EditView {
     /// Replace the entire content of the view with the given one.
     pub fn set_content(&mut self, content: &str) {
         self.offset = 0;
-        self.content = content.to_string();
+        self.content = Rc::new(content.to_string());
     }
 
     /// Get the current text.
     pub fn get_content(&self) -> &str {
-        &self.content
+        &&self.content
     }
 
     /// Sets the current content to the given value.
@@ -134,6 +152,21 @@ impl EditView {
         self.min_length = min_length;
 
         self
+    }
+
+    /// Insert `ch` at the current cursor position.
+    pub fn insert(&mut self, ch: char) {
+        // `make_mut` applies copy-on-write
+        // It means it'll just return a ref if no one else has a ref,
+        // and it will clone it into `self.content` otherwise.
+        Rc::make_mut(&mut self.content).insert(self.cursor, ch);
+    }
+
+    /// Remove the character at the current cursor position.
+    pub fn remove(&mut self, len: usize) {
+        let start = self.cursor;
+        let end = self.cursor + len;
+        Rc::make_mut(&mut self.content).drain(start..end).collect::<Vec<_>>();
     }
 }
 
@@ -154,7 +187,7 @@ impl View for EditView {
             printer.with_effect(effect, |printer| {
                 if width < self.last_length {
                     // No problem, everything fits.
-                    printer.print((0, 0), &self.content);
+                    printer.print((0, 0), self.get_content());
                     printer.print_hline((width, 0),
                                         printer.size.x - width,
                                         "_");
@@ -196,7 +229,7 @@ impl View for EditView {
                         .next()
                         .expect(&format!("Found no char at cursor {} in {}",
                                          self.cursor,
-                                         self.content))
+                                         &self.content))
                 };
                 let offset = self.content[self.offset..self.cursor].width();
                 printer.print((offset, 0), c);
@@ -222,7 +255,7 @@ impl View for EditView {
             Event::Char(ch) => {
                 // Find the byte index of the char at self.cursor
 
-                self.content.insert(self.cursor, ch);
+                self.insert(ch);
                 self.cursor += ch.len_utf8();
             }
             // TODO: handle ctrl-key?
@@ -251,10 +284,15 @@ impl View for EditView {
                     .unwrap()
                     .len();
                 self.cursor -= len;
-                self.content.remove(self.cursor);
+                self.remove(len);
             }
             Event::Key(Key::Del) if self.cursor < self.content.len() => {
-                self.content.remove(self.cursor);
+                let len = self.content[self.cursor..]
+                    .graphemes(true)
+                    .next()
+                    .unwrap()
+                    .len();
+                self.remove(len);
             }
             _ => return EventResult::Ignored,
         }
@@ -293,7 +331,17 @@ impl View for EditView {
             self.offset = self.content.len() - tail_bytes;
         }
 
-        EventResult::Consumed(None)
+        let cb = self.on_edit.clone().map(|cb| {
+
+            // Get a new Rc on it
+            let content = self.content.clone();
+            let cursor = self.cursor;
+
+            Callback::from_fn(move |s| {
+                cb(s, &content, cursor);
+            })
+        });
+        EventResult::Consumed(cb)
     }
 }
 

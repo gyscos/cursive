@@ -16,20 +16,6 @@ use Printer;
 
 use unicode_width::UnicodeWidthStr;
 
-struct Item<T> {
-    label: String,
-    value: Rc<T>,
-}
-
-impl<T> Item<T> {
-    fn new(label: &str, value: T) -> Self {
-        Item {
-            label: label.to_string(),
-            value: Rc::new(value),
-        }
-    }
-}
-
 /// View to select an item among a list.
 ///
 /// It contains a list of values of type T, with associated labels.
@@ -424,3 +410,18 @@ impl<T: 'static> View for SelectView<T> {
         }
     }
 }
+
+struct Item<T> {
+    label: String,
+    value: Rc<T>,
+}
+
+impl<T> Item<T> {
+    fn new(label: &str, value: T) -> Self {
+        Item {
+            label: label.to_string(),
+            value: Rc::new(value),
+        }
+    }
+}
+
