@@ -9,7 +9,7 @@ use theme::{ColorStyle, Effect};
 use vec::Vec2;
 use view::View;
 use event::{Callback, Event, EventResult, Key};
-use utils::suffix_length;
+use utils::simple_suffix_length;
 
 
 /// Input box where the user can enter and edit text.
@@ -380,8 +380,8 @@ impl View for EditView {
             // From the end, count the length until we reach `available`.
             // Then sum the byte lengths.
             let suffix_length =
-                suffix_length(&self.content[self.offset..self.cursor],
-                              available);
+                simple_suffix_length(&self.content[self.offset..self.cursor],
+                                     available);
             self.offset = self.cursor - suffix_length;
             assert!(self.cursor >= self.offset);
 
@@ -389,8 +389,8 @@ impl View for EditView {
 
         // If we have too much space
         if self.content[self.offset..].width() < self.last_length {
-            let suffix_length = suffix_length(&self.content,
-                                              self.last_length - 1);
+            let suffix_length = simple_suffix_length(&self.content,
+                                                     self.last_length - 1);
             self.offset = self.content.len() - suffix_length;
         }
 

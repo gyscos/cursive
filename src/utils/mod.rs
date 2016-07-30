@@ -34,9 +34,9 @@ pub use self::reader::ProgressReader;
 /// prefix_length(my_text.graphemes(true), 5, "");
 /// # }
 /// ```
-pub fn prefix_length<'a, I: Iterator<Item = &'a str>>(iter: I, width: usize,
-                                                      delimiter: &str)
-                                                      -> usize {
+pub fn prefix_length<'a, I>(iter: I, width: usize, delimiter: &str) -> usize
+    where I: Iterator<Item = &'s str>
+{
     let delimiter_width = delimiter.width();
     let delimiter_len = delimiter.len();
 
@@ -64,19 +64,21 @@ pub fn prefix_length<'a, I: Iterator<Item = &'a str>>(iter: I, width: usize,
 
 /// Computes the length of a suffix that fits in the given `width`.
 ///
+/// Doesn't break inside elements returned by `iter`.
+///
 /// Returns the number of bytes of the longest
 /// suffix from `text` that fits in `width`.
-pub fn suffix_length(text: &str, width: usize) -> usize {
-    text.graphemes(true)
-        .rev()
-        .scan(0, |w, g| {
-            *w += g.width();
-            if *w > width {
-                None
-            } else {
-                Some(g)
-            }
-        })
-        .map(|g| g.len())
-        .fold(0, |a, b| a + b)
+///
+/// This is a shortcut for `prefix_length(iter.rev(), width, delimiter)`
+pub fn suffix_length<'a, I>(iter: I, width: usize, delimiter: &str) -> usize
+    where I: DoubleEndedIterator<Item = &'a str>
+{
+    prefix_length(iter.rev(), width, delimiter)
+}
+
+/// Computes the length of a suffix that fits in the given `width`.
+///
+/// Breaks between any two graphemes.
+pub fn simple_suffix_length(text: &str, width: usize) -> usize {
+    suffix_length(text.graphemes(true), width, "")
 }
