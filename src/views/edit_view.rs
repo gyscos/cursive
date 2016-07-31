@@ -199,7 +199,7 @@ impl EditView {
     pub fn remove(&mut self, len: usize) {
         let start = self.cursor;
         let end = self.cursor + len;
-        Rc::make_mut(&mut self.content).drain(start..end).collect::<Vec<_>>();
+        for _ in Rc::make_mut(&mut self.content).drain(start..end) {}
     }
 }
 
