@@ -34,5 +34,4 @@ fn show_popup(s: &mut Cursive, name: &str) {
         s.add_layer(Dialog::new(TextView::new(content))
             .button("Quit", |s| s.quit()));
     }
-
 }

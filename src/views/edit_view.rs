@@ -27,26 +27,33 @@ use utils::simple_suffix_length;
 /// let mut siv = Cursive::new();
 ///
 /// // Create a dialog with an edit text and a button.
-/// siv.add_layer(Dialog::new(EditView::new().min_length(20).with_id("edit"))
-///                   .padding((1, 1, 1, 0))
-///                   .title("Enter your name")
-///                   .button("Ok", |s| {
-///                       // When the button is clicked,
-///                       // read the text and print it in a new dialog.
-///                       let name = s.find_id::<EditView>("edit")
-///                                   .unwrap()
-///                                   .get_content()
-///                                   .to_string();
-///                       if name.is_empty() {
-///                           s.add_layer(Dialog::new(TextView::new("Please enter a name!"))
-///                                           .dismiss_button("Ok"));
-///                       } else {
-///                           let content = format!("Hello {}!", name);
-///                           s.pop_layer();
-///                           s.add_layer(Dialog::new(TextView::new(content))
-///                                           .button("Quit", |s| s.quit()));
-///                       }
-///                   }));
+/// // The user can either hit the <Ok> button,
+/// // or press Enter on the edit text.
+/// siv.add_layer(Dialog::empty()
+///     .title("Enter your name")
+///     .padding((1, 1, 1, 0))
+///     .content(EditView::new()
+///         .min_length(20)
+///         .on_submit(show_popup)
+///         .with_id("name"))
+///     .button("Ok", |s| {
+///         let name = s.find_id::<EditView>("name")
+///             .unwrap()
+///             .get_content();
+///         show_popup(s, &name);
+///     }));
+///
+/// fn show_popup(s: &mut Cursive, name: &str) {
+///     if name.is_empty() {
+///         s.add_layer(Dialog::info("Please enter a name!"));
+///     } else {
+///         let content = format!("Hello {}!", name);
+///         s.pop_layer();
+///         s.add_layer(Dialog::new(TextView::new(content))
+///             .button("Quit", |s| s.quit()));
+///     }
+/// }
+///
 /// # }
 /// ```
 pub struct EditView {
