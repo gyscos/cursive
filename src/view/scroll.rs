@@ -24,6 +24,9 @@ pub struct ScrollBase {
     /// (Useful when each item includes its own side borders,
     /// to draw the scrollbar inside.)
     pub scrollbar_offset: usize,
+
+    /// Blank between the text and the scrollbar.
+    pub right_padding: usize,
 }
 
 impl ScrollBase {
@@ -34,6 +37,7 @@ impl ScrollBase {
             content_height: 0,
             view_height: 0,
             scrollbar_offset: 0,
+            right_padding: 1,
         }
     }
 
@@ -42,8 +46,16 @@ impl ScrollBase {
     /// Used by views that draw their side borders in the children.
     /// Pushing the scrollbar to the left allows it to stay inside
     /// the borders.
-    pub fn bar_offset(mut self, padding: usize) -> Self {
-        self.scrollbar_offset = padding;
+    pub fn scrollbar_offset(mut self, offset: usize) -> Self {
+        self.scrollbar_offset = offset;
+        self
+    }
+
+    /// Sets the number of blank cells between the text and the scrollbar.
+    ///
+    /// Defaults to 1.
+    pub fn right_padding(mut self, padding: usize) -> Self {
+        self.right_padding = padding;
         self
     }
 
@@ -143,7 +155,8 @@ impl ScrollBase {
             if printer.size.x < 2 {
                 return;
             }
-            printer.size.x - 2 + self.scrollbar_offset
+            // We have to remove the bar width and the padding.
+            printer.size.x - 1 - self.right_padding
         } else {
             printer.size.x
         };
@@ -183,7 +196,7 @@ impl ScrollBase {
             let scrollbar_x = printer.size.x - 1 - self.scrollbar_offset;
             printer.print_vline((scrollbar_x, 0), printer.size.y, "|");
             printer.with_color(color, |printer| {
-                printer.print_vline((scrollbar_x, start), height, " ");
+                printer.print_vline((scrollbar_x, start), height, "▒");
             });
         }
     }

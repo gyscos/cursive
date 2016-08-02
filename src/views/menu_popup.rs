@@ -7,7 +7,7 @@ use Cursive;
 use With;
 use menu::{MenuItem, MenuTree};
 use Printer;
-use view::{View, Position, ScrollBase};
+use view::{Position, ScrollBase, View};
 use views::KeyEventView;
 use align::Align;
 use vec::Vec2;
@@ -29,7 +29,7 @@ impl MenuPopup {
         MenuPopup {
             menu: menu,
             focus: 0,
-            scrollbase: ScrollBase::new().bar_offset(1),
+            scrollbase: ScrollBase::new().scrollbar_offset(1).right_padding(0),
             align: Align::top_left(),
             on_dismiss: None,
             on_action: None,

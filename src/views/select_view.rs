@@ -241,7 +241,7 @@ impl<T: 'static> SelectView<T> {
     }
 
     fn focus_down(&mut self, n: usize) {
-        let focus = min(self.focus() + n, self.items.len());
+        let focus = min(self.focus() + n, self.items.len() - 1);
         self.focus.set(focus);
     }
 }

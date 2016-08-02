@@ -52,7 +52,7 @@ impl TextArea {
                            width: 0,
                        }],
             enabled: true,
-            scrollbase: ScrollBase::new(),
+            scrollbase: ScrollBase::new().right_padding(0),
             last_size: None,
             cursor: 0,
         }
@@ -287,12 +287,8 @@ impl View for TextArea {
                     self.move_left();
                 }
             }
-            Event::Ctrl(Key::Home) => {
-                self.cursor = 0
-            }
-            Event::Ctrl(Key::End) => {
-                self.cursor = self.content.len()
-            }
+            Event::Ctrl(Key::Home) => self.cursor = 0,
+            Event::Ctrl(Key::End) => self.cursor = self.content.len(),
             Event::Key(Key::Home) => {
                 self.cursor = self.rows[self.selected_row()].start
             }
