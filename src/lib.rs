@@ -51,6 +51,7 @@ extern crate ncurses;
 extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
+extern crate odds;
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {

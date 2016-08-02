@@ -126,6 +126,7 @@ use toml;
 use B;
 
 /// Text effect
+#[derive(Clone, Copy, Debug)]
 pub enum Effect {
     /// No effect
     Simple,

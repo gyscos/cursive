@@ -200,6 +200,7 @@ impl EditView {
         // It means it'll just return a ref if no one else has a ref,
         // and it will clone it into `self.content` otherwise.
         Rc::make_mut(&mut self.content).insert(self.cursor, ch);
+        self.cursor += ch.len_utf8();
     }
 
     /// Remove the character at the current cursor position.
@@ -317,7 +318,6 @@ impl View for EditView {
                 // Find the byte index of the char at self.cursor
 
                 self.insert(ch);
-                self.cursor += ch.len_utf8();
             }
             // TODO: handle ctrl-key?
             Event::Key(Key::Home) => self.cursor = 0,
