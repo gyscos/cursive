@@ -19,11 +19,11 @@ pub struct ScrollBase {
     /// Padding for the scrollbar
     ///
     /// If present, the scrollbar will be shifted
-    /// `scrollbar_padding` columns to the left.
+    /// `scrollbar_offset` columns to the left.
     ///
     /// (Useful when each item includes its own side borders,
     /// to draw the scrollbar inside.)
-    pub scrollbar_padding: usize,
+    pub scrollbar_offset: usize,
 }
 
 impl ScrollBase {
@@ -33,7 +33,7 @@ impl ScrollBase {
             start_line: 0,
             content_height: 0,
             view_height: 0,
-            scrollbar_padding: 0,
+            scrollbar_offset: 0,
         }
     }
 
@@ -42,8 +42,8 @@ impl ScrollBase {
     /// Used by views that draw their side borders in the children.
     /// Pushing the scrollbar to the left allows it to stay inside
     /// the borders.
-    pub fn bar_padding(mut self, padding: usize) -> Self {
-        self.scrollbar_padding = padding;
+    pub fn bar_offset(mut self, padding: usize) -> Self {
+        self.scrollbar_offset = padding;
         self
     }
 
@@ -143,7 +143,7 @@ impl ScrollBase {
             if printer.size.x < 2 {
                 return;
             }
-            printer.size.x - 2 + self.scrollbar_padding // TODO: 2
+            printer.size.x - 2 + self.scrollbar_offset
         } else {
             printer.size.x
         };
@@ -180,7 +180,7 @@ impl ScrollBase {
             };
 
             // TODO: use 1 instead of 2
-            let scrollbar_x = printer.size.x - 1 - self.scrollbar_padding;
+            let scrollbar_x = printer.size.x - 1 - self.scrollbar_offset;
             printer.print_vline((scrollbar_x, 0), printer.size.y, "|");
             printer.with_color(color, |printer| {
                 printer.print_vline((scrollbar_x, start), height, " ");

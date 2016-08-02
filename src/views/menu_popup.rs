@@ -29,7 +29,7 @@ impl MenuPopup {
         MenuPopup {
             menu: menu,
             focus: 0,
-            scrollbase: ScrollBase::new().bar_padding(1),
+            scrollbase: ScrollBase::new().bar_offset(1),
             align: Align::top_left(),
             on_dismiss: None,
             on_action: None,
