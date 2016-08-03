@@ -46,11 +46,7 @@ impl TextArea {
     pub fn new() -> Self {
         TextArea {
             content: String::new(),
-            rows: vec![Row {
-                           start: 0,
-                           end: 0,
-                           width: 0,
-                       }],
+            rows: Vec::new(),
             enabled: true,
             scrollbase: ScrollBase::new().right_padding(0),
             last_size: None,
