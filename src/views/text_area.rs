@@ -4,7 +4,7 @@ use odds::vec::VecExt;
 
 use std::rc::Rc;
 
-use {Printer, XY};
+use {Printer, With, XY};
 use direction::Direction;
 use vec::Vec2;
 use event::{Event, EventResult, Key};
@@ -61,6 +61,25 @@ impl TextArea {
     /// Retrieves the content of the view.
     pub fn get_content(&self) -> &str {
         &self.content
+    }
+
+    fn invalidate(&mut self) {
+        self.last_size = None;
+    }
+
+    /// Sets the content of the view.
+    pub fn set_content<S: Into<String>>(&mut self, content: S) {
+        self.content = content.into();
+        if let Some(size) = self.last_size.map(|s| s.map(|s| s.value)) {
+            self.compute_rows(size);
+        }
+    }
+
+    /// Sets the content of the view.
+    ///
+    /// Chainable variant.
+    pub fn content<S: Into<String>>(self, content: S) -> Self {
+        self.with(|s| s.set_content(content))
     }
 
     /// Finds the row containing the grapheme at the given offset
@@ -161,7 +180,10 @@ impl TextArea {
     }
 
     fn is_cache_valid(&self, size: Vec2) -> bool {
-        false
+        match self.last_size {
+            None => false,
+            Some(ref last) => last.x.accept(size.x) && last.y.accept(size.y),
+        }
     }
 
     fn fix_ghost_row(&mut self) {
@@ -177,6 +199,11 @@ impl TextArea {
     }
 
     fn compute_rows(&mut self, size: Vec2) {
+        if self.is_cache_valid(size) {
+            return;
+        }
+        // println_stderr!("Computing! Oh yeah!");
+
         let mut available = size.x;
         self.rows = make_rows(&self.content, available);
         self.fix_ghost_row();
@@ -252,6 +279,12 @@ impl TextArea {
     ///
     /// The only damages are assumed to have occured around the cursor.
     fn fix_damages(&mut self, delete: bool) {
+        if self.last_size.is_none() {
+            // If we don't know our size, it means we'll get a layout command soon.
+            // So no need to do that here.
+            return;
+        }
+
         let size = self.last_size.unwrap().map(|s| s.value);
 
         // Find affected text.
@@ -295,6 +328,7 @@ impl TextArea {
             // This changes everything.
             // TODO: compute_rows() currently makes a scroll-less attempt.
             // Here, we know it's just no gonna happen.
+            self.invalidate();
             self.compute_rows(size);
             return;
         }
@@ -399,7 +433,7 @@ impl View for TextArea {
     }
 
     fn layout(&mut self, size: Vec2) {
-        self.last_size = Some(SizeCache::build(size, size));
+        self.compute_rows(size);
         self.scrollbase.set_heights(size.y, self.rows.len());
     }
 }
