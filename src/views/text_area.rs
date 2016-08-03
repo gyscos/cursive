@@ -39,6 +39,8 @@ fn make_rows(text: &str, width: usize) -> Vec<Row> {
         .collect()
 }
 
+new_default!(TextArea);
+
 impl TextArea {
     /// Creates a new, empty TextArea.
     pub fn new() -> Self {
