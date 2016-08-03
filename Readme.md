@@ -5,7 +5,9 @@
 [![Clippy Linting Result](https://clippy.bashy.io/github/gyscos/Cursive/master/badge.svg)](https://clippy.bashy.io/github/gyscos/Cursive/master/log)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-Cursive is a ncurses-based TUI (Text User Interface) library for rust. It is based on jeaye's [ncurses-rs](https://github.com/jeaye/ncurses-rs).
+Cursive is a TUI (Text User Interface) library for rust. It is currently based on jeaye's [ncurses-rs](https://github.com/jeaye/ncurses-rs).
+
+It allows you to build rich user interfaces for terminal applications.
 
 # [Documentation](http://gyscos.github.io/Cursive/cursive/index.html)
 
