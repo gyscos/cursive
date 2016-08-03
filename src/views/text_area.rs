@@ -213,6 +213,7 @@ impl TextArea {
         if !self.rows.is_empty() {
             self.last_size = Some(SizeCache::build(size, size));
         }
+        self.scrollbase.set_heights(size.y, self.rows.len());
     }
 
     fn backspace(&mut self) {
@@ -346,7 +347,6 @@ impl TextArea {
             // Here, we know it's just no gonna happen.
             self.invalidate();
             self.compute_rows(size);
-            self.scrollbase.set_heights(size.y, self.rows.len());
             return;
         }
 
@@ -456,6 +456,5 @@ impl View for TextArea {
 
     fn layout(&mut self, size: Vec2) {
         self.compute_rows(size);
-        self.scrollbase.set_heights(size.y, self.rows.len());
     }
 }
