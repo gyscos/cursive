@@ -65,6 +65,7 @@ impl TextArea {
 
     /// Finds the row containing the grapheme at the given offset
     fn row_at(&self, offset: usize) -> usize {
+        // println_stderr!("Offset: {}", offset);
         self.rows
             .iter()
             .enumerate()
@@ -72,6 +73,13 @@ impl TextArea {
             .map(|(i, _)| i)
             .last()
             .unwrap()
+    }
+
+    fn col_at(&self, offset: usize) -> usize {
+        let row_id = self.row_at(offset);
+        let row = self.rows[row_id];
+        // Number of cells to the left of the cursor
+        self.content[row.start..offset].width()
     }
 
     /// Finds the row containing the cursor
@@ -97,9 +105,8 @@ impl TextArea {
             return;
         }
 
-        let row = self.rows[row_id];
         // Number of cells to the left of the cursor
-        let x = self.content[row.start..self.cursor].width();
+        let x = self.col_at(self.cursor);
 
         let prev_row = self.rows[row_id - 1];
         let prev_text = &self.content[prev_row.start..prev_row.end];
@@ -112,9 +119,7 @@ impl TextArea {
         if row_id + 1 == self.rows.len() {
             return;
         }
-        let row = self.rows[row_id];
-        // Number of cells to the left of the cursor
-        let x = self.content[row.start..self.cursor].width();
+        let x = self.col_at(self.cursor);
 
         let next_row = self.rows[row_id + 1];
         let next_text = &self.content[next_row.start..next_row.end];
@@ -159,26 +164,30 @@ impl TextArea {
         false
     }
 
+    fn fix_ghost_row(&mut self) {
+        if self.rows.is_empty() ||
+           self.rows.last().unwrap().end != self.content.len() {
+            // Add a fake, empty row at the end.
+            self.rows.push(Row {
+                start: self.content.len(),
+                end: self.content.len(),
+                width: 0,
+            });
+        }
+    }
+
     fn compute_rows(&mut self, size: Vec2) {
         let mut available = size.x;
-        let content = format!("{} ", self.content);
-        self.rows = make_rows(&content, available);
+        self.rows = make_rows(&self.content, available);
+        self.fix_ghost_row();
         if self.rows.len() > size.y {
             available -= 1;
             // Doh :(
-            self.rows = make_rows(&content, available);
+            self.rows = make_rows(&self.content, available);
+            self.fix_ghost_row();
         }
 
-
         if !self.rows.is_empty() {
-            // The last row probably contains a fake whitespace.
-            // Unless... the whitespace was used as an implicit newline.
-            // This means the last row ends in a newline-d whitespace.
-            // How do we detect that?
-            // By checking if the last row takes all the available width.
-            if self.rows.last().unwrap().width != available {
-                self.rows.last_mut().unwrap().end -= 1;
-            }
             self.last_size = Some(SizeCache::build(size, size));
         }
     }
@@ -200,28 +209,102 @@ impl TextArea {
         let end = self.cursor + len;
         for _ in self.content.drain(start..end) {}
 
-        let size = self.last_size.unwrap().map(|s| s.value);
-        self.compute_rows(size);
+        let selected_row = self.selected_row();
+        if self.cursor == self.rows[selected_row].end {
+            // We're removing an (implicit) newline.
+            // This means merging two rows.
+        } else {
+            self.rows[selected_row].end -= len;
+        }
+
+        // update all the rows downstream
+        for row in &mut self.rows.iter_mut().skip(1 + selected_row) {
+            row.rev_shift(len);
+        }
+
+        self.fix_damages(true);
     }
 
     fn insert(&mut self, ch: char) {
-        let cursor = self.cursor;
-        self.content.insert(cursor, ch);
 
+        // First, we inject the data, but keep the cursor unmoved
+        // (So the cursor is to the left of the injected char)
+        self.content.insert(self.cursor, ch);
+
+        // Then, we shift the indexes of every row after this one.
         let shift = ch.len_utf8();
+
+        // The current row grows, every other is just shifted.
         let selected_row = self.selected_row();
         self.rows[selected_row].end += shift;
 
-        if selected_row < self.rows.len() {
-            for row in &mut self.rows[1 + selected_row..] {
-                row.start += shift;
-                row.end += shift;
-            }
+        for row in &mut self.rows.iter_mut().skip(1 + selected_row) {
+            row.shift(shift);
+        }
+        self.cursor += shift;
+
+        // Finally, rows may not have the correct width anymore, so fix them.
+        self.fix_damages(false);
+
+    }
+
+    /// Fix a damage located at the cursor.
+    ///
+    /// The only damages are assumed to have occured around the cursor.
+    fn fix_damages(&mut self, delete: bool) {
+        let size = self.last_size.unwrap().map(|s| s.value);
+
+        // Find affected text.
+        let first_row = self.selected_row();
+        let start = self.rows[first_row].start;
+
+        // We don't need to go beyond a newline.
+        // If we don't find one, end of the text it is.
+        // println_stderr!("Cursor: {}", self.cursor);
+        let end = self.content[self.cursor..]
+            .find('\n')
+            .map(|i| i + self.cursor)
+            .unwrap_or(self.content.len());
+        // println_stderr!("Content: `{}` (len={})", self.content, self.content.len());
+        // println_stderr!("start/end: {}/{}", start, end);
+        let last_row = self.row_at(end);
+
+        // Do we have access to the entire width?...
+        let mut available = size.x;
+
+        let scrollable = self.rows.len() > size.y;
+        if scrollable {
+            // ... not if a scrollbar is there
+            available -= 1;
         }
 
-        let size = self.last_size.unwrap().map(|s| s.value);
-        self.compute_rows(size);
-        self.cursor += shift;
+        // First attempt, if scrollbase status didn't change.
+        // println_stderr!("Rows: {:?}", self.rows);
+        let mut new_rows = make_rows(&self.content[start..end], available);
+        // How much did this add?
+        let new_row_count = if delete {
+            let delta = (1 + last_row - first_row) - new_rows.len();
+            self.rows.len() - delta
+        } else {
+            let delta = new_rows.len() - (1 + last_row - first_row);
+            self.rows.len() + delta
+
+        };
+        if !scrollable && new_row_count > size.y {
+            // We just changed scrollable status.
+            // This changes everything.
+            // TODO: compute_rows() currently makes a scroll-less attempt.
+            // Here, we know it's just no gonna happen.
+            self.compute_rows(size);
+            return;
+        }
+
+        // Otherwise, replace stuff.
+        let affected_rows = first_row..(1 + last_row);
+        let replacement_rows = new_rows.into_iter()
+            .map(|row| row.shifted(start));
+        self.rows.splice(affected_rows, replacement_rows);
+        self.fix_ghost_row();
     }
 }
 
@@ -304,6 +387,7 @@ impl View for TextArea {
             _ => return EventResult::Ignored,
         }
 
+        // println_stderr!("Rows: {:?}", self.rows);
         let focus = self.selected_row();
         self.scrollbase.scroll_to(focus);
 

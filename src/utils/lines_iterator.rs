@@ -1,6 +1,7 @@
 use unicode_width::UnicodeWidthStr;
 use unicode_segmentation::UnicodeSegmentation;
 
+use With;
 use utils::prefix_length;
 
 /// Generates rows of text in constrained width.
@@ -59,10 +60,22 @@ pub struct Row {
 
 impl Row {
     /// Shift a row start and end by `offset`.
-    pub fn shift(mut self, offset: usize) -> Self {
+    pub fn shift(&mut self, offset: usize) {
         self.start += offset;
         self.end += offset;
-        self
+    }
+
+    /// Shift a row start and end by `offset`.
+    ///
+    /// Chainable variant;
+    pub fn shifted(self, offset: usize) -> Self {
+        self.with(|s| s.shift(offset))
+    }
+
+    /// Shift back a row start and end by `offset`.
+    pub fn rev_shift(&mut self, offset: usize) {
+        self.start -= offset;
+        self.end -= offset;
     }
 }
 
