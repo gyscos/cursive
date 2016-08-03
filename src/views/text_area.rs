@@ -2,8 +2,6 @@ use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 use odds::vec::VecExt;
 
-use std::rc::Rc;
-
 use {Printer, With, XY};
 use direction::Direction;
 use vec::Vec2;
@@ -227,6 +225,10 @@ impl TextArea {
     }
 
     fn delete(&mut self) {
+        if self.cursor == self.content.len() {
+            return;
+        }
+        // println_stderr!("Rows: {:?}", self.rows);
         let len = self.content[self.cursor..]
             .graphemes(true)
             .next()
@@ -234,22 +236,30 @@ impl TextArea {
             .len();
         let start = self.cursor;
         let end = self.cursor + len;
+        // println_stderr!("Start/end: {}/{}", start, end);
+        // println_stderr!("Content: `{}`", self.content);
         for _ in self.content.drain(start..end) {}
+        // println_stderr!("Content: `{}`", self.content);
 
         let selected_row = self.selected_row();
+        // println_stderr!("Selected row: {}", selected_row);
         if self.cursor == self.rows[selected_row].end {
             // We're removing an (implicit) newline.
             // This means merging two rows.
-        } else {
-            self.rows[selected_row].end -= len;
+            let new_end = self.rows[selected_row + 1].end;
+            self.rows[selected_row].end = new_end;
+            self.rows.remove(selected_row + 1);
         }
+        self.rows[selected_row].end -= len;
 
         // update all the rows downstream
         for row in &mut self.rows.iter_mut().skip(1 + selected_row) {
             row.rev_shift(len);
         }
+        // println_stderr!("Rows: {:?}", self.rows);
 
-        self.fix_damages(true);
+        self.fix_damages();
+        // println_stderr!("Rows: {:?}", self.rows);
     }
 
     fn insert(&mut self, ch: char) {
@@ -271,14 +281,13 @@ impl TextArea {
         self.cursor += shift;
 
         // Finally, rows may not have the correct width anymore, so fix them.
-        self.fix_damages(false);
-
+        self.fix_damages();
     }
 
     /// Fix a damage located at the cursor.
     ///
     /// The only damages are assumed to have occured around the cursor.
-    fn fix_damages(&mut self, delete: bool) {
+    fn fix_damages(&mut self) {
         if self.last_size.is_none() {
             // If we don't know our size, it means we'll get a layout command soon.
             // So no need to do that here.
@@ -288,19 +297,31 @@ impl TextArea {
         let size = self.last_size.unwrap().map(|s| s.value);
 
         // Find affected text.
-        let first_row = self.selected_row();
-        let start = self.rows[first_row].start;
+        // We know the damage started at this row, so it'll need to go.
+        let mut first_row = self.selected_row();
+        // Actually, if possible, also re-compute the previous row.
+        // Indeed, the previous row may have been cut short, and if we now
+        // break apart a big word, maybe the first half can go up one level.
+        if first_row > 0 {
+            first_row -= 1;
+        }
+        // The
+        let first_byte = self.rows[first_row].start;
 
         // We don't need to go beyond a newline.
         // If we don't find one, end of the text it is.
         // println_stderr!("Cursor: {}", self.cursor);
-        let end = self.content[self.cursor..]
+        let last_byte = self.content[self.cursor..]
             .find('\n')
-            .map(|i| i + self.cursor)
-            .unwrap_or(self.content.len());
-        // println_stderr!("Content: `{}` (len={})", self.content, self.content.len());
-        // println_stderr!("start/end: {}/{}", start, end);
-        let last_row = self.row_at(end);
+            .map(|i| 1 + i + self.cursor);
+        let last_row = last_byte.map_or(self.rows.len(), |last_byte| self.row_at(last_byte));
+        let last_byte = last_byte.unwrap_or(self.content.len());
+
+        // println_stderr!("Content: `{}` (len={})",
+        //                 self.content,
+        //                 self.content.len());
+        // println_stderr!("start/end: {}/{}", first_byte, last_byte);
+        // println_stderr!("start/end rows: {}/{}", first_row, last_row);
 
         // Do we have access to the entire width?...
         let mut available = size.x;
@@ -313,16 +334,13 @@ impl TextArea {
 
         // First attempt, if scrollbase status didn't change.
         // println_stderr!("Rows: {:?}", self.rows);
-        let mut new_rows = make_rows(&self.content[start..end], available);
+        let new_rows = make_rows(&self.content[first_byte..last_byte],
+                                     available);
         // How much did this add?
-        let new_row_count = if delete {
-            let delta = (1 + last_row - first_row) - new_rows.len();
-            self.rows.len() - delta
-        } else {
-            let delta = new_rows.len() - (1 + last_row - first_row);
-            self.rows.len() + delta
-
-        };
+        // println_stderr!("New rows: {:?}", new_rows);
+        // println_stderr!("{}-{}", first_row, last_row);
+        let new_row_count = self.rows.len() + new_rows.len() + first_row -
+                            last_row;
         if !scrollable && new_row_count > size.y {
             // We just changed scrollable status.
             // This changes everything.
@@ -330,15 +348,17 @@ impl TextArea {
             // Here, we know it's just no gonna happen.
             self.invalidate();
             self.compute_rows(size);
+            self.scrollbase.set_heights(size.y, self.rows.len());
             return;
         }
 
         // Otherwise, replace stuff.
-        let affected_rows = first_row..(1 + last_row);
+        let affected_rows = first_row..last_row;
         let replacement_rows = new_rows.into_iter()
-            .map(|row| row.shifted(start));
+            .map(|row| row.shifted(first_byte));
         self.rows.splice(affected_rows, replacement_rows);
         self.fix_ghost_row();
+        self.scrollbase.set_heights(size.y, self.rows.len());
     }
 }
 
@@ -362,9 +382,13 @@ impl View for TextArea {
                 }
             });
 
+            // println_stderr!("Content: `{}`", &self.content);
             self.scrollbase.draw(printer, |printer, i| {
+                // println_stderr!("Drawing row {}", i);
                 let row = &self.rows[i];
+                // println_stderr!("row: {:?}", row);
                 let text = &self.content[row.start..row.end];
+                // println_stderr!("row text: `{}`", text);
                 printer.with_effect(effect, |printer| {
                     printer.print((0, 0), text);
                 });
