@@ -148,6 +148,7 @@ impl Cursive {
         B::init();
 
         let theme = theme::load_default();
+        theme.activate();
         // let theme = theme::load_theme("assets/style.toml").unwrap();
 
         let (tx, rx) = mpsc::channel();
@@ -249,12 +250,18 @@ impl Cursive {
         &self.theme
     }
 
+    /// Sets the current theme.
+    pub fn set_theme(&mut self, theme: theme::Theme) {
+        self.theme = theme;
+        self.theme.activate();
+    }
+
     /// Loads a theme from the given file.
     ///
     /// `filename` must point to a valid toml file.
     pub fn load_theme_file<P: AsRef<Path>>(&mut self, filename: P)
                                            -> Result<(), theme::Error> {
-        self.theme = try!(theme::load_theme_file(filename));
+        self.set_theme(try!(theme::load_theme_file(filename)));
         Ok(())
     }
 
@@ -262,7 +269,7 @@ impl Cursive {
     ///
     /// Content must be valid toml.
     pub fn load_theme(&mut self, content: &str) -> Result<(), theme::Error> {
-        self.theme = try!(theme::load_theme(content));
+        self.set_theme(try!(theme::load_theme(content)));
         Ok(())
     }
 

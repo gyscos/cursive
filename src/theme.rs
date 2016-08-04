@@ -227,7 +227,12 @@ impl Theme {
         }
     }
 
-    fn activate(&self) {
+    /// Sets a theme as active.
+    ///
+    /// **Don't use this directly.** Uses [`Cursive::set_theme`] instead.
+    ///
+    /// [`Cursive::set_theme`]: ../struct.Cursive.html#method.set_theme
+    pub fn activate(&self) {
         // Initialize each color with the backend
         B::init_color_style(ColorStyle::Background,
                             &self.colors.view,
@@ -314,8 +319,8 @@ pub struct Palette {
 }
 
 impl Palette {
+    /// Fills `self` with the colors from the given `table`.
     fn load(&mut self, table: &toml::Table) {
-
         load_color(&mut self.background, table.get("background"));
         load_color(&mut self.shadow, table.get("shadow"));
         load_color(&mut self.view, table.get("view"));
@@ -330,6 +335,7 @@ impl Palette {
     }
 }
 
+/// Parses `value` and fills `target` if it's a valid color.
 fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
     if let Some(value) = value {
         match *value {
@@ -478,7 +484,6 @@ pub fn load_theme(content: &str) -> Result<Theme, Error> {
 
     let mut theme = Theme::default();
     theme.load(&table);
-    theme.activate();
 
     Ok(theme)
 }
@@ -486,7 +491,7 @@ pub fn load_theme(content: &str) -> Result<Theme, Error> {
 /// Loads the default theme, and returns its representation.
 pub fn load_default() -> Theme {
     let theme = Theme::default();
-    theme.activate();
+
     theme
 }
 

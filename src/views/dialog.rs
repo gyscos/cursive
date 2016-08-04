@@ -78,11 +78,16 @@ impl Dialog {
         self.content = Box::new(view);
     }
 
+    /// Convenient method to create a dialog with a simple text content.
+    pub fn text<S: Into<String>>(text: S) -> Self {
+        Self::new(TextView::new(text))
+    }
+
     /// Convenient method to create an infobox.
     ///
     /// It will contain the given text and a `Ok` dismiss button.
     pub fn info<S: Into<String>>(text: S) -> Self {
-        Self::new(TextView::new(text)).dismiss_button("Ok")
+        Dialog::text(text).dismiss_button("Ok")
     }
 
     /// Adds a button to the dialog with the given label and callback.
