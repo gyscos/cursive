@@ -40,17 +40,18 @@ mod view_wrapper;
 
 // Essentials components
 mod position;
+mod size_cache;
+mod size_constraint;
 mod view_path;
 
 // Helper bases
 mod scroll;
-
-// Views
+mod identifiable;
+mod boxable;
 
 
 use std::any::Any;
 
-use XY;
 use direction::Direction;
 use event::{Event, EventResult};
 use vec::Vec2;
@@ -60,8 +61,12 @@ pub use self::position::{Offset, Position};
 
 pub use self::scroll::ScrollBase;
 
+pub use self::size_cache::SizeCache;
+pub use self::size_constraint::SizeConstraint;
 pub use self::view_path::ViewPath;
 pub use self::view_wrapper::ViewWrapper;
+pub use self::identifiable::Identifiable;
+pub use self::boxable::Boxable;
 
 
 /// Main trait defining a view behaviour.
@@ -121,61 +126,6 @@ pub trait View {
     }
 }
 
-
-/// Cache around a one-dimensional layout result.
-///
-/// This is not a View, but something to help you if you create your own Views.
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub struct SizeCache {
-    /// Cached value
-    pub value: usize,
-    /// `true` if the last size was constrained.
-    ///
-    /// If unconstrained, any request larger than this value
-    /// would return the same size.
-    pub constrained: bool,
-}
-
-impl SizeCache {
-    /// Creates a new sized cache
-    pub fn new(value: usize, constrained: bool) -> Self {
-        SizeCache {
-            value: value,
-            constrained: constrained,
-        }
-    }
-
-    /// Returns `true` if `self` is still valid for the given `request`.
-    pub fn accept(self, request: usize) -> bool {
-        if request < self.value {
-            false
-        } else if request == self.value {
-            true
-        } else {
-            !self.constrained
-        }
-    }
-
-    /// Creates a new bi-dimensional cache.
-    ///
-    /// It will stay valid for the same request, and compatible ones.
-    ///
-    /// A compatible request is one where, for each axis, either:
-    ///
-    /// * the request is equal to the cached size, or
-    /// * the request is larger than the cached size and the cache is unconstrained
-    ///
-    /// Notes:
-    ///
-    /// * `size` must fit inside `req`.
-    /// * for each dimension, `constrained = (size == req)`
-    pub fn build(size: Vec2, req: Vec2) -> XY<Self> {
-        XY::new(SizeCache::new(size.x, size.x >= req.x),
-                SizeCache::new(size.y, size.y >= req.y))
-    }
-}
-
-
 /// Selects a single view (if any) in the tree.
 pub enum Selector<'a> {
     /// Selects a view from its ID.
@@ -183,13 +133,3 @@ pub enum Selector<'a> {
     /// Selects a view from its path.
     Path(&'a ViewPath),
 }
-
-/// Makes a view wrappable in an `IdView`.
-pub trait Identifiable: View + Sized {
-    /// Wraps this view into an IdView with the given id.
-    fn with_id(self, id: &str) -> ::views::IdView<Self> {
-        ::views::IdView::new(id, self)
-    }
-}
-
-impl<T: View> Identifiable for T {}

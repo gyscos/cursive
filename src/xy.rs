@@ -45,6 +45,11 @@ impl<T> XY<T> {
         }
     }
 
+    /// Returns a new `XY` of tuples made by zipping `self` and `other`.
+    pub fn zip<U>(self, other: XY<U>) -> XY<(T, U)> {
+        XY::new((self.x, other.x), (self.y, other.y))
+    }
+
     /// Returns a new `XY` by calling `f` on `self` and `other` for each axis.
     pub fn zip_map<U, V, F: Fn(T, U) -> V>(self, other: XY<U>, f: F) -> XY<V> {
         XY::new(f(self.x, other.x), f(self.y, other.y))
