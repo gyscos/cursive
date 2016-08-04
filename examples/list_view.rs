@@ -9,18 +9,18 @@ fn main() {
         .title("Please fill out this form")
         .button("Ok", |s| s.quit())
         .content(ListView::new()
-            .child("Name", EditView::new().min_length(10))
+            .child("Name", EditView::new().fixed_width(10))
             .child("Email",
                    LinearLayout::horizontal()
                        .child(EditView::new()
-                           .min_length(15)
                            .disabled()
-                           .with_id("email1"))
+                           .with_id("email1")
+                           .fixed_width(15))
                        .child(TextView::new("@"))
                        .child(EditView::new()
-                           .min_length(10)
                            .disabled()
-                           .with_id("email2")))
+                           .with_id("email2")
+                           .fixed_width(10)))
             .child("Receive spam?",
                    Checkbox::new().on_change(|s, checked| {
                        for name in &["email1", "email2"] {

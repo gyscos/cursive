@@ -33,9 +33,9 @@ use utils::simple_suffix_length;
 ///     .title("Enter your name")
 ///     .padding((1, 1, 1, 0))
 ///     .content(EditView::new()
-///         .min_length(20)
 ///         .on_submit(show_popup)
-///         .with_id("name"))
+///         .with_id("name")
+///         .fixed_width(20))
 ///     .button("Ok", |s| {
 ///         let name = s.find_id::<EditView>("name")
 ///             .unwrap()
@@ -61,8 +61,6 @@ pub struct EditView {
     content: Rc<String>,
     /// Cursor position in the content, in bytes.
     cursor: usize,
-    /// Minimum layout length asked to the parent.
-    min_length: usize,
 
     /// Number of bytes to skip at the beginning of the content.
     ///
@@ -94,7 +92,6 @@ impl EditView {
             content: Rc::new(String::new()),
             cursor: 0,
             offset: 0,
-            min_length: 1,
             last_length: 0, // scrollable: false,
             on_edit: None,
             on_submit: None,
@@ -183,14 +180,6 @@ impl EditView {
     /// Convenient chainable method.
     pub fn content(mut self, content: &str) -> Self {
         self.set_content(content);
-        self
-    }
-
-    /// Sets the minimum length for this view.
-    /// (This applies to the layout, not the content.)
-    pub fn min_length(mut self, min_length: usize) -> Self {
-        self.min_length = min_length;
-
         self
     }
 
@@ -301,10 +290,6 @@ impl View for EditView {
 
     fn layout(&mut self, size: Vec2) {
         self.last_length = size.x;
-    }
-
-    fn get_min_size(&mut self, _: Vec2) -> Vec2 {
-        Vec2::new(self.min_length, 1)
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {

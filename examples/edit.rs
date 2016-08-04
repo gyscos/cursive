@@ -12,9 +12,9 @@ fn main() {
         .title("Enter your name")
         .padding((1, 1, 1, 0))
         .content(EditView::new()
-            .min_length(20)
             .on_submit(show_popup)
-            .with_id("name"))
+            .with_id("name")
+            .fixed_width(20))
         .button("Ok", |s| {
             let name = s.find_id::<EditView>("name")
                 .unwrap()
