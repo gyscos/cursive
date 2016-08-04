@@ -490,9 +490,7 @@ pub fn load_theme(content: &str) -> Result<Theme, Error> {
 
 /// Loads the default theme, and returns its representation.
 pub fn load_default() -> Theme {
-    let theme = Theme::default();
-
-    theme
+    Theme::default()
 }
 
 /// Loads a hexadecimal code
