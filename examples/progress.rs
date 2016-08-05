@@ -44,7 +44,7 @@ fn phase_1(s: &mut Cursive) {
     let cb = s.cb_sink().clone();
 
     s.pop_layer();
-    s.add_layer(Panel::new(ProgressBar::new()
+    s.add_layer(Dialog::new(ProgressBar::new()
         .range(0, n_max)
         .with_task(move |counter| {
             // This closure will be called in a separate thread.
