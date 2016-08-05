@@ -118,7 +118,7 @@ impl Printer {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # use cursive::Printer;
     /// # use cursive::theme;
     /// # let printer = Printer::new((6,4), theme::load_default());
@@ -136,6 +136,9 @@ impl Printer {
         let borders = if let Some(borders) = self.theme.borders {
             borders
         } else {
+            // No border, no box...
+            // TODO: still allow other boxes?
+            // For instance make the check in the view.
             return;
         };
 
