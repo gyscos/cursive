@@ -226,8 +226,10 @@ impl View for Dialog {
                 return;
             }
             let x = (printer.size.x - len) / 2;
-            printer.print((x - 2, 0), "┤ ");
-            printer.print((x + len, 0), " ├");
+            printer.with_high_border(false, |printer| {
+                printer.print((x - 2, 0), "┤ ");
+                printer.print((x + len, 0), " ├");
+            });
 
             printer.with_color(ColorStyle::TitlePrimary,
                                |p| p.print((x, 0), &self.title));
