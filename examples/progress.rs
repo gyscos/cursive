@@ -44,7 +44,7 @@ fn phase_1(s: &mut Cursive) {
     let cb = s.cb_sink().clone();
 
     s.pop_layer();
-    s.add_layer(Panel::new(FullView::full_width(ProgressBar::new()
+    s.add_layer(Panel::new(ProgressBar::new()
         .range(0, n_max)
         .with_task(move |counter| {
             // This closure will be called in a separate thread.
@@ -52,7 +52,8 @@ fn phase_1(s: &mut Cursive) {
 
             // When we're done, send a callback through the channel
             cb.send(Box::new(coffee_break)).unwrap();
-        }))));
+        })
+        .full_width()));
 }
 
 fn coffee_break(s: &mut Cursive) {
@@ -87,7 +88,7 @@ fn phase_2(s: &mut Cursive) {
     }
 
     s.pop_layer();
-    s.add_layer(Dialog::new(FullView::full_width(linear))
+    s.add_layer(Dialog::new(linear.full_width())
         .title("Just a moment..."));
 
     // And we start the worker thread.

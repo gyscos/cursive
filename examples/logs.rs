@@ -23,9 +23,7 @@ fn main() {
     });
 
     // And sets the view to read from the other end of the channel.
-    // (We use FullView to force fullscreen because
-    // we have no min_size for the BufferView).
-    siv.add_layer(FullView::new(BufferView::new(200, rx)));
+    siv.add_layer(BufferView::new(200, rx).full_screen());
 
     siv.run();
 }
