@@ -184,7 +184,7 @@ pub struct Theme {
     /// Wheter views in a StackView should have shadows.
     pub shadow: bool,
     /// How view borders should be drawn.
-    pub borders: BorderStyle,
+    pub borders: Option<BorderStyle>,
     /// What colors should be used through the application?
     pub colors: Palette,
 }
@@ -193,18 +193,18 @@ impl Default for Theme {
     fn default() -> Self {
         Theme {
             shadow: true,
-            borders: BorderStyle::Simple,
+            borders: Some(BorderStyle::Simple),
             colors: Palette {
-                background: Color::Blue,
-                shadow: Color::Black,
-                view: Color::White,
-                primary: Color::Black,
-                secondary: Color::Blue,
-                tertiary: Color::White,
-                title_primary: Color::Red,
-                title_secondary: Color::Yellow,
-                highlight: Color::Red,
-                highlight_inactive: Color::Blue,
+                background: Color::Dark(BaseColor::Blue),
+                shadow: Color::Dark(BaseColor::Black),
+                view: Color::Dark(BaseColor::White),
+                primary: Color::Dark(BaseColor::Black),
+                secondary: Color::Dark(BaseColor::Blue),
+                tertiary: Color::Light(BaseColor::White),
+                title_primary: Color::Dark(BaseColor::Red),
+                title_secondary: Color::Dark(BaseColor::Yellow),
+                highlight: Color::Dark(BaseColor::Red),
+                highlight_inactive: Color::Dark(BaseColor::Blue),
             },
         }
     }
@@ -217,9 +217,7 @@ impl Theme {
         }
 
         if let Some(&toml::Value::String(ref borders)) = table.get("borders") {
-            if let Some(borders) = BorderStyle::from(borders) {
-                self.borders = borders;
-            }
+            self.borders = BorderStyle::from(borders);
         }
 
         if let Some(&toml::Value::Table(ref table)) = table.get("colors") {
@@ -269,8 +267,6 @@ impl Theme {
 /// Borders are used around Dialogs, select popups, and panels.
 #[derive(Clone,Copy,Debug)]
 pub enum BorderStyle {
-    /// Don't draw any border.
-    NoBorder,
     /// Simple borders.
     Simple,
     /// Outset borders with a simple 3d effect.
@@ -281,8 +277,6 @@ impl BorderStyle {
     fn from(s: &str) -> Option<Self> {
         if s == "simple" {
             Some(BorderStyle::Simple)
-        } else if s == "none" {
-            Some(BorderStyle::NoBorder)
         } else if s == "outset" {
             Some(BorderStyle::Outset)
         } else {
@@ -357,9 +351,9 @@ fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
     }
 }
 
-/// Represents a color used by the theme.
-#[derive(Clone,Debug)]
-pub enum Color {
+/// One of the 8 base colors.
+#[derive(Clone,Copy,Debug)]
+pub enum BaseColor {
     /// Black color
     ///
     /// Color #0
@@ -392,6 +386,15 @@ pub enum Color {
     ///
     /// Color #7
     White,
+}
+
+/// Represents a color used by the theme.
+#[derive(Clone,Copy,Debug)]
+pub enum Color {
+    /// One of the 8 base colors.
+    Dark(BaseColor),
+    /// Lighter version of a base color.
+    Light(BaseColor),
     /// True-color, 24-bit.
     Rgb(u8, u8, u8),
     /// Low-resolution
@@ -422,14 +425,22 @@ impl From<io::Error> for Error {
 impl Color {
     fn parse(value: &str) -> Option<Self> {
         Some(match value {
-            "black" => Color::Black,
-            "red" => Color::Red,
-            "green" => Color::Green,
-            "yellow" => Color::Yellow,
-            "blue" => Color::Blue,
-            "magenta" => Color::Magenta,
-            "cyan" => Color::Cyan,
-            "white" => Color::White,
+            "black" => Color::Dark(BaseColor::Black),
+            "red" => Color::Dark(BaseColor::Red),
+            "green" => Color::Dark(BaseColor::Green),
+            "yellow" => Color::Dark(BaseColor::Yellow),
+            "blue" => Color::Dark(BaseColor::Blue),
+            "magenta" => Color::Dark(BaseColor::Magenta),
+            "cyan" => Color::Dark(BaseColor::Cyan),
+            "white" => Color::Dark(BaseColor::White),
+            "light black" => Color::Light(BaseColor::Black),
+            "light red" => Color::Light(BaseColor::Red),
+            "light green" => Color::Light(BaseColor::Green),
+            "light yellow" => Color::Light(BaseColor::Yellow),
+            "light blue" => Color::Light(BaseColor::Blue),
+            "light magenta" => Color::Light(BaseColor::Magenta),
+            "light cyan" => Color::Light(BaseColor::Cyan),
+            "light white" => Color::Light(BaseColor::White),
             value => return Color::parse_special(value),
         })
     }

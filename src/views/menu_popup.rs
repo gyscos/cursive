@@ -156,7 +156,7 @@ impl View for MenuPopup {
             &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
 
         // Start with a box
-        printer.print_box(Vec2::new(0, 0), printer.size);
+        printer.print_box(Vec2::new(0, 0), printer.size, false);
 
         // We're giving it a reduced size because of borders.
         // But we're keeping the full width,

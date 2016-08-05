@@ -254,6 +254,7 @@ impl Cursive {
     pub fn set_theme(&mut self, theme: theme::Theme) {
         self.theme = theme;
         self.theme.activate();
+        B::clear();
     }
 
     /// Loads a theme from the given file.

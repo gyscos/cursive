@@ -24,7 +24,7 @@ impl<V: View> ViewWrapper for Panel<V> {
     }
 
     fn wrap_draw(&self, printer: &Printer) {
-        printer.print_box((0, 0), printer.size);
+        printer.print_box((0, 0), printer.size, true);
         self.view
             .draw(&printer.sub_printer((1, 1), printer.size - (2, 2), true));
     }

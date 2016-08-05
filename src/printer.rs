@@ -8,7 +8,7 @@ use backend::Backend;
 
 use B;
 
-use theme::{ColorStyle, Effect, Theme};
+use theme::{BorderStyle, ColorStyle, Effect, Theme};
 use vec::Vec2;
 
 /// Convenient interface to draw on a subset of the screen.
@@ -121,7 +121,8 @@ impl Printer {
     /// # let printer = Printer::new((6,4), theme::load_default());
     /// printer.print_box((0,0), (6,4));
     /// ```
-    pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S) {
+    pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S,
+                                                   invert: bool) {
         let start = start.into();
         let size = size.into();
         if size.x < 2 || size.y < 2 {
@@ -129,15 +130,37 @@ impl Printer {
         }
         let size = size - (1, 1);
 
-        self.print(start, "┌");
-        self.print(start + size.keep_x(), "┐");
-        self.print(start + size.keep_y(), "└");
-        self.print(start + size, "┘");
+        let borders = if let Some(borders) = self.theme.borders {
+            borders
+        } else {
+            return;
+        };
 
-        self.print_hline(start + (1, 0), size.x - 1, "─");
-        self.print_vline(start + (0, 1), size.y - 1, "│");
-        self.print_hline(start + (1, 0) + size.keep_y(), size.x - 1, "─");
-        self.print_vline(start + (0, 1) + size.keep_x(), size.y - 1, "│");
+        self.with_color(match borders {
+                            BorderStyle::Outset if !invert => {
+                                ColorStyle::Tertiary
+                            }
+                            _ => ColorStyle::Primary,
+                        },
+                        |s| {
+                            s.print(start, "┌");
+                            s.print(start + size.keep_y(), "└");
+                            s.print_hline(start + (1, 0), size.x - 1, "─");
+                            s.print_vline(start + (0, 1), size.y - 1, "│");
+                        });
+
+        self.with_color(match borders {
+                            BorderStyle::Outset if invert => {
+                                ColorStyle::Tertiary
+                            }
+                            _ => ColorStyle::Primary,
+                        },
+                        |s| {
+            s.print(start + size.keep_x(), "┐");
+            s.print(start + size, "┘");
+            s.print_hline(start + (1, 0) + size.keep_y(), size.x - 1, "─");
+            s.print_vline(start + (0, 1) + size.keep_x(), size.y - 1, "│");
+        });
     }
 
     /// Apply a selection style and call the given function.

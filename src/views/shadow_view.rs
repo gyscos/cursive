@@ -66,11 +66,9 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         }
 
         // Skip the first row/column
-        let printer =
-            &printer.sub_printer(Vec2::new(self.left_padding as usize,
-                                           self.top_padding as usize),
-                                 printer.size,
-                                 true);
+        let offset = Vec2::new(self.left_padding as usize,
+                               self.top_padding as usize);
+        let printer = &printer.offset(offset, true);
 
         // Draw the view background
         for y in 0..printer.size.y - 1 {
@@ -81,12 +79,14 @@ impl<T: View> ViewWrapper for ShadowView<T> {
                                             printer.size - (1, 1),
                                             true));
 
-        let h = printer.size.y;
-        let w = printer.size.x;
+        if printer.theme.shadow {
+            let h = printer.size.y;
+            let w = printer.size.x;
 
-        printer.with_color(ColorStyle::Shadow, |printer| {
-            printer.print_hline((1, h - 1), w - 1, " ");
-            printer.print_vline((w - 1, 1), h - 1, " ");
-        });
+            printer.with_color(ColorStyle::Shadow, |printer| {
+                printer.print_hline((1, h - 1), w - 1, " ");
+                printer.print_vline((w - 1, 1), h - 1, " ");
+            });
+        }
     }
 }

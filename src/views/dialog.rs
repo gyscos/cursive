@@ -218,7 +218,7 @@ impl View for Dialog {
                                        inner_size,
                                        self.focus == Focus::Content));
 
-        printer.print_box(Vec2::new(0, 0), printer.size);
+        printer.print_box(Vec2::new(0, 0), printer.size, false);
 
         if !self.title.is_empty() {
             let len = self.title.width();

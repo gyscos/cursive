@@ -1,6 +1,6 @@
 use backend;
 use event::{Event, Key};
-use theme::{Color, ColorStyle, Effect};
+use theme::{Color, ColorStyle, Effect, BaseColor};
 use utf8;
 
 use ncurses;
@@ -225,14 +225,22 @@ fn parse_ncurses_char(ch: i32) -> Event {
 
 fn find_closest(color: &Color) -> u8 {
     match *color {
-        Color::Black => 0,
-        Color::Red => 1,
-        Color::Green => 2,
-        Color::Yellow => 3,
-        Color::Blue => 4,
-        Color::Magenta => 5,
-        Color::Cyan => 6,
-        Color::White => 7,
+        Color::Dark(BaseColor::Black) => 0,
+        Color::Dark(BaseColor::Red) => 1,
+        Color::Dark(BaseColor::Green) => 2,
+        Color::Dark(BaseColor::Yellow) => 3,
+        Color::Dark(BaseColor::Blue) => 4,
+        Color::Dark(BaseColor::Magenta) => 5,
+        Color::Dark(BaseColor::Cyan) => 6,
+        Color::Dark(BaseColor::White) => 7,
+        Color::Light(BaseColor::Black) => 8,
+        Color::Light(BaseColor::Red) => 9,
+        Color::Light(BaseColor::Green) => 10,
+        Color::Light(BaseColor::Yellow) => 11,
+        Color::Light(BaseColor::Blue) => 12,
+        Color::Light(BaseColor::Magenta) => 13,
+        Color::Light(BaseColor::Cyan) => 14,
+        Color::Light(BaseColor::White) => 15,
         Color::Rgb(r, g, b) => {
             let r = 6 * r as u16 / 256;
             let g = 6 * g as u16 / 256;
