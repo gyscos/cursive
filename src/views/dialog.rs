@@ -102,6 +102,7 @@ impl Dialog {
     }
 
     /// Sets the horizontal alignment for the buttons, if any.
+    ///
     /// Only works if the buttons are as a row at the bottom of the dialog.
     pub fn h_align(mut self, h: HAlign) -> Self {
         self.align.h = h;
@@ -110,6 +111,7 @@ impl Dialog {
     }
 
     /// Sets the vertical alignment for the buttons, if any.
+    ///
     /// Only works if the buttons are as a column to the right of the dialog.
     pub fn v_align(mut self, v: VAlign) -> Self {
         self.align.v = v;
@@ -123,10 +125,15 @@ impl Dialog {
     }
 
     /// Sets the title of the dialog.
+    ///
     /// If not empty, it will be visible at the top.
-    pub fn title<S: Into<String>>(mut self, label: S) -> Self {
+    pub fn title<S: Into<String>>(self, label: S) -> Self {
+        self.with(|s| s.set_title(label))
+    }
+
+    /// Sets the title of the dialog.
+    pub fn set_title<S: Into<String>>(&mut self, label: S) {
         self.title = label.into();
-        self
     }
 
     /// Sets the padding in the dialog (around content and buttons).

@@ -137,9 +137,9 @@ impl EditView {
     ///
     /// `callback` will be called with the view
     /// content and the current cursor position.
-    pub fn on_edit<F: Fn(&mut Cursive, &str, usize) + 'static>(mut self,
-                                                               callback: F)
-                                                               -> Self {
+    pub fn on_edit<F>(mut self, callback: F) -> Self
+        where F: Fn(&mut Cursive, &str, usize) + 'static
+    {
         self.on_edit = Some(Rc::new(callback));
         self
     }
@@ -147,9 +147,9 @@ impl EditView {
     /// Sets a callback to be called when `<Enter>` is pressed.
     ///
     /// `callback` will be given the content of the view.
-    pub fn on_submit<F: Fn(&mut Cursive, &str) + 'static>(mut self,
-                                                          callback: F)
-                                                          -> Self {
+    pub fn on_submit<F>(mut self, callback: F) -> Self
+        where F: Fn(&mut Cursive, &str) + 'static
+    {
         self.on_submit = Some(Rc::new(callback));
         self
     }
