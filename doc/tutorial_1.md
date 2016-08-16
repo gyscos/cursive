@@ -1,3 +1,5 @@
+% Tutorial
+
 # Starting with cursive: Basics
 
 ## Target goal
@@ -23,6 +25,7 @@ fn main() {
 ```
 
 Run this application, and you should have something like that:
+
 <img src="../doc/tutorial_1.png" alt="Tutorial 1 goal" />
 
 Now that you have an idea of what we'll do, let's start from scratch.
@@ -60,7 +63,7 @@ This simple application is now ready to use cursive. So let's do just that!
 
 ## The Cursive root
 
-The cursive library is configured through a main `Cursive` root.
+The cursive library is configured through a main [`Cursive`] root.
 A typical cursive application will consist of three phases,
 all centered around this object:
 
@@ -90,21 +93,23 @@ It's rather easy to identify the two steps involved.
 If you run this, you'll get an empty blue terminal, with no way of properly
 leaving the application (you'll have to press <Ctrl-C> to kill it).
 
+[`Cursive`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html
+
 ## Interactivity
 
 Let's first add a way to stop the application. We want to quit when the user
 presses the letter `<q>`.
 
 Cursive sends an event for every user input ; most of these are just ignored
-and have no effect. The `Cursive` root has a `add_global_callback` to call
-a function anytime a certain event is fired. This method takes 2 arguments:
-a trigger, and a callback.
+and have no effect. The `Cursive` root has a [`add_global_callback`] method to
+call a function anytime a certain event is fired.
+This method takes 2 arguments: a trigger, and a callback.
 
 * The trigger needs to implement `Into<event::Event>`. In addition to
-  `event::Event` itself, this includes `event::Key`, or simply `char`. These
-  will trigger when the corresponding key (or letter) is pressed.
+  [`event::Event`] itself, this includes [`event::Key`], or simply `char`.
+  These will trigger when the corresponding key (or letter) is pressed.
 * The callback should be a function taking a `&mut Cursive` as argument. Here,
-  we want to quit, so we'll use `Cursive::quit` in a closure: `|s| s.quit()`.
+  we want to quit, so we'll use [`Cursive::quit`] in a closure: `|s| s.quit()`.
 
 In the end, we have:
 
@@ -125,21 +130,26 @@ fn main() {
 As expected, running it show no visible change, but hitting the `<q>` key at
 least closes the application.
 
+[`add_global_callback`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.add_global_callback
+[`event::Event`]: http://gyscos.github.io/Cursive/cursive/event/enum.Event.html
+[`event::Key`]: http://gyscos.github.io/Cursive/cursive/event/enum.Key.html
+[`Cursive::quit`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.quit
+
 ## Views
 
-`View`s are the main components of the user interface in a cursive application.
-At their core, they define what to draw in a rectangle of the terminal. For
-instance, a view can print a line of text, or a checkbox, etc.
+[`View`s] are the main components of the user interface in a cursive
+application.  At their core, they define what to draw in a rectangle of the
+terminal. For instance, a view can print a line of text, or a checkbox, etc.
 
-Here, we'll be using a `TextView` to show a short message. `TextView` itself
+Here, we'll be using a [`TextView`] to show a short message. `TextView` itself
 can also deal with long text and do proper word-wrapping, but we won't need
 that today.
 
 The `TextView` constructor just takes the text to use: `TextView::new("...")`.
 
-The `Cursive` root itself uses a `StackView` on the entire screen. This
+The `Cursive` root itself uses a [`StackView`] on the entire screen. This
 `StackView` unsurprisingly stacks views in layers. It starts empty, so we'll
-just need to add our `TextView` as a layer. The `Cursive::add_layer` does
+just need to add our `TextView` as a layer. The [`Cursive::add_layer`] does
 exactly that.
 
 Once we've added this line, our first application is complete:
@@ -160,3 +170,8 @@ fn main() {
 	siv.run();
 }
 ```
+
+[`View`s]: http://gyscos.github.io/Cursive/cursive/view/trait.View.html
+[`TextView`]: http://gyscos.github.io/Cursive/cursive/views/struct.TextView.html
+[`StackView`]: http://gyscos.github.io/Cursive/cursive/views/struct.StackView.html
+[`Cursive::add_layer`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.add_layer
