@@ -116,6 +116,8 @@ In the end, we have:
 
 extern crate cursive;
 
+use cursive::Cursive;
+
 fn main() {
 	let mut siv = Cursive::new();
 
