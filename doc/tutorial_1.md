@@ -1,5 +1,3 @@
-% Tutorial
-
 # Starting with cursive: Basics
 
 ## Target goal
