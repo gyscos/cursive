@@ -59,6 +59,8 @@ Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/exa
 
 _(Colors may depend on your terminal configuration.)_
 
+You may also have a look at the [tutorial](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_1.md).
+
 ## Goals
 
 * **Ease of use.** Simple apps should be simple. Complex apps should be manageable.
