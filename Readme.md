@@ -59,7 +59,12 @@ Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/exa
 
 _(Colors may depend on your terminal configuration.)_
 
-You may also have a look at the [tutorial](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_1.md).
+## Tutorials
+
+These tutorials may help you get started with cursive:
+
+* [Starting with cursive: Basics](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_1.md)
+* [Starting with cursive: Intermediate](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_2.md)
 
 ## Goals
 

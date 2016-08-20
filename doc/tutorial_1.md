@@ -3,7 +3,7 @@
 ## Target goal
 
 In this first tutorial, we'll learn the basics of cursive,
-and write a very basic first application: 
+and write a very basic first application:
 
 ```rust
 extern crate cursive;
