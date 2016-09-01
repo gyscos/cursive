@@ -118,10 +118,13 @@ Here is the support table for input keys. Tested terminals are mostly Gnome term
 | PrtScn, ScrollLock       | None | None                   | None                       | None            |
 | Window, Menu             | None | None                   | None                       | None            |
 
-## Contribute
+## Contribute & Feedback
 
-You want to help? Great! Here is a non-exhaustive list of things you could do:
+You want to help? Thank you so much! Here are some ideas of things you could do:
 
+* Give feedback on your experience with cursive! Knowing your impressions is very
+  helpful to identify what parts of the API need more work. Don't hesitate to
+  post an issue if you find something especially annoying, we'll see what we can do to help.
 * Provide example use-case: a good idea of application for existing or new components.
 * Check compatibility: run the `key_codes` example on your favorite terminal, and report the results!
 * Test and reports issues: a bug won't get fixed if we don't know it's there.
