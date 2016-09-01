@@ -12,10 +12,10 @@ version = "0.2.3"
 
 [dependencies]
 ncurses = "5.80.0"
-odds = "0.2.14"
-toml = "0.1"
-unicode-segmentation = "0.1.2"
-unicode-width = "0.1.3"
+odds = "0.2"
+toml = "0.2"
+unicode-segmentation = "0.1"
+unicode-width = "0.1"
 
 [dev-dependencies]
 rand = "0.3"
