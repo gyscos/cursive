@@ -9,8 +9,8 @@
 pub use {Cursive, Printer, With};
 pub use event::{Event, Key};
 pub use view::{Boxable, Identifiable, Selector, View};
-pub use views::{BoxView, Button, Checkbox, Dialog, EditView, IdView,
-                KeyEventView, LinearLayout, ListView, Panel, ProgressBar,
-                SelectView, SliderView, TextArea, TextView};
+pub use views::{BoxView, Button, Checkbox, Dialog, DummyView, EditView,
+                IdView, KeyEventView, LinearLayout, ListView, Panel,
+                ProgressBar, SelectView, SliderView, TextArea, TextView};
 pub use vec::Vec2;
 pub use menu::MenuTree;
