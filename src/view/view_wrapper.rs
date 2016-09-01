@@ -10,6 +10,11 @@ use event::{Event, EventResult};
 ///
 /// Default implementation forwards all calls to the child view.
 /// Overrides some methods as desired.
+///
+/// You can use the [`wrap_impl!`] macro to define `get_view` and
+/// `get_view_mut` for you.
+///
+/// [`wrap_impl!`]: ../macro.wrap_impl.html
 pub trait ViewWrapper {
     /// Get an immutable reference to the wrapped view.
     fn get_view(&self) -> &View;
@@ -83,7 +88,9 @@ impl<T: ViewWrapper> View for T {
     }
 }
 
-/// Convenient macro to implement the ViewWrapper trait.
+/// Convenient macro to implement the [`ViewWrapper`] trait.
+///
+/// [`ViewWrapper`]: view/trait.ViewWrapper.html
 ///
 /// # Examples
 ///
