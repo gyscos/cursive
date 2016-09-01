@@ -195,6 +195,15 @@ impl<T: 'static> SelectView<T> {
         self.items.push(Item::new(label.into(), value));
     }
 
+    /// Removes an item from the list.
+    pub fn remove_item(&mut self, id: usize) {
+        self.items.remove(id);
+        let focus = self.focus();
+        if focus > id {
+            self.focus.set(focus - 1);
+        }
+    }
+
     /// Chainable variant of add_item
     pub fn item<S: Into<String>>(self, label: S, value: T) -> Self {
         self.with(|s| s.add_item(label, value))
@@ -230,7 +239,8 @@ impl<T: 'static> SelectView<T> {
         }
     }
 
-    fn focus(&self) -> usize {
+    /// Returns the id of the item currently selected.
+    pub fn focus(&self) -> usize {
         self.focus.get()
     }
 
