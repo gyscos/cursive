@@ -240,7 +240,22 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Returns the id of the item currently selected.
-    pub fn focus(&self) -> usize {
+    ///
+    /// Returns `None` if the list is empty.
+    pub fn selected_id(&self) -> Option<usize> {
+        if self.items.is_empty() {
+            None
+        } else {
+            Some(self.focus())
+        }
+    }
+
+    /// Returns the number of items in this list.
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    fn focus(&self) -> usize {
         self.focus.get()
     }
 
