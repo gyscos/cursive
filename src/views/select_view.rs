@@ -199,7 +199,7 @@ impl<T: 'static> SelectView<T> {
     pub fn remove_item(&mut self, id: usize) {
         self.items.remove(id);
         let focus = self.focus();
-        if focus >= id {
+        if focus >= id && focus > 0 {
             self.focus.set(focus - 1);
         }
     }
