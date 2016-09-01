@@ -348,10 +348,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn find<V: View + Any>(&mut self, sel: &view::Selector) -> Option<&mut V> {
-        match self.find_any(sel) {
-            None => None,
-            Some(b) => b.downcast_mut::<V>(),
-        }
+        self.find_any(sel).and_then(|b| b.downcast_mut::<V>())
     }
 
     /// Convenient method to use `find` with a `view::Selector::Id`.

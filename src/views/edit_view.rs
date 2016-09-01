@@ -166,9 +166,9 @@ impl EditView {
 
     /// Replace the entire content of the view with the given one.
     pub fn set_content(&mut self, content: &str) {
-        self.offset = 0;
-        self.cursor = 0;
         self.content = Rc::new(content.to_string());
+        self.offset = 0;
+        self.set_cursor(content.len());
     }
 
     /// Get the current text.
