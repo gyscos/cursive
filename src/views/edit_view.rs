@@ -167,6 +167,7 @@ impl EditView {
     /// Replace the entire content of the view with the given one.
     pub fn set_content(&mut self, content: &str) {
         self.offset = 0;
+        self.cursor = 0;
         self.content = Rc::new(content.to_string());
     }
 
@@ -183,6 +184,13 @@ impl EditView {
         self
     }
 
+    /// Sets the cursor position.
+    pub fn set_cursor(&mut self, cursor: usize) {
+        self.cursor = cursor;
+
+        self.keep_cursor_in_view();
+    }
+
     /// Insert `ch` at the current cursor position.
     pub fn insert(&mut self, ch: char) {
         // `make_mut` applies copy-on-write
@@ -197,6 +205,44 @@ impl EditView {
         let start = self.cursor;
         let end = self.cursor + len;
         for _ in Rc::make_mut(&mut self.content).drain(start..end) {}
+    }
+
+    fn keep_cursor_in_view(&mut self) {
+        // keep cursor in [offset, offset+last_length] by changing offset
+        // so keep offset in [last_length-cursor,cursor]
+        // Also call this on resize,
+        // but right now it is an event like any other
+        if self.cursor < self.offset {
+            self.offset = self.cursor;
+        } else {
+            // So we're against the right wall.
+            // Let's find how much space will be taken by the selection
+            // (either a char, or _)
+            let c_len = self.content[self.cursor..]
+                .graphemes(true)
+                .map(|g| g.width())
+                .next()
+                .unwrap_or(1);
+            // Now, we have to fit self.content[..self.cursor]
+            // into self.last_length - c_len.
+            let available = self.last_length - c_len;
+            // Look at the content before the cursor (we will print its tail).
+            // From the end, count the length until we reach `available`.
+            // Then sum the byte lengths.
+            let suffix_length =
+                simple_suffix_length(&self.content[self.offset..self.cursor],
+                                     available);
+            self.offset = self.cursor - suffix_length;
+            assert!(self.cursor >= self.offset);
+
+        }
+
+        // If we have too much space
+        if self.content[self.offset..].width() < self.last_length {
+            let suffix_length = simple_suffix_length(&self.content,
+                                                     self.last_length - 1);
+            self.offset = self.content.len() - suffix_length;
+        }
     }
 }
 
@@ -350,41 +396,7 @@ impl View for EditView {
             _ => return EventResult::Ignored,
         }
 
-        // Keep cursor in [offset, offset+last_length] by changing offset
-        // So keep offset in [last_length-cursor,cursor]
-        // Also call this on resize,
-        // but right now it is an event like any other
-        if self.cursor < self.offset {
-            self.offset = self.cursor;
-        } else {
-            // So we're against the right wall.
-            // Let's find how much space will be taken by the selection
-            // (either a char, or _)
-            let c_len = self.content[self.cursor..]
-                .graphemes(true)
-                .map(|g| g.width())
-                .next()
-                .unwrap_or(1);
-            // Now, we have to fit self.content[..self.cursor]
-            // into self.last_length - c_len.
-            let available = self.last_length - c_len;
-            // Look at the content before the cursor (we will print its tail).
-            // From the end, count the length until we reach `available`.
-            // Then sum the byte lengths.
-            let suffix_length =
-                simple_suffix_length(&self.content[self.offset..self.cursor],
-                                     available);
-            self.offset = self.cursor - suffix_length;
-            assert!(self.cursor >= self.offset);
-
-        }
-
-        // If we have too much space
-        if self.content[self.offset..].width() < self.last_length {
-            let suffix_length = simple_suffix_length(&self.content,
-                                                     self.last_length - 1);
-            self.offset = self.content.len() - suffix_length;
-        }
+        self.keep_cursor_in_view();
 
         let cb = self.on_edit.clone().map(|cb| {
 
