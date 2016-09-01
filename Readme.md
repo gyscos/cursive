@@ -63,8 +63,9 @@ _(Colors may depend on your terminal configuration.)_
 
 These tutorials may help you get started with cursive:
 
-* [Starting with cursive: Basics](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_1.md)
-* [Starting with cursive: Intermediate](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_2.md)
+* [Starting with cursive: (1/3)](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_1.md)
+* [Starting with cursive: (2/3)](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_2.md)
+* [Starting with cursive: (3/3)](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_3.md)
 
 ## Goals
 

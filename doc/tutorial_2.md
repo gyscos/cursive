@@ -1,4 +1,4 @@
-# Starting with cursive: Intermediate
+# Starting with cursive (2/3)
 
 ## Target goal
 

@@ -1,4 +1,4 @@
-# Starting with cursive: Basics
+# Starting with cursive: (1/3)
 
 ## Target goal
 
