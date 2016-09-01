@@ -213,3 +213,5 @@ Your code should now look like the one at the top of this guide.
 As you've seen, the `Dialog` view is a nice way to present a `TextView`, but it
 works with any other content. Actually, most layers you'll add will start with
 a `Dialog` wrapping some other view.
+
+Next: [Starting with Cursive (3/3)](./tutorial_3.md)

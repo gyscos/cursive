@@ -96,7 +96,7 @@ leaving the application (you'll have to press <Ctrl-C> to kill it).
 ## Interactivity
 
 Let's first add a way to stop the application. We want to quit when the user
-presses the letter `<q>`.
+presses the letter `q`.
 
 Cursive sends an event for every user input ; most of these are just ignored
 and have no effect. The `Cursive` root has a [`add_global_callback`] method to
@@ -127,7 +127,7 @@ fn main() {
 }
 ```
 
-As expected, running it show no visible change, but hitting the `<q>` key at
+As expected, running it show no visible change, but hitting the `q` key at
 least closes the application.
 
 [`add_global_callback`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.add_global_callback
@@ -175,3 +175,5 @@ fn main() {
 [`TextView`]: http://gyscos.github.io/Cursive/cursive/views/struct.TextView.html
 [`StackView`]: http://gyscos.github.io/Cursive/cursive/views/struct.StackView.html
 [`Cursive::add_layer`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.add_layer
+
+Next: [Starting with Cursive (2/3)](./tutorial_2.md)
