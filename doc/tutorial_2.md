@@ -38,7 +38,7 @@ fn show_answer(s: &mut Cursive, msg: &str) {
 }
 ```
 
-<img src="../doc/tutorial_2.png" alt="Tutorial 2 goal" />
+![Tutorial 2 goal](./tutorial_2.png)
 
 ## Preparation
 

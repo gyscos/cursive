@@ -24,7 +24,7 @@ fn main() {
 
 Run this application, and you should have something like that:
 
-<img src="../doc/tutorial_1.png" alt="Tutorial 1 goal" />
+![Tutorial 1 goal](./tutorial_1.png)
 
 Now that you have an idea of what we'll do, let's start from scratch.
 

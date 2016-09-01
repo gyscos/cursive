@@ -73,7 +73,7 @@ fn on_submit(s: &mut Cursive, name: &String) {
 }
 ```
 
-![Tutorial 3 goal](../doc/cursive_example.png)
+![Tutorial 3 goal](./tutorial_3.png)
 
 ## SelectView
 
