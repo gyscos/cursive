@@ -165,10 +165,13 @@ impl EditView {
     }
 
     /// Replace the entire content of the view with the given one.
-    pub fn set_content(&mut self, content: &str) {
-        self.content = Rc::new(content.to_string());
+    pub fn set_content<S: Into<String>>(&mut self, content: S) {
+        let content = content.into();
+        let len = content.len();
+
+        self.content = Rc::new(content);
         self.offset = 0;
-        self.set_cursor(content.len());
+        self.set_cursor(len);
     }
 
     /// Get the current text.
@@ -179,7 +182,7 @@ impl EditView {
     /// Sets the current content to the given value.
     ///
     /// Convenient chainable method.
-    pub fn content(mut self, content: &str) -> Self {
+    pub fn content<S: Into<String>>(mut self, content: S) -> Self {
         self.set_content(content);
         self
     }
