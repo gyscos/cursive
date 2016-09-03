@@ -295,6 +295,7 @@ the item currently selected, nothing too surprising.
 We have to find the `SelectView` twice, otherwise we're still borrowing `s`
 when we try to add a new layer - one of the quirks of the borrow checker.
 
+[`EditView`]: http://gyscos.github.io/Cursive/cursive/views/struct.EditView.html
 [`IdView`]: http://gyscos.github.io/Cursive/cursive/views/struct.IdView.html
 [`IdView::new`]: http://gyscos.github.io/Cursive/cursive/prelude/struct.IdView.html#method.new
 [`Identifiable`]: http://gyscos.github.io/Cursive/cursive/view/trait.Identifiable.html
