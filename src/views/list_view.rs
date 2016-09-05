@@ -64,6 +64,11 @@ impl ListView {
         self.children.push(Child::Row(label.to_string(), Box::new(view)));
     }
 
+    /// Removes all children from this view.
+    pub fn clear(&mut self) {
+        self.children.clear();
+    }
+
     /// Adds a view to the end of the list.
     ///
     /// Chainable variant.

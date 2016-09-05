@@ -190,6 +190,11 @@ impl<T: 'static> SelectView<T> {
         self.items[self.focus()].value.clone()
     }
 
+    /// Removes all items from this view.
+    pub fn clear(&mut self) {
+        self.items.clear();
+    }
+
     /// Adds a item to the list, with given label and value.
     pub fn add_item<S: Into<String>>(&mut self, label: S, value: T) {
         self.items.push(Item::new(label.into(), value));
