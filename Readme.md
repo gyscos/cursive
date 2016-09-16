@@ -117,8 +117,7 @@ Here is the support table for input keys. Tested terminals are mostly Gnome term
 | Fn keys: F9-F12          | All  | All except TTY         | All except TTY             | All except TTY  |
 | PrtScn, ScrollLock       | None | None                   | None                       | None            |
 | Window, Menu             | None | None                   | None                       | None            |
-| Ctrl, Shift, Alt
-  (by themselves)          | None | None                   | None                       | None            |
+| Ctrl, Shift, Alt  (by themselves)          | None | None                   | None                       | None            |
 ## Contribute & Feedback
 
 You want to help? Thank you so much! Here are some ideas of things you could do:
