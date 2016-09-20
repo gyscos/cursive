@@ -36,7 +36,7 @@ impl<T: View> TrackedView<T> {
 }
 
 impl<T: View> ViewWrapper for TrackedView<T> {
-    wrap_impl!(&self.view);
+    wrap_impl!(self.view: T);
 
     fn wrap_draw(&self, printer: &Printer) {
         self.offset.set(printer.offset);

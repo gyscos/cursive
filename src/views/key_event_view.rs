@@ -16,16 +16,16 @@ use view::{View, ViewWrapper};
 ///                         .register('q', |s| s.quit())
 ///                         .register(Key::Esc, |s| s.quit());
 /// ```
-pub struct KeyEventView {
-    content: Box<View>,
+pub struct KeyEventView<T: View> {
+    content: T,
     callbacks: HashMap<Event, Callback>,
 }
 
-impl KeyEventView {
+impl <T: View> KeyEventView<T> {
     /// Wraps the given view in a new KeyEventView.
-    pub fn new<V: View + 'static>(view: V) -> Self {
+    pub fn new(view: T) -> Self {
         KeyEventView {
-            content: Box::new(view),
+            content: view,
             callbacks: HashMap::new(),
         }
     }
@@ -40,8 +40,8 @@ impl KeyEventView {
     }
 }
 
-impl ViewWrapper for KeyEventView {
-    wrap_impl!(self.content);
+impl <T: View> ViewWrapper for KeyEventView<T> {
+    wrap_impl!(self.content: T);
 
     fn wrap_on_event(&mut self, event: Event) -> EventResult {
         match self.content.on_event(event) {

@@ -16,7 +16,7 @@ impl<V: View> Panel<V> {
 
 
 impl<V: View> ViewWrapper for Panel<V> {
-    wrap_impl!(&self.view);
+    wrap_impl!(self.view: V);
 
     fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
         // TODO: make borders conditional?

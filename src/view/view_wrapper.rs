@@ -16,11 +16,14 @@ use event::{Event, EventResult};
 ///
 /// [`wrap_impl!`]: ../macro.wrap_impl.html
 pub trait ViewWrapper {
+    /// Type that this view wraps.
+    type V: View;
+
     /// Get an immutable reference to the wrapped view.
-    fn get_view(&self) -> &View;
+    fn get_view(&self) -> &Self::V;
 
     /// Get a mutable reference to the wrapped view.
-    fn get_view_mut(&mut self) -> &mut View;
+    fn get_view_mut(&mut self) -> &mut Self::V;
 
     /// Wraps the `draw` method.
     fn wrap_draw(&self, printer: &Printer) {
@@ -90,26 +93,12 @@ impl<T: ViewWrapper> View for T {
 
 /// Convenient macro to implement the [`ViewWrapper`] trait.
 ///
+/// It defines the `get_view` and `get_view_mut` implementations,
+/// as well as the `type V` declaration.
+///
 /// [`ViewWrapper`]: view/trait.ViewWrapper.html
 ///
 /// # Examples
-///
-/// If the wrapped view is in a box, just name it in the macro:
-///
-/// ```no_run
-/// # #[macro_use] extern crate cursive;
-/// # use cursive::view::{View,ViewWrapper};
-/// struct BoxFooView {
-///     content: Box<View>,
-/// }
-///
-/// impl ViewWrapper for BoxFooView {
-///     wrap_impl!(self.content);
-/// }
-/// # fn main() { }
-/// ```
-///
-/// If the content is directly a view, reference it:
 ///
 /// ```no_run
 /// # #[macro_use] extern crate cursive;
@@ -119,30 +108,21 @@ impl<T: ViewWrapper> View for T {
 /// }
 ///
 /// impl <T: View> ViewWrapper for FooView<T> {
-///     wrap_impl!(&self.view);
+///     wrap_impl!(self.view: T);
 /// }
 /// # fn main() { }
 /// ```
 #[macro_export]
 macro_rules! wrap_impl {
-    (&self.$v:ident) => {
+    (self.$v:ident: $t:path) => {
+        type V = $t;
 
-        fn get_view(&self) -> &View {
+        fn get_view(&self) -> &Self::V {
             &self.$v
         }
 
-        fn get_view_mut(&mut self) -> &mut View {
+        fn get_view_mut(&mut self) -> &mut Self::V {
             &mut self.$v
-        }
-    };
-    (self.$v:ident) => {
-
-        fn get_view(&self) -> &View {
-            &*self.$v
-        }
-
-        fn get_view_mut(&mut self) -> &mut View {
-            &mut *self.$v
         }
     };
 }

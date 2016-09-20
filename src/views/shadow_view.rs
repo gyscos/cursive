@@ -45,7 +45,7 @@ impl<T: View> ShadowView<T> {
 }
 
 impl<T: View> ViewWrapper for ShadowView<T> {
-    wrap_impl!(&self.view);
+    wrap_impl!(self.view: T);
 
     fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
         // Make sure req >= offset

@@ -21,7 +21,7 @@ impl<T: View> SizedView<T> {
 }
 
 impl<T: View> ViewWrapper for SizedView<T> {
-    wrap_impl!(&self.view);
+    wrap_impl!(self.view: T);
 
     fn wrap_layout(&mut self, size: Vec2) {
         self.size = size;

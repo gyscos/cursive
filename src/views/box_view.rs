@@ -149,7 +149,7 @@ impl<T: View> BoxView<T> {
 }
 
 impl<T: View> ViewWrapper for BoxView<T> {
-    wrap_impl!(&self.view);
+    wrap_impl!(self.view: T);
 
     fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
 
