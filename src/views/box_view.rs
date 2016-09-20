@@ -162,15 +162,85 @@ impl<T: View> ViewWrapper for BoxView<T> {
             // We respect the request if we're less or equal.
             let respect_req = result.zip_map(req, |res, req| res <= req);
             result.zip_map(respect_req.zip(child_size),
-                           |res, (respect, child)| if respect {
-                               // If we respect the request, keep the result
-                               res
-                           } else {
-                               // Otherwise, take the child as squish attempt.
-                               child
-                           })
+                           |res, (respect, child)| {
+                if respect {
+                    // If we respect the request, keep the result
+                    res
+                } else {
+                    // Otherwise, take the child as squish attempt.
+                    child
+                }
+            })
         } else {
             result
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use vec::Vec2;
+    use view::{View, Boxable};
+    use views::DummyView;
+
+    // No need to test `draw()` method as it's directly forwarded.
+
+    #[test]
+    fn min_size() {
+        let mut min_w = DummyView.full_screen().min_width(5);
+
+        assert_eq!(Vec2::new(5, 1), min_w.get_min_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(5, 10), min_w.get_min_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 1), min_w.get_min_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 10), min_w.get_min_size(Vec2::new(10, 10)));
+
+        let mut min_h = DummyView.full_screen().min_height(5);
+
+        assert_eq!(Vec2::new(1, 5), min_h.get_min_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 10), min_h.get_min_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 5), min_h.get_min_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 10), min_h.get_min_size(Vec2::new(10, 10)));
+
+        let mut min_s = DummyView.full_screen().min_size((5, 5));
+
+        assert_eq!(Vec2::new(5, 5), min_s.get_min_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(5, 10), min_s.get_min_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 5), min_s.get_min_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 10), min_s.get_min_size(Vec2::new(10, 10)));
+    }
+
+    #[test]
+    fn max_size() {
+        let mut max_w = DummyView.full_screen().max_width(5);
+
+        assert_eq!(Vec2::new(1, 1), max_w.get_min_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 10), max_w.get_min_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(5, 1), max_w.get_min_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(5, 10), max_w.get_min_size(Vec2::new(10, 10)));
+
+        let mut max_h = DummyView.full_screen().max_height(5);
+
+        assert_eq!(Vec2::new(1, 1), max_h.get_min_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 5), max_h.get_min_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 1), max_h.get_min_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 5), max_h.get_min_size(Vec2::new(10, 10)));
+
+        let mut max_s = DummyView.full_screen().max_size((5, 5));
+
+        assert_eq!(Vec2::new(1, 1), max_s.get_min_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 5), max_s.get_min_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(5, 1), max_s.get_min_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(5, 5), max_s.get_min_size(Vec2::new(10, 10)));
+    }
+
+    #[test]
+    fn full_screen() {
+        let mut full = DummyView.full_screen();
+
+        assert_eq!(Vec2::new(1, 1), full.get_min_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 10), full.get_min_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 1), full.get_min_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 10), full.get_min_size(Vec2::new(10, 10)));
     }
 }
