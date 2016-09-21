@@ -1,6 +1,6 @@
 set -e
 
-cargo doc
+cargo doc --no-deps
 FROM=$(git rev-parse --short HEAD)
 git checkout gh-pages
 git fetch && git rebase origin/gh-pages
