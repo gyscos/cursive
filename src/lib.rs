@@ -100,6 +100,7 @@ pub use with::With;
 pub use printer::Printer;
 
 use backend::{Backend, NcursesBackend};
+use view::Finder;
 
 use std::sync::mpsc;
 use std::any::Any;
@@ -320,11 +321,6 @@ impl Cursive {
         self.active_screen = screen_id;
     }
 
-    fn find_any(&mut self, selector: &view::Selector) -> Option<&mut Any> {
-        // Internal find method that returns a Any object.
-        self.screen_mut().find(selector)
-    }
-
     /// Tries to find the view pointed to by the given path.
     ///
     /// If the view is not found, or if it is not of the asked type,
@@ -348,7 +344,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn find<V: View + Any>(&mut self, sel: &view::Selector) -> Option<&mut V> {
-        self.find_any(sel).and_then(|b| b.downcast_mut::<V>())
+        self.screen_mut().find(sel)
     }
 
     /// Convenient method to use `find` with a `view::Selector::Id`.

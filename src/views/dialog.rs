@@ -396,7 +396,7 @@ impl View for Dialog {
         }
     }
 
-    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.content.find(selector)
+    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.content.find_any(selector)
     }
 }

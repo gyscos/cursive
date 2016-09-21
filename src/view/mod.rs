@@ -118,7 +118,7 @@ pub trait View {
     /// Returns None if the path doesn't lead to a view.
     ///
     /// Default implementation always return `None`.
-    fn find(&mut self, &Selector) -> Option<&mut Any> {
+    fn find_any(&mut self, &Selector) -> Option<&mut Any> {
         None
     }
 
@@ -131,6 +131,19 @@ pub trait View {
     fn take_focus(&mut self, source: Direction) -> bool {
         let _ = source;
         false
+    }
+}
+
+/// Provides `find<V: View>` to views.
+pub trait Finder {
+
+    /// Find a view
+    fn find<V: View + Any>(&mut self, sel: &Selector) -> Option<&mut V>;
+}
+
+impl <T: View> Finder for T {
+    fn find<V: View + Any>(&mut self, sel: &Selector) -> Option<&mut V> {
+        self.find_any(sel).and_then(|b| b.downcast_mut::<V>())
     }
 }
 

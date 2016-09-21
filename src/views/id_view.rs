@@ -21,10 +21,10 @@ impl<T: View> IdView<T> {
 impl<T: View + Any> ViewWrapper for IdView<T> {
     wrap_impl!(self.view: T);
 
-    fn wrap_find(&mut self, selector: &Selector) -> Option<&mut Any> {
+    fn wrap_find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
         match selector {
             &Selector::Id(id) if id == self.id => Some(&mut self.view),
-            s => self.view.find(s),
+            s => self.view.find_any(s),
         }
     }
 }

@@ -383,7 +383,10 @@ impl View for LinearLayout {
         }
     }
 
-    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.children.iter_mut().filter_map(|c| c.view.find(selector)).next()
+    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.children
+            .iter_mut()
+            .filter_map(|c| c.view.find_any(selector))
+            .next()
     }
 }

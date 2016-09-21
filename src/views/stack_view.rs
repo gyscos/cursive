@@ -133,12 +133,10 @@ impl View for StackView {
         }
     }
 
-    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
-        for layer in &mut self.layers {
-            if let Some(any) = layer.view.find(selector) {
-                return Some(any);
-            }
-        }
-        None
+    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.layers
+            .iter_mut()
+            .filter_map(|l| l.view.find_any(selector))
+            .next()
     }
 }

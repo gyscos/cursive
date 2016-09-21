@@ -28,16 +28,6 @@ impl Child {
             _ => None,
         }
     }
-
-    // Currently unused
-    //
-    // fn is_delimiter(&self) -> bool {
-    // match *self {
-    // Child::Row(_, _) => false,
-    // Child::Delimiter => true,
-    // }
-    // }
-    //
 }
 
 /// Displays a scrollable list of elements.
@@ -270,11 +260,11 @@ impl View for ListView {
         true
     }
 
-    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
+    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
         self.children
             .iter_mut()
             .filter_map(Child::view)
-            .filter_map(|v| v.find(selector))
+            .filter_map(|v| v.find_any(selector))
             .next()
     }
 }

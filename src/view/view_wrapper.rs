@@ -51,8 +51,8 @@ pub trait ViewWrapper {
     }
 
     /// Wraps the `find` method.
-    fn wrap_find(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.get_view_mut().find(selector)
+    fn wrap_find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.get_view_mut().find_any(selector)
     }
 
     /// Wraps the `needs_relayout` method.
@@ -82,8 +82,8 @@ impl<T: ViewWrapper> View for T {
         self.wrap_take_focus(source)
     }
 
-    fn find(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.wrap_find(selector)
+    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
+        self.wrap_find_any(selector)
     }
 
     fn needs_relayout(&self) -> bool {
