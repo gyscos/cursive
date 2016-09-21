@@ -12,19 +12,19 @@ impl backend::Backend for NcursesBackend {
         ::std::env::set_var("ESCDELAY", "25");
         ncurses::setlocale(ncurses::LcCategory::all, "");
         ncurses::initscr();
-        ncurses::keypad(ncurses::stdscr, true);
+        ncurses::keypad(unsafe { ncurses::stdscr }, true);
         ncurses::noecho();
         ncurses::cbreak();
         ncurses::start_color();
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-        ncurses::wbkgd(ncurses::stdscr,
+        ncurses::wbkgd(unsafe { ncurses::stdscr },
                        ncurses::COLOR_PAIR(ColorStyle::Background.id()));
     }
 
     fn screen_size() -> (usize, usize) {
         let mut x: i32 = 0;
         let mut y: i32 = 0;
-        ncurses::getmaxyx(ncurses::stdscr, &mut y, &mut x);
+        ncurses::getmaxyx(unsafe { ncurses::stdscr }, &mut y, &mut x);
         (x as usize, y as usize)
     }
 
