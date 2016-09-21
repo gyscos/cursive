@@ -260,6 +260,11 @@ impl<T: 'static> SelectView<T> {
         self.items.len()
     }
 
+    /// Returns `true` if this list has no item.
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+
     fn focus(&self) -> usize {
         self.focus.get()
     }
