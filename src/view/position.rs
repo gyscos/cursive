@@ -29,8 +29,16 @@ impl Position {
     /// and a parent with the absolute coordinates `parent`, drawing the
     /// child with its top-left corner at the returned coordinates will
     /// position him appropriately.
-    pub fn compute_offset(&self, size: Vec2, available: Vec2, parent: Vec2)
-                          -> Vec2 {
+    pub fn compute_offset<S, A, P>(&self, size: S, available: A, parent: P)
+                                   -> Vec2
+        where S: Into<Vec2>,
+              A: Into<Vec2>,
+              P: Into<Vec2>
+    {
+        let available = available.into();
+        let size = size.into();
+        let parent = parent.into();
+
         Vec2::new(self.x.compute_offset(size.x, available.x, parent.x),
                   self.y.compute_offset(size.y, available.y, parent.y))
     }
@@ -65,5 +73,23 @@ impl Offset {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use vec::Vec2;
+    use super::{Offset, Position};
+
+    #[test]
+    fn test_center() {
+        let center = Position::center();
+        assert_eq!(Vec2::new(2, 1), center.compute_offset((1,1), (5,3), (0,0)));
+        assert_eq!(Vec2::new(2, 0), center.compute_offset((1,3), (5,3), (0,0)));
+        assert_eq!(Vec2::new(1, 1), center.compute_offset((3,1), (5,3), (0,0)));
+        assert_eq!(Vec2::new(0, 1), center.compute_offset((5,1), (5,3), (0,0)));
+        assert_eq!(Vec2::new(0, 0), center.compute_offset((5,3), (5,3), (0,0)));
+        assert_eq!(Vec2::new(0, 0), center.compute_offset((5,3), (3,1), (0,0)));
     }
 }

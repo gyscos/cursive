@@ -71,7 +71,9 @@ pub use self::boxable::Boxable;
 
 /// Main trait defining a view behaviour.
 pub trait View {
-    /// Called when a key was pressed. Default implementation just ignores it.
+    /// Called when a key was pressed.
+    ///
+    /// Default implementation just ignores it.
     fn on_event(&mut self, Event) -> EventResult {
         EventResult::Ignored
     }
@@ -81,6 +83,8 @@ pub trait View {
     /// If the view is flexible (it has multiple size options), it can try
     /// to return one that fits the given `constraint`.
     /// It's also fine to ignore it and return a fixed value.
+    ///
+    /// Default implementation always return `(1,1)`.
     fn get_min_size(&mut self, constraint: Vec2) -> Vec2 {
         let _ = constraint;
         Vec2::new(1, 1)
@@ -112,6 +116,8 @@ pub trait View {
     /// Finds the view pointed to by the given path.
     ///
     /// Returns None if the path doesn't lead to a view.
+    ///
+    /// Default implementation always return `None`.
     fn find(&mut self, &Selector) -> Option<&mut Any> {
         None
     }
@@ -120,6 +126,8 @@ pub trait View {
     ///
     /// `source` indicates where the focus comes from.
     /// When the source is unclear, `Front` is usually used.
+    ///
+    /// Default implementation always return `false`.
     fn take_focus(&mut self, source: Direction) -> bool {
         let _ = source;
         false
