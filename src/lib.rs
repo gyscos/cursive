@@ -321,7 +321,7 @@ impl Cursive {
         self.active_screen = screen_id;
     }
 
-    /// Tries to find the view pointed to by the given path.
+    /// Tries to find the view pointed to by the given selector.
     ///
     /// If the view is not found, or if it is not of the asked type,
     /// it returns None.

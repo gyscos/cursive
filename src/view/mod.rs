@@ -115,6 +115,10 @@ pub trait View {
 
     /// Finds the view pointed to by the given path.
     ///
+    /// See [`Finder::find`] for a nicer interface, implemented for all views.
+    ///
+    /// [`Finder::find`]: trait.Finder.html#method.find
+    ///
     /// Returns None if the path doesn't lead to a view.
     ///
     /// Default implementation always return `None`.
@@ -135,10 +139,24 @@ pub trait View {
 }
 
 /// Provides `find<V: View>` to views.
+///
+/// This trait is mostly a wrapper around [`View::find_any`].
+///
+/// It provides a nicer interface to find a view when you know its type.
+///
+/// [`View::find_any`]: ./trait.View.html#method.find_any
 pub trait Finder {
 
-    /// Find a view
+    /// Tries to find the view pointed to by the given selector.
+    ///
+    /// If the view is not found, or if it is not of the asked type,
+    /// it returns None.
     fn find<V: View + Any>(&mut self, sel: &Selector) -> Option<&mut V>;
+
+    /// Convenient method to use `find` with a `view::Selector::Id`.
+    fn find_id<V: View + Any>(&mut self, id: &str) -> Option<&mut V> {
+        self.find(&Selector::Id(id))
+    }
 }
 
 impl <T: View> Finder for T {
