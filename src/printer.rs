@@ -12,8 +12,7 @@ use theme::{BorderStyle, ColorStyle, Effect, Theme};
 use vec::Vec2;
 
 /// Convenient interface to draw on a subset of the screen.
-#[derive(Clone)]
-pub struct Printer {
+pub struct Printer<'a> {
     /// Offset into the window this printer should start drawing at.
     pub offset: Vec2,
     /// Size of the area we are allowed to draw on.
@@ -22,16 +21,22 @@ pub struct Printer {
     pub focused: bool,
     /// Currently used theme
     pub theme: Theme,
+
+    backend: &'a B,
 }
 
-impl Printer {
+impl <'a> Printer<'a> {
     /// Creates a new printer on the given window.
-    pub fn new<T: Into<Vec2>>(size: T, theme: Theme) -> Self {
+    ///
+    /// But nobody needs to know that.
+    #[doc(hidden)]
+    pub fn new<T: Into<Vec2>>(size: T, theme: Theme, backend: &'a B) -> Self {
         Printer {
             offset: Vec2::zero(),
             size: size.into(),
             focused: true,
             theme: theme,
+            backend: backend,
         }
     }
 
@@ -90,7 +95,9 @@ impl Printer {
     /// ```no_run
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # let printer = Printer::new((6,4), theme::load_default());
+    /// # use cursive::B;
+    /// # let b = B{};
+    /// # let printer = Printer::new((6,4), theme::load_default(), &b);
     /// printer.with_color(theme::ColorStyle::Highlight, |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
@@ -121,7 +128,9 @@ impl Printer {
     /// ```no_run
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # let printer = Printer::new((6,4), theme::load_default());
+    /// # use cursive::B;
+    /// # let b = B{};
+    /// # let printer = Printer::new((6,4), theme::load_default(), &b);
     /// printer.print_box((0,0), (6,4), false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S,
@@ -213,9 +222,9 @@ impl Printer {
     }
 
     /// Returns a printer on a subset of this one's area.
-    pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(&self, offset: S,
+    pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(&'a self, offset: S,
                                                      size: T, focused: bool)
-                                                     -> Printer {
+                                                     -> Printer<'a> {
         let size = size.into();
         let offset = offset.into().or_min(self.size);
         Printer {
@@ -224,6 +233,7 @@ impl Printer {
             size: Vec2::min(self.size - offset, size),
             focused: self.focused && focused,
             theme: self.theme.clone(),
+            backend: self.backend,
         }
     }
 

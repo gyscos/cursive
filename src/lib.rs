@@ -132,6 +132,8 @@ pub struct Cursive {
 
     running: bool,
 
+    backend: B,
+
     cb_source: mpsc::Receiver<Box<Fn(&mut Cursive) + Send>>,
     cb_sink: mpsc::Sender<Box<Fn(&mut Cursive) + Send>>,
 }
@@ -140,7 +142,8 @@ new_default!(Cursive);
 
 // Use the Ncurses backend.
 // TODO: make this feature-driven
-type B = NcursesBackend;
+#[doc(hidden)]
+pub type B = NcursesBackend;
 
 impl Cursive {
     /// Creates a new Cursive root, and initialize ncurses.
@@ -163,6 +166,7 @@ impl Cursive {
             running: true,
             cb_source: rx,
             cb_sink: tx,
+            backend: NcursesBackend,
         };
 
         res.screens.push(views::StackView::new());
@@ -441,7 +445,7 @@ impl Cursive {
     fn draw(&mut self) {
         // TODO: don't clone the theme
         // Reference it or something
-        let printer = Printer::new(self.screen_size(), self.theme.clone());
+        let printer = Printer::new(self.screen_size(), self.theme.clone(), &mut self.backend);
 
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
@@ -462,7 +466,8 @@ impl Cursive {
 
         let printer =
             printer.sub_printer(Vec2::new(0, offset), printer.size, !selected);
-        self.screen_mut().draw(&printer);
+        let id = self.active_screen;
+        self.screens.get_mut(id).unwrap().draw(&printer);
 
         B::refresh();
     }
