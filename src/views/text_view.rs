@@ -8,7 +8,7 @@ use align::*;
 use event::*;
 use view::ScrollBase;
 
-use utils::{Row, LinesIterator};
+use utils::{LinesIterator, Row};
 
 use unicode_width::UnicodeWidthStr;
 

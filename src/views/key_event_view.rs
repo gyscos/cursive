@@ -21,7 +21,7 @@ pub struct KeyEventView<T: View> {
     callbacks: HashMap<Event, Callback>,
 }
 
-impl <T: View> KeyEventView<T> {
+impl<T: View> KeyEventView<T> {
     /// Wraps the given view in a new KeyEventView.
     pub fn new(view: T) -> Self {
         KeyEventView {
@@ -40,7 +40,7 @@ impl <T: View> KeyEventView<T> {
     }
 }
 
-impl <T: View> ViewWrapper for KeyEventView<T> {
+impl<T: View> ViewWrapper for KeyEventView<T> {
     wrap_impl!(self.content: T);
 
     fn wrap_on_event(&mut self, event: Event) -> EventResult {

@@ -80,7 +80,7 @@ impl Offset {
 mod tests {
 
     use vec::Vec2;
-    use super::{Position};
+    use super::Position;
 
     #[test]
     fn test_center() {

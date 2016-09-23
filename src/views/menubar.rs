@@ -1,10 +1,10 @@
 use Cursive;
-use view::{View, Position};
+use view::{Position, View};
 use vec::Vec2;
 use direction;
 use menu::MenuTree;
 use backend::Backend;
-use views::{MenuPopup, KeyEventView};
+use views::{KeyEventView, MenuPopup};
 use theme::ColorStyle;
 use Printer;
 use event::*;

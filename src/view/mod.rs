@@ -146,7 +146,6 @@ pub trait View {
 ///
 /// [`View::find_any`]: ./trait.View.html#method.find_any
 pub trait Finder {
-
     /// Tries to find the view pointed to by the given selector.
     ///
     /// If the view is not found, or if it is not of the asked type,
@@ -159,7 +158,7 @@ pub trait Finder {
     }
 }
 
-impl <T: View> Finder for T {
+impl<T: View> Finder for T {
     fn find<V: View + Any>(&mut self, sel: &Selector) -> Option<&mut V> {
         self.find_any(sel).and_then(|b| b.downcast_mut::<V>())
     }

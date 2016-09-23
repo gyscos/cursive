@@ -20,7 +20,6 @@ pub enum SizeConstraint {
 }
 
 impl SizeConstraint {
-
     /// Returns the size to be given to the child.
     ///
     /// When `available` is offered to the `BoxView`.

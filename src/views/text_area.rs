@@ -334,7 +334,7 @@ impl TextArea {
         // First attempt, if scrollbase status didn't change.
         // println_stderr!("Rows: {:?}", self.rows);
         let new_rows = make_rows(&self.content[first_byte..last_byte],
-                                     available);
+                                 available);
         // How much did this add?
         // println_stderr!("New rows: {:?}", new_rows);
         // println_stderr!("{}-{}", first_row, last_row);

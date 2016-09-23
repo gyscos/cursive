@@ -181,7 +181,7 @@ impl<T: View> ViewWrapper for BoxView<T> {
 mod tests {
 
     use vec::Vec2;
-    use view::{View, Boxable};
+    use view::{Boxable, View};
     use views::DummyView;
 
     // No need to test `draw()` method as it's directly forwarded.

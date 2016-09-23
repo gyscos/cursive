@@ -347,7 +347,8 @@ impl Cursive {
     /// });
     /// # }
     /// ```
-    pub fn find<V: View + Any>(&mut self, sel: &view::Selector) -> Option<&mut V> {
+    pub fn find<V: View + Any>(&mut self, sel: &view::Selector)
+                               -> Option<&mut V> {
         self.screen_mut().find(sel)
     }
 
@@ -445,7 +446,9 @@ impl Cursive {
     fn draw(&mut self) {
         // TODO: don't clone the theme
         // Reference it or something
-        let printer = Printer::new(self.screen_size(), self.theme.clone(), &mut self.backend);
+        let printer = Printer::new(self.screen_size(),
+                                   self.theme.clone(),
+                                   &self.backend);
 
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.

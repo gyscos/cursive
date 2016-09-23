@@ -1,6 +1,6 @@
 use backend;
 use event::{Event, Key};
-use theme::{Color, ColorStyle, Effect, BaseColor};
+use theme::{BaseColor, Color, ColorStyle, Effect};
 use utf8;
 
 use ncurses;

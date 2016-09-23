@@ -130,7 +130,7 @@ impl<'a> Iterator for LinesIterator<'a> {
                     // would include the whitespace in the row.
                     self.offset += 1;
                     other
-                },
+                }
             };
 
         if prefix_length == 0 {
@@ -154,6 +154,5 @@ impl<'a> Iterator for LinesIterator<'a> {
 mod tests {
 
     #[test]
-    fn test_layout() {
-    }
+    fn test_layout() {}
 }

@@ -23,7 +23,7 @@ mod text_area;
 mod text_view;
 mod tracked_view;
 
-pub use self::id_view::{IdView};
+pub use self::id_view::IdView;
 pub use self::box_view::BoxView;
 pub use self::button::Button;
 pub use self::checkbox::Checkbox;

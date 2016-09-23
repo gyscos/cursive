@@ -25,7 +25,7 @@ pub struct Printer<'a> {
     backend: &'a B,
 }
 
-impl <'a> Printer<'a> {
+impl<'a> Printer<'a> {
     /// Creates a new printer on the given window.
     ///
     /// But nobody needs to know that.
