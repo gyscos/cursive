@@ -230,33 +230,33 @@ impl Theme {
     /// **Don't use this directly.** Uses [`Cursive::set_theme`] instead.
     ///
     /// [`Cursive::set_theme`]: ../struct.Cursive.html#method.set_theme
-    pub fn activate(&self) {
+    pub fn activate(&self, backend: &mut B) {
         // Initialize each color with the backend
-        B::init_color_style(ColorStyle::Background,
+        backend.init_color_style(ColorStyle::Background,
                             &self.colors.view,
                             &self.colors.background);
-        B::init_color_style(ColorStyle::Shadow,
+        backend.init_color_style(ColorStyle::Shadow,
                             &self.colors.shadow,
                             &self.colors.shadow);
-        B::init_color_style(ColorStyle::Primary,
+        backend.init_color_style(ColorStyle::Primary,
                             &self.colors.primary,
                             &self.colors.view);
-        B::init_color_style(ColorStyle::Secondary,
+        backend.init_color_style(ColorStyle::Secondary,
                             &self.colors.secondary,
                             &self.colors.view);
-        B::init_color_style(ColorStyle::Tertiary,
+        backend.init_color_style(ColorStyle::Tertiary,
                             &self.colors.tertiary,
                             &self.colors.view);
-        B::init_color_style(ColorStyle::TitlePrimary,
+        backend.init_color_style(ColorStyle::TitlePrimary,
                             &self.colors.title_primary,
                             &self.colors.view);
-        B::init_color_style(ColorStyle::TitleSecondary,
+        backend.init_color_style(ColorStyle::TitleSecondary,
                             &self.colors.title_secondary,
                             &self.colors.view);
-        B::init_color_style(ColorStyle::Highlight,
+        backend.init_color_style(ColorStyle::Highlight,
                             &self.colors.view,
                             &self.colors.highlight);
-        B::init_color_style(ColorStyle::HighlightInactive,
+        backend.init_color_style(ColorStyle::HighlightInactive,
                             &self.colors.view,
                             &self.colors.highlight_inactive);
     }

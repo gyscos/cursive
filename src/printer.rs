@@ -56,7 +56,7 @@ impl<'a> Printer<'a> {
         let text = &text[..prefix_len];
 
         let p = p + self.offset;
-        B::print_at((p.x, p.y), text);
+        self.backend.print_at((p.x, p.y), text);
     }
 
     /// Prints a vertical line using the given character.
@@ -69,7 +69,7 @@ impl<'a> Printer<'a> {
 
         let p = p + self.offset;
         for y in 0..len {
-            B::print_at((p.x, (p.y + y)), c);
+            self.backend.print_at((p.x, (p.y + y)), c);
         }
     }
 
@@ -83,7 +83,7 @@ impl<'a> Printer<'a> {
 
         let p = p + self.offset;
         for x in 0..len {
-            B::print_at((p.x + x, p.y), c);
+            self.backend.print_at((p.x + x, p.y), c);
         }
     }
 
@@ -105,7 +105,7 @@ impl<'a> Printer<'a> {
     pub fn with_color<F>(&self, c: ColorStyle, f: F)
         where F: FnOnce(&Printer)
     {
-        B::with_color(c, || f(self));
+        self.backend.with_color(c, || f(self));
     }
 
     /// Same as `with_color`, but apply a ncurses style instead,
@@ -115,7 +115,7 @@ impl<'a> Printer<'a> {
     pub fn with_effect<F>(&self, effect: Effect, f: F)
         where F: FnOnce(&Printer)
     {
-        B::with_effect(effect, || f(self));
+        self.backend.with_effect(effect, || f(self));
     }
 
     /// Prints a rectangular box.

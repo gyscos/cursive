@@ -7,23 +7,23 @@ mod curses;
 pub use self::curses::NcursesBackend;
 
 pub trait Backend {
-    fn init();
-    fn finish();
+    fn init() -> Self;
+    fn finish(&mut self);
 
     fn clear();
-    fn refresh();
+    fn refresh(&self);
 
-    fn has_colors() -> bool;
+    fn has_colors(&self) -> bool;
 
-    fn init_color_style(style: theme::ColorStyle, foreground: &theme::Color,
-                        background: &theme::Color);
+    fn init_color_style(&mut self, style: theme::ColorStyle,
+                        foreground: &theme::Color, background: &theme::Color);
 
-    fn print_at((usize, usize), &str);
+    fn print_at(&self, (usize, usize), &str);
 
-    fn poll_event() -> event::Event;
-    fn set_refresh_rate(fps: u32);
-    fn screen_size() -> (usize, usize);
+    fn poll_event(&self) -> event::Event;
+    fn set_refresh_rate(&mut self, fps: u32);
+    fn screen_size(&self) -> (usize, usize);
 
-    fn with_color<F: FnOnce()>(color: theme::ColorStyle, f: F);
-    fn with_effect<F: FnOnce()>(effect: theme::Effect, f: F);
+    fn with_color<F: FnOnce()>(&self, color: theme::ColorStyle, f: F);
+    fn with_effect<F: FnOnce()>(&self, effect: theme::Effect, f: F);
 }

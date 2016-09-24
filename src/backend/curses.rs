@@ -8,7 +8,7 @@ use ncurses;
 pub struct NcursesBackend;
 
 impl backend::Backend for NcursesBackend {
-    fn init() {
+    fn init() -> Self {
         ::std::env::set_var("ESCDELAY", "25");
         ncurses::setlocale(ncurses::LcCategory::all, "");
         ncurses::initscr();
@@ -19,25 +19,27 @@ impl backend::Backend for NcursesBackend {
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
         ncurses::wbkgd(unsafe { ncurses::stdscr },
                        ncurses::COLOR_PAIR(ColorStyle::Background.id()));
+
+        NcursesBackend
     }
 
-    fn screen_size() -> (usize, usize) {
+    fn screen_size(&self) -> (usize, usize) {
         let mut x: i32 = 0;
         let mut y: i32 = 0;
         ncurses::getmaxyx(unsafe { ncurses::stdscr }, &mut y, &mut x);
         (x as usize, y as usize)
     }
 
-    fn has_colors() -> bool {
+    fn has_colors(&self) -> bool {
         ncurses::has_colors()
     }
 
-    fn finish() {
+    fn finish(&mut self) {
         ncurses::endwin();
     }
 
 
-    fn init_color_style(style: ColorStyle, foreground: &Color,
+    fn init_color_style(&mut self, style: ColorStyle, foreground: &Color,
                         background: &Color) {
         // TODO: build the color on the spot
 
@@ -46,7 +48,7 @@ impl backend::Backend for NcursesBackend {
                            find_closest(background) as i16);
     }
 
-    fn with_color<F: FnOnce()>(color: ColorStyle, f: F) {
+    fn with_color<F: FnOnce()>(&self, color: ColorStyle, f: F) {
         let mut current_style: ncurses::attr_t = 0;
         let mut current_color: i16 = 0;
         ncurses::attr_get(&mut current_style, &mut current_color);
@@ -58,7 +60,7 @@ impl backend::Backend for NcursesBackend {
         ncurses::attron(current_style);
     }
 
-    fn with_effect<F: FnOnce()>(effect: Effect, f: F) {
+    fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
         let style = match effect {
             Effect::Reverse => ncurses::A_REVERSE(),
             Effect::Simple => ncurses::A_NORMAL(),
@@ -72,15 +74,15 @@ impl backend::Backend for NcursesBackend {
         ncurses::clear();
     }
 
-    fn refresh() {
+    fn refresh(&self) {
         ncurses::refresh();
     }
 
-    fn print_at((x, y): (usize, usize), text: &str) {
+    fn print_at(&self, (x, y): (usize, usize), text: &str) {
         ncurses::mvaddstr(y as i32, x as i32, text);
     }
 
-    fn poll_event() -> Event {
+    fn poll_event(&self) -> Event {
         let ch: i32 = ncurses::getch();
 
         // Is it a UTF-8 starting point?
@@ -92,7 +94,7 @@ impl backend::Backend for NcursesBackend {
         }
     }
 
-    fn set_refresh_rate(fps: u32) {
+    fn set_refresh_rate(&mut self, fps: u32) {
         if fps == 0 {
             ncurses::timeout(-1);
         } else {

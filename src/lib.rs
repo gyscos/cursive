@@ -149,10 +149,10 @@ impl Cursive {
     /// Creates a new Cursive root, and initialize ncurses.
     pub fn new() -> Self {
         // Default delay is way too long. 25 is imperceptible yet works fine.
-        B::init();
+        let mut backend = B::init();
 
         let theme = theme::load_default();
-        theme.activate();
+        theme.activate(&mut backend);
         // let theme = theme::load_theme("assets/style.toml").unwrap();
 
         let (tx, rx) = mpsc::channel();
@@ -166,7 +166,7 @@ impl Cursive {
             running: true,
             cb_source: rx,
             cb_sink: tx,
-            backend: NcursesBackend,
+            backend: backend,
         };
 
         res.screens.push(views::StackView::new());
@@ -258,7 +258,7 @@ impl Cursive {
     /// Sets the current theme.
     pub fn set_theme(&mut self, theme: theme::Theme) {
         self.theme = theme;
-        self.theme.activate();
+        self.theme.activate(&mut self.backend);
         B::clear();
     }
 
@@ -284,8 +284,8 @@ impl Cursive {
     /// Regularly redraws everything, even when no input is given.
     /// Between 0 and 1000.
     /// Call with fps=0 to disable (default value).
-    pub fn set_fps(&self, fps: u32) {
-        B::set_refresh_rate(fps)
+    pub fn set_fps(&mut self, fps: u32) {
+        self.backend.set_refresh_rate(fps)
     }
 
     /// Returns a reference to the currently active screen.
@@ -430,7 +430,7 @@ impl Cursive {
 
     /// Returns the size of the screen, in characters.
     pub fn screen_size(&self) -> Vec2 {
-        let (x, y) = B::screen_size();
+        let (x, y) = self.backend.screen_size();
 
         Vec2 {
             x: x as usize,
@@ -472,7 +472,7 @@ impl Cursive {
         let id = self.active_screen;
         self.screens.get_mut(id).unwrap().draw(&printer);
 
-        B::refresh();
+        self.backend.refresh();
     }
 
     /// Runs the event loop.
@@ -500,7 +500,7 @@ impl Cursive {
 
             // Wait for next event.
             // (If set_fps was called, this returns -1 now and then)
-            let event = B::poll_event();
+            let event = self.backend.poll_event();
             if event == Event::WindowResize {
                 B::clear();
             }
@@ -535,6 +535,6 @@ impl Cursive {
 
 impl Drop for Cursive {
     fn drop(&mut self) {
-        B::finish();
+        self.backend.finish();
     }
 }
