@@ -114,7 +114,7 @@ impl<T: ViewWrapper> View for T {
 /// ```
 #[macro_export]
 macro_rules! wrap_impl {
-    (self.$v:ident: $t:path) => {
+    (self.$v:ident: $t:ty) => {
         type V = $t;
 
         fn get_view(&self) -> &Self::V {
