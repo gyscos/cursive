@@ -45,6 +45,15 @@
 //!     siv.run();
 //! }
 //! ```
+//!
+//! ## Debugging
+//!
+//! The `Cursive` root initializes the terminal on creation, and do cleanups
+//! on drop. While it is alive, printing to the terminal will not work
+//! as expected, making debugging a bit harder.
+//!
+//! One solution is to redirect stderr to a file when running the application,
+//! and log to it instead of stdout.
 #![deny(missing_docs)]
 
 extern crate ncurses;
