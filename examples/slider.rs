@@ -19,6 +19,7 @@ fn main() {
                 s.add_layer(Dialog::text(format!("Lucky number {}!", v))
                     .button("Ok", Cursive::quit));
             }))
+        .title("[ 7 ]")
         .with_id("dialog"));
 
     siv.run();
