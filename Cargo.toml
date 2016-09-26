@@ -11,11 +11,14 @@ repository = "https://github.com/gyscos/Cursive"
 version = "0.2.6"
 
 [dependencies]
-ncurses = "5.80.0"
 odds = "0.2"
 toml = "0.2"
 unicode-segmentation = "0.1"
 unicode-width = "0.1"
+
+[dependencies.ncurses]
+features = ["wide"]
+version = "5.82.0"
 
 [dev-dependencies]
 rand = "0.3"
