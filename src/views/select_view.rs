@@ -1,6 +1,7 @@
 use std::cmp::min;
 use std::rc::Rc;
 use std::cell::Cell;
+use std::borrow::Borrow;
 
 use Cursive;
 use With;
@@ -132,7 +133,6 @@ impl<T: 'static> SelectView<T> {
 
     /// Sets a callback to be used when an item is selected.
     ///
-    ///
     /// Chainable variant.
     pub fn on_select<F>(self, cb: F) -> Self
         where F: Fn(&mut Cursive, &T) + 'static
@@ -143,10 +143,13 @@ impl<T: 'static> SelectView<T> {
     /// Sets a callback to be used when `<Enter>` is pressed.
     ///
     /// The item currently selected will be given to the callback.
-    pub fn set_on_submit<F>(&mut self, cb: F)
-        where F: Fn(&mut Cursive, &T) + 'static
+    ///
+    /// Here, `V` can be `T` itself, or a type that can be borrowed from `T`.
+    pub fn set_on_submit<F, V: ?Sized>(&mut self, cb: F)
+        where F: Fn(&mut Cursive, &V) + 'static,
+              T: Borrow<V>
     {
-        self.on_submit = Some(Rc::new(cb));
+        self.on_submit = Some(Rc::new(move |s, t| cb(s, t.borrow())));
     }
 
     /// Sets a callback to be used when `<Enter>` is pressed.
@@ -154,8 +157,9 @@ impl<T: 'static> SelectView<T> {
     /// The item currently selected will be given to the callback.
     ///
     /// Chainable variant.
-    pub fn on_submit<F>(self, cb: F) -> Self
-        where F: Fn(&mut Cursive, &T) + 'static
+    pub fn on_submit<F, V: ?Sized>(self, cb: F) -> Self
+        where F: Fn(&mut Cursive, &V) + 'static,
+              T: Borrow<V>
     {
         self.with(|s| s.set_on_submit(cb))
     }
