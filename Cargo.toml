@@ -9,6 +9,7 @@ name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
 version = "0.2.6"
+build="build.rs"
 
 [dependencies]
 odds = "0.2"
@@ -22,6 +23,10 @@ version = "5.82.0"
 
 [dev-dependencies]
 rand = "0.3"
+skeptic = "0.5"
+
+[build-dependencies]
+skeptic = "0.5"
 
 [lib]
 name = "cursive"

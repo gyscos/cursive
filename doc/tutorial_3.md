@@ -8,7 +8,7 @@ them to update them.
 
 Here is the code we'll end up with:
 
-```rust
+```rust,no_run
 extern crate cursive;
 
 use cursive::prelude::*;
@@ -81,7 +81,7 @@ The main element in our application will be a list of names. For this, we'll
 use a [`SelectView`]. This type is generic on the item stored. We just want
 to store the names, so let's build a `SelectView<String>`:
 
-```rust
+```rust,ignore
 let select = SelectView::<String>::new();
 ```
 
@@ -92,7 +92,7 @@ professional-looking, so we'll give it a fixed size.
 To do that, a [`BoxView`] can wrap any view and give it a fixed size.
 We could do:
 
-```rust
+```rust,ignore
 let select = BoxView::with_fixed_size((10, 5), SelectView::<String>::new());
 ```
 
@@ -100,7 +100,7 @@ But there is another shorter way: the [`Boxable`] trait is conveniently
 implemented for any `View`, and allow to wrap in a `BoxView` with a chainable
 call:
 
-```rust
+```rust,ignore
 let select = SelectView::<String>::new()
     .fixed_size((10, 5));
 ```
@@ -110,7 +110,7 @@ We'll also want to add a callback when the user chooses a name. The
  the selected item. Since we're using `String`, our callback will have to be
  `Fn(&mut Cursive, &String)`:
 
-```rust
+```rust,ignore
 let select = SelectView::<String>::new()
     .on_submit(on_submit)
     .fixed_size((10, 5));
@@ -149,7 +149,7 @@ We'll use two of them:
 
 Let's start with the column of buttons:
 
-```rust
+```rust,ignore
 let buttons = LinearLayout::vertical()
     .child(Button::new("Add new", add_name))
     .child(Button::new("Delete", delete_name))
@@ -166,7 +166,7 @@ as a cheap spacer.
 
 We can now create the second linear layout inside a Dialog:
 
-```rust
+```rust,ignore
 siv.add_layer(Dialog::new(LinearLayout::horizontal()
         .child(select)
         .child(DummyView)
@@ -188,7 +188,7 @@ this list with names!
 When the user presses the `<Add new>` button, we want to show a popup where he
 can enter a new name:
 
-```rust
+```rust,ignore
 fn add_name(s: &mut Cursive) {
     s.add_layer(Dialog::new(EditView::new()
             .fixed_width(10))
@@ -222,7 +222,7 @@ reference to the view.
 
 Here's what it looks like in action:
 
-```rust
+```rust,ignore
 fn add_name(s: &mut Cursive) {
     s.add_layer(Dialog::new(EditView::new()
             .with_id("name")
@@ -242,7 +242,7 @@ calling `find_id`.
 Now we just need to do something with this name: add it to the list!
 Remember the `SelectView` we created? Let's give it an ID too:
 
-```rust
+```rust,ignore
 let select = SelectView::<String>::new()
     .on_submit(on_submit)
     .with_id("select")
@@ -253,7 +253,7 @@ the `BoxView`. But we still need to call `on_submit` before that.)
 
 That way, we can update it with a new item:
 
-```rust
+```rust,ignore
 fn add_name(s: &mut Cursive) {
     fn ok(s: &mut Cursive, name: &str) {
         s.find_id::<SelectView<String>>("select").unwrap().add_item_str(name);
@@ -277,7 +277,7 @@ fn add_name(s: &mut Cursive) {
 Now that we know how to access the `SelectView`, removing an item is not very
 complicated:
 
-```rust
+```rust,ignore
 fn delete_name(s: &mut Cursive) {
     match s.find_id::<SelectView<String>>("select").unwrap().selected_id() {
         None => s.add_layer(Dialog::info("No name to remove")),

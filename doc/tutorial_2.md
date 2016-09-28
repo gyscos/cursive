@@ -5,7 +5,7 @@
 This time, we'll work on a slightly bigger example, where the user will need to
 actually make some choices. Here is what the code will look like:
 
-```rust
+```rust,no_run
 extern crate cursive;
 
 use cursive::Cursive;
@@ -45,8 +45,8 @@ fn show_answer(s: &mut Cursive, msg: &str) {
 This time you're not a beginner anymore, so we'll skip the introduction!
 Let's start from a basic cursive application:
 
-```rust
-extern crate cursive
+```rust,no_run
+extern crate cursive;
 
 use cursive::Cursive;
 
@@ -66,7 +66,7 @@ and/or buttons.
 [`Dialog::new`] directly takes a view, so we'll directly give it the
 `TextView`:
 
-```rust
+```rust,no_run
 extern crate cursive;
 
 use cursive::Cursive;
@@ -87,7 +87,7 @@ Since creating a `Dialog` around a `TextView` is a pretty common task,
 becomes a little shorter (and we don't need to import
 `cursive::views::TextView` anymore):
 
-```rust
+```rust,ignore
 siv.add_layer(Dialog::text("..."));
 ```
 
@@ -95,7 +95,7 @@ Next, let's add a title. To do that, `Dialog` has a chainable [`Dialog::title`]
 method. It takes the dialog by value, and return it back, making function
 chains easy:
 
-```rust
+```rust,ignore
 siv.add_layer(Dialog::text("...").title("..."));
 ```
 
@@ -114,7 +114,7 @@ Just like with the title, `Dialog` has a [`Dialog::button`] method to add a
 button in a chain. This method takes a label and a callback, the same kind
 we saw in the previous tutorial:
 
-```rust
+```rust,ignore
 siv.add_layer(Dialog::text("...")
     .title("...")
     .button("Quit", |s| s.quit()));
@@ -124,7 +124,7 @@ Only this time, we don't want to exit the application right away. Instead of
 packing everything into the closure, let's use a separate function for the
 callback. Here is the current state:
 
-```rust
+```rust,no_run
 extern crate cursive;
 
 use cursive::Cursive;
@@ -152,7 +152,7 @@ and show a new one instead. We'll use [`Cursive::pop_layer`] to do that.
 
 Then, we add a new `Dialog`, this time with a few more buttons:
 
-```rust
+```rust,ignore
 fn show_next(s: &mut Cursive) {
     s.pop_layer();
     s.add_layer(Dialog::text("Did you do the thing?")
@@ -169,7 +169,7 @@ The `<Uh?>` button will add a new popup, without removing the current one:
 it'll act as a dismissable infobox. `Dialog::info()` is a shortcut to build
 such a popup:
 
-```rust
+```rust,ignore
 fn show_next(s: &mut Cursive) {
     s.pop_layer();
     s.add_layer(Dialog::text("Did you do the thing?")
@@ -183,7 +183,7 @@ fn show_next(s: &mut Cursive) {
 Finally, let's have the "Yes" and "No" buttons use the same callback method to
 print a message, but with a different text parameter:
 
-```rust
+```rust,ignore
 fn show_next(s: &mut Cursive) {
     s.pop_layer();
     s.add_layer(Dialog::text("Did you do the thing?")
