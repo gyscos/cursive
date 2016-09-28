@@ -5,6 +5,8 @@ use cursive::prelude::*;
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
+use std::iter::Chain;
+use std::slice::Iter;
 
 fn main() {
     // As usual, create the Cursive root
@@ -37,9 +39,8 @@ fn generate_logs(tx: mpsc::Sender<String>) {
         i += 1;
         // The send will fail when the other side is dropped.
         // (When the application ends).
-        match tx.send(line) {
-            Err(_) => return,
-            Ok(_) => (),
+        if tx.send(line).is_err() {
+            return;
         }
         thread::sleep(Duration::from_millis(30));
     }
@@ -76,10 +77,8 @@ impl BufferView {
     }
 
     // Chain together the two parts of the buffer to appear as a circular one.
-    // The signature is quite ugly, but basically we return an iterator:
-    // a Chain of two slice iterators.
-    fn ring<'a>(&'a self)
-                -> std::iter::Chain<std::slice::Iter<'a, String>, std::slice::Iter<'a, String>> {
+    // TODO: Use `-> impl Iterator<Item=String>`...
+    fn ring(&self) -> Chain<Iter<String>, Iter<String>> {
         // The main buffer is "circular" starting at self.pos
         // So we chain the two parts as one
         self.buffer[self.pos..].iter().chain(self.buffer[..self.pos].iter())
@@ -94,9 +93,10 @@ impl View for BufferView {
 
     fn draw(&self, printer: &Printer) {
 
-        // If the buffer is large enough, we'll discard the beginning and keep the end.
+        // If the buffer is large, we'll discard the beginning and keep the end.
         // If the buffer is too small, only print a part of it with an offset.
-        let (discard, offset) = if self.buffer.len() > printer.size.y as usize {
+        let (discard, offset) = if self.buffer.len() >
+                                   printer.size.y as usize {
             (self.buffer.len() - printer.size.y as usize, 0)
         } else {
             (0, printer.size.y - self.buffer.len())

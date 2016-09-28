@@ -28,7 +28,7 @@ impl KeyCodeView {
 impl View for KeyCodeView {
     fn draw(&self, printer: &Printer) {
         for (y, line) in self.history.iter().enumerate() {
-            printer.print((0, y), &line);
+            printer.print((0, y), line);
         }
     }
 
