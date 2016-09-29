@@ -83,7 +83,7 @@ fn main() {
 ```
 
 Since creating a `Dialog` around a `TextView` is a pretty common task,
-[Dialog::text`] is a shortcut function that directly does that. Our line
+[`Dialog::text`] is a shortcut function that directly does that. Our line
 becomes a little shorter (and we don't need to import
 `cursive::views::TextView` anymore):
 
@@ -103,6 +103,8 @@ This way of chaining method to set-up the view is very common in cursive. Most
 views provide chainable variants of their methods, to allow creating the view
 and configuring it in one spot.
 
+[`Dialog::new`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.new
+[`Dialog::text`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.text
 [`Dialog::title`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.title
 
 ## Buttons
