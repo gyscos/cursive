@@ -1,6 +1,7 @@
 extern crate cursive;
 
-use cursive::prelude::*;
+use cursive::Cursive;
+use cursive::views::{Dialog, TextView};
 
 fn main() {
     // Creates the cursive root - required for every application.
@@ -8,8 +9,8 @@ fn main() {
 
     // Creates a dialog with a single "Quit" button
     siv.add_layer(Dialog::new(TextView::new("Hello Dialog!"))
-                      .title("Cursive")
-                      .button("Quit", |s| s.quit()));
+        .title("Cursive")
+        .button("Quit", |s| s.quit()));
 
     // Starts the event loop.
     siv.run();

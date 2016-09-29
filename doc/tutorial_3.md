@@ -11,7 +11,10 @@ Here is the code we'll end up with:
 ```rust,no_run
 extern crate cursive;
 
-use cursive::prelude::*;
+use cursive::Cursive;
+use cursive::views::{Button, Dialog, DummyView, EditView,
+                     LinearLayout, SelectView};
+use cursive::traits::*;
 
 fn main() {
     let mut siv = Cursive::new();
@@ -98,9 +101,12 @@ let select = BoxView::with_fixed_size((10, 5), SelectView::<String>::new());
 
 But there is another shorter way: the [`Boxable`] trait is conveniently
 implemented for any `View`, and allow to wrap in a `BoxView` with a chainable
-call:
+call. `Boxable`, and a few other useful traits, are conveniently bundled in
+the [`traits`] prelude, ready to be imported:
 
 ```rust,ignore
+use cursive::traits::*;
+
 let select = SelectView::<String>::new()
     .fixed_size((10, 5));
 ```
@@ -132,6 +138,7 @@ replace the layer with a simple dialog.
 [`SelectView`]: http://gyscos.github.io/Cursive/cursive/views/struct.SelectView.html
 [`BoxView`]: http://gyscos.github.io/Cursive/cursive/views/struct.BoxView.html
 [`Boxable`]: http://gyscos.github.io/Cursive/cursive/view/trait.Boxable.html
+[`traits`]: http://gyscos.github.io/Cursive/cursive/traits/index.html
 [`SelectView::on_submit`]: http://gyscos.github.io/Cursive/cursive/views/struct.SelectView.html#method.on_submit
 
 ## Linear layouts

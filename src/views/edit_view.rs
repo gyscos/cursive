@@ -22,7 +22,9 @@ use utils::simple_suffix_length;
 ///
 /// ```
 /// # extern crate cursive;
-/// # use cursive::prelude::*;
+/// # use cursive::Cursive;
+/// # use cursive::traits::*;
+/// # use cursive::views::{Dialog, EditView, TextView};
 /// # fn main() {
 /// let mut siv = Cursive::new();
 ///

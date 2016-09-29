@@ -1,6 +1,7 @@
 extern crate cursive;
 
-use cursive::prelude::*;
+use cursive::Cursive;
+use cursive::views::{Dialog, TextView};
 
 fn main() {
     let mut siv = Cursive::new();
@@ -10,9 +11,10 @@ fn main() {
     // Or you can directly load it from a string for easy deployment.
     // siv.load_theme(include_str!("../assets/style.toml")).unwrap();
 
-    siv.add_layer(Dialog::new(TextView::new("This application uses a custom theme!"))
-                      .title("Themed dialog")
-                      .button("Quit", |s| s.quit()));
+    siv.add_layer(Dialog::new(TextView::new("This application uses a \
+                                             custom theme!"))
+        .title("Themed dialog")
+        .button("Quit", |s| s.quit()));
 
     siv.run();
 }

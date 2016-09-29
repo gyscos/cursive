@@ -1,6 +1,8 @@
 extern crate cursive;
 
-use cursive::prelude::*;
+use cursive::{Cursive, Printer};
+use cursive::vec::Vec2;
+use cursive::traits::*;
 
 use std::sync::mpsc;
 use std::thread;

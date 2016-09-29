@@ -29,7 +29,8 @@ cursive = { git = "https://github.com/gyscos/Cursive" }
 ```rust,no_run
 extern crate cursive;
 
-use cursive::prelude::*;
+use cursive::Cursive;
+use cursive::views::{Dialog, TextView};
 
 fn main() {
     // Creates the cursive root - required for every application.

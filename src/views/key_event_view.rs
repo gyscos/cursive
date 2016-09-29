@@ -11,10 +11,11 @@ use view::{View, ViewWrapper};
 /// # Examples
 ///
 /// ```
-/// # use cursive::prelude::*;
+/// # use cursive::event;;
+/// # use cursive::views::{KeyEventView, TextView};
 /// let view = KeyEventView::new(TextView::new("This view has an event!"))
 ///                         .register('q', |s| s.quit())
-///                         .register(Key::Esc, |s| s.quit());
+///                         .register(event::Key::Esc, |s| s.quit());
 /// ```
 pub struct KeyEventView<T: View> {
     content: T,

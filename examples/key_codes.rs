@@ -1,7 +1,8 @@
 extern crate cursive;
 
-use cursive::prelude::*;
-use cursive::event::EventResult;
+use cursive::{Cursive, Printer};
+use cursive::traits::*;
+use cursive::event::{Event, EventResult};
 
 fn main() {
     let mut siv = Cursive::new();

@@ -33,12 +33,12 @@
 //! ```no_run
 //! extern crate cursive;
 //!
-//! use cursive::prelude::*;
+//! use cursive::*;
 //!
 //! fn main() {
 //!     let mut siv = Cursive::new();
 //!
-//!     siv.add_layer(TextView::new("Hello World!\nPress q to quit."));
+//!     siv.add_layer(views::TextView::new("Hello World!\nPress q to quit."));
 //!
 //!     siv.add_global_callback('q', |s| s.quit());
 //!
@@ -80,7 +80,7 @@ macro_rules! new_default(
     }
 );
 
-pub mod prelude;
+pub mod traits;
 
 pub mod event;
 #[macro_use]
@@ -216,10 +216,12 @@ impl Cursive {
     /// ```
     /// # extern crate cursive;
     /// #
-    /// # use cursive::prelude::*;
+    /// # use cursive::{Cursive, event};
+    /// # use cursive::views::{Dialog};
+    /// # use cursive::traits::*;
+    /// # use cursive::menu::*;
     /// #
     /// # fn main() {
-
     /// let mut siv = Cursive::new();
     ///
     /// siv.menubar()
@@ -252,7 +254,7 @@ impl Cursive {
     ///             .leaf("About",
     ///                   |s| s.add_layer(Dialog::info("Cursive v0.0.0"))));
     ///
-    /// siv.add_global_callback(Key::Esc, |s| s.select_menubar());
+    /// siv.add_global_callback(event::Key::Esc, |s| s.select_menubar());
     /// # }
     /// ```
     pub fn menubar(&mut self) -> &mut views::Menubar {
@@ -343,14 +345,16 @@ impl Cursive {
     ///
     /// ```
     /// # extern crate cursive;
-    /// # use cursive::prelude::*;
+    /// # use cursive::{Cursive, views, view};
+    /// # use cursive::traits::*;
     /// # fn main() {
     /// let mut siv = Cursive::new();
     ///
-    /// siv.add_layer(IdView::new("text", TextView::new("Text #1")));
+    /// siv.add_layer(views::TextView::new("Text #1")
+    ///                               .with_id("text"));
     ///
     /// siv.add_global_callback('p', |s| {
-    ///     s.find::<TextView>(&Selector::Id("text"))
+    ///     s.find::<views::TextView>(&view::Selector::Id("text"))
     ///      .unwrap()
     ///      .set_content("Text #2");
     /// });
@@ -367,14 +371,16 @@ impl Cursive {
     ///
     /// ```
     /// # extern crate cursive;
-    /// # use cursive::prelude::*;
+    /// # use cursive::{Cursive, views};
+    /// # use cursive::traits::*;
     /// # fn main() {
     /// let mut siv = Cursive::new();
     ///
-    /// siv.add_layer(IdView::new("text", TextView::new("Text #1")));
+    /// siv.add_layer(views::TextView::new("Text #1")
+    ///                               .with_id("text"));
     ///
     /// siv.add_global_callback('p', |s| {
-    ///     s.find_id::<TextView>("text")
+    ///     s.find_id::<views::TextView>("text")
     ///      .unwrap()
     ///      .set_content("Text #2");
     /// });
@@ -392,7 +398,7 @@ impl Cursive {
     ///
     /// ```
     /// # extern crate cursive;
-    /// # use cursive::prelude::*;
+    /// # use cursive::*;
     /// # fn main() {
     /// let mut siv = Cursive::new();
     ///
@@ -411,11 +417,11 @@ impl Cursive {
     ///
     /// ```
     /// # extern crate cursive;
-    /// # use cursive::prelude::*;
+    /// # use cursive::*;
     /// # fn main() {
     /// let mut siv = Cursive::new();
     ///
-    /// siv.add_layer(TextView::new("Hello world!"));
+    /// siv.add_layer(views::TextView::new("Hello world!"));
     /// # }
     /// ```
     pub fn add_layer<T: 'static + View>(&mut self, view: T) {

@@ -3,8 +3,10 @@ extern crate rand;
 
 use rand::Rng;
 
-use cursive::prelude::*;
+use cursive::Cursive;
+use cursive::views::{Button, Dialog, LinearLayout, ProgressBar, TextView};
 use cursive::views::Counter;
+use cursive::traits::*;
 
 use std::thread;
 use std::cmp::min;
@@ -88,8 +90,7 @@ fn phase_2(s: &mut Cursive) {
     }
 
     s.pop_layer();
-    s.add_layer(Dialog::new(linear.full_width())
-        .title("Just a moment..."));
+    s.add_layer(Dialog::new(linear.full_width()).title("Just a moment..."));
 
     // And we start the worker thread.
     thread::spawn(move || {
@@ -119,6 +120,6 @@ fn final_step(s: &mut Cursive) {
         .title("Report")
         .content(TextView::new("Time travel was a success!\n\
                                We went forward a few seconds!!")
-                 .center())
+            .center())
         .button("That's it?", |s| s.quit()));
 }

@@ -25,7 +25,8 @@ use unicode_width::UnicodeWidthStr;
 ///
 /// ```
 /// # extern crate cursive;
-/// # use cursive::prelude::*;
+/// # use cursive::Cursive;
+/// # use cursive::views::{SelectView, Dialog, TextView};
 /// # use cursive::align::HAlign;
 /// # fn main() {
 /// let mut time_select = SelectView::new().h_align(HAlign::Center);
@@ -42,7 +43,7 @@ use unicode_width::UnicodeWidthStr;
 ///
 /// let mut siv = Cursive::new();
 /// siv.add_layer(Dialog::new(time_select)
-///                 .title("How long is your wait?"));
+///                      .title("How long is your wait?"));
 /// # }
 ///
 /// ```

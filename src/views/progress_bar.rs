@@ -49,7 +49,7 @@ impl Counter {
 /// # Example
 ///
 /// ```
-/// # use cursive::prelude::*;
+/// # use cursive::views::ProgressBar;
 /// let bar = ProgressBar::new()
 ///                       .with_task(|counter| {
 ///                           // This closure is called in parallel.

@@ -15,7 +15,7 @@ use view::View;
 /// # Examples
 ///
 /// ```
-/// # use cursive::prelude::*;
+/// # use cursive::views::Button;
 /// let quit_button = Button::new("Quit", |s| s.quit());
 /// ```
 pub struct Button {

@@ -112,8 +112,6 @@ This method takes 2 arguments: a trigger, and a callback.
 In the end, we have:
 
 ```rust,no_run
-# src/main.rs
-
 extern crate cursive;
 
 use cursive::Cursive;
