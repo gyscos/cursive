@@ -103,6 +103,8 @@ This way of chaining method to set-up the view is very common in cursive. Most
 views provide chainable variants of their methods, to allow creating the view
 and configuring it in one spot.
 
+[`TextView`]: http://gyscos.github.io/Cursive/cursive/views/struct.TextView
+[`Dialog`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html
 [`Dialog::new`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.new
 [`Dialog::text`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.text
 [`Dialog::title`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.title
@@ -146,6 +148,8 @@ fn show_next(s: &mut Cursive) {
     // Empty for now
 }
 ```
+
+[`Dialog::button`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.button
 
 ## Layers
 
