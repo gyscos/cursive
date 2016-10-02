@@ -23,24 +23,13 @@ impl<T> SharedState<T> {
 ///
 /// A `RadioGroup` is used to create and manage [`RadioButton`]s.
 ///
+/// A `RadioGroup` can be cloned; it will keep pointing to the same group.
+///
 /// [`RadioButton`]: struct.RadioButton.html
-///
-/// # Examples
-///
-/// ```
-/// let mut group = RadioGroup::new();
-///
-/// let button_1 = group.button_str(1, "Option 1");
-/// let button_2 = group.button_str(2, "Option 2");
-/// let button_3 = group.button_str(3, "Option 3");
-/// ```
+#[derive(Clone)]
 pub struct RadioGroup<T> {
     // Given to every child button
     state: Rc<RefCell<SharedState<T>>>,
-
-    // Count the number of children already created,
-    // to give an ID to the next child.
-    count: usize,
 }
 
 impl<T> RadioGroup<T> {
@@ -51,7 +40,6 @@ impl<T> RadioGroup<T> {
                 selection: 0,
                 values: Vec::new(),
             })),
-            count: 0,
         }
     }
 
@@ -60,10 +48,9 @@ impl<T> RadioGroup<T> {
     /// The button will display `label` next to it, and will embed `value`.
     pub fn button<S: Into<String>>(&mut self, value: T, label: S)
                                    -> RadioButton<T> {
+        let count = self.state.borrow().values.len();
         self.state.borrow_mut().values.push(Rc::new(value));
-        let result =
-            RadioButton::new(self.state.clone(), self.count, label.into());
-        self.count += 1;
+        let result = RadioButton::new(self.state.clone(), count, label.into());
         result
     }
 
