@@ -26,7 +26,7 @@ enum Focus {
 ///
 /// ```
 /// # use cursive::views::{Dialog,TextView};
-/// let dialog = Dialog::new(TextView::new("Hello!"))
+/// let dialog = Dialog::around(TextView::new("Hello!"))
 ///                     .button("Ok", |s| s.quit());
 /// ```
 pub struct Dialog {
@@ -47,12 +47,12 @@ impl Dialog {
     /// Creates a new `Dialog` with empty content.
     ///
     /// You should probably call `content()` next.
-    pub fn empty() -> Self {
-        Self::new(DummyView)
+    pub fn new() -> Self {
+        Self::around(DummyView)
     }
 
     /// Creates a new `Dialog` with the given content.
-    pub fn new<V: View + 'static>(view: V) -> Self {
+    pub fn around<V: View + 'static>(view: V) -> Self {
         Dialog {
             content: Box::new(view),
             buttons: Vec::new(),
@@ -80,7 +80,7 @@ impl Dialog {
 
     /// Convenient method to create a dialog with a simple text content.
     pub fn text<S: Into<String>>(text: S) -> Self {
-        Self::new(TextView::new(text))
+        Self::around(TextView::new(text))
     }
 
     /// Convenient method to create an infobox.

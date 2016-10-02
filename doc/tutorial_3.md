@@ -29,7 +29,7 @@ fn main() {
         .child(DummyView)
         .child(Button::new("Quit", Cursive::quit));
 
-    siv.add_layer(Dialog::new(LinearLayout::horizontal()
+    siv.add_layer(Dialog::around(LinearLayout::horizontal()
             .child(select)
             .child(DummyView)
             .child(buttons))
@@ -44,7 +44,7 @@ fn add_name(s: &mut Cursive) {
         s.pop_layer();
     }
 
-    s.add_layer(Dialog::new(EditView::new()
+    s.add_layer(Dialog::around(EditView::new()
             .on_submit(ok)
             .with_id("name")
             .fixed_width(10))
@@ -145,7 +145,7 @@ replace the layer with a simple dialog.
 
 Our main screen is more complex than our previous examples: it is made of
 several views. There is a `SelectView` on the left, and three [`Button`]s to
-the right. But our [`Dialog::new`] method only takes one view! How will we do?
+the right. But our [`Dialog::around`] method only takes one view! How will we do?
 
 The solution is to use a layout view to display multiple children side-by-side.
 [`LinearLayout`] for instance can display views in a line.
@@ -174,7 +174,7 @@ as a cheap spacer.
 We can now create the second linear layout inside a Dialog:
 
 ```rust,ignore
-siv.add_layer(Dialog::new(LinearLayout::horizontal()
+siv.add_layer(Dialog::around(LinearLayout::horizontal()
         .child(select)
         .child(DummyView)
         .child(buttons))
@@ -186,7 +186,7 @@ buttons. Though with an empty list, it doesn't look like much yet. Let's fill
 this list with names!
 
 [`Button`]: http://gyscos.github.io/Cursive/cursive/views/struct.Button.html
-[`Dialog::new`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.new
+[`Dialog::around`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.new
 [`LinearLayout`]: http://gyscos.github.io/Cursive/cursive/views/struct.LinearLayout.html
 [`DummyView`]: http://gyscos.github.io/Cursive/cursive/views/struct.DummyView.html
 
@@ -197,7 +197,7 @@ can enter a new name:
 
 ```rust,ignore
 fn add_name(s: &mut Cursive) {
-    s.add_layer(Dialog::new(EditView::new()
+    s.add_layer(Dialog::around(EditView::new()
             .fixed_width(10))
         .title("Enter a new name")
         .button("Ok", |s| {
@@ -231,7 +231,7 @@ Here's what it looks like in action:
 
 ```rust,ignore
 fn add_name(s: &mut Cursive) {
-    s.add_layer(Dialog::new(EditView::new()
+    s.add_layer(Dialog::around(EditView::new()
             .with_id("name")
             .fixed_width(10))
         .title("Enter a new name")
@@ -267,7 +267,7 @@ fn add_name(s: &mut Cursive) {
         s.pop_layer();
     }
 
-    s.add_layer(Dialog::new(EditView::new()
+    s.add_layer(Dialog::around(EditView::new()
             .on_submit(ok)
             .with_id("name")
             .fixed_width(10))
@@ -304,7 +304,7 @@ when we try to add a new layer - one of the quirks of the borrow checker.
 
 [`EditView`]: http://gyscos.github.io/Cursive/cursive/views/struct.EditView.html
 [`IdView`]: http://gyscos.github.io/Cursive/cursive/views/struct.IdView.html
-[`IdView::new`]: http://gyscos.github.io/Cursive/cursive/prelude/struct.IdView.html#method.new
+[`IdView::new`]: http://gyscos.github.io/Cursive/cursive/prelude/struct.IdView.html#method.around
 [`Identifiable`]: http://gyscos.github.io/Cursive/cursive/view/trait.Identifiable.html
 [`Cursive::find_id`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.find_id
 [`SelectView::selected_id`]: http://gyscos.github.io/Cursive/cursive/views/struct.SelectView.html#method.selected_id

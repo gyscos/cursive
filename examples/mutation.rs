@@ -10,7 +10,7 @@ fn show_popup(siv: &mut Cursive) {
     // Let's center the popup horizontally, but offset it down a few rows
     siv.screen_mut()
        .add_layer_at(Position::new(Offset::Center, Offset::Parent(3)),
-                     Dialog::new(TextView::new("Tak!"))
+                     Dialog::around(TextView::new("Tak!"))
                          .button("Change", |s| {
                              // Look for a view tagged "text". We _know_ it's there, so unwrap it.
                              let view = s.find_id::<TextView>("text").unwrap();

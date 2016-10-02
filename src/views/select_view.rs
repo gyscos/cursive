@@ -37,12 +37,12 @@ use unicode_width::UnicodeWidthStr;
 /// time_select.set_on_submit(|s, time| {
 ///     s.pop_layer();
 ///     let text = format!("You will wait for {} minutes...", time);
-///     s.add_layer(Dialog::new(TextView::new(text))
+///     s.add_layer(Dialog::around(TextView::new(text))
 ///                     .button("Quit", |s| s.quit()));
 /// });
 ///
 /// let mut siv = Cursive::new();
-/// siv.add_layer(Dialog::new(time_select)
+/// siv.add_layer(Dialog::around(time_select)
 ///                      .title("How long is your wait?"));
 /// # }
 ///

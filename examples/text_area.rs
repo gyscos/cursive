@@ -7,7 +7,7 @@ use cursive::traits::*;
 fn main() {
     let mut siv = Cursive::new();
 
-    siv.add_layer(Dialog::empty()
+    siv.add_layer(Dialog::new()
         .title("Describe your issue")
         .padding((1, 1, 1, 0))
         .content(TextArea::new()

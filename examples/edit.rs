@@ -10,7 +10,7 @@ fn main() {
     // Create a dialog with an edit text and a button.
     // The user can either hit the <Ok> button,
     // or press Enter on the edit text.
-    siv.add_layer(Dialog::empty()
+    siv.add_layer(Dialog::new()
         .title("Enter your name")
         .padding((1, 1, 1, 0))
         .content(EditView::new()
@@ -33,7 +33,7 @@ fn show_popup(s: &mut Cursive, name: &str) {
     } else {
         let content = format!("Hello {}!", name);
         s.pop_layer();
-        s.add_layer(Dialog::new(TextView::new(content))
+        s.add_layer(Dialog::around(TextView::new(content))
             .button("Quit", |s| s.quit()));
     }
 }

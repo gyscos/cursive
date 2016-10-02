@@ -14,7 +14,7 @@ fn main() {
                 has a fixed width, and the title is centered horizontally.";
 
     // We'll create a dialog with a TextView serving as a title
-    siv.add_layer(Dialog::new(LinearLayout::vertical()
+    siv.add_layer(Dialog::around(LinearLayout::vertical()
             .child(TextView::new("Title").h_align(HAlign::Center))
             // Box the textview, so it doesn't get too wide.
             // A 0 height value means it will be unconstrained.

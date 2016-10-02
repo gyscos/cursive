@@ -63,7 +63,7 @@ Instead of directly using a [`TextView`], we'll use a [`Dialog`] this time.
 A dialog is wrapper with a frame around another view, and optionally a title
 and/or buttons.
 
-[`Dialog::new`] directly takes a view, so we'll directly give it the
+[`Dialog::around`] directly takes a view, so we'll directly give it the
 `TextView`:
 
 ```rust,no_run
@@ -76,7 +76,7 @@ use cursive::views::TextView;
 fn main() {
     let mut siv = Cursive::new();
 
-    siv.add_layer(Dialog::new(TextView::new("...")));
+    siv.add_layer(Dialog::around(TextView::new("...")));
 
     siv.run();
 }
@@ -105,7 +105,7 @@ and configuring it in one spot.
 
 [`TextView`]: http://gyscos.github.io/Cursive/cursive/views/struct.TextView
 [`Dialog`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html
-[`Dialog::new`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.new
+[`Dialog::around`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.around
 [`Dialog::text`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.text
 [`Dialog::title`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.title
 

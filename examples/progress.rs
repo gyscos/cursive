@@ -16,7 +16,7 @@ fn main() {
     let mut siv = Cursive::new();
 
     // We'll start slowly with a simple start button...
-    siv.add_layer(Dialog::empty()
+    siv.add_layer(Dialog::new()
         .title("Progress bar example")
         .padding((0, 0, 1, 1))
         .content(Button::new("Start", phase_1)));
@@ -46,7 +46,7 @@ fn phase_1(s: &mut Cursive) {
     let cb = s.cb_sink().clone();
 
     s.pop_layer();
-    s.add_layer(Dialog::new(ProgressBar::new()
+    s.add_layer(Dialog::around(ProgressBar::new()
         .range(0, n_max)
         .with_task(move |counter| {
             // This closure will be called in a separate thread.
@@ -61,7 +61,7 @@ fn phase_1(s: &mut Cursive) {
 fn coffee_break(s: &mut Cursive) {
     // A little break before things get serious.
     s.pop_layer();
-    s.add_layer(Dialog::empty()
+    s.add_layer(Dialog::new()
         .title("Preparation complete")
         .content(TextView::new("Now, the real deal!").center())
         .button("Again??", phase_2));
@@ -90,7 +90,7 @@ fn phase_2(s: &mut Cursive) {
     }
 
     s.pop_layer();
-    s.add_layer(Dialog::new(linear.full_width()).title("Just a moment..."));
+    s.add_layer(Dialog::around(linear.full_width()).title("Just a moment..."));
 
     // And we start the worker thread.
     thread::spawn(move || {
@@ -116,7 +116,7 @@ fn phase_2(s: &mut Cursive) {
 fn final_step(s: &mut Cursive) {
     // A little break before things get serious.
     s.pop_layer();
-    s.add_layer(Dialog::empty()
+    s.add_layer(Dialog::new()
         .title("Report")
         .content(TextView::new("Time travel was a success!\n\
                                We went forward a few seconds!!")

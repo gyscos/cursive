@@ -47,7 +47,7 @@ fn main() {
 
     siv.add_global_callback(Key::Esc, |s| s.select_menubar());
 
-    siv.add_layer(Dialog::new(TextView::new("Hit <Esc> to show the menu!")));
+    siv.add_layer(Dialog::around(TextView::new("Hit <Esc> to show the menu!")));
 
     siv.run();
 }

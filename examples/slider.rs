@@ -10,7 +10,7 @@ fn main() {
     // Let's add a simple slider in a dialog.
     // Moving the slider will update the dialog's title.
     // And pressing "Enter" will show a new dialog.
-    siv.add_layer(Dialog::new(SliderView::horizontal(15)
+    siv.add_layer(Dialog::around(SliderView::horizontal(15)
             .value(7)
             .on_change(|s, v| {
                 let title = format!("[ {} ]", v);

@@ -8,7 +8,7 @@ use cursive::traits::*;
 fn main() {
     let mut siv = Cursive::new();
 
-    siv.add_layer(Dialog::empty()
+    siv.add_layer(Dialog::new()
         .title("Please fill out this form")
         .button("Ok", |s| s.quit())
         .content(ListView::new()
