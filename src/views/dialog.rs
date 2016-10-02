@@ -44,6 +44,8 @@ pub struct Dialog {
     align: Align,
 }
 
+new_default!(Dialog);
+
 impl Dialog {
     /// Creates a new `Dialog` with empty content.
     ///

@@ -50,8 +50,7 @@ impl<T> RadioGroup<T> {
                                    -> RadioButton<T> {
         let count = self.state.borrow().values.len();
         self.state.borrow_mut().values.push(Rc::new(value));
-        let result = RadioButton::new(self.state.clone(), count, label.into());
-        result
+        RadioButton::new(self.state.clone(), count, label.into())
     }
 
     /// Returns the id of the selected button.
@@ -78,7 +77,7 @@ impl RadioGroup<String> {
 
 /// Variant of `Checkbox` arranged in group.
 ///
-/// RadioButton are managed by a [`RadioGroup`]. A single group can contain
+/// `RadioButton`s are managed by a [`RadioGroup`]. A single group can contain
 /// several radio buttons, but only one button per group can be active at a
 /// time.
 ///
