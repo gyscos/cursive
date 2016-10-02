@@ -1,6 +1,6 @@
 # Cursive
 
-[![crates.io](http://meritbadge.herokuapp.com/cursive)](https://crates.io/crates/cursive)
+[![crates.io](https://meritbadge.herokuapp.com/cursive)](https://crates.io/crates/cursive)
 [![Build Status](https://travis-ci.org/gyscos/Cursive.svg?branch=master)](https://travis-ci.org/gyscos/Cursive)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
