@@ -1,13 +1,13 @@
-use std::any::Any;
+use Printer;
+use backend::Backend;
 
 use direction::Direction;
-use backend::Backend;
+use event::{Event, EventResult};
+use std::any::Any;
+use theme::ColorStyle;
 use vec::Vec2;
 use view::{Offset, Position, Selector, View};
 use views::ShadowView;
-use event::{Event, EventResult};
-use Printer;
-use theme::ColorStyle;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.

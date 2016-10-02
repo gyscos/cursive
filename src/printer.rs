@@ -1,14 +1,14 @@
 //! Makes drawing on ncurses windows easier.
 
+
+use B;
+use backend::Backend;
 use std::cmp::min;
+
+use theme::{BorderStyle, ColorStyle, Effect, Theme};
 use unicode_segmentation::UnicodeSegmentation;
 
 use utils::prefix_length;
-use backend::Backend;
-
-use B;
-
-use theme::{BorderStyle, ColorStyle, Effect, Theme};
 use vec::Vec2;
 
 /// Convenient interface to draw on a subset of the screen.

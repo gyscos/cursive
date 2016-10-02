@@ -1,5 +1,5 @@
-use std::cmp::min;
 use XY;
+use std::cmp::min;
 use vec::Vec2;
 
 /// Location of the view on screen
@@ -60,7 +60,8 @@ pub enum Offset {
 
 impl Offset {
     /// Computes a single-dimension offset requred to draw a view.
-    pub fn compute_offset(&self, size: usize, available: usize, parent: usize)
+    pub fn compute_offset(&self, size: usize, available: usize,
+                          parent: usize)
                           -> usize {
         if size > available {
             0
@@ -79,17 +80,17 @@ impl Offset {
 #[cfg(test)]
 mod tests {
 
-    use vec::Vec2;
     use super::Position;
+    use vec::Vec2;
 
     #[test]
     fn test_center() {
-        let center = Position::center();
-        assert_eq!(Vec2::new(2, 1), center.compute_offset((1,1), (5,3), (0,0)));
-        assert_eq!(Vec2::new(2, 0), center.compute_offset((1,3), (5,3), (0,0)));
-        assert_eq!(Vec2::new(1, 1), center.compute_offset((3,1), (5,3), (0,0)));
-        assert_eq!(Vec2::new(0, 1), center.compute_offset((5,1), (5,3), (0,0)));
-        assert_eq!(Vec2::new(0, 0), center.compute_offset((5,3), (5,3), (0,0)));
-        assert_eq!(Vec2::new(0, 0), center.compute_offset((5,3), (3,1), (0,0)));
+        let c = Position::center();
+        assert_eq!(Vec2::new(2, 1), c.compute_offset((1, 1), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(2, 0), c.compute_offset((1, 3), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(1, 1), c.compute_offset((3, 1), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(0, 1), c.compute_offset((5, 1), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(0, 0), c.compute_offset((5, 3), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(0, 0), c.compute_offset((5, 3), (3, 1), (0, 0)));
     }
 }

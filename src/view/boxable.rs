@@ -1,6 +1,6 @@
+use vec::Vec2;
 use view::{SizeConstraint, View};
 use views::BoxView;
-use vec::Vec2;
 
 /// Makes a view wrappable in a [`BoxView`].
 ///

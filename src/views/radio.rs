@@ -1,12 +1,12 @@
 use {Printer, With};
-use vec::Vec2;
-use view::View;
-use theme::ColorStyle;
-use event::{Event, EventResult, Key};
 use direction::Direction;
+use event::{Event, EventResult, Key};
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use theme::ColorStyle;
+use vec::Vec2;
+use view::View;
 
 struct SharedState<T> {
     selection: usize,
@@ -98,7 +98,8 @@ pub struct RadioButton<T> {
 impl<T> RadioButton<T> {
     impl_enabled!(self.enabled);
 
-    fn new(state: Rc<RefCell<SharedState<T>>>, id: usize, label: String) -> Self {
+    fn new(state: Rc<RefCell<SharedState<T>>>, id: usize, label: String)
+           -> Self {
         RadioButton {
             state: state,
             id: id,

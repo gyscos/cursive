@@ -1,9 +1,9 @@
 use backend;
 use event::{Event, Key};
-use theme::{BaseColor, Color, ColorStyle, Effect};
-use utf8;
 
 use ncurses;
+use theme::{BaseColor, Color, ColorStyle, Effect};
+use utf8;
 
 pub struct NcursesBackend;
 

@@ -1,17 +1,17 @@
 use Cursive;
-use view::{Position, View};
-use vec::Vec2;
-use direction;
-use menu::MenuTree;
-use backend::Backend;
-use views::{KeyEventView, MenuPopup};
-use theme::ColorStyle;
 use Printer;
+use backend::Backend;
+use direction;
 use event::*;
+use menu::MenuTree;
 
 use std::rc::Rc;
+use theme::ColorStyle;
 
 use unicode_width::UnicodeWidthStr;
+use vec::Vec2;
+use view::{Position, View};
+use views::{KeyEventView, MenuPopup};
 
 /// Current state of the menubar
 #[derive(PartialEq, Debug)]
@@ -169,11 +169,7 @@ impl View for Menubar {
                     .iter()
                     .map(|&(ref title, _)| title.width() + 2)
                     .fold(0, |a, b| a + b),
-                              if self.autohide {
-                    1
-                } else {
-                    0
-                });
+                              if self.autohide { 1 } else { 0 });
                 // Since the closure will be called multiple times,
                 // we also need a new Rc on every call.
                 return EventResult::with_cb(move |s| {

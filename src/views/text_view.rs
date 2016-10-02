@@ -1,16 +1,16 @@
-use XY;
-use With;
-use direction::Direction;
-use vec::Vec2;
-use view::{SizeCache, View};
 use Printer;
+use With;
+use XY;
 use align::*;
+use direction::Direction;
 use event::*;
-use view::ScrollBase;
-
-use utils::{LinesIterator, Row};
 
 use unicode_width::UnicodeWidthStr;
+
+use utils::{LinesIterator, Row};
+use vec::Vec2;
+use view::{SizeCache, View};
+use view::ScrollBase;
 
 
 /// A simple view showing a fixed text

@@ -1,10 +1,10 @@
-use std::any::Any;
+use Printer;
 
 use direction::Direction;
+use event::{Event, EventResult};
+use std::any::Any;
 use vec::Vec2;
 use view::{Selector, View};
-use Printer;
-use event::{Event, EventResult};
 
 /// Generic wrapper around a view.
 ///

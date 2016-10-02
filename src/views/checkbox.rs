@@ -1,13 +1,13 @@
-use With;
 use Cursive;
 use Printer;
-use vec::Vec2;
-use theme::ColorStyle;
-use view::View;
-use event::{Event, EventResult, Key};
+use With;
 use direction::Direction;
+use event::{Event, EventResult, Key};
 
 use std::rc::Rc;
+use theme::ColorStyle;
+use vec::Vec2;
+use view::View;
 
 
 /// Checkable box.

@@ -1,5 +1,5 @@
-use views::IdView;
 use view::View;
+use views::IdView;
 
 /// Makes a view wrappable in an [`IdView`].
 ///

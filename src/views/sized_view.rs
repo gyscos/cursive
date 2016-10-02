@@ -1,5 +1,5 @@
-use view::View;
 use vec::Vec2;
+use view::View;
 use view::ViewWrapper;
 
 /// Wrapper around a view that remembers its size.

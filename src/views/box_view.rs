@@ -38,7 +38,8 @@ impl<T: View> BoxView<T> {
     /// Creates a new `BoxView` with the given width and height requirements.
     ///
     /// `None` values will use the wrapped view's preferences.
-    pub fn new(width: SizeConstraint, height: SizeConstraint, view: T) -> Self {
+    pub fn new(width: SizeConstraint, height: SizeConstraint, view: T)
+               -> Self {
         BoxView {
             size: (width, height).into(),
             squishable: false,

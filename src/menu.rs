@@ -12,10 +12,10 @@
 //!
 //! [menubar]: ../struct.Cursive.html#method.menubar
 
-use With;
 use Cursive;
-use std::rc::Rc;
+use With;
 use event::Callback;
+use std::rc::Rc;
 
 /// Root of a menu tree.
 #[derive(Default)]

@@ -13,10 +13,10 @@
 //!   [global callback](../struct.Cursive.html#method.add_global_callback)
 //!   table is checked.
 
-use std::rc::Rc;
-use std::ops::Deref;
 
 use Cursive;
+use std::ops::Deref;
+use std::rc::Rc;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.

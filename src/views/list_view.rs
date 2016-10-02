@@ -1,13 +1,13 @@
 use Printer;
 use With;
-use vec::Vec2;
-use view::View;
-use view::Selector;
 use direction;
-use view::ScrollBase;
 use event::{Event, EventResult, Key};
 
 use std::any::Any;
+use vec::Vec2;
+use view::ScrollBase;
+use view::Selector;
+use view::View;
 
 enum Child {
     Row(String, Box<View>),
@@ -84,11 +84,7 @@ impl ListView {
 
         match source {
             direction::Relative::Front => {
-                let start = if from_focus {
-                    self.focus
-                } else {
-                    0
-                };
+                let start = if from_focus { self.focus } else { 0 };
 
                 Box::new(self.children.iter_mut().enumerate().skip(start))
             }

@@ -1,7 +1,7 @@
 //! Toolbox to make text layout easier.
 
-use unicode_width::UnicodeWidthStr;
 use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 mod lines_iterator;
 mod reader;
@@ -55,11 +55,7 @@ pub fn prefix_length<'a, I>(iter: I, width: usize, delimiter: &str) -> usize
 
     // We counted delimiter once too many times,
     // but only if the iterator was non empty.
-    if sum == 0 {
-        sum
-    } else {
-        sum - delimiter_len
-    }
+    if sum == 0 { sum } else { sum - delimiter_len }
 }
 
 /// Computes the length of a suffix that fits in the given `width`.

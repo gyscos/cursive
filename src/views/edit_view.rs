@@ -1,15 +1,16 @@
-use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::UnicodeWidthStr;
 
-use std::rc::Rc;
 
 use {Cursive, Printer, With};
 use direction::Direction;
+use event::{Callback, Event, EventResult, Key};
+
+use std::rc::Rc;
 use theme::{ColorStyle, Effect};
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
+use utils::simple_suffix_length;
 use vec::Vec2;
 use view::View;
-use event::{Callback, Event, EventResult, Key};
-use utils::simple_suffix_length;
 
 
 /// Input box where the user can enter and edit text.
@@ -289,11 +290,7 @@ impl View for EditView {
                     let display_bytes = content.graphemes(true)
                         .scan(0, |w, g| {
                             *w += g.width();
-                            if *w > self.last_length {
-                                None
-                            } else {
-                                Some(g)
-                            }
+                            if *w > self.last_length { None } else { Some(g) }
                         })
                         .map(|g| g.len())
                         .fold(0, |a, b| a + b);

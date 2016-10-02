@@ -1,18 +1,19 @@
-use std::cmp::max;
-use std::any::Any;
+
 
 use Cursive;
-use With;
-use direction::Direction;
-use align::*;
-use event::*;
-use theme::ColorStyle;
-use view::{Selector, View};
-use views::{Button, DummyView, SizedView, TextView};
-use vec::{Vec2, Vec4};
 use Printer;
+use With;
+use align::*;
+use direction::Direction;
+use event::*;
+use std::any::Any;
+use std::cmp::max;
+use theme::ColorStyle;
 
 use unicode_width::UnicodeWidthStr;
+use vec::{Vec2, Vec4};
+use view::{Selector, View};
+use views::{Button, DummyView, SizedView, TextView};
 
 #[derive(PartialEq)]
 enum Focus {

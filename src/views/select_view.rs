@@ -1,21 +1,22 @@
-use std::cmp::min;
-use std::rc::Rc;
-use std::cell::Cell;
-use std::borrow::Borrow;
+
 
 use Cursive;
-use With;
-use menu::MenuTree;
-use direction::Direction;
-use view::{Position, ScrollBase, View};
-use views::MenuPopup;
-use align::{Align, HAlign, VAlign};
-use event::{Callback, Event, EventResult, Key};
-use theme::ColorStyle;
-use vec::Vec2;
 use Printer;
+use With;
+use align::{Align, HAlign, VAlign};
+use direction::Direction;
+use event::{Callback, Event, EventResult, Key};
+use menu::MenuTree;
+use std::borrow::Borrow;
+use std::cell::Cell;
+use std::cmp::min;
+use std::rc::Rc;
+use theme::ColorStyle;
 
 use unicode_width::UnicodeWidthStr;
+use vec::Vec2;
+use view::{Position, ScrollBase, View};
+use views::MenuPopup;
 
 /// View to select an item among a list.
 ///
@@ -394,11 +395,7 @@ impl<T: 'static> View for SelectView<T> {
             let scrolling = req.y < h;
 
             // Add 2 spaces for the scrollbar if we need
-            let w = if scrolling {
-                w + 2
-            } else {
-                w
-            };
+            let w = if scrolling { w + 2 } else { w };
 
             Vec2::new(w, h)
         }

@@ -1,8 +1,8 @@
+use Printer;
 use std::cmp::{max, min};
 
 use theme::ColorStyle;
 use vec::Vec2;
-use Printer;
 
 /// Provide scrolling functionalities to a view.
 ///

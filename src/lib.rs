@@ -104,22 +104,25 @@ mod utf8;
 
 mod backend;
 
-pub use xy::XY;
-pub use with::With;
-pub use printer::Printer;
 
 use backend::{Backend, NcursesBackend};
-use view::Finder;
 
-use std::sync::mpsc;
+use event::{Callback, Event, EventResult};
+
+pub use printer::Printer;
+
 use std::any::Any;
 use std::collections::HashMap;
 use std::path::Path;
 
-use vec::Vec2;
-use view::View;
+use std::sync::mpsc;
 
-use event::{Callback, Event, EventResult};
+use vec::Vec2;
+use view::Finder;
+use view::View;
+pub use with::With;
+pub use xy::XY;
+
 
 /// Identifies a screen in the cursive ROOT.
 pub type ScreenId = usize;
@@ -467,11 +470,7 @@ impl Cursive {
 
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
-        let offset = if self.menubar.autohide {
-            0
-        } else {
-            1
-        };
+        let offset = if self.menubar.autohide { 0 } else { 1 };
         // Draw the menubar?
         if self.menubar.visible() {
             let printer = printer.sub_printer(Vec2::zero(),

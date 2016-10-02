@@ -114,16 +114,16 @@
 //! 	highlight_inactive = "#5555FF"
 //! ```
 
-use std::io;
-use std::io::Read;
-use std::fs::File;
-use std::path::Path;
-
-use backend::Backend;
-
-use toml;
 
 use B;
+
+use backend::Backend;
+use std::fs::File;
+use std::io;
+use std::io::Read;
+use std::path::Path;
+
+use toml;
 
 /// Text effect
 #[derive(Clone, Copy, Debug)]
@@ -233,32 +233,32 @@ impl Theme {
     pub fn activate(&self, backend: &mut B) {
         // Initialize each color with the backend
         backend.init_color_style(ColorStyle::Background,
-                            &self.colors.view,
-                            &self.colors.background);
+                                 &self.colors.view,
+                                 &self.colors.background);
         backend.init_color_style(ColorStyle::Shadow,
-                            &self.colors.shadow,
-                            &self.colors.shadow);
+                                 &self.colors.shadow,
+                                 &self.colors.shadow);
         backend.init_color_style(ColorStyle::Primary,
-                            &self.colors.primary,
-                            &self.colors.view);
+                                 &self.colors.primary,
+                                 &self.colors.view);
         backend.init_color_style(ColorStyle::Secondary,
-                            &self.colors.secondary,
-                            &self.colors.view);
+                                 &self.colors.secondary,
+                                 &self.colors.view);
         backend.init_color_style(ColorStyle::Tertiary,
-                            &self.colors.tertiary,
-                            &self.colors.view);
+                                 &self.colors.tertiary,
+                                 &self.colors.view);
         backend.init_color_style(ColorStyle::TitlePrimary,
-                            &self.colors.title_primary,
-                            &self.colors.view);
+                                 &self.colors.title_primary,
+                                 &self.colors.view);
         backend.init_color_style(ColorStyle::TitleSecondary,
-                            &self.colors.title_secondary,
-                            &self.colors.view);
+                                 &self.colors.title_secondary,
+                                 &self.colors.view);
         backend.init_color_style(ColorStyle::Highlight,
-                            &self.colors.view,
-                            &self.colors.highlight);
+                                 &self.colors.view,
+                                 &self.colors.highlight);
         backend.init_color_style(ColorStyle::HighlightInactive,
-                            &self.colors.view,
-                            &self.colors.highlight_inactive);
+                                 &self.colors.view,
+                                 &self.colors.highlight_inactive);
     }
 }
 

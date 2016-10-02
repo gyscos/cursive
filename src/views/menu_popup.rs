@@ -1,17 +1,18 @@
-use std::rc::Rc;
-use std::cmp::min;
 
-use unicode_width::UnicodeWidthStr;
 
 use Cursive;
-use With;
-use menu::{MenuItem, MenuTree};
 use Printer;
+use With;
+use align::Align;
+use event::{Callback, Event, EventResult, Key};
+use menu::{MenuItem, MenuTree};
+use std::cmp::min;
+use std::rc::Rc;
+
+use unicode_width::UnicodeWidthStr;
+use vec::Vec2;
 use view::{Position, ScrollBase, View};
 use views::KeyEventView;
-use align::Align;
-use vec::Vec2;
-use event::{Callback, Event, EventResult, Key};
 
 /// Popup that shows a list of items.
 pub struct MenuPopup {
@@ -205,11 +206,7 @@ impl View for MenuPopup {
 
         let scrolling = req.y < h;
 
-        let w = if scrolling {
-            w + 1
-        } else {
-            w
-        };
+        let w = if scrolling { w + 1 } else { w };
 
         Vec2::new(w, h)
     }

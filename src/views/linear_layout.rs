@@ -1,14 +1,14 @@
-use XY;
-use With;
-use direction;
-use view::View;
-use view::{Selector, SizeCache};
-use vec::Vec2;
 use Printer;
+use With;
+use XY;
+use direction;
 use event::{Event, EventResult, Key};
 
 use std::any::Any;
 use std::cmp::min;
+use vec::Vec2;
+use view::{Selector, SizeCache};
+use view::View;
 
 /// Arranges its children linearly according to its orientation.
 pub struct LinearLayout {
@@ -120,11 +120,7 @@ impl LinearLayout {
 
         match source {
             direction::Relative::Front => {
-                let start = if from_focus {
-                    self.focus
-                } else {
-                    0
-                };
+                let start = if from_focus { self.focus } else { 0 };
 
                 Box::new(self.children.iter_mut().enumerate().skip(start))
             }
@@ -263,11 +259,7 @@ impl View for LinearLayout {
         let mut overweight: Vec<(usize, usize)> = sizes.iter()
             .map(|v| self.orientation.get(v))
             .zip(min_sizes.iter().map(|v| self.orientation.get(v)))
-            .map(|(a, b)| if a > b {
-                a - b
-            } else {
-                0
-            })
+            .map(|(a, b)| if a > b { a - b } else { 0 })
             .enumerate()
             .collect();
         // println_stderr!("Overweight: {:?}", overweight);

@@ -1,7 +1,8 @@
-use std::collections::HashMap;
+
 
 use Cursive;
 use event::{Callback, Event, EventResult};
+use std::collections::HashMap;
 use view::{View, ViewWrapper};
 
 /// A simple wrapper view that catches some ignored event from its child.

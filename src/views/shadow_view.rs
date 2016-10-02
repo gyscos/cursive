@@ -1,7 +1,7 @@
-use view::{View, ViewWrapper};
 use Printer;
-use vec::Vec2;
 use theme::ColorStyle;
+use vec::Vec2;
+use view::{View, ViewWrapper};
 
 /// Wrapper view that adds a shadow.
 ///

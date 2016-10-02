@@ -50,12 +50,12 @@ mod identifiable;
 mod boxable;
 
 
-use std::any::Any;
+use Printer;
 
 use direction::Direction;
 use event::{Event, EventResult};
-use vec::Vec2;
-use Printer;
+pub use self::boxable::Boxable;
+pub use self::identifiable::Identifiable;
 
 pub use self::position::{Offset, Position};
 
@@ -65,8 +65,8 @@ pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
 pub use self::view_path::ViewPath;
 pub use self::view_wrapper::ViewWrapper;
-pub use self::identifiable::Identifiable;
-pub use self::boxable::Boxable;
+use std::any::Any;
+use vec::Vec2;
 
 
 /// Main trait defining a view behaviour.

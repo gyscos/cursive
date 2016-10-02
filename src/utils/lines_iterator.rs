@@ -1,7 +1,8 @@
-use unicode_width::UnicodeWidthStr;
-use unicode_segmentation::UnicodeSegmentation;
+
 
 use With;
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 use utils::prefix_length;
 
 /// Generates rows of text in constrained width.

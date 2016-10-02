@@ -1,11 +1,12 @@
-use std::sync::Arc;
 
-use std::thread;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::cmp;
 
 use {Cursive, Printer};
 use align::HAlign;
+use std::cmp;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+use std::thread;
 use theme::{ColorStyle, Effect};
 use view::View;
 

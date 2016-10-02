@@ -1,10 +1,11 @@
-use unicode_width::UnicodeWidthStr;
+
 
 use {Cursive, Printer, With};
 use align::HAlign;
-use event::*;
 use direction::Direction;
+use event::*;
 use theme::ColorStyle;
+use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::View;
 

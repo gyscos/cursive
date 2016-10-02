@@ -1,14 +1,15 @@
-use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::UnicodeWidthStr;
-use odds::vec::VecExt;
+
 
 use {Printer, With, XY};
 use direction::Direction;
-use vec::Vec2;
 use event::{Event, EventResult, Key};
-use utils::{LinesIterator, Row, prefix_length};
-use view::{ScrollBase, SizeCache, View};
+use odds::vec::VecExt;
 use theme::{ColorStyle, Effect};
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
+use utils::{LinesIterator, Row, prefix_length};
+use vec::Vec2;
+use view::{ScrollBase, SizeCache, View};
 
 /// Multi-lines text editor.
 ///
