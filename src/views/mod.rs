@@ -1,5 +1,39 @@
 //! Various views to use when creating the layout.
 
+macro_rules! impl_enabled {
+    (self.$x:ident) => {
+
+        /// Disables this view.
+        ///
+        /// A disabled view cannot be selected.
+        pub fn disable(&mut self) {
+            self.$x = false;
+        }
+
+        /// Disables this view.
+        ///
+        /// Chainable variant.
+        pub fn disabled(self) -> Self {
+            self.with(Self::disable)
+        }
+
+        /// Re-enables this view.
+        pub fn enable(&mut self) {
+            self.$x = true;
+        }
+
+        /// Enable or disable this view.
+        pub fn set_enabled(&mut self, enabled: bool) {
+            self.$x = enabled;
+        }
+
+        /// Returns `true` if this view is enabled.
+        pub fn is_enabled(&self) -> bool {
+            self.$x
+        }
+    }
+}
+
 mod box_view;
 mod button;
 mod checkbox;
@@ -14,6 +48,7 @@ mod menubar;
 mod menu_popup;
 mod panel;
 mod progress_bar;
+mod radio;
 mod select_view;
 mod slider_view;
 mod shadow_view;
@@ -37,6 +72,7 @@ pub use self::menubar::Menubar;
 pub use self::menu_popup::MenuPopup;
 pub use self::panel::Panel;
 pub use self::progress_bar::{Counter, ProgressBar};
+pub use self::radio::{RadioGroup, RadioButton};
 pub use self::select_view::SelectView;
 pub use self::slider_view::SliderView;
 pub use self::shadow_view::ShadowView;
