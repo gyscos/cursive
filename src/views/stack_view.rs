@@ -105,7 +105,11 @@ impl View for StackView {
 
         for layer in &mut self.layers {
             // Give each guy what he asks for, within the budget constraints.
-            layer.size = Vec2::min(size, layer.view.get_min_size(size));
+            let size = Vec2::min(size, layer.view.get_min_size(size));
+            if !layer.size.fits_in(size) {
+                ::B::clear();
+            }
+            layer.size = size;
             layer.view.layout(layer.size);
 
             // We do it here instead of when adding a new layer because...?
