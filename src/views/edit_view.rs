@@ -229,6 +229,10 @@ impl EditView {
                 .map(|g| g.width())
                 .next()
                 .unwrap_or(1);
+            if c_len > self.last_length {
+                // Weird - no available space?
+                return;
+            }
             // Now, we have to fit self.content[..self.cursor]
             // into self.last_length - c_len.
             let available = self.last_length - c_len;
@@ -239,6 +243,7 @@ impl EditView {
                 simple_suffix_length(&self.content[self.offset..self.cursor],
                                      available);
             self.offset = self.cursor - suffix_length;
+            // Make sure the cursor is in view
             assert!(self.cursor >= self.offset);
 
         }
