@@ -12,14 +12,14 @@ It allows you to build rich user interfaces for terminal applications.
 
 It is designed to be safe and easy to use:
 
-```
+```toml
 [dependencies]
 cursive = "0.3"
 ```
 
 Or to use the latest git version:
 
-```
+```toml
 [dependencies]
 cursive = { git = "https://github.com/gyscos/Cursive" }
 ```
