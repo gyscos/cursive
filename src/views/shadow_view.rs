@@ -60,7 +60,8 @@ impl<T: View> ViewWrapper for ShadowView<T> {
 
     fn wrap_draw(&self, printer: &Printer) {
 
-        if printer.size.y == 0 || printer.size.x == 0 {
+        if printer.size.y <= self.top_padding as usize ||
+           printer.size.x <= self.left_padding as usize {
             // Nothing to do if there's no place to draw.
             return;
         }
@@ -79,7 +80,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
                                             printer.size - (1, 1),
                                             true));
 
-        if printer.theme.shadow {
+        if printer.theme.shadow && false {
             let h = printer.size.y;
             let w = printer.size.x;
 

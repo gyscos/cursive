@@ -1,5 +1,6 @@
 [package]
 authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
+build = "build.rs"
 description = "A TUI (Text User Interface) library focused on ease-of-use."
 documentation = "https://gyscos.github.io/Cursive/cursive/index.html"
 exclude = ["doc", "assets"]
@@ -9,10 +10,13 @@ name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
 version = "0.3.1"
-build="build.rs"
+
+[build-dependencies]
+skeptic = "0.6"
 
 [dependencies]
 odds = "0.2"
+termion = "1.1.1"
 toml = "0.2"
 unicode-segmentation = "0.1"
 unicode-width = "0.1"
@@ -23,9 +27,6 @@ version = "5.82.0"
 
 [dev-dependencies]
 rand = "0.3"
-skeptic = "0.6"
-
-[build-dependencies]
 skeptic = "0.6"
 
 [lib]

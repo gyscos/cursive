@@ -3,15 +3,18 @@ use theme;
 
 // Module is not named `ncurses` to avoir naming conflict
 mod curses;
+mod termion;
 
 pub use self::curses::NcursesBackend;
+pub use self::termion::TermionBackend;
 
 pub trait Backend {
     fn init() -> Self;
+    // TODO: take `self` by value?
     fn finish(&mut self);
 
     fn clear(&self);
-    fn refresh(&self);
+    fn refresh(&mut self);
 
     fn has_colors(&self) -> bool;
 
@@ -24,6 +27,7 @@ pub trait Backend {
     fn set_refresh_rate(&mut self, fps: u32);
     fn screen_size(&self) -> (usize, usize);
 
+    // TODO: unify those into a single method?
     fn with_color<F: FnOnce()>(&self, color: theme::ColorStyle, f: F);
     fn with_effect<F: FnOnce()>(&self, effect: theme::Effect, f: F);
 }

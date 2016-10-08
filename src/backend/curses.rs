@@ -74,7 +74,7 @@ impl backend::Backend for NcursesBackend {
         ncurses::clear();
     }
 
-    fn refresh(&self) {
+    fn refresh(&mut self) {
         ncurses::refresh();
     }
 

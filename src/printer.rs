@@ -104,8 +104,11 @@ impl<'a> Printer<'a> {
             return;
         }
         let len = min(len, self.size.x - p.x);
+        let text: String = ::std::iter::repeat(c).take(len).collect();
 
         let p = p + self.offset;
+        // self.backend.print_at((p.x, p.y), &text);
+        self.print(p, &text);
         for x in 0..len {
             self.backend.print_at((p.x + x, p.y), c);
         }

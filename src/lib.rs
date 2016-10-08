@@ -61,6 +61,7 @@ extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
 extern crate odds;
+extern crate termion;
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
@@ -105,7 +106,7 @@ mod utf8;
 mod backend;
 
 
-use backend::{Backend, NcursesBackend};
+use backend::{Backend};
 
 use event::{Callback, Event, EventResult};
 
@@ -155,7 +156,7 @@ new_default!(Cursive);
 // Use the Ncurses backend.
 // TODO: make this feature-driven
 #[doc(hidden)]
-pub type B = NcursesBackend;
+pub type B = backend::TermionBackend;
 
 impl Cursive {
     /// Creates a new Cursive root, and initialize ncurses.
@@ -493,7 +494,6 @@ impl Cursive {
         let id = self.active_screen;
         self.screens.get_mut(id).unwrap().draw(&printer);
 
-        self.backend.refresh();
     }
 
     /// Runs the event loop.
@@ -518,6 +518,7 @@ impl Cursive {
             // TODO: Do we need to redraw every view every time?
             // (Is this getting repetitive? :p)
             self.draw();
+            self.backend.refresh();
 
             // Wait for next event.
             // (If set_fps was called, this returns -1 now and then)
