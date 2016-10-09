@@ -1,5 +1,3 @@
-
-
 use ::backend;
 use ::event::{Event, Key};
 use std::io::Write;
@@ -15,18 +13,19 @@ pub struct TermionBackend {
 impl backend::Backend for TermionBackend {
     fn init() -> Self {
         print!("{}", termion::cursor::Hide);
-        Self::clear();
 
-
-        TermionBackend {
+        let backend = TermionBackend {
             terminal: ::std::io::stdout().into_raw_mode().unwrap(),
-        }
+        };
+
+        backend.clear();
+        backend
     }
 
     fn finish(&mut self) {
         // Maybe we should clear everything?
         print!("{}{}", termion::cursor::Show, termion::cursor::Goto(1, 1));
-        Self::clear();
+        self.clear();
     }
 
     fn init_color_style(&mut self, style: ColorStyle, foreground: &Color,
@@ -58,7 +57,7 @@ impl backend::Backend for TermionBackend {
         (x as usize, y as usize)
     }
 
-    fn clear() {
+    fn clear(&self) {
         print!("{}", termion::clear::All);
     }
 
