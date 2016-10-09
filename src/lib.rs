@@ -56,12 +56,15 @@
 //! and log to it instead of stdout.
 #![deny(missing_docs)]
 
+#[cfg(feature = "ncurses")]
 extern crate ncurses;
+#[cfg(feature = "termion")]
+extern crate termion;
+
 extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
 extern crate odds;
-extern crate termion;
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
@@ -155,8 +158,13 @@ new_default!(Cursive);
 
 // Use the Ncurses backend.
 // TODO: make this feature-driven
+#[cfg(feature = "termion")]
 #[doc(hidden)]
-pub type B = backend::TermionBackend;
+pub type B = backend::termion::TermionBackend;
+
+#[doc(hidden)]
+#[cfg(feature = "ncurses")]
+pub type B = backend::curses::NcursesBackend;
 
 impl Cursive {
     /// Creates a new Cursive root, and initialize ncurses.
