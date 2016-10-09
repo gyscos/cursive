@@ -204,7 +204,7 @@ impl Cursive {
 
     /// Sets the menubar autohide_menubar feature.
     ///
-    /// * When enabled, the menu is only visible when selected.
+    /// * When enabled (default), the menu is only visible when selected.
     /// * When disabled, the menu is always visible and reserves the top row.
     pub fn set_autohide_menu(&mut self, autohide: bool) {
         self.menubar.autohide = autohide;
