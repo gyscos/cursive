@@ -3,7 +3,9 @@
 
 use B;
 use backend::Backend;
+use std::cell::Cell;
 use std::cmp::min;
+use std::rc::Rc;
 
 use theme::{BorderStyle, ColorStyle, Effect, Theme};
 use unicode_segmentation::UnicodeSegmentation;
@@ -22,6 +24,9 @@ pub struct Printer<'a> {
     /// Currently used theme
     pub theme: Theme,
 
+    /// `true` if nothing has been drawn yet.
+    new: Rc<Cell<bool>>,
+    /// Backend used to actually draw things
     backend: &'a B,
 }
 
@@ -36,14 +41,29 @@ impl<'a> Printer<'a> {
             size: size.into(),
             focused: true,
             theme: theme,
+            new: Rc::new(Cell::new(true)),
             backend: backend,
         }
+    }
+
+    /// Clear the screen.
+    ///
+    /// Careful with this method, it will discard anything drawn before.
+    pub fn clear(&self) {
+        self.backend.clear();
+    }
+
+    /// Returns `true` if nothing has been printed yet.
+    pub fn is_new(&self) -> bool {
+        self.new.get()
     }
 
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position relative to the window.
     pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) {
+        self.new.set(false);
+
         let p = pos.into();
         if p.y >= self.size.y || p.x >= self.size.x {
             return;
@@ -61,6 +81,8 @@ impl<'a> Printer<'a> {
 
     /// Prints a vertical line using the given character.
     pub fn print_vline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
+        self.new.set(false);
+
         let p = start.into();
         if p.y > self.size.y || p.x > self.size.x {
             return;
@@ -75,6 +97,8 @@ impl<'a> Printer<'a> {
 
     /// Prints a horizontal line using the given character.
     pub fn print_hline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
+        self.new.set(false);
+
         let p = start.into();
         if p.y > self.size.y || p.x > self.size.x {
             return;
@@ -135,6 +159,8 @@ impl<'a> Printer<'a> {
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S,
                                                    invert: bool) {
+        self.new.set(false);
+
         let start = start.into();
         let size = size.into();
         if size.x < 2 || size.y < 2 {
@@ -234,6 +260,7 @@ impl<'a> Printer<'a> {
             focused: self.focused && focused,
             theme: self.theme.clone(),
             backend: self.backend,
+            new: self.new.clone(),
         }
     }
 

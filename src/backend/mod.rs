@@ -10,7 +10,7 @@ pub trait Backend {
     fn init() -> Self;
     fn finish(&mut self);
 
-    fn clear();
+    fn clear(&self);
     fn refresh(&self);
 
     fn has_colors(&self) -> bool;

@@ -1,6 +1,5 @@
 use Cursive;
 use Printer;
-use backend::Backend;
 use direction;
 use event::*;
 use menu::MenuTree;
@@ -61,7 +60,6 @@ impl Menubar {
     /// Hides the menubar.
     fn hide(&mut self) {
         self.state = State::Inactive;
-        ::B::clear();
     }
 
     /// True if we should be receiving events.
@@ -144,7 +142,10 @@ impl View for Menubar {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Esc) => self.hide(),
+            Event::Key(Key::Esc) => {
+                self.hide();
+                return EventResult::with_cb(|s| s.clear());
+            }
             Event::Key(Key::Left) => {
                 if self.focus > 0 {
                     self.focus -= 1

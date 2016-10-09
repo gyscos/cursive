@@ -70,7 +70,7 @@ impl backend::Backend for NcursesBackend {
         ncurses::attroff(style);
     }
 
-    fn clear() {
+    fn clear(&self) {
         ncurses::clear();
     }
 

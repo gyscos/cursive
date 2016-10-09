@@ -273,7 +273,14 @@ impl Cursive {
     pub fn set_theme(&mut self, theme: theme::Theme) {
         self.theme = theme;
         self.theme.activate(&mut self.backend);
-        B::clear();
+        self.backend.clear();
+    }
+
+    /// Clears the screen.
+    ///
+    /// If a view becomes smaller, clearing the screen may be necessary.
+    pub fn clear(&self) {
+        self.backend.clear();
     }
 
     /// Loads a theme from the given file.
@@ -516,7 +523,7 @@ impl Cursive {
             // (If set_fps was called, this returns -1 now and then)
             let event = self.backend.poll_event();
             if event == Event::WindowResize {
-                B::clear();
+                self.backend.clear();
             }
 
             // Event dispatch order:
