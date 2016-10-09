@@ -1,11 +1,13 @@
 use event;
 use theme;
 
-// Module is not named `ncurses` to avoir naming conflict
-#[cfg(feature = "ncurses")]
-pub mod curses;
-#[cfg(feature = "termion")]
-pub mod termion;
+#[cfg(feature = "cursive_termion")]
+mod termion;
+mod curses;
+
+pub use self::curses::*;
+#[cfg(feature = "cursive_termion")]
+pub use self::termion::*;
 
 pub trait Backend {
     fn init() -> Self;

@@ -105,7 +105,6 @@ impl backend::Backend for NcursesBackend {
 
 /// Returns the Key enum corresponding to the given ncurses event.
 fn parse_ncurses_char(ch: i32) -> Event {
-
     match ch {
         // Value sent by ncurses when nothing happens
         -1 => Event::Refresh,

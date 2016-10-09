@@ -3,3 +3,9 @@ cache: cargo
 rust:
     - stable
     - nightly
+script:
+    - cargo build --verbose
+    - cargo test --verbose
+    -
+    - cargo build --verbose --features=pancurses --no-default-features
+    - cargo test --verbose --features=pancurses --no-default-features

@@ -56,11 +56,12 @@
 //! and log to it instead of stdout.
 #![deny(missing_docs)]
 
-#[cfg(feature = "ncurses")]
+#[cfg(feature = "cursive_ncurses")]
 extern crate ncurses;
-#[cfg(feature = "termion")]
+#[cfg(feature = "cursive_pancurses")]
+extern crate pancurses;
+#[cfg(feature = "cursive_termion")]
 extern crate termion;
-
 extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
@@ -109,7 +110,7 @@ mod utf8;
 mod backend;
 
 
-use backend::{Backend};
+use backend::Backend;
 
 use event::{Callback, Event, EventResult};
 
@@ -156,18 +157,18 @@ pub struct Cursive {
 
 new_default!(Cursive);
 
-// Use the Ncurses backend.
-// TODO: make this feature-driven
-#[cfg(feature = "termion")]
 #[doc(hidden)]
-pub type B = backend::termion::TermionBackend;
-
+#[cfg(feature = "cursive_ncurses")]
+pub type B = backend::NcursesBackend;
 #[doc(hidden)]
-#[cfg(feature = "ncurses")]
-pub type B = backend::curses::NcursesBackend;
+#[cfg(feature = "cursive_pancurses")]
+pub type B = backend::PancursesBackend;
+#[doc(hidden)]
+#[cfg(feature = "cursive_termion")]
+pub type B = backend::TermionBackend;
 
 impl Cursive {
-    /// Creates a new Cursive root, and initialize ncurses.
+    /// Creates a new Cursive root, and initialize the back-end.
     pub fn new() -> Self {
         // Default delay is way too long. 25 is imperceptible yet works fine.
         let mut backend = B::init();
