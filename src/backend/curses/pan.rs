@@ -89,16 +89,14 @@ impl backend::Backend for PancursesBackend {
                 pancurses::Input::Unknown(i) => Event::Unknown(i),
                 // TODO: I honestly have no fucking idea what KeyCodeYes is
                 pancurses::Input::KeyCodeYes => Event::Refresh,
-                // TODO: There seems to not be a Key::Break??
-                pancurses::Input::KeyBreak => Event::Refresh,
+                pancurses::Input::KeyBreak => Event::Key(PauseBreak),
                 pancurses::Input::KeyDown => Event::Key(Key::Down),
                 pancurses::Input::KeyUp => Event::Key(Key::Up),
                 pancurses::Input::KeyLeft => Event::Key(Key::Left),
                 pancurses::Input::KeyRight => Event::Key(Key::Right),
                 pancurses::Input::KeyHome => Event::Key(Key::Home),
                 pancurses::Input::KeyBackspace => Event::Key(Key::Backspace),
-                // TODO: there seems to not be an F0 key for some reason?
-                pancurses::Input::KeyF0 => Event::Refresh,
+                pancurses::Input::KeyF0 => Event::Key(Key::F0),
                 pancurses::Input::KeyF1 => Event::Key(Key::F1),
                 pancurses::Input::KeyF2 => Event::Key(Key::F2),
                 pancurses::Input::KeyF3 => Event::Key(Key::F3),
@@ -129,10 +127,9 @@ impl backend::Backend for PancursesBackend {
                 pancurses::Input::KeySR => Event::Refresh,
                 pancurses::Input::KeyNPage => Event::Refresh,
                 pancurses::Input::KeyPPage => Event::Refresh,
-                // TODO: no way to handle this
-                pancurses::Input::KeySTab => Event::Refresh,
-                pancurses::Input::KeyCTab => Event::CtrlChar('\t'),
-                pancurses::Input::KeyCATab => Event::Refresh,
+                pancurses::Input::KeySTab => Event::Shift(Key::Tab),
+                pancurses::Input::KeyCTab => Event::Ctrl(Key::Tab),
+                pancurses::Input::KeyCATab => Event::CtrlAlt(Key::Tab),
                 pancurses::Input::KeyEnter => Event::Key(Key::Enter),
                 // TODO: not sure what those are
                 pancurses::Input::KeySReset => Event::Refresh,
@@ -199,7 +196,7 @@ impl backend::Backend for PancursesBackend {
                 pancurses::Input::KeyUndo => Event::Refresh,
                 pancurses::Input::KeyResize => Event::Refresh,
                 pancurses::Input::KeyEvent => Event::Refresh,
-                // TODO: not sure how to handle this
+                // TODO: mouse support
                 pancurses::Input::KeyMouse => Event::Refresh,
                 // TODO: not sure what those are
                 pancurses::Input::KeyA1 => Event::Refresh,
