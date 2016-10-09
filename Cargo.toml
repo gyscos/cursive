@@ -14,12 +14,6 @@ version = "0.3.1"
 [build-dependencies]
 skeptic = "0.6"
 
-[features]
-cursive_ncurses = ["ncurses"]
-cursive_pancurses = ["pancurses"]
-cursive_termion = ["termion"]
-default = ["cursive_ncurses"]
-
 [dependencies]
 odds = "0.2"
 toml = "0.2"
@@ -43,6 +37,9 @@ optional = true
 [dev-dependencies]
 rand = "0.3"
 skeptic = "0.6"
+
+[features]
+default = ["ncurses"]
 
 [lib]
 name = "cursive"

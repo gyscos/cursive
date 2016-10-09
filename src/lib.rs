@@ -56,11 +56,11 @@
 //! and log to it instead of stdout.
 #![deny(missing_docs)]
 
-#[cfg(feature = "cursive_ncurses")]
+#[cfg(feature = "ncurses")]
 extern crate ncurses;
-#[cfg(feature = "cursive_pancurses")]
+#[cfg(feature = "pancurses")]
 extern crate pancurses;
-#[cfg(feature = "cursive_termion")]
+#[cfg(feature = "termion")]
 extern crate termion;
 extern crate toml;
 extern crate unicode_segmentation;
@@ -158,13 +158,13 @@ pub struct Cursive {
 new_default!(Cursive);
 
 #[doc(hidden)]
-#[cfg(feature = "cursive_ncurses")]
+#[cfg(feature = "ncurses")]
 pub type B = backend::NcursesBackend;
 #[doc(hidden)]
-#[cfg(feature = "cursive_pancurses")]
+#[cfg(feature = "pancurses")]
 pub type B = backend::PancursesBackend;
 #[doc(hidden)]
-#[cfg(feature = "cursive_termion")]
+#[cfg(feature = "termion")]
 pub type B = backend::TermionBackend;
 
 impl Cursive {

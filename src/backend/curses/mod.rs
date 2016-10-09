@@ -1,13 +1,13 @@
 use theme::{BaseColor, Color};
 
-#[cfg(feature = "cursive_ncurses")]
+#[cfg(feature = "ncurses")]
 mod n;
-#[cfg(feature = "cursive_ncurses")]
+#[cfg(feature = "ncurses")]
 pub use self::n::*;
 
-#[cfg(feature = "cursive_pancurses")]
+#[cfg(feature = "pancurses")]
 mod pan;
-#[cfg(feature = "cursive_pancurses")]
+#[cfg(feature = "pancurses")]
 pub use self::pan::*;
 
 

@@ -72,7 +72,7 @@ impl backend::Backend for PancursesBackend {
         self.window.clear();
     }
 
-    fn refresh(&self) {
+    fn refresh(&mut self) {
         self.window.refresh();
     }
 

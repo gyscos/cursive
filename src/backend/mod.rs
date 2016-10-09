@@ -1,12 +1,12 @@
 use event;
 use theme;
 
-#[cfg(feature = "cursive_termion")]
+#[cfg(feature = "termion")]
 mod termion;
 mod curses;
 
 pub use self::curses::*;
-#[cfg(feature = "cursive_termion")]
+#[cfg(feature = "termion")]
 pub use self::termion::*;
 
 pub trait Backend {
