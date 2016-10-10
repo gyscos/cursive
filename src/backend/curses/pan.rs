@@ -114,7 +114,7 @@ impl backend::Backend for Concrete {
                 pancurses::Input::KeyF15 => Event::Shift(Key::F3),
                 // TODO: not sure what those are
                 pancurses::Input::KeyDL => Event::Refresh,
-                pancurses::Input::KeyIL => Event::Key(Key::Insert),
+                pancurses::Input::KeyIL => Event::Key(Key::Ins),
                 pancurses::Input::KeyDC => Event::Key(Key::Del),
                 pancurses::Input::KeyIC => Event::Refresh,
                 pancurses::Input::KeyEIC => Event::Refresh,
@@ -174,7 +174,7 @@ impl backend::Backend for Concrete {
                 pancurses::Input::KeySExit => Event::Refresh,
                 pancurses::Input::KeySFind => Event::Refresh,
                 pancurses::Input::KeySHome => Event::Shift(Key::Home),
-                pancurses::Input::KeySIC => Event::Shift(Key::Insert),
+                pancurses::Input::KeySIC => Event::Shift(Key::Ins),
                 pancurses::Input::KeySLeft => Event::Refresh,
                 pancurses::Input::KeySMessage => Event::Refresh,
                 pancurses::Input::KeySMove => Event::Refresh,
