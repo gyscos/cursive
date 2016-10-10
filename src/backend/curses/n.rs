@@ -1,13 +1,14 @@
+extern crate ncurses;
+
 use backend;
 use event::{Event, Key};
 
-use ncurses;
 use theme::{BaseColor, Color, ColorStyle, Effect};
 use utf8;
 
-pub struct NcursesBackend;
+pub struct Concrete;
 
-impl backend::Backend for NcursesBackend {
+impl backend::Backend for Concrete {
     fn init() -> Self {
         ::std::env::set_var("ESCDELAY", "25");
         ncurses::setlocale(ncurses::LcCategory::all, "");
@@ -20,7 +21,7 @@ impl backend::Backend for NcursesBackend {
         ncurses::wbkgd(unsafe { ncurses::stdscr() },
                        ncurses::COLOR_PAIR(ColorStyle::Background.id()));
 
-        NcursesBackend
+        Concrete
     }
 
     fn screen_size(&self) -> (usize, usize) {

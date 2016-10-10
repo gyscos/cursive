@@ -1,20 +1,21 @@
+extern crate termion;
+
 use ::backend;
 use ::event::{Event, Key};
 use std::io::Write;
-use termion;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use ::theme::{BaseColor, Color, ColorStyle, Effect};
 
-pub struct TermionBackend {
+pub struct Concrete {
     terminal: termion::raw::RawTerminal<::std::io::Stdout>,
 }
 
-impl backend::Backend for TermionBackend {
+impl backend::Backend for Concrete {
     fn init() -> Self {
         print!("{}", termion::cursor::Hide);
 
-        let backend = TermionBackend {
+        let backend = Concrete {
             terminal: ::std::io::stdout().into_raw_mode().unwrap(),
         };
 

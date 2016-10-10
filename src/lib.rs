@@ -56,12 +56,6 @@
 //! and log to it instead of stdout.
 #![deny(missing_docs)]
 
-#[cfg(feature = "ncurses")]
-extern crate ncurses;
-#[cfg(feature = "pancurses")]
-extern crate pancurses;
-#[cfg(feature = "termion")]
-extern crate termion;
 extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
@@ -149,7 +143,7 @@ pub struct Cursive {
 
     running: bool,
 
-    backend: B,
+    backend: backend::Concrete,
 
     cb_source: mpsc::Receiver<Box<Fn(&mut Cursive) + Send>>,
     cb_sink: mpsc::Sender<Box<Fn(&mut Cursive) + Send>>,
@@ -157,21 +151,11 @@ pub struct Cursive {
 
 new_default!(Cursive);
 
-#[doc(hidden)]
-#[cfg(feature = "ncurses")]
-pub type B = backend::NcursesBackend;
-#[doc(hidden)]
-#[cfg(feature = "pancurses")]
-pub type B = backend::PancursesBackend;
-#[doc(hidden)]
-#[cfg(feature = "termion")]
-pub type B = backend::TermionBackend;
-
 impl Cursive {
     /// Creates a new Cursive root, and initialize the back-end.
     pub fn new() -> Self {
         // Default delay is way too long. 25 is imperceptible yet works fine.
-        let mut backend = B::init();
+        let mut backend = backend::Concrete::init();
 
         let theme = theme::load_default();
         theme.activate(&mut backend);

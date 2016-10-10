@@ -1,16 +1,17 @@
+extern crate pancurses;
+
 use backend;
 use event::{Event, Key};
 
-use pancurses;
 use self::super::find_closest;
 use theme::{BaseColor, Color, ColorStyle, Effect};
 use utf8;
 
-pub struct PancursesBackend {
+pub struct Concrete {
     window: pancurses::Window,
 }
 
-impl backend::Backend for PancursesBackend {
+impl backend::Backend for Concrete {
     fn init() -> Self {
         ::std::env::set_var("ESCDELAY", "25");
         let window = pancurses::initscr();
@@ -21,7 +22,7 @@ impl backend::Backend for PancursesBackend {
         pancurses::curs_set(0);
         window.bkgd(pancurses::COLOR_PAIR(ColorStyle::Background.id() as u64));
 
-        PancursesBackend { window: window }
+        Concrete { window: window }
     }
 
     fn screen_size(&self) -> (usize, usize) {
@@ -89,7 +90,7 @@ impl backend::Backend for PancursesBackend {
                 pancurses::Input::Unknown(i) => Event::Unknown(i),
                 // TODO: I honestly have no fucking idea what KeyCodeYes is
                 pancurses::Input::KeyCodeYes => Event::Refresh,
-                pancurses::Input::KeyBreak => Event::Key(PauseBreak),
+                pancurses::Input::KeyBreak => Event::Key(Key::PauseBreak),
                 pancurses::Input::KeyDown => Event::Key(Key::Down),
                 pancurses::Input::KeyUp => Event::Key(Key::Up),
                 pancurses::Input::KeyLeft => Event::Key(Key::Left),
