@@ -80,7 +80,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
                                             printer.size - (1, 1),
                                             true));
 
-        if printer.theme.shadow && false {
+        if printer.theme.shadow {
             let h = printer.size.y;
             let w = printer.size.x;
 

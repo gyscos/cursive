@@ -107,11 +107,7 @@ impl<'a> Printer<'a> {
         let text: String = ::std::iter::repeat(c).take(len).collect();
 
         let p = p + self.offset;
-        // self.backend.print_at((p.x, p.y), &text);
-        self.print(p, &text);
-        for x in 0..len {
-            self.backend.print_at((p.x + x, p.y), c);
-        }
+        self.backend.print_at((p.x, p.y), &text);
     }
 
     /// Call the given closure with a colored printer,
