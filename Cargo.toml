@@ -23,7 +23,7 @@ unicode-width = "0.1"
 [dependencies.ncurses]
 features = ["wide"]
 optional = true
-version = "5.82.0"
+version = "5.83.0"
 
 [dependencies.termion]
 optional = true
