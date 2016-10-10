@@ -4,8 +4,7 @@ use backend;
 use event::{Event, Key};
 
 use self::super::find_closest;
-use theme::{BaseColor, Color, ColorStyle, Effect};
-use utf8;
+use theme::{Color, ColorStyle, Effect};
 
 pub struct Concrete {
     window: pancurses::Window,
@@ -206,6 +205,8 @@ impl backend::Backend for Concrete {
                 pancurses::Input::KeyC1 => Event::Refresh,
                 pancurses::Input::KeyC3 => Event::Refresh,
             }
+        } else {
+            Event::Refresh
         }
     }
 
