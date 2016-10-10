@@ -9,3 +9,6 @@ script:
     -
     - cargo build --verbose --features=pancurses --no-default-features
     - cargo test --verbose --features=pancurses --no-default-features
+    -
+    - cargo build --verbose --features=termion --no-default-features
+    - cargo test --verbose --features=termion --no-default-features
