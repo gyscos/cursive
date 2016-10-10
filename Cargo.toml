@@ -24,7 +24,6 @@ unicode-width = "0.1"
 version = "5.83.0"
 features = ["wide"]
 optional = true
-version = "5.83.0"
 
 [dependencies.pancurses]
 version = "0.3.0"
