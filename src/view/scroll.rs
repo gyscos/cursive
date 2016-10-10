@@ -134,7 +134,7 @@ impl ScrollBase {
     /// # use cursive::view::ScrollBase;
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::backend;
+    /// # use cursive::backend::{self, Backend};
     /// # let scrollbase = ScrollBase::new();
     /// # let b = backend::Concrete::init();
     /// # let printer = Printer::new((5,1), theme::load_default(), &b);

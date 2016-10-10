@@ -117,7 +117,7 @@ impl<'a> Printer<'a> {
     /// ```no_run
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::backend;
+    /// # use cursive::backend::{self, Backend};
     /// # let b = backend::Concrete::init();
     /// # let printer = Printer::new((6,4), theme::load_default(), &b);
     /// printer.with_color(theme::ColorStyle::Highlight, |printer| {
@@ -150,7 +150,7 @@ impl<'a> Printer<'a> {
     /// ```no_run
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::backend;
+    /// # use cursive::backend::{self, Backend};
     /// # let b = backend::Concrete::init();
     /// # let printer = Printer::new((6,4), theme::load_default(), &b);
     /// printer.print_box((0,0), (6,4), false);

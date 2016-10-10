@@ -3,8 +3,8 @@ extern crate termion;
 use ::backend;
 use ::event::{Event, Key};
 use std::io::Write;
-use termion::input::TermRead;
-use termion::raw::IntoRawMode;
+use self::termion::input::TermRead;
+use self::termion::raw::IntoRawMode;
 use ::theme::{BaseColor, Color, ColorStyle, Effect};
 
 pub struct Concrete {
