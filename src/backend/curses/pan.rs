@@ -109,11 +109,9 @@ impl backend::Backend for Concrete {
                 pancurses::Input::KeyF10 => Event::Key(Key::F10),
                 pancurses::Input::KeyF11 => Event::Key(Key::F11),
                 pancurses::Input::KeyF12 => Event::Key(Key::F12),
-                // TODO: there seems to not be any F-keys above F15
-                // for some reason?
-                pancurses::Input::KeyF13 => Event::Refresh,
-                pancurses::Input::KeyF14 => Event::Refresh,
-                pancurses::Input::KeyF15 => Event::Refresh,
+                pancurses::Input::KeyF13 => Event::Shift(Key::F1),
+                pancurses::Input::KeyF14 => Event::Shift(Key::F2),
+                pancurses::Input::KeyF15 => Event::Shift(Key::F3),
                 // TODO: not sure what those are
                 pancurses::Input::KeyDL => Event::Refresh,
                 pancurses::Input::KeyIL => Event::Refresh,
