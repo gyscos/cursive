@@ -101,7 +101,8 @@ mod with;
 mod div;
 mod utf8;
 
-mod backend;
+#[doc(hidden)]
+pub mod backend;
 
 
 use backend::Backend;
