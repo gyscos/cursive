@@ -3,11 +3,15 @@ use theme;
 
 #[cfg(feature = "termion")]
 mod termion;
+#[cfg(feature = "bear-lib-terminal")]
+mod blt;
 mod curses;
 
 pub use self::curses::*;
 #[cfg(feature = "termion")]
 pub use self::termion::*;
+#[cfg(feature = "bear-lib-terminal")]
+pub use self::blt::*;
 
 pub trait Backend {
     fn init() -> Self;
