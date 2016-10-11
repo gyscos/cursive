@@ -21,7 +21,7 @@ use view::View;
 ///
 /// [edit example]: https://github.com/gyscos/Cursive/blob/master/examples/edit.rs
 ///
-/// ```
+/// ```no_run
 /// # extern crate cursive;
 /// # use cursive::Cursive;
 /// # use cursive::traits::*;

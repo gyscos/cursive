@@ -211,7 +211,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// #
     /// # use cursive::{Cursive, event};
@@ -348,7 +348,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// # use cursive::{Cursive, views, view};
     /// # use cursive::traits::*;
@@ -374,7 +374,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// # use cursive::{Cursive, views};
     /// # use cursive::traits::*;
@@ -401,7 +401,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {
@@ -420,7 +420,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {

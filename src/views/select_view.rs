@@ -24,7 +24,7 @@ use views::MenuPopup;
 ///
 /// # Examples
 ///
-/// ```
+/// ```no_run
 /// # extern crate cursive;
 /// # use cursive::Cursive;
 /// # use cursive::views::{SelectView, Dialog, TextView};

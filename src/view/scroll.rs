@@ -130,7 +130,7 @@ impl ScrollBase {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # use cursive::view::ScrollBase;
     /// # use cursive::Printer;
     /// # use cursive::theme;
