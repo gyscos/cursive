@@ -114,9 +114,14 @@ pub enum Key {
     /// Page Down key
     PageDown,
 
+    /// Pause Break key
+    PauseBreak,
+
     /// The 5 in the center of the keypad, when numlock is disabled.
     NumpadCenter,
 
+    /// F0 key
+    F0,
     /// F1 key
     F1,
     /// F2 key
@@ -153,6 +158,7 @@ impl Key {
     /// If `n == 0 || n > 12`
     pub fn from_f(n: u8) -> Key {
         match n {
+            0 => Key::F0,
             1 => Key::F1,
             2 => Key::F2,
             3 => Key::F3,

@@ -1,8 +1,7 @@
 //! Makes drawing on ncurses windows easier.
 
 
-use B;
-use backend::Backend;
+use backend::{self, Backend};
 use std::cell::Cell;
 use std::cmp::min;
 use std::rc::Rc;
@@ -27,7 +26,7 @@ pub struct Printer<'a> {
     /// `true` if nothing has been drawn yet.
     new: Rc<Cell<bool>>,
     /// Backend used to actually draw things
-    backend: &'a B,
+    backend: &'a backend::Concrete,
 }
 
 impl<'a> Printer<'a> {
@@ -35,7 +34,7 @@ impl<'a> Printer<'a> {
     ///
     /// But nobody needs to know that.
     #[doc(hidden)]
-    pub fn new<T: Into<Vec2>>(size: T, theme: Theme, backend: &'a B) -> Self {
+    pub fn new<T: Into<Vec2>>(size: T, theme: Theme, backend: &'a backend::Concrete) -> Self {
         Printer {
             offset: Vec2::zero(),
             size: size.into(),
@@ -118,8 +117,8 @@ impl<'a> Printer<'a> {
     /// ```no_run
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::B;
-    /// # let b = B{};
+    /// # use cursive::backend::{self, Backend};
+    /// # let b = backend::Concrete::init();
     /// # let printer = Printer::new((6,4), theme::load_default(), &b);
     /// printer.with_color(theme::ColorStyle::Highlight, |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
@@ -151,8 +150,8 @@ impl<'a> Printer<'a> {
     /// ```no_run
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::B;
-    /// # let b = B{};
+    /// # use cursive::backend::{self, Backend};
+    /// # let b = backend::Concrete::init();
     /// # let printer = Printer::new((6,4), theme::load_default(), &b);
     /// printer.print_box((0,0), (6,4), false);
     /// ```

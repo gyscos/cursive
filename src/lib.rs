@@ -56,11 +56,6 @@
 //! and log to it instead of stdout.
 #![deny(missing_docs)]
 
-#[cfg(feature = "ncurses")]
-extern crate ncurses;
-#[cfg(feature = "termion")]
-extern crate termion;
-
 extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
@@ -106,10 +101,11 @@ mod with;
 mod div;
 mod utf8;
 
-mod backend;
+#[doc(hidden)]
+pub mod backend;
 
 
-use backend::{Backend};
+use backend::Backend;
 
 use event::{Callback, Event, EventResult};
 
@@ -148,7 +144,7 @@ pub struct Cursive {
 
     running: bool,
 
-    backend: B,
+    backend: backend::Concrete,
 
     cb_source: mpsc::Receiver<Box<Fn(&mut Cursive) + Send>>,
     cb_sink: mpsc::Sender<Box<Fn(&mut Cursive) + Send>>,
@@ -156,21 +152,11 @@ pub struct Cursive {
 
 new_default!(Cursive);
 
-// Use the Ncurses backend.
-// TODO: make this feature-driven
-#[cfg(feature = "termion")]
-#[doc(hidden)]
-pub type B = backend::termion::TermionBackend;
-
-#[doc(hidden)]
-#[cfg(feature = "ncurses")]
-pub type B = backend::curses::NcursesBackend;
-
 impl Cursive {
-    /// Creates a new Cursive root, and initialize ncurses.
+    /// Creates a new Cursive root, and initialize the back-end.
     pub fn new() -> Self {
         // Default delay is way too long. 25 is imperceptible yet works fine.
-        let mut backend = B::init();
+        let mut backend = backend::Concrete::init();
 
         let theme = theme::load_default();
         theme.activate(&mut backend);
@@ -225,7 +211,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// #
     /// # use cursive::{Cursive, event};
@@ -362,7 +348,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// # use cursive::{Cursive, views, view};
     /// # use cursive::traits::*;
@@ -388,7 +374,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// # use cursive::{Cursive, views};
     /// # use cursive::traits::*;
@@ -415,7 +401,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {
@@ -434,7 +420,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {

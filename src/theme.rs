@@ -115,9 +115,7 @@
 //! ```
 
 
-use B;
-
-use backend::Backend;
+use backend::{self, Backend};
 use std::fs::File;
 use std::io;
 use std::io::Read;
@@ -230,7 +228,7 @@ impl Theme {
     /// **Don't use this directly.** Uses [`Cursive::set_theme`] instead.
     ///
     /// [`Cursive::set_theme`]: ../struct.Cursive.html#method.set_theme
-    pub fn activate(&self, backend: &mut B) {
+    pub fn activate(&self, backend: &mut backend::Concrete) {
         // Initialize each color with the backend
         backend.init_color_style(ColorStyle::Background,
                                  &self.colors.view,
