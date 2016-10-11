@@ -85,6 +85,7 @@ impl backend::Backend for Concrete {
         // of Ctrl/Alt/Shift in these :v
         if let Some(ev) = self.window.getch() {
             match ev {
+                pancurses::Input::Character('\n') => Event::Key(Key::Enter),
                 pancurses::Input::Character(c) => Event::Char(c),
                 pancurses::Input::Unknown(i) => Event::Unknown(i),
                 // TODO: I honestly have no fucking idea what KeyCodeYes is
