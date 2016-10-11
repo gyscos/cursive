@@ -352,11 +352,7 @@ impl View for EditView {
     fn on_event(&mut self, event: Event) -> EventResult {
 
         match event {
-            Event::Char(ch) => {
-                // Find the byte index of the char at self.cursor
-
-                self.insert(ch);
-            }
+            Event::Char(ch) => self.insert(ch),
             // TODO: handle ctrl-key?
             Event::Key(Key::Home) => self.cursor = 0,
             Event::Key(Key::End) => self.cursor = self.content.len(),

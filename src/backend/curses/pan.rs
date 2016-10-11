@@ -5,6 +5,7 @@ use event::{Event, Key};
 
 use self::super::find_closest;
 use theme::{Color, ColorStyle, Effect};
+use utf8;
 
 pub struct Concrete {
     window: pancurses::Window,
@@ -89,8 +90,22 @@ impl backend::Backend for Concrete {
                 // TODO: wait for a very short delay. If more keys are
                 // pipelined, it may be an escape sequence.
                 pancurses::Input::Character('\u{1b}') => Event::Key(Key::Esc),
-                pancurses::Input::Character('\u{7f}') => Event::Key(Key::Backspace),
-                pancurses::Input::Character(c) => Event::Char(c),
+                pancurses::Input::Character('\u{7f}') => {
+                    Event::Key(Key::Backspace)
+                }
+                pancurses::Input::Character(c) if 32 <= (c as u32) &&
+                                                  (c as u32) <= 255 => {
+                    Event::Char(utf8::read_char(c as u8, || {
+                            self.window.getch().and_then(|i| match i {
+                                pancurses::Input::Character(c) => {
+                                    Some(c as u8)
+                                }
+                                _ => None,
+                            })
+                        })
+                        .unwrap())
+                }
+                pancurses::Input::Character(c) => Event::Unknown(c as i32),
                 // TODO: Some key combos are not recognized by pancurses,
                 // but are sent as Unknown. We could still parse them here.
                 pancurses::Input::Unknown(i) => Event::Unknown(i),
