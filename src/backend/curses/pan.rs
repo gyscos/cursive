@@ -25,7 +25,7 @@ impl backend::Backend for Concrete {
     }
 
     fn screen_size(&self) -> (usize, usize) {
-        let (x, y) = self.window.get_max_yx();
+        let (y, x) = self.window.get_max_yx();
         (x as usize, y as usize)
     }
 
