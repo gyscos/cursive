@@ -3,7 +3,8 @@ extern crate ncurses;
 use backend;
 use event::{Event, Key};
 
-use theme::{BaseColor, Color, ColorStyle, Effect};
+use self::super::find_closest;
+use theme::{Color, ColorStyle, Effect};
 use utf8;
 
 pub struct Concrete;
@@ -13,12 +14,12 @@ impl backend::Backend for Concrete {
         ::std::env::set_var("ESCDELAY", "25");
         ncurses::setlocale(ncurses::LcCategory::all, "");
         ncurses::initscr();
-        ncurses::keypad(unsafe { ncurses::stdscr() }, true);
+        ncurses::keypad(ncurses::stdscr(), true);
         ncurses::noecho();
         ncurses::cbreak();
         ncurses::start_color();
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-        ncurses::wbkgd(unsafe { ncurses::stdscr() },
+        ncurses::wbkgd(ncurses::stdscr(),
                        ncurses::COLOR_PAIR(ColorStyle::Background.id()));
 
         Concrete
@@ -27,7 +28,7 @@ impl backend::Backend for Concrete {
     fn screen_size(&self) -> (usize, usize) {
         let mut x: i32 = 0;
         let mut y: i32 = 0;
-        ncurses::getmaxyx(unsafe { ncurses::stdscr() }, &mut y, &mut x);
+        ncurses::getmaxyx(ncurses::stdscr(), &mut y, &mut x);
         (x as usize, y as usize)
     }
 
@@ -222,33 +223,5 @@ fn parse_ncurses_char(ch: i32) -> Event {
         // so we probably won't receive them. Meh~
         c @ 1...25 => Event::CtrlChar((b'a' + (c - 1) as u8) as char),
         _ => Event::Unknown(ch),
-    }
-}
-
-fn find_closest(color: &Color) -> u8 {
-    match *color {
-        Color::Dark(BaseColor::Black) => 0,
-        Color::Dark(BaseColor::Red) => 1,
-        Color::Dark(BaseColor::Green) => 2,
-        Color::Dark(BaseColor::Yellow) => 3,
-        Color::Dark(BaseColor::Blue) => 4,
-        Color::Dark(BaseColor::Magenta) => 5,
-        Color::Dark(BaseColor::Cyan) => 6,
-        Color::Dark(BaseColor::White) => 7,
-        Color::Light(BaseColor::Black) => 8,
-        Color::Light(BaseColor::Red) => 9,
-        Color::Light(BaseColor::Green) => 10,
-        Color::Light(BaseColor::Yellow) => 11,
-        Color::Light(BaseColor::Blue) => 12,
-        Color::Light(BaseColor::Magenta) => 13,
-        Color::Light(BaseColor::Cyan) => 14,
-        Color::Light(BaseColor::White) => 15,
-        Color::Rgb(r, g, b) => {
-            let r = 6 * r as u16 / 256;
-            let g = 6 * g as u16 / 256;
-            let b = 6 * b as u16 / 256;
-            (16 + 36 * r + 6 * g + b) as u8
-        }
-        Color::RgbLowRes(r, g, b) => (16 + 36 * r + 6 * g + b) as u8,
     }
 }
