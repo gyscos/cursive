@@ -78,6 +78,15 @@ impl EventResult {
             EventResult::Ignored => false,
         }
     }
+
+    /// Process this result if it is a callback.
+    ///
+    /// Does nothing otherwise.
+    pub fn process(self, s: &mut Cursive) {
+        if let EventResult::Consumed(Some(cb)) = self {
+            cb(s);
+        }
+    }
 }
 
 /// A non-character key on the keyboard

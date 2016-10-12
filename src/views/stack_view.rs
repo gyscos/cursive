@@ -13,7 +13,6 @@ use views::ShadowView;
 pub struct StackView {
     layers: Vec<Layer>,
     last_size: Vec2,
-    needs_clear: bool,
 }
 
 struct Layer {
@@ -32,7 +31,6 @@ impl StackView {
         StackView {
             layers: Vec::new(),
             last_size: Vec2::zero(),
-            needs_clear: false,
         }
     }
 
@@ -58,7 +56,6 @@ impl StackView {
     /// Remove the top-most layer.
     pub fn pop_layer(&mut self) {
         self.layers.pop();
-        self.needs_clear = true;
     }
 
     /// Computes the offset of the current top view.
@@ -71,13 +68,15 @@ impl StackView {
         }
         previous
     }
+
+    /// Returns the size for each layer in this view.
+    pub fn layer_sizes(&self) -> Vec<Vec2> {
+        self.layers.iter().map(|layer| layer.size).collect()
+    }
 }
 
 impl View for StackView {
     fn draw(&self, printer: &Printer) {
-        if self.needs_clear && printer.is_new() {
-            printer.clear();
-        }
         let last = self.layers.len();
         let mut previous = Vec2::zero();
         printer.with_color(ColorStyle::Primary, |printer| {
@@ -110,9 +109,6 @@ impl View for StackView {
         for layer in &mut self.layers {
             // Give each guy what he asks for, within the budget constraints.
             let size = Vec2::min(size, layer.view.get_min_size(size));
-            if !layer.size.fits_in(size) {
-                self.needs_clear = true;
-            }
             layer.size = size;
             layer.view.layout(layer.size);
 

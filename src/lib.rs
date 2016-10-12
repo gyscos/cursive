@@ -140,6 +140,10 @@ pub struct Cursive {
     global_callbacks: HashMap<Event, Callback>,
     menubar: views::Menubar,
 
+    // Last layer sizes of the stack view.
+    // If it changed, clear the screen.
+    last_sizes: Vec<Vec2>,
+
     active_screen: ScreenId,
 
     running: bool,
@@ -167,6 +171,7 @@ impl Cursive {
         let mut res = Cursive {
             theme: theme,
             screens: Vec::new(),
+            last_sizes: Vec::new(),
             global_callbacks: HashMap::new(),
             menubar: views::Menubar::new(),
             active_screen: 0,
@@ -436,6 +441,7 @@ impl Cursive {
     /// Convenient method to remove a layer from the current screen.
     pub fn pop_layer(&mut self) {
         self.screen_mut().pop_layer();
+        self.clear();
     }
 
     // Handles a key event when it was ignored by the current view
@@ -466,6 +472,13 @@ impl Cursive {
     fn draw(&mut self) {
         // TODO: don't clone the theme
         // Reference it or something
+
+        let sizes = self.screen().layer_sizes();
+        if &self.last_sizes != &sizes {
+            self.clear();
+            self.last_sizes = sizes;
+        }
+
         let printer = Printer::new(self.screen_size(),
                                    self.theme.clone(),
                                    &self.backend);
@@ -527,10 +540,7 @@ impl Cursive {
             //     * Current screen (top layer)
             // * Global callbacks
             if self.menubar.receive_events() {
-                if let EventResult::Consumed(Some(cb)) = self.menubar
-                    .on_event(event) {
-                    cb(self);
-                }
+                self.menubar.on_event(event).process(self);
             } else {
                 match self.screen_mut().on_event(event) {
                     // If the event was ignored,
