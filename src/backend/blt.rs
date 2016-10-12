@@ -16,7 +16,8 @@ pub struct Concrete {
 impl backend::Backend for Concrete {
     fn init() -> Self {
         // TODO: Make this configurable?
-        terminal::open("Cursive", 80, 80);
+        terminal::open("Cursive", 80, 24);
+        terminal::set(terminal::config::Window::empty().resizeable(true));
 
         Concrete { colours: BTreeMap::new() }
     }
@@ -78,9 +79,10 @@ impl backend::Backend for Concrete {
     }
 
     fn poll_event(&self) -> Event {
+        // TODO: we could add backend-specific controls here.
+        // Ex: ctrl+mouse wheel cause window cellsize to change
         if let Some(ev) = terminal::wait_event() {
             match ev {
-                // TODO: what should we do here?
                 BltEvent::Close => Event::Exit,
                 BltEvent::Resize { .. } => Event::WindowResize,
                 // TODO: mouse support
