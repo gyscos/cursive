@@ -3,10 +3,9 @@ extern crate bear_lib_terminal;
 use ::backend;
 use ::event::{Event, Key};
 use self::bear_lib_terminal::Color as BltColor;
-use self::bear_lib_terminal::geometry::{Point, Size};
+use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{self, Event as BltEvent, KeyCode};
 use std::collections::BTreeMap;
-use std::io::Write;
 use ::theme::{BaseColor, Color, ColorStyle, Effect};
 
 pub struct Concrete {
@@ -15,7 +14,6 @@ pub struct Concrete {
 
 impl backend::Backend for Concrete {
     fn init() -> Self {
-        // TODO: Make this configurable?
         terminal::open("Cursive", 80, 24);
         terminal::set(terminal::config::Window::empty().resizeable(true));
 
@@ -74,7 +72,7 @@ impl backend::Backend for Concrete {
         terminal::print_xy(x as i32, y as i32, text);
     }
 
-    fn set_refresh_rate(&mut self, fps: u32) {
+    fn set_refresh_rate(&mut self, _: u32) {
         // TODO: unsupported
     }
 
