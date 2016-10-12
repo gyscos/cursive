@@ -1,14 +1,17 @@
 extern crate pancurses;
 
+
 use backend;
 use event::{Event, Key};
 
 use self::super::find_closest;
+use std::cell::Cell;
 use theme::{Color, ColorStyle, Effect};
 use utf8;
 
 pub struct Concrete {
     window: pancurses::Window,
+    current_style: Cell<ColorStyle>,
 }
 
 impl backend::Backend for Concrete {
@@ -22,7 +25,10 @@ impl backend::Backend for Concrete {
         pancurses::curs_set(0);
         window.bkgd(pancurses::COLOR_PAIR(ColorStyle::Background.id() as u64));
 
-        Concrete { window: window }
+        Concrete {
+            window: window,
+            current_style: Cell::new(ColorStyle::Background),
+        }
     }
 
     fn screen_size(&self) -> (usize, usize) {
@@ -50,12 +56,17 @@ impl backend::Backend for Concrete {
         // let mut current_style: pancurses::attr_t = 0;
         // let mut current_color: i16 = 0;
         // pancurses::attr_get(&mut current_style, &mut current_color);
+        let current_style = self.current_style.get();
 
         let style = pancurses::COLOR_PAIR(color.id() as u64);
         self.window.attron(style);
+
+        self.current_style.set(color);
         f();
-        self.window.attroff(style);
-        // pancurses::attron(current_style);
+        self.current_style.set(current_style);
+
+        // self.window.attroff(style);
+        self.window.attron(pancurses::COLOR_PAIR(current_style.id() as u64));
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
