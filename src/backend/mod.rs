@@ -5,8 +5,10 @@ use theme;
 mod termion;
 #[cfg(feature = "bear-lib-terminal")]
 mod blt;
+#[cfg(any(feature = "ncurses", feature = "pancurses"))]
 mod curses;
 
+#[cfg(any(feature = "ncurses", feature = "pancurses"))]
 pub use self::curses::*;
 #[cfg(feature = "termion")]
 pub use self::termion::*;
