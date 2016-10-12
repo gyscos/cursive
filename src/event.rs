@@ -218,6 +218,10 @@ pub enum Event {
 
     /// An unknown event was received.
     Unknown(i32),
+
+    #[doc(hidden)]
+    /// The application is about to exit.
+    Exit,
 }
 
 impl From<char> for Event {

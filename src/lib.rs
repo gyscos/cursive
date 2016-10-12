@@ -530,6 +530,10 @@ impl Cursive {
             // Wait for next event.
             // (If set_fps was called, this returns -1 now and then)
             let event = self.backend.poll_event();
+            if event == Event::Exit {
+                self.quit();
+            }
+
             if event == Event::WindowResize {
                 self.backend.clear();
             }

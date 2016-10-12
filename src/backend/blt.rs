@@ -81,7 +81,7 @@ impl backend::Backend for Concrete {
         if let Some(ev) = terminal::wait_event() {
             match ev {
                 // TODO: what should we do here?
-                BltEvent::Close => Event::Refresh,
+                BltEvent::Close => Event::Exit,
                 BltEvent::Resize { .. } => Event::WindowResize,
                 // TODO: mouse support
                 BltEvent::MouseMove { .. } => Event::Refresh,
