@@ -21,10 +21,6 @@ toml = "0.2"
 unicode-segmentation = "0.1"
 unicode-width = "0.1"
 
-[dependencies.bear-lib-terminal]
-optional = true
-version = "1.3.1"
-
 [dependencies.ncurses]
 features = ["wide"]
 optional = true
@@ -38,6 +34,10 @@ version = "0.6"
 [dependencies.termion]
 optional = true
 version = "1.1.1"
+
+[dependencies.bear-lib-terminal]
+optional = true
+version = "1.3.1"
 
 [dev-dependencies]
 rand = "0.3"
