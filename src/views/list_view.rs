@@ -50,13 +50,15 @@ impl ListView {
     }
 
     /// Adds a view to the end of the list.
-    pub fn add_child<V: View + 'static>(&mut self, label: &str, view: V) {
+    pub fn add_child<V: View + 'static>(&mut self, label: &str, mut view: V) {
+        view.take_focus(direction::Direction::none());
         self.children.push(Child::Row(label.to_string(), Box::new(view)));
     }
 
     /// Removes all children from this view.
     pub fn clear(&mut self) {
         self.children.clear();
+        self.focus = 0;
     }
 
     /// Adds a view to the end of the list.
@@ -140,6 +142,10 @@ fn try_focus((i, child): (usize, &mut Child), source: direction::Direction)
 
 impl View for ListView {
     fn draw(&self, printer: &Printer) {
+        if self.children.is_empty() {
+            return;
+        }
+
         let offset = self.children
             .iter()
             .map(Child::label)
@@ -200,6 +206,10 @@ impl View for ListView {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        if self.children.is_empty() {
+            return EventResult::Ignored;
+        }
+
         if let Child::Row(_, ref mut view) = self.children[self.focus] {
             let result = view.on_event(event);
             if result.is_consumed() {
