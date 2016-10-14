@@ -1,4 +1,4 @@
-#[cfg(skeptic)]
+#[cfg(feature = "skeptic")]
 fn main() {
     extern crate skeptic;
 
@@ -8,5 +8,5 @@ fn main() {
                                   "doc/tutorial_3.md" ]);
 }
 
-#[cfg(not(skeptic))]
+#[cfg(not(feature = "skeptic"))]
 fn main() {}
