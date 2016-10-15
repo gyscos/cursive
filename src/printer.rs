@@ -47,7 +47,9 @@ impl<'a> Printer<'a> {
 
     /// Clear the screen.
     ///
-    /// Careful with this method, it will discard anything drawn before.
+    /// It will discard anything drawn before.
+    ///
+    /// Users rarely need to call this directly.
     pub fn clear(&self) {
         self.backend.clear();
     }

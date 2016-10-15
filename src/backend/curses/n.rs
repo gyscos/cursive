@@ -11,6 +11,9 @@ pub struct Concrete;
 
 impl backend::Backend for Concrete {
     fn init() -> Self {
+        // The delay is the time ncurses wait after pressing ESC
+        // to see if it's an escape sequence.
+        // Default delay is way too long. 25 is imperceptible yet works fine.
         ::std::env::set_var("ESCDELAY", "25");
         ncurses::setlocale(ncurses::LcCategory::all, "");
         ncurses::initscr();

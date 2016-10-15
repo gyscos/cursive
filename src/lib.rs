@@ -124,7 +124,7 @@ pub use with::With;
 pub use xy::XY;
 
 
-/// Identifies a screen in the cursive ROOT.
+/// Identifies a screen in the cursive root.
 pub type ScreenId = usize;
 
 /// Central part of the cursive library.
@@ -159,7 +159,6 @@ new_default!(Cursive);
 impl Cursive {
     /// Creates a new Cursive root, and initialize the back-end.
     pub fn new() -> Self {
-        // Default delay is way too long. 25 is imperceptible yet works fine.
         let mut backend = backend::Concrete::init();
 
         let theme = theme::load_default();
@@ -193,16 +192,21 @@ impl Cursive {
     ///
     /// Callbacks will be executed in the order
     /// of arrival on the next event cycle.
+    ///
+    /// Note that you currently need to call [`set_fps`] to force cursive to
+    /// regularly check for messages.
+    ///
+    /// [`set_fps`]: #method.set_fps
     pub fn cb_sink(&self) -> &mpsc::Sender<Box<Fn(&mut Cursive) + Send>> {
         &self.cb_sink
     }
 
-    /// Selects the menubar
+    /// Selects the menubar.
     pub fn select_menubar(&mut self) {
         self.menubar.take_focus(direction::Direction::none());
     }
 
-    /// Sets the menubar autohide_menubar feature.
+    /// Sets the menubar autohide feature.
     ///
     /// * When enabled (default), the menu is only visible when selected.
     /// * When disabled, the menu is always visible and reserves the top row.
@@ -210,7 +214,7 @@ impl Cursive {
         self.menubar.autohide = autohide;
     }
 
-    /// Retrieve the menu tree used by the menubar.
+    /// Access the menu tree used by the menubar.
     ///
     /// This allows to add menu items to the menubar.
     ///
@@ -264,7 +268,7 @@ impl Cursive {
         &mut self.menubar
     }
 
-    /// Returns the currently used theme
+    /// Returns the currently used theme.
     pub fn current_theme(&self) -> &theme::Theme {
         &self.theme
     }
@@ -278,7 +282,7 @@ impl Cursive {
 
     /// Clears the screen.
     ///
-    /// If a view becomes smaller, clearing the screen may be necessary.
+    /// Users rarely have to call this directly.
     pub fn clear(&self) {
         self.backend.clear();
     }
@@ -303,8 +307,13 @@ impl Cursive {
     /// Sets the refresh rate, in frames per second.
     ///
     /// Regularly redraws everything, even when no input is given.
-    /// Between 0 and 1000.
-    /// Call with fps=0 to disable (default value).
+    ///
+    /// You currently need this to regularly check
+    /// for events sent using [`cb_sink`].
+    ///
+    /// Between 0 and 1000. Call with `fps = 0` to disable (default value).
+    ///
+    /// [`cb_sink`]: #method.cb_sink
     pub fn set_fps(&mut self, fps: u32) {
         self.backend.set_refresh_rate(fps)
     }
@@ -508,7 +517,7 @@ impl Cursive {
     /// It will wait for user input (key presses)
     /// and trigger callbacks accordingly.
     ///
-    /// Blocks until quit() is called.
+    /// Blocks until `quit()` is called.
     pub fn run(&mut self) {
 
         // And the big event loop begins!

@@ -1,4 +1,4 @@
-//! Tools to control view alignment
+//! Tools to control view alignment.
 
 /// Specifies the alignment along both horizontal and vertical directions.
 pub struct Align {
