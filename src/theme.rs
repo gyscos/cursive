@@ -179,7 +179,7 @@ impl ColorStyle {
 /// Represents the style a Cursive application will use.
 #[derive(Clone,Debug)]
 pub struct Theme {
-    /// Wheter views in a StackView should have shadows.
+    /// Whether views in a StackView should have shadows.
     pub shadow: bool,
     /// How view borders should be drawn.
     pub borders: Option<BorderStyle>,
