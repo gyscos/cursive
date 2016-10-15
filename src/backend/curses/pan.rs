@@ -101,9 +101,8 @@ impl backend::Backend for Concrete {
                 // TODO: wait for a very short delay. If more keys are
                 // pipelined, it may be an escape sequence.
                 pancurses::Input::Character('\u{1b}') => Event::Key(Key::Esc),
-                pancurses::Input::Character('\u{7f}') => {
-                    Event::Key(Key::Backspace)
-                }
+                pancurses::Input::Character('\u{7f}') |
+                pancurses::Input::Character('\u{8}') => Event::Key(Key::Backspace),
                 pancurses::Input::Character(c) if 32 <= (c as u32) &&
                                                   (c as u32) <= 255 => {
                     Event::Char(utf8::read_char(c as u8, || {
