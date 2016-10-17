@@ -9,7 +9,7 @@ license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
-version = "0.3.4"
+version = "0.3.5"
 
 [build-dependencies.skeptic]
 optional = true
