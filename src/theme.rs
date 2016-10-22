@@ -257,6 +257,7 @@ impl Theme {
         backend.init_color_style(ColorStyle::HighlightInactive,
                                  &self.colors.view,
                                  &self.colors.highlight_inactive);
+        backend.clear();
     }
 }
 

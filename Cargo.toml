@@ -33,7 +33,8 @@ version = "0.6"
 
 [dependencies.termion]
 optional = true
-version = "1.1.1"
+# version = "1.1.1"
+git = "https://github.com/gyscos/termion"
 
 [dependencies.bear-lib-terminal]
 optional = true
