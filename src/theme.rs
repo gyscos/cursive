@@ -130,6 +130,7 @@ pub enum Effect {
     Simple,
     /// Reverses foreground and background colors
     Reverse,
+    // TODO: bold, italic, underline
 }
 
 /// Possible color style for a cell.

@@ -3,7 +3,9 @@ extern crate termion;
 use ::backend;
 use ::event::{Event, Key};
 use self::termion::color;
+use self::termion::event::Key as TKey;
 use self::termion::input::TermRead;
+use self::termion::style;
 use self::termion::raw::IntoRawMode;
 use std::cell::Cell;
 use std::collections::BTreeMap;
@@ -15,6 +17,27 @@ pub struct Concrete {
     terminal: termion::raw::RawTerminal<::std::io::Stdout>,
     current_style: Cell<theme::ColorStyle>,
     colors: BTreeMap<i16, (Box<color::Color>, Box<color::Color>)>,
+}
+
+trait Effectable {
+    fn on(&self);
+    fn off(&self);
+}
+
+impl Effectable for theme::Effect {
+    fn on(&self) {
+        match *self {
+            theme::Effect::Simple => (),
+            theme::Effect::Reverse => print!("{}", style::Invert),
+        }
+    }
+
+    fn off(&self) {
+        match *self {
+            theme::Effect::Simple => (),
+            theme::Effect::Reverse => print!("{}", style::NoInvert),
+        }
+    }
 }
 
 fn apply_colors(fg: &color::Color, bg: &color::Color) {
@@ -75,7 +98,9 @@ impl backend::Backend for Concrete {
         // TODO: actually use effects
         // TODO: careful! need to remember the previous state
         //                and apply it back
+        effect.on();
         f();
+        effect.off();
     }
 
     fn has_colors(&self) -> bool {
@@ -110,8 +135,32 @@ impl backend::Backend for Concrete {
 
     fn poll_event(&self) -> Event {
         // TODO: parse input
-        ::std::io::stdin().keys().next();
-        Event::Key(Key::Enter)
+        if let Some(key) = ::std::io::stdin().keys().next() {
+            match key.unwrap() {
+                TKey::Backspace => Event::Key(Key::Backspace),
+                TKey::Left => Event::Key(Key::Left),
+                TKey::Right => Event::Key(Key::Right),
+                TKey::Up => Event::Key(Key::Up),
+                TKey::Down => Event::Key(Key::Down),
+                TKey::Home => Event::Key(Key::Home),
+                TKey::End => Event::Key(Key::End),
+                TKey::PageUp => Event::Key(Key::PageUp),
+                TKey::PageDown => Event::Key(Key::PageDown),
+                TKey::Delete => Event::Key(Key::Del),
+                TKey::Insert => Event::Key(Key::Ins),
+                TKey::F(i) if i < 12 => Event::Key(Key::from_f(i)),
+                TKey::F(j) => Event::Unknown(-(j as i32)),
+                TKey::Char('\n') => Event::Key(Key::Enter),
+                TKey::Char('\t') => Event::Key(Key::Tab),
+                TKey::Char(c) => Event::Char(c),
+                TKey::Ctrl('c') => panic!("Ctrl-C pressed"),
+                TKey::Ctrl(c) => Event::CtrlChar(c),
+                TKey::Alt(c) => Event::AltChar(c),
+                _ => Event::Unknown(-1),
+            }
+        } else {
+            Event::Refresh
+        }
     }
 }
 
