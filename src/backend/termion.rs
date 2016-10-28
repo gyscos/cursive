@@ -10,6 +10,7 @@ use self::termion::raw::IntoRawMode;
 use std::cell::Cell;
 use std::collections::BTreeMap;
 use std::io::Write;
+use std::fmt;
 
 use ::theme;
 
@@ -22,6 +23,22 @@ pub struct Concrete {
 trait Effectable {
     fn on(&self);
     fn off(&self);
+}
+
+struct ColorRef<'a>(&'a color::Color);
+
+impl <'a> color::Color for ColorRef<'a> {
+
+    #[inline]
+    fn write_fg(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.write_fg(f)
+    }
+
+    #[inline]
+    fn write_bg(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.write_bg(f)
+    }
+
 }
 
 impl Effectable for theme::Effect {
@@ -41,7 +58,7 @@ impl Effectable for theme::Effect {
 }
 
 fn apply_colors(fg: &color::Color, bg: &color::Color) {
-    print!("{}{}", color::Fg(fg), color::Bg(bg));
+    print!("{}{}", color::Fg(ColorRef(fg)), color::Bg(ColorRef(bg)));
 }
 
 impl Concrete {
