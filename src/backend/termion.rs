@@ -154,6 +154,7 @@ impl backend::Backend for Concrete {
         // TODO: parse input
         if let Some(key) = ::std::io::stdin().keys().next() {
             match key.unwrap() {
+                TKey::Esc => Event::Key(Key::Esc),
                 TKey::Backspace => Event::Key(Key::Backspace),
                 TKey::Left => Event::Key(Key::Left),
                 TKey::Right => Event::Key(Key::Right),
