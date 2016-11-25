@@ -23,7 +23,7 @@ impl backend::Backend for Concrete {
         pancurses::cbreak();
         pancurses::start_color();
         pancurses::curs_set(0);
-        window.bkgd(pancurses::COLOR_PAIR(ColorStyle::Background.id() as u64));
+        window.bkgd(pancurses::COLOR_PAIR(ColorStyle::Background.id() as u32));
 
         Concrete {
             window: window,
@@ -58,7 +58,7 @@ impl backend::Backend for Concrete {
         // pancurses::attr_get(&mut current_style, &mut current_color);
         let current_style = self.current_style.get();
 
-        let style = pancurses::COLOR_PAIR(color.id() as u64);
+        let style = pancurses::COLOR_PAIR(color.id() as u32);
         self.window.attron(style);
 
         self.current_style.set(color);
@@ -66,7 +66,7 @@ impl backend::Backend for Concrete {
         self.current_style.set(current_style);
 
         // self.window.attroff(style);
-        self.window.attron(pancurses::COLOR_PAIR(current_style.id() as u64));
+        self.window.attron(pancurses::COLOR_PAIR(current_style.id() as u32));
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {

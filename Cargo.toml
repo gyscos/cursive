@@ -24,12 +24,12 @@ unicode-width = "0.1"
 [dependencies.ncurses]
 features = ["wide"]
 optional = true
-version = "5.83.0"
+version = "5.84.0"
 
 [dependencies.pancurses]
 features = ["wide"]
 optional = true
-version = "0.6"
+version = "0.7"
 
 [dependencies.termion]
 optional = true
