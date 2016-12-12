@@ -16,7 +16,7 @@
 //! ## Views
 //!
 //! Views are the main components of a cursive interface.
-//! The [`view`](./view/index.html) module contains many views to use in your
+//! The [`views`](./views/index.html) module contains many views to use in your
 //! application; if you don't find what you need, you may also implement the
 //! [`View`](view/trait.View.html) trait and build your own.
 //!
@@ -33,12 +33,13 @@
 //! ```no_run
 //! extern crate cursive;
 //!
-//! use cursive::*;
+//! use cursive::Cursive;
+//! use cursive::views::TextView;
 //!
 //! fn main() {
 //!     let mut siv = Cursive::new();
 //!
-//!     siv.add_layer(views::TextView::new("Hello World!\nPress q to quit."));
+//!     siv.add_layer(TextView::new("Hello World!\nPress q to quit."));
 //!
 //!     siv.add_global_callback('q', |s| s.quit());
 //!
@@ -54,6 +55,8 @@
 //!
 //! One solution is to redirect stderr to a file when running the application,
 //! and log to it instead of stdout.
+//!
+//! Or you can use gdb as usual.
 #![deny(missing_docs)]
 
 extern crate toml;
