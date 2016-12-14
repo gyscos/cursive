@@ -1,5 +1,7 @@
 extern crate termion;
 
+extern crate chan_signal;
+
 use ::backend;
 use ::event::{Event, Key};
 use self::termion::color as tcolor;
@@ -11,9 +13,9 @@ use std::cell::Cell;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::io::Write;
-use std::sync::mpsc;
 use std::thread;
 use std::time;
+use chan;
 
 use ::theme;
 
@@ -22,8 +24,9 @@ pub struct Concrete {
     current_style: Cell<theme::ColorStyle>,
     colors: BTreeMap<i16, (Box<tcolor::Color>, Box<tcolor::Color>)>,
 
-    input: mpsc::Receiver<Event>,
-    timeout: Option<time::Duration>,
+    input: chan::Receiver<Event>,
+    resize: chan::Receiver<chan_signal::Signal>,
+    timeout: Option<u32>,
 }
 
 trait Effectable {
@@ -75,17 +78,18 @@ impl Concrete {
 impl backend::Backend for Concrete {
     fn init() -> Self {
         print!("{}", termion::cursor::Hide);
+
+        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
+
         let terminal = ::std::io::stdout().into_raw_mode().unwrap();
-        let (sender, receiver) = mpsc::channel();
+        let (sender, receiver) = chan::async();
 
         // TODO: use signal_chan crate
 
         thread::spawn(move || {
             for key in ::std::io::stdin().keys() {
                 if let Ok(key) = key {
-                    if sender.send(map_key(key)).is_err() {
-                        break;
-                    }
+                    sender.send(map_key(key))
                 }
             }
         });
@@ -95,6 +99,7 @@ impl backend::Backend for Concrete {
             current_style: Cell::new(theme::ColorStyle::Background),
             colors: BTreeMap::new(),
             input: receiver,
+            resize: resize,
             timeout: None,
         };
 
@@ -167,16 +172,27 @@ impl backend::Backend for Concrete {
         // TODO: handle async refresh, when no input is entered.
         // Could be done with a timeout on the event polling,
         // if it was supportedd.
-        self.timeout = Some(time::Duration::from_millis(1000 / fps as u64));
+        self.timeout = Some(1000 / fps as u32);
     }
 
     fn poll_event(&self) -> Event {
         // TODO: select! on the input and SIGWINCH signal channel.
         // TODO: also handle timeout... recv_timeout?
+        let input = &self.input;
+        let resize = &self.resize;
+
         if let Some(timeout) = self.timeout {
-            self.input.recv_timeout(timeout).unwrap_or(Event::Refresh)
+            let timeout = chan::after_ms(timeout);
+            chan_select!{
+                timeout.recv() => return Event::Refresh,
+                resize.recv() => return Event::WindowResize,
+                input.recv() -> input => return input.unwrap(),
+            }
         } else {
-            self.input.recv().unwrap()
+            chan_select!{
+                resize.recv() => return Event::WindowResize,
+                input.recv() -> input => return input.unwrap(),
+            }
         }
     }
 }

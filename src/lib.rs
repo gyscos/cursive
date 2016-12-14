@@ -64,6 +64,9 @@ extern crate unicode_segmentation;
 extern crate unicode_width;
 extern crate odds;
 
+#[macro_use]
+extern crate chan;
+
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
         use ::std::io::Write;
