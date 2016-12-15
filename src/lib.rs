@@ -518,56 +518,77 @@ impl Cursive {
 
     }
 
+    /// Returns `true` until [`quit(&mut self)`] is called.
+    ///
+    /// [`quit(&mut self)`]: #method.quit
+    pub fn is_running(&self) -> bool {
+        self.running
+    }
+
+
     /// Runs the event loop.
     ///
     /// It will wait for user input (key presses)
     /// and trigger callbacks accordingly.
     ///
-    /// Blocks until `quit()` is called.
+    /// Calls [`step(&mut self)`] until [`quit(&mut self)`] is called.
+    ///
+    /// [`step(&mut self)`]: #method.step
+    /// [`quit(&mut self)`]: #method.quit
     pub fn run(&mut self) {
 
         // And the big event loop begins!
         while self.running {
-            if let Ok(cb) = self.cb_source.try_recv() {
-                cb(self);
-            }
+            self.step();
+        }
+    }
 
-            // Do we need to redraw everytime?
-            // Probably, actually.
-            // TODO: Do we need to re-layout everytime?
-            self.layout();
+    /// Performs a single step from the event loop.
+    ///
+    /// Useful if you need tighter control on the event loop.
+    /// Otherwise, [`run(&mut self)`] might be more convenient.
+    ///
+    /// [`run(&mut self)`]: #method.run
+    pub fn step(&mut self) {
+        if let Ok(cb) = self.cb_source.try_recv() {
+            cb(self);
+        }
 
-            // TODO: Do we need to redraw every view every time?
-            // (Is this getting repetitive? :p)
-            self.draw();
-            self.backend.refresh();
+        // Do we need to redraw everytime?
+        // Probably, actually.
+        // TODO: Do we need to re-layout everytime?
+        self.layout();
 
-            // Wait for next event.
-            // (If set_fps was called, this returns -1 now and then)
-            let event = self.backend.poll_event();
-            if event == Event::Exit {
-                self.quit();
-            }
+        // TODO: Do we need to redraw every view every time?
+        // (Is this getting repetitive? :p)
+        self.draw();
+        self.backend.refresh();
 
-            if event == Event::WindowResize {
-                self.backend.clear();
-            }
+        // Wait for next event.
+        // (If set_fps was called, this returns -1 now and then)
+        let event = self.backend.poll_event();
+        if event == Event::Exit {
+            self.quit();
+        }
 
-            // Event dispatch order:
-            // * Focused element:
-            //     * Menubar (if active)
-            //     * Current screen (top layer)
-            // * Global callbacks
-            if self.menubar.receive_events() {
-                self.menubar.on_event(event).process(self);
-            } else {
-                match self.screen_mut().on_event(event) {
-                    // If the event was ignored,
-                    // it is our turn to play with it.
-                    EventResult::Ignored => self.on_event(event),
-                    EventResult::Consumed(None) => (),
-                    EventResult::Consumed(Some(cb)) => cb(self),
-                }
+        if event == Event::WindowResize {
+            self.backend.clear();
+        }
+
+        // Event dispatch order:
+        // * Focused element:
+        //     * Menubar (if active)
+        //     * Current screen (top layer)
+        // * Global callbacks
+        if self.menubar.receive_events() {
+            self.menubar.on_event(event).process(self);
+        } else {
+            match self.screen_mut().on_event(event) {
+                // If the event was ignored,
+                // it is our turn to play with it.
+                EventResult::Ignored => self.on_event(event),
+                EventResult::Consumed(None) => (),
+                EventResult::Consumed(Some(cb)) => cb(self),
             }
         }
     }
