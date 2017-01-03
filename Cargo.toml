@@ -22,7 +22,7 @@ chan = "0.1.18"
 chan-signal = "0.1"
 odds = "0.2"
 toml = "0.2"
-unicode-segmentation = "0.1"
+unicode-segmentation = "1.0"
 unicode-width = "0.1"
 
 [dependencies.bear-lib-terminal]
