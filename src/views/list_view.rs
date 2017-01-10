@@ -1,9 +1,11 @@
+use Cursive;
 use Printer;
 use With;
 use direction;
-use event::{Event, EventResult, Key};
+use event::{Callback, Event, EventResult, Key};
 
 use std::any::Any;
+use std::rc::Rc;
 use vec::Vec2;
 use view::ScrollBase;
 use view::Selector;
@@ -35,6 +37,8 @@ pub struct ListView {
     children: Vec<Child>,
     scrollbase: ScrollBase,
     focus: usize,
+    // This callback is called when the selection is changed.
+    on_select: Option<Rc<Fn(&mut Cursive, &String)>>,
 }
 
 new_default!(ListView);
@@ -46,6 +50,7 @@ impl ListView {
             children: Vec::new(),
             scrollbase: ScrollBase::new(),
             focus: 0,
+            on_select: None,
         }
     }
 
@@ -78,6 +83,29 @@ impl ListView {
     /// Chainable variant.
     pub fn delimiter(self) -> Self {
         self.with(Self::add_delimiter)
+    }
+
+    /// Sets a callback to be used when an item is selected.
+    pub fn set_on_select<F>(&mut self, cb: F)
+        where F: Fn(&mut Cursive, &String) + 'static
+    {
+        self.on_select = Some(Rc::new(cb));
+    }
+
+    /// Sets a callback to be used when an item is selected.
+    ///
+    /// Chainable variant.
+    pub fn on_select<F>(self, cb: F) -> Self
+        where F: Fn(&mut Cursive, &String) + 'static
+    {
+        self.with(|s| s.set_on_select(cb))
+    }
+
+    /// Returns the index of the currently focused item.
+    ///
+    /// Panics if the list is empty.
+    pub fn focus(&self) -> usize {
+        self.focus
     }
 
     fn iter_mut<'a>(&'a mut self, from_focus: bool,
@@ -121,7 +149,11 @@ impl ListView {
         self.focus = i;
         self.scrollbase.scroll_to(self.focus);
 
-        EventResult::Consumed(None)
+        EventResult::Consumed(self.on_select.clone().map(|cb| {
+            let i = self.focus();
+            let focused_string = String::from(self.children[i].label());
+            Callback::from_fn(move |s| cb(s, &focused_string))
+        }))
     }
 }
 
