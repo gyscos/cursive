@@ -108,7 +108,7 @@ impl backend::Backend for Concrete {
 
     fn finish(&mut self) {
         print!("{}{}", termion::cursor::Show, termion::cursor::Goto(1, 1));
-        self.clear();
+        print!("{}[49m{}[39m{}", 27 as char, 27 as char, termion::clear::All);
     }
 
     fn init_color_style(&mut self, style: theme::ColorStyle,
