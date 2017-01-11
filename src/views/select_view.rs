@@ -1,5 +1,3 @@
-
-
 use Cursive;
 use Printer;
 use With;
