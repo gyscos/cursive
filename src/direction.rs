@@ -16,6 +16,7 @@
 //!   Its actual direction depends on the orientation.
 
 use vec::Vec2;
+use XY;
 
 /// Describes a vertical or horizontal orientation for a view.
 #[derive(Clone,Copy,Debug,PartialEq)]
@@ -31,8 +32,8 @@ impl Orientation {
     ///
     /// (`Horizontal` will return the x value,
     /// and `Vertical` will return the y value.)
-    pub fn get(&self, v: &Vec2) -> usize {
-        *v.get(*self)
+    pub fn get<T: Clone>(&self, v: &XY<T>) -> T {
+        v.get(*self).clone()
     }
 
     /// Returns the other orientation.
@@ -45,7 +46,7 @@ impl Orientation {
 
     /// Returns a mutable reference to the component of the given vector
     /// corresponding to this orientation.
-    pub fn get_ref<'a, 'b>(&'a self, v: &'b mut Vec2) -> &'b mut usize {
+    pub fn get_ref<'a, 'b, T>(&'a self, v: &'b mut XY<T>) -> &'b mut T {
         match *self {
             Orientation::Horizontal => &mut v.x,
             Orientation::Vertical => &mut v.y,

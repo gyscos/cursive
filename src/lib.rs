@@ -63,6 +63,7 @@ extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
 extern crate odds;
+extern crate num;
 
 #[macro_use]
 extern crate chan;

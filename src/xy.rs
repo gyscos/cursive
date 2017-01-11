@@ -56,6 +56,27 @@ impl<T> XY<T> {
     }
 }
 
+impl <T: Clone> XY<T> {
+    /// Returns a new `XY` with the axis `o` set to `value`.
+    pub fn with_axis(&self, o: Orientation, value: T) -> Self {
+        let mut new = self.clone();
+        *o.get_ref(&mut new) = value;
+        new
+    }
+
+    /// Returns a new `XY` with the axis `o` set to the value from `other`.
+    pub fn with_axis_from(&self, o: Orientation, other: &Self) -> Self {
+        let mut new = self.clone();
+        new.set_axis_from(o, other);
+        new
+    }
+
+    /// Sets the axis `o` on `self` to the value from `other`.
+    pub fn set_axis_from(&mut self, o: Orientation, other: &Self) {
+        *o.get_ref(self) = o.get(other);
+    }
+}
+
 impl<T> XY<Option<T>> {
     /// Returns a new `XY` by calling `unwrap_or` on each axis.
     pub fn unwrap_or(self, other: XY<T>) -> XY<T> {

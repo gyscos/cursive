@@ -2,6 +2,7 @@
 
 use XY;
 use direction::Orientation;
+use num::traits::Zero;
 use std::cmp::{Ordering, max, min};
 
 use std::ops::{Add, Div, Mul, Sub};
@@ -30,81 +31,75 @@ impl PartialOrd for XY<usize> {
     }
 }
 
-impl XY<usize> {
+impl<T: Ord> XY<T> {
+    /// Returns `true` if `self` could fit inside `other`.
+    ///
+    /// Shortcut for `self.x <= other.x && self.y <= other.y`.
+    pub fn fits_in<O: Into<Self>>(&self, other: O) -> bool {
+        let other = other.into();
+        self.x <= other.x && self.y <= other.y
+    }
+
     /// Returns a new Vec2 that is a maximum per coordinate.
-    pub fn max<A: Into<Vec2>, B: Into<Vec2>>(a: A, b: B) -> Self {
+    pub fn max<A: Into<XY<T>>, B: Into<XY<T>>>(a: A, b: B) -> Self {
         let a = a.into();
         let b = b.into();
         a.zip_map(b, max)
     }
 
     /// Returns a new Vec2 that is no larger than any input in both dimensions.
-    pub fn min<A: Into<Vec2>, B: Into<Vec2>>(a: A, b: B) -> Self {
+    pub fn min<A: Into<XY<T>>, B: Into<XY<T>>>(a: A, b: B) -> Self {
         let a = a.into();
         let b = b.into();
         a.zip_map(b, min)
     }
 
     /// Returns the minimum of `self` and `other`.
-    pub fn or_min<T: Into<Vec2>>(self, other: T) -> Self {
-        Vec2::min(self, other)
+    pub fn or_min<O: Into<XY<T>>>(self, other: O) -> Self {
+        Self::min(self, other)
     }
 
     /// Returns the maximum of `self` and `other`.
-    pub fn or_max<T: Into<Vec2>>(self, other: T) -> Self {
-        Vec2::max(self, other)
+    pub fn or_max<O: Into<XY<T>>>(self, other: O) -> Self {
+        Self::max(self, other)
+    }
+}
+
+impl<T: Ord + Add<Output = T> + Clone> XY<T> {
+    /// Returns (max(self.x,other.x), self.y+other.y)
+    pub fn stack_vertical(&self, other: &Self) -> Self {
+        Self::new(max(self.x.clone(), other.x.clone()),
+                  self.y.clone() + other.y.clone())
     }
 
+    /// Returns (self.x+other.x, max(self.y,other.y))
+    pub fn stack_horizontal(&self, other: &Self) -> Self {
+        Self::new(self.x.clone() + other.x.clone(),
+                  max(self.y.clone(), other.y.clone()))
+    }
+}
+
+impl<T: Zero + Clone> XY<T> {
     /// Returns a vector with the X component of self, and y=0.
     pub fn keep_x(&self) -> Self {
-        Vec2::new(self.x, 0)
+        Self::new(self.x.clone(), T::zero())
     }
 
     /// Returns a vector with the Y component of self, and x=0.
     pub fn keep_y(&self) -> Self {
-        Vec2::new(0, self.y)
+        Self::new(T::zero(), self.y.clone())
     }
 
-    /// Alias for `Vec2::new(0,0)`.
+    /// Alias for `Self::new(0,0)`.
     pub fn zero() -> Self {
-        Vec2::new(0, 0)
+        Self::new(T::zero(), T::zero())
     }
+}
 
-    /// Returns (max(self.x,other.x), self.y+other.y)
-    pub fn stack_vertical(&self, other: &Vec2) -> Vec2 {
-        Vec2::new(max(self.x, other.x), self.y + other.y)
-    }
-
-    /// Returns (self.x+other.x, max(self.y,other.y))
-    pub fn stack_horizontal(&self, other: &Vec2) -> Vec2 {
-        Vec2::new(self.x + other.x, max(self.y, other.y))
-    }
-
-    /// Returns `true` if `self` could fit inside `other`.
-    ///
-    /// Shortcut for `self.x <= other.x && self.y <= other.y`.
-    pub fn fits_in<T: Into<Vec2>>(&self, other: T) -> bool {
-        let other = other.into();
-        self.x <= other.x && self.y <= other.y
-    }
-
-    /// Returns a new `Vec2` with the axis `o` set to `value`.
-    pub fn with_axis(&self, o: Orientation, value: usize) -> Self {
-        let mut new = *self;
-        *o.get_ref(&mut new) = value;
-        new
-    }
-
-    /// Returns a new `Vec2` with the axis `o` set to the value from `other`.
-    pub fn with_axis_from(&self, o: Orientation, other: &Vec2) -> Self {
-        let mut new = *self;
-        new.set_axis_from(o, other);
-        new
-    }
-
-    /// Sets the axis `o` on `self` to the value from `other`.
-    pub fn set_axis_from(&mut self, o: Orientation, other: &Vec2) {
-        *o.get_ref(self) = o.get(other);
+impl <T: Into<XY<usize>>> From<T> for XY<isize> {
+    fn from(t: T) -> Self {
+        let other = t.into();
+        Self::new(other.x as isize, other.y as isize)
     }
 }
 
@@ -121,27 +116,27 @@ impl From<(u32, u32)> for XY<usize> {
 }
 
 
-impl<T: Into<Vec2>> Add<T> for XY<usize> {
-    type Output = Vec2;
+impl<T: Add<Output=T>, O: Into<XY<T>>> Add<O> for XY<T> {
+    type Output = Self;
 
-    fn add(self, other: T) -> Vec2 {
+    fn add(self, other: O) -> Self {
         self.zip_map(other.into(), Add::add)
     }
 }
 
-impl<T: Into<Vec2>> Sub<T> for XY<usize> {
-    type Output = Vec2;
+impl<T: Sub<Output=T>, O: Into<XY<T>>> Sub<O> for XY<T> {
+    type Output = Self;
 
-    fn sub(self, other: T) -> Vec2 {
+    fn sub(self, other: O) -> Self {
         self.zip_map(other.into(), Sub::sub)
     }
 }
 
-impl Div<usize> for XY<usize> {
-    type Output = Vec2;
+impl <T: Clone + Div<Output=T>> Div<T> for XY<T> {
+    type Output = Self;
 
-    fn div(self, other: usize) -> Vec2 {
-        self.map(|s| s / other)
+    fn div(self, other: T) -> Self {
+        self.map(|s| s / other.clone())
     }
 }
 

@@ -18,7 +18,7 @@ impl Position {
     }
 
     /// Returns a position relative to the parent on both axis.
-    pub fn parent<T: Into<Vec2>>(offset: T) -> Self {
+    pub fn parent<T: Into<XY<isize>>>(offset: T) -> Self {
         let offset = offset.into();
         Position::new(Offset::Parent(offset.x), Offset::Parent(offset.y))
     }
@@ -55,7 +55,7 @@ pub enum Offset {
     /// Offset from the previous layer's top-left corner.
     ///
     /// If this is the first layer, behaves like `Absolute`.
-    Parent(usize), // TODO: use a signed vec for negative offset?
+    Parent(isize),
 }
 
 impl Offset {
@@ -70,7 +70,7 @@ impl Offset {
                 Offset::Center => (available - size) / 2,
                 Offset::Absolute(offset) => min(offset, available - size),
                 Offset::Parent(offset) => {
-                    min(parent + offset, available - size)
+                    min((parent as isize + offset) as usize, available - size)
                 }
             }
         }

@@ -1,6 +1,7 @@
 use Cursive;
 use Printer;
 use With;
+use XY;
 use align::{Align, HAlign, VAlign};
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key};
@@ -425,8 +426,13 @@ impl<T: 'static> View for SelectView<T> {
                     // This is the offset for the label text.
                     // We'll want to show the popup so that the text matches.
                     // It'll be soo cool.
-                    let text_offset =
-                        (self.last_size.x - self.items[focus].label.len()) / 2;
+                    let item_length = self.items[focus].label.len();
+                    let text_offset = if self.last_size.x >= item_length {
+                        (self.last_size.x - item_length) / 2
+                    } else {
+                        // We were too small to show the entire item last time.
+                        0
+                    };
                     // The total offset for the window is:
                     // * the last absolute offset at which we drew this view
                     // * shifted to the top of the focus (so the line matches)
@@ -444,7 +450,7 @@ impl<T: 'static> View for SelectView<T> {
                         // A nice effect is that window resizes will keep both
                         // layers together.
                         let current_offset = s.screen().offset();
-                        let offset = offset - current_offset;
+                        let offset = XY::<isize>::from(offset) - current_offset;
                         // And finally, put the view in view!
                         s.screen_mut()
                             .add_layer_at(Position::parent(offset),
