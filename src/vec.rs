@@ -1,7 +1,6 @@
 //! Points on the 2D character grid.
 
 use XY;
-use direction::Orientation;
 use num::traits::Zero;
 use std::cmp::{Ordering, max, min};
 

@@ -1,6 +1,6 @@
 
 
-use {Cursive, Printer};
+use Printer;
 use align::HAlign;
 use std::cmp;
 use std::sync::Arc;
@@ -10,7 +10,7 @@ use std::thread;
 use theme::{ColorStyle, Effect};
 use view::View;
 
-pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
+// pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
 
 /// Atomic counter used by `ProgressBar`.
 #[derive(Clone)]
