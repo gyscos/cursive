@@ -95,7 +95,7 @@ impl<'a> Iterator for LinesIterator<'a> {
 
         // Find the ideal line, in an infinitely wide world.
         // We'll make a line larger than that.
-        let next = content.find('\n').unwrap_or(content.len());
+        let next = content.find('\n').unwrap_or_else(|| content.len());
         let content = &content[..next];
 
         let allowed_width = if self.show_spaces {

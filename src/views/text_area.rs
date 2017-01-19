@@ -315,7 +315,7 @@ impl TextArea {
             .find('\n')
             .map(|i| 1 + i + self.cursor);
         let last_row = last_byte.map_or(self.rows.len(), |last_byte| self.row_at(last_byte));
-        let last_byte = last_byte.unwrap_or(self.content.len());
+        let last_byte = last_byte.unwrap_or_else(|| self.content.len());
 
         // println_stderr!("Content: `{}` (len={})",
         //                 self.content,

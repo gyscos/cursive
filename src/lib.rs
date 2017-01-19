@@ -334,7 +334,7 @@ impl Cursive {
     /// Returns a mutable reference to the currently active screen.
     pub fn screen_mut(&mut self) -> &mut views::StackView {
         let id = self.active_screen;
-        self.screens.get_mut(id).unwrap()
+        &mut self.screens[id]
     }
 
     /// Adds a new screen, and returns its ID.
@@ -515,7 +515,7 @@ impl Cursive {
         let printer =
             printer.sub_printer(Vec2::new(0, offset), printer.size, !selected);
         let id = self.active_screen;
-        self.screens.get_mut(id).unwrap().draw(&printer);
+        self.screens[id].draw(&printer);
 
     }
 
