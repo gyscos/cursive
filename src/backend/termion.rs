@@ -3,6 +3,7 @@ extern crate termion;
 extern crate chan_signal;
 
 use ::backend;
+use chan;
 use ::event::{Event, Key};
 use self::termion::color as tcolor;
 use self::termion::event::Key as TKey;
@@ -15,7 +16,6 @@ use std::fmt;
 use std::io::Write;
 use std::thread;
 use std::time;
-use chan;
 
 use ::theme;
 
@@ -84,13 +84,9 @@ impl backend::Backend for Concrete {
         let terminal = ::std::io::stdout().into_raw_mode().unwrap();
         let (sender, receiver) = chan::async();
 
-        // TODO: use signal_chan crate
-
-        thread::spawn(move || {
-            for key in ::std::io::stdin().keys() {
-                if let Ok(key) = key {
-                    sender.send(map_key(key))
-                }
+        thread::spawn(move || for key in ::std::io::stdin().keys() {
+            if let Ok(key) = key {
+                sender.send(map_key(key))
             }
         });
 
@@ -108,7 +104,10 @@ impl backend::Backend for Concrete {
 
     fn finish(&mut self) {
         print!("{}{}", termion::cursor::Show, termion::cursor::Goto(1, 1));
-        print!("{}[49m{}[39m{}", 27 as char, 27 as char, termion::clear::All);
+        print!("{}[49m{}[39m{}",
+               27 as char,
+               27 as char,
+               termion::clear::All);
     }
 
     fn init_color_style(&mut self, style: theme::ColorStyle,
@@ -120,10 +119,6 @@ impl backend::Backend for Concrete {
     }
 
     fn with_color<F: FnOnce()>(&self, color: theme::ColorStyle, f: F) {
-        // TODO: actually use colors
-        // TODO: careful! need to remember the previous state
-        //                and apply it back
-
         let current_style = self.current_style.get();
 
         self.apply_colorstyle(color);
@@ -136,9 +131,6 @@ impl backend::Backend for Concrete {
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: theme::Effect, f: F) {
-        // TODO: actually use effects
-        // TODO: careful! need to remember the previous state
-        //                and apply it back
         effect.on();
         f();
         effect.off();
@@ -164,20 +156,16 @@ impl backend::Backend for Concrete {
     }
 
     fn print_at(&self, (x, y): (usize, usize), text: &str) {
-        // TODO: terminals are 1-based. Should we add 1 here?
-        print!("{}{}", termion::cursor::Goto(x as u16, y as u16), text);
+        print!("{}{}",
+               termion::cursor::Goto(1 + x as u16, 1 + y as u16),
+               text);
     }
 
     fn set_refresh_rate(&mut self, fps: u32) {
-        // TODO: handle async refresh, when no input is entered.
-        // Could be done with a timeout on the event polling,
-        // if it was supportedd.
         self.timeout = Some(1000 / fps as u32);
     }
 
     fn poll_event(&self) -> Event {
-        // TODO: select! on the input and SIGWINCH signal channel.
-        // TODO: also handle timeout... recv_timeout?
         let input = &self.input;
         let resize = &self.resize;
 
