@@ -5,11 +5,15 @@ description = "A TUI (Text User Interface) library focused on ease-of-use."
 documentation = "https://gyscos.github.io/Cursive/cursive/index.html"
 exclude = ["doc", "assets"]
 keywords = ["ncurses", "TUI", "UI"]
+categories = ["command-line-interface", "gui"]
 license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
 version = "0.3.7"
+
+[badges]
+travis-ci = { repository = "gyscos/cursive" }
 
 [build-dependencies.skeptic]
 optional = true
