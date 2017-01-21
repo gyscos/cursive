@@ -136,6 +136,9 @@ impl TextView {
         self.with(|s| s.set_scroll_strategy(strategy))
     }
 
+    // Apply the scrolling strategy to the current scroll position.
+    //
+    // Called when computing rows and when applying a new strategy.
     fn adjust_scroll(&mut self) {
         match self.scroll_strategy {
             ScrollStrategy::StickToTop => self.scrollbase.scroll_top(),
@@ -145,56 +148,69 @@ impl TextView {
     }
 
     fn compute_rows(&mut self, size: Vec2) {
-        if !self.is_cache_valid(size) {
-            self.last_size = None;
-            // Recompute
+        if self.is_cache_valid(size) {
+            return;
+        }
 
-            if size.x == 0 {
-                // Nothing we can do at this poing.
+        // Completely bust the cache
+        // Just in case we fail, we don't want to leave a bad cache.
+        self.last_size = None;
+
+        if size.x == 0 {
+            // Nothing we can do at this point.
+            return;
+        }
+
+        // First attempt: naively hope that we won't need a scrollbar_width
+        // (This means we try to use the entire available width for text).
+        self.rows = LinesIterator::new(&self.content, size.x).collect();
+
+        // Width taken by the scrollbar. Without a scrollbar, it's 0.
+        let mut scrollbar_width = 0;
+
+        if self.scrollable && self.rows.len() > size.y {
+            // We take 1 column for the bar itself + 1 spacing column
+            scrollbar_width = 2;
+
+            if size.x < scrollbar_width {
+                // Again, this is a lost cause.
                 return;
             }
 
-            self.rows = LinesIterator::new(&self.content, size.x).collect();
-            let mut scrollbar = 0;
-            if self.scrollable && self.rows.len() > size.y {
-                scrollbar = 2;
-                if size.x < scrollbar {
-                    // Again, this is a lost cause.
-                    return;
-                }
+            // If we're too high, include a scrollbar_width
+            let available = size.x - scrollbar_width;
+            self.rows = LinesIterator::new(&self.content, available).collect();
 
-                // If we're too high, include a scrollbar
-                self.rows = LinesIterator::new(&self.content,
-                                               size.x - scrollbar)
-                    .collect();
-                if self.rows.is_empty() && !self.content.is_empty() {
-                    return;
-                }
+            if self.rows.is_empty() && !self.content.is_empty() {
+                // We have some content, we we didn't find any row for it?
+                // This probably means we couldn't even make a single row
+                // (for instance we only have 1 column and we have a wide character).
+                return;
             }
-
-            // Desired width, including the scrollbar.
-            self.width = self.rows
-                .iter()
-                .map(|row| row.width)
-                .max()
-                .map(|w| w + scrollbar);
-
-            // Our resulting size.
-            // We can't go lower, width-wise.
-
-            let mut my_size = Vec2::new(self.width.unwrap_or(0),
-                                        self.rows.len());
-
-            if self.scrollable && my_size.y > size.y {
-                my_size.y = size.y;
-            }
-
-
-            // println_stderr!("my: {:?} | si: {:?}", my_size, size);
-            self.last_size = Some(SizeCache::build(my_size, size));
-            self.scrollbase.set_heights(size.y, self.rows.len());
-            self.adjust_scroll();
         }
+
+        // Desired width, including the scrollbar_width.
+        self.width = self.rows
+            .iter()
+            .map(|row| row.width)
+            .max()
+            .map(|w| w + scrollbar_width);
+
+        // The entire "virtual" size (includes all rows)
+        let mut my_size = Vec2::new(self.width.unwrap_or(0), self.rows.len());
+
+        // If we're scrolling, cap the the available size.
+        if self.scrollable && my_size.y > size.y {
+            my_size.y = size.y;
+        }
+
+
+        // Build a fresh cache.
+        self.last_size = Some(SizeCache::build(my_size, size));
+
+        // Adjust scrolling, in case we're sticking to the bottom for instance.
+        self.scrollbase.set_heights(size.y, self.rows.len());
+        self.adjust_scroll();
     }
 
     // Invalidates the cache, so next call will recompute everything.
