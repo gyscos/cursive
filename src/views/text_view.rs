@@ -126,6 +126,7 @@ impl TextView {
     /// manually.
     pub fn set_scroll_strategy(&mut self, strategy: ScrollStrategy) {
         self.scroll_strategy = strategy;
+        self.adjust_scroll();
     }
 
     /// Defines the way scrolling is adjusted on content or size change.
