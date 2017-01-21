@@ -59,7 +59,7 @@ pub use self::identifiable::Identifiable;
 
 pub use self::position::{Offset, Position};
 
-pub use self::scroll::ScrollBase;
+pub use self::scroll::{ScrollBase, ScrollStrategy};
 
 pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;

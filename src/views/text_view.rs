@@ -9,9 +9,7 @@ use unicode_width::UnicodeWidthStr;
 
 use utils::{LinesIterator, Row};
 use vec::Vec2;
-use view::{SizeCache, View};
-use view::ScrollBase;
-
+use view::{SizeCache, View, ScrollBase, ScrollStrategy};
 
 /// A simple view showing a fixed text
 pub struct TextView {
@@ -25,6 +23,7 @@ pub struct TextView {
 
     // ScrollBase make many scrolling-related things easier
     scrollbase: ScrollBase,
+    scroll_strategy: ScrollStrategy,
     last_size: Option<XY<SizeCache>>,
     width: Option<usize>,
 }
@@ -46,6 +45,7 @@ impl TextView {
             rows: Vec::new(),
             scrollable: true,
             scrollbase: ScrollBase::new(),
+            scroll_strategy: ScrollStrategy::KeepRow,
             align: Align::top_left(),
             last_size: None,
             width: None,
@@ -117,6 +117,32 @@ impl TextView {
         }
     }
 
+    /// Defines the way scrolling is adjusted on content or size change.
+    ///
+    /// The scroll strategy defines how the scrolling position is adjusted
+    /// when the size of the view or the content change.
+    ///
+    /// It is reset to `ScrollStrategy::KeepRow` whenever the user scrolls
+    /// manually.
+    pub fn set_scroll_strategy(&mut self, strategy: ScrollStrategy) {
+        self.scroll_strategy = strategy;
+    }
+
+    /// Defines the way scrolling is adjusted on content or size change.
+    ///
+    /// Chainable variant.
+    pub fn scroll_strategy(self, strategy: ScrollStrategy) -> Self {
+        self.with(|s| s.set_scroll_strategy(strategy))
+    }
+
+    fn adjust_scroll(&mut self) {
+        match self.scroll_strategy {
+            ScrollStrategy::StickToTop => self.scrollbase.scroll_top(),
+            ScrollStrategy::StickToBottom => self.scrollbase.scroll_bottom(),
+            ScrollStrategy::KeepRow => (),
+        };
+    }
+
     fn compute_rows(&mut self, size: Vec2) {
         if !self.is_cache_valid(size) {
             self.last_size = None;
@@ -165,6 +191,8 @@ impl TextView {
 
             // println_stderr!("my: {:?} | si: {:?}", my_size, size);
             self.last_size = Some(SizeCache::build(my_size, size));
+            self.scrollbase.set_heights(size.y, self.rows.len());
+            self.adjust_scroll();
         }
     }
 
@@ -210,6 +238,8 @@ impl View for TextView {
             _ => return EventResult::Ignored,
         }
 
+        // We just scrolled manually, so reset the scroll strategy.
+        self.scroll_strategy = ScrollStrategy::KeepRow;
         EventResult::Consumed(None)
     }
 
