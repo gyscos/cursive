@@ -18,13 +18,14 @@ use event::Callback;
 use std::rc::Rc;
 
 /// Root of a menu tree.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct MenuTree {
     /// Menu items
     pub children: Vec<MenuItem>,
 }
 
 /// Node in the menu tree.
+#[derive(Clone)]
 pub enum MenuItem {
     /// Actionnable button with a label.
     Leaf(String, Callback),
@@ -69,11 +70,6 @@ impl MenuTree {
         Self::default()
     }
 
-    /// Returns the number of children, including delimiters.
-    pub fn len(&self) -> usize {
-        self.children.len()
-    }
-
     /// Remove every children from this tree.
     pub fn clear(&mut self) {
         self.children.clear();
@@ -84,9 +80,15 @@ impl MenuTree {
         self.children.is_empty()
     }
 
+    /// Inserts a delimiter at the given position.
+    pub fn insert_delimiter(&mut self, i: usize) {
+        self.children.insert(i, MenuItem::Delimiter);
+    }
+
     /// Adds a delimiter to the end of this tree.
     pub fn add_delimiter(&mut self) {
-        self.children.push(MenuItem::Delimiter);
+        let i = self.children.len();
+        self.insert_delimiter(i);
     }
 
     /// Adds a delimiter to the end of this tree - chainable variant.
@@ -95,27 +97,98 @@ impl MenuTree {
     }
 
     /// Adds a actionnable leaf to the end of this tree.
-    pub fn add_leaf<F: 'static + Fn(&mut Cursive)>(&mut self, title: &str,
-                                                   cb: F) {
-        self.children
-            .push(MenuItem::Leaf(title.to_string(), Callback::from_fn(cb)));
+    pub fn add_leaf<S, F>(&mut self, title: S, cb: F)
+        where S: Into<String>,
+              F: 'static + Fn(&mut Cursive)
+    {
+        let i = self.children.len();
+        self.insert_leaf(i, title, cb);
     }
 
+    /// Inserts a leaf at the given position.
+    pub fn insert_leaf<S, F>(&mut self, i: usize, title: S, cb: F)
+        where S: Into<String>,
+              F: 'static + Fn(&mut Cursive)
+    {
+        let title = title.into();
+        self.children.insert(i, MenuItem::Leaf(title, Callback::from_fn(cb)));
+    }
+
+
     /// Adds a actionnable leaf to the end of this tree - chainable variant.
-    pub fn leaf<F>(self, title: &str, cb: F) -> Self
-        where F: 'static + Fn(&mut Cursive)
+    pub fn leaf<S, F>(self, title: S, cb: F) -> Self
+        where S: Into<String>,
+              F: 'static + Fn(&mut Cursive)
     {
         self.with(|menu| menu.add_leaf(title, cb))
     }
 
+    /// Inserts a subtree at the given position.
+    pub fn insert_subtree<S>(&mut self, i: usize, title: S, tree: MenuTree)
+        where S: Into<String>
+    {
+        let title = title.into();
+        let tree = MenuItem::Subtree(title, Rc::new(tree));
+        self.children.insert(i, tree);
+    }
+
     /// Adds a submenu to the end of this tree.
-    pub fn add_subtree(&mut self, title: &str, tree: MenuTree) {
-        self.children
-            .push(MenuItem::Subtree(title.to_string(), Rc::new(tree)));
+    pub fn add_subtree<S>(&mut self, title: S, tree: MenuTree)
+        where S: Into<String>
+    {
+        let i = self.children.len();
+        self.insert_subtree(i, title, tree);
     }
 
     /// Adds a submenu to the end of this tree - chainable variant.
-    pub fn subtree(self, title: &str, tree: MenuTree) -> Self {
+    pub fn subtree<S>(self, title: S, tree: MenuTree) -> Self
+        where S: Into<String>
+    {
         self.with(|menu| menu.add_subtree(title, tree))
+    }
+
+    /// Looks for a child with the given title.
+    ///
+    /// Returns `None` if no such label was found.
+    pub fn find_item(&mut self, title: &str) -> Option<&mut MenuItem> {
+        self.children
+            .iter_mut()
+            .find(|child| child.label() == title)
+    }
+
+    /// Returns the position of a child with the given label.
+    ///
+    /// Returns `None` if no such label was found.
+    pub fn find_position(&mut self, title: &str) -> Option<usize> {
+        self.children
+            .iter()
+            .position(|child| child.label() == title)
+    }
+
+    /// Looks for a subtree child with the given label.
+    ///
+    /// Returns `None` if the given title was not found,
+    /// or if it wasn't a subtree.
+    pub fn find_subtree(&mut self, title: &str) -> Option<&mut MenuTree> {
+        self.find_item(title).and_then(|item| {
+            if let &mut MenuItem::Subtree(_, ref mut tree) = item {
+                Some(Rc::make_mut(tree))
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Removes the item at the given position.
+    pub fn remove(&mut self, i: usize) {
+        self.children.remove(i);
+    }
+
+    /// Returns the number of direct children in this node.
+    ///
+    /// * Includes delimiters.
+    /// * Does not count nested children.
+    pub fn len(&self) -> usize {
+        self.children.len()
     }
 }

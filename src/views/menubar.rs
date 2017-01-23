@@ -5,8 +5,8 @@ use event::*;
 use menu::MenuTree;
 
 use std::rc::Rc;
-use theme::ColorStyle;
 
+use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, View};
@@ -35,7 +35,7 @@ enum State {
 /// [`Cursive`]: ../struct.Cursive.html#method.menubar
 pub struct Menubar {
     /// Menu items in this menubar.
-    pub menus: Vec<(String, Rc<MenuTree>)>,
+    menus: Vec<(String, Rc<MenuTree>)>,
     /// TODO: move this out of this view.
     pub autohide: bool,
     focus: usize,
@@ -77,8 +77,61 @@ impl Menubar {
     /// The item will use the given title, and on selection, will open a
     /// popup-menu with the given menu tree.
     pub fn add(&mut self, title: &str, menu: MenuTree) -> &mut Self {
-        self.menus.push((title.to_string(), Rc::new(menu)));
+        let i = self.menus.len();
+        self.insert(i, title, menu)
+    }
+
+    /// Insert a new item at the given position.
+    pub fn insert(&mut self, i: usize, title: &str, menu: MenuTree)
+                  -> &mut Self {
+        self.menus.insert(i, (title.to_string(), Rc::new(menu)));
         self
+    }
+
+    /// Removes all menu items from this menubar.
+    pub fn clear(&mut self) {
+        self.menus.clear();
+        self.focus = 0;
+    }
+
+    /// Returns the number of items in this menubar.
+    pub fn len(&self) -> usize {
+        self.menus.len()
+    }
+
+    /// Returns the item at the given position.
+    ///
+    /// Returns `None` if `i > self.len()`
+    pub fn get(&mut self, i: usize) -> Option<&mut MenuTree> {
+        self.menus
+            .get_mut(i)
+            .map(|&mut (_, ref mut tree)| Rc::make_mut(tree))
+    }
+
+    /// Looks for an item with the given label.
+    pub fn find(&mut self, label: &str) -> Option<&mut MenuTree> {
+        // Look for the menu with the correct label,
+        // then call Rc::make_mut on the tree.
+        // If another Rc on this tree existed, this will clone
+        // the tree and keep the forked version.
+        self.menus
+            .iter_mut()
+            .find(|&&mut (ref l, _)| l == label)
+            .map(|&mut (_, ref mut tree)| Rc::make_mut(tree))
+    }
+
+    /// Returns the position of the item with the given label.
+    ///
+    /// Returns `None` if no such label was found.
+    pub fn find_position(&mut self, label: &str) -> Option<usize> {
+        self.menus
+            .iter()
+            .position(|&(ref l, _)| l == label)
+    }
+
+    /// Remove the item at the given position.
+    pub fn remove(&mut self, i: usize) {
+        self.menus.remove(i);
     }
 }
 
@@ -101,8 +154,9 @@ fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
                 s.select_menubar();
                 // Act as if we sent "Right" then "Down"
                 s.menubar().on_event(Event::Key(Key::Right)).process(s);
-                if let EventResult::Consumed(Some(cb)) = s.menubar()
-                    .on_event(Event::Key(Key::Down)) {
+                if let EventResult::Consumed(Some(cb)) =
+                    s.menubar()
+                        .on_event(Event::Key(Key::Down)) {
                     cb(s);
                 }
             })
@@ -111,8 +165,9 @@ fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
                 s.select_menubar();
                 // Act as if we sent "Left" then "Down"
                 s.menubar().on_event(Event::Key(Key::Left)).process(s);
-                if let EventResult::Consumed(Some(cb)) = s.menubar()
-                    .on_event(Event::Key(Key::Down)) {
+                if let EventResult::Consumed(Some(cb)) =
+                    s.menubar()
+                        .on_event(Event::Key(Key::Down)) {
                     cb(s);
                 }
             }));
@@ -167,9 +222,9 @@ impl View for Menubar {
                 let menu = self.menus[self.focus].1.clone();
                 self.state = State::Submenu;
                 let offset = (self.menus[..self.focus]
-                    .iter()
-                    .map(|&(ref title, _)| title.width() + 2)
-                    .fold(0, |a, b| a + b),
+                                  .iter()
+                                  .map(|&(ref title, _)| title.width() + 2)
+                                  .fold(0, |a, b| a + b),
                               if self.autohide { 1 } else { 0 });
                 // Since the closure will be called multiple times,
                 // we also need a new Rc on every call.

@@ -6,9 +6,14 @@ use cursive::menu::MenuTree;
 use cursive::traits::*;
 use cursive::views::Dialog;
 
+use std::sync::atomic::{Ordering, AtomicUsize};
+
 fn main() {
 
     let mut siv = Cursive::new();
+
+    // We'll use a counter to name new files.
+    let counter = AtomicUsize::new(1);
 
     // The menubar is a list of (label, menu tree) pairs.
     siv.menubar()
@@ -16,7 +21,17 @@ fn main() {
         .add("File",
              MenuTree::new()
                  // Trees are made of leaves, with are directly actionable...
-                 .leaf("New", |s| s.add_layer(Dialog::info("New file!")))
+                 .leaf("New", move |s| {
+                     // Here we use the counter to add an entry
+                     // in the list of "Recent" items.
+                     let i = counter.fetch_add(1, Ordering::Relaxed);
+                     let filename = format!("New {}", i);
+                     s.menubar().find("File").unwrap()
+                                .find_subtree("Recent").unwrap()
+                                .insert_leaf(0, filename, |_| ());
+
+                     s.add_layer(Dialog::info("New file!"));
+                 })
                  // ... and of sub-trees, which open up when selected.
                  .subtree("Recent",
                           // The `.with()` method can help when running loops
@@ -25,7 +40,7 @@ fn main() {
                               for i in 1..100 {
                                   // We don't actually do anything here,
                                   // but you could!
-                                  tree.add_leaf(&format!("Item {}", i), |_| ())
+                                  tree.add_leaf(format!("Item {}", i), |_| ())
                               }
                           }))
                  // Delimiter are simple lines between items,
@@ -33,7 +48,7 @@ fn main() {
                  .delimiter()
                  .with(|tree| {
                      for i in 1..10 {
-                         tree.add_leaf(&format!("Option {}", i), |_| ());
+                         tree.add_leaf(format!("Option {}", i), |_| ());
                      }
                  })
                  .delimiter()

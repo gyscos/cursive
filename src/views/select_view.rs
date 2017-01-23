@@ -403,6 +403,7 @@ impl<T: 'static> View for SelectView<T> {
     fn on_event(&mut self, event: Event) -> EventResult {
         if self.popup {
             match event {
+                // TODO: add Left/Right support for quick-switch?
                 Event::Key(Key::Enter) => {
                     // Build a shallow menu tree to mimick the items array.
                     // TODO: cache it?
@@ -411,7 +412,7 @@ impl<T: 'static> View for SelectView<T> {
                         let focus = self.focus.clone();
                         let on_submit = self.on_submit.as_ref().cloned();
                         let value = item.value.clone();
-                        tree.add_leaf(&item.label, move |s| {
+                        tree.add_leaf(item.label.clone(), move |s| {
                             focus.set(i);
                             if let Some(ref on_submit) = on_submit {
                                 on_submit(s, &value);
@@ -450,7 +451,8 @@ impl<T: 'static> View for SelectView<T> {
                         // A nice effect is that window resizes will keep both
                         // layers together.
                         let current_offset = s.screen().offset();
-                        let offset = XY::<isize>::from(offset) - current_offset;
+                        let offset = XY::<isize>::from(offset) -
+                                     current_offset;
                         // And finally, put the view in view!
                         s.screen_mut()
                             .add_layer_at(Position::parent(offset),
