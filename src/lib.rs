@@ -244,13 +244,13 @@ impl Cursive {
     ///             .leaf("New", |s| s.add_layer(Dialog::info("New file!")))
     ///             .subtree("Recent", MenuTree::new().with(|tree| {
     ///                 for i in 1..100 {
-    ///                     tree.add_leaf(&format!("Item {}", i), |_| ())
+    ///                     tree.add_leaf(format!("Item {}", i), |_| ())
     ///                 }
     ///             }))
     ///             .delimiter()
     ///             .with(|tree| {
     ///                 for i in 1..10 {
-    ///                     tree.add_leaf(&format!("Option {}", i), |_| ());
+    ///                     tree.add_leaf(format!("Option {}", i), |_| ());
     ///                 }
     ///             })
     ///             .delimiter()
