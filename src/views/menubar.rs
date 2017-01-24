@@ -76,13 +76,13 @@ impl Menubar {
     ///
     /// The item will use the given title, and on selection, will open a
     /// popup-menu with the given menu tree.
-    pub fn add(&mut self, title: &str, menu: MenuTree) -> &mut Self {
+    pub fn add_subtree(&mut self, title: &str, menu: MenuTree) -> &mut Self {
         let i = self.menus.len();
-        self.insert(i, title, menu)
+        self.insert_subtree(i, title, menu)
     }
 
     /// Insert a new item at the given position.
-    pub fn insert(&mut self, i: usize, title: &str, menu: MenuTree)
+    pub fn insert_subtree(&mut self, i: usize, title: &str, menu: MenuTree)
                   -> &mut Self {
         self.menus.insert(i, (title.to_string(), Rc::new(menu)));
         self
@@ -102,14 +102,14 @@ impl Menubar {
     /// Returns the item at the given position.
     ///
     /// Returns `None` if `i > self.len()`
-    pub fn get(&mut self, i: usize) -> Option<&mut MenuTree> {
+    pub fn get_subtree(&mut self, i: usize) -> Option<&mut MenuTree> {
         self.menus
             .get_mut(i)
             .map(|&mut (_, ref mut tree)| Rc::make_mut(tree))
     }
 
     /// Looks for an item with the given label.
-    pub fn find(&mut self, label: &str) -> Option<&mut MenuTree> {
+    pub fn find_subtree(&mut self, label: &str) -> Option<&mut MenuTree> {
         // Look for the menu with the correct label,
         // then call Rc::make_mut on the tree.
         // If another Rc on this tree existed, this will clone

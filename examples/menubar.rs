@@ -18,7 +18,7 @@ fn main() {
     // The menubar is a list of (label, menu tree) pairs.
     siv.menubar()
         // We add a new "File" tree
-        .add("File",
+        .add_subtree("File",
              MenuTree::new()
                  // Trees are made of leaves, with are directly actionable...
                  .leaf("New", move |s| {
@@ -26,7 +26,7 @@ fn main() {
                      // in the list of "Recent" items.
                      let i = counter.fetch_add(1, Ordering::Relaxed);
                      let filename = format!("New {}", i);
-                     s.menubar().find("File").unwrap()
+                     s.menubar().find_subtree("File").unwrap()
                                 .find_subtree("Recent").unwrap()
                                 .insert_leaf(0, filename, |_| ());
 
@@ -53,7 +53,7 @@ fn main() {
                  })
                  .delimiter()
                  .leaf("Quit", |s| s.quit()))
-        .add("Help",
+        .add_subtree("Help",
              MenuTree::new()
                  .subtree("Help",
                           MenuTree::new()
