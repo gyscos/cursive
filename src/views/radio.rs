@@ -139,7 +139,7 @@ impl<T> RadioButton<T> {
 }
 
 impl<T> View for RadioButton<T> {
-    fn get_min_size(&mut self, _: Vec2) -> Vec2 {
+    fn required_size(&mut self, _: Vec2) -> Vec2 {
         if self.label.is_empty() {
             Vec2::new(3, 1)
         } else {

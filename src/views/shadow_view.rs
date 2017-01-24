@@ -47,10 +47,10 @@ impl<T: View> ShadowView<T> {
 impl<T: View> ViewWrapper for ShadowView<T> {
     wrap_impl!(self.view: T);
 
-    fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
+    fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
         // Make sure req >= offset
         let offset = self.padding().or_min(req);
-        self.view.get_min_size(req - offset) + offset
+        self.view.required_size(req - offset) + offset
     }
 
     fn wrap_layout(&mut self, size: Vec2) {

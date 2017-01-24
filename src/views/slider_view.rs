@@ -125,7 +125,7 @@ impl View for SliderView {
         });
     }
 
-    fn get_min_size(&mut self, _: Vec2) -> Vec2 {
+    fn required_size(&mut self, _: Vec2) -> Vec2 {
         self.orientation.make_vec(self.max_value, 1)
     }
 

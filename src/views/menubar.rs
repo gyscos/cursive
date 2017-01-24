@@ -242,7 +242,7 @@ impl View for Menubar {
         true
     }
 
-    fn get_min_size(&mut self, _: Vec2) -> Vec2 {
+    fn required_size(&mut self, _: Vec2) -> Vec2 {
         // TODO: scroll the options if the screen is too small?
 
         // We add 2 to the length of every label for marin.

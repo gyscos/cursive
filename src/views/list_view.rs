@@ -196,7 +196,7 @@ impl View for ListView {
         });
     }
 
-    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
+    fn required_size(&mut self, req: Vec2) -> Vec2 {
         let label_size = self.children
             .iter()
             .map(Child::label)
@@ -206,7 +206,7 @@ impl View for ListView {
         let view_size = self.children
             .iter_mut()
             .filter_map(Child::view)
-            .map(|v| v.get_min_size(req).x)
+            .map(|v| v.required_size(req).x)
             .max()
             .unwrap_or(0);
 

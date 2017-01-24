@@ -90,7 +90,7 @@ impl View for Button {
         });
     }
 
-    fn get_min_size(&mut self, _: Vec2) -> Vec2 {
+    fn required_size(&mut self, _: Vec2) -> Vec2 {
         // Meh. Fixed size we are.
         Vec2::new(2 + self.label.width(), 1)
     }

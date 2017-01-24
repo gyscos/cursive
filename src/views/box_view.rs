@@ -152,10 +152,10 @@ impl<T: View> BoxView<T> {
 impl<T: View> ViewWrapper for BoxView<T> {
     wrap_impl!(self.view: T);
 
-    fn wrap_get_min_size(&mut self, req: Vec2) -> Vec2 {
+    fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
 
         let req = self.size.zip_map(req, SizeConstraint::available);
-        let child_size = self.view.get_min_size(req);
+        let child_size = self.view.required_size(req);
         let result = self.size
             .zip_map(child_size.zip(req), SizeConstraint::result);
 
@@ -191,57 +191,57 @@ mod tests {
     fn min_size() {
         let mut min_w = DummyView.full_screen().min_width(5);
 
-        assert_eq!(Vec2::new(5, 1), min_w.get_min_size(Vec2::new(1, 1)));
-        assert_eq!(Vec2::new(5, 10), min_w.get_min_size(Vec2::new(1, 10)));
-        assert_eq!(Vec2::new(10, 1), min_w.get_min_size(Vec2::new(10, 1)));
-        assert_eq!(Vec2::new(10, 10), min_w.get_min_size(Vec2::new(10, 10)));
+        assert_eq!(Vec2::new(5, 1), min_w.required_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(5, 10), min_w.required_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 1), min_w.required_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 10), min_w.required_size(Vec2::new(10, 10)));
 
         let mut min_h = DummyView.full_screen().min_height(5);
 
-        assert_eq!(Vec2::new(1, 5), min_h.get_min_size(Vec2::new(1, 1)));
-        assert_eq!(Vec2::new(1, 10), min_h.get_min_size(Vec2::new(1, 10)));
-        assert_eq!(Vec2::new(10, 5), min_h.get_min_size(Vec2::new(10, 1)));
-        assert_eq!(Vec2::new(10, 10), min_h.get_min_size(Vec2::new(10, 10)));
+        assert_eq!(Vec2::new(1, 5), min_h.required_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 10), min_h.required_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 5), min_h.required_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 10), min_h.required_size(Vec2::new(10, 10)));
 
         let mut min_s = DummyView.full_screen().min_size((5, 5));
 
-        assert_eq!(Vec2::new(5, 5), min_s.get_min_size(Vec2::new(1, 1)));
-        assert_eq!(Vec2::new(5, 10), min_s.get_min_size(Vec2::new(1, 10)));
-        assert_eq!(Vec2::new(10, 5), min_s.get_min_size(Vec2::new(10, 1)));
-        assert_eq!(Vec2::new(10, 10), min_s.get_min_size(Vec2::new(10, 10)));
+        assert_eq!(Vec2::new(5, 5), min_s.required_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(5, 10), min_s.required_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 5), min_s.required_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 10), min_s.required_size(Vec2::new(10, 10)));
     }
 
     #[test]
     fn max_size() {
         let mut max_w = DummyView.full_screen().max_width(5);
 
-        assert_eq!(Vec2::new(1, 1), max_w.get_min_size(Vec2::new(1, 1)));
-        assert_eq!(Vec2::new(1, 10), max_w.get_min_size(Vec2::new(1, 10)));
-        assert_eq!(Vec2::new(5, 1), max_w.get_min_size(Vec2::new(10, 1)));
-        assert_eq!(Vec2::new(5, 10), max_w.get_min_size(Vec2::new(10, 10)));
+        assert_eq!(Vec2::new(1, 1), max_w.required_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 10), max_w.required_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(5, 1), max_w.required_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(5, 10), max_w.required_size(Vec2::new(10, 10)));
 
         let mut max_h = DummyView.full_screen().max_height(5);
 
-        assert_eq!(Vec2::new(1, 1), max_h.get_min_size(Vec2::new(1, 1)));
-        assert_eq!(Vec2::new(1, 5), max_h.get_min_size(Vec2::new(1, 10)));
-        assert_eq!(Vec2::new(10, 1), max_h.get_min_size(Vec2::new(10, 1)));
-        assert_eq!(Vec2::new(10, 5), max_h.get_min_size(Vec2::new(10, 10)));
+        assert_eq!(Vec2::new(1, 1), max_h.required_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 5), max_h.required_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 1), max_h.required_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 5), max_h.required_size(Vec2::new(10, 10)));
 
         let mut max_s = DummyView.full_screen().max_size((5, 5));
 
-        assert_eq!(Vec2::new(1, 1), max_s.get_min_size(Vec2::new(1, 1)));
-        assert_eq!(Vec2::new(1, 5), max_s.get_min_size(Vec2::new(1, 10)));
-        assert_eq!(Vec2::new(5, 1), max_s.get_min_size(Vec2::new(10, 1)));
-        assert_eq!(Vec2::new(5, 5), max_s.get_min_size(Vec2::new(10, 10)));
+        assert_eq!(Vec2::new(1, 1), max_s.required_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 5), max_s.required_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(5, 1), max_s.required_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(5, 5), max_s.required_size(Vec2::new(10, 10)));
     }
 
     #[test]
     fn full_screen() {
         let mut full = DummyView.full_screen();
 
-        assert_eq!(Vec2::new(1, 1), full.get_min_size(Vec2::new(1, 1)));
-        assert_eq!(Vec2::new(1, 10), full.get_min_size(Vec2::new(1, 10)));
-        assert_eq!(Vec2::new(10, 1), full.get_min_size(Vec2::new(10, 1)));
-        assert_eq!(Vec2::new(10, 10), full.get_min_size(Vec2::new(10, 10)));
+        assert_eq!(Vec2::new(1, 1), full.required_size(Vec2::new(1, 1)));
+        assert_eq!(Vec2::new(1, 10), full.required_size(Vec2::new(1, 10)));
+        assert_eq!(Vec2::new(10, 1), full.required_size(Vec2::new(10, 1)));
+        assert_eq!(Vec2::new(10, 10), full.required_size(Vec2::new(10, 10)));
     }
 }

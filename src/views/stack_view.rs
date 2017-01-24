@@ -149,7 +149,7 @@ impl View for StackView {
 
         for layer in &mut self.layers {
             // Give each guy what he asks for, within the budget constraints.
-            let size = Vec2::min(size, layer.view.get_min_size(size));
+            let size = Vec2::min(size, layer.view.required_size(size));
             layer.size = size;
             layer.view.layout(layer.size);
 
@@ -164,12 +164,12 @@ impl View for StackView {
         }
     }
 
-    fn get_min_size(&mut self, size: Vec2) -> Vec2 {
+    fn required_size(&mut self, size: Vec2) -> Vec2 {
         // The min size is the max of all children's
 
         self.layers
             .iter_mut()
-            .map(|layer| layer.view.get_min_size(size))
+            .map(|layer| layer.view.required_size(size))
             .fold(Vec2::new(1, 1), Vec2::max)
     }
 

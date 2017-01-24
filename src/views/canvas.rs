@@ -13,7 +13,7 @@ pub struct Canvas<T> {
 
     draw: Box<Fn(&Printer, &T)>,
     on_event: Box<FnMut(Event, &mut T) -> EventResult>,
-    get_min_size: Box<FnMut(Vec2, &mut T) -> Vec2>,
+    required_size: Box<FnMut(Vec2, &mut T) -> Vec2>,
     layout: Box<FnMut(Vec2, &mut T)>,
     take_focus: Box<FnMut(Direction, &mut T) -> bool>,
 }
@@ -35,7 +35,7 @@ impl<T> Canvas<T> {
             state: state,
             draw: Box::new(|_, _| ()),
             on_event: Box::new(|_, _| EventResult::Ignored),
-            get_min_size: Box::new(|_, _| Vec2::new(1, 1)),
+            required_size: Box::new(|_, _| Vec2::new(1, 1)),
             layout: Box::new(|_, _| ()),
             take_focus: Box::new(|_, _| false),
         }
@@ -73,20 +73,20 @@ impl<T> Canvas<T> {
         self.with(|s| s.set_on_event(f))
     }
 
-    /// Sets the closure for `get_min_size(Vec2)`
-    pub fn set_get_min_size<F>(&mut self, f: F)
+    /// Sets the closure for `required_size(Vec2)`
+    pub fn set_required_size<F>(&mut self, f: F)
         where F: 'static + FnMut(Vec2, &mut T) -> Vec2
     {
-        self.get_min_size = Box::new(f);
+        self.required_size = Box::new(f);
     }
 
-    /// Sets the closure for `get_min_size(Vec2)`
+    /// Sets the closure for `required_size(Vec2)`
     ///
     /// Chainable variant.
-    pub fn with_get_min_size<F>(self, f: F) -> Self
+    pub fn with_required_size<F>(self, f: F) -> Self
         where F: 'static + FnMut(Vec2, &mut T) -> Vec2
     {
-        self.with(|s| s.set_get_min_size(f))
+        self.with(|s| s.set_required_size(f))
     }
 
     /// Sets the closure for `layout(Vec2)`
@@ -131,8 +131,8 @@ impl <T> View for Canvas<T> {
         (self.on_event)(event, &mut self.state)
     }
 
-    fn get_min_size(&mut self, constraint: Vec2) -> Vec2 {
-        (self.get_min_size)(constraint, &mut self.state)
+    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+        (self.required_size)(constraint, &mut self.state)
     }
 
     fn layout(&mut self, size: Vec2) {

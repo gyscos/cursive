@@ -26,8 +26,8 @@ struct Child {
 }
 
 impl Child {
-    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
-        self.size = self.view.get_min_size(req);
+    fn required_size(&mut self, req: Vec2) -> Vec2 {
+        self.size = self.view.required_size(req);
         self.size
     }
 
@@ -191,7 +191,7 @@ impl View for LinearLayout {
     fn layout(&mut self, size: Vec2) {
         // If we can get away without breaking a sweat, you can bet we will.
         if self.get_cache(size).is_none() {
-            self.get_min_size(size);
+            self.required_size(size);
         }
 
         let o = self.orientation;
@@ -202,7 +202,7 @@ impl View for LinearLayout {
         }
     }
 
-    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
+    fn required_size(&mut self, req: Vec2) -> Vec2 {
         // Did anything change since last time?
         if let Some(size) = self.get_cache(req) {
             return size;
@@ -211,7 +211,7 @@ impl View for LinearLayout {
         // First, make a naive scenario: everything will work fine.
         let sizes: Vec<Vec2> = self.children
             .iter_mut()
-            .map(|c| c.get_min_size(req))
+            .map(|c| c.required_size(req))
             .collect();
         // println_stderr!("Ideal sizes: {:?}", sizes);
         let ideal = self.orientation.stack(sizes.iter());
@@ -233,7 +233,7 @@ impl View for LinearLayout {
         // See how they like it that way
         let min_sizes: Vec<Vec2> = self.children
             .iter_mut()
-            .map(|c| c.get_min_size(budget_req))
+            .map(|c| c.required_size(budget_req))
             .collect();
         let desperate = self.orientation.stack(min_sizes.iter());
         // println_stderr!("Min sizes: {:?}", min_sizes);
@@ -298,7 +298,7 @@ impl View for LinearLayout {
         let final_sizes: Vec<Vec2> = self.children
             .iter_mut()
             .enumerate()
-            .map(|(i, c)| c.get_min_size(final_lengths[i]))
+            .map(|(i, c)| c.required_size(final_lengths[i]))
             .collect();
         // println_stderr!("Final sizes2: {:?}", final_sizes);
 

@@ -272,7 +272,7 @@ impl View for TextView {
         self.last_size.is_none()
     }
 
-    fn get_min_size(&mut self, size: Vec2) -> Vec2 {
+    fn required_size(&mut self, size: Vec2) -> Vec2 {
         self.compute_rows(size);
 
         // This is what we'd like

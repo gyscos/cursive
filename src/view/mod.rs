@@ -15,7 +15,7 @@
 //! `View::layout()` on its own children.
 //!
 //! In order to determine how much space should be given each child, parents
-//! can use `View::get_min_size()` on them.
+//! can use `View::required_size()` on them.
 //!
 //!
 //! ### Contracts
@@ -31,9 +31,9 @@
 //!
 //!   In this case, it is safe to omit the call to `View::layout()`.
 //!
-//! * The value returned by `get_min_size` should be an actually viable size,
+//! * The value returned by `required_size` should be an actually viable size,
 //!   no matter what the request is. This means calling `View::layout()` with
-//!   a size returned by `get_min_size` is **never** an error.
+//!   a size returned by `required_size` is **never** an error.
 
 #[macro_use]
 mod view_wrapper;
@@ -85,7 +85,7 @@ pub trait View {
     /// It's also fine to ignore it and return a fixed value.
     ///
     /// Default implementation always return `(1,1)`.
-    fn get_min_size(&mut self, constraint: Vec2) -> Vec2 {
+    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
         let _ = constraint;
         Vec2::new(1, 1)
     }
@@ -98,7 +98,7 @@ pub trait View {
     /// * Views can ignore it and always return true (default implementation).
     ///   They will always be assumed to have changed.
     /// * View Groups can ignore it and always re-layout their children.
-    ///     * If they call `get_min_size` or `layout` with stable parameters,
+    ///     * If they call `required_size` or `layout` with stable parameters,
     ///       the children may cache the result themselves and speed up the
     ///       process anyway.
     fn needs_relayout(&self) -> bool {

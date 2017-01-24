@@ -247,7 +247,7 @@ impl View for Dialog {
 
     }
 
-    fn get_min_size(&mut self, req: Vec2) -> Vec2 {
+    fn required_size(&mut self, req: Vec2) -> Vec2 {
         // Padding and borders are not available for kids.
         let nomans_land = self.padding.combined() + self.borders.combined();
 
@@ -257,7 +257,7 @@ impl View for Dialog {
             buttons_size.x += self.buttons.len() - 1;
         }
         for button in &mut self.buttons {
-            let s = button.view.get_min_size(req);
+            let s = button.view.required_size(req);
             buttons_size.x += s.x;
             buttons_size.y = max(buttons_size.y, s.y + 1);
         }
@@ -270,7 +270,7 @@ impl View for Dialog {
         }
         let content_req = req - taken;
 
-        let content_size = self.content.get_min_size(content_req);
+        let content_size = self.content.required_size(content_req);
 
         // On the Y axis, we add buttons and content.
         // On the X axis, we take the max.
@@ -300,7 +300,7 @@ impl View for Dialog {
         // Buttons are kings, we give them everything they want.
         let mut buttons_height = 0;
         for button in self.buttons.iter_mut().rev() {
-            let size = button.get_min_size(size);
+            let size = button.required_size(size);
             buttons_height = max(buttons_height, size.y + 1);
             button.layout(size);
         }
