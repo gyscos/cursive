@@ -37,6 +37,7 @@ macro_rules! impl_enabled {
 
 mod box_view;
 mod button;
+mod canvas;
 mod checkbox;
 mod dialog;
 mod dummy;
@@ -62,6 +63,7 @@ mod tracked_view;
 
 pub use self::box_view::BoxView;
 pub use self::button::Button;
+pub use self::canvas::Canvas;
 pub use self::checkbox::Checkbox;
 pub use self::dialog::Dialog;
 pub use self::dummy::DummyView;
