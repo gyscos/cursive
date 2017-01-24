@@ -6,20 +6,44 @@ use std::any::Any;
 use theme::ColorStyle;
 use vec::Vec2;
 use view::{Offset, Position, Selector, View};
-use views::ShadowView;
+use views::{Layer, ShadowView};
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
 pub struct StackView {
-    layers: Vec<Layer>,
+    layers: Vec<Child>,
     last_size: Vec2,
 }
 
-struct Layer {
+enum Placement {
+    Floating(Position),
+    Fullscreen,
+}
+
+impl Placement {
+    pub fn compute_offset<S, A, P>(&self, size: S, available: A, parent: P)
+                                   -> Vec2
+        where S: Into<Vec2>,
+              A: Into<Vec2>,
+              P: Into<Vec2>
+    {
+        match *self {
+            Placement::Floating(ref position) => {
+                position.compute_offset(size, available, parent)
+            }
+            Placement::Fullscreen => Vec2::zero(),
+        }
+    }
+}
+
+struct Child {
     view: Box<View>,
     size: Vec2,
-    position: Position,
-    // Has it received the gift yet?
+    placement: Placement,
+
+    // We cannot call `take_focus` until we've called `layout()`
+    // So we want to call `take_focus` right after the first call
+    // to `layout`; this flag remembers when we've done that.
     virgin: bool,
 }
 
@@ -34,21 +58,38 @@ impl StackView {
         }
     }
 
+    /// Adds a new full-screen layer on top of the stack.
+    ///
+    /// Fullscreen layers have no shadow.
+    pub fn add_fullscreen_layer<T>(&mut self, view: T)
+        where T: 'static + View
+    {
+        self.layers.push(Child {
+            view: Box::new(Layer::new(view)),
+            size: Vec2::zero(),
+            placement: Placement::Fullscreen,
+            virgin: true,
+        });
+    }
+
     /// Adds new view on top of the stack in the center of the screen.
-    pub fn add_layer<T: 'static + View>(&mut self, view: T) {
+    pub fn add_layer<T>(&mut self, view: T)
+        where T: 'static + View
+    {
         self.add_layer_at(Position::center(), view);
     }
 
     /// Adds a view on top of the stack.
-    pub fn add_layer_at<T: 'static + View>(&mut self, position: Position,
-                                           view: T) {
-        self.layers.push(Layer {
+    pub fn add_layer_at<T>(&mut self, position: Position, view: T)
+        where T: 'static + View
+    {
+        self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
-            view: Box::new(ShadowView::new(view)
+            view: Box::new(ShadowView::new(Layer::new(view))
                 .top_padding(position.y == Offset::Center)
                 .left_padding(position.x == Offset::Center)),
             size: Vec2::new(0, 0),
-            position: position,
+            placement: Placement::Floating(position),
             virgin: true,
         });
     }
@@ -62,7 +103,7 @@ impl StackView {
     pub fn offset(&self) -> Vec2 {
         let mut previous = Vec2::zero();
         for layer in &self.layers {
-            let offset = layer.position
+            let offset = layer.placement
                 .compute_offset(layer.size, self.last_size, previous);
             previous = offset;
         }
@@ -83,7 +124,7 @@ impl View for StackView {
             for (i, v) in self.layers.iter().enumerate() {
                 // Place the view
                 // Center the view
-                let offset = v.position
+                let offset = v.placement
                     .compute_offset(v.size, printer.size, previous);
 
                 previous = offset;

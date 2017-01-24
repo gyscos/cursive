@@ -1,5 +1,6 @@
 //! Various views to use when creating the layout.
 
+/// A macro to help with creating toggleable views.
 macro_rules! impl_enabled {
     (self.$x:ident) => {
 
@@ -42,6 +43,7 @@ mod dummy;
 mod edit_view;
 mod id_view;
 mod key_event_view;
+mod layer;
 mod linear_layout;
 mod list_view;
 mod menubar;
@@ -66,6 +68,7 @@ pub use self::dummy::DummyView;
 pub use self::edit_view::EditView;
 pub use self::id_view::IdView;
 pub use self::key_event_view::KeyEventView;
+pub use self::layer::Layer;
 pub use self::linear_layout::LinearLayout;
 pub use self::list_view::ListView;
 pub use self::menu_popup::MenuPopup;

@@ -437,7 +437,7 @@ impl Cursive {
         self.global_callbacks.insert(event.into(), Callback::from_fn(cb));
     }
 
-    /// Convenient method to add a layer to the current screen.
+    /// Add a layer to the current screen.
     ///
     /// # Examples
     ///
@@ -452,6 +452,15 @@ impl Cursive {
     /// ```
     pub fn add_layer<T: 'static + View>(&mut self, view: T) {
         self.screen_mut().add_layer(view);
+    }
+
+    /// Adds a new full-screen layer to the current screen.
+    ///
+    /// Fullscreen layers have no shadow.
+    pub fn add_fullscreen_layer<T>(&mut self, view: T)
+        where T: 'static + View
+    {
+        self.screen_mut().add_fullscreen_layer(view);
     }
 
     /// Convenient method to remove a layer from the current screen.
