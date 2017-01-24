@@ -212,7 +212,7 @@ impl<'a> Printer<'a> {
     {
         let color = match self.theme.borders {
             None => return,
-            Some(BorderStyle::Outset) if invert => ColorStyle::Secondary,
+            Some(BorderStyle::Outset) if invert => ColorStyle::Tertiary,
             _ => ColorStyle::Primary,
         };
 
