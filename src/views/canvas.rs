@@ -24,6 +24,7 @@ impl<T> Canvas<T> {
     /// # Examples
     ///
     /// ```rust
+    /// # use cursive::views::Canvas;
     /// let canvas = Canvas::new(())
     ///                     .with_draw(|printer, _| {
     ///                         // Print the view
