@@ -29,17 +29,18 @@ pub struct TextView {
 }
 
 // If the last character is a newline, strip it.
-fn strip_last_newline(content: &mut String) {
+fn strip_last_newline(content: &str) -> &str {
     if content.ends_with('\n') {
-        content.pop().unwrap();
+        &content[..content.len() - 1]
+    } else {
+        content
     }
 }
 
 impl TextView {
     /// Creates a new TextView with the given content.
     pub fn new<S: Into<String>>(content: S) -> Self {
-        let mut content = content.into();
-        strip_last_newline(&mut content);
+        let content = content.into();
         TextView {
             content: content,
             rows: Vec::new(),
@@ -99,9 +100,14 @@ impl TextView {
 
     /// Replace the text in this view.
     pub fn set_content<S: Into<String>>(&mut self, content: S) {
-        let mut content = content.into();
-        strip_last_newline(&mut content);
+        let content = content.into();
         self.content = content;
+        self.invalidate();
+    }
+
+    /// Append content to the end of a TextView.
+    pub fn append_content(&mut self, content: &str) {
+        self.content.push_str(content);
         self.invalidate();
     }
 
@@ -163,7 +169,9 @@ impl TextView {
 
         // First attempt: naively hope that we won't need a scrollbar_width
         // (This means we try to use the entire available width for text).
-        self.rows = LinesIterator::new(&self.content, size.x).collect();
+        self.rows = LinesIterator::new(strip_last_newline(&self.content),
+                                       size.x)
+            .collect();
 
         // Width taken by the scrollbar. Without a scrollbar, it's 0.
         let mut scrollbar_width = 0;
