@@ -239,7 +239,7 @@ impl Cursive {
     /// let mut siv = Cursive::new();
     ///
     /// siv.menubar()
-    ///    .add("File",
+    ///    .add_subtree("File",
     ///         MenuTree::new()
     ///             .leaf("New", |s| s.add_layer(Dialog::info("New file!")))
     ///             .subtree("Recent", MenuTree::new().with(|tree| {
@@ -255,7 +255,7 @@ impl Cursive {
     ///             })
     ///             .delimiter()
     ///             .leaf("Quit", |s| s.quit()))
-    ///    .add("Help",
+    ///    .add_subtree("Help",
     ///         MenuTree::new()
     ///             .subtree("Help",
     ///                      MenuTree::new()
