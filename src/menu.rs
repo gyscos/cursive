@@ -75,11 +75,6 @@ impl MenuTree {
         self.children.clear();
     }
 
-    /// Returns `true` if this tree has no children.
-    pub fn is_empty(&self) -> bool {
-        self.children.is_empty()
-    }
-
     /// Inserts a delimiter at the given position.
     pub fn insert_delimiter(&mut self, i: usize) {
         self.children.insert(i, MenuItem::Delimiter);
@@ -171,7 +166,7 @@ impl MenuTree {
     /// or if it wasn't a subtree.
     pub fn find_subtree(&mut self, title: &str) -> Option<&mut MenuTree> {
         self.find_item(title).and_then(|item| {
-            if let &mut MenuItem::Subtree(_, ref mut tree) = item {
+            if let MenuItem::Subtree(_, ref mut tree) = *item {
                 Some(Rc::make_mut(tree))
             } else {
                 None
@@ -191,4 +186,10 @@ impl MenuTree {
     pub fn len(&self) -> usize {
         self.children.len()
     }
+
+    /// Returns `true` if this tree has no children.
+    pub fn is_empty(&self) -> bool {
+        self.children.is_empty()
+    }
+
 }

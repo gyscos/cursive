@@ -99,6 +99,11 @@ impl Menubar {
         self.menus.len()
     }
 
+    /// Returns `true` if this menubar is empty.
+    pub fn is_empty(&self) -> bool {
+        self.menus.is_empty()
+    }
+
     /// Returns the item at the given position.
     ///
     /// Returns `None` if `i > self.len()`
