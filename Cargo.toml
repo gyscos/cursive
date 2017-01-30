@@ -13,7 +13,7 @@ repository = "https://github.com/gyscos/Cursive"
 version = "0.4.0"
 
 [badges]
-travis-ci = { repository = "gyscos/cursive" }
+travis-ci = { repository = "gyscos/Cursive" }
 
 [build-dependencies.skeptic]
 optional = true
