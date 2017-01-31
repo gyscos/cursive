@@ -63,12 +63,14 @@ impl<'a> Printer<'a> {
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position relative to the window.
-    pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) {
+    ///
+    /// Returns the unicode-width of the printed text.
+    pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) -> usize {
         self.new.set(false);
 
         let p = pos.into();
         if p.y >= self.size.y || p.x >= self.size.x {
-            return;
+            return 0;
         }
         // Do we have enough room for the entire line?
         let room = self.size.x - p.x;
@@ -79,45 +81,35 @@ impl<'a> Printer<'a> {
 
         let p = p + self.offset;
         self.backend.print_at((p.x, p.y), text);
+
+        prefix_len
     }
 
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
     /// Prints some styled text at the given position relative to the window.
-    pub fn print_styled<S: Into<Vec2>>(&self, pos: S, text: &[StyledStr]) {
-        self.new.set(false);
+    ///
+    /// Returns the unicode-width of the printed text.
+    pub fn print_styled<S: Into<Vec2>>(&self, pos: S, text: &[StyledStr]) -> usize {
+        let pos = pos.into();
 
-        let p = pos.into();
-        if p.y >= self.size.y || p.x >= self.size.x {
-            return;
-        }
-        // Do we have enough room for the entire line?
-        let room = self.size.x - p.x;
-
-        let mut part_offset = 0;
+        let mut part_offset: usize = 0;
         for part in text.iter() {
             let (text, style) = *part;
 
-            // We want the number of CHARACTERS, not bytes.
-            // (Actually we want the "width" of the string, see unicode-width)
-            let prefix_len = prefix_length(text.graphemes(true), room, "");
-            let text = &text[..prefix_len];
-
-            let part_offset_copy = part_offset;
-            let print = |printer: &Printer| {
-                let p = p + self.offset;
-                printer.backend.print_at((p.x + part_offset_copy, p.y), text);
+            let mut do_print = |printer: &Printer| {
+                part_offset += printer.print((pos.x + part_offset, pos.y), text);
             };
 
             self.with_effect(style.effect, |printer| {
                 match style.color {
-                    Some(color) => self.with_color(color, print),
-                    None => print(printer)
-                };
+                    Some(color) => printer.with_color(color, do_print),
+                    None => do_print(printer)
+                }
             });
-
-            part_offset += prefix_len;
         }
+
+        part_offset
     }
 
     /// Prints a vertical line using the given character.
