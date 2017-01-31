@@ -133,12 +133,18 @@ pub enum Effect {
     // TODO: bold, italic, underline
 }
 
+impl Default for Effect {
+    fn default() -> Self {
+        Effect::Simple
+    }
+}
+
 /// Possible color style for a cell.
 ///
 /// Represents a color pair role to use when printing something.
 ///
 /// The current theme will assign each role a foreground and background color.
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Debug)]
 pub enum ColorStyle {
     /// Application background, where no view is present.
     Background,

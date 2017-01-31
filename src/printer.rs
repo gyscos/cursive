@@ -7,6 +7,7 @@ use std::cmp::min;
 use std::rc::Rc;
 
 use theme::{BorderStyle, ColorStyle, Effect, Theme};
+use style::*;
 use unicode_segmentation::UnicodeSegmentation;
 
 use utils::prefix;
@@ -78,6 +79,45 @@ impl<'a> Printer<'a> {
 
         let p = p + self.offset;
         self.backend.print_at((p.x, p.y), text);
+    }
+
+    // TODO: use &mut self? We don't *need* it, but it may make sense.
+    // We don't want people to start calling prints in parallel?
+    /// Prints some styled text at the given position relative to the window.
+    pub fn print_styled<S: Into<Vec2>>(&self, pos: S, text: &[StyledStr]) {
+        self.new.set(false);
+
+        let p = pos.into();
+        if p.y >= self.size.y || p.x >= self.size.x {
+            return;
+        }
+        // Do we have enough room for the entire line?
+        let room = self.size.x - p.x;
+
+        let mut part_offset = 0;
+        for part in text.iter() {
+            let (text, style) = *part;
+
+            // We want the number of CHARACTERS, not bytes.
+            // (Actually we want the "width" of the string, see unicode-width)
+            let prefix_len = prefix_length(text.graphemes(true), room, "");
+            let text = &text[..prefix_len];
+
+            let part_offset_copy = part_offset;
+            let print = |printer: &Printer| {
+                let p = p + self.offset;
+                printer.backend.print_at((p.x + part_offset_copy, p.y), text);
+            };
+
+            self.with_effect(style.effect, |printer| {
+                match style.color {
+                    Some(color) => self.with_color(color, print),
+                    None => print(printer)
+                };
+            });
+
+            part_offset += prefix_len;
+        }
     }
 
     /// Prints a vertical line using the given character.
