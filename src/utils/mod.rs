@@ -34,20 +34,23 @@ pub use self::reader::ProgressReader;
 /// prefix_length(my_text.graphemes(true), 5, "");
 /// # }
 /// ```
-pub fn prefix_length<'a, I>(iter: I, width: usize, delimiter: &str) -> usize
+pub fn prefix_length<'a, I>(iter: I, available_width: usize, delimiter: &str) -> usize
     where I: Iterator<Item = &'a str>
 {
     let delimiter_width = delimiter.width();
     let delimiter_len = delimiter.len();
 
-    let sum = iter.scan(0, |w, token| {
-            *w += token.width();
-            if *w > width {
-                None
+    let mut current_width = 0;
+    let sum = iter.take_while(|token| {
+            let width = token.width();
+            if current_width + width > available_width {
+                false
             } else {
-                // Add a space
-                *w += delimiter_width;
-                Some(token)
+                if current_width != 0 {
+                    current_width += delimiter_width;
+                }
+                current_width += width;
+                true
             }
         })
         .map(|token| token.len() + delimiter_len)
