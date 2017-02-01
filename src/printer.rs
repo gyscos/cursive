@@ -9,7 +9,7 @@ use std::rc::Rc;
 use theme::{BorderStyle, ColorStyle, Effect, Theme};
 use unicode_segmentation::UnicodeSegmentation;
 
-use utils::prefix_length;
+use utils::prefix;
 use vec::Vec2;
 
 /// Convenient interface to draw on a subset of the screen.
@@ -73,7 +73,7 @@ impl<'a> Printer<'a> {
         let room = self.size.x - p.x;
         // We want the number of CHARACTERS, not bytes.
         // (Actually we want the "width" of the string, see unicode-width)
-        let prefix_len = prefix_length(text.graphemes(true), room, "");
+        let prefix_len = prefix(text.graphemes(true), room, "").length;
         let text = &text[..prefix_len];
 
         let p = p + self.offset;
