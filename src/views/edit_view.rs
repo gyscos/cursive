@@ -8,7 +8,7 @@ use std::rc::Rc;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::simple_suffix_length;
+use utils::simple_suffix;
 use vec::Vec2;
 use view::View;
 
@@ -240,8 +240,8 @@ impl EditView {
             // From the end, count the length until we reach `available`.
             // Then sum the byte lengths.
             let suffix_length =
-                simple_suffix_length(&self.content[self.offset..self.cursor],
-                                     available);
+                simple_suffix(&self.content[self.offset..self.cursor],
+                              available).length;
             self.offset = self.cursor - suffix_length;
             // Make sure the cursor is in view
             assert!(self.cursor >= self.offset);
@@ -250,8 +250,8 @@ impl EditView {
 
         // If we have too much space
         if self.content[self.offset..].width() < self.last_length {
-            let suffix_length = simple_suffix_length(&self.content,
-                                                     self.last_length - 1);
+            let suffix_length = simple_suffix(&self.content,
+                                              self.last_length - 1).length;
             self.offset = self.content.len() - suffix_length;
         }
     }

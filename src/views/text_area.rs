@@ -7,7 +7,7 @@ use odds::vec::VecExt;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::{LinesIterator, Row, prefix_length};
+use utils::{LinesIterator, Row, prefix};
 use vec::Vec2;
 use view::{ScrollBase, SizeCache, View};
 
@@ -126,7 +126,7 @@ impl TextArea {
 
         let prev_row = self.rows[row_id - 1];
         let prev_text = &self.content[prev_row.start..prev_row.end];
-        let offset = prefix_length(prev_text.graphemes(true), x, "");
+        let offset = prefix(prev_text.graphemes(true), x, "").length;
         self.cursor = prev_row.start + offset;
     }
 
@@ -139,7 +139,7 @@ impl TextArea {
 
         let next_row = self.rows[row_id + 1];
         let next_text = &self.content[next_row.start..next_row.end];
-        let offset = prefix_length(next_text.graphemes(true), x, "");
+        let offset = prefix(next_text.graphemes(true), x, "").length;
         self.cursor = next_row.start + offset;
     }
 

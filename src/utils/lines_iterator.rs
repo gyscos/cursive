@@ -3,7 +3,7 @@
 use With;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::prefix_length;
+use utils::prefix;
 
 /// Generates rows of text in constrained width.
 ///
@@ -119,11 +119,11 @@ impl<'a> Iterator for LinesIterator<'a> {
 
         // First attempt: only break on spaces.
         let prefix_length =
-            match prefix_length(content.split(' '), allowed_width, " ") {
+            match prefix(content.split(' '), allowed_width, " ").length {
                 // If this fail, fallback: only break on graphemes.
                 // There's no whitespace to skip there.
                 // And don't reserve the white space anymore.
-                0 => prefix_length(content.graphemes(true), self.width, ""),
+                0 => prefix(content.graphemes(true), self.width, "").length,
                 other => {
                     // If it works, advance the cursor by 1
                     // to jump the whitespace.
