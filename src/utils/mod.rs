@@ -14,7 +14,7 @@ pub struct Prefix {
     /// The length (in bytes) of the string.
     pub length: usize,
     /// The unicode-width of the string.
-    pub width: usize
+    pub width: usize,
 }
 
 /// Computes the length (number of bytes) and width of a prefix that fits in the given `width`.
@@ -42,7 +42,8 @@ pub struct Prefix {
 /// prefix(my_text.graphemes(true), 5, "");
 /// # }
 /// ```
-pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str) -> Prefix
+pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str)
+                     -> Prefix
     where I: Iterator<Item = &'a str>
 {
     let delimiter_width = delimiter.width();
@@ -70,7 +71,7 @@ pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str) -> Prefix
 
     Prefix {
         length: length,
-        width: current_width
+        width: current_width,
     }
 }
 

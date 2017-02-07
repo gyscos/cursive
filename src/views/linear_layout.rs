@@ -375,10 +375,10 @@ impl View for LinearLayout {
         }
     }
 
-    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.children
-            .iter_mut()
-            .filter_map(|c| c.view.find_any(selector))
-            .next()
+    fn find_any<'a>(&mut self, selector: &Selector,
+                    mut callback: Box<FnMut(&mut Any) + 'a>) {
+        for child in &mut self.children {
+            child.view.find_any(selector, Box::new(|any| callback(any)));
+        }
     }
 }

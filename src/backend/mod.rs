@@ -8,12 +8,12 @@ mod blt;
 #[cfg(any(feature = "ncurses", feature = "pancurses"))]
 mod curses;
 
+#[cfg(feature = "bear-lib-terminal")]
+pub use self::blt::*;
 #[cfg(any(feature = "ncurses", feature = "pancurses"))]
 pub use self::curses::*;
 #[cfg(feature = "termion")]
 pub use self::termion::*;
-#[cfg(feature = "bear-lib-terminal")]
-pub use self::blt::*;
 
 pub trait Backend {
     fn init() -> Self;

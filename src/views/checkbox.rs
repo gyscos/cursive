@@ -61,9 +61,7 @@ impl Checkbox {
     ///
     /// Chainable variant.
     pub fn checked(self) -> Self {
-        self.with(|s| {
-            s.check();
-        })
+        self.with(|s| { s.check(); })
     }
 
     /// Returns `true` if the checkbox is checked.
@@ -80,9 +78,7 @@ impl Checkbox {
     ///
     /// Chainable variant.
     pub fn unchecked(self) -> Self {
-        self.with(|s| {
-            s.uncheck();
-        })
+        self.with(|s| { s.uncheck(); })
     }
 
     /// Sets the checkbox state.

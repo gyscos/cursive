@@ -68,6 +68,7 @@ extern crate num;
 #[macro_use]
 extern crate chan;
 
+
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
         use ::std::io::Write;
@@ -364,8 +365,11 @@ impl Cursive {
 
     /// Tries to find the view pointed to by the given selector.
     ///
+    /// Runs a closure on the view once it's found, and return the
+    /// result.
+    ///
     /// If the view is not found, or if it is not of the asked type,
-    /// it returns None.
+    /// returns None.
     ///
     /// # Examples
     ///
@@ -380,15 +384,18 @@ impl Cursive {
     ///                               .with_id("text"));
     ///
     /// siv.add_global_callback('p', |s| {
-    ///     s.find::<views::TextView>(&view::Selector::Id("text"))
-    ///      .unwrap()
-    ///      .set_content("Text #2");
+    ///     s.find(&view::Selector::Id("text"), |view: &mut views::TextView| {
+    ///         view.set_content("Text #2");
+    ///     });
     /// });
     /// # }
     /// ```
-    pub fn find<V: View + Any>(&mut self, sel: &view::Selector)
-                               -> Option<&mut V> {
-        self.screen_mut().find(sel)
+    pub fn find<V, F, R>(&mut self, sel: &view::Selector, callback: F)
+                         -> Option<R>
+        where V: View + Any,
+              F: FnOnce(&mut V) -> R
+    {
+        self.screen_mut().find(sel, callback)
     }
 
     /// Convenient method to use `find` with a `view::Selector::Id`.
@@ -406,14 +413,17 @@ impl Cursive {
     ///                               .with_id("text"));
     ///
     /// siv.add_global_callback('p', |s| {
-    ///     s.find_id::<views::TextView>("text")
-    ///      .unwrap()
-    ///      .set_content("Text #2");
+    ///     s.find_id("text", |view: &mut views::TextView| {
+    ///         view.set_content("Text #2");
+    ///     });
     /// });
     /// # }
     /// ```
-    pub fn find_id<V: View + Any>(&mut self, id: &str) -> Option<&mut V> {
-        self.find(&view::Selector::Id(id))
+    pub fn find_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
+        where V: View + Any,
+              F: FnOnce(&mut V) -> R
+    {
+        self.find(&view::Selector::Id(id), callback)
     }
 
     /// Adds a global callback.

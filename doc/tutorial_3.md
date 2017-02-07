@@ -40,7 +40,9 @@ fn main() {
 
 fn add_name(s: &mut Cursive) {
     fn ok(s: &mut Cursive, name: &str) {
-        s.find_id::<SelectView<String>>("select").unwrap().add_item_str(name);
+        s.find_id("select", |view: &mut SelectView<String>| {
+            view.add_item_str(name)
+        });
         s.pop_layer();
     }
 
@@ -51,19 +53,25 @@ fn add_name(s: &mut Cursive) {
         .title("Enter a new name")
         .button("Ok", |s| {
             let name =
-                s.find_id::<EditView>("name").unwrap().get_content().clone();
+                s.find_id("name", |view: &mut EditView| {
+                    view.get_content().clone()
+                }).unwrap();
             ok(s, &name);
         })
         .button("Cancel", |s| s.pop_layer()));
 }
 
 fn delete_name(s: &mut Cursive) {
-    match s.find_id::<SelectView<String>>("select").unwrap().selected_id() {
+    let selection = s.find_id("select", |view: &mut SelectView<String>| {
+        view.selected_id()
+    }).unwrap();
+
+    match selection {
         None => s.add_layer(Dialog::info("No name to remove")),
         Some(focus) => {
-            s.find_id::<SelectView<String>>("select")
-                .unwrap()
-                .remove_item(focus)
+            s.find_id("select", |view: &mut SelectView<String>| {
+                view.remove_item(focus)
+            });
         }
     }
 }
@@ -224,8 +232,8 @@ Later, you can ask the Cursive root for this ID and get access to the view.
 Just what we need!
 
 Like `BoxView`, `IdView` can be used directly with [`IdView::new`], or through
-the [`Identifiable`] trait. [`Cursive::find_id`] can then give you a mutable
-reference to the view.
+the [`Identifiable`] trait. [`Cursive::find_id`] allows you to run a closure
+on the view.
 
 Here's what it looks like in action:
 
@@ -236,8 +244,9 @@ fn add_name(s: &mut Cursive) {
             .fixed_width(10))
         .title("Enter a new name")
         .button("Ok", |s| {
-            let name =
-                s.find_id::<EditView>("name").unwrap().get_content().clone();
+            let name = s.find_id("name", |view: &mut EditView| {
+                view.get_content().clone()
+            }).unwrap();
         })
         .button("Cancel", |s| s.pop_layer()));
 }
@@ -263,7 +272,9 @@ That way, we can update it with a new item:
 ```rust,ignore
 fn add_name(s: &mut Cursive) {
     fn ok(s: &mut Cursive, name: &str) {
-        s.find_id::<SelectView<String>>("select").unwrap().add_item_str(name);
+        s.find_id("select", |view: &mut SelectView<String>| {
+            view.add_item_str(name);
+        });
         s.pop_layer();
     }
 
@@ -273,8 +284,9 @@ fn add_name(s: &mut Cursive) {
             .fixed_width(10))
         .title("Enter a new name")
         .button("Ok", |s| {
-            let name =
-                s.find_id::<EditView>("name").unwrap().get_content().clone();
+            let name = s.find_id("name", |v: &mut EditView| {
+                v.get_content().clone()
+            }).unwrap();
             ok(s, &name);
         })
         .button("Cancel", |s| s.pop_layer()));
@@ -286,13 +298,13 @@ complicated:
 
 ```rust,ignore
 fn delete_name(s: &mut Cursive) {
-    match s.find_id::<SelectView<String>>("select").unwrap().selected_id() {
+    match s.find_id("select", |v: &mut SelectView<String>| {
+        v.selected_id()
+    }).unwrap() {
         None => s.add_layer(Dialog::info("No name to remove")),
-        Some(focus) => {
-            s.find_id::<SelectView<String>>("select")
-                .unwrap()
-                .remove_item(focus)
-        }
+        Some(focus) => s.find_id("select", |v: &mut SelectView<String>| {
+            v.remove_item(focus)
+        }),
     }
 }
 ```

@@ -165,13 +165,13 @@ impl MenuTree {
     /// Returns `None` if the given title was not found,
     /// or if it wasn't a subtree.
     pub fn find_subtree(&mut self, title: &str) -> Option<&mut MenuTree> {
-        self.find_item(title).and_then(|item| {
-            if let MenuItem::Subtree(_, ref mut tree) = *item {
+        self.find_item(title)
+            .and_then(|item| if let MenuItem::Subtree(_, ref mut tree) =
+                *item {
                 Some(Rc::make_mut(tree))
             } else {
                 None
-            }
-        })
+            })
     }
 
     /// Removes the item at the given position.
@@ -191,5 +191,4 @@ impl MenuTree {
     pub fn is_empty(&self) -> bool {
         self.children.is_empty()
     }
-
 }

@@ -1,8 +1,8 @@
 extern crate cursive;
 
 use cursive::Cursive;
-use cursive::views::{Dialog, EditView, TextView};
 use cursive::traits::*;
+use cursive::views::{Dialog, EditView, TextView};
 
 fn main() {
     let mut siv = Cursive::new();
@@ -18,9 +18,9 @@ fn main() {
             .with_id("name")
             .fixed_width(20))
         .button("Ok", |s| {
-            let name = s.find_id::<EditView>("name")
-                .unwrap()
-                .get_content();
+            let name =
+                s.find_id("name", |view: &mut EditView| view.get_content())
+                    .unwrap();
             show_popup(s, &name);
         }));
 

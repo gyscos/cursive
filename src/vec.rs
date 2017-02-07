@@ -95,7 +95,7 @@ impl<T: Zero + Clone> XY<T> {
     }
 }
 
-impl <T: Into<XY<usize>>> From<T> for XY<isize> {
+impl<T: Into<XY<usize>>> From<T> for XY<isize> {
     fn from(t: T) -> Self {
         let other = t.into();
         Self::new(other.x as isize, other.y as isize)
@@ -115,7 +115,7 @@ impl From<(u32, u32)> for XY<usize> {
 }
 
 
-impl<T: Add<Output=T>, O: Into<XY<T>>> Add<O> for XY<T> {
+impl<T: Add<Output = T>, O: Into<XY<T>>> Add<O> for XY<T> {
     type Output = Self;
 
     fn add(self, other: O) -> Self {
@@ -123,7 +123,7 @@ impl<T: Add<Output=T>, O: Into<XY<T>>> Add<O> for XY<T> {
     }
 }
 
-impl<T: Sub<Output=T>, O: Into<XY<T>>> Sub<O> for XY<T> {
+impl<T: Sub<Output = T>, O: Into<XY<T>>> Sub<O> for XY<T> {
     type Output = Self;
 
     fn sub(self, other: O) -> Self {
@@ -131,7 +131,7 @@ impl<T: Sub<Output=T>, O: Into<XY<T>>> Sub<O> for XY<T> {
     }
 }
 
-impl <T: Clone + Div<Output=T>> Div<T> for XY<T> {
+impl<T: Clone + Div<Output = T>> Div<T> for XY<T> {
     type Output = Self;
 
     fn div(self, other: T) -> Self {

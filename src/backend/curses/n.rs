@@ -1,9 +1,9 @@
 extern crate ncurses;
 
-use backend;
-use event::{Event, Key};
 
 use self::super::find_closest;
+use backend;
+use event::{Event, Key};
 use theme::{Color, ColorStyle, Effect};
 use utf8;
 

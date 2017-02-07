@@ -1,10 +1,10 @@
 extern crate pancurses;
 
 
-use backend;
-use event::{Event, Key};
 
 use self::super::find_closest;
+use backend;
+use event::{Event, Key};
 use std::cell::Cell;
 use theme::{Color, ColorStyle, Effect};
 use utf8;
@@ -23,7 +23,8 @@ impl backend::Backend for Concrete {
         pancurses::cbreak();
         pancurses::start_color();
         pancurses::curs_set(0);
-        window.bkgd(pancurses::COLOR_PAIR(ColorStyle::Background.id() as pancurses::chtype));
+        window.bkgd(pancurses::COLOR_PAIR(ColorStyle::Background.id() as
+                                          pancurses::chtype));
 
         Concrete {
             window: window,
@@ -66,7 +67,8 @@ impl backend::Backend for Concrete {
         self.current_style.set(current_style);
 
         // self.window.attroff(style);
-        self.window.attron(pancurses::COLOR_PAIR(current_style.id() as pancurses::chtype));
+        self.window.attron(pancurses::COLOR_PAIR(current_style.id() as
+                                                 pancurses::chtype));
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
@@ -101,7 +103,9 @@ impl backend::Backend for Concrete {
                 // TODO: wait for a very short delay. If more keys are
                 // pipelined, it may be an escape sequence.
                 pancurses::Input::Character('\u{7f}') |
-                pancurses::Input::Character('\u{8}') => Event::Key(Key::Backspace),
+                pancurses::Input::Character('\u{8}') => {
+                    Event::Key(Key::Backspace)
+                }
                 pancurses::Input::Character('\u{9}') => Event::Key(Key::Tab),
                 pancurses::Input::Character('\u{1b}') => Event::Key(Key::Esc),
                 pancurses::Input::Character(c) if 32 <= (c as u32) &&

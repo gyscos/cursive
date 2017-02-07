@@ -56,7 +56,7 @@ impl<T> XY<T> {
     }
 }
 
-impl <T: Clone> XY<T> {
+impl<T: Clone> XY<T> {
     /// Returns a new `XY` with the axis `o` set to `value`.
     pub fn with_axis(&self, o: Orientation, value: T) -> Self {
         let mut new = self.clone();

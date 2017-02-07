@@ -1,9 +1,9 @@
 extern crate cursive;
 
 use cursive::Cursive;
+use cursive::traits::*;
 use cursive::views::{Checkbox, Dialog, EditView, LinearLayout, ListView,
                      SelectView, TextView};
-use cursive::traits::*;
 
 fn main() {
     let mut siv = Cursive::new();
@@ -25,12 +25,13 @@ fn main() {
                            .with_id("email2")
                            .fixed_width(10)))
             .child("Receive spam?",
-                   Checkbox::new().on_change(|s, checked| {
-                       for name in &["email1", "email2"] {
-                           let view: &mut EditView = s.find_id(name).unwrap();
-                           view.set_enabled(checked);
-                       }
-                   }))
+                   Checkbox::new()
+                       .on_change(|s, checked| for name in &["email1",
+                                                             "email2"] {
+                           s.find_id(name, |view: &mut EditView| {
+                               view.set_enabled(checked)
+                           });
+                       }))
             .delimiter()
             .child("Age",
                    SelectView::new()
@@ -39,10 +40,8 @@ fn main() {
                        .item_str("19-30")
                        .item_str("31-40")
                        .item_str("41+"))
-            .with(|list| {
-                for i in 0..50 {
-                    list.add_child(&format!("Item {}", i), EditView::new());
-                }
+            .with(|list| for i in 0..50 {
+                list.add_child(&format!("Item {}", i), EditView::new());
             })));
 
     siv.run();

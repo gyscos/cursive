@@ -132,16 +132,16 @@ impl ListView {
     fn move_focus(&mut self, n: usize, source: direction::Direction)
                   -> EventResult {
         let i = if let Some(i) =
-                       source.relative(direction::Orientation::Vertical)
-            .and_then(|rel| {
-                // The iterator starts at the focused element.
-                // We don't want that one.
-                self.iter_mut(true, rel)
-                    .skip(1)
-                    .filter_map(|p| try_focus(p, source))
-                    .take(n)
-                    .last()
-            }) {
+            source.relative(direction::Orientation::Vertical)
+                .and_then(|rel| {
+                    // The iterator starts at the focused element.
+                    // We don't want that one.
+                    self.iter_mut(true, rel)
+                        .skip(1)
+                        .filter_map(|p| try_focus(p, source))
+                        .take(n)
+                        .last()
+                }) {
             i
         } else {
             return EventResult::Ignored;
@@ -185,14 +185,12 @@ impl View for ListView {
             .max()
             .unwrap_or(0) + 1;
 
-        self.scrollbase.draw(printer, |printer, i| {
-            match self.children[i] {
-                Child::Row(ref label, ref view) => {
-                    printer.print((0, 0), label);
-                    view.draw(&printer.offset((offset, 0), i == self.focus));
-                }
-                Child::Delimiter => (),
+        self.scrollbase.draw(printer, |printer, i| match self.children[i] {
+            Child::Row(ref label, ref view) => {
+                printer.print((0, 0), label);
+                view.draw(&printer.offset((offset, 0), i == self.focus));
             }
+            Child::Delimiter => (),
         });
     }
 
@@ -298,11 +296,12 @@ impl View for ListView {
         true
     }
 
-    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.children
+    fn find_any<'a>(&mut self, selector: &Selector,
+                    mut callback: Box<FnMut(&mut Any) + 'a>) {
+        for view in self.children
             .iter_mut()
-            .filter_map(Child::view)
-            .filter_map(|v| v.find_any(selector))
-            .next()
+            .filter_map(Child::view) {
+            view.find_any(selector, Box::new(|any| callback(any)));
+        }
     }
 }

@@ -2,14 +2,14 @@ extern crate termion;
 
 extern crate chan_signal;
 
-use ::backend;
-use chan;
-use ::event::{Event, Key};
 use self::termion::color as tcolor;
 use self::termion::event::Key as TKey;
 use self::termion::input::TermRead;
 use self::termion::raw::IntoRawMode;
 use self::termion::style as tstyle;
+use backend;
+use chan;
+use event::{Event, Key};
 use std::cell::Cell;
 use std::collections::BTreeMap;
 use std::fmt;
@@ -17,7 +17,7 @@ use std::io::Write;
 use std::thread;
 use std::time;
 
-use ::theme;
+use theme;
 
 pub struct Concrete {
     terminal: termion::raw::RawTerminal<::std::io::Stdout>,

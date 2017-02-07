@@ -34,7 +34,9 @@ impl<'a> Printer<'a> {
     ///
     /// But nobody needs to know that.
     #[doc(hidden)]
-    pub fn new<T: Into<Vec2>>(size: T, theme: Theme, backend: &'a backend::Concrete) -> Self {
+    pub fn new<T: Into<Vec2>>(size: T, theme: Theme,
+                              backend: &'a backend::Concrete)
+                              -> Self {
         Printer {
             offset: Vec2::zero(),
             size: size.into(),

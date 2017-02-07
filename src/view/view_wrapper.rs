@@ -11,8 +11,8 @@ use view::{Selector, View};
 /// Default implementation forwards all calls to the child view.
 /// Overrides some methods as desired.
 ///
-/// You can use the [`wrap_impl!`] macro to define `get_view` and
-/// `get_view_mut` for you.
+/// You can use the [`wrap_impl!`] macro to define `with_view` and
+/// `with_view_mut` for you.
 ///
 /// [`wrap_impl!`]: ../macro.wrap_impl.html
 pub trait ViewWrapper {
@@ -20,44 +20,46 @@ pub trait ViewWrapper {
     type V: View;
 
     /// Get an immutable reference to the wrapped view.
-    fn get_view(&self) -> &Self::V;
+    fn with_view<F, R>(&self, f: F) -> R where F: FnOnce(&Self::V) -> R;
 
     /// Get a mutable reference to the wrapped view.
-    fn get_view_mut(&mut self) -> &mut Self::V;
+    fn with_view_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Self::V) -> R;
 
     /// Wraps the `draw` method.
     fn wrap_draw(&self, printer: &Printer) {
-        self.get_view().draw(printer);
+        self.with_view(|v| v.draw(printer));
     }
 
     /// Wraps the `required_size` method.
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
-        self.get_view_mut().required_size(req)
+        self.with_view_mut(|v| v.required_size(req))
     }
 
     /// Wraps the `on_event` method.
     fn wrap_on_event(&mut self, ch: Event) -> EventResult {
-        self.get_view_mut().on_event(ch)
+        self.with_view_mut(|v| v.on_event(ch))
     }
 
     /// Wraps the `layout` method.
     fn wrap_layout(&mut self, size: Vec2) {
-        self.get_view_mut().layout(size);
+        self.with_view_mut(|v| v.layout(size));
     }
 
     /// Wraps the `take_focus` method.
     fn wrap_take_focus(&mut self, source: Direction) -> bool {
-        self.get_view_mut().take_focus(source)
+        self.with_view_mut(|v| v.take_focus(source))
     }
 
     /// Wraps the `find` method.
-    fn wrap_find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.get_view_mut().find_any(selector)
+    fn wrap_find_any<'a>(&mut self, selector: &Selector,
+                         callback: Box<FnMut(&mut Any) + 'a>) {
+        self.with_view_mut(|v| v.find_any(selector, callback));
     }
 
     /// Wraps the `needs_relayout` method.
     fn wrap_needs_relayout(&self) -> bool {
-        self.get_view().needs_relayout()
+        self.with_view(|v| v.needs_relayout())
     }
 }
 
@@ -82,8 +84,9 @@ impl<T: ViewWrapper> View for T {
         self.wrap_take_focus(source)
     }
 
-    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.wrap_find_any(selector)
+    fn find_any<'a>(&mut self, selector: &Selector,
+                    callback: Box<FnMut(&mut Any) + 'a>) {
+        self.wrap_find_any(selector, callback)
     }
 
     fn needs_relayout(&self) -> bool {
@@ -93,7 +96,7 @@ impl<T: ViewWrapper> View for T {
 
 /// Convenient macro to implement the [`ViewWrapper`] trait.
 ///
-/// It defines the `get_view` and `get_view_mut` implementations,
+/// It defines the `with_view` and `with_view_mut` implementations,
 /// as well as the `type V` declaration.
 ///
 /// [`ViewWrapper`]: view/trait.ViewWrapper.html
@@ -117,12 +120,14 @@ macro_rules! wrap_impl {
     (self.$v:ident: $t:ty) => {
         type V = $t;
 
-        fn get_view(&self) -> &Self::V {
-            &self.$v
+        fn with_view<F, R>(&self, f: F) -> R where F: FnOnce(&Self::V) -> R {
+            f(&self.$v)
         }
 
-        fn get_view_mut(&mut self) -> &mut Self::V {
-            &mut self.$v
+        fn with_view_mut<F, R>(&mut self, f: F) -> R
+            where F: FnOnce(&mut Self::V) -> R
+        {
+            f(&mut self.$v)
         }
     };
 }

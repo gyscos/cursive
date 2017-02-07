@@ -40,9 +40,8 @@ use view::View;
 ///         .with_id("name")
 ///         .fixed_width(20))
 ///     .button("Ok", |s| {
-///         let name = s.find_id::<EditView>("name")
-///             .unwrap()
-///             .get_content();
+///         let name = s.find_id("name", |view: &mut EditView| view.get_content())
+///             .unwrap();
 ///         show_popup(s, &name);
 ///     }));
 ///
@@ -239,9 +238,10 @@ impl EditView {
             // Look at the content before the cursor (we will print its tail).
             // From the end, count the length until we reach `available`.
             // Then sum the byte lengths.
-            let suffix_length =
-                simple_suffix(&self.content[self.offset..self.cursor],
-                              available).length;
+            let suffix_length = simple_suffix(&self.content[self.offset..
+                                               self.cursor],
+                                              available)
+                .length;
             self.offset = self.cursor - suffix_length;
             // Make sure the cursor is in view
             assert!(self.cursor >= self.offset);
@@ -250,8 +250,8 @@ impl EditView {
 
         // If we have too much space
         if self.content[self.offset..].width() < self.last_length {
-            let suffix_length = simple_suffix(&self.content,
-                                              self.last_length - 1).length;
+            let suffix_length =
+                simple_suffix(&self.content, self.last_length - 1).length;
             self.offset = self.content.len() - suffix_length;
         }
     }
@@ -392,9 +392,7 @@ impl View for EditView {
             Event::Key(Key::Enter) if self.on_submit.is_some() => {
                 let cb = self.on_submit.clone().unwrap();
                 let content = self.content.clone();
-                return EventResult::with_cb(move |s| {
-                    cb(s, &content);
-                });
+                return EventResult::with_cb(move |s| { cb(s, &content); });
             }
             _ => return EventResult::Ignored,
         }
@@ -407,9 +405,7 @@ impl View for EditView {
             let content = self.content.clone();
             let cursor = self.cursor;
 
-            Callback::from_fn(move |s| {
-                cb(s, &content, cursor);
-            })
+            Callback::from_fn(move |s| { cb(s, &content, cursor); })
         });
         EventResult::Consumed(cb)
     }
