@@ -64,6 +64,7 @@ extern crate unicode_segmentation;
 extern crate unicode_width;
 extern crate odds;
 extern crate num;
+extern crate owning_ref;
 
 #[macro_use]
 extern crate chan;
