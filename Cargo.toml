@@ -12,12 +12,8 @@ readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
 version = "0.4.0"
 
-[badges]
-
 [badges.travis-ci]
 repository = "gyscos/Cursive"
-
-[build-dependencies]
 
 [build-dependencies.skeptic]
 optional = true
