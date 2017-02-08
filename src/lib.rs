@@ -427,6 +427,18 @@ impl Cursive {
         self.find(&view::Selector::Id(id), callback)
     }
 
+    /// Convenient method to find a view wrapped in [`RefCellView`].
+    ///
+    /// This looks for a `RefCellView<V>` with the given ID, and return
+    /// a mutable reference to the wrapped view.
+    ///
+    /// [`RefCellView`]: views/struct.RefCellView.html
+    pub fn find_id_mut<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
+        where V: View + Any
+    {
+        self.find_id(id, views::RefCellView::<V>::get_mut)
+    }
+
     /// Adds a global callback.
     ///
     /// Will be triggered on the given key press when no view catches it.
