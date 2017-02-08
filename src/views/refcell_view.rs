@@ -35,15 +35,15 @@ impl<V: View> RefCellView<V> {
 impl<T: View> ViewWrapper for RefCellView<T> {
     type V = T;
 
-    fn with_view<F, R>(&self, f: F) -> R
+    fn with_view<F, R>(&self, f: F) -> Option<R>
         where F: FnOnce(&Self::V) -> R
     {
-        f(&*self.view.borrow())
+        self.view.try_borrow().ok().map(|v| f(&*v))
     }
 
-    fn with_view_mut<F, R>(&mut self, f: F) -> R
+    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
         where F: FnOnce(&mut Self::V) -> R
     {
-        f(&mut *self.view.borrow_mut())
+        self.view.try_borrow_mut().ok().map(|mut v| f(&mut *v))
     }
 }

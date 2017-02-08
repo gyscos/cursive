@@ -20,10 +20,10 @@ pub trait ViewWrapper {
     type V: View;
 
     /// Get an immutable reference to the wrapped view.
-    fn with_view<F, R>(&self, f: F) -> R where F: FnOnce(&Self::V) -> R;
+    fn with_view<F, R>(&self, f: F) -> Option<R> where F: FnOnce(&Self::V) -> R;
 
     /// Get a mutable reference to the wrapped view.
-    fn with_view_mut<F, R>(&mut self, f: F) -> R
+    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
         where F: FnOnce(&mut Self::V) -> R;
 
     /// Wraps the `draw` method.
@@ -33,12 +33,12 @@ pub trait ViewWrapper {
 
     /// Wraps the `required_size` method.
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
-        self.with_view_mut(|v| v.required_size(req))
+        self.with_view_mut(|v| v.required_size(req)).unwrap_or_else(Vec2::zero)
     }
 
     /// Wraps the `on_event` method.
     fn wrap_on_event(&mut self, ch: Event) -> EventResult {
-        self.with_view_mut(|v| v.on_event(ch))
+        self.with_view_mut(|v| v.on_event(ch)).unwrap_or(EventResult::Ignored)
     }
 
     /// Wraps the `layout` method.
@@ -48,7 +48,7 @@ pub trait ViewWrapper {
 
     /// Wraps the `take_focus` method.
     fn wrap_take_focus(&mut self, source: Direction) -> bool {
-        self.with_view_mut(|v| v.take_focus(source))
+        self.with_view_mut(|v| v.take_focus(source)).unwrap_or(false)
     }
 
     /// Wraps the `find` method.
@@ -59,7 +59,7 @@ pub trait ViewWrapper {
 
     /// Wraps the `needs_relayout` method.
     fn wrap_needs_relayout(&self) -> bool {
-        self.with_view(|v| v.needs_relayout())
+        self.with_view(|v| v.needs_relayout()).unwrap_or(true)
     }
 }
 
@@ -120,14 +120,16 @@ macro_rules! wrap_impl {
     (self.$v:ident: $t:ty) => {
         type V = $t;
 
-        fn with_view<F, R>(&self, f: F) -> R where F: FnOnce(&Self::V) -> R {
-            f(&self.$v)
+        fn with_view<F, R>(&self, f: F) -> Option<R>
+            where F: FnOnce(&Self::V) -> R
+        {
+            Some(f(&self.$v))
         }
 
-        fn with_view_mut<F, R>(&mut self, f: F) -> R
+        fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
             where F: FnOnce(&mut Self::V) -> R
         {
-            f(&mut self.$v)
+            Some(f(&mut self.$v))
         }
     };
 }
