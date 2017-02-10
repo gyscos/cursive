@@ -90,12 +90,12 @@ impl<'a> Printer<'a> {
     /// Prints some styled text at the given position relative to the window.
     ///
     /// Returns the unicode-width of the printed text.
-    pub fn print_styled<S: Into<Vec2>>(&self, pos: S, text: &[StyledStr]) -> usize {
+    pub fn print_styled<S: Into<Vec2>>(&self, pos: S, text: &[StyledString]) -> usize {
         let pos = pos.into();
 
         let mut part_offset: usize = 0;
         for part in text.iter() {
-            let (text, style) = *part;
+            let (ref text, style) = *part;
 
             let mut do_print = |printer: &Printer| {
                 part_offset += printer.print((pos.x + part_offset, pos.y), text);
