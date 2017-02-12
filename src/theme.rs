@@ -124,7 +124,7 @@ use std::path::Path;
 use toml;
 
 /// Text effect
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Effect {
     /// No effect
     Simple,
@@ -144,7 +144,7 @@ impl Default for Effect {
 /// Represents a color pair role to use when printing something.
 ///
 /// The current theme will assign each role a foreground and background color.
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy,PartialEq,Eq,Debug)]
 pub enum ColorStyle {
     /// Application background, where no view is present.
     Background,
