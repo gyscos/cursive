@@ -65,9 +65,10 @@ use Printer;
 
 use direction::Direction;
 use event::{Event, EventResult};
-use std::any::Any;
 use vec::Vec2;
+use views::RefCellView;
 
+use std::any::Any;
 
 /// Main trait defining a view behaviour.
 pub trait View {
@@ -122,8 +123,7 @@ pub trait View {
     /// Returns None if the path doesn't lead to a view.
     ///
     /// Default implementation always return `None`.
-    fn find_any<'a>(&mut self, _: &Selector,
-                    _: Box<FnMut(&mut Any) + 'a>) {
+    fn find_any<'a>(&mut self, _: &Selector, _: Box<FnMut(&mut Any) + 'a>) {
         // TODO: FnMut -> FnOnce once it works
     }
 
@@ -176,8 +176,11 @@ impl<T: View> Finder for T {
             let mut callback = Some(callback);
             let callback = |v: &mut Any| if let Some(callback) =
                 callback.take() {
-                if let Some(v) = v.downcast_mut::<V>() {
-                    *result_ref = Some(callback(v));
+                if v.is::<V>() {
+                    *result_ref = v.downcast_mut::<V>().map(|v| callback(v));
+                } else if v.is::<RefCellView<V>>() {
+                    *result_ref = v.downcast_mut::<RefCellView<V>>()
+                        .and_then(|v| v.with_view_mut(callback));
                 }
             };
             self.find_any(sel, Box::new(callback));

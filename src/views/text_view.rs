@@ -53,6 +53,11 @@ impl TextView {
         }
     }
 
+    /// Creates a new empty `TextView`.
+    pub fn empty() -> Self {
+        TextView::new("")
+    }
+
     /// Enable or disable the view's scrolling capabilities.
     ///
     /// When disabled, the view will never attempt to scroll
@@ -96,6 +101,13 @@ impl TextView {
     pub fn center(mut self) -> Self {
         self.align = Align::center();
         self
+    }
+
+    /// Replace the text in this view.
+    ///
+    /// Chainable variant.
+    pub fn content<S: Into<String>>(self, content: S) -> Self {
+        self.with(|s| s.set_content(content))
     }
 
     /// Replace the text in this view.
