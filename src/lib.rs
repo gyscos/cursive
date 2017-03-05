@@ -65,6 +65,7 @@ extern crate unicode_width;
 extern crate odds;
 extern crate num;
 
+#[cfg(feature = "termion")]
 #[macro_use]
 extern crate chan;
 

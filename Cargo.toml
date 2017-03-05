@@ -20,12 +20,15 @@ optional = true
 version = "0.6"
 
 [dependencies]
-chan = "0.1.18"
 num = "0.1"
 odds = "0.2"
 toml = "0.2"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
+
+[dependencies.chan]
+optional = true
+version = "0.1.18"
 
 [dependencies.chan-signal]
 optional = true
@@ -55,7 +58,7 @@ skeptic = "0.6"
 
 [features]
 default = ["ncurses"]
-termion-backend = ["termion", "chan-signal"]
+termion-backend = ["termion", "chan", "chan-signal"]
 pancurses-backend = ["pancurses"]
 
 [lib]
