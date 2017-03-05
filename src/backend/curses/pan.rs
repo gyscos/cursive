@@ -5,13 +5,11 @@ use backend;
 use event::{Event, Key};
 
 use self::super::find_closest;
-use std::cell::Cell;
 use theme::{Color, ColorStyle, Effect};
 use utf8;
 
 pub struct Concrete {
     window: pancurses::Window,
-    current_style: Cell<ColorStyle>,
 }
 
 impl backend::Backend for Concrete {
@@ -23,11 +21,10 @@ impl backend::Backend for Concrete {
         pancurses::cbreak();
         pancurses::start_color();
         pancurses::curs_set(0);
-        window.bkgd(pancurses::COLOR_PAIR(ColorStyle::Background.id() as pancurses::chtype));
+        window.bkgd(pancurses::ColorPair(ColorStyle::Background.id() as u8));
 
         Concrete {
             window: window,
-            current_style: Cell::new(ColorStyle::Background),
         }
     }
 
@@ -52,28 +49,18 @@ impl backend::Backend for Concrete {
     }
 
     fn with_color<F: FnOnce()>(&self, color: ColorStyle, f: F) {
-        // TODO: pancurses doesn't have an `attr_get` equivalent
-        // let mut current_style: pancurses::attr_t = 0;
-        // let mut current_color: i16 = 0;
-        // pancurses::attr_get(&mut current_style, &mut current_color);
-        let current_style = self.current_style.get();
+        let (_, current_color_pair) = self.window.attrget();
+        let color_attribute = pancurses::ColorPair(color.id() as u8);
 
-        let style = pancurses::COLOR_PAIR(color.id() as pancurses::chtype);
-        self.window.attron(style);
-
-        self.current_style.set(color);
+        self.window.attron(color_attribute);
         f();
-        self.current_style.set(current_style);
-
-        // self.window.attroff(style);
-        self.window.attron(pancurses::COLOR_PAIR(current_style.id() as pancurses::chtype));
+        self.window.attron(pancurses::ColorPair(current_color_pair as u8));
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
         let style = match effect {
-            // A_REVERSE, taken from ncurses
-            Effect::Reverse => 1 << (10 + 8u32),
-            Effect::Simple => pancurses::A_NORMAL,
+            Effect::Reverse => pancurses::Attribute::Reverse,
+            Effect::Simple => pancurses::Attribute::Normal,
         };
         self.window.attron(style);
         f();
