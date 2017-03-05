@@ -267,7 +267,7 @@ fn make_small_stars(length: usize) -> &'static str {
 
 impl View for EditView {
     fn draw(&self, printer: &Printer) {
-        assert!(printer.size.x == self.last_length,
+        assert_eq!(printer.size.x, self.last_length,
                 "Was promised {}, received {}",
                 self.last_length,
                 printer.size.x);

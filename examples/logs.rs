@@ -22,8 +22,8 @@ fn main() {
     let (tx, rx) = mpsc::channel();
 
     // Generate data in a separate thread.
-    thread::spawn(|| {
-        generate_logs(tx);
+    thread::spawn(move || {
+        generate_logs(&tx);
     });
 
     // And sets the view to read from the other end of the channel.
@@ -34,7 +34,7 @@ fn main() {
 
 // We will only simulate log generation here.
 // In real life, this may come from a running task, a separate process, ...
-fn generate_logs(tx: mpsc::Sender<String>) {
+fn generate_logs(tx: &mpsc::Sender<String>) {
     let mut i = 1;
     loop {
         let line = format!("Interesting log line {}", i);
