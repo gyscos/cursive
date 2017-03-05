@@ -6,6 +6,8 @@ use event::{Callback, Event, EventResult, Key};
 
 use std::any::Any;
 use std::rc::Rc;
+
+use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::ScrollBase;
 use view::Selector;
@@ -132,16 +134,16 @@ impl ListView {
     fn move_focus(&mut self, n: usize, source: direction::Direction)
                   -> EventResult {
         let i = if let Some(i) =
-                       source.relative(direction::Orientation::Vertical)
-            .and_then(|rel| {
-                // The iterator starts at the focused element.
-                // We don't want that one.
-                self.iter_mut(true, rel)
-                    .skip(1)
-                    .filter_map(|p| try_focus(p, source))
-                    .take(n)
-                    .last()
-            }) {
+            source.relative(direction::Orientation::Vertical)
+                .and_then(|rel| {
+                    // The iterator starts at the focused element.
+                    // We don't want that one.
+                    self.iter_mut(true, rel)
+                        .skip(1)
+                        .filter_map(|p| try_focus(p, source))
+                        .take(n)
+                        .last()
+                }) {
             i
         } else {
             return EventResult::Ignored;
@@ -181,28 +183,30 @@ impl View for ListView {
         let offset = self.children
             .iter()
             .map(Child::label)
-            .map(str::len)
+            .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0) + 1;
 
-        self.scrollbase.draw(printer, |printer, i| {
-            match self.children[i] {
-                Child::Row(ref label, ref view) => {
-                    printer.print((0, 0), label);
-                    view.draw(&printer.offset((offset, 0), i == self.focus));
-                }
-                Child::Delimiter => (),
+        // println_stderr!("Offset: {}", offset);
+
+        self.scrollbase.draw(printer, |printer, i| match self.children[i] {
+            Child::Row(ref label, ref view) => {
+                printer.print((0, 0), label);
+                view.draw(&printer.offset((offset, 0), i == self.focus));
             }
+            Child::Delimiter => (),
         });
     }
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
-        let label_size = self.children
+        // We'll show 2 columns: the labels, and the views.
+        let label_width = self.children
             .iter()
             .map(Child::label)
-            .map(str::len)
+            .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0);
+
         let view_size = self.children
             .iter_mut()
             .filter_map(Child::view)
@@ -211,26 +215,34 @@ impl View for ListView {
             .unwrap_or(0);
 
         if self.children.len() > req.y {
-            Vec2::new(label_size + 1 + view_size + 2, req.y)
+            Vec2::new(label_width + 1 + view_size + 2, req.y)
         } else {
-            Vec2::new(label_size + 1 + view_size, self.children.len())
+            Vec2::new(label_width + 1 + view_size, self.children.len())
         }
     }
 
     fn layout(&mut self, size: Vec2) {
         self.scrollbase.set_heights(size.y, self.children.len());
 
-        let label_size = self.children
+        // We'll show 2 columns: the labels, and the views.
+        let label_width = self.children
             .iter()
             .map(Child::label)
-            .map(str::len)
+            .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0);
-        let mut available = size.x - label_size - 1;
 
-        if self.children.len() > size.y {
-            available -= 2;
-        }
+        let spacing = 1;
+        let scrollbar_width = if self.children.len() > size.y { 2 } else { 0 };
+
+        let available = if label_width + spacing + scrollbar_width > size.x {
+            // We have no space for the kids! :(
+            0
+        } else {
+            size.x - label_width - spacing - scrollbar_width
+        };
+
+        // println_stderr!("Available: {}", available);
 
         for child in self.children.iter_mut().filter_map(Child::view) {
             child.layout(Vec2::new(available, 1));

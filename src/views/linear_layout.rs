@@ -26,6 +26,7 @@ struct Child {
 }
 
 impl Child {
+    // Compute and caches the required size.
     fn required_size(&mut self, req: Vec2) -> Vec2 {
         self.size = self.view.required_size(req);
         self.size
@@ -33,6 +34,17 @@ impl Child {
 
     fn as_view(&self) -> &View {
         &*self.view
+    }
+}
+
+fn cap<'a, I: Iterator<Item = &'a mut usize>>(iter: I, max: usize) {
+    let mut available = max;
+    for item in iter {
+        if *item > available {
+            *item = available;
+        }
+
+        available -= *item;
     }
 }
 
@@ -197,6 +209,7 @@ impl View for LinearLayout {
         let o = self.orientation;
 
         for child in &mut self.children {
+            // Every item has the same size orthogonal to the layout
             child.size.set_axis_from(o.swap(), &size);
             child.view.layout(size.with_axis_from(o, &child.size));
         }
@@ -225,8 +238,8 @@ impl View for LinearLayout {
             return ideal;
         }
 
-        // Ok, so maybe it didn't.
-        // Budget cuts, everyone.
+        // Ok, so maybe it didn't. Budget cuts, everyone.
+        // Let's pretend we have almost no space in this direction.
         let budget_req = req.with_axis(self.orientation, 1);
         // println_stderr!("Budget req: {:?}", budget_req);
 
@@ -240,8 +253,15 @@ impl View for LinearLayout {
         // println_stderr!("Desperate: {:?}", desperate);
 
         // This is the lowest we'll ever go. It better fit at least.
+        let orientation = self.orientation;
         if !desperate.fits_in(req) {
             // Just give up...
+            // TODO: hard-cut
+            cap(self.children
+                    .iter_mut()
+                    .map(|c| c.size.get_mut(orientation)),
+                *req.get(self.orientation));
+
             // TODO: print some error message or something
             // println_stderr!("Seriously? {:?} > {:?}???", desperate, req);
             // self.cache = Some(SizeCache::build(desperate, req));

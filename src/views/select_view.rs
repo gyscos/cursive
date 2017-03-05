@@ -340,6 +340,9 @@ impl<T: 'static> View for SelectView<T> {
                 ColorStyle::Highlight
             };
             let x = printer.size.x;
+            if x == 0 {
+                return;
+            }
 
 
             printer.with_color(style, |printer| {
