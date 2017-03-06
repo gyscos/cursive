@@ -51,7 +51,7 @@ pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str) -> Prefix
     // `current_width` is the width of everything
     // before the next token, including any space.
     let mut current_width = 0;
-    let sum = iter.take_while(|token| {
+    let sum: usize = iter.take_while(|token| {
             let width = token.width();
             if current_width + width > available_width {
                 false
@@ -63,7 +63,7 @@ pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str) -> Prefix
             }
         })
         .map(|token| token.len() + delimiter_len)
-        .fold(0, |a, b| a + b);
+        .sum();
 
     // We counted delimiter once too many times,
     // but only if the iterator was non empty.
