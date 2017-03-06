@@ -50,16 +50,12 @@ pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str) -> Prefix
 
     let mut current_width = 0;
     let sum = iter.take_while(|token| {
-            let needed_width = if current_width == 0 {
-                token.width()
-            } else {
-                // We also need to insert the delimiter, if not at the beginning.
-                token.width() + delimiter_width
-            };
-            if current_width + needed_width > available_width {
+            let width = token.width();
+            if current_width + width > available_width {
                 false
             } else {
-                current_width += needed_width;
+                current_width += width;
+                current_width += delimiter_width;
                 true
             }
         })
@@ -70,7 +66,7 @@ pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str) -> Prefix
     // but only if the iterator was non empty.
     let length = sum.saturating_sub(delimiter_len);
 
-    debug_assert!(current_width <= available_width);
+    debug_assert!(current_width <= available_width + delimiter_width);
 
     Prefix {
         length: length,
@@ -97,4 +93,16 @@ pub fn suffix<'a, I>(iter: I, width: usize, delimiter: &str) -> Prefix
 /// Breaks between any two graphemes.
 pub fn simple_suffix(text: &str, width: usize) -> Prefix {
     suffix(text.graphemes(true), width, "")
+}
+
+#[cfg(test)]
+mod tests {
+    use utils;
+
+    #[test]
+    fn test_prefix() {
+        assert_eq!(utils::prefix(" abra ".split(' '), 5, " ").length, 5);
+        assert_eq!(utils::prefix("abra a".split(' '), 5, " ").length, 4);
+        assert_eq!(utils::prefix("a a br".split(' '), 5, " ").length, 3);
+    }
 }
