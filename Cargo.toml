@@ -22,7 +22,7 @@ version = "0.6"
 [dependencies]
 num = "0.1"
 odds = "0.2"
-toml = "0.2"
+toml = "0.3"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
 

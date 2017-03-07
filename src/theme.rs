@@ -210,7 +210,7 @@ impl Default for Theme {
 }
 
 impl Theme {
-    fn load(&mut self, table: &toml::Table) {
+    fn load(&mut self, table: &toml::value::Table) {
         if let Some(&toml::Value::Boolean(shadow)) = table.get("shadow") {
             self.shadow = shadow;
         }
@@ -314,7 +314,7 @@ pub struct Palette {
 
 impl Palette {
     /// Fills `self` with the colors from the given `table`.
-    fn load(&mut self, table: &toml::Table) {
+    fn load(&mut self, table: &toml::value::Table) {
         load_color(&mut self.background, table.get("background"));
         load_color(&mut self.shadow, table.get("shadow"));
         load_color(&mut self.view, table.get("view"));
@@ -413,12 +413,18 @@ pub enum Error {
     /// An error occured when reading the file.
     Io(io::Error),
     /// An error occured when parsing the toml content.
-    Parse,
+    Parse(toml::de::Error),
 }
 
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
         Error::Io(err)
+    }
+}
+
+impl From<toml::de::Error> for Error {
+    fn from(err: toml::de::Error) -> Self {
+        Error::Parse(err)
     }
 }
 
@@ -490,8 +496,7 @@ pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
 
 /// Loads a theme string and sets it as active.
 pub fn load_theme(content: &str) -> Result<Theme, Error> {
-    let mut parser = toml::Parser::new(content);
-    let table = try!(parser.parse().ok_or(Error::Parse));
+    let table = toml::de::from_str(content)?;
 
     let mut theme = Theme::default();
     theme.load(&table);
