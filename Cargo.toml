@@ -17,7 +17,7 @@ travis-ci = { repository = "gyscos/Cursive" }
 
 [build-dependencies.skeptic]
 optional = true
-version = "0.6"
+version = "0.7"
 
 [dependencies]
 num = "0.1"
@@ -54,7 +54,7 @@ version = "1.1.1"
 
 [dev-dependencies]
 rand = "0.3"
-skeptic = "0.6"
+skeptic = "0.7"
 
 [features]
 default = ["ncurses"]
