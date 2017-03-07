@@ -57,9 +57,12 @@ rand = "0.3"
 skeptic = "0.7"
 
 [features]
-default = ["ncurses"]
+default = ["ncurses-backend"]
+
+ncurses-backend = ["ncurses"]
 termion-backend = ["termion", "chan", "chan-signal"]
 pancurses-backend = ["pancurses"]
+blt-backend = ["bear-lib-terminal"]
 
 [lib]
 name = "cursive"
