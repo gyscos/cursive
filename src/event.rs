@@ -186,7 +186,7 @@ impl Key {
 }
 
 /// Represents an event as seen by the application.
-#[derive(PartialEq,Eq,Clone,Copy,Hash,Debug)]
+#[derive(PartialEq,Eq,Clone,Hash,Debug)]
 pub enum Event {
     /// Event fired when the window is resized.
     WindowResize,
@@ -217,7 +217,7 @@ pub enum Event {
     CtrlAlt(Key),
 
     /// An unknown event was received.
-    Unknown(i32),
+    Unknown(Vec<u8>),
 
     #[doc(hidden)]
     /// The application is about to exit.

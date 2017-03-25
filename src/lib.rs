@@ -594,7 +594,7 @@ impl Cursive {
         if self.menubar.receive_events() {
             self.menubar.on_event(event).process(self);
         } else {
-            match self.screen_mut().on_event(event) {
+            match self.screen_mut().on_event(event.clone()) {
                 // If the event was ignored,
                 // it is our turn to play with it.
                 EventResult::Ignored => self.on_event(event),

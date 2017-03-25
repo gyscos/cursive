@@ -353,7 +353,7 @@ impl View for LinearLayout {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        match self.children[self.focus].view.on_event(event) {
+        match self.children[self.focus].view.on_event(event.clone()) {
             EventResult::Ignored => {
                 match event {
                     Event::Shift(Key::Tab) if self.focus > 0 => {

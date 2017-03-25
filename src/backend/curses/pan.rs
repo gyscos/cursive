@@ -1,10 +1,10 @@
 extern crate pancurses;
 
 
-use backend;
-use event::{Event, Key};
 
 use self::super::find_closest;
+use backend;
+use event::{Event, Key};
 use theme::{Color, ColorStyle, Effect};
 use utf8;
 
@@ -23,9 +23,7 @@ impl backend::Backend for Concrete {
         pancurses::curs_set(0);
         window.bkgd(pancurses::ColorPair(ColorStyle::Background.id() as u8));
 
-        Concrete {
-            window: window,
-        }
+        Concrete { window: window }
     }
 
     fn screen_size(&self) -> (usize, usize) {
@@ -88,25 +86,39 @@ impl backend::Backend for Concrete {
                 // TODO: wait for a very short delay. If more keys are
                 // pipelined, it may be an escape sequence.
                 pancurses::Input::Character('\u{7f}') |
-                pancurses::Input::Character('\u{8}') => Event::Key(Key::Backspace),
+                pancurses::Input::Character('\u{8}') => {
+                    Event::Key(Key::Backspace)
+                }
                 pancurses::Input::Character('\u{9}') => Event::Key(Key::Tab),
                 pancurses::Input::Character('\u{1b}') => Event::Key(Key::Esc),
                 pancurses::Input::Character(c) if 32 <= (c as u32) &&
                                                   (c as u32) <= 255 => {
                     Event::Char(utf8::read_char(c as u8, || {
-                            self.window.getch().and_then(|i| match i {
+                        self.window.getch().and_then(|i| match i {
                                 pancurses::Input::Character(c) => {
                                     Some(c as u8)
                                 }
                                 _ => None,
                             })
-                        })
-                        .unwrap())
+                    })
+                                        .unwrap())
                 }
-                pancurses::Input::Character(c) => Event::Unknown(c as i32),
+                pancurses::Input::Character(c) => {
+                    let mut bytes = [0u8; 4];
+                    Event::Unknown(c.encode_utf8(&mut bytes)
+                                       .as_bytes()
+                                       .to_vec())
+                }
                 // TODO: Some key combos are not recognized by pancurses,
                 // but are sent as Unknown. We could still parse them here.
-                pancurses::Input::Unknown(i) => Event::Unknown(i),
+                pancurses::Input::Unknown(other) => {
+                    Event::Unknown((0..4)
+                                       .map(|i| {
+                                                ((other >> (8 * i)) & 0xFF) as
+                                                u8
+                                            })
+                                       .collect())
+                }
                 // TODO: I honestly have no fucking idea what KeyCodeYes is
                 pancurses::Input::KeyCodeYes => Event::Refresh,
                 pancurses::Input::KeyBreak => Event::Key(Key::PauseBreak),

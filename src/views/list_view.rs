@@ -255,7 +255,7 @@ impl View for ListView {
         }
 
         if let Child::Row(_, ref mut view) = self.children[self.focus] {
-            let result = view.on_event(event);
+            let result = view.on_event(event.clone());
             if result.is_consumed() {
                 return result;
             }

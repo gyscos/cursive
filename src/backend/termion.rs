@@ -2,22 +2,22 @@ extern crate termion;
 
 extern crate chan_signal;
 
-use ::backend;
-use chan;
-use ::event::{Event, Key};
 use self::termion::color as tcolor;
+use self::termion::event::Event as TEvent;
 use self::termion::event::Key as TKey;
 use self::termion::input::TermRead;
 use self::termion::raw::IntoRawMode;
 use self::termion::style as tstyle;
+use backend;
+use chan;
+use event::{Event, Key};
 use std::cell::Cell;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::io::Write;
 use std::thread;
-use std::time;
 
-use ::theme;
+use theme;
 
 pub struct Concrete {
     terminal: termion::raw::RawTerminal<::std::io::Stdout>,
@@ -84,11 +84,11 @@ impl backend::Backend for Concrete {
         let terminal = ::std::io::stdout().into_raw_mode().unwrap();
         let (sender, receiver) = chan::async();
 
-        thread::spawn(move || for key in ::std::io::stdin().keys() {
-            if let Ok(key) = key {
-                sender.send(map_key(key))
-            }
-        });
+        thread::spawn(move || for key in ::std::io::stdin().events() {
+                          if let Ok(key) = key {
+                              sender.send(map_key(key))
+                          }
+                      });
 
         let backend = Concrete {
             terminal: terminal,
@@ -185,29 +185,30 @@ impl backend::Backend for Concrete {
     }
 }
 
-fn map_key(key: TKey) -> Event {
-    match key {
-        TKey::Esc => Event::Key(Key::Esc),
-        TKey::Backspace => Event::Key(Key::Backspace),
-        TKey::Left => Event::Key(Key::Left),
-        TKey::Right => Event::Key(Key::Right),
-        TKey::Up => Event::Key(Key::Up),
-        TKey::Down => Event::Key(Key::Down),
-        TKey::Home => Event::Key(Key::Home),
-        TKey::End => Event::Key(Key::End),
-        TKey::PageUp => Event::Key(Key::PageUp),
-        TKey::PageDown => Event::Key(Key::PageDown),
-        TKey::Delete => Event::Key(Key::Del),
-        TKey::Insert => Event::Key(Key::Ins),
-        TKey::F(i) if i < 12 => Event::Key(Key::from_f(i)),
-        TKey::F(j) => Event::Unknown(-(j as i32)),
-        TKey::Char('\n') => Event::Key(Key::Enter),
-        TKey::Char('\t') => Event::Key(Key::Tab),
-        TKey::Char(c) => Event::Char(c),
-        TKey::Ctrl('c') => Event::Exit,
-        TKey::Ctrl(c) => Event::CtrlChar(c),
-        TKey::Alt(c) => Event::AltChar(c),
-        _ => Event::Unknown(-1),
+fn map_key(event: TEvent) -> Event {
+    match event {
+        TEvent::Unsupported(bytes) => Event::Unknown(bytes),
+        TEvent::Key(TKey::Esc) => Event::Key(Key::Esc),
+        TEvent::Key(TKey::Backspace) => Event::Key(Key::Backspace),
+        TEvent::Key(TKey::Left) => Event::Key(Key::Left),
+        TEvent::Key(TKey::Right) => Event::Key(Key::Right),
+        TEvent::Key(TKey::Up) => Event::Key(Key::Up),
+        TEvent::Key(TKey::Down) => Event::Key(Key::Down),
+        TEvent::Key(TKey::Home) => Event::Key(Key::Home),
+        TEvent::Key(TKey::End) => Event::Key(Key::End),
+        TEvent::Key(TKey::PageUp) => Event::Key(Key::PageUp),
+        TEvent::Key(TKey::PageDown) => Event::Key(Key::PageDown),
+        TEvent::Key(TKey::Delete) => Event::Key(Key::Del),
+        TEvent::Key(TKey::Insert) => Event::Key(Key::Ins),
+        TEvent::Key(TKey::F(i)) if i < 12 => Event::Key(Key::from_f(i)),
+        TEvent::Key(TKey::F(j)) => Event::Unknown(vec![j]),
+        TEvent::Key(TKey::Char('\n')) => Event::Key(Key::Enter),
+        TEvent::Key(TKey::Char('\t')) => Event::Key(Key::Tab),
+        TEvent::Key(TKey::Char(c)) => Event::Char(c),
+        TEvent::Key(TKey::Ctrl('c')) => Event::Exit,
+        TEvent::Key(TKey::Ctrl(c)) => Event::CtrlChar(c),
+        TEvent::Key(TKey::Alt(c)) => Event::AltChar(c),
+        _ => Event::Unknown(vec![]),
     }
 
 }
