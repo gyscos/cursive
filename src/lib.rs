@@ -392,6 +392,8 @@ impl Cursive {
         self.screen_mut().find(sel)
     }
 
+    /// Tries to find the view identified by the given id.
+    ///
     /// Convenient method to use `find` with a `view::Selector::Id`.
     ///
     /// # Examples
@@ -415,6 +417,18 @@ impl Cursive {
     /// ```
     pub fn find_id<V: View + Any>(&mut self, id: &str) -> Option<&mut V> {
         self.find(&view::Selector::Id(id))
+    }
+
+    /// Moves the focus to the view identified by `id`.
+    ///
+    /// Convenient method to call `focus` with a `view::Selector::Id`.
+    pub fn focus_id(&mut self, id: &str) -> Result<(), ()> {
+        self.focus(&view::Selector::Id(id))
+    }
+
+    /// Moves the focus to the view identified by `sel`.
+    pub fn focus(&mut self, sel: &view::Selector) -> Result<(), ()> {
+        self.screen_mut().focus_view(sel)
     }
 
     /// Adds a global callback.

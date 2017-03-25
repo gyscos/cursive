@@ -27,4 +27,11 @@ impl<T: View + Any> ViewWrapper for IdView<T> {
             s => self.view.find_any(s),
         }
     }
+
+    fn wrap_focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        match selector {
+            &Selector::Id(id) if id == self.id => Ok(()),
+            s => self.view.focus_view(s),
+        }
+    }
 }

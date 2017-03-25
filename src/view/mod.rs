@@ -113,7 +113,7 @@ pub trait View {
     /// Draws the view with the given printer (includes bounds) and focus.
     fn draw(&self, printer: &Printer);
 
-    /// Finds the view pointed to by the given path.
+    /// Finds the view identified by the given selector.
     ///
     /// See [`Finder::find`] for a nicer interface, implemented for all views.
     ///
@@ -124,6 +124,13 @@ pub trait View {
     /// Default implementation always return `None`.
     fn find_any(&mut self, &Selector) -> Option<&mut Any> {
         None
+    }
+
+    /// Moves the focus to the view identified by the given selector.
+    ///
+    /// Returns `Ok(())` if the view was found and selected.
+    fn focus_view(&mut self, &Selector) -> Result<(), ()> {
+        Err(())
     }
 
     /// This view is offered focus. Will it take it?

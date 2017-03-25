@@ -401,4 +401,15 @@ impl View for LinearLayout {
             .filter_map(|c| c.view.find_any(selector))
             .next()
     }
+
+    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        for (i, child) in self.children.iter_mut().enumerate() {
+            if child.view.focus_view(selector).is_ok() {
+                self.focus = i;
+                return Ok(());
+            }
+        }
+
+        Err(())
+    }
 }

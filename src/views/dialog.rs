@@ -402,4 +402,8 @@ impl View for Dialog {
     fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
         self.content.find_any(selector)
     }
+
+    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        self.content.focus_view(selector)
+    }
 }

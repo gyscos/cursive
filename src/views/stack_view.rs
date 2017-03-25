@@ -186,4 +186,14 @@ impl View for StackView {
             .filter_map(|l| l.view.find_any(selector))
             .next()
     }
+
+    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        for layer in &mut self.layers {
+            if layer.view.focus_view(selector).is_ok() {
+                return Ok(());
+            }
+        }
+
+        Err(())
+    }
 }

@@ -118,7 +118,10 @@ impl ListView {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
 
-                Box::new(self.children.iter_mut().enumerate().skip(start))
+                Box::new(self.children
+                             .iter_mut()
+                             .enumerate()
+                             .skip(start))
             }
             direction::Relative::Back => {
                 let end = if from_focus {
@@ -296,10 +299,11 @@ impl View for ListView {
 
     fn take_focus(&mut self, source: direction::Direction) -> bool {
         let rel = source.relative(direction::Orientation::Vertical);
-        let i = if let Some(i) = self.iter_mut(rel.is_none(),
-                      rel.unwrap_or(direction::Relative::Front))
-            .filter_map(|p| try_focus(p, source))
-            .next() {
+        let i = if let Some(i) =
+            self.iter_mut(rel.is_none(),
+                          rel.unwrap_or(direction::Relative::Front))
+                .filter_map(|p| try_focus(p, source))
+                .next() {
             i
         } else {
             // No one wants to be in focus
@@ -316,5 +320,19 @@ impl View for ListView {
             .filter_map(Child::view)
             .filter_map(|v| v.find_any(selector))
             .next()
+    }
+
+    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        if let Some(i) = self.children
+               .iter_mut()
+               .enumerate()
+               .filter_map(|(i, v)| v.view().map(|v| (i, v)))
+               .filter_map(|(i, v)| v.focus_view(selector).ok().map(|_| i))
+               .next() {
+            self.focus = i;
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 }
