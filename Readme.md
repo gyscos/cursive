@@ -51,12 +51,14 @@ fn main() {
 
 Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/examples) to get these results, and more:
 
+<div>
 <img src="doc/examples/edit.png" alt="edit.rs example", width="49%" />
 <img src="doc/examples/lorem.png" alt="lorem.rs example", width="49%" />
 <img src="doc/examples/menubar.png" alt="menubar.rs example", width="49%" />
 <img src="doc/examples/select.png" alt="select.rs example", width="49%" />
 <img src="doc/examples/list_view.png" alt="list_view.rs example", width="49%" />
 <img src="doc/examples/theme.png" alt="theme.rs example", width="49%" />
+</div>
 
 _(Colors may depend on your terminal configuration.)_
 
