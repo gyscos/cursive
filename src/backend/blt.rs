@@ -1,12 +1,12 @@
 extern crate bear_lib_terminal;
 
-use ::backend;
-use ::event::{Event, Key};
 use self::bear_lib_terminal::Color as BltColor;
 use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{self, Event as BltEvent, KeyCode};
+use backend;
+use event::{Event, Key};
 use std::collections::BTreeMap;
-use ::theme::{BaseColor, Color, ColorStyle, Effect};
+use theme::{BaseColor, Color, ColorStyle, Effect};
 
 pub struct Concrete {
     colours: BTreeMap<i16, (BltColor, BltColor)>,

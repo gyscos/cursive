@@ -50,10 +50,6 @@ mod identifiable;
 mod boxable;
 
 
-use Printer;
-
-use direction::Direction;
-use event::{Event, EventResult};
 pub use self::boxable::Boxable;
 pub use self::identifiable::Identifiable;
 
@@ -65,9 +61,14 @@ pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
 pub use self::view_path::ViewPath;
 pub use self::view_wrapper::ViewWrapper;
-use std::any::Any;
-use vec::Vec2;
+use Printer;
 
+use direction::Direction;
+use event::{Event, EventResult};
+use vec::Vec2;
+use views::RefCellView;
+
+use std::any::Any;
 
 /// Main trait defining a view behaviour.
 pub trait View {
@@ -122,8 +123,8 @@ pub trait View {
     /// Returns None if the path doesn't lead to a view.
     ///
     /// Default implementation always return `None`.
-    fn find_any(&mut self, &Selector) -> Option<&mut Any> {
-        None
+    fn find_any<'a>(&mut self, _: &Selector, _: Box<FnMut(&mut Any) + 'a>) {
+        // TODO: FnMut -> FnOnce once it works
     }
 
     /// Moves the focus to the view identified by the given selector.
@@ -157,17 +158,41 @@ pub trait Finder {
     ///
     /// If the view is not found, or if it is not of the asked type,
     /// it returns None.
-    fn find<V: View + Any>(&mut self, sel: &Selector) -> Option<&mut V>;
+    fn find<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
+        where V: View + Any,
+              F: FnOnce(&mut V) -> R;
 
     /// Convenient method to use `find` with a `view::Selector::Id`.
-    fn find_id<V: View + Any>(&mut self, id: &str) -> Option<&mut V> {
-        self.find(&Selector::Id(id))
+    fn find_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
+        where V: View + Any,
+              F: FnOnce(&mut V) -> R
+    {
+        self.find(&Selector::Id(id), callback)
     }
 }
 
 impl<T: View> Finder for T {
-    fn find<V: View + Any>(&mut self, sel: &Selector) -> Option<&mut V> {
-        self.find_any(sel).and_then(|b| b.downcast_mut::<V>())
+    fn find<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
+        where V: View + Any,
+              F: FnOnce(&mut V) -> R
+    {
+        let mut result = None;
+        {
+            let result_ref = &mut result;
+
+            let mut callback = Some(callback);
+            let callback = |v: &mut Any| if let Some(callback) =
+                callback.take() {
+                if v.is::<V>() {
+                    *result_ref = v.downcast_mut::<V>().map(|v| callback(v));
+                } else if v.is::<RefCellView<V>>() {
+                    *result_ref = v.downcast_mut::<RefCellView<V>>()
+                        .and_then(|v| v.with_view_mut(callback));
+                }
+            };
+            self.find_any(sel, Box::new(callback));
+        }
+        result
     }
 }
 

@@ -1,19 +1,19 @@
 [package]
 authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
 build = "build.rs"
+categories = ["command-line-interface", "gui"]
 description = "A TUI (Text User Interface) library focused on ease-of-use."
 documentation = "https://gyscos.github.io/Cursive/cursive/index.html"
 exclude = ["doc", "assets"]
 keywords = ["ncurses", "TUI", "UI"]
-categories = ["command-line-interface", "gui"]
 license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
 version = "0.4.1"
 
-[badges]
-travis-ci = { repository = "gyscos/Cursive" }
+[badges.travis-ci]
+repository = "gyscos/Cursive"
 
 [build-dependencies.skeptic]
 optional = true
@@ -22,6 +22,7 @@ version = "0.7"
 [dependencies]
 num = "0.1"
 odds = "0.2"
+owning_ref = "0.2.4"
 toml = "0.3"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"

@@ -191,7 +191,6 @@ impl View for ListView {
             .unwrap_or(0) + 1;
 
         // println_stderr!("Offset: {}", offset);
-
         self.scrollbase.draw(printer, |printer, i| match self.children[i] {
             Child::Row(ref label, ref view) => {
                 printer.print((0, 0), label);
@@ -314,12 +313,13 @@ impl View for ListView {
         true
     }
 
-    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.children
+    fn find_any<'a>(&mut self, selector: &Selector,
+                    mut callback: Box<FnMut(&mut Any) + 'a>) {
+        for view in self.children
             .iter_mut()
-            .filter_map(Child::view)
-            .filter_map(|v| v.find_any(selector))
-            .next()
+            .filter_map(Child::view) {
+            view.find_any(selector, Box::new(|any| callback(any)));
+        }
     }
 
     fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {

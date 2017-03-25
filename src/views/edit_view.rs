@@ -41,9 +41,8 @@ use view::View;
 ///         .with_id("name")
 ///         .fixed_width(20))
 ///     .button("Ok", |s| {
-///         let name = s.find_id::<EditView>("name")
-///             .unwrap()
-///             .get_content();
+///         let name = s.find_id("name", |view: &mut EditView| view.get_content())
+///             .unwrap();
 ///         show_popup(s, &name);
 ///     }));
 ///

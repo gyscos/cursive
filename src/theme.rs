@@ -129,7 +129,7 @@ pub enum Effect {
     /// No effect
     Simple,
     /// Reverses foreground and background colors
-    Reverse,
+    Reverse, 
     // TODO: bold, italic, underline
 }
 

@@ -399,8 +399,9 @@ impl View for Dialog {
         }
     }
 
-    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.content.find_any(selector)
+    fn find_any<'a>(&mut self, selector: &Selector,
+                    callback: Box<FnMut(&mut Any) + 'a>) {
+        self.content.find_any(selector, callback);
     }
 
     fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {

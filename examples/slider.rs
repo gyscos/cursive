@@ -1,8 +1,8 @@
 extern crate cursive;
 
 use cursive::Cursive;
-use cursive::views::{Dialog, SliderView};
 use cursive::traits::*;
+use cursive::views::{Dialog, SliderView};
 
 fn main() {
     let mut siv = Cursive::new();
@@ -14,7 +14,7 @@ fn main() {
             .value(7)
             .on_change(|s, v| {
                 let title = format!("[ {} ]", v);
-                s.find_id::<Dialog>("dialog").unwrap().set_title(title);
+                s.find_id("dialog", |view: &mut Dialog| view.set_title(title));
             })
             .on_enter(|s, v| {
                 s.pop_layer();

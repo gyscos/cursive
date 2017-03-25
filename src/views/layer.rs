@@ -10,12 +10,10 @@ pub struct Layer<T: View> {
     view: T,
 }
 
-impl <T: View> Layer<T> {
+impl<T: View> Layer<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
-        Layer {
-            view: view,
-        }
+        Layer { view: view }
     }
 }
 

@@ -180,11 +180,11 @@ impl View for StackView {
         }
     }
 
-    fn find_any(&mut self, selector: &Selector) -> Option<&mut Any> {
-        self.layers
-            .iter_mut()
-            .filter_map(|l| l.view.find_any(selector))
-            .next()
+    fn find_any<'a>(&mut self, selector: &Selector,
+                    mut callback: Box<FnMut(&mut Any) + 'a>) {
+        for layer in &mut self.layers {
+            layer.view.find_any(selector, Box::new(|any| callback(any)));
+        }
     }
 
     fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {

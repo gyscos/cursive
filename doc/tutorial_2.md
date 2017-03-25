@@ -144,7 +144,7 @@ fn main() {
     siv.run();
 }
 
-fn show_next(s: &mut Cursive) {
+fn show_next(_: &mut Cursive) {
     // Empty for now
 }
 ```

@@ -15,8 +15,8 @@
 //! * Relative direction: front or back.
 //!   Its actual direction depends on the orientation.
 
-use vec::Vec2;
 use XY;
+use vec::Vec2;
 
 /// Describes a vertical or horizontal orientation for a view.
 #[derive(Clone,Copy,Debug,PartialEq)]

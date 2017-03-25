@@ -64,10 +64,12 @@ extern crate unicode_segmentation;
 extern crate unicode_width;
 extern crate odds;
 extern crate num;
+extern crate owning_ref;
 
 #[cfg(feature = "termion")]
 #[macro_use]
 extern crate chan;
+
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
@@ -365,8 +367,11 @@ impl Cursive {
 
     /// Tries to find the view pointed to by the given selector.
     ///
+    /// Runs a closure on the view once it's found, and return the
+    /// result.
+    ///
     /// If the view is not found, or if it is not of the asked type,
-    /// it returns None.
+    /// returns None.
     ///
     /// # Examples
     ///
@@ -381,15 +386,18 @@ impl Cursive {
     ///                               .with_id("text"));
     ///
     /// siv.add_global_callback('p', |s| {
-    ///     s.find::<views::TextView>(&view::Selector::Id("text"))
-    ///      .unwrap()
-    ///      .set_content("Text #2");
+    ///     s.find(&view::Selector::Id("text"), |view: &mut views::TextView| {
+    ///         view.set_content("Text #2");
+    ///     });
     /// });
     /// # }
     /// ```
-    pub fn find<V: View + Any>(&mut self, sel: &view::Selector)
-                               -> Option<&mut V> {
-        self.screen_mut().find(sel)
+    pub fn find<V, F, R>(&mut self, sel: &view::Selector, callback: F)
+                         -> Option<R>
+        where V: View + Any,
+              F: FnOnce(&mut V) -> R
+    {
+        self.screen_mut().find(sel, callback)
     }
 
     /// Tries to find the view identified by the given id.
@@ -409,14 +417,29 @@ impl Cursive {
     ///                               .with_id("text"));
     ///
     /// siv.add_global_callback('p', |s| {
-    ///     s.find_id::<views::TextView>("text")
-    ///      .unwrap()
-    ///      .set_content("Text #2");
+    ///     s.find_id("text", |view: &mut views::TextView| {
+    ///         view.set_content("Text #2");
+    ///     });
     /// });
     /// # }
     /// ```
-    pub fn find_id<V: View + Any>(&mut self, id: &str) -> Option<&mut V> {
-        self.find(&view::Selector::Id(id))
+    pub fn find_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
+        where V: View + Any,
+              F: FnOnce(&mut V) -> R
+    {
+        self.find(&view::Selector::Id(id), callback)
+    }
+
+    /// Convenient method to find a view wrapped in [`RefCellView`].
+    ///
+    /// This looks for a `RefCellView<V>` with the given ID, and return
+    /// a mutable reference to the wrapped view.
+    ///
+    /// [`RefCellView`]: views/struct.RefCellView.html
+    pub fn find_id_mut<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
+        where V: View + Any
+    {
+        self.find_id(id, views::RefCellView::<V>::get_mut)
     }
 
     /// Moves the focus to the view identified by `id`.

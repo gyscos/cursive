@@ -55,9 +55,7 @@ impl SliderView {
     ///
     /// Chainable variant.
     pub fn value(self, value: usize) -> Self {
-        self.with(|s| {
-            s.set_value(value);
-        })
+        self.with(|s| { s.set_value(value); })
     }
 
     /// Sets a callback to be called when the slider is moved.
@@ -79,9 +77,7 @@ impl SliderView {
     fn get_change_result(&self) -> EventResult {
         EventResult::Consumed(self.on_change.clone().map(|cb| {
             let value = self.value;
-            Callback::from_fn(move |s| {
-                cb(s, value);
-            })
+            Callback::from_fn(move |s| { cb(s, value); })
         }))
     }
 
@@ -148,9 +144,7 @@ impl View for SliderView {
             Event::Key(Key::Enter) if self.on_enter.is_some() => {
                 let value = self.value;
                 let cb = self.on_enter.clone().unwrap();
-                EventResult::with_cb(move |s| {
-                    cb(s, value);
-                })
+                EventResult::with_cb(move |s| { cb(s, value); })
             }
             _ => EventResult::Ignored,
         }

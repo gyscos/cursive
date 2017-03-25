@@ -118,9 +118,7 @@ impl ProgressBar {
     pub fn start<F: FnOnce(Counter) + Send + 'static>(&mut self, f: F) {
         let counter: Counter = self.value.clone();
 
-        thread::spawn(move || {
-            f(counter);
-        });
+        thread::spawn(move || { f(counter); });
     }
 
     /// Starts a function in a separate thread, and monitor the progress.

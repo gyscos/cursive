@@ -228,12 +228,9 @@ impl View for MenuPopup {
             Event::Key(Key::PageDown) => self.scroll_down(5, false),
 
             Event::Key(Key::Home) => self.focus = 0,
-            Event::Key(Key::End) => {
-                self.focus = self.menu.children.len() - 1
-            }
+            Event::Key(Key::End) => self.focus = self.menu.children.len() - 1,
 
-            Event::Key(Key::Right) if self.menu.children
-                                          [self.focus]
+            Event::Key(Key::Right) if self.menu.children[self.focus]
                 .is_subtree() => {
                 return match self.menu.children[self.focus] {
                     MenuItem::Subtree(_, ref tree) => {
@@ -243,8 +240,7 @@ impl View for MenuPopup {
 
                 };
             }
-            Event::Key(Key::Enter) if !self.menu.children
-                                           [self.focus]
+            Event::Key(Key::Enter) if !self.menu.children[self.focus]
                 .is_delimiter() => {
                 return match self.menu.children[self.focus] {
                     MenuItem::Leaf(_, ref cb) => {

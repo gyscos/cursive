@@ -83,7 +83,7 @@ impl Menubar {
 
     /// Insert a new item at the given position.
     pub fn insert_subtree(&mut self, i: usize, title: &str, menu: MenuTree)
-                  -> &mut Self {
+                          -> &mut Self {
         self.menus.insert(i, (title.to_string(), Rc::new(menu)));
         self
     }
