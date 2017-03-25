@@ -66,6 +66,7 @@ extern crate odds;
 extern crate num;
 extern crate owning_ref;
 
+#[cfg(feature = "termion")]
 #[macro_use]
 extern crate chan;
 
@@ -399,6 +400,8 @@ impl Cursive {
         self.screen_mut().find(sel, callback)
     }
 
+    /// Tries to find the view identified by the given id.
+    ///
     /// Convenient method to use `find` with a `view::Selector::Id`.
     ///
     /// # Examples
@@ -437,6 +440,18 @@ impl Cursive {
         where V: View + Any
     {
         self.find_id(id, views::RefCellView::<V>::get_mut)
+    }
+
+    /// Moves the focus to the view identified by `id`.
+    ///
+    /// Convenient method to call `focus` with a `view::Selector::Id`.
+    pub fn focus_id(&mut self, id: &str) -> Result<(), ()> {
+        self.focus(&view::Selector::Id(id))
+    }
+
+    /// Moves the focus to the view identified by `sel`.
+    pub fn focus(&mut self, sel: &view::Selector) -> Result<(), ()> {
+        self.screen_mut().focus_view(sel)
     }
 
     /// Adds a global callback.
@@ -616,7 +631,7 @@ impl Cursive {
         if self.menubar.receive_events() {
             self.menubar.on_event(event).process(self);
         } else {
-            match self.screen_mut().on_event(event) {
+            match self.screen_mut().on_event(event.clone()) {
                 // If the event was ignored,
                 // it is our turn to play with it.
                 EventResult::Ignored => self.on_event(event),

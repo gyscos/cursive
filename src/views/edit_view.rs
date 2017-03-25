@@ -3,6 +3,7 @@
 use {Cursive, Printer, With};
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key};
+use std::cell::RefCell;
 
 use std::rc::Rc;
 use theme::{ColorStyle, Effect};
@@ -73,7 +74,7 @@ pub struct EditView {
 
     /// Callback when the content is modified.
     ///
-    /// Will be called with the current content and the cursor position
+    /// Will be called with the current content and the cursor position.
     on_edit: Option<Rc<Fn(&mut Cursive, &str, usize)>>,
 
     /// Callback when <Enter> is pressed.
@@ -135,25 +136,118 @@ impl EditView {
         self.enabled = true;
     }
 
+    /// Sets a mutable callback to be called whenever the content is modified.
+    ///
+    /// `callback` will be called with the view
+    /// content and the current cursor position.
+    ///
+    /// *Warning*: this callback cannot be called recursively. If you somehow
+    /// trigger this callback again in the given closure, it will be ignored.
+    ///
+    /// If you don't need a mutable closure but want the possibility of
+    /// recursive calls, see [`set_on_edit`](#method.set_on_edit).
+    pub fn set_on_edit_mut<F>(&mut self, callback: F)
+        where F: FnMut(&mut Cursive, &str, usize) + 'static
+    {
+        let callback = RefCell::new(callback);
+        // Here's the weird trick: if we're already borrowed,
+        // just ignored the callback.
+        self.set_on_edit(move |s, text, cursor| {
+            if let Ok(mut f) = callback.try_borrow_mut() {
+                // Beeeaaah that's ugly.
+                // Why do we need to manually dereference here?
+                (&mut *f)(s, text, cursor);
+            }
+        });
+    }
+
     /// Sets a callback to be called whenever the content is modified.
     ///
     /// `callback` will be called with the view
     /// content and the current cursor position.
-    pub fn on_edit<F>(mut self, callback: F) -> Self
+    ///
+    /// This callback can safely trigger itself recursively if needed
+    /// (for instance if you call `on_event` on this view from the callback).
+    ///
+    /// If you need a mutable closure and don't care about the recursive
+    /// aspect, see [`set_on_edit_mut`](#method.set_on_edit_mut).
+    pub fn set_on_edit<F>(&mut self, callback: F)
         where F: Fn(&mut Cursive, &str, usize) + 'static
     {
         self.on_edit = Some(Rc::new(callback));
-        self
+    }
+
+    /// Sets a mutable callback to be called whenever the content is modified.
+    ///
+    /// Chainable variant. See [`set_on_edit_mut`](#method.set_on_edit_mut).
+    pub fn on_edit_mut<F>(self, callback: F) -> Self
+        where F: FnMut(&mut Cursive, &str, usize) + 'static
+    {
+        self.with(|v| v.set_on_edit_mut(callback))
+    }
+
+    /// Sets a callback to be called whenever the content is modified.
+    ///
+    /// Chainable variant. See [`set_on_edit`](#method.set_on_edit).
+    pub fn on_edit<F>(self, callback: F) -> Self
+        where F: Fn(&mut Cursive, &str, usize) + 'static
+    {
+        self.with(|v| v.set_on_edit(callback))
+    }
+
+    /// Sets a mutable callback to be called when `<Enter>` is pressed.
+    ///
+    /// `callback` will be given the content of the view.
+    ///
+    /// *Warning*: this callback cannot be called recursively. If you somehow
+    /// trigger this callback again in the given closure, it will be ignored.
+    ///
+    /// If you don't need a mutable closure but want the possibility of
+    /// recursive calls, see [`set_on_submit`](#method.set_on_submit).
+    pub fn set_on_submit_mut<F>(&mut self, callback: F)
+        where F: FnMut(&mut Cursive, &str) + 'static
+    {
+        // TODO: don't duplicate all those methods.
+        // Instead, have some generic function immutify()
+        // or something that wraps a FnMut closure.
+        let callback = RefCell::new(callback);
+        self.set_on_submit(move |s, text| if let Ok(mut f) =
+            callback.try_borrow_mut() {
+            (&mut *f)(s, text);
+        });
     }
 
     /// Sets a callback to be called when `<Enter>` is pressed.
     ///
     /// `callback` will be given the content of the view.
-    pub fn on_submit<F>(mut self, callback: F) -> Self
+    ///
+    /// This callback can safely trigger itself recursively if needed
+    /// (for instance if you call `on_event` on this view from the callback).
+    ///
+    /// If you need a mutable closure and don't care about the recursive
+    /// aspect, see [`set_on_submit_mut`](#method.set_on_submit_mut).
+    pub fn set_on_submit<F>(&mut self, callback: F)
         where F: Fn(&mut Cursive, &str) + 'static
     {
         self.on_submit = Some(Rc::new(callback));
-        self
+    }
+
+    /// Sets a mutable callback to be called when `<Enter>` is pressed.
+    ///
+    /// Chainable variant.
+    pub fn on_submit_mut<F>(self, callback: F) -> Self
+        where F: FnMut(&mut Cursive, &str) + 'static
+    {
+        self.with(|v| v.set_on_submit_mut(callback))
+    }
+
+    /// Sets a callback to be called when `<Enter>` is pressed.
+    ///
+    /// Chainable variant.
+    pub fn on_submit<F>(self, callback: F) -> Self
+        where F: Fn(&mut Cursive, &str) + 'static
+    {
+        self.with(|v| v.set_on_submit(callback))
     }
 
     /// Enable or disable this view.
@@ -267,7 +361,7 @@ fn make_small_stars(length: usize) -> &'static str {
 
 impl View for EditView {
     fn draw(&self, printer: &Printer) {
-        assert!(printer.size.x == self.last_length,
+        assert_eq!(printer.size.x, self.last_length,
                 "Was promised {}, received {}",
                 self.last_length,
                 printer.size.x);
@@ -343,6 +437,7 @@ impl View for EditView {
 
     fn layout(&mut self, size: Vec2) {
         self.last_length = size.x;
+        // println_stderr!("Promised: {}", size.x);
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {
@@ -401,7 +496,7 @@ impl View for EditView {
 
         let cb = self.on_edit.clone().map(|cb| {
 
-            // Get a new Rc on it
+            // Get a new Rc on the content
             let content = self.content.clone();
             let cursor = self.cursor;
 

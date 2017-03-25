@@ -3,6 +3,7 @@
 [![crates.io](https://meritbadge.herokuapp.com/cursive)](https://crates.io/crates/cursive)
 [![Build Status](https://travis-ci.org/gyscos/Cursive.svg?branch=master)](https://travis-ci.org/gyscos/Cursive)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Gitter chat](https://badges.gitter.im/gyscos/cursive.png)](https://gitter.im/cursive-rs/cursive)
 
 Cursive is a TUI (Text User Interface) library for rust. It is currently based on jeaye's [ncurses-rs](https://github.com/jeaye/ncurses-rs), but [other backends are available](https://github.com/gyscos/Cursive/wiki/Backends).
 
@@ -50,12 +51,14 @@ fn main() {
 
 Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/examples) to get these results, and more:
 
-<img src="doc/examples/edit.png" alt="`edit` example", width="49%" />
-<img src="doc/examples/lorem.png" alt="`lorem` example", width="49%" />
-<img src="doc/examples/menubar.png" alt="`menubar` example", width="49%" />
-<img src="doc/examples/select.png" alt="`select` example", width="49%" />
-<img src="doc/examples/list_view.png" alt="`list_view` example", width="49%" />
-<img src="doc/examples/theme.png" alt="`theme` example", width="49%" />
+<div>
+<img src="doc/examples/edit.png" alt="edit.rs example", width="49%" />
+<img src="doc/examples/lorem.png" alt="lorem.rs example", width="49%" />
+<img src="doc/examples/menubar.png" alt="menubar.rs example", width="49%" />
+<img src="doc/examples/select.png" alt="select.rs example", width="49%" />
+<img src="doc/examples/list_view.png" alt="list_view.rs example", width="49%" />
+<img src="doc/examples/theme.png" alt="theme.rs example", width="49%" />
+</div>
 
 _(Colors may depend on your terminal configuration.)_
 

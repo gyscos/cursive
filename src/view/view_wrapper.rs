@@ -57,6 +57,11 @@ pub trait ViewWrapper {
         self.with_view_mut(|v| v.find_any(selector, callback));
     }
 
+    /// Wraps the `focus_view` method.
+    fn wrap_focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        self.with_view_mut(|v| v.focus_view(selector)).unwrap_or(Err(()))
+    }
+
     /// Wraps the `needs_relayout` method.
     fn wrap_needs_relayout(&self) -> bool {
         self.with_view(|v| v.needs_relayout()).unwrap_or(true)
@@ -91,6 +96,10 @@ impl<T: ViewWrapper> View for T {
 
     fn needs_relayout(&self) -> bool {
         self.wrap_needs_relayout()
+    }
+
+    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        self.wrap_focus_view(selector)
     }
 }
 

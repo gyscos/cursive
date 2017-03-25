@@ -316,7 +316,7 @@ impl View for Dialog {
         match self.focus {
             // If we are on the content, we can only go down.
             Focus::Content => {
-                match self.content.on_event(event) {
+                match self.content.on_event(event.clone()) {
                     EventResult::Ignored if !self.buttons.is_empty() => {
                         match event {
                             Event::Key(Key::Down) |
@@ -334,7 +334,7 @@ impl View for Dialog {
             }
             // If we are on a button, we have more choice
             Focus::Button(i) => {
-                match self.buttons[i].on_event(event) {
+                match self.buttons[i].on_event(event.clone()) {
                     EventResult::Ignored => {
                         match event {
                             // Up goes back to the content
@@ -402,5 +402,9 @@ impl View for Dialog {
     fn find_any<'a>(&mut self, selector: &Selector,
                     callback: Box<FnMut(&mut Any) + 'a>) {
         self.content.find_any(selector, callback);
+    }
+
+    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        self.content.focus_view(selector)
     }
 }

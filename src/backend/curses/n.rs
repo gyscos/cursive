@@ -94,7 +94,7 @@ impl backend::Backend for Concrete {
         if 32 <= ch && ch <= 255 && ch != 127 {
             Event::Char(utf8::read_char(ch as u8,
                                         || Some(ncurses::getch() as u8))
-                .unwrap())
+                                .unwrap())
         } else {
             parse_ncurses_char(ch)
         }
@@ -226,6 +226,11 @@ fn parse_ncurses_char(ch: i32) -> Event {
         // Values 8-10 (H,I,J) are used by other commands,
         // so we probably won't receive them. Meh~
         c @ 1...25 => Event::CtrlChar((b'a' + (c - 1) as u8) as char),
-        _ => Event::Unknown(ch),
+        other => {
+            // Split the i32 into 4 bytes
+            Event::Unknown((0..4)
+                               .map(|i| ((other >> (8 * i)) & 0xFF) as u8)
+                               .collect())
+        }
     }
 }

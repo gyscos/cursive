@@ -119,22 +119,28 @@ impl ScrollBase {
 
     /// Scroll to the bottom of the view.
     pub fn scroll_bottom(&mut self) {
-        self.start_line = self.content_height - self.view_height;
+        if self.scrollable() {
+            self.start_line = self.content_height - self.view_height;
+        }
     }
 
     /// Scroll down by the given number of line.
     ///
     /// Never further than the bottom of the view.
     pub fn scroll_down(&mut self, n: usize) {
-        self.start_line = min(self.start_line + n,
-                              self.content_height - self.view_height);
+        if self.scrollable() {
+            self.start_line = min(self.start_line + n,
+                                  self.content_height - self.view_height);
+        }
     }
 
     /// Scroll up by the given number of lines.
     ///
     /// Never above the top of the view.
     pub fn scroll_up(&mut self, n: usize) {
-        self.start_line -= min(self.start_line, n);
+        if self.scrollable() {
+            self.start_line -= min(self.start_line, n);
+        }
     }
 
     /// Draws the scroll bar and the content using the given drawer.

@@ -49,25 +49,29 @@ pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str)
     let delimiter_width = delimiter.width();
     let delimiter_len = delimiter.len();
 
+    // `current_width` is the width of everything
+    // before the next token, including any space.
     let mut current_width = 0;
-    let sum = iter.take_while(|token| {
+    let sum: usize = iter.take_while(|token| {
             let width = token.width();
             if current_width + width > available_width {
                 false
             } else {
-                if current_width != 0 {
-                    current_width += delimiter_width;
-                }
+                // Include the delimiter after this token.
                 current_width += width;
+                current_width += delimiter_width;
                 true
             }
         })
         .map(|token| token.len() + delimiter_len)
-        .fold(0, |a, b| a + b);
+        .sum();
 
     // We counted delimiter once too many times,
     // but only if the iterator was non empty.
-    let length = if sum == 0 { sum } else { sum - delimiter_len };
+    let length = sum.saturating_sub(delimiter_len);
+
+    // `current_width` includes a delimiter after the last token
+    debug_assert!(current_width <= available_width + delimiter_width);
 
     Prefix {
         length: length,
@@ -94,4 +98,16 @@ pub fn suffix<'a, I>(iter: I, width: usize, delimiter: &str) -> Prefix
 /// Breaks between any two graphemes.
 pub fn simple_suffix(text: &str, width: usize) -> Prefix {
     suffix(text.graphemes(true), width, "")
+}
+
+#[cfg(test)]
+mod tests {
+    use utils;
+
+    #[test]
+    fn test_prefix() {
+        assert_eq!(utils::prefix(" abra ".split(' '), 5, " ").length, 5);
+        assert_eq!(utils::prefix("abra a".split(' '), 5, " ").length, 4);
+        assert_eq!(utils::prefix("a a br".split(' '), 5, " ").length, 3);
+    }
 }

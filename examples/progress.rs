@@ -28,7 +28,7 @@ fn main() {
 }
 
 // Function to simulate a long process.
-fn fake_load(n_max: usize, counter: Counter) {
+fn fake_load(n_max: usize, counter: &Counter) {
     for _ in 0..n_max {
         thread::sleep(Duration::from_millis(5));
         // The `counter.tick()` method increases the progress value
@@ -50,7 +50,7 @@ fn phase_1(s: &mut Cursive) {
         .range(0, n_max)
         .with_task(move |counter| {
             // This closure will be called in a separate thread.
-            fake_load(n_max, counter);
+            fake_load(n_max, &counter);
 
             // When we're done, send a callback through the channel
             cb.send(Box::new(coffee_break)).unwrap();

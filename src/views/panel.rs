@@ -20,12 +20,27 @@ impl<V: View> ViewWrapper for Panel<V> {
 
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
         // TODO: make borders conditional?
-        self.view.required_size(req - (2, 2)) + (2, 2)
+        let req = if Vec2::new(2, 2).fits_in(req) {
+            req - (2, 2)
+        } else {
+            Vec2::zero()
+        };
+
+        self.view.required_size(req) + (2, 2)
     }
 
     fn wrap_draw(&self, printer: &Printer) {
         printer.print_box((0, 0), printer.size, true);
-        self.view
-            .draw(&printer.sub_printer((1, 1), printer.size - (2, 2), true));
+        self.view.draw(&printer.sub_printer((1, 1),
+                                            printer.size - (2, 2),
+                                            true));
+    }
+
+    fn wrap_layout(&mut self, size: Vec2) {
+        self.view.layout(if Vec2::new(2, 2).fits_in(size) {
+                             size - (2, 2)
+                         } else {
+                             size
+                         });
     }
 }

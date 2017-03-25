@@ -45,6 +45,14 @@ impl<T> XY<T> {
         }
     }
 
+    /// Returns a mutable reference to the value on the given axis.
+    pub fn get_mut(&mut self, o: Orientation) -> &mut T {
+        match o {
+            Orientation::Horizontal => &mut self.x,
+            Orientation::Vertical => &mut self.y,
+        }
+    }
+
     /// Returns a new `XY` of tuples made by zipping `self` and `other`.
     pub fn zip<U>(self, other: XY<U>) -> XY<(T, U)> {
         XY::new((self.x, other.x), (self.y, other.y))

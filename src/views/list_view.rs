@@ -6,6 +6,8 @@ use event::{Callback, Event, EventResult, Key};
 
 use std::any::Any;
 use std::rc::Rc;
+
+use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::ScrollBase;
 use view::Selector;
@@ -116,7 +118,10 @@ impl ListView {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
 
-                Box::new(self.children.iter_mut().enumerate().skip(start))
+                Box::new(self.children
+                             .iter_mut()
+                             .enumerate()
+                             .skip(start))
             }
             direction::Relative::Back => {
                 let end = if from_focus {
@@ -181,10 +186,11 @@ impl View for ListView {
         let offset = self.children
             .iter()
             .map(Child::label)
-            .map(str::len)
+            .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0) + 1;
 
+        // println_stderr!("Offset: {}", offset);
         self.scrollbase.draw(printer, |printer, i| match self.children[i] {
             Child::Row(ref label, ref view) => {
                 printer.print((0, 0), label);
@@ -195,12 +201,14 @@ impl View for ListView {
     }
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
-        let label_size = self.children
+        // We'll show 2 columns: the labels, and the views.
+        let label_width = self.children
             .iter()
             .map(Child::label)
-            .map(str::len)
+            .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0);
+
         let view_size = self.children
             .iter_mut()
             .filter_map(Child::view)
@@ -209,26 +217,34 @@ impl View for ListView {
             .unwrap_or(0);
 
         if self.children.len() > req.y {
-            Vec2::new(label_size + 1 + view_size + 2, req.y)
+            Vec2::new(label_width + 1 + view_size + 2, req.y)
         } else {
-            Vec2::new(label_size + 1 + view_size, self.children.len())
+            Vec2::new(label_width + 1 + view_size, self.children.len())
         }
     }
 
     fn layout(&mut self, size: Vec2) {
         self.scrollbase.set_heights(size.y, self.children.len());
 
-        let label_size = self.children
+        // We'll show 2 columns: the labels, and the views.
+        let label_width = self.children
             .iter()
             .map(Child::label)
-            .map(str::len)
+            .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0);
-        let mut available = size.x - label_size - 1;
 
-        if self.children.len() > size.y {
-            available -= 2;
-        }
+        let spacing = 1;
+        let scrollbar_width = if self.children.len() > size.y { 2 } else { 0 };
+
+        let available = if label_width + spacing + scrollbar_width > size.x {
+            // We have no space for the kids! :(
+            0
+        } else {
+            size.x - label_width - spacing - scrollbar_width
+        };
+
+        // println_stderr!("Available: {}", available);
 
         for child in self.children.iter_mut().filter_map(Child::view) {
             child.layout(Vec2::new(available, 1));
@@ -241,7 +257,7 @@ impl View for ListView {
         }
 
         if let Child::Row(_, ref mut view) = self.children[self.focus] {
-            let result = view.on_event(event);
+            let result = view.on_event(event.clone());
             if result.is_consumed() {
                 return result;
             }
@@ -282,10 +298,11 @@ impl View for ListView {
 
     fn take_focus(&mut self, source: direction::Direction) -> bool {
         let rel = source.relative(direction::Orientation::Vertical);
-        let i = if let Some(i) = self.iter_mut(rel.is_none(),
-                      rel.unwrap_or(direction::Relative::Front))
-            .filter_map(|p| try_focus(p, source))
-            .next() {
+        let i = if let Some(i) =
+            self.iter_mut(rel.is_none(),
+                          rel.unwrap_or(direction::Relative::Front))
+                .filter_map(|p| try_focus(p, source))
+                .next() {
             i
         } else {
             // No one wants to be in focus
@@ -302,6 +319,20 @@ impl View for ListView {
             .iter_mut()
             .filter_map(Child::view) {
             view.find_any(selector, Box::new(|any| callback(any)));
+        }
+    }
+
+    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        if let Some(i) = self.children
+               .iter_mut()
+               .enumerate()
+               .filter_map(|(i, v)| v.view().map(|v| (i, v)))
+               .filter_map(|(i, v)| v.focus_view(selector).ok().map(|_| i))
+               .next() {
+            self.focus = i;
+            Ok(())
+        } else {
+            Err(())
         }
     }
 }

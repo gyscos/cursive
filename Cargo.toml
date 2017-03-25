@@ -10,31 +10,34 @@ license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
-version = "0.4.0"
+version = "0.4.1"
 
 [badges.travis-ci]
 repository = "gyscos/Cursive"
 
 [build-dependencies.skeptic]
 optional = true
-version = "0.6"
+version = "0.7"
 
 [dependencies]
-chan = "0.1.18"
 num = "0.1"
 odds = "0.2"
 owning_ref = "0.2.4"
-toml = "0.2"
+toml = "0.3"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
+
+[dependencies.chan]
+optional = true
+version = "0.1.18"
+
+[dependencies.chan-signal]
+optional = true
+version = "0.2"
 
 [dependencies.bear-lib-terminal]
 optional = true
 version = "1.3.1"
-
-[dependencies.chan-signal]
-optional = true
-version = "0.1"
 
 [dependencies.ncurses]
 features = ["wide"]
@@ -44,20 +47,23 @@ version = "5.85.0"
 [dependencies.pancurses]
 features = ["wide"]
 optional = true
-version = "0.7"
+version = "0.8"
 
 [dependencies.termion]
 optional = true
-version = "1.1.1"
+version = "1.3.0"
 
 [dev-dependencies]
 rand = "0.3"
-skeptic = "0.6"
+skeptic = "0.7"
 
 [features]
-default = ["ncurses"]
+default = ["ncurses-backend"]
+
+ncurses-backend = ["ncurses"]
+termion-backend = ["termion", "chan", "chan-signal"]
 pancurses-backend = ["pancurses"]
-termion-backend = ["termion", "chan-signal"]
+blt-backend = ["bear-lib-terminal"]
 
 [lib]
 name = "cursive"
