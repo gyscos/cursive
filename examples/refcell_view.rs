@@ -10,9 +10,9 @@ fn main() {
     // Create a dialog with 2 edit fields, and a text view.
     // The text view indicates when the 2 fields content match.
     siv.add_layer(Dialog::around(LinearLayout::vertical()
-            .child(EditView::new().on_edit(on_edit).with_id_mut("1"))
-            .child(EditView::new().on_edit(on_edit).with_id_mut("2"))
-            .child(TextView::new("match").with_id_mut("match"))
+            .child(EditView::new().on_edit(on_edit).with_id("1"))
+            .child(EditView::new().on_edit(on_edit).with_id("2"))
+            .child(TextView::new("match").with_id("match"))
             .fixed_width(10))
         .button("Quit", Cursive::quit));
 

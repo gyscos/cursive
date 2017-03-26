@@ -66,7 +66,7 @@ use Printer;
 use direction::Direction;
 use event::{Event, EventResult};
 use vec::Vec2;
-use views::RefCellView;
+use views::IdView;
 
 use std::any::Any;
 
@@ -185,8 +185,8 @@ impl<T: View> Finder for T {
                 callback.take() {
                 if v.is::<V>() {
                     *result_ref = v.downcast_mut::<V>().map(|v| callback(v));
-                } else if v.is::<RefCellView<V>>() {
-                    *result_ref = v.downcast_mut::<RefCellView<V>>()
+                } else if v.is::<IdView<V>>() {
+                    *result_ref = v.downcast_mut::<IdView<V>>()
                         .and_then(|v| v.with_view_mut(callback));
                 }
             };
