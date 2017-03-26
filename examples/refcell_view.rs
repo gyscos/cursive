@@ -26,12 +26,12 @@ fn main() {
 // and directly retrieve the content from the `Cursive` root.
 fn on_edit(siv: &mut Cursive, _content: &str, _cursor: usize) {
     // Get handles for each view.
-    let edit_1 = siv.find_id_mut::<EditView>("1").unwrap();
-    let edit_2 = siv.find_id_mut::<EditView>("2").unwrap();
+    let edit_1 = siv.find_id::<EditView>("1").unwrap();
+    let edit_2 = siv.find_id::<EditView>("2").unwrap();
 
     // Directly compare references to edit_1 and edit_2.
     let matches = edit_1.get_content() == edit_2.get_content();
-    siv.find_id("match", |v: &mut TextView| v.set_content(if matches {
+    siv.call_on_id("match", |v: &mut TextView| v.set_content(if matches {
         "match"
     } else {
         "no match"

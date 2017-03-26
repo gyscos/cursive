@@ -417,13 +417,13 @@ impl Cursive {
     ///                               .with_id("text"));
     ///
     /// siv.add_global_callback('p', |s| {
-    ///     s.find_id("text", |view: &mut views::TextView| {
+    ///     s.call_on_id("text", |view: &mut views::TextView| {
     ///         view.set_content("Text #2");
     ///     });
     /// });
     /// # }
     /// ```
-    pub fn find_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
+    pub fn call_on_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
         where V: View + Any,
               F: FnOnce(&mut V) -> R
     {
@@ -436,10 +436,10 @@ impl Cursive {
     /// a mutable reference to the wrapped view.
     ///
     /// [`RefCellView`]: views/struct.RefCellView.html
-    pub fn find_id_mut<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
+    pub fn find_id<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
         where V: View + Any
     {
-        self.find_id(id, views::RefCellView::<V>::get_mut)
+        self.call_on_id(id, views::RefCellView::<V>::get_mut)
     }
 
     /// Moves the focus to the view identified by `id`.

@@ -13,7 +13,7 @@ fn show_popup(siv: &mut Cursive) {
                      Dialog::around(TextView::new("Tak!"))
                          .button("Change", |s| {
                              // Look for a view tagged "text". We _know_ it's there, so unwrap it.
-                             s.find_id("text", |view: &mut TextView| {
+                             s.call_on_id("text", |view: &mut TextView| {
                                 let content: String = view.get_content().chars().rev().collect();
                                 view.set_content(content);
                              });

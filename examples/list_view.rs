@@ -28,7 +28,7 @@ fn main() {
                    Checkbox::new()
                        .on_change(|s, checked| for name in &["email1",
                                                              "email2"] {
-                           s.find_id(name, |view: &mut EditView| {
+                           s.call_on_id(name, |view: &mut EditView| {
                                view.set_enabled(checked)
                            });
                        }))

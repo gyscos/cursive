@@ -19,7 +19,7 @@ fn main() {
             .fixed_width(20))
         .button("Ok", |s| {
             let name =
-                s.find_id("name", |view: &mut EditView| view.get_content())
+                s.call_on_id("name", |view: &mut EditView| view.get_content())
                     .unwrap();
             show_popup(s, &name);
         }));
