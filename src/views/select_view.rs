@@ -198,6 +198,7 @@ impl<T: 'static> SelectView<T> {
     /// Removes all items from this view.
     pub fn clear(&mut self) {
         self.items.clear();
+        self.focus.set(0);
     }
 
     /// Adds a item to the list, with given label and value.
