@@ -275,6 +275,13 @@ impl<T: 'static> SelectView<T> {
         self.focus.get()
     }
 
+    /// Moves the selection to the given position.
+    pub fn set_selection(&mut self, i: usize) {
+        // TODO: Check if `i > self.len()` ?
+        self.focus.set(i);
+        self.scrollbase.scroll_to(i);
+    }
+
     fn focus_up(&mut self, n: usize) {
         let focus = self.focus();
         let n = min(focus, n);
