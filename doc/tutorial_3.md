@@ -54,7 +54,7 @@ fn add_name(s: &mut Cursive) {
         .button("Ok", |s| {
             let name =
                 s.call_on_id("name", |view: &mut EditView| {
-                    view.get_content().clone()
+                    view.get_content()
                 }).unwrap();
             ok(s, &name);
         })
@@ -240,7 +240,7 @@ fn add_name(s: &mut Cursive) {
         .title("Enter a new name")
         .button("Ok", |s| {
             let name = s.call_on_id("name", |view: &mut EditView| {
-                view.get_content().clone()
+                view.get_content()
             }).unwrap();
         })
         .button("Cancel", |s| s.pop_layer()));
@@ -280,7 +280,7 @@ fn add_name(s: &mut Cursive) {
         .title("Enter a new name")
         .button("Ok", |s| {
             let name = s.call_on_id("name", |v: &mut EditView| {
-                v.get_content().clone()
+                v.get_content()
             }).unwrap();
             ok(s, &name);
         })
@@ -306,7 +306,7 @@ fn delete_name(s: &mut Cursive) {
 We use [`SelectView::selected_id`] and [`SelectView::remove_item`] to remove
 the item currently selected, nothing too surprising.
 
-But this time, instead of using `call_on_id`, we use `Cursive::find_id`:
+But this time, instead of using `call_on_id`, we use [`Cursive::find_id`]:
 this method returns a handle, through which we can mutate the view.
 It uses `Rc` and `RefCell` under the hood to provide mutable access to the
 view without borrowing the `Cursive` root, leaving us free to pop layers.
