@@ -64,11 +64,10 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
 
     fn wrap_call_on_any<'a>(&mut self, selector: &Selector,
                          mut callback: Box<for<'b> FnMut(&'b mut Any) + 'a>) {
-        let result = match selector {
+        match selector {
             &Selector::Id(id) if id == self.id => callback(self),
             s => self.view.borrow_mut().call_on_any(s, callback),
-        };
-        result
+        }
     }
 
     fn wrap_focus_view(&mut self, selector: &Selector) -> Result<(), ()> {

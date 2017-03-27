@@ -6,6 +6,7 @@ use std::char::from_u32;
 /// function to get more if needed.
 ///
 /// Returns an error if the stream is invalid utf-8.
+#[allow(dead_code)]
 pub fn read_char<F>(first: u8, next: F) -> Result<char, String>
     where F: Fn() -> Option<u8>
 {
@@ -46,6 +47,7 @@ pub fn read_char<F>(first: u8, next: F) -> Result<char, String>
 }
 
 // Returns a simple bitmask with n 1s to the right.
+#[allow(dead_code)]
 fn make_mask(n: usize) -> u8 {
     let mut r = 0u8;
     for i in 0..n {
