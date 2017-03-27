@@ -1,7 +1,7 @@
 use owning_ref::{RcRef, OwningHandle};
+use std::any::Any;
 
 use std::cell::{RefCell, RefMut};
-use std::any::Any;
 use std::rc::Rc;
 use view::{Selector, View, ViewWrapper};
 
@@ -12,6 +12,10 @@ pub struct IdView<V: View> {
 }
 
 /// Mutable reference to a view.
+///
+/// This behaves like a [`RefMut`], but without being tied to a lifetime.
+///
+/// [`RefMut`]: https://doc.rust-lang.org/std/cell/struct.RefMut.html
 pub type ViewRef<V> = OwningHandle<RcRef<RefCell<V>>, RefMut<'static, V>>;
 
 impl<V: View> IdView<V> {
@@ -24,6 +28,8 @@ impl<V: View> IdView<V> {
     }
 
     /// Gets mutable access to the inner view.
+    ///
+    /// This returns a `ViewRef<V>`, which implement `DerefMut<Target = V>`.
     pub fn get_mut(&mut self) -> ViewRef<V> {
         // TODO: return a standalone item (not tied to our lifetime)
         // that bundles `self.view.clone()` and allow mutable reference to
@@ -56,11 +62,11 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
             .map(|mut v| f(&mut *v))
     }
 
-    fn wrap_find_any<'a>(&mut self, selector: &Selector,
+    fn wrap_call_on_any<'a>(&mut self, selector: &Selector,
                          mut callback: Box<for<'b> FnMut(&'b mut Any) + 'a>) {
         let result = match selector {
             &Selector::Id(id) if id == self.id => callback(self),
-            s => self.view.borrow_mut().find_any(s, callback),
+            s => self.view.borrow_mut().call_on_any(s, callback),
         };
         result
     }

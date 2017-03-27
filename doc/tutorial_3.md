@@ -40,7 +40,7 @@ fn main() {
 
 fn add_name(s: &mut Cursive) {
     fn ok(s: &mut Cursive, name: &str) {
-        s.find_id("select", |view: &mut SelectView<String>| {
+        s.call_on_id("select", |view: &mut SelectView<String>| {
             view.add_item_str(name)
         });
         s.pop_layer();
@@ -53,7 +53,7 @@ fn add_name(s: &mut Cursive) {
         .title("Enter a new name")
         .button("Ok", |s| {
             let name =
-                s.find_id("name", |view: &mut EditView| {
+                s.call_on_id("name", |view: &mut EditView| {
                     view.get_content().clone()
                 }).unwrap();
             ok(s, &name);
@@ -62,16 +62,11 @@ fn add_name(s: &mut Cursive) {
 }
 
 fn delete_name(s: &mut Cursive) {
-    let selection = s.find_id("select", |view: &mut SelectView<String>| {
-        view.selected_id()
-    }).unwrap();
-
-    match selection {
+    let mut select = s.find_id::<SelectView<String>>("select").unwrap();
+    match select.selected_id() {
         None => s.add_layer(Dialog::info("No name to remove")),
         Some(focus) => {
-            s.find_id("select", |view: &mut SelectView<String>| {
-                view.remove_item(focus)
-            });
+            select.remove_item(focus);
         }
     }
 }
@@ -232,7 +227,7 @@ Later, you can ask the Cursive root for this ID and get access to the view.
 Just what we need!
 
 Like `BoxView`, `IdView` can be used directly with [`IdView::new`], or through
-the [`Identifiable`] trait. [`Cursive::find_id`] allows you to run a closure
+the [`Identifiable`] trait. [`Cursive::call_on_id`] allows you to run a closure
 on the view.
 
 Here's what it looks like in action:
@@ -244,7 +239,7 @@ fn add_name(s: &mut Cursive) {
             .fixed_width(10))
         .title("Enter a new name")
         .button("Ok", |s| {
-            let name = s.find_id("name", |view: &mut EditView| {
+            let name = s.call_on_id("name", |view: &mut EditView| {
                 view.get_content().clone()
             }).unwrap();
         })
@@ -253,7 +248,7 @@ fn add_name(s: &mut Cursive) {
 ```
 
 We create the `EditView` with the id `"name"`, and we use `"name"` again when
-calling `find_id`.
+calling `call_on_id`.
 
 Now we just need to do something with this name: add it to the list!
 Remember the `SelectView` we created? Let's give it an ID too:
@@ -272,7 +267,7 @@ That way, we can update it with a new item:
 ```rust,ignore
 fn add_name(s: &mut Cursive) {
     fn ok(s: &mut Cursive, name: &str) {
-        s.find_id("select", |view: &mut SelectView<String>| {
+        s.call_on_id("select", |view: &mut SelectView<String>| {
             view.add_item_str(name);
         });
         s.pop_layer();
@@ -284,7 +279,7 @@ fn add_name(s: &mut Cursive) {
             .fixed_width(10))
         .title("Enter a new name")
         .button("Ok", |s| {
-            let name = s.find_id("name", |v: &mut EditView| {
+            let name = s.call_on_id("name", |v: &mut EditView| {
                 v.get_content().clone()
             }).unwrap();
             ok(s, &name);
@@ -298,27 +293,30 @@ complicated:
 
 ```rust,ignore
 fn delete_name(s: &mut Cursive) {
-    match s.find_id("select", |v: &mut SelectView<String>| {
-        v.selected_id()
-    }).unwrap() {
+    let mut select = s.find_id::<SelectView<String>>("select").unwrap();
+    match select.selected_id() {
         None => s.add_layer(Dialog::info("No name to remove")),
-        Some(focus) => s.find_id("select", |v: &mut SelectView<String>| {
-            v.remove_item(focus)
-        }),
+        Some(focus) => {
+            select.remove_item(focus);
+        }
     }
 }
 ```
 
 We use [`SelectView::selected_id`] and [`SelectView::remove_item`] to remove
 the item currently selected, nothing too surprising.
-We have to find the `SelectView` twice, otherwise we're still borrowing `s`
-when we try to add a new layer - one of the quirks of the borrow checker.
+
+But this time, instead of using `call_on_id`, we use `Cursive::find_id`:
+this method returns a handle, through which we can mutate the view.
+It uses `Rc` and `RefCell` under the hood to provide mutable access to the
+view without borrowing the `Cursive` root, leaving us free to pop layers.
 
 [`EditView`]: http://gyscos.github.io/Cursive/cursive/views/struct.EditView.html
 [`IdView`]: http://gyscos.github.io/Cursive/cursive/views/struct.IdView.html
 [`IdView::new`]: http://gyscos.github.io/Cursive/cursive/prelude/struct.IdView.html#method.around
 [`Identifiable`]: http://gyscos.github.io/Cursive/cursive/view/trait.Identifiable.html
 [`Cursive::find_id`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.find_id
+[`Cursive::call_on_id`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.call_on_id
 [`SelectView::selected_id`]: http://gyscos.github.io/Cursive/cursive/views/struct.SelectView.html#method.selected_id
 [`SelectView::remove_item`]: http://gyscos.github.io/Cursive/cursive/views/struct.SelectView.html#method.remove_item
 

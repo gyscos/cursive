@@ -386,23 +386,23 @@ impl Cursive {
     ///                               .with_id("text"));
     ///
     /// siv.add_global_callback('p', |s| {
-    ///     s.find(&view::Selector::Id("text"), |view: &mut views::TextView| {
+    ///     s.call_on(&view::Selector::Id("text"), |view: &mut views::TextView| {
     ///         view.set_content("Text #2");
     ///     });
     /// });
     /// # }
     /// ```
-    pub fn find<V, F, R>(&mut self, sel: &view::Selector, callback: F)
+    pub fn call_on<V, F, R>(&mut self, sel: &view::Selector, callback: F)
                          -> Option<R>
         where V: View + Any,
               F: FnOnce(&mut V) -> R
     {
-        self.screen_mut().find(sel, callback)
+        self.screen_mut().call_on(sel, callback)
     }
 
     /// Tries to find the view identified by the given id.
     ///
-    /// Convenient method to use `find` with a `view::Selector::Id`.
+    /// Convenient method to use `call_on` with a `view::Selector::Id`.
     ///
     /// # Examples
     ///
@@ -427,7 +427,7 @@ impl Cursive {
         where V: View + Any,
               F: FnOnce(&mut V) -> R
     {
-        self.find(&view::Selector::Id(id), callback)
+        self.call_on(&view::Selector::Id(id), callback)
     }
 
     /// Convenient method to find a view wrapped in [`IdView`].

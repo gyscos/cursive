@@ -116,14 +116,14 @@ pub trait View {
 
     /// Finds the view identified by the given selector.
     ///
-    /// See [`Finder::find`] for a nicer interface, implemented for all views.
+    /// See [`Finder::call_on`] for a nicer interface, implemented for all views.
     ///
-    /// [`Finder::find`]: trait.Finder.html#method.find
+    /// [`Finder::call_on`]: trait.Finder.html#method.call_on
     ///
     /// Returns None if the path doesn't lead to a view.
     ///
     /// Default implementation always return `None`.
-    fn find_any<'a>(&mut self, _: &Selector, _: Box<FnMut(&mut Any) + 'a>) {
+    fn call_on_any<'a>(&mut self, _: &Selector, _: Box<FnMut(&mut Any) + 'a>) {
         // TODO: FnMut -> FnOnce once it works
     }
 
@@ -146,33 +146,33 @@ pub trait View {
     }
 }
 
-/// Provides `find<V: View>` to views.
+/// Provides `call_on<V: View>` to views.
 ///
-/// This trait is mostly a wrapper around [`View::find_any`].
+/// This trait is mostly a wrapper around [`View::call_on_any`].
 ///
 /// It provides a nicer interface to find a view when you know its type.
 ///
-/// [`View::find_any`]: ./trait.View.html#method.find_any
+/// [`View::call_on_any`]: ./trait.View.html#method.call_on_any
 pub trait Finder {
     /// Tries to find the view pointed to by the given selector.
     ///
     /// If the view is not found, or if it is not of the asked type,
     /// it returns None.
-    fn find<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
+    fn call_on<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
         where V: View + Any,
               F: FnOnce(&mut V) -> R;
 
-    /// Convenient method to use `find` with a `view::Selector::Id`.
+    /// Convenient method to use `call_on` with a `view::Selector::Id`.
     fn find_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
         where V: View + Any,
               F: FnOnce(&mut V) -> R
     {
-        self.find(&Selector::Id(id), callback)
+        self.call_on(&Selector::Id(id), callback)
     }
 }
 
 impl<T: View> Finder for T {
-    fn find<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
+    fn call_on<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
         where V: View + Any,
               F: FnOnce(&mut V) -> R
     {
@@ -190,7 +190,7 @@ impl<T: View> Finder for T {
                         .and_then(|v| v.with_view_mut(callback));
                 }
             };
-            self.find_any(sel, Box::new(callback));
+            self.call_on_any(sel, Box::new(callback));
         }
         result
     }

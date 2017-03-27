@@ -313,12 +313,12 @@ impl View for ListView {
         true
     }
 
-    fn find_any<'a>(&mut self, selector: &Selector,
+    fn call_on_any<'a>(&mut self, selector: &Selector,
                     mut callback: Box<FnMut(&mut Any) + 'a>) {
         for view in self.children
             .iter_mut()
             .filter_map(Child::view) {
-            view.find_any(selector, Box::new(|any| callback(any)));
+            view.call_on_any(selector, Box::new(|any| callback(any)));
         }
     }
 

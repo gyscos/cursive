@@ -52,9 +52,9 @@ pub trait ViewWrapper {
     }
 
     /// Wraps the `find` method.
-    fn wrap_find_any<'a>(&mut self, selector: &Selector,
+    fn wrap_call_on_any<'a>(&mut self, selector: &Selector,
                          callback: Box<FnMut(&mut Any) + 'a>) {
-        self.with_view_mut(|v| v.find_any(selector, callback));
+        self.with_view_mut(|v| v.call_on_any(selector, callback));
     }
 
     /// Wraps the `focus_view` method.
@@ -89,9 +89,9 @@ impl<T: ViewWrapper> View for T {
         self.wrap_take_focus(source)
     }
 
-    fn find_any<'a>(&mut self, selector: &Selector,
+    fn call_on_any<'a>(&mut self, selector: &Selector,
                     callback: Box<FnMut(&mut Any) + 'a>) {
-        self.wrap_find_any(selector, callback)
+        self.wrap_call_on_any(selector, callback)
     }
 
     fn needs_relayout(&self) -> bool {
