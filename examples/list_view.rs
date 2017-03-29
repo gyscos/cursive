@@ -13,6 +13,17 @@ fn main() {
         .button("Ok", |s| s.quit())
         .content(ListView::new()
             .child("Name", EditView::new().fixed_width(10))
+            .child("Receive spam?",
+                   Checkbox::new()
+                       .on_change(|s, checked| for name in &["email1",
+                                                             "email2"] {
+                           s.call_on_id(name, |view: &mut EditView| {
+                               view.set_enabled(checked)
+                           });
+                           if checked {
+                               s.focus_id("email1").unwrap();
+                           }
+                       }))
             .child("Email",
                    LinearLayout::horizontal()
                        .child(EditView::new()
@@ -24,14 +35,6 @@ fn main() {
                            .disabled()
                            .with_id("email2")
                            .fixed_width(10)))
-            .child("Receive spam?",
-                   Checkbox::new()
-                       .on_change(|s, checked| for name in &["email1",
-                                                             "email2"] {
-                           s.call_on_id(name, |view: &mut EditView| {
-                               view.set_enabled(checked)
-                           });
-                       }))
             .delimiter()
             .child("Age",
                    SelectView::new()
