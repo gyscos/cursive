@@ -84,6 +84,8 @@ pub struct EditView {
     secret: bool,
 
     enabled: bool,
+
+    style: ColorStyle,
 }
 
 new_default!(EditView);
@@ -100,6 +102,7 @@ impl EditView {
             on_submit: None,
             secret: false,
             enabled: true,
+            style: ColorStyle::Secondary,
         }
     }
 
@@ -134,6 +137,25 @@ impl EditView {
     /// Re-enables this view.
     pub fn enable(&mut self) {
         self.enabled = true;
+    }
+
+    /// Sets the style used for this view.
+    ///
+    /// When the view is enabled, the style will be reversed.
+    ///
+    /// Defaults to `ColorStyle::Secondary`.
+    pub fn set_style(&mut self, style: ColorStyle) {
+        self.style = style;
+    }
+
+
+    /// Sets the style used for this view.
+    ///
+    /// When the view is enabled, the style will be reversed.
+    ///
+    /// Chainable variant.
+    pub fn style(self, style: ColorStyle) -> Self {
+        self.with(|s| s.set_style(style))
     }
 
     /// Sets a mutable callback to be called whenever the content is modified.
@@ -367,7 +389,7 @@ impl View for EditView {
                 printer.size.x);
 
         let width = self.content.width();
-        printer.with_color(ColorStyle::Secondary, |printer| {
+        printer.with_color(self.style, |printer| {
             let effect = if self.enabled {
                 Effect::Reverse
             } else {
