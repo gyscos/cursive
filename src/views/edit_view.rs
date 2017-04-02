@@ -83,6 +83,9 @@ pub struct EditView {
     /// When `true`, only print `*` instead of the true content.
     secret: bool,
 
+    /// Character to fill empty space
+    filler: char,
+
     enabled: bool,
 }
 
@@ -99,6 +102,7 @@ impl EditView {
             on_edit: None,
             on_submit: None,
             secret: false,
+            filler: '_',
             enabled: true,
         }
     }
@@ -115,6 +119,13 @@ impl EditView {
     /// Only `*` will be shown.
     pub fn secret(self) -> Self {
         self.with(|s| s.set_secret(true))
+    }
+
+    /// Sets the character to fill in blank space
+    ///
+    /// Defaults to '_'
+    pub fn set_filler(&mut self, filler: char) {
+        self.filler = filler;
     }
 
     /// Disables this view.
@@ -383,7 +394,7 @@ impl View for EditView {
                     }
                     printer.print_hline((width, 0),
                                         printer.size.x - width,
-                                        "_");
+                                        self.filler.to_string().as_str());
                 } else {
                     let content = &self.content[self.offset..];
                     let display_bytes = content.graphemes(true)
@@ -406,7 +417,7 @@ impl View for EditView {
                     if width < self.last_length {
                         printer.print_hline((width, 0),
                                             self.last_length - width,
-                                            "_");
+                                            self.filler.to_string().as_str());
                     }
                 }
             });
