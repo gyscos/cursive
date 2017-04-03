@@ -124,11 +124,26 @@ impl EditView {
         self.with(|s| s.set_secret(true))
     }
 
-    /// Sets the character to fill in blank space
+    /// Sets the character to fill in blank space.
     ///
-    /// Defaults to "_"
-    pub fn set_filler(&mut self, filler: String) {
-        self.filler = filler;
+    /// Defaults to "_".
+    pub fn set_filler<S: Into<String>>(&mut self, filler: S) {
+        self.filler = filler.into();
+    }
+
+    /// Sets the character to fill in blank space.
+    ///
+    /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::views::EditView;
+    /// let edit = EditView::new()
+    ///             .filler(" ");
+    /// ```
+    pub fn filler<S: Into<String>>(self, filler: S) -> Self {
+        self.with(|s| s.set_filler(filler))
     }
 
     /// Disables this view.
@@ -389,6 +404,7 @@ impl EditView {
 /// Only works for small `length` (1 or 2).
 /// Best used for single character replacement.
 fn make_small_stars(length: usize) -> &'static str {
+    // TODO: be able to use any character as hidden mode?
     &"****"[..length]
 }
 
@@ -414,8 +430,9 @@ impl View for EditView {
                     } else {
                         printer.print((0, 0), &self.content);
                     }
+                    let filler_len = (printer.size.x - width) / self.filler.width();
                     printer.print_hline((width, 0),
-                                        printer.size.x - width,
+                                        filler_len,
                                         self.filler.as_str());
                 } else {
                     let content = &self.content[self.offset..];
@@ -437,8 +454,9 @@ impl View for EditView {
                     }
 
                     if width < self.last_length {
+                        let filler_len = (self.last_length - width) / self.filler.width();
                         printer.print_hline((width, 0),
-                                            self.last_length - width,
+                                            filler_len,
                                             self.filler.as_str());
                     }
                 }
@@ -447,7 +465,7 @@ impl View for EditView {
             // Now print cursor
             if printer.focused {
                 let c: &str = if self.cursor == self.content.len() {
-                    "_"
+                    &self.filler
                 } else {
                     // Get the char from the string... Is it so hard?
                     let selected = self.content[self.cursor..]
