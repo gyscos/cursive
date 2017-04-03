@@ -1,5 +1,6 @@
 use Printer;
 
+use ::With;
 use direction::Direction;
 use event::{Event, EventResult};
 use std::any::Any;
@@ -79,6 +80,24 @@ impl StackView {
         self.add_layer_at(Position::center(), view);
     }
 
+    /// Adds new view on top of the stack in the center of the screen.
+    ///
+    /// Chainable variant.
+    pub fn layer<T>(self, view: T) -> Self
+        where T: 'static + View
+    {
+        self.with(|s| s.add_layer(view))
+    }
+
+    /// Adds a new full-screen layer on top of the stack.
+    ///
+    /// Chainable variant.
+    pub fn fullscreen_layer<T>(self, view: T) -> Self
+        where T: 'static + View
+    {
+        self.with(|s| s.add_fullscreen_layer(view))
+    }
+
     /// Adds a view on top of the stack.
     pub fn add_layer_at<T>(&mut self, position: Position, view: T)
         where T: 'static + View
@@ -92,6 +111,15 @@ impl StackView {
             placement: Placement::Floating(position),
             virgin: true,
         });
+    }
+
+    /// Adds a view on top of the stack.
+    ///
+    /// Chainable variant.
+    pub fn layer_at<T>(self, position: Position, view: T) -> Self
+        where T: 'static + View
+    {
+        self.with(|s| s.add_layer_at(position, view))
     }
 
     /// Remove the top-most layer.
