@@ -1,4 +1,4 @@
-use theme::{BaseColor, Color};
+use theme::{BaseColor, Color, ColorStyle};
 
 #[cfg(feature = "ncurses")]
 mod n;
@@ -36,5 +36,21 @@ fn find_closest(color: &Color) -> u8 {
             (16 + 36 * r + 6 * g + b) as u8
         }
         Color::RgbLowRes(r, g, b) => (16 + 36 * r + 6 * g + b) as u8,
+    }
+}
+
+fn color_id(style: ColorStyle) -> i16 {
+    match style {
+        ColorStyle::Background => 1,
+        ColorStyle::Shadow => 2,
+        ColorStyle::Primary => 3,
+        ColorStyle::Secondary => 4,
+        ColorStyle::Tertiary => 5,
+        ColorStyle::TitlePrimary => 6,
+        ColorStyle::TitleSecondary => 7,
+        ColorStyle::Highlight => 8,
+        ColorStyle::HighlightInactive => 9,
+        ColorStyle::Custom { front, back } => 10,
+
     }
 }

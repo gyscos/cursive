@@ -1,7 +1,7 @@
 extern crate ncurses;
 
 
-use self::super::find_closest;
+use self::super::{color_id, find_closest};
 use backend;
 use event::{Event, Key};
 use theme::{Color, ColorStyle, Effect};
@@ -23,7 +23,7 @@ impl backend::Backend for Concrete {
         ncurses::start_color();
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
         ncurses::wbkgd(ncurses::stdscr(),
-                       ncurses::COLOR_PAIR(ColorStyle::Background.id()));
+                       ncurses::COLOR_PAIR(color_id(ColorStyle::Background)));
 
         Concrete
     }
@@ -48,7 +48,7 @@ impl backend::Backend for Concrete {
                         background: &Color) {
         // TODO: build the color on the spot
 
-        ncurses::init_pair(style.id(),
+        ncurses::init_pair(color_id(style),
                            find_closest(foreground) as i16,
                            find_closest(background) as i16);
     }
@@ -58,7 +58,7 @@ impl backend::Backend for Concrete {
         let mut current_color: i16 = 0;
         ncurses::attr_get(&mut current_style, &mut current_color);
 
-        let style = ncurses::COLOR_PAIR(color.id());
+        let style = ncurses::COLOR_PAIR(color_id(color));
         ncurses::attron(style);
         f();
         // ncurses::attroff(style);

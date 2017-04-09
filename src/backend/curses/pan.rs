@@ -2,7 +2,7 @@ extern crate pancurses;
 
 
 
-use self::super::find_closest;
+use self::super::{color_id, find_closest};
 use backend;
 use event::{Event, Key};
 use theme::{Color, ColorStyle, Effect};
@@ -21,7 +21,7 @@ impl backend::Backend for Concrete {
         pancurses::cbreak();
         pancurses::start_color();
         pancurses::curs_set(0);
-        window.bkgd(pancurses::ColorPair(ColorStyle::Background.id() as u8));
+        window.bkgd(pancurses::ColorPair(color_id(ColorStyle::Background) as u8));
 
         Concrete { window: window }
     }
@@ -41,14 +41,14 @@ impl backend::Backend for Concrete {
 
     fn init_color_style(&mut self, style: ColorStyle, foreground: &Color,
                         background: &Color) {
-        pancurses::init_pair(style.id(),
+        pancurses::init_pair(color_id(style),
                              find_closest(foreground) as i16,
                              find_closest(background) as i16);
     }
 
     fn with_color<F: FnOnce()>(&self, color: ColorStyle, f: F) {
         let (_, current_color_pair) = self.window.attrget();
-        let color_attribute = pancurses::ColorPair(color.id() as u8);
+        let color_attribute = pancurses::ColorPair(color_id(color) as u8);
 
         self.window.attron(color_attribute);
         f();

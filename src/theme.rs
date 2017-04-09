@@ -158,23 +158,13 @@ pub enum ColorStyle {
     Highlight,
     /// Highlight color for inactive views (not in focus).
     HighlightInactive,
-}
-
-impl ColorStyle {
-    /// Returns the ncurses pair ID associated with this color pair.
-    pub fn id(self) -> i16 {
-        match self {
-            ColorStyle::Background => 1,
-            ColorStyle::Shadow => 2,
-            ColorStyle::Primary => 3,
-            ColorStyle::Secondary => 4,
-            ColorStyle::Tertiary => 5,
-            ColorStyle::TitlePrimary => 6,
-            ColorStyle::TitleSecondary => 7,
-            ColorStyle::Highlight => 8,
-            ColorStyle::HighlightInactive => 9,
-        }
-    }
+    /// Directly specifies colors, independently of the theme.
+    Custom {
+        /// Foreground color
+        front: Color,
+        /// Background color
+        back: Color
+    },
 }
 
 /// Represents the style a Cursive application will use.
@@ -288,7 +278,7 @@ impl BorderStyle {
 /// Color configuration for the application.
 ///
 /// Assign each color role an actual color.
-#[derive(Clone,Debug)]
+#[derive(Copy,Clone,Debug)]
 pub struct Palette {
     /// Color used for the application background.
     pub background: Color,
@@ -405,8 +395,6 @@ pub enum Color {
     RgbLowRes(u8, u8, u8),
 }
 
-impl Color {}
-
 /// Possible error returned when loading a theme.
 #[derive(Debug)]
 pub enum Error {
@@ -431,24 +419,24 @@ impl From<toml::de::Error> for Error {
 impl Color {
     fn parse(value: &str) -> Option<Self> {
         Some(match value {
-            "black" => Color::Dark(BaseColor::Black),
-            "red" => Color::Dark(BaseColor::Red),
-            "green" => Color::Dark(BaseColor::Green),
-            "yellow" => Color::Dark(BaseColor::Yellow),
-            "blue" => Color::Dark(BaseColor::Blue),
-            "magenta" => Color::Dark(BaseColor::Magenta),
-            "cyan" => Color::Dark(BaseColor::Cyan),
-            "white" => Color::Dark(BaseColor::White),
-            "light black" => Color::Light(BaseColor::Black),
-            "light red" => Color::Light(BaseColor::Red),
-            "light green" => Color::Light(BaseColor::Green),
-            "light yellow" => Color::Light(BaseColor::Yellow),
-            "light blue" => Color::Light(BaseColor::Blue),
-            "light magenta" => Color::Light(BaseColor::Magenta),
-            "light cyan" => Color::Light(BaseColor::Cyan),
-            "light white" => Color::Light(BaseColor::White),
-            value => return Color::parse_special(value),
-        })
+                 "black" => Color::Dark(BaseColor::Black),
+                 "red" => Color::Dark(BaseColor::Red),
+                 "green" => Color::Dark(BaseColor::Green),
+                 "yellow" => Color::Dark(BaseColor::Yellow),
+                 "blue" => Color::Dark(BaseColor::Blue),
+                 "magenta" => Color::Dark(BaseColor::Magenta),
+                 "cyan" => Color::Dark(BaseColor::Cyan),
+                 "white" => Color::Dark(BaseColor::White),
+                 "light black" => Color::Light(BaseColor::Black),
+                 "light red" => Color::Light(BaseColor::Red),
+                 "light green" => Color::Light(BaseColor::Green),
+                 "light yellow" => Color::Light(BaseColor::Yellow),
+                 "light blue" => Color::Light(BaseColor::Blue),
+                 "light magenta" => Color::Light(BaseColor::Magenta),
+                 "light cyan" => Color::Light(BaseColor::Cyan),
+                 "light white" => Color::Light(BaseColor::White),
+                 value => return Color::parse_special(value),
+             })
     }
 
     fn parse_special(value: &str) -> Option<Color> {
