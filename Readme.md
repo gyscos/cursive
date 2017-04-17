@@ -52,12 +52,12 @@ fn main() {
 Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/examples) to get these results, and more:
 
 <div>
-<img src="doc/examples/edit.png" alt="edit.rs example", width="49%" />
-<img src="doc/examples/lorem.png" alt="lorem.rs example", width="49%" />
-<img src="doc/examples/menubar.png" alt="menubar.rs example", width="49%" />
-<img src="doc/examples/select.png" alt="select.rs example", width="49%" />
-<img src="doc/examples/list_view.png" alt="list_view.rs example", width="49%" />
-<img src="doc/examples/theme.png" alt="theme.rs example", width="49%" />
+<a href="examples/edit.rs"><img src="doc/examples/edit.png" alt="edit.rs example", width="48%" /></a>
+<a href="examples/lorem.rs"><img src="doc/examples/lorem.png" alt="lorem.rs example", width="48%" /></a>
+<a href="examples/menubar.rs"><img src="doc/examples/menubar.png" alt="menubar.rs example", width="48%" /></a>
+<a href="examples/select.rs"><img src="doc/examples/select.png" alt="select.rs example", width="48%" /></a>
+<a href="examples/list_view.rs"><img src="doc/examples/list_view.png" alt="list_view.rs example", width="48%" /></a>
+<a href="examples/theme.rs"><img src="doc/examples/theme.png" alt="theme.rs example", width="48%" /></a>
 </div>
 
 _(Colors may depend on your terminal configuration.)_
