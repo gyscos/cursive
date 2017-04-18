@@ -70,6 +70,13 @@ These tutorials may help you get started with cursive:
 * [Starting with cursive: (2/3)](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_2.md)
 * [Starting with cursive: (3/3)](https://github.com/gyscos/Cursive/tree/master/doc/tutorial_3.md)
 
+## Third-party views
+
+Here are a few crates implementing new views for you to use:
+
+* [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view)
+* [cursive_calendar_view](https://github.com/BonsaiDen/cursive_calendar_view)
+
 ## Goals
 
 * **Ease of use.** Simple apps should be simple. Complex apps should be manageable.
