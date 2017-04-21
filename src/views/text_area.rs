@@ -13,8 +13,8 @@ use view::{ScrollBase, SizeCache, View};
 
 /// Multi-lines text editor.
 ///
-/// A `TextArea` by itself doesn't have a well-defined size.
-/// You should wrap it in a `BoxView` to control its size.
+/// A `TextArea` will attempt to grow vertically dependent on the content.
+/// Wrap it in a `BoxView` to constrain its size.
 pub struct TextArea {
     // TODO: use a smarter data structure (rope?)
     content: String,
@@ -362,6 +362,11 @@ impl TextArea {
 }
 
 impl View for TextArea {
+    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+        self.compute_rows(constraint);
+        Vec2::new(1, self.rows.len())
+    }
+
     fn draw(&self, printer: &Printer) {
         printer.with_color(ColorStyle::Secondary, |printer| {
             let effect = if self.enabled {
