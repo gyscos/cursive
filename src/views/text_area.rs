@@ -13,8 +13,9 @@ use view::{ScrollBase, SizeCache, View};
 
 /// Multi-lines text editor.
 ///
-/// A `TextArea` will attempt to grow vertically dependent on the content.
-/// Wrap it in a `BoxView` to constrain its size.
+/// A `TextArea` will attempt to grow vertically and horizontally
+/// dependent on the content.  Wrap it in a `BoxView` to
+/// constrain its size.
 pub struct TextArea {
     // TODO: use a smarter data structure (rope?)
     content: String,
