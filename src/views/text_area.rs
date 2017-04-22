@@ -366,7 +366,7 @@ impl View for TextArea {
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
         self.compute_rows(constraint);
         Vec2::new(
-            self.rows.iter().map(|r| r.width).max().unwrap_or(1),
+            1 + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
             self.rows.len()
         )
     }
