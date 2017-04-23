@@ -29,7 +29,8 @@ pub fn read_char<F>(first: u8, next: F) -> Result<char, String>
 
     // We already have one byte, now read the others.
     for _ in 1..n_bytes {
-        let byte = try!(next().ok_or("Missing UTF-8 byte".to_string()));
+        let byte =
+            try!(next().ok_or_else(|| "Missing UTF-8 byte".to_string()));
         if byte & 0xC0 != 0x80 {
             return Err(format!("Found non-continuation byte after leading: \
                                 {}",

@@ -537,7 +537,7 @@ impl Cursive {
         // Reference it or something
 
         let sizes = self.screen().layer_sizes();
-        if &self.last_sizes != &sizes {
+        if self.last_sizes != sizes {
             self.clear();
             self.last_sizes = sizes;
         }
