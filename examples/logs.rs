@@ -1,14 +1,15 @@
 extern crate cursive;
 
 use cursive::{Cursive, Printer};
-use cursive::vec::Vec2;
 use cursive::traits::*;
+use cursive::vec::Vec2;
+use std::collections::VecDeque;
+use std::iter::Chain;
+use std::slice::Iter;
 
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
-use std::iter::Chain;
-use std::slice::Iter;
 
 fn main() {
     // As usual, create the Cursive root
@@ -22,9 +23,7 @@ fn main() {
     let (tx, rx) = mpsc::channel();
 
     // Generate data in a separate thread.
-    thread::spawn(move || {
-        generate_logs(&tx);
-    });
+    thread::spawn(move || { generate_logs(&tx); });
 
     // And sets the view to read from the other end of the channel.
     siv.add_layer(BufferView::new(200, rx).full_screen());
@@ -50,10 +49,8 @@ fn generate_logs(tx: &mpsc::Sender<String>) {
 
 // Let's define a buffer view, that shows the last lines from a stream.
 struct BufferView {
-    // We will emulate a ring buffer
-    buffer: Vec<String>,
-    // Current position in the buffer
-    pos: usize,
+    // We'll use a ring buffer
+    buffer: VecDeque<String>,
     // Receiving end of the stream
     rx: mpsc::Receiver<String>,
 }
@@ -61,29 +58,21 @@ struct BufferView {
 impl BufferView {
     // Creates a new view with the given buffer size
     fn new(size: usize, rx: mpsc::Receiver<String>) -> Self {
+        let mut buffer = VecDeque::new();
+        buffer.resize(size, String::new());
         BufferView {
             rx: rx,
-            buffer: (0..size).map(|_| String::new()).collect(),
-            pos: 0,
+            buffer: buffer,
         }
     }
 
     // Reads available data from the stream into the buffer
     fn update(&mut self) {
-        let mut i = self.pos;
+        // Add each available line to the end of the buffer.
         while let Ok(line) = self.rx.try_recv() {
-            self.buffer[i] = line;
-            i = (i + 1) % self.buffer.len();
+            self.buffer.push_back(line);
+            self.buffer.pop_front();
         }
-        self.pos = i;
-    }
-
-    // Chain together the two parts of the buffer to appear as a circular one.
-    // TODO: Use `-> impl Iterator<Item=String>`...
-    fn ring(&self) -> Chain<Iter<String>, Iter<String>> {
-        // The main buffer is "circular" starting at self.pos
-        // So we chain the two parts as one
-        self.buffer[self.pos..].iter().chain(self.buffer[..self.pos].iter())
     }
 }
 
@@ -94,18 +83,13 @@ impl View for BufferView {
     }
 
     fn draw(&self, printer: &Printer) {
-
-        // If the buffer is large, we'll discard the beginning and keep the end.
-        // If the buffer is too small, only print a part of it with an offset.
-        let (discard, offset) = if self.buffer.len() >
-                                   printer.size.y as usize {
-            (self.buffer.len() - printer.size.y as usize, 0)
-        } else {
-            (0, printer.size.y - self.buffer.len())
-        };
-
-        for (i, line) in self.ring().skip(discard).enumerate() {
-            printer.print((0, offset + i), line);
+        // Print the end of the buffer
+        for (i, line) in self.buffer
+                .iter()
+                .rev()
+                .take(printer.size.y)
+                .enumerate() {
+            printer.print((0, printer.size.y - 1 - i), line);
         }
     }
 }
