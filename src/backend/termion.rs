@@ -7,6 +7,7 @@ use self::termion::event::Event as TEvent;
 use self::termion::event::Key as TKey;
 use self::termion::input::TermRead;
 use self::termion::raw::IntoRawMode;
+use self::termion::screen::AlternateScreen;
 use self::termion::style as tstyle;
 use backend;
 use chan;
@@ -20,7 +21,7 @@ use std::thread;
 use theme;
 
 pub struct Concrete {
-    terminal: termion::raw::RawTerminal<::std::io::Stdout>,
+    terminal: AlternateScreen<termion::raw::RawTerminal<::std::io::Stdout>>,
     current_style: Cell<theme::ColorStyle>,
     colors: BTreeMap<i16, (Box<tcolor::Color>, Box<tcolor::Color>)>,
 
@@ -81,7 +82,7 @@ impl backend::Backend for Concrete {
 
         let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
 
-        let terminal = ::std::io::stdout().into_raw_mode().unwrap();
+        let terminal = AlternateScreen::from(::std::io::stdout().into_raw_mode().unwrap());
         let (sender, receiver) = chan::async();
 
         thread::spawn(move || for key in ::std::io::stdin().events() {
