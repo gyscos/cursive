@@ -356,7 +356,7 @@ impl TextArea {
         let affected_rows = first_row..last_row;
         let replacement_rows = new_rows.into_iter()
             .map(|row| row.shifted(first_byte));
-        self.rows.splice(affected_rows, replacement_rows);
+        VecExt::splice(&mut self.rows, affected_rows, replacement_rows);
         self.fix_ghost_row();
         self.scrollbase.set_heights(size.y, self.rows.len());
     }
