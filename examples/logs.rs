@@ -4,8 +4,6 @@ use cursive::{Cursive, Printer};
 use cursive::traits::*;
 use cursive::vec::Vec2;
 use std::collections::VecDeque;
-use std::iter::Chain;
-use std::slice::Iter;
 
 use std::sync::mpsc;
 use std::thread;
