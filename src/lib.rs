@@ -587,7 +587,7 @@ impl Cursive {
     /// [`step(&mut self)`]: #method.step
     /// [`quit(&mut self)`]: #method.quit
     pub fn run(&mut self) {
-        self.run = true;
+        self.running = true;
         // And the big event loop begins!
         while self.running {
             self.step();
