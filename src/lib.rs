@@ -158,7 +158,8 @@ pub struct Cursive {
 
     running: bool,
 
-    backend: backend::Concrete,
+    /// backend
+    pub backend: backend::Concrete,
 
     cb_source: mpsc::Receiver<Box<Fn(&mut Cursive) + Send>>,
     cb_sink: mpsc::Sender<Box<Fn(&mut Cursive) + Send>>,
@@ -527,12 +528,14 @@ impl Cursive {
         }
     }
 
-    fn layout(&mut self) {
+    /// does layout
+    pub fn layout(&mut self) {
         let size = self.screen_size();
         self.screen_mut().layout(size);
     }
 
-    fn draw(&mut self) {
+    /// draws
+    pub fn draw(&mut self) {
         // TODO: don't clone the theme
         // Reference it or something
 
@@ -584,7 +587,7 @@ impl Cursive {
     /// [`step(&mut self)`]: #method.step
     /// [`quit(&mut self)`]: #method.quit
     pub fn run(&mut self) {
-
+        self.run = true;
         // And the big event loop begins!
         while self.running {
             self.step();
