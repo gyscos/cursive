@@ -90,18 +90,31 @@ impl MenuPopup {
 
 
     /// Sets the alignment for this view.
-    pub fn align(mut self, align: Align) -> Self {
-        self.align = align;
+    ///
+    /// Chainable variant.
+    pub fn align(self, align: Align) -> Self {
+        self.with(|s| s.set_align(align))
+    }
 
-        self
+    /// Sets the alignment for this view.
+    pub fn set_align(&mut self, align: Align) {
+        self.align = align;
     }
 
     /// Sets a callback to be used when this view is actively dismissed.
     ///
     /// (When the user hits <ESC>)
-    pub fn on_dismiss<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
+    ///
+    /// Chainable variant.
+    pub fn on_dismiss<F: 'static + Fn(&mut Cursive)>(self, f: F) -> Self {
+        self.with(|s| s.set_on_dismiss(f))
+    }
+
+    /// Sets a callback to be used when this view is actively dismissed.
+    ///
+    /// (When the user hits <ESC>)
+    pub fn set_on_dismiss<F: 'static + Fn(&mut Cursive)>(&mut self, f: F) {
         self.on_dismiss = Some(Callback::from_fn(f));
-        self
     }
 
     /// Sets a callback to be used when a leaf is activated.
@@ -109,9 +122,19 @@ impl MenuPopup {
     /// Will also be called if a leaf from a subtree is activated.
     ///
     /// Usually used to hide the parent view.
-    pub fn on_action<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
+    ///
+    /// Chainable variant.
+    pub fn on_action<F: 'static + Fn(&mut Cursive)>(self, f: F) -> Self {
+        self.with(|s| s.set_on_action(f))
+    }
+
+    /// Sets a callback to be used when a leaf is activated.
+    ///
+    /// Will also be called if a leaf from a subtree is activated.
+    ///
+    /// Usually used to hide the parent view.
+    pub fn set_on_action<F: 'static + Fn(&mut Cursive)>(&mut self, f: F) {
         self.on_action = Some(Callback::from_fn(f));
-        self
     }
 
     fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
