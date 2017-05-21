@@ -72,7 +72,7 @@ pub use self::id_view::{IdView, ViewRef};
 pub use self::key_event_view::KeyEventView;
 pub use self::layer::Layer;
 pub use self::linear_layout::LinearLayout;
-pub use self::list_view::ListView;
+pub use self::list_view::{ListChild, ListView};
 pub use self::menu_popup::MenuPopup;
 pub use self::menubar::Menubar;
 pub use self::panel::Panel;
