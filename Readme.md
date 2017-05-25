@@ -47,7 +47,7 @@ fn main() {
 }
 ```
 
-![Cursive dialog example](https://raw.githubusercontent.com/gyscos/Cursive/master/doc/cursive_example.png)
+[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/Cursive/master/doc/cursive_example.png)](examples/dialog.rs)
 
 Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/examples) to get these results, and more:
 
