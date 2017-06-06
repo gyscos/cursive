@@ -71,6 +71,7 @@ extern crate owning_ref;
 extern crate chan;
 
 
+#[allow(unused)]
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
         use ::std::io::Write;
