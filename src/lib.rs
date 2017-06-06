@@ -57,6 +57,7 @@
 //! and log to it instead of stdout.
 //!
 //! Or you can use gdb as usual.
+#![feature(splice)]
 #![deny(missing_docs)]
 
 extern crate toml;
