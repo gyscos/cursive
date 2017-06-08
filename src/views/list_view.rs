@@ -66,6 +66,14 @@ impl ListView {
         self.children.len()
     }
 
+    /// Returns `true` if this view contains no children.
+    ///
+    /// Returns `false` if at least a delimiter or a view is present.
+    pub fn is_empty(&self) -> bool {
+        self.children.is_empty()
+    }
+
+
     /// Returns a reference to the children
     pub fn children(&self) -> &[ListChild] {
         &self.children[..]
