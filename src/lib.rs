@@ -582,9 +582,13 @@ impl Cursive {
     ///
     /// Calls [`step(&mut self)`] until [`quit(&mut self)`] is called.
     ///
+    /// After this function returns, you can call
+    /// it again and it will start a new loop.
+    ///
     /// [`step(&mut self)`]: #method.step
     /// [`quit(&mut self)`]: #method.quit
     pub fn run(&mut self) {
+        self.running = true;
 
         // And the big event loop begins!
         while self.running {
