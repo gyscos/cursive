@@ -129,7 +129,7 @@ pub enum Effect {
     /// No effect
     Simple,
     /// Reverses foreground and background colors
-    Reverse, 
+    Reverse,
     // TODO: bold, italic, underline
 }
 
@@ -138,7 +138,7 @@ pub enum Effect {
 /// Represents a color pair role to use when printing something.
 ///
 /// The current theme will assign each role a foreground and background color.
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub enum ColorStyle {
     /// Application background, where no view is present.
     Background,
@@ -342,7 +342,7 @@ fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
 }
 
 /// One of the 8 base colors.
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub enum BaseColor {
     /// Black color
     ///
@@ -379,7 +379,7 @@ pub enum BaseColor {
 }
 
 /// Represents a color used by the theme.
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub enum Color {
     /// One of the 8 base colors.
     Dark(BaseColor),

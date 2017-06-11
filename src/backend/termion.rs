@@ -13,7 +13,7 @@ use backend;
 use chan;
 use event::{Event, Key};
 use std::cell::Cell;
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::fmt;
 use std::io::Write;
 use std::thread;
@@ -23,7 +23,7 @@ use theme;
 pub struct Concrete {
     terminal: AlternateScreen<termion::raw::RawTerminal<::std::io::Stdout>>,
     current_style: Cell<theme::ColorStyle>,
-    colors: BTreeMap<i16, (Box<tcolor::Color>, Box<tcolor::Color>)>,
+    colors: HashMap<theme::ColorStyle, (Box<tcolor::Color>, Box<tcolor::Color>)>,
 
     input: chan::Receiver<Event>,
     resize: chan::Receiver<chan_signal::Signal>,
@@ -33,20 +33,6 @@ pub struct Concrete {
 trait Effectable {
     fn on(&self);
     fn off(&self);
-}
-
-struct ColorRef<'a>(&'a tcolor::Color);
-
-impl<'a> tcolor::Color for ColorRef<'a> {
-    #[inline]
-    fn write_fg(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.write_fg(f)
-    }
-
-    #[inline]
-    fn write_bg(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.write_bg(f)
-    }
 }
 
 impl Effectable for theme::Effect {
@@ -66,13 +52,20 @@ impl Effectable for theme::Effect {
 }
 
 fn apply_colors(fg: &tcolor::Color, bg: &tcolor::Color) {
-    print!("{}{}", tcolor::Fg(ColorRef(fg)), tcolor::Bg(ColorRef(bg)));
+    print!("{}{}", tcolor::Fg(fg), tcolor::Bg(bg));
 }
 
 impl Concrete {
     fn apply_colorstyle(&self, color_style: theme::ColorStyle) {
-        let (ref fg, ref bg) = self.colors[&color_style.id()];
-        apply_colors(&**fg, &**bg);
+        if let theme::ColorStyle::Custom { front, back } = color_style {
+            let fg = colour_to_termion_colour(&front);
+            let bg = colour_to_termion_colour(&back);
+            apply_colors(&*fg, &*bg);
+        } else {
+            let (ref fg, ref bg) = self.colors[&color_style];
+            apply_colors(&**fg, &**bg);
+        }
+
     }
 }
 
@@ -82,7 +75,9 @@ impl backend::Backend for Concrete {
 
         let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
 
-        let terminal = AlternateScreen::from(::std::io::stdout().into_raw_mode().unwrap());
+        let terminal = AlternateScreen::from(::std::io::stdout()
+                                                 .into_raw_mode()
+                                                 .unwrap());
         let (sender, receiver) = chan::async();
 
         thread::spawn(move || for key in ::std::io::stdin().events() {
@@ -94,7 +89,7 @@ impl backend::Backend for Concrete {
         let backend = Concrete {
             terminal: terminal,
             current_style: Cell::new(theme::ColorStyle::Background),
-            colors: BTreeMap::new(),
+            colors: HashMap::new(),
             input: receiver,
             resize: resize,
             timeout: None,
@@ -114,9 +109,10 @@ impl backend::Backend for Concrete {
     fn init_color_style(&mut self, style: theme::ColorStyle,
                         foreground: &theme::Color, background: &theme::Color) {
         // Step 1: convert foreground and background into proper termion Color
-        self.colors.insert(style.id(),
-                           (colour_to_termion_colour(foreground),
-                            colour_to_termion_colour(background)));
+        self.colors
+            .insert(style,
+                    (colour_to_termion_colour(foreground),
+                     colour_to_termion_colour(background)));
     }
 
     fn with_color<F: FnOnce()>(&self, color: theme::ColorStyle, f: F) {

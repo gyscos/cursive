@@ -50,7 +50,6 @@ fn color_id(style: ColorStyle) -> i16 {
         ColorStyle::TitleSecondary => 7,
         ColorStyle::Highlight => 8,
         ColorStyle::HighlightInactive => 9,
-        ColorStyle::Custom { front, back } => 10,
-
+        ColorStyle::Custom { .. } => 10,
     }
 }

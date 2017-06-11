@@ -4,10 +4,13 @@ extern crate ncurses;
 use self::super::{color_id, find_closest};
 use backend;
 use event::{Event, Key};
+use std::cell::Cell;
 use theme::{Color, ColorStyle, Effect};
 use utf8;
 
-pub struct Concrete;
+pub struct Concrete {
+    current_style: Cell<ColorStyle>,
+}
 
 impl backend::Backend for Concrete {
     fn init() -> Self {
@@ -25,7 +28,7 @@ impl backend::Backend for Concrete {
         ncurses::wbkgd(ncurses::stdscr(),
                        ncurses::COLOR_PAIR(color_id(ColorStyle::Background)));
 
-        Concrete
+        Concrete { current_style: Cell::new(ColorStyle::Background) }
     }
 
     fn screen_size(&self) -> (usize, usize) {
@@ -46,7 +49,6 @@ impl backend::Backend for Concrete {
 
     fn init_color_style(&mut self, style: ColorStyle, foreground: &Color,
                         background: &Color) {
-        // TODO: build the color on the spot
 
         ncurses::init_pair(color_id(style),
                            find_closest(foreground) as i16,
@@ -54,15 +56,13 @@ impl backend::Backend for Concrete {
     }
 
     fn with_color<F: FnOnce()>(&self, color: ColorStyle, f: F) {
-        let mut current_style: ncurses::attr_t = 0;
-        let mut current_color: i16 = 0;
-        ncurses::attr_get(&mut current_style, &mut current_color);
+        let current = self.current_style.get();
 
-        let style = ncurses::COLOR_PAIR(color_id(color));
-        ncurses::attron(style);
+        self.current_style.set(color);
+        set_colorstyle(color);
         f();
-        // ncurses::attroff(style);
-        ncurses::attron(current_style);
+        set_colorstyle(current);
+        self.current_style.set(current);
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
@@ -107,6 +107,21 @@ impl backend::Backend for Concrete {
             ncurses::timeout(1000 / fps as i32);
         }
     }
+}
+
+fn set_colorstyle(style: ColorStyle) {
+    if let ColorStyle::Custom {
+               ref front,
+               ref back,
+           } = style {
+
+               println_stderr!("Redifining...");
+        ncurses::init_pair(color_id(style),
+                           find_closest(front) as i16,
+                           find_closest(back) as i16);
+    }
+    let style = ncurses::COLOR_PAIR(color_id(style));
+    ncurses::attron(style);
 }
 
 /// Returns the Key enum corresponding to the given ncurses event.
