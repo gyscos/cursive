@@ -10,7 +10,7 @@ use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, View};
-use views::{KeyEventView, MenuPopup};
+use views::{OnEventView, MenuPopup};
 
 /// Current state of the menubar
 #[derive(PartialEq, Debug)]
@@ -108,9 +108,7 @@ impl Menubar {
     ///
     /// Returns `None` if `i > self.len()`
     pub fn get_subtree(&mut self, i: usize) -> Option<&mut MenuTree> {
-        self.menus
-            .get_mut(i)
-            .map(|&mut (_, ref mut tree)| Rc::make_mut(tree))
+        self.menus.get_mut(i).map(|&mut (_, ref mut tree)| Rc::make_mut(tree))
     }
 
     /// Looks for an item with the given label.
@@ -129,9 +127,7 @@ impl Menubar {
     ///
     /// Returns `None` if no such label was found.
     pub fn find_position(&mut self, label: &str) -> Option<usize> {
-        self.menus
-            .iter()
-            .position(|&(ref l, _)| l == label)
+        self.menus.iter().position(|&(ref l, _)| l == label)
     }
 
     /// Remove the item at the given position.
@@ -145,37 +141,38 @@ fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
     // Also adds two key callbacks on this new view, to handle `left` and
     // `right` key presses.
     // (If the view itself listens for a `left` or `right` press, it will
-    // consume it before our KeyEventView. This means sub-menus can properly
+    // consume it before our OnEventView. This means sub-menus can properly
     // be entered.)
     s.screen_mut()
         .add_layer_at(Position::absolute(offset),
-                      KeyEventView::new(MenuPopup::new(menu)
-                              .on_dismiss(|s| s.select_menubar())
-                              .on_action(|s| {
-                                  s.menubar().state = State::Inactive
-                              }))
-                          .register(Key::Right, |s| {
-                s.pop_layer();
-                s.select_menubar();
-                // Act as if we sent "Right" then "Down"
-                s.menubar().on_event(Event::Key(Key::Right)).process(s);
-                if let EventResult::Consumed(Some(cb)) =
-                    s.menubar()
-                        .on_event(Event::Key(Key::Down)) {
-                    cb(s);
-                }
-            })
-                          .register(Key::Left, |s| {
-                s.pop_layer();
-                s.select_menubar();
-                // Act as if we sent "Left" then "Down"
-                s.menubar().on_event(Event::Key(Key::Left)).process(s);
-                if let EventResult::Consumed(Some(cb)) =
-                    s.menubar()
-                        .on_event(Event::Key(Key::Down)) {
-                    cb(s);
-                }
-            }));
+                      OnEventView::new(MenuPopup::new(menu)
+                                           .on_dismiss(|s| {
+                                                           s.select_menubar()
+                                                       })
+                                           .on_action(|s| {
+                                                          s.menubar().state =
+                                                              State::Inactive
+                                                      }))
+                              .on_event(Key::Right, |s| {
+            s.pop_layer();
+            s.select_menubar();
+            // Act as if we sent "Right" then "Down"
+            s.menubar().on_event(Event::Key(Key::Right)).process(s);
+            if let EventResult::Consumed(Some(cb)) =
+                s.menubar().on_event(Event::Key(Key::Down)) {
+                cb(s);
+            }
+        })
+                              .on_event(Key::Left, |s| {
+            s.pop_layer();
+            s.select_menubar();
+            // Act as if we sent "Left" then "Down"
+            s.menubar().on_event(Event::Key(Key::Left)).process(s);
+            if let EventResult::Consumed(Some(cb)) =
+                s.menubar().on_event(Event::Key(Key::Down)) {
+                cb(s);
+            }
+        }));
 
 }
 
@@ -226,16 +223,19 @@ impl View for Menubar {
                 // since we don't know when it will be called.
                 let menu = self.menus[self.focus].1.clone();
                 self.state = State::Submenu;
-                let offset = (self.menus[..self.focus]
-                                  .iter()
-                                  .map(|&(ref title, _)| title.width() + 2)
-                                  .fold(0, |a, b| a + b),
-                              if self.autohide { 1 } else { 0 });
+                let offset =
+                    (self.menus[..self.focus]
+                         .iter()
+                         .map(|&(ref title, _)| title.width() + 2)
+                         .fold(0, |a, b| a + b),
+                     if self.autohide { 1 } else { 0 });
                 // Since the closure will be called multiple times,
                 // we also need a new Rc on every call.
                 return EventResult::with_cb(move |s| {
-                    show_child(s, offset, menu.clone())
-                });
+                                                show_child(s,
+                                                           offset,
+                                                           menu.clone())
+                                            });
             }
             _ => return EventResult::Ignored,
         }

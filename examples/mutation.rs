@@ -1,7 +1,7 @@
 extern crate cursive;
 
 use cursive::Cursive;
-use cursive::views::{Dialog, KeyEventView, TextView};
+use cursive::views::{Dialog, OnEventView, TextView};
 use cursive::view::{Offset, Position};
 use cursive::traits::*;
 
@@ -33,8 +33,8 @@ fn main() {
     // Let's wrap the view to give it a recognizable ID, so we can look for it.
     // We add the P callback on the textview only (and not globally),
     // so that we can't call it when the popup is already visible.
-    siv.add_layer(KeyEventView::new(TextView::new(content).with_id("text"))
-        .register('p', |s| show_popup(s)));
+    siv.add_layer(OnEventView::new(TextView::new(content).with_id("text"))
+        .on_event('p', |s| show_popup(s)));
 
 
     siv.run();
