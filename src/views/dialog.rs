@@ -242,7 +242,7 @@ impl View for Dialog {
             });
 
             printer.with_color(ColorStyle::TitlePrimary,
-                               |p| p.print((x, 0), &self.title));
+                               |p| { p.print((x, 0), &self.title); });
         }
 
     }

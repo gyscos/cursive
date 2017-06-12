@@ -99,6 +99,7 @@ pub mod view;
 pub mod views;
 pub mod vec;
 pub mod theme;
+pub mod style;
 pub mod align;
 pub mod menu;
 pub mod direction;

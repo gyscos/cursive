@@ -43,6 +43,11 @@ impl<'a> LinesIterator<'a> {
         self.show_spaces = true;
         self
     }
+
+    /// Returns the text it iterates over.
+    pub fn get_content(&self) -> &'a str {
+        self.content
+    }
 }
 
 /// Represents a row of text within a `String`.

@@ -7,6 +7,7 @@ use std::cmp::min;
 use std::rc::Rc;
 
 use theme::{BorderStyle, ColorStyle, Effect, Theme};
+use style::*;
 use unicode_segmentation::UnicodeSegmentation;
 
 use utils::prefix;
@@ -64,12 +65,14 @@ impl<'a> Printer<'a> {
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position relative to the window.
-    pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) {
+    ///
+    /// Returns the unicode-width of the printed text.
+    pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) -> usize {
         self.new.set(false);
 
         let p = pos.into();
         if p.y >= self.size.y || p.x >= self.size.x {
-            return;
+            return 0;
         }
         // Do we have enough room for the entire line?
         let room = self.size.x - p.x;
@@ -80,6 +83,35 @@ impl<'a> Printer<'a> {
 
         let p = p + self.offset;
         self.backend.print_at((p.x, p.y), text);
+
+        prefix_len
+    }
+
+    // TODO: use &mut self? We don't *need* it, but it may make sense.
+    // We don't want people to start calling prints in parallel?
+    /// Prints some styled text at the given position relative to the window.
+    ///
+    /// Returns the unicode-width of the printed text.
+    pub fn print_styled<S: Into<Vec2>>(&self, pos: S, text: &[StyledString]) -> usize {
+        let pos = pos.into();
+
+        let mut part_offset: usize = 0;
+        for part in text.iter() {
+            let (ref text, style) = *part;
+
+            let mut do_print = |printer: &Printer| {
+                part_offset += printer.print((pos.x + part_offset, pos.y), text);
+            };
+
+            self.with_effect(style.effect, |printer| {
+                match style.color {
+                    Some(color) => printer.with_color(color, do_print),
+                    None => do_print(printer)
+                }
+            });
+        }
+
+        part_offset
     }
 
     /// Prints a vertical line using the given character.
