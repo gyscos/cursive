@@ -25,9 +25,6 @@ pub trait Backend {
 
     fn has_colors(&self) -> bool;
 
-    fn init_color_style(&mut self, style: theme::ColorStyle,
-                        foreground: &theme::Color, background: &theme::Color);
-
     fn print_at(&self, (usize, usize), &str);
 
     fn poll_event(&self) -> event::Event;
@@ -35,6 +32,6 @@ pub trait Backend {
     fn screen_size(&self) -> (usize, usize);
 
     // TODO: unify those into a single method?
-    fn with_color<F: FnOnce()>(&self, color: theme::ColorStyle, f: F);
+    fn with_color<F: FnOnce()>(&self, colors: theme::ColorPair, f: F);
     fn with_effect<F: FnOnce()>(&self, effect: theme::Effect, f: F);
 }

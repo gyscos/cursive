@@ -21,7 +21,8 @@ impl backend::Backend for Concrete {
         pancurses::cbreak();
         pancurses::start_color();
         pancurses::curs_set(0);
-        window.bkgd(pancurses::ColorPair(color_id(ColorStyle::Background) as u8));
+        window.bkgd(pancurses::ColorPair(color_id(ColorStyle::Background) as
+                                         u8));
 
         Concrete { window: window }
     }
@@ -52,7 +53,8 @@ impl backend::Backend for Concrete {
 
         self.window.attron(color_attribute);
         f();
-        self.window.attron(pancurses::ColorPair(current_color_pair as u8));
+        self.window
+            .attron(pancurses::ColorPair(current_color_pair as u8));
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
@@ -94,12 +96,14 @@ impl backend::Backend for Concrete {
                 pancurses::Input::Character(c) if 32 <= (c as u32) &&
                                                   (c as u32) <= 255 => {
                     Event::Char(utf8::read_char(c as u8, || {
-                        self.window.getch().and_then(|i| match i {
-                                pancurses::Input::Character(c) => {
-                                    Some(c as u8)
-                                }
-                                _ => None,
-                            })
+                        self.window
+                            .getch()
+                            .and_then(|i| match i {
+                                          pancurses::Input::Character(c) => {
+                                              Some(c as u8)
+                                          }
+                                          _ => None,
+                                      })
                     })
                                         .unwrap())
                 }

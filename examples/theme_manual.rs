@@ -20,9 +20,9 @@ fn main() {
 
         theme.shadow = !theme.shadow;
         theme.borders = match theme.borders {
-            Some(BorderStyle::Simple) => Some(BorderStyle::Outset),
-            Some(BorderStyle::Outset) => None,
-            None => Some(BorderStyle::Simple),
+            BorderStyle::Simple => BorderStyle::Outset,
+            BorderStyle::Outset => BorderStyle::None,
+            BorderStyle::None => BorderStyle::Simple,
         };
 
         s.set_theme(theme);

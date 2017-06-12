@@ -1,15 +1,54 @@
 extern crate ncurses;
 
-
 use self::super::{color_id, find_closest};
 use backend;
 use event::{Event, Key};
-use std::cell::Cell;
-use theme::{Color, ColorStyle, Effect};
+use std::cell::{RefCell, Cell};
+use std::collections::HashMap;
+use theme::{ColorPair, ColorStyle, Effect};
 use utf8;
 
 pub struct Concrete {
-    current_style: Cell<ColorStyle>,
+    current_style: Cell<ColorPair>,
+    pairs: RefCell<HashMap<ColorPair, i16>>,
+}
+
+impl Concrete {
+    fn insert_color(&self, pairs: &mut HashMap<ColorPair, i16>, pair: ColorPair) -> i16 {
+
+        let n = 1 + pairs.len() as i16;
+        let target = if ncurses::COLOR_PAIRS() > n as i32 {
+            // We still have plenty of space for everyone.
+            n
+        } else {
+            // The world is too small for both of us.
+            let target = n - 1;
+            // Remove the mapping to n-1
+            pairs.retain(|_, &mut v| v != target);
+            target
+        };
+        pairs.insert(pair, target);
+        ncurses::init_pair(target,
+                           find_closest(&pair.front) as i16,
+                           find_closest(&pair.back) as i16);
+        target
+    }
+    fn set_colorstyle(&self, pair: ColorPair) {
+        self.current_style.set(pair);
+
+        let mut pairs = self.pairs.borrow_mut();
+
+        // Find if we have this color in stock
+        let i = if pairs.contains_key(&pair) {
+            // We got it!
+            pairs[&pair]
+        } else {
+            self.insert_color(&mut *pairs, pair)
+        };
+
+        let style = ncurses::COLOR_PAIR(i);
+        ncurses::attron(style);
+    }
 }
 
 impl backend::Backend for Concrete {
@@ -28,7 +67,10 @@ impl backend::Backend for Concrete {
         ncurses::wbkgd(ncurses::stdscr(),
                        ncurses::COLOR_PAIR(color_id(ColorStyle::Background)));
 
-        Concrete { current_style: Cell::new(ColorStyle::Background) }
+        Concrete {
+            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
+            pairs: RefCell::new(HashMap::new()),
+        }
     }
 
     fn screen_size(&self) -> (usize, usize) {
@@ -47,21 +89,12 @@ impl backend::Backend for Concrete {
     }
 
 
-    fn init_color_style(&mut self, style: ColorStyle, foreground: &Color,
-                        background: &Color) {
-
-        ncurses::init_pair(color_id(style),
-                           find_closest(foreground) as i16,
-                           find_closest(background) as i16);
-    }
-
-    fn with_color<F: FnOnce()>(&self, color: ColorStyle, f: F) {
+    fn with_color<F: FnOnce()>(&self, colors: ColorPair, f: F) {
         let current = self.current_style.get();
 
-        self.current_style.set(color);
-        set_colorstyle(color);
+        self.set_colorstyle(colors);
         f();
-        set_colorstyle(current);
+        self.set_colorstyle(current);
         self.current_style.set(current);
     }
 
@@ -107,21 +140,6 @@ impl backend::Backend for Concrete {
             ncurses::timeout(1000 / fps as i32);
         }
     }
-}
-
-fn set_colorstyle(style: ColorStyle) {
-    if let ColorStyle::Custom {
-               ref front,
-               ref back,
-           } = style {
-
-               println_stderr!("Redifining...");
-        ncurses::init_pair(color_id(style),
-                           find_closest(front) as i16,
-                           find_closest(back) as i16);
-    }
-    let style = ncurses::COLOR_PAIR(color_id(style));
-    ncurses::attron(style);
 }
 
 /// Returns the Key enum corresponding to the given ncurses event.

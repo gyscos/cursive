@@ -26,9 +26,10 @@ impl backend::Backend for Concrete {
 
     fn init_color_style(&mut self, style: ColorStyle, foreground: &Color,
                         background: &Color) {
-        self.colours.insert(style.id(),
-                            (colour_to_blt_colour(foreground),
-                             colour_to_blt_colour(background)));
+        self.colours
+            .insert(style.id(),
+                    (colour_to_blt_colour(foreground),
+                     colour_to_blt_colour(background)));
     }
 
     fn with_color<F: FnOnce()>(&self, color: ColorStyle, f: F) {

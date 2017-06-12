@@ -23,7 +23,8 @@ use theme;
 pub struct Concrete {
     terminal: AlternateScreen<termion::raw::RawTerminal<::std::io::Stdout>>,
     current_style: Cell<theme::ColorStyle>,
-    colors: HashMap<theme::ColorStyle, (Box<tcolor::Color>, Box<tcolor::Color>)>,
+    colors:
+        HashMap<theme::ColorStyle, (Box<tcolor::Color>, Box<tcolor::Color>)>,
 
     input: chan::Receiver<Event>,
     resize: chan::Receiver<chan_signal::Signal>,
