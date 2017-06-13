@@ -124,8 +124,11 @@ impl backend::Backend for Concrete {
         (x as usize, y as usize)
     }
 
-    fn clear(&self) {
-        // self.apply_colorstyle(theme::ColorStyle::Background);
+    fn clear(&self, color: theme::Color) {
+        self.apply_colorstyle(theme::ColorPair {
+            front: color,
+            back: color,
+        });
         print!("{}", termion::clear::All);
     }
 

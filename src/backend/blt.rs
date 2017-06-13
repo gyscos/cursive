@@ -6,7 +6,7 @@ use self::bear_lib_terminal::terminal::{self, Event as BltEvent, KeyCode};
 use backend;
 use event::{Event, Key};
 use std::collections::BTreeMap;
-use theme::{BaseColor, Color, ColorStyle, Effect};
+use theme::{BaseColor, Color, ColorPair, Effect};
 
 pub struct Concrete {
     colours: BTreeMap<i16, (BltColor, BltColor)>,
@@ -24,16 +24,9 @@ impl backend::Backend for Concrete {
         terminal::close();
     }
 
-    fn init_color_style(&mut self, style: ColorStyle, foreground: &Color,
-                        background: &Color) {
-        self.colours
-            .insert(style.id(),
-                    (colour_to_blt_colour(foreground),
-                     colour_to_blt_colour(background)));
-    }
-
-    fn with_color<F: FnOnce()>(&self, color: ColorStyle, f: F) {
-        let (fg, bg) = self.colours[&color.id()];
+    fn with_color<F: FnOnce()>(&self, color: ColorPair, f: F) {
+        let fg = colour_to_blt_colour(color.front);
+        let bg = colour_to_blt_colour(color.back);
         terminal::with_colors(fg, bg, f);
     }
 
@@ -61,7 +54,7 @@ impl backend::Backend for Concrete {
         (width as usize, height as usize)
     }
 
-    fn clear(&self) {
+    fn clear(&self, color: Color) {
         terminal::clear(None);
     }
 
@@ -104,8 +97,8 @@ impl backend::Backend for Concrete {
     }
 }
 
-fn colour_to_blt_colour(clr: &Color) -> BltColor {
-    let (r, g, b) = match *clr {
+fn colour_to_blt_colour(clr: Color) -> BltColor {
+    let (r, g, b) = match clr {
         // Colours taken from
         // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
         Color::Dark(BaseColor::Black) => (0, 0, 0),
@@ -141,7 +134,7 @@ fn blt_keycode_to_ev(kc: KeyCode, shift: bool, ctrl: bool) -> Event {
         KeyCode::F1 | KeyCode::F2 | KeyCode::F3 | KeyCode::F4 |
         KeyCode::F5 | KeyCode::F6 | KeyCode::F7 | KeyCode::F8 |
         KeyCode::F9 | KeyCode::F10 | KeyCode::F11 | KeyCode::F12 |
-        KeyCode::Enter | KeyCode::Escape | KeyCode::Backspace |
+        KeyCode::NumEnter | KeyCode::Enter | KeyCode::Escape | KeyCode::Backspace |
         KeyCode::Tab | KeyCode::Pause | KeyCode::Insert | KeyCode::Home |
         KeyCode::PageUp | KeyCode::Delete | KeyCode::End |
         KeyCode::PageDown | KeyCode::Right | KeyCode::Left |
@@ -169,7 +162,7 @@ fn blt_keycode_to_ev(kc: KeyCode, shift: bool, ctrl: bool) -> Event {
         KeyCode::Apostrophe | KeyCode::Comma | KeyCode::Period |
         KeyCode::Slash | KeyCode::Space | KeyCode::NumDivide |
         KeyCode::NumMultiply | KeyCode::NumMinus | KeyCode::NumPlus |
-        KeyCode::NumEnter | KeyCode::NumPeriod | KeyCode::Num1 |
+        KeyCode::NumPeriod | KeyCode::Num1 |
         KeyCode::Num2 | KeyCode::Num3 | KeyCode::Num4 | KeyCode::Num5 |
         KeyCode::Num6 | KeyCode::Num7 | KeyCode::Num8 | KeyCode::Num9 |
         KeyCode::Num0 => {
@@ -247,7 +240,7 @@ fn blt_keycode_to_char(kc: KeyCode, shift: bool) -> char {
         KeyCode::Num8 => '8',
         KeyCode::Num9 => '9',
         KeyCode::Num0 => '0',
-        _ => unreachable!(),
+        _ => { println_stderr!("{:?}", kc); unreachable!() },
     }
 }
 
@@ -265,7 +258,7 @@ fn blt_keycode_to_key(kc: KeyCode) -> Key {
         KeyCode::F10 => Key::F10,
         KeyCode::F11 => Key::F11,
         KeyCode::F12 => Key::F12,
-        KeyCode::Enter => Key::Enter,
+        KeyCode::NumEnter | KeyCode::Enter => Key::Enter,
         KeyCode::Escape => Key::Esc,
         KeyCode::Backspace => Key::Backspace,
         KeyCode::Tab => Key::Tab,

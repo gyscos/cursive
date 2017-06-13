@@ -287,14 +287,14 @@ impl Cursive {
     pub fn set_theme(&mut self, theme: theme::Theme) {
         self.theme = theme;
         // self.theme.activate(&mut self.backend);
-        self.backend.clear();
+        self.clear();
     }
 
     /// Clears the screen.
     ///
     /// Users rarely have to call this directly.
     pub fn clear(&self) {
-        self.backend.clear();
+        self.backend.clear(self.theme.colors.background);
     }
 
     /// Loads a theme from the given file.
@@ -617,7 +617,7 @@ impl Cursive {
         }
 
         if event == Event::WindowResize {
-            self.backend.clear();
+            self.clear();
         }
 
         // Event dispatch order:

@@ -1,11 +1,11 @@
 extern crate ncurses;
 
-use self::super::{color_id, find_closest};
+use self::super::find_closest;
 use backend;
 use event::{Event, Key};
 use std::cell::{RefCell, Cell};
 use std::collections::HashMap;
-use theme::{ColorPair, ColorStyle, Effect};
+use theme::{Color, ColorPair, Effect};
 use utf8;
 
 pub struct Concrete {
@@ -14,7 +14,10 @@ pub struct Concrete {
 }
 
 impl Concrete {
-    fn insert_color(&self, pairs: &mut HashMap<ColorPair, i16>, pair: ColorPair) -> i16 {
+    /// Save a new color pair.
+    fn insert_color(&self, pairs: &mut HashMap<ColorPair, i16>,
+                    pair: ColorPair)
+                    -> i16 {
 
         let n = 1 + pairs.len() as i16;
         let target = if ncurses::COLOR_PAIRS() > n as i32 {
@@ -33,19 +36,26 @@ impl Concrete {
                            find_closest(&pair.back) as i16);
         target
     }
-    fn set_colorstyle(&self, pair: ColorPair) {
-        self.current_style.set(pair);
+
+    /// Checks the pair in the cache, or re-define a color if needed.
+    fn get_or_create(&self, pair: ColorPair) -> i16 {
 
         let mut pairs = self.pairs.borrow_mut();
 
         // Find if we have this color in stock
-        let i = if pairs.contains_key(&pair) {
+        if pairs.contains_key(&pair) {
             // We got it!
             pairs[&pair]
         } else {
             self.insert_color(&mut *pairs, pair)
-        };
+        }
+    }
 
+    fn set_colorstyle(&self, pair: ColorPair) {
+
+        let i = self.get_or_create(pair);
+
+        self.current_style.set(pair);
         let style = ncurses::COLOR_PAIR(i);
         ncurses::attron(style);
     }
@@ -64,8 +74,6 @@ impl backend::Backend for Concrete {
         ncurses::cbreak();
         ncurses::start_color();
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-        ncurses::wbkgd(ncurses::stdscr(),
-                       ncurses::COLOR_PAIR(color_id(ColorStyle::Background)));
 
         Concrete {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
@@ -108,7 +116,13 @@ impl backend::Backend for Concrete {
         ncurses::attroff(style);
     }
 
-    fn clear(&self) {
+    fn clear(&self, color: Color) {
+        let id = self.get_or_create(ColorPair {
+                                        front: color,
+                                        back: color,
+                                    });
+        ncurses::wbkgd(ncurses::stdscr(), ncurses::COLOR_PAIR(id));
+
         ncurses::clear();
     }
 

@@ -53,7 +53,7 @@ impl<'a> Printer<'a> {
     ///
     /// Users rarely need to call this directly.
     pub fn clear(&self) {
-        self.backend.clear();
+        self.backend.clear(self.theme.colors.background);
     }
 
     /// Returns `true` if nothing has been printed yet.
