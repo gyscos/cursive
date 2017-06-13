@@ -49,12 +49,8 @@ impl Effectable for theme::Effect {
     }
 }
 
-fn apply_colors(fg: &tcolor::Color, bg: &tcolor::Color) {
-    print!("{}{}", tcolor::Fg(fg), tcolor::Bg(bg));
-}
-
 impl Concrete {
-    fn apply_colorstyle(&self, colors: theme::ColorPair) {
+    fn apply_colors(&self, colors: theme::ColorPair) {
         with_color(&colors.front, |c| print!("{}", tcolor::Fg(c)));
         with_color(&colors.back, |c| print!("{}", tcolor::Bg(c)));
     }
@@ -99,13 +95,17 @@ impl backend::Backend for Concrete {
     fn with_color<F: FnOnce()>(&self, color: theme::ColorPair, f: F) {
         let current_style = self.current_style.get();
 
-        self.apply_colorstyle(color);
+        if current_style != color {
+            self.apply_colors(color);
+            self.current_style.set(color);
+        }
 
-        self.current_style.set(color);
         f();
-        self.current_style.set(current_style);
 
-        self.apply_colorstyle(current_style);
+        if current_style != color {
+            self.current_style.set(current_style);
+            self.apply_colors(current_style);
+        }
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: theme::Effect, f: F) {
@@ -125,7 +125,7 @@ impl backend::Backend for Concrete {
     }
 
     fn clear(&self, color: theme::Color) {
-        self.apply_colorstyle(theme::ColorPair {
+        self.apply_colors(theme::ColorPair {
             front: color,
             back: color,
         });
