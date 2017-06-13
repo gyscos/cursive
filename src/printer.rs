@@ -123,7 +123,8 @@ impl<'a> Printer<'a> {
     /// # use cursive::theme;
     /// # use cursive::backend::{self, Backend};
     /// # let b = backend::Concrete::init();
-    /// # let printer = Printer::new((6,4), theme::load_default(), &b);
+    /// # let t = theme::load_default();
+    /// # let printer = Printer::new((6,4), &t, &b);
     /// printer.with_color(theme::ColorStyle::Highlight, |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
@@ -156,7 +157,8 @@ impl<'a> Printer<'a> {
     /// # use cursive::theme;
     /// # use cursive::backend::{self, Backend};
     /// # let b = backend::Concrete::init();
-    /// # let printer = Printer::new((6,4), theme::load_default(), &b);
+    /// # let t = theme::load_default();
+    /// # let printer = Printer::new((6,4), &t, &b);
     /// printer.print_box((0,0), (6,4), false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S,
