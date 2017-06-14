@@ -47,7 +47,7 @@ fn main() {
 }
 ```
 
-![Cursive dialog example](https://raw.githubusercontent.com/gyscos/Cursive/master/doc/cursive_example.png)
+[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/Cursive/master/doc/cursive_example.png)](examples/dialog.rs)
 
 Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/examples) to get these results, and more:
 
@@ -76,6 +76,7 @@ Here are a few crates implementing new views for you to use:
 
 * [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view)
 * [cursive_calendar_view](https://github.com/BonsaiDen/cursive_calendar_view)
+* [cursive_tree_view](https://github.com/BonsaiDen/cursive_tree_view)
 
 ## Goals
 

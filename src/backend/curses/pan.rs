@@ -66,8 +66,8 @@ impl Concrete {
 
 impl backend::Backend for Concrete {
     fn init() -> Self {
-        ::std::env::set_var("ESCDELAY", "25");
         let window = pancurses::initscr();
+        ::std::env::set_var("ESCDELAY", "25");
         window.keypad(true);
         pancurses::noecho();
         pancurses::cbreak();

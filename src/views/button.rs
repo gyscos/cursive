@@ -37,6 +37,15 @@ impl Button {
         }
     }
 
+    /// Sets the function to be called when the button is pressed.
+    ///
+    /// Replaces the previous callback.
+    pub fn set_callback<F>(&mut self, cb: F)
+        where F: Fn(&mut Cursive) + 'static
+    {
+        self.callback = Callback::from_fn(cb);
+    }
+
     /// Disables this view.
     ///
     /// A disabled view cannot be selected.

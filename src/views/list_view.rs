@@ -13,22 +13,27 @@ use view::ScrollBase;
 use view::Selector;
 use view::View;
 
-enum Child {
+/// Represents a child from a [`ListView`].
+///
+/// [`ListView`]: struct.ListView.html
+pub enum ListChild {
+    /// A single row, with a label and a view.
     Row(String, Box<View>),
+    /// A delimiter between groups.
     Delimiter,
 }
 
-impl Child {
+impl ListChild {
     fn label(&self) -> &str {
         match *self {
-            Child::Row(ref label, _) => label,
+            ListChild::Row(ref label, _) => label,
             _ => "",
         }
     }
 
     fn view(&mut self) -> Option<&mut Box<View>> {
         match *self {
-            Child::Row(_, ref mut view) => Some(view),
+            ListChild::Row(_, ref mut view) => Some(view),
             _ => None,
         }
     }
@@ -36,7 +41,7 @@ impl Child {
 
 /// Displays a scrollable list of elements.
 pub struct ListView {
-    children: Vec<Child>,
+    children: Vec<ListChild>,
     scrollbase: ScrollBase,
     focus: usize,
     // This callback is called when the selection is changed.
@@ -56,10 +61,42 @@ impl ListView {
         }
     }
 
+    /// Returns the number of children, including delimiters.
+    pub fn len(&self) -> usize {
+        self.children.len()
+    }
+
+    /// Returns `true` if this view contains no children.
+    ///
+    /// Returns `false` if at least a delimiter or a view is present.
+    pub fn is_empty(&self) -> bool {
+        self.children.is_empty()
+    }
+
+
+    /// Returns a reference to the children
+    pub fn children(&self) -> &[ListChild] {
+        &self.children[..]
+    }
+
+    /// Returns a reference to the child at the given position.
+    pub fn get_row(&self, id: usize) -> &ListChild {
+        &self.children[id]
+    }
+
+    /// Gives mutable access to the child at the given position.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `id >= self.len()`.
+    pub fn row_mut(&mut self, id: usize) -> &mut ListChild {
+        &mut self.children[id]
+    }
+
     /// Adds a view to the end of the list.
     pub fn add_child<V: View + 'static>(&mut self, label: &str, mut view: V) {
         view.take_focus(direction::Direction::none());
-        self.children.push(Child::Row(label.to_string(), Box::new(view)));
+        self.children.push(ListChild::Row(label.to_string(), Box::new(view)));
     }
 
     /// Removes all children from this view.
@@ -77,7 +114,7 @@ impl ListView {
 
     /// Adds a delimiter to the end of the list.
     pub fn add_delimiter(&mut self) {
-        self.children.push(Child::Delimiter);
+        self.children.push(ListChild::Delimiter);
     }
 
     /// Adds a delimiter to the end of the list.
@@ -112,7 +149,7 @@ impl ListView {
 
     fn iter_mut<'a>(&'a mut self, from_focus: bool,
                     source: direction::Relative)
-                    -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
+                    -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
 
         match source {
             direction::Relative::Front => {
@@ -162,11 +199,11 @@ impl ListView {
     }
 }
 
-fn try_focus((i, child): (usize, &mut Child), source: direction::Direction)
+fn try_focus((i, child): (usize, &mut ListChild), source: direction::Direction)
              -> Option<usize> {
     match *child {
-        Child::Delimiter => None,
-        Child::Row(_, ref mut view) => {
+        ListChild::Delimiter => None,
+        ListChild::Row(_, ref mut view) => {
             if view.take_focus(source) {
                 Some(i)
             } else {
@@ -185,18 +222,18 @@ impl View for ListView {
 
         let offset = self.children
             .iter()
-            .map(Child::label)
+            .map(ListChild::label)
             .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0) + 1;
 
         // println_stderr!("Offset: {}", offset);
         self.scrollbase.draw(printer, |printer, i| match self.children[i] {
-            Child::Row(ref label, ref view) => {
+            ListChild::Row(ref label, ref view) => {
                 printer.print((0, 0), label);
                 view.draw(&printer.offset((offset, 0), i == self.focus));
             }
-            Child::Delimiter => (),
+            ListChild::Delimiter => (),
         });
     }
 
@@ -204,14 +241,14 @@ impl View for ListView {
         // We'll show 2 columns: the labels, and the views.
         let label_width = self.children
             .iter()
-            .map(Child::label)
+            .map(ListChild::label)
             .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0);
 
         let view_size = self.children
             .iter_mut()
-            .filter_map(Child::view)
+            .filter_map(ListChild::view)
             .map(|v| v.required_size(req).x)
             .max()
             .unwrap_or(0);
@@ -229,7 +266,7 @@ impl View for ListView {
         // We'll show 2 columns: the labels, and the views.
         let label_width = self.children
             .iter()
-            .map(Child::label)
+            .map(ListChild::label)
             .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0);
@@ -246,7 +283,7 @@ impl View for ListView {
 
         // println_stderr!("Available: {}", available);
 
-        for child in self.children.iter_mut().filter_map(Child::view) {
+        for child in self.children.iter_mut().filter_map(ListChild::view) {
             child.layout(Vec2::new(available, 1));
         }
     }
@@ -256,7 +293,7 @@ impl View for ListView {
             return EventResult::Ignored;
         }
 
-        if let Child::Row(_, ref mut view) = self.children[self.focus] {
+        if let ListChild::Row(_, ref mut view) = self.children[self.focus] {
             let result = view.on_event(event.clone());
             if result.is_consumed() {
                 return result;
@@ -317,7 +354,7 @@ impl View for ListView {
                     mut callback: Box<FnMut(&mut Any) + 'a>) {
         for view in self.children
             .iter_mut()
-            .filter_map(Child::view) {
+            .filter_map(ListChild::view) {
             view.call_on_any(selector, Box::new(|any| callback(any)));
         }
     }

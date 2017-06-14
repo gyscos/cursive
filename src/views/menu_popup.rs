@@ -12,7 +12,7 @@ use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, ScrollBase, View};
-use views::KeyEventView;
+use views::OnEventView;
 
 /// Popup that shows a list of items.
 pub struct MenuPopup {
@@ -90,18 +90,31 @@ impl MenuPopup {
 
 
     /// Sets the alignment for this view.
-    pub fn align(mut self, align: Align) -> Self {
-        self.align = align;
+    ///
+    /// Chainable variant.
+    pub fn align(self, align: Align) -> Self {
+        self.with(|s| s.set_align(align))
+    }
 
-        self
+    /// Sets the alignment for this view.
+    pub fn set_align(&mut self, align: Align) {
+        self.align = align;
     }
 
     /// Sets a callback to be used when this view is actively dismissed.
     ///
     /// (When the user hits <ESC>)
-    pub fn on_dismiss<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
+    ///
+    /// Chainable variant.
+    pub fn on_dismiss<F: 'static + Fn(&mut Cursive)>(self, f: F) -> Self {
+        self.with(|s| s.set_on_dismiss(f))
+    }
+
+    /// Sets a callback to be used when this view is actively dismissed.
+    ///
+    /// (When the user hits <ESC>)
+    pub fn set_on_dismiss<F: 'static + Fn(&mut Cursive)>(&mut self, f: F) {
         self.on_dismiss = Some(Callback::from_fn(f));
-        self
     }
 
     /// Sets a callback to be used when a leaf is activated.
@@ -109,20 +122,30 @@ impl MenuPopup {
     /// Will also be called if a leaf from a subtree is activated.
     ///
     /// Usually used to hide the parent view.
-    pub fn on_action<F: 'static + Fn(&mut Cursive)>(mut self, f: F) -> Self {
+    ///
+    /// Chainable variant.
+    pub fn on_action<F: 'static + Fn(&mut Cursive)>(self, f: F) -> Self {
+        self.with(|s| s.set_on_action(f))
+    }
+
+    /// Sets a callback to be used when a leaf is activated.
+    ///
+    /// Will also be called if a leaf from a subtree is activated.
+    ///
+    /// Usually used to hide the parent view.
+    pub fn set_on_action<F: 'static + Fn(&mut Cursive)>(&mut self, f: F) {
         self.on_action = Some(Callback::from_fn(f));
-        self
     }
 
     fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
         let tree = tree.clone();
         let max_width = 4 +
                         self.menu
-            .children
-            .iter()
-            .map(Self::item_width)
-            .max()
-            .unwrap_or(1);
+                            .children
+                            .iter()
+                            .map(Self::item_width)
+                            .max()
+                            .unwrap_or(1);
         let offset = Vec2::new(max_width, self.focus);
         let action_cb = self.on_action.clone();
 
@@ -130,7 +153,7 @@ impl MenuPopup {
             let action_cb = action_cb.clone();
             s.screen_mut()
                 .add_layer_at(Position::parent(offset),
-                              KeyEventView::new(MenuPopup::new(tree.clone())
+                              OnEventView::new(MenuPopup::new(tree.clone())
                                       .on_action(move |s| {
                             // This will happen when the subtree popup
                             // activates something;
@@ -140,7 +163,7 @@ impl MenuPopup {
                                 action_cb.clone()(s);
                             }
                         }))
-                                  .register(Key::Left, |s| s.pop_layer()));
+                                  .on_event(Key::Left, |s| s.pop_layer()));
         })
     }
 }
@@ -196,11 +219,11 @@ impl View for MenuPopup {
         // We can't really shrink our items here, so it's not flexible.
         let w = 4 +
                 self.menu
-            .children
-            .iter()
-            .map(Self::item_width)
-            .max()
-            .unwrap_or(1);
+                    .children
+                    .iter()
+                    .map(Self::item_width)
+                    .max()
+                    .unwrap_or(1);
         let h = 2 + self.menu.children.len();
 
 
@@ -231,38 +254,38 @@ impl View for MenuPopup {
             Event::Key(Key::End) => self.focus = self.menu.children.len() - 1,
 
             Event::Key(Key::Right) if self.menu.children[self.focus]
-                .is_subtree() => {
+                                          .is_subtree() => {
                 return match self.menu.children[self.focus] {
-                    MenuItem::Subtree(_, ref tree) => {
-                        self.make_subtree_cb(tree)
-                    }
-                    _ => panic!("Not a subtree???"),
+                           MenuItem::Subtree(_, ref tree) => {
+                               self.make_subtree_cb(tree)
+                           }
+                           _ => panic!("Not a subtree???"),
 
-                };
+                       };
             }
             Event::Key(Key::Enter) if !self.menu.children[self.focus]
-                .is_delimiter() => {
+                                           .is_delimiter() => {
                 return match self.menu.children[self.focus] {
-                    MenuItem::Leaf(_, ref cb) => {
+                           MenuItem::Leaf(_, ref cb) => {
 
-                        let cb = cb.clone();
-                        let action_cb = self.on_action.clone();
-                        EventResult::with_cb(move |s| {
-                            // Remove ourselves from the face of the earth
-                            s.pop_layer();
-                            // If we had prior orders, do it now.
-                            if let Some(ref action_cb) = action_cb {
-                                action_cb.clone()(s);
-                            }
-                            // And transmit his last words.
-                            cb.clone()(s);
-                        })
-                    }
-                    MenuItem::Subtree(_, ref tree) => {
-                        self.make_subtree_cb(tree)
-                    }
-                    _ => panic!("No delimiter here"),
-                };
+                    let cb = cb.clone();
+                    let action_cb = self.on_action.clone();
+                    EventResult::with_cb(move |s| {
+                        // Remove ourselves from the face of the earth
+                        s.pop_layer();
+                        // If we had prior orders, do it now.
+                        if let Some(ref action_cb) = action_cb {
+                            action_cb.clone()(s);
+                        }
+                        // And transmit his last words.
+                        cb.clone()(s);
+                    })
+                }
+                           MenuItem::Subtree(_, ref tree) => {
+                               self.make_subtree_cb(tree)
+                           }
+                           _ => panic!("No delimiter here"),
+                       };
             }
 
             _ => return EventResult::Ignored,
@@ -274,7 +297,6 @@ impl View for MenuPopup {
     }
 
     fn layout(&mut self, size: Vec2) {
-        self.scrollbase
-            .set_heights(size.y - 2, self.menu.children.len());
+        self.scrollbase.set_heights(size.y - 2, self.menu.children.len());
     }
 }
