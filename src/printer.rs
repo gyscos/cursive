@@ -21,7 +21,7 @@ pub struct Printer<'a> {
     /// Whether the view to draw is currently focused or not.
     pub focused: bool,
     /// Currently used theme
-    pub theme: Theme,
+    pub theme: &'a Theme,
 
     /// `true` if nothing has been drawn yet.
     new: Rc<Cell<bool>>,
@@ -34,7 +34,7 @@ impl<'a> Printer<'a> {
     ///
     /// But nobody needs to know that.
     #[doc(hidden)]
-    pub fn new<T: Into<Vec2>>(size: T, theme: Theme,
+    pub fn new<T: Into<Vec2>>(size: T, theme: &'a Theme,
                               backend: &'a backend::Concrete)
                               -> Self {
         Printer {
@@ -53,7 +53,7 @@ impl<'a> Printer<'a> {
     ///
     /// Users rarely need to call this directly.
     pub fn clear(&self) {
-        self.backend.clear();
+        self.backend.clear(self.theme.colors.background);
     }
 
     /// Returns `true` if nothing has been printed yet.
@@ -123,7 +123,8 @@ impl<'a> Printer<'a> {
     /// # use cursive::theme;
     /// # use cursive::backend::{self, Backend};
     /// # let b = backend::Concrete::init();
-    /// # let printer = Printer::new((6,4), theme::load_default(), &b);
+    /// # let t = theme::load_default();
+    /// # let printer = Printer::new((6,4), &t, &b);
     /// printer.with_color(theme::ColorStyle::Highlight, |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
@@ -131,7 +132,7 @@ impl<'a> Printer<'a> {
     pub fn with_color<F>(&self, c: ColorStyle, f: F)
         where F: FnOnce(&Printer)
     {
-        self.backend.with_color(c, || f(self));
+        self.backend.with_color(c.resolve(self.theme), || f(self));
     }
 
     /// Same as `with_color`, but apply a ncurses style instead,
@@ -156,7 +157,8 @@ impl<'a> Printer<'a> {
     /// # use cursive::theme;
     /// # use cursive::backend::{self, Backend};
     /// # let b = backend::Concrete::init();
-    /// # let printer = Printer::new((6,4), theme::load_default(), &b);
+    /// # let t = theme::load_default();
+    /// # let printer = Printer::new((6,4), &t, &b);
     /// printer.print_box((0,0), (6,4), false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S,
@@ -195,8 +197,8 @@ impl<'a> Printer<'a> {
         where F: FnOnce(&Printer)
     {
         let color = match self.theme.borders {
-            None => return,
-            Some(BorderStyle::Outset) if !invert => ColorStyle::Tertiary,
+            BorderStyle::None => return,
+            BorderStyle::Outset if !invert => ColorStyle::Tertiary,
             _ => ColorStyle::Primary,
         };
 
@@ -213,8 +215,8 @@ impl<'a> Printer<'a> {
         where F: FnOnce(&Printer)
     {
         let color = match self.theme.borders {
-            None => return,
-            Some(BorderStyle::Outset) if invert => ColorStyle::Tertiary,
+            BorderStyle::None => return,
+            BorderStyle::Outset if invert => ColorStyle::Tertiary,
             _ => ColorStyle::Primary,
         };
 
@@ -260,7 +262,7 @@ impl<'a> Printer<'a> {
             // We can't be larger than what remains
             size: Vec2::min(self.size - offset, size),
             focused: self.focused && focused,
-            theme: self.theme.clone(),
+            theme: self.theme,
             backend: self.backend,
             new: self.new.clone(),
         }

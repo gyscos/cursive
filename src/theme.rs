@@ -114,8 +114,6 @@
 //! 	highlight_inactive = "#5555FF"
 //! ```
 
-
-use backend::{self, Backend};
 use std::fs::File;
 use std::io;
 use std::io::Read;
@@ -129,8 +127,37 @@ pub enum Effect {
     /// No effect
     Simple,
     /// Reverses foreground and background colors
-    Reverse, 
+    Reverse,
     // TODO: bold, italic, underline
+}
+
+/// Combines a front and back color.
+#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
+pub struct ColorPair {
+    /// Color used for the foreground.
+    pub front: Color,
+    /// Color used for the background.
+    pub back: Color,
+}
+
+impl ColorPair {
+    /// Return an inverted color pair.
+    ///
+    /// With swapped front abd back color.
+    pub fn invert(&self) -> Self {
+        ColorPair {
+            front: self.back,
+            back: self.front,
+        }
+    }
+
+    /// Creates a new color pair from color IDs.
+    pub fn from_256colors(front: u8, back: u8) -> Self {
+        Self {
+            front: Color::from_256colors(front),
+            back: Color::from_256colors(back),
+        }
+    }
 }
 
 /// Possible color style for a cell.
@@ -138,7 +165,7 @@ pub enum Effect {
 /// Represents a color pair role to use when printing something.
 ///
 /// The current theme will assign each role a foreground and background color.
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub enum ColorStyle {
     /// Application background, where no view is present.
     Background,
@@ -158,22 +185,34 @@ pub enum ColorStyle {
     Highlight,
     /// Highlight color for inactive views (not in focus).
     HighlightInactive,
+    /// Directly specifies colors, independently of the theme.
+    Custom {
+        /// Foreground color
+        front: Color,
+        /// Background color
+        back: Color,
+    },
 }
 
 impl ColorStyle {
-    /// Returns the ncurses pair ID associated with this color pair.
-    pub fn id(self) -> i16 {
-        match self {
-            ColorStyle::Background => 1,
-            ColorStyle::Shadow => 2,
-            ColorStyle::Primary => 3,
-            ColorStyle::Secondary => 4,
-            ColorStyle::Tertiary => 5,
-            ColorStyle::TitlePrimary => 6,
-            ColorStyle::TitleSecondary => 7,
-            ColorStyle::Highlight => 8,
-            ColorStyle::HighlightInactive => 9,
-        }
+    /// Return the color pair that this style represents.
+    ///
+    /// Returns `(front, back)`.
+    pub fn resolve(&self, theme: &Theme) -> ColorPair {
+        let c = &theme.colors;
+        let (front, back) = match *self {
+            ColorStyle::Background => (c.view, c.background),
+            ColorStyle::Shadow => (c.shadow, c.shadow),
+            ColorStyle::Primary => (c.primary, c.view),
+            ColorStyle::Secondary => (c.secondary, c.view),
+            ColorStyle::Tertiary => (c.tertiary, c.view),
+            ColorStyle::TitlePrimary => (c.title_primary, c.view),
+            ColorStyle::TitleSecondary => (c.title_secondary, c.view),
+            ColorStyle::Highlight => (c.view, c.highlight),
+            ColorStyle::HighlightInactive => (c.view, c.highlight_inactive),
+            ColorStyle::Custom { front, back } => (front, back),
+        };
+        ColorPair { front, back }
     }
 }
 
@@ -183,7 +222,7 @@ pub struct Theme {
     /// Whether views in a StackView should have shadows.
     pub shadow: bool,
     /// How view borders should be drawn.
-    pub borders: Option<BorderStyle>,
+    pub borders: BorderStyle,
     /// What colors should be used through the application?
     pub colors: Palette,
 }
@@ -192,7 +231,7 @@ impl Default for Theme {
     fn default() -> Self {
         Theme {
             shadow: true,
-            borders: Some(BorderStyle::Simple),
+            borders: BorderStyle::Simple,
             colors: Palette {
                 background: Color::Dark(BaseColor::Blue),
                 shadow: Color::Dark(BaseColor::Black),
@@ -223,64 +262,29 @@ impl Theme {
             self.colors.load(table);
         }
     }
-
-    /// Sets a theme as active.
-    ///
-    /// **Don't use this directly.** Uses [`Cursive::set_theme`] instead.
-    ///
-    /// [`Cursive::set_theme`]: ../struct.Cursive.html#method.set_theme
-    pub fn activate(&self, backend: &mut backend::Concrete) {
-        // Initialize each color with the backend
-        backend.init_color_style(ColorStyle::Background,
-                                 &self.colors.view,
-                                 &self.colors.background);
-        backend.init_color_style(ColorStyle::Shadow,
-                                 &self.colors.shadow,
-                                 &self.colors.shadow);
-        backend.init_color_style(ColorStyle::Primary,
-                                 &self.colors.primary,
-                                 &self.colors.view);
-        backend.init_color_style(ColorStyle::Secondary,
-                                 &self.colors.secondary,
-                                 &self.colors.view);
-        backend.init_color_style(ColorStyle::Tertiary,
-                                 &self.colors.tertiary,
-                                 &self.colors.view);
-        backend.init_color_style(ColorStyle::TitlePrimary,
-                                 &self.colors.title_primary,
-                                 &self.colors.view);
-        backend.init_color_style(ColorStyle::TitleSecondary,
-                                 &self.colors.title_secondary,
-                                 &self.colors.view);
-        backend.init_color_style(ColorStyle::Highlight,
-                                 &self.colors.view,
-                                 &self.colors.highlight);
-        backend.init_color_style(ColorStyle::HighlightInactive,
-                                 &self.colors.view,
-                                 &self.colors.highlight_inactive);
-        backend.clear();
-    }
 }
 
 /// Specifies how some borders should be drawn.
 ///
 /// Borders are used around Dialogs, select popups, and panels.
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub enum BorderStyle {
     /// Simple borders.
     Simple,
     /// Outset borders with a simple 3d effect.
     Outset,
+    /// No borders.
+    None,
 }
 
 impl BorderStyle {
-    fn from(s: &str) -> Option<Self> {
+    fn from(s: &str) -> Self {
         if s == "simple" {
-            Some(BorderStyle::Simple)
+            BorderStyle::Simple
         } else if s == "outset" {
-            Some(BorderStyle::Outset)
+            BorderStyle::Outset
         } else {
-            None
+            BorderStyle::None
         }
     }
 }
@@ -288,7 +292,7 @@ impl BorderStyle {
 /// Color configuration for the application.
 ///
 /// Assign each color role an actual color.
-#[derive(Clone,Debug)]
+#[derive(Copy,Clone,Debug)]
 pub struct Palette {
     /// Color used for the application background.
     pub background: Color,
@@ -352,7 +356,7 @@ fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
 }
 
 /// One of the 8 base colors.
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub enum BaseColor {
     /// Black color
     ///
@@ -388,8 +392,24 @@ pub enum BaseColor {
     White,
 }
 
+impl From<u8> for BaseColor {
+    fn from(n: u8) -> Self {
+        match n % 8 {
+            0 => BaseColor::Black,
+            1 => BaseColor::Red,
+            2 => BaseColor::Green,
+            3 => BaseColor::Yellow,
+            4 => BaseColor::Blue,
+            5 => BaseColor::Magenta,
+            6 => BaseColor::Cyan,
+            7 => BaseColor::White,
+            _ => unreachable!(),
+        }
+    }
+}
+
 /// Represents a color used by the theme.
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub enum Color {
     /// One of the 8 base colors.
     Dark(BaseColor),
@@ -404,8 +424,6 @@ pub enum Color {
     /// These 216 possible colors are part of the default color palette.
     RgbLowRes(u8, u8, u8),
 }
-
-impl Color {}
 
 /// Possible error returned when loading a theme.
 #[derive(Debug)]
@@ -429,26 +447,47 @@ impl From<toml::de::Error> for Error {
 }
 
 impl Color {
+    /// Creates a color from its ID in the 256 colors list.
+    ///
+    /// * Colors 0-7 are base dark colors.
+    /// * Colors 8-15 are base light colors.
+    /// * Colors 16-255 are rgb colors with 6 values per channel.
+    pub fn from_256colors(n: u8) -> Self {
+        if n < 8 {
+            Color::Dark(BaseColor::from(n))
+        } else if n < 16 {
+            Color::Light(BaseColor::from(n))
+        } else {
+            let n = n - 16;
+
+            let r = n / 36;
+            let g = (n % 36) / 6;
+            let b = n % 6;
+
+            Color::RgbLowRes(r, g, b)
+        }
+    }
+
     fn parse(value: &str) -> Option<Self> {
         Some(match value {
-            "black" => Color::Dark(BaseColor::Black),
-            "red" => Color::Dark(BaseColor::Red),
-            "green" => Color::Dark(BaseColor::Green),
-            "yellow" => Color::Dark(BaseColor::Yellow),
-            "blue" => Color::Dark(BaseColor::Blue),
-            "magenta" => Color::Dark(BaseColor::Magenta),
-            "cyan" => Color::Dark(BaseColor::Cyan),
-            "white" => Color::Dark(BaseColor::White),
-            "light black" => Color::Light(BaseColor::Black),
-            "light red" => Color::Light(BaseColor::Red),
-            "light green" => Color::Light(BaseColor::Green),
-            "light yellow" => Color::Light(BaseColor::Yellow),
-            "light blue" => Color::Light(BaseColor::Blue),
-            "light magenta" => Color::Light(BaseColor::Magenta),
-            "light cyan" => Color::Light(BaseColor::Cyan),
-            "light white" => Color::Light(BaseColor::White),
-            value => return Color::parse_special(value),
-        })
+                 "black" => Color::Dark(BaseColor::Black),
+                 "red" => Color::Dark(BaseColor::Red),
+                 "green" => Color::Dark(BaseColor::Green),
+                 "yellow" => Color::Dark(BaseColor::Yellow),
+                 "blue" => Color::Dark(BaseColor::Blue),
+                 "magenta" => Color::Dark(BaseColor::Magenta),
+                 "cyan" => Color::Dark(BaseColor::Cyan),
+                 "white" => Color::Dark(BaseColor::White),
+                 "light black" => Color::Light(BaseColor::Black),
+                 "light red" => Color::Light(BaseColor::Red),
+                 "light green" => Color::Light(BaseColor::Green),
+                 "light yellow" => Color::Light(BaseColor::Yellow),
+                 "light blue" => Color::Light(BaseColor::Blue),
+                 "light magenta" => Color::Light(BaseColor::Magenta),
+                 "light cyan" => Color::Light(BaseColor::Cyan),
+                 "light white" => Color::Light(BaseColor::White),
+                 value => return Color::parse_special(value),
+             })
     }
 
     fn parse_special(value: &str) -> Option<Color> {

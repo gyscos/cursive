@@ -170,10 +170,10 @@ new_default!(Cursive);
 impl Cursive {
     /// Creates a new Cursive root, and initialize the back-end.
     pub fn new() -> Self {
-        let mut backend = backend::Concrete::init();
+        let backend = backend::Concrete::init();
 
         let theme = theme::load_default();
-        theme.activate(&mut backend);
+        // theme.activate(&mut backend);
         // let theme = theme::load_theme("assets/style.toml").unwrap();
 
         let (tx, rx) = mpsc::channel();
@@ -287,15 +287,15 @@ impl Cursive {
     /// Sets the current theme.
     pub fn set_theme(&mut self, theme: theme::Theme) {
         self.theme = theme;
-        self.theme.activate(&mut self.backend);
-        self.backend.clear();
+        // self.theme.activate(&mut self.backend);
+        self.clear();
     }
 
     /// Clears the screen.
     ///
     /// Users rarely have to call this directly.
     pub fn clear(&self) {
-        self.backend.clear();
+        self.backend.clear(self.theme.colors.background);
     }
 
     /// Loads a theme from the given file.
@@ -534,9 +534,6 @@ impl Cursive {
     }
 
     fn draw(&mut self) {
-        // TODO: don't clone the theme
-        // Reference it or something
-
         let sizes = self.screen().layer_sizes();
         if self.last_sizes != sizes {
             self.clear();
@@ -544,7 +541,7 @@ impl Cursive {
         }
 
         let printer = Printer::new(self.screen_size(),
-                                   self.theme.clone(),
+                                   &self.theme,
                                    &self.backend);
 
         // Draw the currently active screen
@@ -625,7 +622,7 @@ impl Cursive {
         }
 
         if event == Event::WindowResize {
-            self.backend.clear();
+            self.clear();
         }
 
         // Event dispatch order:

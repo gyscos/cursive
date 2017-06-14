@@ -13,8 +13,6 @@ use backend;
 use chan;
 use event::{Event, Key};
 use std::cell::Cell;
-use std::collections::BTreeMap;
-use std::fmt;
 use std::io::Write;
 use std::thread;
 
@@ -22,9 +20,7 @@ use theme;
 
 pub struct Concrete {
     terminal: AlternateScreen<termion::raw::RawTerminal<::std::io::Stdout>>,
-    current_style: Cell<theme::ColorStyle>,
-    colors: BTreeMap<i16, (Box<tcolor::Color>, Box<tcolor::Color>)>,
-
+    current_style: Cell<theme::ColorPair>,
     input: chan::Receiver<Event>,
     resize: chan::Receiver<chan_signal::Signal>,
     timeout: Option<u32>,
@@ -33,20 +29,6 @@ pub struct Concrete {
 trait Effectable {
     fn on(&self);
     fn off(&self);
-}
-
-struct ColorRef<'a>(&'a tcolor::Color);
-
-impl<'a> tcolor::Color for ColorRef<'a> {
-    #[inline]
-    fn write_fg(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.write_fg(f)
-    }
-
-    #[inline]
-    fn write_bg(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.write_bg(f)
-    }
 }
 
 impl Effectable for theme::Effect {
@@ -65,14 +47,10 @@ impl Effectable for theme::Effect {
     }
 }
 
-fn apply_colors(fg: &tcolor::Color, bg: &tcolor::Color) {
-    print!("{}{}", tcolor::Fg(ColorRef(fg)), tcolor::Bg(ColorRef(bg)));
-}
-
 impl Concrete {
-    fn apply_colorstyle(&self, color_style: theme::ColorStyle) {
-        let (ref fg, ref bg) = self.colors[&color_style.id()];
-        apply_colors(&**fg, &**bg);
+    fn apply_colors(&self, colors: theme::ColorPair) {
+        with_color(&colors.front, |c| print!("{}", tcolor::Fg(c)));
+        with_color(&colors.back, |c| print!("{}", tcolor::Bg(c)));
     }
 }
 
@@ -82,7 +60,9 @@ impl backend::Backend for Concrete {
 
         let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
 
-        let terminal = AlternateScreen::from(::std::io::stdout().into_raw_mode().unwrap());
+        let terminal = AlternateScreen::from(::std::io::stdout()
+                                                 .into_raw_mode()
+                                                 .unwrap());
         let (sender, receiver) = chan::async();
 
         thread::spawn(move || for key in ::std::io::stdin().events() {
@@ -93,8 +73,7 @@ impl backend::Backend for Concrete {
 
         let backend = Concrete {
             terminal: terminal,
-            current_style: Cell::new(theme::ColorStyle::Background),
-            colors: BTreeMap::new(),
+            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
             input: receiver,
             resize: resize,
             timeout: None,
@@ -111,24 +90,20 @@ impl backend::Backend for Concrete {
                termion::clear::All);
     }
 
-    fn init_color_style(&mut self, style: theme::ColorStyle,
-                        foreground: &theme::Color, background: &theme::Color) {
-        // Step 1: convert foreground and background into proper termion Color
-        self.colors.insert(style.id(),
-                           (colour_to_termion_colour(foreground),
-                            colour_to_termion_colour(background)));
-    }
-
-    fn with_color<F: FnOnce()>(&self, color: theme::ColorStyle, f: F) {
+    fn with_color<F: FnOnce()>(&self, color: theme::ColorPair, f: F) {
         let current_style = self.current_style.get();
 
-        self.apply_colorstyle(color);
+        if current_style != color {
+            self.apply_colors(color);
+            self.current_style.set(color);
+        }
 
-        self.current_style.set(color);
         f();
-        self.current_style.set(current_style);
 
-        self.apply_colorstyle(current_style);
+        if current_style != color {
+            self.current_style.set(current_style);
+            self.apply_colors(current_style);
+        }
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: theme::Effect, f: F) {
@@ -147,8 +122,11 @@ impl backend::Backend for Concrete {
         (x as usize, y as usize)
     }
 
-    fn clear(&self) {
-        self.apply_colorstyle(theme::ColorStyle::Background);
+    fn clear(&self, color: theme::Color) {
+        self.apply_colors(theme::ColorPair {
+            front: color,
+            back: color,
+        });
         print!("{}", termion::clear::All);
     }
 
@@ -214,49 +192,43 @@ fn map_key(event: TEvent) -> Event {
 
 }
 
-fn colour_to_termion_colour(clr: &theme::Color) -> Box<tcolor::Color> {
+fn with_color<F, R>(clr: &theme::Color, f: F) -> R
+    where F: FnOnce(&tcolor::Color) -> R
+{
+
     match *clr {
-        theme::Color::Dark(theme::BaseColor::Black) => Box::new(tcolor::Black),
-        theme::Color::Dark(theme::BaseColor::Red) => Box::new(tcolor::Red),
-        theme::Color::Dark(theme::BaseColor::Green) => Box::new(tcolor::Green),
-        theme::Color::Dark(theme::BaseColor::Yellow) => {
-            Box::new(tcolor::Yellow)
-        }
-        theme::Color::Dark(theme::BaseColor::Blue) => Box::new(tcolor::Blue),
-        theme::Color::Dark(theme::BaseColor::Magenta) => {
-            Box::new(tcolor::Magenta)
-        }
-        theme::Color::Dark(theme::BaseColor::Cyan) => Box::new(tcolor::Cyan),
-        theme::Color::Dark(theme::BaseColor::White) => Box::new(tcolor::White),
+          theme::Color::Dark(theme::BaseColor::Black) => f(&tcolor::Black),
+          theme::Color::Dark(theme::BaseColor::Red) => f(&tcolor::Red),
+          theme::Color::Dark(theme::BaseColor::Green) => f(&tcolor::Green),
+          theme::Color::Dark(theme::BaseColor::Yellow) => f(&tcolor::Yellow),
+          theme::Color::Dark(theme::BaseColor::Blue) => f(&tcolor::Blue),
+          theme::Color::Dark(theme::BaseColor::Magenta) => f(&tcolor::Magenta),
+          theme::Color::Dark(theme::BaseColor::Cyan) => f(&tcolor::Cyan),
+          theme::Color::Dark(theme::BaseColor::White) => f(&tcolor::White),
 
-        theme::Color::Light(theme::BaseColor::Black) => {
-            Box::new(tcolor::LightBlack)
-        }
-        theme::Color::Light(theme::BaseColor::Red) => {
-            Box::new(tcolor::LightRed)
-        }
-        theme::Color::Light(theme::BaseColor::Green) => {
-            Box::new(tcolor::LightGreen)
-        }
-        theme::Color::Light(theme::BaseColor::Yellow) => {
-            Box::new(tcolor::LightYellow)
-        }
-        theme::Color::Light(theme::BaseColor::Blue) => {
-            Box::new(tcolor::LightBlue)
-        }
-        theme::Color::Light(theme::BaseColor::Magenta) => {
-            Box::new(tcolor::LightMagenta)
-        }
-        theme::Color::Light(theme::BaseColor::Cyan) => {
-            Box::new(tcolor::LightCyan)
-        }
-        theme::Color::Light(theme::BaseColor::White) => {
-            Box::new(tcolor::LightWhite)
-        }
+          theme::Color::Light(theme::BaseColor::Black) => {
+              f(&tcolor::LightBlack)
+          }
+          theme::Color::Light(theme::BaseColor::Red) => f(&tcolor::LightRed),
+          theme::Color::Light(theme::BaseColor::Green) => {
+              f(&tcolor::LightGreen)
+          }
+          theme::Color::Light(theme::BaseColor::Yellow) => {
+              f(&tcolor::LightYellow)
+          }
+          theme::Color::Light(theme::BaseColor::Blue) => f(&tcolor::LightBlue),
+          theme::Color::Light(theme::BaseColor::Magenta) => {
+              f(&tcolor::LightMagenta)
+          }
+          theme::Color::Light(theme::BaseColor::Cyan) => f(&tcolor::LightCyan),
+          theme::Color::Light(theme::BaseColor::White) => {
+              f(&tcolor::LightWhite)
+          }
 
-        theme::Color::Rgb(r, g, b) => Box::new(tcolor::Rgb(r, g, b)),
-        theme::Color::RgbLowRes(r, g, b) => {
-            Box::new(tcolor::AnsiValue::rgb(r, g, b))
-        }
-    }
+          theme::Color::Rgb(r, g, b) => f(&tcolor::Rgb(r, g, b)),
+          theme::Color::RgbLowRes(r, g, b) => {
+              f(&tcolor::AnsiValue::rgb(r, g, b))
+          }
+
+      }
 }
