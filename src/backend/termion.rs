@@ -13,8 +13,6 @@ use backend;
 use chan;
 use event::{Event, Key};
 use std::cell::Cell;
-use std::collections::HashMap;
-use std::fmt;
 use std::io::Write;
 use std::thread;
 

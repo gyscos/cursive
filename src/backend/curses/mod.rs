@@ -11,7 +11,7 @@ mod pan;
 pub use self::pan::*;
 
 
-fn find_closest(color: &Color) -> u8 {
+fn find_closest(color: &Color) -> i16 {
     match *color {
         Color::Dark(BaseColor::Black) => 0,
         Color::Dark(BaseColor::Red) => 1,
@@ -33,8 +33,8 @@ fn find_closest(color: &Color) -> u8 {
             let r = 6 * r as u16 / 256;
             let g = 6 * g as u16 / 256;
             let b = 6 * b as u16 / 256;
-            (16 + 36 * r + 6 * g + b) as u8
+            (16 + 36 * r + 6 * g + b) as i16
         }
-        Color::RgbLowRes(r, g, b) => (16 + 36 * r + 6 * g + b) as u8,
+        Color::RgbLowRes(r, g, b) => (16 + 36 * r + 6 * g + b) as i16,
     }
 }

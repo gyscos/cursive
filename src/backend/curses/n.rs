@@ -32,8 +32,8 @@ impl Concrete {
         };
         pairs.insert(pair, target);
         ncurses::init_pair(target,
-                           find_closest(&pair.front) as i16,
-                           find_closest(&pair.back) as i16);
+                           find_closest(&pair.front),
+                           find_closest(&pair.back));
         target
     }
 
@@ -51,7 +51,7 @@ impl Concrete {
         }
     }
 
-    fn set_colorstyle(&self, pair: ColorPair) {
+    fn set_colors(&self, pair: ColorPair) {
 
         let i = self.get_or_create(pair);
 
@@ -99,11 +99,15 @@ impl backend::Backend for Concrete {
 
     fn with_color<F: FnOnce()>(&self, colors: ColorPair, f: F) {
         let current = self.current_style.get();
+        if current != colors {
+            self.set_colors(colors);
+        }
 
-        self.set_colorstyle(colors);
         f();
-        self.set_colorstyle(current);
-        self.current_style.set(current);
+
+        if current != colors {
+            self.set_colors(current);
+        }
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {

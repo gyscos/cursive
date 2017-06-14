@@ -1,15 +1,67 @@
 extern crate pancurses;
 
-
-
-use self::super::{color_id, find_closest};
+use self::super::find_closest;
 use backend;
 use event::{Event, Key};
-use theme::{Color, ColorStyle, Effect};
+use std::cell::{RefCell, Cell};
+use std::collections::HashMap;
+use theme::{Color, ColorStyle, ColorPair, Effect};
 use utf8;
 
 pub struct Concrete {
+    current_style: Cell<ColorPair>,
+    pairs: RefCell<HashMap<ColorPair, i32>>,
     window: pancurses::Window,
+}
+
+impl Concrete {
+    /// Save a new color pair.
+    fn insert_color(&self, pairs: &mut HashMap<ColorPair, i32>,
+                    pair: ColorPair)
+                    -> i32 {
+
+        let n = 1 + pairs.len() as i32;
+
+        // TODO: when COLORS_PAIRS is available...
+        let target = if 16 > n {
+            // We still have plenty of space for everyone.
+            n
+        } else {
+            // The world is too small for both of us.
+            let target = n - 1;
+            // Remove the mapping to n-1
+            pairs.retain(|_, &mut v| v != target);
+            target
+        };
+        pairs.insert(pair, target);
+        pancurses::init_pair(target as i16,
+                             find_closest(&pair.front),
+                             find_closest(&pair.back));
+        target
+    }
+
+    /// Checks the pair in the cache, or re-define a color if needed.
+    fn get_or_create(&self, pair: ColorPair) -> i32 {
+
+        let mut pairs = self.pairs.borrow_mut();
+
+        // Find if we have this color in stock
+        if pairs.contains_key(&pair) {
+            // We got it!
+            pairs[&pair]
+        } else {
+            self.insert_color(&mut *pairs, pair)
+        }
+    }
+
+    fn set_colors(&self, pair: ColorPair) {
+
+        let i = self.get_or_create(pair);
+
+        self.current_style.set(pair);
+        let style = pancurses::COLOR_PAIR(i as u32);
+        self.window.attron(style);
+    }
 }
 
 impl backend::Backend for Concrete {
@@ -21,10 +73,12 @@ impl backend::Backend for Concrete {
         pancurses::cbreak();
         pancurses::start_color();
         pancurses::curs_set(0);
-        window.bkgd(pancurses::ColorPair(color_id(ColorStyle::Background) as
-                                         u8));
 
-        Concrete { window: window }
+        Concrete {
+            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
+            pairs: RefCell::new(HashMap::new()),
+            window: window,
+        }
     }
 
     fn screen_size(&self) -> (usize, usize) {
@@ -40,21 +94,18 @@ impl backend::Backend for Concrete {
         pancurses::endwin();
     }
 
-    fn init_color_style(&mut self, style: ColorStyle, foreground: &Color,
-                        background: &Color) {
-        pancurses::init_pair(color_id(style),
-                             find_closest(foreground) as i16,
-                             find_closest(background) as i16);
-    }
+    fn with_color<F: FnOnce()>(&self, colors: ColorPair, f: F) {
+        let current = self.current_style.get();
 
-    fn with_color<F: FnOnce()>(&self, color: ColorStyle, f: F) {
-        let (_, current_color_pair) = self.window.attrget();
-        let color_attribute = pancurses::ColorPair(color_id(color) as u8);
+        if current != colors {
+            self.set_colors(colors);
+        }
 
-        self.window.attron(color_attribute);
         f();
-        self.window
-            .attron(pancurses::ColorPair(current_color_pair as u8));
+
+        if current != colors {
+            self.set_colors(current);
+        }
     }
 
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
@@ -67,7 +118,12 @@ impl backend::Backend for Concrete {
         self.window.attroff(style);
     }
 
-    fn clear(&self) {
+    fn clear(&self, color: Color) {
+        let id = self.get_or_create(ColorPair {
+                                        front: color,
+                                        back: color,
+                                    });
+        self.window.bkgd(pancurses::ColorPair(id as u8));
         self.window.clear();
     }
 
