@@ -5,7 +5,7 @@ use backend;
 use event::{Event, Key};
 use std::cell::{RefCell, Cell};
 use std::collections::HashMap;
-use theme::{Color, ColorStyle, ColorPair, Effect};
+use theme::{Color, ColorPair, Effect};
 use utf8;
 
 pub struct Concrete {
@@ -59,7 +59,7 @@ impl Concrete {
         let i = self.get_or_create(pair);
 
         self.current_style.set(pair);
-        let style = pancurses::COLOR_PAIR(i as u32);
+        let style = pancurses::COLOR_PAIR(i as pancurses::chtype);
         self.window.attron(style);
     }
 }
