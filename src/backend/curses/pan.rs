@@ -23,7 +23,7 @@ impl Concrete {
         let n = 1 + pairs.len() as i32;
 
         // TODO: when COLORS_PAIRS is available...
-        let target = if 16 > n {
+        let target = if 256 > n {
             // We still have plenty of space for everyone.
             n
         } else {
