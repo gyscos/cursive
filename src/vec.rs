@@ -114,6 +114,11 @@ impl From<(u32, u32)> for XY<usize> {
     }
 }
 
+impl From<(u8, u8)> for XY<usize> {
+    fn from((x, y): (u8, u8)) -> Self {
+        (x as usize, y as usize).into()
+    }
+}
 
 impl<T: Add<Output = T>, O: Into<XY<T>>> Add<O> for XY<T> {
     type Output = Self;

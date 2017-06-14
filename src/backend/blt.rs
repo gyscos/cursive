@@ -55,6 +55,7 @@ impl backend::Backend for Concrete {
     }
 
     fn clear(&self, color: Color) {
+        terminal::set_background(colour_to_blt_colour(color));
         terminal::clear(None);
     }
 
@@ -134,11 +135,11 @@ fn blt_keycode_to_ev(kc: KeyCode, shift: bool, ctrl: bool) -> Event {
         KeyCode::F1 | KeyCode::F2 | KeyCode::F3 | KeyCode::F4 |
         KeyCode::F5 | KeyCode::F6 | KeyCode::F7 | KeyCode::F8 |
         KeyCode::F9 | KeyCode::F10 | KeyCode::F11 | KeyCode::F12 |
-        KeyCode::NumEnter | KeyCode::Enter | KeyCode::Escape | KeyCode::Backspace |
-        KeyCode::Tab | KeyCode::Pause | KeyCode::Insert | KeyCode::Home |
-        KeyCode::PageUp | KeyCode::Delete | KeyCode::End |
-        KeyCode::PageDown | KeyCode::Right | KeyCode::Left |
-        KeyCode::Down | KeyCode::Up => {
+        KeyCode::NumEnter | KeyCode::Enter | KeyCode::Escape |
+        KeyCode::Backspace | KeyCode::Tab | KeyCode::Pause |
+        KeyCode::Insert | KeyCode::Home | KeyCode::PageUp |
+        KeyCode::Delete | KeyCode::End | KeyCode::PageDown |
+        KeyCode::Right | KeyCode::Left | KeyCode::Down | KeyCode::Up => {
             match (shift, ctrl) {
                 (true, true) => Event::CtrlShift(blt_keycode_to_key(kc)),
                 (true, false) => Event::Shift(blt_keycode_to_key(kc)),
@@ -162,10 +163,9 @@ fn blt_keycode_to_ev(kc: KeyCode, shift: bool, ctrl: bool) -> Event {
         KeyCode::Apostrophe | KeyCode::Comma | KeyCode::Period |
         KeyCode::Slash | KeyCode::Space | KeyCode::NumDivide |
         KeyCode::NumMultiply | KeyCode::NumMinus | KeyCode::NumPlus |
-        KeyCode::NumPeriod | KeyCode::Num1 |
-        KeyCode::Num2 | KeyCode::Num3 | KeyCode::Num4 | KeyCode::Num5 |
-        KeyCode::Num6 | KeyCode::Num7 | KeyCode::Num8 | KeyCode::Num9 |
-        KeyCode::Num0 => {
+        KeyCode::NumPeriod | KeyCode::Num1 | KeyCode::Num2 |
+        KeyCode::Num3 | KeyCode::Num4 | KeyCode::Num5 | KeyCode::Num6 |
+        KeyCode::Num7 | KeyCode::Num8 | KeyCode::Num9 | KeyCode::Num0 => {
             if ctrl {
                 Event::CtrlChar(blt_keycode_to_char(kc, shift))
             } else {
@@ -240,7 +240,10 @@ fn blt_keycode_to_char(kc: KeyCode, shift: bool) -> char {
         KeyCode::Num8 => '8',
         KeyCode::Num9 => '9',
         KeyCode::Num0 => '0',
-        _ => { println_stderr!("{:?}", kc); unreachable!() },
+        _ => {
+            println_stderr!("{:?}", kc);
+            unreachable!()
+        }
     }
 }
 
