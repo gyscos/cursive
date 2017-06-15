@@ -6,7 +6,7 @@ Here are a few guidelines to help make sure your contribution goes as smoothly a
 
 This is still a young library, and bugs are sure to be hiding everywhere. If you found one, great!
 
-* Please mention the operating system you are using. If you are manually selecting a backend, please mention this as well.
+* Mention the operating system you are using. If you are manually selecting a backend (for instance termion), please mention this as well.
 * Try to provide "simple" (if possible) code to reproduce the bug. If you can't simplify your code, a complete code is better than a simple, but incomplete one.
 * If relevant, you can post a screenshot describing the problem.
 
@@ -23,3 +23,4 @@ If you feel like digging in the code, thank you again! We're very grateful for y
 * Format your code with rustfmt.
 * Make sure all tests are passing - it's very easy to forget a backend! If you start a Pull Request, travis will check all backends for you.
 * Only use stable rust features. This library should compile on rust stable.
+* Do one thing at a time. Split a large change into a series of smaller, standalone changes. Don't start a refactor while adding a feature.
