@@ -109,34 +109,4 @@ Also, Cursive currently expects every codepoint to be a one-column character, so
 * Keep in mind that if the terminal has shortcuts registered, they probably won't be transmitted to the app.
 * UTF-8 input should work fine in a unicode-enabled terminal emulator, but raw linux TTY may be more capricious.
 
-Here is the support table for input keys. Tested terminals are mostly Gnome terminal and Linux TTY, xterm, and a few others now and then.
-
-|                          | Key  | Shift+Key              | Ctrl+Key                   | Shift+Ctrl+Key  |
-|--------------------------|:----:|:----------------------:|:--------------------------:|:---------------:|
-| Letters                  | All  | All                    | All (except c,z,q,s,i,h,m) | None            |
-| Numbers                  | All  | All                    | None (can crash the app)   | None            |
-| Punctuation              | All  | All                    | None (can crash the app)   | None            |
-| Enter, Esc               | All  | None                   | None                       | None            |
-| Left, Right arrow keys   | All  | VTE+Xterm              | VTE+Xterm                  | VTE+Xterm       |
-| Up, Down arrow keys      | All  | Xterm                  | VTE+Xterm                  | Xterm           |
-| Ins                      | All  | None (paste clipboard) | Xterm                      | None            |
-| Del                      | All  | VTE+Xterm              | VTE+Xterm                  | VTE+Xterm       |
-| Home, End                | All  | Xterm                  | Xterm                      | Xterm           |
-| PageUp, PageDown         | All  | All                    | All                        | None            |
-| Fn keys: F1-F4           | All  | All except Konsole     | Gnome+XTerm                | Gnome+Xterm     |
-| Fn keys: F5-F8           | All  | All                    | All except TTY             | All except TTY  |
-| Fn keys: F9-F12          | All  | All except TTY         | All except TTY             | All except TTY  |
-| PrtScn, ScrollLock       | None | None                   | None                       | None            |
-| Window, Menu             | None | None                   | None                       | None            |
-| Ctrl, Shift, Alt  (by themselves)          | None | None                   | None                       | None            |
-## Contribute & Feedback
-
-You want to help? Thank you so much! Here are some ideas of things you could do:
-
-* Give feedback on your experience with cursive! Knowing your impressions is very
-  helpful to identify what parts of the API need more work. Don't hesitate to
-  post an issue if you find something especially annoying, we'll see what we can do to help.
-* Provide example use-case: a good idea of application for existing or new components.
-* Check compatibility: run the `key_codes` example on your favorite terminal, and report the results!
-* Test and reports issues: a bug won't get fixed if we don't know it's there.
-* Hack the code! If you feel confident with rust, pick an issue you like and hack away!
+## [Contributing](CONTRIBUTING.md)
