@@ -114,15 +114,15 @@ pub trait View {
     /// Draws the view with the given printer (includes bounds) and focus.
     fn draw(&self, printer: &Printer);
 
-    /// Finds the view identified by the given selector.
+    /// Runs a closure on the view identified by the given selector.
     ///
     /// See [`Finder::call_on`] for a nicer interface, implemented for all views.
     ///
     /// [`Finder::call_on`]: trait.Finder.html#method.call_on
     ///
-    /// Returns None if the path doesn't lead to a view.
+    /// If the selector doesn't find a match, the closure will not be run.
     ///
-    /// Default implementation always return `None`.
+    /// Default implementation is a no-op.
     fn call_on_any<'a>(&mut self, _: &Selector, _: Box<FnMut(&mut Any) + 'a>) {
         // TODO: FnMut -> FnOnce once it works
     }
@@ -130,6 +130,8 @@ pub trait View {
     /// Moves the focus to the view identified by the given selector.
     ///
     /// Returns `Ok(())` if the view was found and selected.
+    ///
+    /// Default implementation simply returns `Err(())`.
     fn focus_view(&mut self, &Selector) -> Result<(), ()> {
         Err(())
     }
