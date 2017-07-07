@@ -17,13 +17,13 @@ repository = "gyscos/Cursive"
 
 [build-dependencies.skeptic]
 optional = true
-version = "0.7"
+version = "0.10"
 
 [dependencies]
 num = "0.1"
 odds = "0.2"
-owning_ref = "0.2.4"
-toml = "0.3"
+owning_ref = "0.3"
+toml = "0.4"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
 
@@ -42,7 +42,7 @@ version = "1.3.1"
 [dependencies.ncurses]
 features = ["wide"]
 optional = true
-version = "5.85.0"
+version = "5.86.0"
 
 [dependencies.pancurses]
 features = ["wide"]
@@ -51,11 +51,11 @@ version = "0.8"
 
 [dependencies.termion]
 optional = true
-version = "1.3.0"
+version = "1.4.0"
 
 [dev-dependencies]
 rand = "0.3"
-skeptic = "0.7"
+skeptic = "0.10"
 
 [features]
 default = ["ncurses-backend"]

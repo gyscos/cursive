@@ -37,11 +37,7 @@ impl<V: View> IdView<V> {
     pub fn get_mut(&mut self) -> ViewRef<V> {
         let cell_ref = RcRef::new(self.view.clone());
 
-        // The unsafe part here is tied to OwningHandle's limitation.
-        OwningHandle::new(
-            cell_ref,
-            |x| unsafe { x.as_ref() }.unwrap().borrow_mut(),
-        )
+        OwningHandle::new_mut(cell_ref)
     }
 }
 
