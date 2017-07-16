@@ -167,6 +167,8 @@ impl ColorPair {
 /// The current theme will assign each role a foreground and background color.
 #[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub enum ColorStyle {
+    /// Style set by terminal before entering a Cursive program.
+    Default,
     /// Application background, where no view is present.
     Background,
     /// Color used by view shadows. Only background matters.
@@ -201,6 +203,7 @@ impl ColorStyle {
     pub fn resolve(&self, theme: &Theme) -> ColorPair {
         let c = &theme.colors;
         let (front, back) = match *self {
+            ColorStyle::Default => (Color::Default, Color::Default),
             ColorStyle::Background => (c.view, c.background),
             ColorStyle::Shadow => (c.shadow, c.shadow),
             ColorStyle::Primary => (c.primary, c.view),
@@ -411,6 +414,8 @@ impl From<u8> for BaseColor {
 /// Represents a color used by the theme.
 #[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub enum Color {
+    /// Represents a color, preset by terminal.
+    Default,
     /// One of the 8 base colors.
     Dark(BaseColor),
     /// Lighter version of a base color.

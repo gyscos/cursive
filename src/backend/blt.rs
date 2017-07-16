@@ -2,11 +2,16 @@ extern crate bear_lib_terminal;
 
 use self::bear_lib_terminal::Color as BltColor;
 use self::bear_lib_terminal::geometry::Size;
-use self::bear_lib_terminal::terminal::{self, Event as BltEvent, KeyCode};
+use self::bear_lib_terminal::terminal::{self, state, Event as BltEvent, KeyCode};
 use backend;
 use event::{Event, Key};
 use std::collections::BTreeMap;
 use theme::{BaseColor, Color, ColorPair, Effect};
+
+enum ColorRole {
+    Foreground,
+    Background,
+}
 
 pub struct Concrete {
     colours: BTreeMap<i16, (BltColor, BltColor)>,
@@ -25,8 +30,8 @@ impl backend::Backend for Concrete {
     }
 
     fn with_color<F: FnOnce()>(&self, color: ColorPair, f: F) {
-        let fg = colour_to_blt_colour(color.front);
-        let bg = colour_to_blt_colour(color.back);
+        let fg = colour_to_blt_colour(color.front, ColorRole::Foreground);
+        let bg = colour_to_blt_colour(color.back, ColorRole::Background);
         terminal::with_colors(fg, bg, f);
     }
 
@@ -55,7 +60,7 @@ impl backend::Backend for Concrete {
     }
 
     fn clear(&self, color: Color) {
-        terminal::set_background(colour_to_blt_colour(color));
+        terminal::set_background(colour_to_blt_colour(color, ColorRole::Background));
         terminal::clear(None);
     }
 
@@ -98,8 +103,17 @@ impl backend::Backend for Concrete {
     }
 }
 
-fn colour_to_blt_colour(clr: Color) -> BltColor {
+fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
     let (r, g, b) = match clr {
+        Color::Default => {
+            let clr = match role {
+                ColorRole::Foreground => state::foreground(),
+                ColorRole::Background => state::background(),
+            };
+
+            return clr;
+        },
+
         // Colours taken from
         // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
         Color::Dark(BaseColor::Black) => (0, 0, 0),
