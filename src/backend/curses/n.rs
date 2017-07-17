@@ -73,6 +73,7 @@ impl backend::Backend for Concrete {
         ncurses::noecho();
         ncurses::cbreak();
         ncurses::start_color();
+        ncurses::use_default_colors();
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 
         Concrete {

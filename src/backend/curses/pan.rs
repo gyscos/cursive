@@ -72,6 +72,7 @@ impl backend::Backend for Concrete {
         pancurses::noecho();
         pancurses::cbreak();
         pancurses::start_color();
+        pancurses::use_default_colors();
         pancurses::curs_set(0);
 
         Concrete {
