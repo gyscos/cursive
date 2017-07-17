@@ -36,9 +36,7 @@ pub struct TextArea {
 }
 
 fn make_rows(text: &str, width: usize) -> Vec<Row> {
-    LinesIterator::new(text, width)
-        .show_spaces()
-        .collect()
+    LinesIterator::new(text, width).show_spaces().collect()
 }
 
 new_default!(TextArea);
@@ -157,10 +155,7 @@ impl TextArea {
             }
 
             let text = &self.content[self.rows[row].start..self.cursor];
-            text.graphemes(true)
-                .last()
-                .unwrap()
-                .len()
+            text.graphemes(true).last().unwrap().len()
         };
         self.cursor -= len;
     }
@@ -186,7 +181,8 @@ impl TextArea {
 
     fn fix_ghost_row(&mut self) {
         if self.rows.is_empty() ||
-           self.rows.last().unwrap().end != self.content.len() {
+            self.rows.last().unwrap().end != self.content.len()
+        {
             // Add a fake, empty row at the end.
             self.rows.push(Row {
                 start: self.content.len(),
@@ -312,10 +308,12 @@ impl TextArea {
         // We don't need to go beyond a newline.
         // If we don't find one, end of the text it is.
         // println_stderr!("Cursor: {}", self.cursor);
-        let last_byte = self.content[self.cursor..]
-            .find('\n')
-            .map(|i| 1 + i + self.cursor);
-        let last_row = last_byte.map_or(self.rows.len(), |last_byte| self.row_at(last_byte));
+        let last_byte = self.content[self.cursor..].find('\n').map(|i| {
+            1 + i + self.cursor
+        });
+        let last_row = last_byte.map_or(self.rows.len(), |last_byte| {
+            self.row_at(last_byte)
+        });
         let last_byte = last_byte.unwrap_or_else(|| self.content.len());
 
         // println_stderr!("Content: `{}` (len={})",
@@ -335,13 +333,13 @@ impl TextArea {
 
         // First attempt, if scrollbase status didn't change.
         // println_stderr!("Rows: {:?}", self.rows);
-        let new_rows = make_rows(&self.content[first_byte..last_byte],
-                                 available);
+        let new_rows =
+            make_rows(&self.content[first_byte..last_byte], available);
         // How much did this add?
         // println_stderr!("New rows: {:?}", new_rows);
         // println_stderr!("{}-{}", first_row, last_row);
         let new_row_count = self.rows.len() + new_rows.len() + first_row -
-                            last_row;
+            last_row;
         if !scrollable && new_row_count > size.y {
             // We just changed scrollable status.
             // This changes everything.
@@ -354,8 +352,8 @@ impl TextArea {
 
         // Otherwise, replace stuff.
         let affected_rows = first_row..last_row;
-        let replacement_rows = new_rows.into_iter()
-            .map(|row| row.shifted(first_byte));
+        let replacement_rows =
+            new_rows.into_iter().map(|row| row.shifted(first_byte));
         VecExt::splice(&mut self.rows, affected_rows, replacement_rows);
         self.fix_ghost_row();
         self.scrollbase.set_heights(size.y, self.rows.len());
@@ -364,10 +362,17 @@ impl TextArea {
 
 impl View for TextArea {
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+        // Make sure our structure is up to date
         self.compute_rows(constraint);
+
+        // Ideally, we'd want x = the longest row + 1
+        // (we always keep a space at the end)
+        // And y = number of rows
+        // println_stderr!("{:?}", self.rows);
+        let scroll_width = if self.rows.len() > constraint.y { 1 } else { 0 };
         Vec2::new(
-            1 + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
-            self.rows.len()
+            scroll_width + 1 + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
+            self.rows.len(),
         )
     }
 
@@ -384,10 +389,12 @@ impl View for TextArea {
             } else {
                 printer.size.x
             };
-            printer.with_effect(effect,
-                                |printer| for y in 0..printer.size.y {
-                                    printer.print_hline((0, y), w, " ");
-                                });
+            printer.with_effect(
+                effect,
+                |printer| for y in 0..printer.size.y {
+                    printer.print_hline((0, y), w, " ");
+                },
+            );
 
             // println_stderr!("Content: `{}`", &self.content);
             self.scrollbase.draw(printer, |printer, i| {
@@ -396,19 +403,19 @@ impl View for TextArea {
                 // println_stderr!("row: {:?}", row);
                 let text = &self.content[row.start..row.end];
                 // println_stderr!("row text: `{}`", text);
-                printer.with_effect(effect, |printer| {
-                    printer.print((0, 0), text);
-                });
+                printer.with_effect(
+                    effect,
+                    |printer| { printer.print((0, 0), text); },
+                );
 
                 if printer.focused && i == self.selected_row() {
                     let cursor_offset = self.cursor - row.start;
                     let c = if cursor_offset == text.len() {
                         "_"
                     } else {
-                        text[cursor_offset..]
-                            .graphemes(true)
-                            .next()
-                            .expect("Found no char!")
+                        text[cursor_offset..].graphemes(true).next().expect(
+                            "Found no char!",
+                        )
                     };
                     let offset = text[..cursor_offset].width();
                     printer.print((offset, 0), c);
@@ -431,7 +438,8 @@ impl View for TextArea {
                 let row = self.selected_row();
                 self.cursor = self.rows[row].end;
                 if row + 1 < self.rows.len() &&
-                   self.cursor == self.rows[row + 1].start {
+                    self.cursor == self.rows[row + 1].start
+                {
                     self.move_left();
                 }
             }
@@ -441,8 +449,10 @@ impl View for TextArea {
                 self.cursor = self.rows[self.selected_row()].start
             }
             Event::Key(Key::Up) if self.selected_row() > 0 => self.move_up(),
-            Event::Key(Key::Down) if self.selected_row() + 1 <
-                                     self.rows.len() => self.move_down(),
+            Event::Key(Key::Down)
+                if self.selected_row() + 1 < self.rows.len() => {
+                self.move_down()
+            }
             Event::Key(Key::PageUp) => self.page_up(),
             Event::Key(Key::PageDown) => self.page_down(),
             Event::Key(Key::Left) if self.cursor > 0 => self.move_left(),
