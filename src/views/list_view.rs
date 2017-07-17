@@ -31,9 +31,9 @@ impl ListChild {
         }
     }
 
-    fn view(&mut self) -> Option<&mut Box<View>> {
+    fn view(&mut self) -> Option<&mut View> {
         match *self {
-            ListChild::Row(_, ref mut view) => Some(view),
+            ListChild::Row(_, ref mut view) => Some(view.as_mut()),
             _ => None,
         }
     }

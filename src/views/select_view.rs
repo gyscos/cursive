@@ -67,6 +67,12 @@ pub struct SelectView<T = String> {
     last_size: Vec2,
 }
 
+impl <T: 'static> Default for SelectView<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: 'static> SelectView<T> {
     /// Creates a new empty SelectView.
     pub fn new() -> Self {

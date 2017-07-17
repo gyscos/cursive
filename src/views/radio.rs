@@ -32,6 +32,12 @@ pub struct RadioGroup<T> {
     state: Rc<RefCell<SharedState<T>>>,
 }
 
+impl <T> Default for RadioGroup<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> RadioGroup<T> {
     /// Creates an empty group for radio buttons.
     pub fn new() -> Self {
