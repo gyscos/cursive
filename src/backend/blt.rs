@@ -2,7 +2,8 @@ extern crate bear_lib_terminal;
 
 use self::bear_lib_terminal::Color as BltColor;
 use self::bear_lib_terminal::geometry::Size;
-use self::bear_lib_terminal::terminal::{self, state, Event as BltEvent, KeyCode};
+use self::bear_lib_terminal::terminal::{self, state, Event as BltEvent,
+                                        KeyCode};
 use backend;
 use event::{Event, Key};
 use std::collections::BTreeMap;
@@ -13,16 +14,14 @@ enum ColorRole {
     Background,
 }
 
-pub struct Concrete {
-    colours: BTreeMap<i16, (BltColor, BltColor)>,
-}
+pub struct Concrete {}
 
 impl backend::Backend for Concrete {
     fn init() -> Self {
         terminal::open("Cursive", 80, 24);
         terminal::set(terminal::config::Window::empty().resizeable(true));
 
-        Concrete { colours: BTreeMap::new() }
+        Concrete {}
     }
 
     fn finish(&mut self) {
@@ -43,9 +42,11 @@ impl backend::Backend for Concrete {
             //       we'd need the colours in our position,
             //       but `f()` can do whatever
             Effect::Reverse => {
-                terminal::with_colors(BltColor::from_rgb(0, 0, 0),
-                                      BltColor::from_rgb(255, 255, 255),
-                                      f)
+                terminal::with_colors(
+                    BltColor::from_rgb(0, 0, 0),
+                    BltColor::from_rgb(255, 255, 255),
+                    f,
+                )
             }
         }
     }
@@ -60,7 +61,9 @@ impl backend::Backend for Concrete {
     }
 
     fn clear(&self, color: Color) {
-        terminal::set_background(colour_to_blt_colour(color, ColorRole::Background));
+        terminal::set_background(
+            colour_to_blt_colour(color, ColorRole::Background),
+        );
         terminal::clear(None);
     }
 
@@ -105,14 +108,14 @@ impl backend::Backend for Concrete {
 
 fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
     let (r, g, b) = match clr {
-        Color::Default => {
+        Color::TerminalDefault => {
             let clr = match role {
                 ColorRole::Foreground => state::foreground(),
                 ColorRole::Background => state::background(),
             };
 
             return clr;
-        },
+        }
 
         // Colours taken from
         // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
@@ -136,9 +139,11 @@ fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
 
         Color::Rgb(r, g, b) => (r, g, b),
         Color::RgbLowRes(r, g, b) => {
-            ((r as f32 / 5.0 * 255.0) as u8,
-             (g as f32 / 5.0 * 255.0) as u8,
-             (b as f32 / 5.0 * 255.0) as u8)
+            (
+                (r as f32 / 5.0 * 255.0) as u8,
+                (g as f32 / 5.0 * 255.0) as u8,
+                (b as f32 / 5.0 * 255.0) as u8,
+            )
         }
     };
     BltColor::from_rgb(r, g, b)

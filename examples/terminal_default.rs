@@ -8,7 +8,7 @@ use cursive::views::TextView;
 
 fn custom_theme_from_cursive(siv: &Cursive) -> Theme {
     let mut theme = siv.current_theme().clone();
-    theme.colors.background = Color::Default;
+    theme.colors.background = Color::TerminalDefault;
     theme
 }
 

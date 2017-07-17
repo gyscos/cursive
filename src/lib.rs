@@ -287,7 +287,6 @@ impl Cursive {
     /// Sets the current theme.
     pub fn set_theme(&mut self, theme: theme::Theme) {
         self.theme = theme;
-        // self.theme.activate(&mut self.backend);
         self.clear();
     }
 

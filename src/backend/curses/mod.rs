@@ -13,7 +13,7 @@ pub use self::pan::*;
 
 fn find_closest(color: &Color) -> i16 {
     match *color {
-        Color::Default => -1,
+        Color::TerminalDefault => -1,
         Color::Dark(BaseColor::Black) => 0,
         Color::Dark(BaseColor::Red) => 1,
         Color::Dark(BaseColor::Green) => 2,

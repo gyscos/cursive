@@ -197,7 +197,7 @@ fn with_color<F, R>(clr: &theme::Color, f: F) -> R
 {
 
     match *clr {
-          theme::Color::Default => f(&tcolor::Reset),
+          theme::Color::TerminalDefault => f(&tcolor::Reset),
           theme::Color::Dark(theme::BaseColor::Black) => f(&tcolor::Black),
           theme::Color::Dark(theme::BaseColor::Red) => f(&tcolor::Red),
           theme::Color::Dark(theme::BaseColor::Green) => f(&tcolor::Green),

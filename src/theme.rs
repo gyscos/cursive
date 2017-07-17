@@ -132,7 +132,7 @@ pub enum Effect {
 }
 
 /// Combines a front and back color.
-#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ColorPair {
     /// Color used for the foreground.
     pub front: Color,
@@ -165,10 +165,10 @@ impl ColorPair {
 /// Represents a color pair role to use when printing something.
 ///
 /// The current theme will assign each role a foreground and background color.
-#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ColorStyle {
     /// Style set by terminal before entering a Cursive program.
-    Default,
+    TerminalDefault,
     /// Application background, where no view is present.
     Background,
     /// Color used by view shadows. Only background matters.
@@ -203,7 +203,10 @@ impl ColorStyle {
     pub fn resolve(&self, theme: &Theme) -> ColorPair {
         let c = &theme.colors;
         let (front, back) = match *self {
-            ColorStyle::Default => (Color::Default, Color::Default),
+            ColorStyle::TerminalDefault => (
+                Color::TerminalDefault,
+                Color::TerminalDefault,
+            ),
             ColorStyle::Background => (c.view, c.background),
             ColorStyle::Shadow => (c.shadow, c.shadow),
             ColorStyle::Primary => (c.primary, c.view),
@@ -220,7 +223,7 @@ impl ColorStyle {
 }
 
 /// Represents the style a Cursive application will use.
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct Theme {
     /// Whether views in a StackView should have shadows.
     pub shadow: bool,
@@ -270,7 +273,7 @@ impl Theme {
 /// Specifies how some borders should be drawn.
 ///
 /// Borders are used around Dialogs, select popups, and panels.
-#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum BorderStyle {
     /// Simple borders.
     Simple,
@@ -295,7 +298,7 @@ impl BorderStyle {
 /// Color configuration for the application.
 ///
 /// Assign each color role an actual color.
-#[derive(Copy,Clone,Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Palette {
     /// Color used for the application background.
     pub background: Color,
@@ -331,8 +334,10 @@ impl Palette {
         load_color(&mut self.title_primary, table.get("title_primary"));
         load_color(&mut self.title_secondary, table.get("title_secondary"));
         load_color(&mut self.highlight, table.get("highlight"));
-        load_color(&mut self.highlight_inactive,
-                   table.get("highlight_inactive"));
+        load_color(
+            &mut self.highlight_inactive,
+            table.get("highlight_inactive"),
+        );
     }
 }
 
@@ -359,7 +364,7 @@ fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
 }
 
 /// One of the 8 base colors.
-#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum BaseColor {
     /// Black color
     ///
@@ -412,10 +417,10 @@ impl From<u8> for BaseColor {
 }
 
 /// Represents a color used by the theme.
-#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Color {
     /// Represents a color, preset by terminal.
-    Default,
+    TerminalDefault,
     /// One of the 8 base colors.
     Dark(BaseColor),
     /// Lighter version of a base color.
@@ -475,24 +480,25 @@ impl Color {
 
     fn parse(value: &str) -> Option<Self> {
         Some(match value {
-                 "black" => Color::Dark(BaseColor::Black),
-                 "red" => Color::Dark(BaseColor::Red),
-                 "green" => Color::Dark(BaseColor::Green),
-                 "yellow" => Color::Dark(BaseColor::Yellow),
-                 "blue" => Color::Dark(BaseColor::Blue),
-                 "magenta" => Color::Dark(BaseColor::Magenta),
-                 "cyan" => Color::Dark(BaseColor::Cyan),
-                 "white" => Color::Dark(BaseColor::White),
-                 "light black" => Color::Light(BaseColor::Black),
-                 "light red" => Color::Light(BaseColor::Red),
-                 "light green" => Color::Light(BaseColor::Green),
-                 "light yellow" => Color::Light(BaseColor::Yellow),
-                 "light blue" => Color::Light(BaseColor::Blue),
-                 "light magenta" => Color::Light(BaseColor::Magenta),
-                 "light cyan" => Color::Light(BaseColor::Cyan),
-                 "light white" => Color::Light(BaseColor::White),
-                 value => return Color::parse_special(value),
-             })
+            "black" => Color::Dark(BaseColor::Black),
+            "red" => Color::Dark(BaseColor::Red),
+            "green" => Color::Dark(BaseColor::Green),
+            "yellow" => Color::Dark(BaseColor::Yellow),
+            "blue" => Color::Dark(BaseColor::Blue),
+            "magenta" => Color::Dark(BaseColor::Magenta),
+            "cyan" => Color::Dark(BaseColor::Cyan),
+            "white" => Color::Dark(BaseColor::White),
+            "light black" => Color::Light(BaseColor::Black),
+            "light red" => Color::Light(BaseColor::Red),
+            "light green" => Color::Light(BaseColor::Green),
+            "light yellow" => Color::Light(BaseColor::Yellow),
+            "light blue" => Color::Light(BaseColor::Blue),
+            "light magenta" => Color::Light(BaseColor::Magenta),
+            "light cyan" => Color::Light(BaseColor::Cyan),
+            "light white" => Color::Light(BaseColor::White),
+            "default" => Color::TerminalDefault,
+            value => return Color::parse_special(value),
+        })
     }
 
     fn parse_special(value: &str) -> Option<Color> {
@@ -514,9 +520,9 @@ impl Color {
             let rgb: Vec<_> =
                 value.chars().map(|c| c as i16 - '0' as i16).collect();
             if rgb.iter().all(|&i| i >= 0 && i < 6) {
-                Some(Color::RgbLowRes(rgb[0] as u8,
-                                      rgb[1] as u8,
-                                      rgb[2] as u8))
+                Some(
+                    Color::RgbLowRes(rgb[0] as u8, rgb[1] as u8, rgb[2] as u8),
+                )
             } else {
                 None
             }
