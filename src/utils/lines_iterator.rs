@@ -99,7 +99,11 @@ impl<'a> Iterator for LinesIterator<'a> {
         let content = &content[..next];
 
         let allowed_width = if self.show_spaces {
-            self.width - 1
+            if self.width < 1 {
+                0
+            } else {
+                self.width - 1
+            }
         } else {
             self.width
         };
