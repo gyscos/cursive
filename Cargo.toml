@@ -10,7 +10,7 @@ license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
-version = "0.6.3"
+version = "0.6.4-pre"
 
 [badges.travis-ci]
 repository = "gyscos/Cursive"
