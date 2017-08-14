@@ -167,6 +167,7 @@ impl<'a> Printer<'a> {
 
         let start = start.into();
         let size = size.into();
+
         if size.x < 2 || size.y < 2 {
             return;
         }
@@ -247,8 +248,8 @@ impl<'a> Printer<'a> {
     pub fn print_hdelim<T: Into<Vec2>>(&self, start: T, len: usize) {
         let start = start.into();
         self.print(start, "├");
-        self.print_hline(start + (1, 0), len - 2, "─");
-        self.print(start + (len - 1, 0), "┤");
+        self.print_hline(start + (1, 0), len.saturating_sub(2), "─");
+        self.print(start + (len.saturating_sub(1), 0), "┤");
     }
 
     /// Returns a printer on a subset of this one's area.
@@ -257,10 +258,15 @@ impl<'a> Printer<'a> {
                                                      -> Printer<'a> {
         let size = size.into();
         let offset = offset.into().or_min(self.size);
+        let available = if !offset.fits_in(self.size) {
+            Vec2::zero()
+        } else {
+            Vec2::min(self.size - offset, size)
+        };
         Printer {
             offset: self.offset + offset,
             // We can't be larger than what remains
-            size: Vec2::min(self.size - offset, size),
+            size: available,
             focused: self.focused && focused,
             theme: self.theme,
             backend: self.backend,

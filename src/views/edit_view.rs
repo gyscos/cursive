@@ -370,13 +370,14 @@ impl EditView {
                 .map(|g| g.width())
                 .next()
                 .unwrap_or(1);
-            if c_len > self.last_length {
-                // Weird - no available space?
-                return;
-            }
+
             // Now, we have to fit self.content[..self.cursor]
             // into self.last_length - c_len.
-            let available = self.last_length - c_len;
+            let available = match self.last_length.checked_sub(c_len) {
+                Some(s) => s,
+                // Weird - no available space?
+                None => return,
+            };
             // Look at the content before the cursor (we will print its tail).
             // From the end, count the length until we reach `available`.
             // Then sum the byte lengths.
@@ -384,6 +385,8 @@ impl EditView {
                                                self.cursor],
                                               available)
                 .length;
+
+            assert!(suffix_length <= self.cursor);
             self.offset = self.cursor - suffix_length;
             // Make sure the cursor is in view
             assert!(self.cursor >= self.offset);
@@ -392,8 +395,11 @@ impl EditView {
 
         // If we have too much space
         if self.content[self.offset..].width() < self.last_length {
+            assert!(self.last_length >= 1);
             let suffix_length =
                 simple_suffix(&self.content, self.last_length - 1).length;
+
+            assert!(self.content.len() >= 1);
             self.offset = self.content.len() - suffix_length;
         }
     }
@@ -425,6 +431,7 @@ impl View for EditView {
             printer.with_effect(effect, |printer| {
                 if width < self.last_length {
                     // No problem, everything fits.
+                    assert!(printer.size.x >= width);
                     if self.secret {
                         printer.print_hline((0, 0), width, "*");
                     } else {

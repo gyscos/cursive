@@ -192,13 +192,12 @@ impl TextView {
             // We take 1 column for the bar itself + 1 spacing column
             scrollbar_width = 2;
 
-            if size.x < scrollbar_width {
-                // Again, this is a lost cause.
-                return;
-            }
-
             // If we're too high, include a scrollbar_width
-            let available = size.x - scrollbar_width;
+            let available = match size.x.checked_sub(scrollbar_width) {
+                Some(s) => s,
+                None => return,
+            };
+
             self.rows = LinesIterator::new(&self.content, available).collect();
 
             if self.rows.is_empty() && !self.content.is_empty() {

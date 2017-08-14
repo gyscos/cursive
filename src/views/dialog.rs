@@ -179,28 +179,26 @@ impl View for Dialog {
         // Current horizontal position of the next button we'll draw.
 
         // Sum of the sizes + len-1 for margins
-        let width = if self.buttons.is_empty() {
-            0
-        } else {
-            self.buttons
-                .iter()
-                .map(|button| button.size.x)
-                .fold(0, |a, b| a + b) + self.buttons.len() - 1
-        };
+        let width = self.buttons
+            .iter()
+            .map(|button| button.size.x)
+            .fold(0, |a, b| a + b) +
+                    self.buttons.len().saturating_sub(1);
         let overhead = self.padding + self.borders;
         if printer.size.x < overhead.horizontal() {
             return;
         }
         let mut offset = overhead.left +
-                         self.align
-            .h
-            .get_offset(width, printer.size.x - overhead.horizontal());
+                         self.align.h.get_offset(width,
+                                                 printer.size.x -
+                                                 overhead.horizontal());
 
         let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
-        if overhead_bottom > printer.size.y {
-            return;
-        }
-        let y = printer.size.y - overhead_bottom;
+
+        let y = match printer.size.y.checked_sub(overhead_bottom) {
+            Some(y) => y,
+            None => return,
+        };
 
         for (i, button) in self.buttons.iter().enumerate() {
             let size = button.size;
@@ -217,16 +215,16 @@ impl View for Dialog {
         // What do we have left?
         let taken = Vec2::new(0, buttons_height) + self.borders.combined() +
                     self.padding.combined();
-        if !taken.fits_in(printer.size) {
-            return;
-        }
-        let inner_size = printer.size - taken;
 
-        self.content
-            .draw(&printer.sub_printer(self.borders.top_left() +
-                                       self.padding.top_left(),
-                                       inner_size,
-                                       self.focus == Focus::Content));
+        let inner_size = match printer.size.checked_sub(taken) {
+            Some(s) => s,
+            None => return,
+        };
+
+        self.content.draw(&printer.sub_printer(self.borders.top_left() +
+                                               self.padding.top_left(),
+                                               inner_size,
+                                               self.focus == Focus::Content));
 
         printer.print_box(Vec2::new(0, 0), printer.size, false);
 
@@ -253,9 +251,10 @@ impl View for Dialog {
 
         // Buttons are not flexible, so their size doesn't depend on ours.
         let mut buttons_size = Vec2::new(0, 0);
-        if !self.buttons.is_empty() {
-            buttons_size.x += self.buttons.len() - 1;
-        }
+
+        // Start with the inter-button space.
+        buttons_size.x += self.buttons.len().saturating_sub(1);
+
         for button in &mut self.buttons {
             let s = button.view.required_size(req);
             buttons_size.x += s.x;
@@ -264,11 +263,12 @@ impl View for Dialog {
 
         // We also remove one row for the buttons.
         let taken = nomans_land + Vec2::new(0, buttons_size.y);
-        if !taken.fits_in(req) {
+
+        let content_req = match req.checked_sub(taken) {
+            Some(r) => r,
             // Bad!!
-            return taken;
-        }
-        let content_req = req - taken;
+            None => return taken,
+        };
 
         let content_size = self.content.required_size(content_req);
 
@@ -291,11 +291,7 @@ impl View for Dialog {
         // Padding and borders are taken, sorry.
         // TODO: handle border-less themes?
         let taken = self.borders.combined() + self.padding.combined();
-        size = if taken.fits_in(size) {
-            size - taken
-        } else {
-            Vec2::zero()
-        };
+        size = size.saturating_sub(taken);
 
         // Buttons are kings, we give them everything they want.
         let mut buttons_height = 0;
@@ -309,7 +305,7 @@ impl View for Dialog {
         if buttons_height > size.y {
             buttons_height = size.y;
         }
-        self.content.layout(size - Vec2::new(0, buttons_height));
+        self.content.layout(size.saturating_sub((0, buttons_height)));
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
@@ -339,8 +335,7 @@ impl View for Dialog {
                         match event {
                             // Up goes back to the content
                             Event::Key(Key::Up) => {
-                                if self.content
-                                    .take_focus(Direction::down()) {
+                                if self.content.take_focus(Direction::down()) {
                                     self.focus = Focus::Content;
                                     EventResult::Consumed(None)
                                 } else {
@@ -348,8 +343,7 @@ impl View for Dialog {
                                 }
                             }
                             Event::Shift(Key::Tab) => {
-                                if self.content
-                                    .take_focus(Direction::back()) {
+                                if self.content.take_focus(Direction::back()) {
                                     self.focus = Focus::Content;
                                     EventResult::Consumed(None)
                                 } else {
@@ -358,7 +352,7 @@ impl View for Dialog {
                             }
                             Event::Key(Key::Tab) => {
                                 if self.content
-                                    .take_focus(Direction::front()) {
+                                       .take_focus(Direction::front()) {
                                     self.focus = Focus::Content;
                                     EventResult::Consumed(None)
                                 } else {
@@ -367,8 +361,7 @@ impl View for Dialog {
                             }
                             // Left and Right move to other buttons
                             Event::Key(Key::Right) if i + 1 <
-                                                      self.buttons
-                                .len() => {
+                                                      self.buttons.len() => {
                                 self.focus = Focus::Button(i + 1);
                                 EventResult::Consumed(None)
                             }
@@ -400,7 +393,7 @@ impl View for Dialog {
     }
 
     fn call_on_any<'a>(&mut self, selector: &Selector,
-                    callback: Box<FnMut(&mut Any) + 'a>) {
+                       callback: Box<FnMut(&mut Any) + 'a>) {
         self.content.call_on_any(selector, callback);
     }
 

@@ -170,7 +170,7 @@ impl MenuPopup {
 
 impl View for MenuPopup {
     fn draw(&self, printer: &Printer) {
-        if printer.size.x < 2 || printer.size.y < 2 {
+        if !printer.size.fits((2, 2)) {
             return;
         }
 
@@ -200,7 +200,8 @@ impl View for MenuPopup {
                         }
                         printer.print_hline((1, 0), printer.size.x - 2, " ");
                         printer.print((2, 0), label);
-                        printer.print((printer.size.x - 4, 0), ">>");
+                        printer.print((printer.size.x.saturating_sub(4), 0),
+                                      ">>");
                     }
                     MenuItem::Leaf(ref label, _) => {
                         if printer.size.x < 2 {
@@ -251,7 +252,12 @@ impl View for MenuPopup {
             Event::Key(Key::PageDown) => self.scroll_down(5, false),
 
             Event::Key(Key::Home) => self.focus = 0,
-            Event::Key(Key::End) => self.focus = self.menu.children.len() - 1,
+            Event::Key(Key::End) => {
+                self.focus = self.menu
+                    .children
+                    .len()
+                    .saturating_sub(1)
+            }
 
             Event::Key(Key::Right) if self.menu.children[self.focus]
                                           .is_subtree() => {
@@ -297,6 +303,7 @@ impl View for MenuPopup {
     }
 
     fn layout(&mut self, size: Vec2) {
-        self.scrollbase.set_heights(size.y - 2, self.menu.children.len());
+        self.scrollbase.set_heights(size.y.saturating_sub(2),
+                                    self.menu.children.len());
     }
 }

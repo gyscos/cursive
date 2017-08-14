@@ -177,14 +177,12 @@ impl ScrollBase {
         let max_y = min(self.view_height,
                         self.content_height - self.start_line);
         let w = if self.scrollable() {
-            if printer.size.x < 2 {
-                return;
-            }
             // We have to remove the bar width and the padding.
-            printer.size.x - 1 - self.right_padding
+            printer.size.x.saturating_sub(1 + self.right_padding)
         } else {
             printer.size.x
         };
+
         for y in 0..max_y {
             // Y is the actual coordinate of the line.
             // The item ID is then Y + self.start_line
@@ -218,7 +216,7 @@ impl ScrollBase {
             };
 
             // TODO: use 1 instead of 2
-            let scrollbar_x = printer.size.x - 1 - self.scrollbar_offset;
+            let scrollbar_x = printer.size.x.saturating_sub(1 + self.scrollbar_offset);
             printer.print_vline((scrollbar_x, 0), printer.size.y, "|");
             printer.with_color(color, |printer| {
                 printer.print_vline((scrollbar_x, start), height, "▒");

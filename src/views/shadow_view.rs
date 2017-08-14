@@ -49,13 +49,13 @@ impl<T: View> ViewWrapper for ShadowView<T> {
 
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
         // Make sure req >= offset
-        let offset = self.padding().or_min(req);
-        self.view.required_size(req - offset) + offset
+        let offset = self.padding();
+        self.view.required_size(req.saturating_sub(offset)) + offset
     }
 
     fn wrap_layout(&mut self, size: Vec2) {
-        let offset = self.padding().or_min(size);
-        self.view.layout(size - offset);
+        let offset = self.padding();
+        self.view.layout(size.saturating_sub(offset));
     }
 
     fn wrap_draw(&self, printer: &Printer) {
@@ -74,6 +74,10 @@ impl<T: View> ViewWrapper for ShadowView<T> {
             let h = printer.size.y;
             let w = printer.size.x;
 
+            if h == 0 || w == 0 {
+                return;
+            }
+
             printer.with_color(ColorStyle::Shadow, |printer| {
                 printer.print_hline((1, h - 1), w - 1, " ");
                 printer.print_vline((w - 1, 1), h - 1, " ");
@@ -81,8 +85,9 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         }
 
         // Draw the view background
-        let printer =
-            printer.sub_printer(Vec2::zero(), printer.size - (1, 1), true);
+        let printer = printer.sub_printer(Vec2::zero(),
+                                          printer.size.saturating_sub((1, 1)),
+                                          true);
         self.view.draw(&printer);
     }
 }

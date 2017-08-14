@@ -270,7 +270,7 @@ impl View for LinearLayout {
         }
 
         // This here is how much we're generously offered
-        // (We just checked that req >= desperate, so the substraction is safe
+        // (We just checked that req >= desperate, so the subtraction is safe
         let mut available = self.orientation.get(&(req - desperate));
         // println_stderr!("Available: {:?}", available);
 
@@ -279,7 +279,7 @@ impl View for LinearLayout {
         let mut overweight: Vec<(usize, usize)> = sizes.iter()
             .map(|v| self.orientation.get(v))
             .zip(min_sizes.iter().map(|v| self.orientation.get(v)))
-            .map(|(a, b)| if a > b { a - b } else { 0 })
+            .map(|(a, b)| a.saturating_sub(b))
             .enumerate()
             .collect();
         // println_stderr!("Overweight: {:?}", overweight);

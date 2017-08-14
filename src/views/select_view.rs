@@ -1,7 +1,6 @@
 use Cursive;
 use Printer;
 use With;
-use XY;
 use align::{Align, HAlign, VAlign};
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key};
@@ -67,7 +66,7 @@ pub struct SelectView<T = String> {
     last_size: Vec2,
 }
 
-impl <T: 'static> Default for SelectView<T> {
+impl<T: 'static> Default for SelectView<T> {
     fn default() -> Self {
         Self::new()
     }
@@ -252,7 +251,8 @@ impl<T: 'static> SelectView<T> {
         printer.print_hline((0, 0), x, " ");
         printer.print((x, 0), &self.items[i].label);
         if l < printer.size.x {
-            printer.print_hline((x + l, 0), printer.size.x - l - x, " ");
+            assert!((l + x) <= printer.size.x);
+            printer.print_hline((x + l, 0), printer.size.x - (l + x), " ");
         }
     }
 
@@ -290,12 +290,11 @@ impl<T: 'static> SelectView<T> {
 
     fn focus_up(&mut self, n: usize) {
         let focus = self.focus();
-        let n = min(focus, n);
-        self.focus.set(focus - n);
+        self.focus.set(focus.saturating_sub(n));
     }
 
     fn focus_down(&mut self, n: usize) {
-        let focus = min(self.focus() + n, self.items.len() - 1);
+        let focus = min(self.focus() + n, self.items.len().saturating_sub(1));
         self.focus.set(focus);
     }
 }
@@ -353,23 +352,22 @@ impl<T: 'static> View for SelectView<T> {
             } else {
                 ColorStyle::Highlight
             };
-            let x = printer.size.x;
-            if x == 0 {
-                return;
-            }
-
+            let x = match printer.size.x.checked_sub(1) {
+                Some(x) => x,
+                None => return,
+            };
 
             printer.with_color(style, |printer| {
                 // Prepare the entire background
-                printer.print_hline((1, 0), x - 1, " ");
+                printer.print_hline((1, 0), x, " ");
                 // Draw the borders
                 printer.print((0, 0), "<");
-                printer.print((x - 1, 0), ">");
+                printer.print((x, 0), ">");
 
                 let label = &self.items[self.focus()].label;
 
                 // And center the text?
-                let offset = HAlign::Center.get_offset(label.len(), x);
+                let offset = HAlign::Center.get_offset(label.len(), x + 1);
 
                 printer.print((offset, 0), label);
             });
@@ -445,20 +443,17 @@ impl<T: 'static> View for SelectView<T> {
                     // We'll want to show the popup so that the text matches.
                     // It'll be soo cool.
                     let item_length = self.items[focus].label.len();
-                    let text_offset = if self.last_size.x >= item_length {
-                        (self.last_size.x - item_length) / 2
-                    } else {
-                        // We were too small to show the entire item last time.
-                        0
-                    };
+                    let text_offset =
+                        (self.last_size.x.saturating_sub(item_length)) / 2;
                     // The total offset for the window is:
                     // * the last absolute offset at which we drew this view
-                    // * shifted to the top of the focus (so the line matches)
                     // * shifted to the right of the text offset
+                    // * shifted to the top of the focus (so the line matches)
                     // * shifted top-left of the border+padding of the popup
-                    let offset = self.last_offset.get() - (0, focus) +
-                                 (text_offset, 0) -
-                                 (2, 1);
+                    let offset = self.last_offset.get();
+                    let offset = offset + (text_offset, 0);
+                    let offset = offset.saturating_sub((0, focus));
+                    let offset = offset.saturating_sub((2, 1));
                     // And now, we can return the callback.
                     EventResult::with_cb(move |s| {
                         // The callback will want to work with a fresh Rc
@@ -468,12 +463,11 @@ impl<T: 'static> View for SelectView<T> {
                         // A nice effect is that window resizes will keep both
                         // layers together.
                         let current_offset = s.screen().offset();
-                        let offset = XY::<isize>::from(offset) -
-                                     current_offset;
+                        let offset = offset.signed() - current_offset;
                         // And finally, put the view in view!
-                        s.screen_mut()
-                            .add_layer_at(Position::parent(offset),
-                                          MenuPopup::new(tree).focus(focus));
+                        s.screen_mut().add_layer_at(Position::parent(offset),
+                                                    MenuPopup::new(tree)
+                                                        .focus(focus));
                     })
                 }
                 _ => EventResult::Ignored,
@@ -488,7 +482,7 @@ impl<T: 'static> View for SelectView<T> {
                 Event::Key(Key::PageUp) => self.focus_up(10),
                 Event::Key(Key::PageDown) => self.focus_down(10),
                 Event::Key(Key::Home) => self.focus.set(0),
-                Event::Key(Key::End) => self.focus.set(self.items.len() - 1),
+                Event::Key(Key::End) => self.focus.set(self.items.len().saturating_sub(1)),
                 Event::Key(Key::Enter) if self.on_submit.is_some() => {
                     let cb = self.on_submit.clone().unwrap();
                     let v = self.selection();
@@ -504,9 +498,10 @@ impl<T: 'static> View for SelectView<T> {
                     // the list when we reach the end.
                     // This is achieved by chaining twice the iterator
                     let iter = self.items.iter().chain(self.items.iter());
-                    if let Some((i, _)) = iter.enumerate()
-                        .skip(self.focus() + 1)
-                        .find(|&(_, item)| item.label.starts_with(c)) {
+                    if let Some((i, _)) =
+                        iter.enumerate()
+                            .skip(self.focus() + 1)
+                            .find(|&(_, item)| item.label.starts_with(c)) {
                         // Apply modulo in case we have a hit
                         // from the chained iterator
                         self.focus.set(i % self.items.len());

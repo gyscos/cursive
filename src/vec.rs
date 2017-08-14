@@ -30,13 +30,55 @@ impl PartialOrd for XY<usize> {
     }
 }
 
+impl XY<usize> {
+    /// Saturating subtraction. Computes `self - other`, saturating at 0.
+    ///
+    /// Never panics.
+    pub fn saturating_sub<O: Into<Self>>(&self, other: O) -> Self {
+        let other = other.into();
+        Self::new(self.x.saturating_sub(other.x),
+                  self.y.saturating_sub(other.y))
+    }
+
+    /// Checked subtraction. Computes `self - other` if possible.
+    ///
+    /// Returns `None` if `self.x < other.x || self.y < other.y`.
+    ///
+    /// Never panics.
+    pub fn checked_sub<O: Into<Self>>(&self, other: O) -> Option<Self> {
+        let other = other.into();
+        if self.fits(other) {
+            Some(*self - other)
+        } else {
+            None
+        }
+    }
+
+    /// Returns a `XY<isize>` from `self`.
+    pub fn signed(self) -> XY<isize> {
+        self.into()
+    }
+}
+
 impl<T: Ord> XY<T> {
     /// Returns `true` if `self` could fit inside `other`.
     ///
     /// Shortcut for `self.x <= other.x && self.y <= other.y`.
+    ///
+    /// If this returns `true`, then `other - self` will not underflow.
     pub fn fits_in<O: Into<Self>>(&self, other: O) -> bool {
         let other = other.into();
         self.x <= other.x && self.y <= other.y
+    }
+
+    /// Returns `true` if `other` could fit inside `self`.
+    ///
+    /// Shortcut for `self.x >= other.x && self.y >= other.y`.
+    ///
+    /// If this returns `true`, then `self - other` will not underflow.
+    pub fn fits<O: Into<Self>>(&self, other: O) -> bool {
+        let other = other.into();
+        self.x >= other.x && self.y >= other.y
     }
 
     /// Returns a new Vec2 that is a maximum per coordinate.

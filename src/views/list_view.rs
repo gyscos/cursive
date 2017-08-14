@@ -199,7 +199,8 @@ impl ListView {
     }
 }
 
-fn try_focus((i, child): (usize, &mut ListChild), source: direction::Direction)
+fn try_focus((i, child): (usize, &mut ListChild),
+             source: direction::Direction)
              -> Option<usize> {
     match *child {
         ListChild::Delimiter => None,
@@ -274,12 +275,8 @@ impl View for ListView {
         let spacing = 1;
         let scrollbar_width = if self.children.len() > size.y { 2 } else { 0 };
 
-        let available = if label_width + spacing + scrollbar_width > size.x {
-            // We have no space for the kids! :(
-            0
-        } else {
-            size.x - label_width - spacing - scrollbar_width
-        };
+        let available = size.x.saturating_sub(label_width + spacing +
+                                              scrollbar_width);
 
         // println_stderr!("Available: {}", available);
 
@@ -351,10 +348,8 @@ impl View for ListView {
     }
 
     fn call_on_any<'a>(&mut self, selector: &Selector,
-                    mut callback: Box<FnMut(&mut Any) + 'a>) {
-        for view in self.children
-            .iter_mut()
-            .filter_map(ListChild::view) {
+                       mut callback: Box<FnMut(&mut Any) + 'a>) {
+        for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, Box::new(|any| callback(any)));
         }
     }
@@ -364,7 +359,9 @@ impl View for ListView {
                .iter_mut()
                .enumerate()
                .filter_map(|(i, v)| v.view().map(|v| (i, v)))
-               .filter_map(|(i, v)| v.focus_view(selector).ok().map(|_| i))
+               .filter_map(|(i, v)| {
+                               v.focus_view(selector).ok().map(|_| i)
+                           })
                .next() {
             self.focus = i;
             Ok(())
