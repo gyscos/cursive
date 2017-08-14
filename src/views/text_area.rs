@@ -148,10 +148,10 @@ impl TextArea {
     fn move_left(&mut self) {
         let len = {
             // We don't want to utf8-parse the entire content.
-            // So restrict to the last row.
+            // So only consider the last row.
             let mut row = self.selected_row();
             if self.rows[row].start == self.cursor {
-                row -= 1;
+                row = row.saturating_sub(1);
             }
 
             let text = &self.content[self.rows[row].start..self.cursor];
@@ -179,7 +179,12 @@ impl TextArea {
         }
     }
 
+    // If we are editing the text, we add a fake "space" character for the cursor to indicate
+    // where the next character will appear.
+    // If the current line is full, adding a character will overflow into the next line. To
+    // show that, we need to add a fake "ghost" row, just for the cursor.
     fn fix_ghost_row(&mut self) {
+
         if self.rows.is_empty() ||
             self.rows.last().unwrap().end != self.content.len()
         {
@@ -199,11 +204,13 @@ impl TextArea {
         // println_stderr!("Computing! Oh yeah!");
 
         let mut available = size.x;
+
         self.rows = make_rows(&self.content, available);
         self.fix_ghost_row();
+
         if self.rows.len() > size.y {
-            available -= 1;
-            // Doh :(
+            available = available.saturating_sub(1);
+            // Apparently we'll need a scrollbar. Doh :(
             self.rows = make_rows(&self.content, available);
             self.fix_ghost_row();
         }
@@ -295,14 +302,12 @@ impl TextArea {
 
         // Find affected text.
         // We know the damage started at this row, so it'll need to go.
-        let mut first_row = self.selected_row();
+        //
         // Actually, if possible, also re-compute the previous row.
         // Indeed, the previous row may have been cut short, and if we now
         // break apart a big word, maybe the first half can go up one level.
-        if first_row > 0 {
-            first_row -= 1;
-        }
-        // The
+        let first_row = self.selected_row().saturating_sub(1);
+
         let first_byte = self.rows[first_row].start;
 
         // We don't need to go beyond a newline.
@@ -328,7 +333,7 @@ impl TextArea {
         let scrollable = self.rows.len() > size.y;
         if scrollable {
             // ... not if a scrollbar is there
-            available -= 1;
+            available = available.saturating_sub(1);
         }
 
         // First attempt, if scrollbase status didn't change.
@@ -385,7 +390,7 @@ impl View for TextArea {
             };
 
             let w = if self.scrollbase.scrollable() {
-                printer.size.x - 1
+                printer.size.x.saturating_sub(1)
             } else {
                 printer.size.x
             };

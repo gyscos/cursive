@@ -204,7 +204,7 @@ impl View for StackView {
     fn take_focus(&mut self, source: Direction) -> bool {
         match self.layers.last_mut() {
             None => false,
-            Some(mut v) => v.view.take_focus(source),
+            Some(v) => v.view.take_focus(source),
         }
     }
 
