@@ -399,7 +399,7 @@ impl EditView {
             let suffix_length =
                 simple_suffix(&self.content, self.last_length - 1).length;
 
-            assert!(self.content.len() >= 1);
+            assert!(self.content.len() >= suffix_length);
             self.offset = self.content.len() - suffix_length;
         }
     }
