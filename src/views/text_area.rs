@@ -80,7 +80,7 @@ impl TextArea {
 
     /// Finds the row containing the grapheme at the given offset
     fn row_at(&self, offset: usize) -> usize {
-        // println_stderr!("Offset: {}", offset);
+        // eprintln!("Offset: {}", offset);
         self.rows
             .iter()
             .enumerate()
@@ -201,7 +201,7 @@ impl TextArea {
         if self.is_cache_valid(size) {
             return;
         }
-        // println_stderr!("Computing! Oh yeah!");
+        // eprintln!("Computing! Oh yeah!");
 
         let mut available = size.x;
 
@@ -232,7 +232,7 @@ impl TextArea {
         if self.cursor == self.content.len() {
             return;
         }
-        // println_stderr!("Rows: {:?}", self.rows);
+        // eprintln!("Rows: {:?}", self.rows);
         let len = self.content[self.cursor..]
             .graphemes(true)
             .next()
@@ -240,13 +240,13 @@ impl TextArea {
             .len();
         let start = self.cursor;
         let end = self.cursor + len;
-        // println_stderr!("Start/end: {}/{}", start, end);
-        // println_stderr!("Content: `{}`", self.content);
+        // eprintln!("Start/end: {}/{}", start, end);
+        // eprintln!("Content: `{}`", self.content);
         for _ in self.content.drain(start..end) {}
-        // println_stderr!("Content: `{}`", self.content);
+        // eprintln!("Content: `{}`", self.content);
 
         let selected_row = self.selected_row();
-        // println_stderr!("Selected row: {}", selected_row);
+        // eprintln!("Selected row: {}", selected_row);
         if self.cursor == self.rows[selected_row].end {
             // We're removing an (implicit) newline.
             // This means merging two rows.
@@ -260,10 +260,10 @@ impl TextArea {
         for row in &mut self.rows.iter_mut().skip(1 + selected_row) {
             row.rev_shift(len);
         }
-        // println_stderr!("Rows: {:?}", self.rows);
+        // eprintln!("Rows: {:?}", self.rows);
 
         self.fix_damages();
-        // println_stderr!("Rows: {:?}", self.rows);
+        // eprintln!("Rows: {:?}", self.rows);
     }
 
     fn insert(&mut self, ch: char) {
@@ -312,7 +312,7 @@ impl TextArea {
 
         // We don't need to go beyond a newline.
         // If we don't find one, end of the text it is.
-        // println_stderr!("Cursor: {}", self.cursor);
+        // eprintln!("Cursor: {}", self.cursor);
         let last_byte = self.content[self.cursor..].find('\n').map(|i| {
             1 + i + self.cursor
         });
@@ -321,11 +321,11 @@ impl TextArea {
         });
         let last_byte = last_byte.unwrap_or_else(|| self.content.len());
 
-        // println_stderr!("Content: `{}` (len={})",
+        // eprintln!("Content: `{}` (len={})",
         //                 self.content,
         //                 self.content.len());
-        // println_stderr!("start/end: {}/{}", first_byte, last_byte);
-        // println_stderr!("start/end rows: {}/{}", first_row, last_row);
+        // eprintln!("start/end: {}/{}", first_byte, last_byte);
+        // eprintln!("start/end rows: {}/{}", first_row, last_row);
 
         // Do we have access to the entire width?...
         let mut available = size.x;
@@ -337,12 +337,12 @@ impl TextArea {
         }
 
         // First attempt, if scrollbase status didn't change.
-        // println_stderr!("Rows: {:?}", self.rows);
+        // eprintln!("Rows: {:?}", self.rows);
         let new_rows =
             make_rows(&self.content[first_byte..last_byte], available);
         // How much did this add?
-        // println_stderr!("New rows: {:?}", new_rows);
-        // println_stderr!("{}-{}", first_row, last_row);
+        // eprintln!("New rows: {:?}", new_rows);
+        // eprintln!("{}-{}", first_row, last_row);
         let new_row_count = self.rows.len() + new_rows.len() + first_row -
             last_row;
         if !scrollable && new_row_count > size.y {
@@ -373,7 +373,7 @@ impl View for TextArea {
         // Ideally, we'd want x = the longest row + 1
         // (we always keep a space at the end)
         // And y = number of rows
-        // println_stderr!("{:?}", self.rows);
+        // eprintln!("{:?}", self.rows);
         let scroll_width = if self.rows.len() > constraint.y { 1 } else { 0 };
         Vec2::new(
             scroll_width + 1 + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
@@ -401,13 +401,13 @@ impl View for TextArea {
                 },
             );
 
-            // println_stderr!("Content: `{}`", &self.content);
+            // eprintln!("Content: `{}`", &self.content);
             self.scrollbase.draw(printer, |printer, i| {
-                // println_stderr!("Drawing row {}", i);
+                // eprintln!("Drawing row {}", i);
                 let row = &self.rows[i];
-                // println_stderr!("row: {:?}", row);
+                // eprintln!("row: {:?}", row);
                 let text = &self.content[row.start..row.end];
-                // println_stderr!("row text: `{}`", text);
+                // eprintln!("row text: `{}`", text);
                 printer.with_effect(
                     effect,
                     |printer| { printer.print((0, 0), text); },
@@ -467,7 +467,7 @@ impl View for TextArea {
             _ => return EventResult::Ignored,
         }
 
-        // println_stderr!("Rows: {:?}", self.rows);
+        // eprintln!("Rows: {:?}", self.rows);
         let focus = self.selected_row();
         self.scrollbase.scroll_to(focus);
 

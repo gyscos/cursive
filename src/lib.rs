@@ -70,16 +70,6 @@ extern crate owning_ref;
 #[macro_use]
 extern crate chan;
 
-
-#[allow(unused)]
-macro_rules! println_stderr(
-    ($($arg:tt)*) => { {
-        use ::std::io::Write;
-        let r = writeln!(&mut ::std::io::stderr(), $($arg)*);
-        r.expect("failed printing to stderr");
-    } }
-);
-
 macro_rules! new_default(
     ($c:ty) => {
         impl Default for $c {
