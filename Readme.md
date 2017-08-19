@@ -101,7 +101,7 @@ First off, terminals are messy. A small set of features is standard, but beyond 
 
 * **Colors**: the basic 8-colors palette should be broadly supported. User-defined colors is not supported in the raw linux TTY, but should work in most terminals, although it's still kinda experimental.
 * **UTF-8**: Currently Cursive really expects a UTF-8 locale. It may eventually get patched to support window borders on other locales, but it's not a priority.
-Also, Cursive currently expects every codepoint to be a one-column character, so some things may break with exotic characters...
+There is initial support for [wide characters](https://en.wikipedia.org/wiki/CJK_characters). [RTL](https://en.wikipedia.org/wiki/Right-to-left) support [is planned](https://github.com/gyscos/Cursive/issues/31), but still very early.
 
 ### Input
 
