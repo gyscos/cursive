@@ -132,7 +132,8 @@ impl<T: 'static> SelectView<T> {
 
     /// Sets a callback to be used when an item is selected.
     pub fn set_on_select<F>(&mut self, cb: F)
-        where F: Fn(&mut Cursive, &T) + 'static
+    where
+        F: Fn(&mut Cursive, &T) + 'static,
     {
         self.on_select = Some(Rc::new(cb));
     }
@@ -141,7 +142,8 @@ impl<T: 'static> SelectView<T> {
     ///
     /// Chainable variant.
     pub fn on_select<F>(self, cb: F) -> Self
-        where F: Fn(&mut Cursive, &T) + 'static
+    where
+        F: Fn(&mut Cursive, &T) + 'static,
     {
         self.with(|s| s.set_on_select(cb))
     }
@@ -152,8 +154,9 @@ impl<T: 'static> SelectView<T> {
     ///
     /// Here, `V` can be `T` itself, or a type that can be borrowed from `T`.
     pub fn set_on_submit<F, V: ?Sized>(&mut self, cb: F)
-        where F: Fn(&mut Cursive, &V) + 'static,
-              T: Borrow<V>
+    where
+        F: Fn(&mut Cursive, &V) + 'static,
+        T: Borrow<V>,
     {
         self.on_submit = Some(Rc::new(move |s, t| cb(s, t.borrow())));
     }
@@ -164,8 +167,9 @@ impl<T: 'static> SelectView<T> {
     ///
     /// Chainable variant.
     pub fn on_submit<F, V: ?Sized>(self, cb: F) -> Self
-        where F: Fn(&mut Cursive, &V) + 'static,
-              T: Borrow<V>
+    where
+        F: Fn(&mut Cursive, &V) + 'static,
+        T: Borrow<V>,
     {
         self.with(|s| s.set_on_submit(cb))
     }
@@ -227,8 +231,9 @@ impl<T: 'static> SelectView<T> {
 
     /// Adds all items from from an iterator.
     pub fn add_all<S, I>(&mut self, iter: I)
-        where S: Into<String>,
-              I: IntoIterator<Item = (S, T)>
+    where
+        S: Into<String>,
+        I: IntoIterator<Item = (S, T)>,
     {
         for (s, t) in iter {
             self.add_item(s, t);
@@ -239,8 +244,9 @@ impl<T: 'static> SelectView<T> {
     ///
     /// Chainable variant.
     pub fn with_all<S, I>(self, iter: I) -> Self
-        where S: Into<String>,
-              I: IntoIterator<Item = (S, T)>
+    where
+        S: Into<String>,
+        I: IntoIterator<Item = (S, T)>,
     {
         self.with(|s| s.add_all(iter))
     }
@@ -288,11 +294,27 @@ impl<T: 'static> SelectView<T> {
         self.scrollbase.scroll_to(i);
     }
 
-    fn focus_up(&mut self, n: usize) {
+    /// Moves the selection up by the given number of rows.
+    pub fn select_up(&mut self, n: usize) {
+        self.focus_up(n);
         let focus = self.focus();
-        self.focus.set(focus.saturating_sub(n));
+        self.scrollbase.scroll_to(focus);
     }
 
+    /// Moves the selection down by the given number of rows.
+    pub fn select_down(&mut self, n: usize) {
+        self.focus_down(n);
+        let focus = self.focus();
+        self.scrollbase.scroll_to(focus);
+    }
+
+    // Low-level focus change. Does not fix scrollbase.
+    fn focus_up(&mut self, n: usize) {
+        let focus = self.focus().saturating_sub(n);
+        self.focus.set(focus);
+    }
+
+    // Low-level focus change. Does not fix scrollbase.
     fn focus_down(&mut self, n: usize) {
         let focus = min(self.focus() + n, self.items.len().saturating_sub(1));
         self.focus.set(focus);
@@ -321,8 +343,9 @@ impl SelectView<String> {
     /// select_view.add_all_str(vec!["a", "b", "c"]);
     /// ```
     pub fn add_all_str<S, I>(&mut self, iter: I)
-        where S: Into<String>,
-              I: IntoIterator<Item = S>
+    where
+        S: Into<String>,
+        I: IntoIterator<Item = S>,
     {
         for s in iter {
             self.add_item_str(s);
@@ -333,8 +356,9 @@ impl SelectView<String> {
     ///
     /// Chainable variant.
     pub fn with_all_str<S, I>(self, iter: I) -> Self
-        where S: Into<String>,
-              I: IntoIterator<Item = S>
+    where
+        S: Into<String>,
+        I: IntoIterator<Item = S>,
     {
         self.with(|s| s.add_all_str(iter))
     }
@@ -372,7 +396,6 @@ impl<T: 'static> View for SelectView<T> {
                 printer.print((offset, 0), label);
             });
         } else {
-
             let h = self.items.len();
             let offset = self.align.v.get_offset(h, printer.size.y);
             let printer =
@@ -465,9 +488,10 @@ impl<T: 'static> View for SelectView<T> {
                         let current_offset = s.screen().offset();
                         let offset = offset.signed() - current_offset;
                         // And finally, put the view in view!
-                        s.screen_mut().add_layer_at(Position::parent(offset),
-                                                    MenuPopup::new(tree)
-                                                        .focus(focus));
+                        s.screen_mut().add_layer_at(
+                            Position::parent(offset),
+                            MenuPopup::new(tree).focus(focus),
+                        );
                     })
                 }
                 _ => EventResult::Ignored,
@@ -475,21 +499,24 @@ impl<T: 'static> View for SelectView<T> {
         } else {
             match event {
                 Event::Key(Key::Up) if self.focus() > 0 => self.focus_up(1),
-                Event::Key(Key::Down) if self.focus() + 1 <
-                                         self.items.len() => {
+                Event::Key(Key::Down)
+                    if self.focus() + 1 < self.items.len() =>
+                {
                     self.focus_down(1)
                 }
                 Event::Key(Key::PageUp) => self.focus_up(10),
                 Event::Key(Key::PageDown) => self.focus_down(10),
                 Event::Key(Key::Home) => self.focus.set(0),
-                Event::Key(Key::End) => self.focus.set(self.items.len().saturating_sub(1)),
+                Event::Key(Key::End) => {
+                    self.focus.set(self.items.len().saturating_sub(1))
+                }
                 Event::Key(Key::Enter) if self.on_submit.is_some() => {
                     let cb = self.on_submit.clone().unwrap();
                     let v = self.selection();
                     // We return a Callback Rc<|s| cb(s, &*v)>
-                    return EventResult::Consumed(Some(Callback::from_fn(move |s| {
-                        cb(s, &v)
-                    })));
+                    return EventResult::Consumed(
+                        Some(Callback::from_fn(move |s| cb(s, &v))),
+                    );
                 }
                 Event::Char(c) => {
                     // Starting from the current focus,
@@ -498,10 +525,10 @@ impl<T: 'static> View for SelectView<T> {
                     // the list when we reach the end.
                     // This is achieved by chaining twice the iterator
                     let iter = self.items.iter().chain(self.items.iter());
-                    if let Some((i, _)) =
-                        iter.enumerate()
-                            .skip(self.focus() + 1)
-                            .find(|&(_, item)| item.label.starts_with(c)) {
+                    if let Some((i, _)) = iter.enumerate()
+                        .skip(self.focus() + 1)
+                        .find(|&(_, item)| item.label.starts_with(c))
+                    {
                         // Apply modulo in case we have a hit
                         // from the chained iterator
                         self.focus.set(i % self.items.len());
