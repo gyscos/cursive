@@ -59,12 +59,14 @@
 //! Or you can use gdb as usual.
 #![deny(missing_docs)]
 
+#[macro_use]
+extern crate log;
+extern crate num;
+extern crate odds;
+extern crate owning_ref;
 extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
-extern crate odds;
-extern crate num;
-extern crate owning_ref;
 
 #[cfg(feature = "termion")]
 #[macro_use]

@@ -160,7 +160,7 @@ impl<T: View> ViewWrapper for BoxView<T> {
         let result = self.size
             .zip_map(child_size.zip(req), SizeConstraint::result);
 
-        // eprintln!("{:?}", result);
+        debug!("{:?}", result);
 
         if self.squishable {
             // We respect the request if we're less or equal.

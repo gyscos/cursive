@@ -228,7 +228,7 @@ impl View for ListView {
             .max()
             .unwrap_or(0) + 1;
 
-        // eprintln!("Offset: {}", offset);
+        debug!("Offset: {}", offset);
         self.scrollbase.draw(printer, |printer, i| match self.children[i] {
             ListChild::Row(ref label, ref view) => {
                 printer.print((0, 0), label);
@@ -278,7 +278,7 @@ impl View for ListView {
         let available = size.x.saturating_sub(label_width + spacing +
                                               scrollbar_width);
 
-        // eprintln!("Available: {}", available);
+        debug!("Available: {}", available);
 
         for child in self.children.iter_mut().filter_map(ListChild::view) {
             child.layout(Vec2::new(available, 1));
