@@ -226,9 +226,9 @@ impl View for LinearLayout {
             .iter_mut()
             .map(|c| c.required_size(req))
             .collect();
-        // eprintln!("Ideal sizes: {:?}", sizes);
+        debug!("Ideal sizes: {:?}", sizes);
         let ideal = self.orientation.stack(sizes.iter());
-        // eprintln!("Ideal result: {:?}", ideal);
+        debug!("Ideal result: {:?}", ideal);
 
 
         // Does it fit?
@@ -241,7 +241,7 @@ impl View for LinearLayout {
         // Ok, so maybe it didn't. Budget cuts, everyone.
         // Let's pretend we have almost no space in this direction.
         let budget_req = req.with_axis(self.orientation, 1);
-        // eprintln!("Budget req: {:?}", budget_req);
+        debug!("Budget req: {:?}", budget_req);
 
         // See how they like it that way
         let min_sizes: Vec<Vec2> = self.children
@@ -249,8 +249,8 @@ impl View for LinearLayout {
             .map(|c| c.required_size(budget_req))
             .collect();
         let desperate = self.orientation.stack(min_sizes.iter());
-        // eprintln!("Min sizes: {:?}", min_sizes);
-        // eprintln!("Desperate: {:?}", desperate);
+        debug!("Min sizes: {:?}", min_sizes);
+        debug!("Desperate: {:?}", desperate);
 
         // This is the lowest we'll ever go. It better fit at least.
         let orientation = self.orientation;
@@ -263,7 +263,7 @@ impl View for LinearLayout {
                 *req.get(self.orientation));
 
             // TODO: print some error message or something
-            // eprintln!("Seriously? {:?} > {:?}???", desperate, req);
+            debug!("Seriously? {:?} > {:?}???", desperate, req);
             // self.cache = Some(SizeCache::build(desperate, req));
             self.cache = None;
             return desperate;
@@ -272,7 +272,7 @@ impl View for LinearLayout {
         // This here is how much we're generously offered
         // (We just checked that req >= desperate, so the subtraction is safe
         let mut available = self.orientation.get(&(req - desperate));
-        // eprintln!("Available: {:?}", available);
+        debug!("Available: {:?}", available);
 
         // Here, we have to make a compromise between the ideal
         // and the desperate solutions.
@@ -282,7 +282,7 @@ impl View for LinearLayout {
             .map(|(a, b)| a.saturating_sub(b))
             .enumerate()
             .collect();
-        // eprintln!("Overweight: {:?}", overweight);
+        debug!("Overweight: {:?}", overweight);
 
         // So... distribute `available` to reduce the overweight...
         // TODO: use child weight in the distribution...
@@ -302,7 +302,7 @@ impl View for LinearLayout {
             allocations[j] = spent;
             available -= spent;
         }
-        // eprintln!("Allocations: {:?}", allocations);
+        debug!("Allocations: {:?}", allocations);
 
         // Final lengths are the minimum ones + generous allocations
         let final_lengths: Vec<Vec2> = min_sizes.iter()
@@ -311,7 +311,7 @@ impl View for LinearLayout {
             .map(|(a, b)| a + b)
             .map(|l| req.with_axis(self.orientation, l))
             .collect();
-        // eprintln!("Final sizes: {:?}", final_lengths);
+        debug!("Final sizes: {:?}", final_lengths);
 
         // Let's ask everyone one last time. Everyone should be happy.
         // (But they may ask more on the other axis.)
@@ -320,7 +320,7 @@ impl View for LinearLayout {
             .enumerate()
             .map(|(i, c)| c.required_size(final_lengths[i]))
             .collect();
-        // eprintln!("Final sizes2: {:?}", final_sizes);
+        debug!("Final sizes2: {:?}", final_sizes);
 
         // Let's stack everything to see what it looks like.
         let compromise = self.orientation.stack(final_sizes.iter());

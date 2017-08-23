@@ -20,6 +20,7 @@ optional = true
 version = "0.10"
 
 [dependencies]
+log = "0.3"
 num = "0.1"
 odds = "0.2"
 owning_ref = "0.3"

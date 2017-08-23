@@ -495,7 +495,7 @@ impl View for EditView {
 
     fn layout(&mut self, size: Vec2) {
         self.last_length = size.x;
-        // eprintln!("Promised: {}", size.x);
+        debug!("Promised: {}", size.x);
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {

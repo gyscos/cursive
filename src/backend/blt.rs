@@ -260,8 +260,7 @@ fn blt_keycode_to_char(kc: KeyCode, shift: bool) -> char {
         KeyCode::Num9 => '9',
         KeyCode::Num0 => '0',
         _ => {
-            eprintln!("Found unknown input: {:?}", kc);
-            unreachable!()
+            unreachable!("Found unknown input: {:?}", kc)
         }
     }
 }
