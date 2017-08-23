@@ -87,10 +87,21 @@ impl EventResult {
             cb(s);
         }
     }
+
+    /// Returns `self` if it is not `Event::Ignored`, otherwise returns `f()`.
+    pub fn or_else<F>(self, f: F) -> Self
+    where
+        F: FnOnce() -> EventResult,
+    {
+        match self {
+            EventResult::Ignored => f(),
+            other => other,
+        }
+    }
 }
 
 /// A non-character key on the keyboard
-#[derive(PartialEq,Eq,Clone,Copy,Hash,Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
 pub enum Key {
     /// Both Enter (or Return) and numpad Enter
     Enter,
@@ -186,7 +197,7 @@ impl Key {
 }
 
 /// Represents an event as seen by the application.
-#[derive(PartialEq,Eq,Clone,Hash,Debug)]
+#[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub enum Event {
     /// Event fired when the window is resized.
     WindowResize,
