@@ -1,9 +1,10 @@
 extern crate cursive;
 
 use cursive::Cursive;
-use cursive::views::{Dialog, SelectView, TextView};
 use cursive::align::HAlign;
+use cursive::event::EventResult;
 use cursive::traits::*;
+use cursive::views::{Dialog, OnEventView, SelectView, TextView};
 
 fn main() {
     let mut select = SelectView::new().h_align(HAlign::Center);
@@ -16,11 +17,24 @@ fn main() {
     // Sets the callback for when "Enter" is pressed.
     select.set_on_submit(show_next_window);
 
+    // Let's override the `j` and `k` keys for navigation
+    let select = OnEventView::new(select)
+        .on_pre_event_inner('k', |s| {
+            s.select_up(1);
+            Some(EventResult::Consumed(None))
+        })
+        .on_pre_event_inner('j', |s| {
+            s.select_down(1);
+            Some(EventResult::Consumed(None))
+        });
+
     let mut siv = Cursive::new();
 
     // Let's add a BoxView to keep the list at a reasonable size - it can scroll anyway.
-    siv.add_layer(Dialog::around(select.fixed_size((20, 10)))
-        .title("Where are you from?"));
+    siv.add_layer(
+        Dialog::around(select.fixed_size((20, 10)))
+            .title("Where are you from?"),
+    );
 
     siv.run();
 }
@@ -29,6 +43,7 @@ fn main() {
 fn show_next_window(siv: &mut Cursive, city: &str) {
     siv.pop_layer();
     let text = format!("{} is a great city!", city);
-    siv.add_layer(Dialog::around(TextView::new(text))
-        .button("Quit", |s| s.quit()));
+    siv.add_layer(
+        Dialog::around(TextView::new(text)).button("Quit", |s| s.quit()),
+    );
 }
