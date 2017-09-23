@@ -28,7 +28,7 @@ fn back_color(x: u8, y: u8, x_max: u8, y_max: u8) -> Color {
                255 - x * (255 / x_max))
 }
 
-fn draw(p: &Printer, _: &()) {
+fn draw(_: &(), p: &Printer) {
     let x_max = p.size.x as u8;
     let y_max = p.size.y as u8;
 
