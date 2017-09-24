@@ -17,14 +17,21 @@ use view::{Selector, View};
 /// [`wrap_impl!`]: ../macro.wrap_impl.html
 pub trait ViewWrapper {
     /// Type that this view wraps.
-    type V: View;
+    type V: View + ?Sized;
 
     /// Get an immutable reference to the wrapped view.
-    fn with_view<F, R>(&self, f: F) -> Option<R> where F: FnOnce(&Self::V) -> R;
+    ///
+    /// Returns `None` if the inner view is unavailable.
+    fn with_view<F, R>(&self, f: F) -> Option<R>
+    where
+        F: FnOnce(&Self::V) -> R;
 
     /// Get a mutable reference to the wrapped view.
+    ///
+    /// Returns `None` if the inner view is unavailable.
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-        where F: FnOnce(&mut Self::V) -> R;
+    where
+        F: FnOnce(&mut Self::V) -> R;
 
     /// Wraps the `draw` method.
     fn wrap_draw(&self, printer: &Printer) {
@@ -33,12 +40,15 @@ pub trait ViewWrapper {
 
     /// Wraps the `required_size` method.
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
-        self.with_view_mut(|v| v.required_size(req)).unwrap_or_else(Vec2::zero)
+        self.with_view_mut(|v| v.required_size(req))
+            .unwrap_or_else(Vec2::zero)
     }
 
     /// Wraps the `on_event` method.
     fn wrap_on_event(&mut self, ch: Event) -> EventResult {
-        self.with_view_mut(|v| v.on_event(ch)).unwrap_or(EventResult::Ignored)
+        self.with_view_mut(|v| v.on_event(ch)).unwrap_or(
+            EventResult::Ignored,
+        )
     }
 
     /// Wraps the `layout` method.
@@ -48,23 +58,47 @@ pub trait ViewWrapper {
 
     /// Wraps the `take_focus` method.
     fn wrap_take_focus(&mut self, source: Direction) -> bool {
-        self.with_view_mut(|v| v.take_focus(source)).unwrap_or(false)
+        self.with_view_mut(|v| v.take_focus(source)).unwrap_or(
+            false,
+        )
     }
 
     /// Wraps the `find` method.
-    fn wrap_call_on_any<'a>(&mut self, selector: &Selector,
-                         callback: Box<FnMut(&mut Any) + 'a>) {
+    fn wrap_call_on_any<'a>(&mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>) {
         self.with_view_mut(|v| v.call_on_any(selector, callback));
     }
 
     /// Wraps the `focus_view` method.
     fn wrap_focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
-        self.with_view_mut(|v| v.focus_view(selector)).unwrap_or(Err(()))
+        self.with_view_mut(|v| v.focus_view(selector)).unwrap_or(
+            Err(()),
+        )
     }
 
     /// Wraps the `needs_relayout` method.
     fn wrap_needs_relayout(&self) -> bool {
         self.with_view(|v| v.needs_relayout()).unwrap_or(true)
+    }
+}
+
+use std::ops::{Deref, DerefMut};
+impl<U: View + ?Sized, T: Deref<Target = U> + DerefMut> ViewWrapper for T {
+    type V = U;
+
+    /// Get an immutable reference to the wrapped view.
+    fn with_view<F, R>(&self, f: F) -> Option<R>
+    where
+        F: FnOnce(&Self::V) -> R,
+    {
+        Some(f(self.deref()))
+    }
+
+    /// Get a mutable reference to the wrapped view.
+    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
+    where
+        F: FnOnce(&mut Self::V) -> R,
+    {
+        Some(f(self.deref_mut()))
     }
 }
 
@@ -89,8 +123,7 @@ impl<T: ViewWrapper> View for T {
         self.wrap_take_focus(source)
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector,
-                    callback: Box<FnMut(&mut Any) + 'a>) {
+    fn call_on_any<'a>(&mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>) {
         self.wrap_call_on_any(selector, callback)
     }
 

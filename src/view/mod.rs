@@ -148,42 +148,6 @@ pub trait View {
     }
 }
 
-use std::ops::{Deref, DerefMut};
-impl View for Box<View> {
-    fn draw(&self, printer: &Printer) {
-        self.deref().draw(printer)
-    }
-
-    fn required_size(&mut self, req: Vec2) -> Vec2 {
-        self.deref_mut().required_size(req)
-    }
-
-    fn on_event(&mut self, ch: Event) -> EventResult {
-        self.deref_mut().on_event(ch)
-    }
-
-    fn layout(&mut self, size: Vec2) {
-        self.deref_mut().layout(size);
-    }
-
-    fn take_focus(&mut self, source: Direction) -> bool {
-        self.deref_mut().take_focus(source)
-    }
-
-    fn call_on_any<'a>(&mut self, selector: &Selector,
-                    callback: Box<FnMut(&mut Any) + 'a>) {
-        self.deref_mut().call_on_any(selector, callback)
-    }
-
-    fn needs_relayout(&self) -> bool {
-        self.deref().needs_relayout()
-    }
-
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
-        self.deref_mut().focus_view(selector)
-    }
-}
-
 /// Provides `call_on<V: View>` to views.
 ///
 /// This trait is mostly a wrapper around [`View::call_on_any`].
