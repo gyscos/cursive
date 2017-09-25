@@ -15,9 +15,8 @@ version = "0.6.5-pre"
 [badges.travis-ci]
 repository = "gyscos/Cursive"
 
-[build-dependencies.skeptic]
-optional = true
-version = "0.10"
+[build-dependencies]
+skeptic = "0.13"
 
 [dependencies]
 log = "0.3"
@@ -56,7 +55,7 @@ version = "1.4.0"
 
 [dev-dependencies]
 rand = "0.3"
-skeptic = "0.10"
+skeptic = "0.13"
 
 [features]
 default = ["ncurses-backend"]
