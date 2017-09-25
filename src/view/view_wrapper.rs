@@ -19,16 +19,18 @@ pub trait ViewWrapper {
     /// Type that this view wraps.
     type V: View + ?Sized;
 
-    /// Get an immutable reference to the wrapped view.
+    /// Runs a function on the inner view, returning the result.
     ///
-    /// Returns `None` if the inner view is unavailable.
+    /// Returns `None` if the inner view is unavailable.  This should only
+    /// happen with some views if they are already borrowed by another call.
     fn with_view<F, R>(&self, f: F) -> Option<R>
     where
         F: FnOnce(&Self::V) -> R;
 
-    /// Get a mutable reference to the wrapped view.
+    /// Runs a function on the inner view, returning the result.
     ///
-    /// Returns `None` if the inner view is unavailable.
+    /// Returns `None` if the inner view is unavailable.  This should only
+    /// happen with some views if they are already borrowed by another call.
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
     where
         F: FnOnce(&mut Self::V) -> R;
@@ -81,11 +83,12 @@ pub trait ViewWrapper {
     }
 }
 
+// Some types easily implement ViewWrapper.
+// This includes Box<T: View>
 use std::ops::{Deref, DerefMut};
 impl<U: View + ?Sized, T: Deref<Target = U> + DerefMut> ViewWrapper for T {
     type V = U;
 
-    /// Get an immutable reference to the wrapped view.
     fn with_view<F, R>(&self, f: F) -> Option<R>
     where
         F: FnOnce(&Self::V) -> R,
@@ -93,7 +96,6 @@ impl<U: View + ?Sized, T: Deref<Target = U> + DerefMut> ViewWrapper for T {
         Some(f(self.deref()))
     }
 
-    /// Get a mutable reference to the wrapped view.
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
     where
         F: FnOnce(&mut Self::V) -> R,
@@ -102,6 +104,7 @@ impl<U: View + ?Sized, T: Deref<Target = U> + DerefMut> ViewWrapper for T {
     }
 }
 
+// The main point of implementing ViewWrapper is to have View for free.
 impl<T: ViewWrapper> View for T {
     fn draw(&self, printer: &Printer) {
         self.wrap_draw(printer);
