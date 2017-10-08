@@ -18,6 +18,8 @@ use Cursive;
 use std::ops::Deref;
 use std::rc::Rc;
 
+use vec::Vec2;
+
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
 #[derive(Clone)]
@@ -196,6 +198,34 @@ impl Key {
     }
 }
 
+/// One of the buttons present on the mouse
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
+pub enum MouseButton {
+    /// The left button, used for main actions.
+    Left,
+    /// Middle button, probably the wheel. Often pastes text in X11 on linux.
+    Middle,
+    /// The right button, for special actions.
+    Right,
+
+    // TODO: handle more buttons?
+    #[doc(hidden)]
+    Other,
+}
+
+/// Represents a possible event sent by the mouse.
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
+pub enum MouseEvent {
+    /// A button was pressed.
+    Press(MouseButton),
+    /// A button was released.
+    Release(MouseButton),
+    /// The wheel was moved up.
+    WheelUp,
+    /// The wheel was moved down.
+    WheelDown,
+}
+
 /// Represents an event as seen by the application.
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub enum Event {
@@ -204,6 +234,9 @@ pub enum Event {
 
     /// Event fired regularly when a auto-refresh is set.
     Refresh,
+
+
+    // TODO: have Char(modifier, char) and Key(modifier, key) enums?
 
     /// A character was entered (includes numbers, punctuation, ...).
     Char(char),
@@ -227,9 +260,22 @@ pub enum Event {
     /// A non-character key was pressed with the Ctrl and Alt keys pressed.
     CtrlAlt(Key),
 
+    /// A mouse event was sent.
+    Mouse {
+        /// Position of the top-left corner of the view receiving this event.
+        offset: Vec2,
+        /// Position of the mouse when this event was fired.
+        position: Vec2,
+        /// The mouse event itself.
+        event: MouseEvent,
+    },
+
+    // TODO: use a backend-dependent type for the unknown values?
     /// An unknown event was received.
     Unknown(Vec<u8>),
 
+    // Having a doc-hidden event prevents people from having exhaustive matches,
+    // allowing us to add events in the future.
     #[doc(hidden)]
     /// The application is about to exit.
     Exit,
