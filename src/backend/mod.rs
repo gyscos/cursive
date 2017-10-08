@@ -27,7 +27,7 @@ pub trait Backend {
     fn screen_size(&self) -> (usize, usize);
 
     /// Main input method
-    fn poll_event(&self) -> event::Event;
+    fn poll_event(&mut self) -> event::Event;
 
     /// Main method used for printing
     fn print_at(&self, (usize, usize), &str);

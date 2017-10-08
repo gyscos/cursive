@@ -79,7 +79,7 @@ impl backend::Backend for Concrete {
         // TODO: unsupported
     }
 
-    fn poll_event(&self) -> Event {
+    fn poll_event(&mut self) -> Event {
         // TODO: we could add backend-specific controls here.
         // Ex: ctrl+mouse wheel cause window cellsize to change
         if let Some(ev) = terminal::wait_event() {

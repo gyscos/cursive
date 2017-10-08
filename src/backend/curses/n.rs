@@ -139,7 +139,7 @@ impl backend::Backend for Concrete {
         ncurses::mvaddstr(y as i32, x as i32, text);
     }
 
-    fn poll_event(&self) -> Event {
+    fn poll_event(&mut self) -> Event {
         let ch: i32 = ncurses::getch();
 
         // Is it a UTF-8 starting point?

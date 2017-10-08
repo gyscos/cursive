@@ -136,7 +136,7 @@ impl backend::Backend for Concrete {
         self.window.mvaddstr(y as i32, x as i32, text);
     }
 
-    fn poll_event(&self) -> Event {
+    fn poll_event(&mut self) -> Event {
         // TODO: there seems to not be any indication
         // of Ctrl/Alt/Shift in these :v
         if let Some(ev) = self.window.getch() {

@@ -144,7 +144,7 @@ impl backend::Backend for Concrete {
         self.timeout = Some(1000 / fps as u32);
     }
 
-    fn poll_event(&self) -> Event {
+    fn poll_event(&mut self) -> Event {
         let input = &self.input;
         let resize = &self.resize;
 
