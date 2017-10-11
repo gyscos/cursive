@@ -1,9 +1,9 @@
 use Printer;
-
-use ::With;
+use With;
 use direction::Direction;
 use event::{Event, EventResult};
 use std::any::Any;
+use std::ops::Deref;
 use theme::ColorStyle;
 use vec::Vec2;
 use view::{Offset, Position, Selector, View};
@@ -22,11 +22,13 @@ enum Placement {
 }
 
 impl Placement {
-    pub fn compute_offset<S, A, P>(&self, size: S, available: A, parent: P)
-                                   -> Vec2
-        where S: Into<Vec2>,
-              A: Into<Vec2>,
-              P: Into<Vec2>
+    pub fn compute_offset<S, A, P>(
+        &self, size: S, available: A, parent: P
+    ) -> Vec2
+    where
+        S: Into<Vec2>,
+        A: Into<Vec2>,
+        P: Into<Vec2>,
     {
         match *self {
             Placement::Floating(ref position) => {
@@ -63,7 +65,8 @@ impl StackView {
     ///
     /// Fullscreen layers have no shadow.
     pub fn add_fullscreen_layer<T>(&mut self, view: T)
-        where T: 'static + View
+    where
+        T: 'static + View,
     {
         self.layers.push(Child {
             view: Box::new(Layer::new(view)),
@@ -75,7 +78,8 @@ impl StackView {
 
     /// Adds new view on top of the stack in the center of the screen.
     pub fn add_layer<T>(&mut self, view: T)
-        where T: 'static + View
+    where
+        T: 'static + View,
     {
         self.add_layer_at(Position::center(), view);
     }
@@ -84,7 +88,8 @@ impl StackView {
     ///
     /// Chainable variant.
     pub fn layer<T>(self, view: T) -> Self
-        where T: 'static + View
+    where
+        T: 'static + View,
     {
         self.with(|s| s.add_layer(view))
     }
@@ -93,20 +98,24 @@ impl StackView {
     ///
     /// Chainable variant.
     pub fn fullscreen_layer<T>(self, view: T) -> Self
-        where T: 'static + View
+    where
+        T: 'static + View,
     {
         self.with(|s| s.add_fullscreen_layer(view))
     }
 
     /// Adds a view on top of the stack.
     pub fn add_layer_at<T>(&mut self, position: Position, view: T)
-        where T: 'static + View
+    where
+        T: 'static + View,
     {
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
-            view: Box::new(ShadowView::new(Layer::new(view))
-                .top_padding(position.y == Offset::Center)
-                .left_padding(position.x == Offset::Center)),
+            view: Box::new(
+                ShadowView::new(Layer::new(view))
+                    .top_padding(position.y == Offset::Center)
+                    .left_padding(position.x == Offset::Center),
+            ),
             size: Vec2::new(0, 0),
             placement: Placement::Floating(position),
             virgin: true,
@@ -117,7 +126,8 @@ impl StackView {
     ///
     /// Chainable variant.
     pub fn layer_at<T>(self, position: Position, view: T) -> Self
-        where T: 'static + View
+    where
+        T: 'static + View,
     {
         self.with(|s| s.add_layer_at(position, view))
     }
@@ -131,8 +141,11 @@ impl StackView {
     pub fn offset(&self) -> Vec2 {
         let mut previous = Vec2::zero();
         for layer in &self.layers {
-            let offset = layer.placement
-                .compute_offset(layer.size, self.last_size, previous);
+            let offset = layer.placement.compute_offset(
+                layer.size,
+                self.last_size,
+                previous,
+            );
             previous = offset;
         }
         previous
@@ -144,18 +157,52 @@ impl StackView {
     }
 }
 
+struct StackPositionIterator<R: Deref<Target = Child>, I: Iterator<Item = R>> {
+    inner: I,
+    previous: Vec2,
+    total_size: Vec2,
+}
+
+impl<R: Deref<Target = Child>, I: Iterator<Item = R>>
+    StackPositionIterator<R, I> {
+    /// Returns a new StackPositionIterator
+    pub fn new(inner: I, total_size: Vec2) -> Self {
+        let previous = Vec2::zero();
+        StackPositionIterator {
+            inner,
+            previous,
+            total_size,
+        }
+    }
+}
+
+impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
+    for StackPositionIterator<R, I> {
+    type Item = (R, Vec2);
+
+    fn next(&mut self) -> Option<(R, Vec2)> {
+        self.inner.next().map(|v| {
+            let offset = v.placement.compute_offset(
+                v.size,
+                self.total_size,
+                self.previous,
+            );
+
+            self.previous = offset;
+
+            (v, offset)
+        })
+    }
+}
+
 impl View for StackView {
     fn draw(&self, printer: &Printer) {
         let last = self.layers.len();
-        let mut previous = Vec2::zero();
         printer.with_color(ColorStyle::Primary, |printer| {
-            for (i, v) in self.layers.iter().enumerate() {
-                // Place the view
-                // Center the view
-                let offset = v.placement
-                    .compute_offset(v.size, printer.size, previous);
-
-                previous = offset;
+            for (i, (v, offset)) in
+                StackPositionIterator::new(self.layers.iter(), printer.size)
+                    .enumerate()
+            {
                 v.view
                     .draw(&printer.sub_printer(offset, v.size, i + 1 == last));
             }
@@ -163,9 +210,15 @@ impl View for StackView {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        match self.layers.last_mut() {
+        // Use the stack position iterator to get the offset of the top layer.
+        // TODO: save it instead when drawing?
+        match StackPositionIterator::new(
+            self.layers.iter_mut(),
+            self.last_size,
+        ).last()
+        {
             None => EventResult::Ignored,
-            Some(v) => v.view.on_event(event),
+            Some((v, offset)) => v.view.on_event(event.relativized(offset)),
         }
     }
 
@@ -208,10 +261,14 @@ impl View for StackView {
         }
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector,
-                    mut callback: Box<FnMut(&mut Any) + 'a>) {
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector,
+        mut callback: Box<FnMut(&mut Any) + 'a>,
+    ) {
         for layer in &mut self.layers {
-            layer.view.call_on_any(selector, Box::new(|any| callback(any)));
+            layer
+                .view
+                .call_on_any(selector, Box::new(|any| callback(any)));
         }
     }
 
