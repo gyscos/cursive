@@ -205,7 +205,9 @@ impl Dialog {
 
     // An event is received while the content is in focus
     fn on_event_content(&mut self, event: Event) -> EventResult {
-        match self.content.on_event(event.relativized((1, 1))) {
+        match self.content.on_event(
+            event.relativized((self.padding + self.borders).top_left()),
+        ) {
             EventResult::Ignored if !self.buttons.is_empty() => {
                 match event {
                     Event::Key(Key::Down) |
@@ -383,7 +385,10 @@ impl Dialog {
                 position.fits_in_rect(btn.offset.get(), btn.button.size)
             }) {
                 self.focus = Focus::Button(i);
-            } else if position.fits_in_rect((1, 1), self.content.size)
+            } else if position.fits_in_rect(
+                (self.padding + self.borders).top_left(),
+                self.content.size,
+            )
                 && self.content.take_focus(Direction::none())
             {
                 // Or did we click the content?
