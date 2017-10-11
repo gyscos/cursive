@@ -45,8 +45,9 @@ struct Child {
     placement: Placement,
 
     // We cannot call `take_focus` until we've called `layout()`
-    // So we want to call `take_focus` right after the first call
-    // to `layout`; this flag remembers when we've done that.
+    // (for instance, a textView must know it will scroll to be focusable).
+    // So we want to call `take_focus` right after the first call to `layout`.
+    // This flag remembers when we've done that.
     virgin: bool,
 }
 
