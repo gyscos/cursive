@@ -78,7 +78,7 @@ fn phase_2(s: &mut Cursive) {
     let speeds: Vec<_> =
         (0..n_bars).map(|_| rand::thread_rng().gen_range(50, 150)).collect();
 
-    let n_max = 100000;
+    let n_max = 100_000;
     let cb = s.cb_sink().clone();
 
     // Let's prepare the progress bars...

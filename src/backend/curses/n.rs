@@ -20,7 +20,7 @@ impl Concrete {
                     -> i16 {
 
         let n = 1 + pairs.len() as i16;
-        let target = if ncurses::COLOR_PAIRS() > n as i32 {
+        let target = if ncurses::COLOR_PAIRS() > i32::from(n) {
             // We still have plenty of space for everyone.
             n
         } else {

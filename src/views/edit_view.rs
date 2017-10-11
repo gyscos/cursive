@@ -13,6 +13,13 @@ use utils::simple_suffix;
 use vec::Vec2;
 use view::View;
 
+/// closure type for callbacks when the content is modified. Arguments are the
+/// `Cursive`, current content of the input and cursor position
+pub type OnEdit = Fn(&mut Cursive, &str, usize);
+
+/// closure type for callbacks when Enter is pressed. Arguments are the `Cursive`
+/// and the content of the input.
+pub type OnSubmit = Fn(&mut Cursive, &str);
 
 /// Input box where the user can enter and edit text.
 ///
@@ -75,10 +82,10 @@ pub struct EditView {
     /// Callback when the content is modified.
     ///
     /// Will be called with the current content and the cursor position.
-    on_edit: Option<Rc<Fn(&mut Cursive, &str, usize)>>,
+    on_edit: Option<Rc<OnEdit>>,
 
     /// Callback when <Enter> is pressed.
-    on_submit: Option<Rc<Fn(&mut Cursive, &str)>>,
+    on_submit: Option<Rc<OnSubmit>>,
 
     /// When `true`, only print `*` instead of the true content.
     secret: bool,

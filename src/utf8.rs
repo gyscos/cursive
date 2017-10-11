@@ -25,7 +25,7 @@ pub fn read_char<F>(first: u8, next: F) -> Result<char, String>
     let mut res = 0u32;
 
     // First, get the data - only the few last bits
-    res |= (first & make_mask(7 - n_bytes)) as u32;
+    res |= u32::from(first & make_mask(7 - n_bytes));
 
     // We already have one byte, now read the others.
     for _ in 1..n_bytes {
@@ -39,7 +39,7 @@ pub fn read_char<F>(first: u8, next: F) -> Result<char, String>
         // We have 6 fresh new bits to read, make room.
         res <<= 6;
         // 0x3F is 00111111, so we keep the last 6 bits
-        res |= (byte & 0x3F) as u32;
+        res |= u32::from(byte & 0x3F);
     }
 
     // from_u32 could return an error if we gave it invalid utf-8.
