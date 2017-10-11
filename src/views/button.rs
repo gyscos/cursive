@@ -110,8 +110,8 @@ impl View for Button {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        eprintln!("{:?}", event);
-        eprintln!("{:?}", self.req_size());
+        // eprintln!("{:?}", event);
+        // eprintln!("{:?}", self.req_size());
         match event {
             // 10 is the ascii code for '\n', that is the return key
             Event::Key(Key::Enter) => {

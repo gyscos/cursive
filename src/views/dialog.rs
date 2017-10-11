@@ -375,7 +375,7 @@ impl Dialog {
                 Some(pos) => pos,
             };
 
-            eprintln!("Rel pos: {:?}", position);
+            // eprintln!("Rel pos: {:?}", position);
 
             // Now that we have a relative position, checks for buttons?
             if let Some(i) = self.buttons.iter().position(|btn| {
