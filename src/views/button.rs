@@ -28,7 +28,8 @@ pub struct Button {
 impl Button {
     /// Creates a new button with the given content and callback.
     pub fn new<F, S: Into<String>>(label: S, cb: F) -> Self
-        where F: Fn(&mut Cursive) + 'static
+    where
+        F: Fn(&mut Cursive) + 'static,
     {
         Button {
             label: label.into(),
@@ -41,7 +42,8 @@ impl Button {
     ///
     /// Replaces the previous callback.
     pub fn set_callback<F>(&mut self, cb: F)
-        where F: Fn(&mut Cursive) + 'static
+    where
+        F: Fn(&mut Cursive) + 'static,
     {
         self.callback = Callback::from_fn(cb);
     }
@@ -74,11 +76,14 @@ impl Button {
     pub fn is_enabled(&self) -> bool {
         self.enabled
     }
+
+    fn req_size(&self) -> Vec2 {
+        Vec2::new(2 + self.label.width(), 1)
+    }
 }
 
 impl View for Button {
     fn draw(&self, printer: &Printer) {
-
         if printer.size.x == 0 {
             return;
         }
@@ -101,13 +106,23 @@ impl View for Button {
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {
         // Meh. Fixed size we are.
-        Vec2::new(2 + self.label.width(), 1)
+        self.req_size()
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        eprintln!("{:?}", event);
+        eprintln!("{:?}", self.req_size());
         match event {
             // 10 is the ascii code for '\n', that is the return key
             Event::Key(Key::Enter) => {
+                EventResult::Consumed(Some(self.callback.clone()))
+            }
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                position,
+                offset,
+            } if position.fits_in_rect(offset, self.req_size()) =>
+            {
                 EventResult::Consumed(Some(self.callback.clone()))
             }
             _ => EventResult::Ignored,
