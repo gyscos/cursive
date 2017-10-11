@@ -298,6 +298,53 @@ pub enum Event {
     Exit,
 }
 
+impl Event {
+    /// Returns the position of the mouse, if `self` is a mouse event.
+    pub fn mouse_position(&self) -> Option<Vec2> {
+        if let Event::Mouse {
+            offset: _,
+            position,
+            event: _,
+        } = *self
+        {
+            Some(position)
+        } else {
+            None
+        }
+    }
+
+    /// Update `self` with the given offset.
+    ///
+    /// If `self` is a mouse event, adds `top_left` to its offset.
+    /// Otherwise, do nothing.
+    pub fn relativize<V>(&mut self, top_left: V)
+    where
+        V: Into<Vec2>,
+    {
+        if let Event::Mouse {
+            ref mut offset,
+            position: _,
+            event: _,
+        } = *self
+        {
+            *offset = *offset + top_left;
+        }
+    }
+
+    /// Returns a cloned, relativized event.
+    ///
+    /// If `self` is a mouse event, adds `top_left` to its offset.
+    /// Otherwise, returns a simple clone.
+    pub fn relativized<V>(&self, top_left: V) -> Self
+    where
+        V: Into<Vec2>,
+    {
+        let mut result = self.clone();
+        result.relativize(top_left);
+        result
+    }
+}
+
 impl From<char> for Event {
     fn from(c: char) -> Event {
         Event::Char(c)
