@@ -77,12 +77,12 @@ impl Concrete {
         {
             // eprintln!("{:032b}", mevent.bstate);
             // Currently unused
-            let _shift = (mevent.bstate & ncurses::BUTTON_SHIFT as u32) != 0;
-            let _alt = (mevent.bstate & ncurses::BUTTON_ALT as u32) != 0;
-            let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as u32) != 0;
+            let _shift = (mevent.bstate & ncurses::BUTTON_SHIFT as ncurses::mmask_t) != 0;
+            let _alt = (mevent.bstate & ncurses::BUTTON_ALT as ncurses::mmask_t) != 0;
+            let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as ncurses::mmask_t) != 0;
 
             mevent.bstate &= !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT
-                | ncurses::BUTTON_CTRL) as u32;
+                | ncurses::BUTTON_CTRL) as ncurses::mmask_t;
 
             let make_event = |event| {
                 Event::Mouse {
@@ -92,7 +92,7 @@ impl Concrete {
                 }
             };
 
-            if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as u32 {
+            if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as ncurses::mmask_t {
                 // The event is either a mouse drag event,
                 // or a weird double-release event. :S
                 self.last_mouse_button
@@ -101,7 +101,7 @@ impl Concrete {
                     .unwrap_or(Event::Unknown(vec![]))
             } else {
                 // Identify the button
-                let mut bare_event = (mevent.bstate & ((1 << 25) - 1)) as i32;
+                let mut bare_event = mevent.bstate & ((1 << 25) - 1);
 
                 let mut event = None;
                 while bare_event != 0 {
@@ -109,7 +109,7 @@ impl Concrete {
                     bare_event ^= single_event;
 
                     // Process single_event
-                    get_event(single_event, |e| if event.is_none() {
+                    get_event(single_event as i32, |e| if event.is_none() {
                         event = Some(e);
                     } else {
                         self.event_queue.push(make_event(e));
@@ -276,7 +276,7 @@ impl backend::Backend for Concrete {
         // Listen to all mouse events.
         ncurses::mousemask(
             (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION)
-                as u32,
+                as ncurses::mmask_t,
             None,
         );
         ncurses::noecho();
