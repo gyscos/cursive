@@ -17,7 +17,6 @@
 use Cursive;
 use std::ops::Deref;
 use std::rc::Rc;
-
 use vec::Vec2;
 
 /// Callback is a function that can be triggered by an event.
@@ -208,9 +207,13 @@ pub enum MouseButton {
     /// The right button, for special actions.
     Right,
 
+    /// Fourth button if the mouse supports it.
+    Button4,
+    /// Fifth button if the mouse supports it.
+    Button5,
+
     // TODO: handle more buttons?
-    #[doc(hidden)]
-    Other,
+    #[doc(hidden)] Other,
 }
 
 /// Represents a possible event sent by the mouse.
@@ -220,10 +223,26 @@ pub enum MouseEvent {
     Press(MouseButton),
     /// A button was released.
     Release(MouseButton),
+    /// A button is being held.
+    Hold(MouseButton),
     /// The wheel was moved up.
     WheelUp,
     /// The wheel was moved down.
     WheelDown,
+}
+
+impl MouseEvent {
+    /// Returns the button used by this event, if any.
+    ///
+    /// Returns `None` if `self` is `WheelUp` or `WheelDown`.
+    pub fn button(&self) -> Option<MouseButton> {
+        match *self {
+            MouseEvent::Press(btn) |
+            MouseEvent::Release(btn) |
+            MouseEvent::Hold(btn) => Some(btn),
+            _ => None,
+        }
+    }
 }
 
 /// Represents an event as seen by the application.
@@ -235,9 +254,7 @@ pub enum Event {
     /// Event fired regularly when a auto-refresh is set.
     Refresh,
 
-
     // TODO: have Char(modifier, char) and Key(modifier, key) enums?
-
     /// A character was entered (includes numbers, punctuation, ...).
     Char(char),
     /// A character was entered with the Ctrl key pressed.
