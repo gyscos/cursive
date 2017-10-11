@@ -243,6 +243,18 @@ impl MouseEvent {
             _ => None,
         }
     }
+
+    /// Returns `true` if `self` is an event that can grab focus.
+    ///
+    /// This includes `Press`, `WheelUp` and `WheelDown`.
+    pub fn grabs_focus(self) -> bool {
+        match self {
+            MouseEvent::Press(_) |
+            MouseEvent::WheelUp |
+            MouseEvent::WheelDown => true,
+            _ => false,
+        }
+    }
 }
 
 /// Represents an event as seen by the application.
