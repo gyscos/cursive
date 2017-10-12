@@ -34,6 +34,7 @@ enum State {
 pub struct Menubar {
     /// Menu items in this menubar.
     menus: Vec<(String, Rc<MenuTree>)>,
+
     /// TODO: move this out of this view.
     pub autohide: bool,
     focus: usize,
@@ -135,6 +136,39 @@ impl Menubar {
     pub fn remove(&mut self, i: usize) {
         self.menus.remove(i);
     }
+
+    fn child_at(&self, x: usize) -> Option<usize> {
+        if x == 0 {
+            return None;
+        }
+        let mut offset = 1;
+        for (i, &(ref title, _)) in self.menus.iter().enumerate() {
+            offset += title.width() + 2;
+
+            if x < offset {
+                return Some(i);
+            }
+        }
+
+        None
+    }
+
+    fn select_child(&mut self) -> EventResult {
+        // First, we need a new Rc to send the callback,
+        // since we don't know when it will be called.
+        let menu = self.menus[self.focus].1.clone();
+        self.state = State::Submenu;
+        let offset = (
+            self.menus[..self.focus]
+                .iter()
+                .map(|&(ref title, _)| title.width() + 2)
+                .fold(0, |a, b| a + b),
+            if self.autohide { 1 } else { 0 },
+        );
+        // Since the closure will be called multiple times,
+        // we also need a new Rc on every call.
+        EventResult::with_cb(move |s| show_child(s, offset, menu.clone()))
+    }
 }
 
 fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
@@ -191,14 +225,14 @@ impl View for Menubar {
                 (self.state != State::Inactive) && (i == self.focus);
             printer.with_selection(selected, |printer| {
                 printer.print((offset, 0), &format!(" {} ", title));
-                offset += title.width() + 2;
             });
+            offset += title.width() + 2;
         }
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Esc) => {
+            Event::Key(Key::Esc) if self.autohide => {
                 self.hide();
                 return EventResult::with_cb(|s| s.clear());
             }
@@ -213,22 +247,43 @@ impl View for Menubar {
                 self.focus = 0
             },
             Event::Key(Key::Down) | Event::Key(Key::Enter) => {
-                // First, we need a new Rc to send the callback,
-                // since we don't know when it will be called.
-                let menu = self.menus[self.focus].1.clone();
-                self.state = State::Submenu;
-                let offset = (
-                    self.menus[..self.focus]
-                        .iter()
-                        .map(|&(ref title, _)| title.width() + 2)
-                        .fold(0, |a, b| a + b),
-                    if self.autohide { 1 } else { 0 },
-                );
-                // Since the closure will be called multiple times,
-                // we also need a new Rc on every call.
-                return EventResult::with_cb(
-                    move |s| show_child(s, offset, menu.clone()),
-                );
+                return self.select_child();
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(_),
+                position,
+                offset,
+            } if position.fits(offset) && position.y == offset.y =>
+            {
+                position
+                    .checked_sub(offset)
+                    .and_then(|pos| self.child_at(pos.x))
+                    .map(|child| {
+                        self.focus = child;
+                    });
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(_),
+                position: _,
+                offset: _,
+            } => {
+                self.hide();
+                return EventResult::with_cb(|s| s.clear());
+            }
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                position,
+                offset,
+            } if position.fits(offset) && position.y == offset.y =>
+            {
+                if let Some(child) = position
+                    .checked_sub(offset)
+                    .and_then(|pos| self.child_at(pos.x))
+                {
+                    if self.focus == child {
+                        return self.select_child();
+                    }
+                }
             }
             _ => return EventResult::Ignored,
         }
