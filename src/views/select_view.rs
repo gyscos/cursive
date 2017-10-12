@@ -386,7 +386,7 @@ impl<T: 'static> SelectView<T> {
                 position,
                 offset,
             } => if let Some(position) = position.checked_sub(offset) {
-                if position.fits_in(self.last_size) {
+                if position < self.last_size {
                     fix_scroll = false;
                     self.focus.set(position.y + self.scrollbase.start_line);
                 }
@@ -400,7 +400,7 @@ impl<T: 'static> SelectView<T> {
                 self.scrollbase.release_grab();
                 if self.on_submit.is_some() {
                     if let Some(position) = position.checked_sub(offset) {
-                        if position.fits_in(self.last_size) {
+                        if position < self.last_size {
                             if position.y + self.scrollbase.start_line
                                 == self.focus()
                             {
@@ -476,7 +476,8 @@ impl<T: 'static> SelectView<T> {
         let offset = offset + (text_offset, 0);
         let offset = offset.saturating_sub((0, focus));
         let offset = offset.saturating_sub((2, 1));
-        // And now, we can return the callback.
+
+        // And now, we can return the callback that will create the popup.
         EventResult::with_cb(move |s| {
             // The callback will want to work with a fresh Rc
             let tree = tree.clone();
@@ -500,7 +501,7 @@ impl<T: 'static> SelectView<T> {
             // TODO: add Left/Right support for quick-switch?
             Event::Key(Key::Enter) => self.open_popup(),
             Event::Mouse {
-                event: MouseEvent::Press(MouseButton::Left),
+                event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
             } if position.fits_in_rect(offset, self.last_size) =>
