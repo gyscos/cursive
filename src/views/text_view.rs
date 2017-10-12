@@ -4,12 +4,10 @@ use XY;
 use align::*;
 use direction::Direction;
 use event::*;
-
 use unicode_width::UnicodeWidthStr;
-
 use utils::{LinesIterator, Row};
 use vec::Vec2;
-use view::{SizeCache, View, ScrollBase, ScrollStrategy};
+use view::{ScrollBase, ScrollStrategy, SizeCache, View};
 
 /// A simple view showing a fixed text
 pub struct TextView {
@@ -181,9 +179,9 @@ impl TextView {
 
         // First attempt: naively hope that we won't need a scrollbar_width
         // (This means we try to use the entire available width for text).
-        self.rows = LinesIterator::new(strip_last_newline(&self.content),
-                                       size.x)
-            .collect();
+        self.rows =
+            LinesIterator::new(strip_last_newline(&self.content), size.x)
+                .collect();
 
         // Width taken by the scrollbar. Without a scrollbar, it's 0.
         let mut scrollbar_width = 0;
@@ -241,11 +239,10 @@ impl TextView {
 
 impl View for TextView {
     fn draw(&self, printer: &Printer) {
-
         let h = self.rows.len();
+        // If the content is smaller than the view, align it somewhere.
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer =
-            &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
+        let printer = &printer.offset((0, offset), true);
 
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
@@ -261,14 +258,56 @@ impl View for TextView {
             return EventResult::Ignored;
         }
 
+        // We know we are scrollable, otherwise the event would just be ignored.
         match event {
             Event::Key(Key::Home) => self.scrollbase.scroll_top(),
             Event::Key(Key::End) => self.scrollbase.scroll_bottom(),
             Event::Key(Key::Up) if self.scrollbase.can_scroll_up() => {
                 self.scrollbase.scroll_up(1)
             }
-            Event::Key(Key::Down) if self.scrollbase
-                .can_scroll_down() => self.scrollbase.scroll_down(1),
+            Event::Key(Key::Down) if self.scrollbase.can_scroll_down() => {
+                self.scrollbase.scroll_down(1)
+            }
+            Event::Mouse {
+                event: MouseEvent::WheelDown,
+                position: _,
+                offset: _,
+            } if self.scrollbase.can_scroll_down() =>
+            {
+                self.scrollbase.scroll_down(5)
+            }
+            Event::Mouse {
+                event: MouseEvent::WheelUp,
+                position: _,
+                offset: _,
+            } if self.scrollbase.can_scroll_up() =>
+            {
+                self.scrollbase.scroll_up(5)
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(MouseButton::Left),
+                position,
+                offset,
+            } if position
+                .checked_sub(offset)
+                .and_then(|position| {
+                    self.width.map(
+                        |width| self.scrollbase.start_drag(position, width),
+                    )
+                })
+                .unwrap_or(false) =>
+            {
+                // Start scroll drag at the given position
+            }
+            Event::Mouse {
+                event: MouseEvent::Hold(MouseButton::Left),
+                position,
+                offset,
+            } => {
+                position
+                    .checked_sub(offset)
+                    .map(|position| self.scrollbase.drag(position));
+            }
             Event::Key(Key::PageDown) => self.scrollbase.scroll_down(10),
             Event::Key(Key::PageUp) => self.scrollbase.scroll_up(10),
             _ => return EventResult::Ignored,

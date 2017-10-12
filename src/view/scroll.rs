@@ -1,6 +1,5 @@
 use Printer;
 use std::cmp::{max, min};
-
 use theme::ColorStyle;
 use vec::Vec2;
 
@@ -12,10 +11,13 @@ use vec::Vec2;
 pub struct ScrollBase {
     /// First line visible
     pub start_line: usize,
+
     /// Content height
     pub content_height: usize,
+
     /// Number of lines displayed
     pub view_height: usize,
+
     /// Padding for the scrollbar
     ///
     /// If present, the scrollbar will be shifted
@@ -27,6 +29,9 @@ pub struct ScrollBase {
 
     /// Blank between the text and the scrollbar.
     pub right_padding: usize,
+
+    /// Initial position of the cursor when dragging.
+    pub thumb_grab: usize,
 }
 
 /// Defines the scrolling behaviour on content or size change
@@ -54,6 +59,7 @@ impl ScrollBase {
             view_height: 0,
             scrollbar_offset: 0,
             right_padding: 1,
+            thumb_grab: 0,
         }
     }
 
@@ -81,8 +87,8 @@ impl ScrollBase {
         self.content_height = content_height;
 
         if self.scrollable() {
-            self.start_line = min(self.start_line,
-                                  self.content_height - self.view_height);
+            self.start_line =
+                min(self.start_line, self.content_height - self.view_height);
         } else {
             self.start_line = 0;
         }
@@ -129,9 +135,22 @@ impl ScrollBase {
     /// Never further than the bottom of the view.
     pub fn scroll_down(&mut self, n: usize) {
         if self.scrollable() {
-            self.start_line = min(self.start_line + n,
-                                  self.content_height - self.view_height);
+            self.start_line = min(
+                self.start_line + n,
+                self.content_height - self.view_height,
+            );
         }
+    }
+
+    /// Scrolls down until the scrollbar thumb is at the given location.
+    pub fn scroll_to_thumb(&mut self, thumb_y: usize, thumb_height: usize) {
+        // The min() is there to stop at the bottom of the content.
+        // The saturating_sub is there to stop at the bottom of the content.
+        self.start_line = min(
+            (1 + self.content_height - self.view_height) * thumb_y
+                / (self.view_height - thumb_height + 1),
+            self.content_height - self.view_height,
+        );
     }
 
     /// Scroll up by the given number of lines.
@@ -142,6 +161,42 @@ impl ScrollBase {
             self.start_line -= min(self.start_line, n);
         }
     }
+
+    /// Starts scrolling from the given cursor position.
+    pub fn start_drag(&mut self, position: Vec2, width: usize) -> bool {
+        // First: are we on the correct column?
+        if position.x != self.scrollbar_x(width) {
+            return false;
+        }
+
+
+        // Now, did we hit the thumb? Or should we direct-jump?
+        let height = self.scrollbar_thumb_height();
+        let thumb_y = self.scrollbar_thumb_y(height);
+
+        if position.y >= thumb_y && position.y < thumb_y + height {
+            // Grabbed!
+            self.thumb_grab = position.y - thumb_y;
+        } else {
+            // Just jump a bit...
+            self.thumb_grab = height / 2;
+        }
+
+        self.drag(position);
+
+
+        true
+    }
+
+    /// Keeps scrolling by dragging the cursor.
+    pub fn drag(&mut self, position: Vec2) {
+        // Our goal is self.scrollbar_thumb_y()+thumb_grab == position.y
+        // Which means that position.y is the middle of the scrollbar.
+        let height = self.scrollbar_thumb_height();
+        let grab = self.thumb_grab;
+        self.scroll_to_thumb(position.y.saturating_sub(grab), height);
+    }
+
 
     /// Draws the scroll bar and the content using the given drawer.
     ///
@@ -168,14 +223,15 @@ impl ScrollBase {
     /// });
     /// ```
     pub fn draw<F>(&self, printer: &Printer, line_drawer: F)
-        where F: Fn(&Printer, usize)
+    where
+        F: Fn(&Printer, usize),
     {
         if self.view_height == 0 {
             return;
         }
         // Print the content in a sub_printer
-        let max_y = min(self.view_height,
-                        self.content_height - self.start_line);
+        let max_y =
+            min(self.view_height, self.content_height - self.start_line);
         let w = if self.scrollable() {
             // We have to remove the bar width and the padding.
             printer.size.x.saturating_sub(1 + self.right_padding)
@@ -186,10 +242,10 @@ impl ScrollBase {
         for y in 0..max_y {
             // Y is the actual coordinate of the line.
             // The item ID is then Y + self.start_line
-            line_drawer(&printer.sub_printer(Vec2::new(0, y),
-                                             Vec2::new(w, 1),
-                                             true),
-                        y + self.start_line);
+            line_drawer(
+                &printer.sub_printer(Vec2::new(0, y), Vec2::new(w, 1), true),
+                y + self.start_line,
+            );
         }
 
 
@@ -199,15 +255,8 @@ impl ScrollBase {
             // (that way we avoid using floats).
             // (ratio) * max_height
             // Where ratio is ({start or end} / content.height)
-            let height = max(1,
-                             self.view_height * self.view_height /
-                             self.content_height);
-            // Number of different possible positions
-            let steps = self.view_height - height + 1;
-
-            // Now
-            let start = steps * self.start_line /
-                        (1 + self.content_height - self.view_height);
+            let height = self.scrollbar_thumb_height();
+            let start = self.scrollbar_thumb_y(height);
 
             let color = if printer.focused {
                 ColorStyle::Highlight
@@ -215,12 +264,34 @@ impl ScrollBase {
                 ColorStyle::HighlightInactive
             };
 
-            // TODO: use 1 instead of 2
-            let scrollbar_x = printer.size.x.saturating_sub(1 + self.scrollbar_offset);
+            let scrollbar_x = self.scrollbar_x(printer.size.x);
+
+            // The background
             printer.print_vline((scrollbar_x, 0), printer.size.y, "|");
+
+            // The scrollbar thumb
             printer.with_color(color, |printer| {
                 printer.print_vline((scrollbar_x, start), height, "▒");
             });
         }
+    }
+
+    /// Returns the X position of the scrollbar, given the size available.
+    ///
+    /// Note that this does not depend whether or
+    /// not a scrollbar will actually be present.
+    pub fn scrollbar_x(&self, total_size: usize) -> usize {
+        total_size.saturating_sub(1 + self.scrollbar_offset)
+    }
+
+    /// Returns the height of the scrollbar thumb.
+    pub fn scrollbar_thumb_height(&self) -> usize {
+        max(1, self.view_height * self.view_height / self.content_height)
+    }
+
+    /// Returns the y position of the scrollbar thumb.
+    pub fn scrollbar_thumb_y(&self, scrollbar_thumb_height: usize) -> usize {
+        let steps = self.view_height - scrollbar_thumb_height + 1;
+        steps * self.start_line / (1 + self.content_height - self.view_height)
     }
 }
