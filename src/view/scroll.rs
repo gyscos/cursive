@@ -169,7 +169,9 @@ impl ScrollBase {
     /// Starts scrolling from the given cursor position.
     pub fn start_drag(&mut self, position: Vec2, width: usize) -> bool {
         // First: are we on the correct column?
-        if position.x != self.scrollbar_x(width) {
+        let scrollbar_x = self.scrollbar_x(width);
+        // eprintln!("Grabbed {} for {}", position.x, scrollbar_x);
+        if position.x != scrollbar_x {
             return false;
         }
 
@@ -275,6 +277,7 @@ impl ScrollBase {
             };
 
             let scrollbar_x = self.scrollbar_x(printer.size.x);
+            // eprintln!("Drawing bar at x={}", scrollbar_x);
 
             // The background
             printer.print_vline((scrollbar_x, 0), printer.size.y, "|");

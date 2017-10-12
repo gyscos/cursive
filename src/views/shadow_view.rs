@@ -24,10 +24,11 @@ impl<T: View> ShadowView<T> {
     }
 
     fn padding(&self) -> Vec2 {
-        Vec2::new(
-            1 + self.left_padding as usize,
-            1 + self.top_padding as usize,
-        )
+        self.top_left_padding() + (1, 1)
+    }
+
+    fn top_left_padding(&self) -> Vec2 {
+        Vec2::new(self.left_padding as usize, self.top_padding as usize)
     }
 
     /// If set, adds an empty column to the left of the view.
@@ -62,7 +63,8 @@ impl<T: View> ViewWrapper for ShadowView<T> {
     }
 
     fn wrap_on_event(&mut self, event: Event) -> EventResult {
-        self.view.on_event(event.relativized((1, 1)))
+        let padding = self.top_left_padding();
+        self.view.on_event(event.relativized(padding))
     }
 
     fn wrap_draw(&self, printer: &Printer) {

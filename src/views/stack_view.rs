@@ -191,6 +191,7 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
 
             self.previous = offset;
 
+            // eprintln!("{:?}", offset);
             (v, offset)
         })
     }
