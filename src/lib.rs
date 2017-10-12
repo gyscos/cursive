@@ -109,7 +109,7 @@ mod utf8;
 pub mod backend;
 
 
+pub use cursive::{Cursive, ScreenId};
 pub use printer::Printer;
 pub use with::With;
 pub use xy::XY;
-pub use cursive::{ScreenId, Cursive};

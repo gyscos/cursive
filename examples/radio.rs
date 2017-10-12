@@ -10,7 +10,8 @@ fn main() {
     let mut color_group: RadioGroup<String> = RadioGroup::new();
     let mut size_group: RadioGroup<u32> = RadioGroup::new();
 
-    siv.add_layer(Dialog::new()
+    siv.add_layer(
+        Dialog::new()
         .title("Make your selection")
         // We'll have two columns side-by-side
         .content(LinearLayout::horizontal()
@@ -37,7 +38,8 @@ fn main() {
                                              color,
                                              size))
                 .button("Ok", |s| s.quit()));
-        }));
+        }),
+    );
 
     siv.run();
 }

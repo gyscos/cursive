@@ -1,6 +1,8 @@
 use backend;
 use backend::Backend;
+use direction;
 use event::{Callback, Event, EventResult};
+use printer::Printer;
 use std::any::Any;
 use std::collections::HashMap;
 use std::path::Path;
@@ -9,8 +11,6 @@ use theme;
 use vec::Vec2;
 use view::{self, Finder, View};
 use views;
-use printer::Printer;
-use direction;
 
 /// Identifies a screen in the cursive root.
 pub type ScreenId = usize;

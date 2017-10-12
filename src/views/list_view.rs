@@ -3,10 +3,8 @@ use Printer;
 use With;
 use direction;
 use event::{Callback, Event, EventResult, Key};
-
 use std::any::Any;
 use std::rc::Rc;
-
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::ScrollBase;
@@ -96,7 +94,8 @@ impl ListView {
     /// Adds a view to the end of the list.
     pub fn add_child<V: View + 'static>(&mut self, label: &str, mut view: V) {
         view.take_focus(direction::Direction::none());
-        self.children.push(ListChild::Row(label.to_string(), Box::new(view)));
+        self.children
+            .push(ListChild::Row(label.to_string(), Box::new(view)));
     }
 
     /// Removes all children from this view.
@@ -126,7 +125,8 @@ impl ListView {
 
     /// Sets a callback to be used when an item is selected.
     pub fn set_on_select<F>(&mut self, cb: F)
-        where F: Fn(&mut Cursive, &String) + 'static
+    where
+        F: Fn(&mut Cursive, &String) + 'static,
     {
         self.on_select = Some(Rc::new(cb));
     }
@@ -135,7 +135,8 @@ impl ListView {
     ///
     /// Chainable variant.
     pub fn on_select<F>(self, cb: F) -> Self
-        where F: Fn(&mut Cursive, &String) + 'static
+    where
+        F: Fn(&mut Cursive, &String) + 'static,
     {
         self.with(|s| s.set_on_select(cb))
     }
@@ -147,18 +148,14 @@ impl ListView {
         self.focus
     }
 
-    fn iter_mut<'a>(&'a mut self, from_focus: bool,
-                    source: direction::Relative)
-                    -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
-
+    fn iter_mut<'a>(
+        &'a mut self, from_focus: bool, source: direction::Relative
+    ) -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
 
-                Box::new(self.children
-                             .iter_mut()
-                             .enumerate()
-                             .skip(start))
+                Box::new(self.children.iter_mut().enumerate().skip(start))
             }
             direction::Relative::Back => {
                 let end = if from_focus {
@@ -171,19 +168,20 @@ impl ListView {
         }
     }
 
-    fn move_focus(&mut self, n: usize, source: direction::Direction)
-                  -> EventResult {
-        let i = if let Some(i) =
-            source.relative(direction::Orientation::Vertical)
-                .and_then(|rel| {
-                    // The iterator starts at the focused element.
-                    // We don't want that one.
-                    self.iter_mut(true, rel)
-                        .skip(1)
-                        .filter_map(|p| try_focus(p, source))
-                        .take(n)
-                        .last()
-                }) {
+    fn move_focus(
+        &mut self, n: usize, source: direction::Direction
+    ) -> EventResult {
+        let i = if let Some(i) = source
+            .relative(direction::Orientation::Vertical)
+            .and_then(|rel| {
+                // The iterator starts at the focused element.
+                // We don't want that one.
+                self.iter_mut(true, rel)
+                    .skip(1)
+                    .filter_map(|p| try_focus(p, source))
+                    .take(n)
+                    .last()
+            }) {
             i
         } else {
             return EventResult::Ignored;
@@ -199,19 +197,16 @@ impl ListView {
     }
 }
 
-fn try_focus((i, child): (usize, &mut ListChild),
-             source: direction::Direction)
-             -> Option<usize> {
+fn try_focus(
+    (i, child): (usize, &mut ListChild), source: direction::Direction
+) -> Option<usize> {
     match *child {
         ListChild::Delimiter => None,
-        ListChild::Row(_, ref mut view) => {
-            if view.take_focus(source) {
-                Some(i)
-            } else {
-                None
-            }
-        }
-
+        ListChild::Row(_, ref mut view) => if view.take_focus(source) {
+            Some(i)
+        } else {
+            None
+        },
     }
 }
 
@@ -229,13 +224,14 @@ impl View for ListView {
             .unwrap_or(0) + 1;
 
         debug!("Offset: {}", offset);
-        self.scrollbase.draw(printer, |printer, i| match self.children[i] {
-            ListChild::Row(ref label, ref view) => {
-                printer.print((0, 0), label);
-                view.draw(&printer.offset((offset, 0), i == self.focus));
-            }
-            ListChild::Delimiter => (),
-        });
+        self.scrollbase
+            .draw(printer, |printer, i| match self.children[i] {
+                ListChild::Row(ref label, ref view) => {
+                    printer.print((0, 0), label);
+                    view.draw(&printer.offset((offset, 0), i == self.focus));
+                }
+                ListChild::Delimiter => (),
+            });
     }
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
@@ -275,8 +271,8 @@ impl View for ListView {
         let spacing = 1;
         let scrollbar_width = if self.children.len() > size.y { 2 } else { 0 };
 
-        let available = size.x.saturating_sub(label_width + spacing +
-                                              scrollbar_width);
+        let available = size.x
+            .saturating_sub(label_width + spacing + scrollbar_width);
 
         debug!("Available: {}", available);
 
@@ -310,15 +306,17 @@ impl View for ListView {
             Event::Key(Key::PageDown) => {
                 self.move_focus(10, direction::Direction::up())
             }
-            Event::Key(Key::Home) |
-            Event::Ctrl(Key::Home) => {
-                self.move_focus(usize::max_value(),
-                                direction::Direction::back())
+            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => {
+                self.move_focus(
+                    usize::max_value(),
+                    direction::Direction::back(),
+                )
             }
-            Event::Key(Key::End) |
-            Event::Ctrl(Key::End) => {
-                self.move_focus(usize::max_value(),
-                                direction::Direction::front())
+            Event::Key(Key::End) | Event::Ctrl(Key::End) => {
+                self.move_focus(
+                    usize::max_value(),
+                    direction::Direction::front(),
+                )
             }
             Event::Key(Key::Tab) => {
                 self.move_focus(1, direction::Direction::front())
@@ -332,11 +330,12 @@ impl View for ListView {
 
     fn take_focus(&mut self, source: direction::Direction) -> bool {
         let rel = source.relative(direction::Orientation::Vertical);
-        let i = if let Some(i) =
-            self.iter_mut(rel.is_none(),
-                          rel.unwrap_or(direction::Relative::Front))
-                .filter_map(|p| try_focus(p, source))
-                .next() {
+        let i = if let Some(i) = self.iter_mut(
+            rel.is_none(),
+            rel.unwrap_or(direction::Relative::Front),
+        ).filter_map(|p| try_focus(p, source))
+            .next()
+        {
             i
         } else {
             // No one wants to be in focus
@@ -347,8 +346,10 @@ impl View for ListView {
         true
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector,
-                       mut callback: Box<FnMut(&mut Any) + 'a>) {
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector,
+        mut callback: Box<FnMut(&mut Any) + 'a>,
+    ) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, Box::new(|any| callback(any)));
         }
@@ -356,13 +357,12 @@ impl View for ListView {
 
     fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
         if let Some(i) = self.children
-               .iter_mut()
-               .enumerate()
-               .filter_map(|(i, v)| v.view().map(|v| (i, v)))
-               .filter_map(|(i, v)| {
-                               v.focus_view(selector).ok().map(|_| i)
-                           })
-               .next() {
+            .iter_mut()
+            .enumerate()
+            .filter_map(|(i, v)| v.view().map(|v| (i, v)))
+            .filter_map(|(i, v)| v.focus_view(selector).ok().map(|_| i))
+            .next()
+        {
             self.focus = i;
             Ok(())
         } else {

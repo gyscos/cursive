@@ -29,8 +29,9 @@ impl SizeConstraint {
             SizeConstraint::Full |
             SizeConstraint::AtLeast(_) => available,
             // If the available space is too small, always give in.
-            SizeConstraint::Fixed(value) |
-            SizeConstraint::AtMost(value) => min(value, available),
+            SizeConstraint::Fixed(value) | SizeConstraint::AtMost(value) => {
+                min(value, available)
+            }
         }
     }
 

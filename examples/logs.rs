@@ -4,7 +4,6 @@ use cursive::{Cursive, Printer};
 use cursive::traits::*;
 use cursive::vec::Vec2;
 use std::collections::VecDeque;
-
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -21,7 +20,9 @@ fn main() {
     let (tx, rx) = mpsc::channel();
 
     // Generate data in a separate thread.
-    thread::spawn(move || { generate_logs(&tx); });
+    thread::spawn(move || {
+        generate_logs(&tx);
+    });
 
     // And sets the view to read from the other end of the channel.
     siv.add_layer(BufferView::new(200, rx).full_screen());
@@ -82,11 +83,9 @@ impl View for BufferView {
 
     fn draw(&self, printer: &Printer) {
         // Print the end of the buffer
-        for (i, line) in self.buffer
-                .iter()
-                .rev()
-                .take(printer.size.y)
-                .enumerate() {
+        for (i, line) in
+            self.buffer.iter().rev().take(printer.size.y).enumerate()
+        {
             printer.print((0, printer.size.y - 1 - i), line);
         }
     }

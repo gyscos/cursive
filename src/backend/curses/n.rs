@@ -77,12 +77,18 @@ impl Concrete {
         {
             // eprintln!("{:032b}", mevent.bstate);
             // Currently unused
-            let _shift = (mevent.bstate & ncurses::BUTTON_SHIFT as ncurses::mmask_t) != 0;
-            let _alt = (mevent.bstate & ncurses::BUTTON_ALT as ncurses::mmask_t) != 0;
-            let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as ncurses::mmask_t) != 0;
+            let _shift = (mevent.bstate
+                & ncurses::BUTTON_SHIFT as ncurses::mmask_t)
+                != 0;
+            let _alt =
+                (mevent.bstate & ncurses::BUTTON_ALT as ncurses::mmask_t) != 0;
+            let _ctrl = (mevent.bstate
+                & ncurses::BUTTON_CTRL as ncurses::mmask_t)
+                != 0;
 
             mevent.bstate &= !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT
-                | ncurses::BUTTON_CTRL) as ncurses::mmask_t;
+                | ncurses::BUTTON_CTRL)
+                as ncurses::mmask_t;
 
             let make_event = |event| {
                 Event::Mouse {
@@ -92,7 +98,9 @@ impl Concrete {
                 }
             };
 
-            if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as ncurses::mmask_t {
+            if mevent.bstate
+                == ncurses::REPORT_MOUSE_POSITION as ncurses::mmask_t
+            {
                 // The event is either a mouse drag event,
                 // or a weird double-release event. :S
                 self.last_mouse_button

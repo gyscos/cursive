@@ -27,9 +27,11 @@ impl<V: View> ViewWrapper for Panel<V> {
 
     fn wrap_draw(&self, printer: &Printer) {
         printer.print_box((0, 0), printer.size, true);
-        self.view.draw(&printer.sub_printer((1, 1),
-                                            printer.size.saturating_sub((2, 2)),
-                                            true));
+        self.view.draw(&printer.sub_printer(
+            (1, 1),
+            printer.size.saturating_sub((2, 2)),
+            true,
+        ));
     }
 
     fn wrap_layout(&mut self, size: Vec2) {

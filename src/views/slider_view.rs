@@ -1,5 +1,4 @@
 use {Cursive, Printer};
-
 use With;
 use direction::{Direction, Orientation};
 use event::{Callback, Event, EventResult, Key};
@@ -55,12 +54,15 @@ impl SliderView {
     ///
     /// Chainable variant.
     pub fn value(self, value: usize) -> Self {
-        self.with(|s| { s.set_value(value); })
+        self.with(|s| {
+            s.set_value(value);
+        })
     }
 
     /// Sets a callback to be called when the slider is moved.
     pub fn on_change<F>(mut self, callback: F) -> Self
-        where F: Fn(&mut Cursive, usize) + 'static
+    where
+        F: Fn(&mut Cursive, usize) + 'static,
     {
         self.on_change = Some(Rc::new(callback));
         self
@@ -68,7 +70,8 @@ impl SliderView {
 
     /// Sets a callback to be called when the <Enter> key is pressed.
     pub fn on_enter<F>(mut self, callback: F) -> Self
-        where F: Fn(&mut Cursive, usize) + 'static
+    where
+        F: Fn(&mut Cursive, usize) + 'static,
     {
         self.on_enter = Some(Rc::new(callback));
         self
@@ -77,7 +80,9 @@ impl SliderView {
     fn get_change_result(&self) -> EventResult {
         EventResult::Consumed(self.on_change.clone().map(|cb| {
             let value = self.value;
-            Callback::from_fn(move |s| { cb(s, value); })
+            Callback::from_fn(move |s| {
+                cb(s, value);
+            })
         }))
     }
 
@@ -127,24 +132,32 @@ impl View for SliderView {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Left) if self.orientation ==
-                                     Orientation::Horizontal => {
+            Event::Key(Key::Left)
+                if self.orientation == Orientation::Horizontal =>
+            {
                 self.slide_minus()
             }
-            Event::Key(Key::Right) if self.orientation ==
-                                      Orientation::Horizontal => {
+            Event::Key(Key::Right)
+                if self.orientation == Orientation::Horizontal =>
+            {
                 self.slide_plus()
             }
-            Event::Key(Key::Up) if self.orientation ==
-                                   Orientation::Vertical => self.slide_minus(),
-            Event::Key(Key::Down) if self.orientation ==
-                                     Orientation::Vertical => {
+            Event::Key(Key::Up)
+                if self.orientation == Orientation::Vertical =>
+            {
+                self.slide_minus()
+            }
+            Event::Key(Key::Down)
+                if self.orientation == Orientation::Vertical =>
+            {
                 self.slide_plus()
             }
             Event::Key(Key::Enter) if self.on_enter.is_some() => {
                 let value = self.value;
                 let cb = self.on_enter.clone().unwrap();
-                EventResult::with_cb(move |s| { cb(s, value); })
+                EventResult::with_cb(move |s| {
+                    cb(s, value);
+                })
             }
             _ => EventResult::Ignored,
         }

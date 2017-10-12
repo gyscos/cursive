@@ -2,7 +2,6 @@ use Cursive;
 use With;
 use event::{Callback, Event, EventResult};
 use std::collections::HashMap;
-
 use std::rc::Rc;
 use view::{View, ViewWrapper};
 

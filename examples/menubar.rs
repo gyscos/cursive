@@ -5,11 +5,9 @@ use cursive::event::Key;
 use cursive::menu::MenuTree;
 use cursive::traits::*;
 use cursive::views::Dialog;
-
-use std::sync::atomic::{Ordering, AtomicUsize};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 fn main() {
-
     let mut siv = Cursive::new();
 
     // We'll use a counter to name new files.

@@ -1,6 +1,5 @@
-use owning_ref::{RcRef, OwningHandle};
+use owning_ref::{OwningHandle, RcRef};
 use std::any::Any;
-
 use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
 use view::{Selector, View, ViewWrapper};
@@ -60,14 +59,15 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
 
     fn wrap_call_on_any<'a>(
         &mut self, selector: &Selector,
-        mut callback: Box<for<'b> FnMut(&'b mut Any) + 'a>
+        mut callback: Box<for<'b> FnMut(&'b mut Any) + 'a>,
     ) {
         match selector {
             &Selector::Id(id) if id == self.id => callback(self),
             s => {
-                self.view.try_borrow_mut().ok().map(|mut v| {
-                    v.call_on_any(s, callback)
-                });
+                self.view
+                    .try_borrow_mut()
+                    .ok()
+                    .map(|mut v| v.call_on_any(s, callback));
             }
         }
     }
@@ -75,13 +75,10 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
     fn wrap_focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
         match selector {
             &Selector::Id(id) if id == self.id => Ok(()),
-            s => {
-                self.view.try_borrow_mut().map_err(|_| ()).and_then(
-                    |mut v| {
-                        v.focus_view(s)
-                    },
-                )
-            }
+            s => self.view
+                .try_borrow_mut()
+                .map_err(|_| ())
+                .and_then(|mut v| v.focus_view(s)),
         }
     }
 }

@@ -14,7 +14,7 @@ use std::ops::{Add, Div, Mul, Sub};
 /// [`XY`]: ../struct.XY.html
 pub type Vec2 = XY<usize>;
 
-impl <T: PartialOrd> PartialOrd for XY<T> {
+impl<T: PartialOrd> PartialOrd for XY<T> {
     /// `a < b` <=> `a.x < b.x && a.y < b.y`
     fn partial_cmp(&self, other: &XY<T>) -> Option<Ordering> {
         if self == other {

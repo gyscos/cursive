@@ -38,8 +38,9 @@ impl<T: View> BoxView<T> {
     /// Creates a new `BoxView` with the given width and height requirements.
     ///
     /// `None` values will use the wrapped view's preferences.
-    pub fn new(width: SizeConstraint, height: SizeConstraint, view: T)
-               -> Self {
+    pub fn new(
+        width: SizeConstraint, height: SizeConstraint, view: T
+    ) -> Self {
         BoxView {
             size: (width, height).into(),
             squishable: false,
@@ -64,9 +65,11 @@ impl<T: View> BoxView<T> {
     pub fn with_fixed_size<S: Into<Vec2>>(size: S, view: T) -> Self {
         let size = size.into();
 
-        BoxView::new(SizeConstraint::Fixed(size.x),
-                     SizeConstraint::Fixed(size.y),
-                     view)
+        BoxView::new(
+            SizeConstraint::Fixed(size.x),
+            SizeConstraint::Fixed(size.y),
+            view,
+        )
     }
 
     /// Wraps `view` in a new `BoxView` with fixed width.
@@ -98,54 +101,66 @@ impl<T: View> BoxView<T> {
     pub fn with_max_size<S: Into<Vec2>>(size: S, view: T) -> Self {
         let size = size.into();
 
-        BoxView::new(SizeConstraint::AtMost(size.x),
-                     SizeConstraint::AtMost(size.y),
-                     view)
+        BoxView::new(
+            SizeConstraint::AtMost(size.x),
+            SizeConstraint::AtMost(size.y),
+            view,
+        )
     }
 
     /// Wraps `view` in a `BoxView` which will enforce a maximum width.
     ///
     /// The resulting width will never be more than `max_width`.
     pub fn with_max_width(max_width: usize, view: T) -> Self {
-        BoxView::new(SizeConstraint::AtMost(max_width),
-                     SizeConstraint::Free,
-                     view)
+        BoxView::new(
+            SizeConstraint::AtMost(max_width),
+            SizeConstraint::Free,
+            view,
+        )
     }
 
     /// Wraps `view` in a `BoxView` which will enforce a maximum height.
     ///
     /// The resulting height will never be more than `max_height`.
     pub fn with_max_height(max_height: usize, view: T) -> Self {
-        BoxView::new(SizeConstraint::Free,
-                     SizeConstraint::AtMost(max_height),
-                     view)
+        BoxView::new(
+            SizeConstraint::Free,
+            SizeConstraint::AtMost(max_height),
+            view,
+        )
     }
 
     /// Wraps `view` in a `BoxView` which will never be smaller than `size`.
     pub fn with_min_size<S: Into<Vec2>>(size: S, view: T) -> Self {
         let size = size.into();
 
-        BoxView::new(SizeConstraint::AtLeast(size.x),
-                     SizeConstraint::AtLeast(size.y),
-                     view)
+        BoxView::new(
+            SizeConstraint::AtLeast(size.x),
+            SizeConstraint::AtLeast(size.y),
+            view,
+        )
     }
 
     /// Wraps `view` in a `BoxView` which will enforce a minimum width.
     ///
     /// The resulting width will never be less than `min_width`.
     pub fn with_min_width(min_width: usize, view: T) -> Self {
-        BoxView::new(SizeConstraint::AtLeast(min_width),
-                     SizeConstraint::Free,
-                     view)
+        BoxView::new(
+            SizeConstraint::AtLeast(min_width),
+            SizeConstraint::Free,
+            view,
+        )
     }
 
     /// Wraps `view` in a `BoxView` which will enforce a minimum height.
     ///
     /// The resulting height will never be less than `min_height`.
     pub fn with_min_height(min_height: usize, view: T) -> Self {
-        BoxView::new(SizeConstraint::Free,
-                     SizeConstraint::AtLeast(min_height),
-                     view)
+        BoxView::new(
+            SizeConstraint::Free,
+            SizeConstraint::AtLeast(min_height),
+            view,
+        )
     }
 }
 
@@ -153,7 +168,6 @@ impl<T: View> ViewWrapper for BoxView<T> {
     wrap_impl!(self.view: T);
 
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
-
         let req = self.size.zip_map(req, SizeConstraint::available);
         let child_size = self.view.required_size(req);
 
@@ -165,16 +179,18 @@ impl<T: View> ViewWrapper for BoxView<T> {
         if self.squishable {
             // We respect the request if we're less or equal.
             let respect_req = result.zip_map(req, |res, req| res <= req);
-            result.zip_map(respect_req.zip(child_size),
-                           |res, (respect, child)| {
-                if respect {
-                    // If we respect the request, keep the result
-                    res
-                } else {
-                    // Otherwise, take the child as squish attempt.
-                    child
-                }
-            })
+            result.zip_map(
+                respect_req.zip(child_size),
+                |res, (respect, child)| {
+                    if respect {
+                        // If we respect the request, keep the result
+                        res
+                    } else {
+                        // Otherwise, take the child as squish attempt.
+                        child
+                    }
+                },
+            )
         } else {
             result
         }
