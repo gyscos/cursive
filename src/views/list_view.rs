@@ -195,6 +195,49 @@ impl ListView {
             Callback::from_fn(move |s| cb(s, &focused_string))
         }))
     }
+
+    fn labels_width(&self) -> usize {
+        self.children
+            .iter()
+            .map(ListChild::label)
+            .map(UnicodeWidthStr::width)
+            .max()
+            .unwrap_or(0)
+    }
+
+    fn check_focus_grab(&mut self, event: &Event) {
+        if let &Event::Mouse {
+            offset,
+            position,
+            event,
+        } = event
+        {
+            if !event.grabs_focus() {
+                return;
+            }
+
+            let position = match position.checked_sub(offset) {
+                None => return,
+                Some(pos) => pos,
+            };
+
+            if position.y > self.scrollbase.view_height {
+                return;
+            }
+
+            // eprintln!("Rel pos: {:?}", position);
+
+            // Now that we have a relative position, checks for buttons?
+            let focus = position.y + self.scrollbase.start_line;
+            if let &mut ListChild::Row(_, ref mut view) =
+                &mut self.children[focus]
+            {
+                if view.take_focus(direction::Direction::none()) {
+                    self.focus = focus;
+                }
+            }
+        }
+    }
 }
 
 fn try_focus(
@@ -216,12 +259,7 @@ impl View for ListView {
             return;
         }
 
-        let offset = self.children
-            .iter()
-            .map(ListChild::label)
-            .map(UnicodeWidthStr::width)
-            .max()
-            .unwrap_or(0) + 1;
+        let offset = self.labels_width() + 1;
 
         debug!("Offset: {}", offset);
         self.scrollbase
@@ -286,13 +324,21 @@ impl View for ListView {
             return EventResult::Ignored;
         }
 
+        // First: some events can move the focus around.
+        self.check_focus_grab(&event);
+
+        // Send the event to the focused child.
+        let labels_width = self.labels_width();
         if let ListChild::Row(_, ref mut view) = self.children[self.focus] {
-            let result = view.on_event(event.clone());
+            let y = self.focus - self.scrollbase.start_line;
+            let offset = (labels_width + 1, y);
+            let result = view.on_event(event.relativized(offset));
             if result.is_consumed() {
                 return result;
             }
         }
 
+        // If the child ignored this event, change the focus.
         match event {
             Event::Key(Key::Up) if self.focus > 0 => {
                 self.move_focus(1, direction::Direction::down())
