@@ -1,8 +1,8 @@
 use Printer;
+use div::div_up;
 use std::cmp::{max, min};
 use theme::ColorStyle;
 use vec::Vec2;
-use div::div_up;
 
 /// Provide scrolling functionalities to a view.
 ///
@@ -149,8 +149,10 @@ impl ScrollBase {
         // The saturating_sub is there to stop at the bottom of the content.
         // eprintln!("Scrolling to {}", thumb_y);
         self.start_line = min(
-            div_up((1 + self.content_height - self.view_height) * thumb_y
-                , (self.view_height - thumb_height + 1)),
+            div_up(
+                (1 + self.content_height - self.view_height) * thumb_y,
+                (self.view_height - thumb_height + 1),
+            ),
             self.content_height - self.view_height,
         );
     }
@@ -181,7 +183,8 @@ impl ScrollBase {
             self.thumb_grab = position.y - thumb_y;
         } else {
             // Just jump a bit...
-            self.thumb_grab = height / 2;
+            self.thumb_grab = (height - 1) / 2;
+            eprintln!("Grabbed at {}", self.thumb_grab);
             self.drag(position);
         }
 
