@@ -1,7 +1,6 @@
 use num::Num;
 
 /// Integer division that rounds up.
-#[allow(dead_code)]
 pub fn div_up<T>(p: T, q: T) -> T
 where
     T: Num + Clone,

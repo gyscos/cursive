@@ -147,7 +147,7 @@ impl ScrollBase {
     pub fn scroll_to_thumb(&mut self, thumb_y: usize, thumb_height: usize) {
         // The min() is there to stop at the bottom of the content.
         // The saturating_sub is there to stop at the bottom of the content.
-        eprintln!("Scrolling to {}", thumb_y);
+        // eprintln!("Scrolling to {}", thumb_y);
         self.start_line = min(
             div_up((1 + self.content_height - self.view_height) * thumb_y
                 , (self.view_height - thumb_height + 1)),
@@ -192,7 +192,7 @@ impl ScrollBase {
     pub fn drag(&mut self, position: Vec2) {
         // Our goal is self.scrollbar_thumb_y()+thumb_grab == position.y
         // Which means that position.y is the middle of the scrollbar.
-        eprintln!("Dragged: {:?}", position);
+        // eprintln!("Dragged: {:?}", position);
         let height = self.scrollbar_thumb_height();
         let grab = self.thumb_grab;
         self.scroll_to_thumb(position.y.saturating_sub(grab), height);
