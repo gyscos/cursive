@@ -32,7 +32,7 @@ pub struct ScrollBase {
     pub right_padding: usize,
 
     /// Initial position of the cursor when dragging.
-    pub thumb_grab: usize,
+    pub thumb_grab: Option<usize>,
 }
 
 /// Defines the scrolling behaviour on content or size change
@@ -60,7 +60,7 @@ impl ScrollBase {
             view_height: 0,
             scrollbar_offset: 0,
             right_padding: 1,
-            thumb_grab: 0,
+            thumb_grab: None,
         }
     }
 
@@ -180,11 +180,11 @@ impl ScrollBase {
 
         if position.y >= thumb_y && position.y < thumb_y + height {
             // Grabbed!
-            self.thumb_grab = position.y - thumb_y;
+            self.thumb_grab = Some(position.y - thumb_y);
         } else {
             // Just jump a bit...
-            self.thumb_grab = (height - 1) / 2;
-            eprintln!("Grabbed at {}", self.thumb_grab);
+            self.thumb_grab = Some((height - 1) / 2);
+            // eprintln!("Grabbed at {}", self.thumb_grab);
             self.drag(position);
         }
 
@@ -196,9 +196,15 @@ impl ScrollBase {
         // Our goal is self.scrollbar_thumb_y()+thumb_grab == position.y
         // Which means that position.y is the middle of the scrollbar.
         // eprintln!("Dragged: {:?}", position);
-        let height = self.scrollbar_thumb_height();
-        let grab = self.thumb_grab;
-        self.scroll_to_thumb(position.y.saturating_sub(grab), height);
+        if let Some(grab) = self.thumb_grab {
+            let height = self.scrollbar_thumb_height();
+            self.scroll_to_thumb(position.y.saturating_sub(grab), height);
+        }
+    }
+
+    /// Stops grabbing the scrollbar.
+    pub fn release_grab(&mut self) {
+        self.thumb_grab = None;
     }
 
 

@@ -3,14 +3,13 @@ use Printer;
 use With;
 use align::{Align, HAlign, VAlign};
 use direction::Direction;
-use event::{Callback, Event, EventResult, Key};
+use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use menu::MenuTree;
 use std::borrow::Borrow;
 use std::cell::Cell;
 use std::cmp::min;
 use std::rc::Rc;
 use theme::ColorStyle;
-
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, ScrollBase, View};
@@ -319,6 +318,198 @@ impl<T: 'static> SelectView<T> {
         let focus = min(self.focus() + n, self.items.len().saturating_sub(1));
         self.focus.set(focus);
     }
+
+    fn submit(&mut self) -> EventResult {
+        let cb = self.on_submit.clone().unwrap();
+        let v = self.selection();
+        // We return a Callback Rc<|s| cb(s, &*v)>
+        EventResult::Consumed(Some(Callback::from_fn(move |s| cb(s, &v))))
+    }
+
+    fn on_event_regular(&mut self, event: Event) -> EventResult {
+        let mut fix_scroll = true;
+        match event {
+            Event::Key(Key::Up) if self.focus() > 0 => self.focus_up(1),
+            Event::Key(Key::Down) if self.focus() + 1 < self.items.len() => {
+                self.focus_down(1)
+            }
+            Event::Key(Key::PageUp) => self.focus_up(10),
+            Event::Key(Key::PageDown) => self.focus_down(10),
+            Event::Key(Key::Home) => self.focus.set(0),
+            Event::Key(Key::End) => {
+                self.focus.set(self.items.len().saturating_sub(1))
+            }
+            Event::Mouse {
+                event: MouseEvent::WheelDown,
+                position: _,
+                offset: _,
+            } if self.scrollbase.can_scroll_down() =>
+            {
+                fix_scroll = false;
+                self.scrollbase.scroll_down(5);
+            }
+            Event::Mouse {
+                event: MouseEvent::WheelUp,
+                position: _,
+                offset: _,
+            } if self.scrollbase.can_scroll_up() =>
+            {
+                fix_scroll = false;
+                self.scrollbase.scroll_up(5);
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(MouseButton::Left),
+                position,
+                offset,
+            } if position
+                .checked_sub(offset)
+                .map(|position| {
+                    self.scrollbase.start_drag(position, self.last_size.x)
+                })
+                .unwrap_or(false) =>
+            {
+                fix_scroll = false;
+            }
+            Event::Mouse {
+                event: MouseEvent::Hold(MouseButton::Left),
+                position,
+                offset,
+            } => {
+                // If the mouse is dragged, we always consume the event.
+                fix_scroll = false;
+                position
+                    .checked_sub(offset)
+                    .map(|position| self.scrollbase.drag(position));
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(_),
+                position,
+                offset,
+            } => if let Some(position) = position.checked_sub(offset) {
+                if position.fits_in(self.last_size) {
+                    fix_scroll = false;
+                    self.focus.set(position.y + self.scrollbase.start_line);
+                }
+            },
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                position,
+                offset,
+            } => {
+                fix_scroll = false;
+                self.scrollbase.release_grab();
+                if self.on_submit.is_some() {
+                    if let Some(position) = position.checked_sub(offset) {
+                        if position.fits_in(self.last_size) {
+                            if position.y + self.scrollbase.start_line
+                                == self.focus()
+                            {
+                                return self.submit();
+                            }
+                        }
+                    }
+                }
+            }
+            Event::Key(Key::Enter) if self.on_submit.is_some() => {
+                return self.submit();
+            }
+            Event::Char(c) => {
+                // Starting from the current focus,
+                // find the first item that match the char.
+                // Cycle back to the beginning of
+                // the list when we reach the end.
+                // This is achieved by chaining twice the iterator
+                let iter = self.items.iter().chain(self.items.iter());
+                if let Some((i, _)) = iter.enumerate()
+                    .skip(self.focus() + 1)
+                    .find(|&(_, item)| item.label.starts_with(c))
+                {
+                    // Apply modulo in case we have a hit
+                    // from the chained iterator
+                    self.focus.set(i % self.items.len());
+                }
+            }
+            _ => return EventResult::Ignored,
+        }
+        if fix_scroll {
+            let focus = self.focus();
+            self.scrollbase.scroll_to(focus);
+        }
+
+        EventResult::Consumed(self.on_select.clone().map(|cb| {
+            let v = self.selection();
+            Callback::from_fn(move |s| cb(s, &v))
+        }))
+    }
+
+    fn open_popup(&mut self) -> EventResult {
+        // Build a shallow menu tree to mimick the items array.
+        // TODO: cache it?
+        let mut tree = MenuTree::new();
+        for (i, item) in self.items.iter().enumerate() {
+            let focus = self.focus.clone();
+            let on_submit = self.on_submit.as_ref().cloned();
+            let value = item.value.clone();
+            tree.add_leaf(item.label.clone(), move |s| {
+                focus.set(i);
+                if let Some(ref on_submit) = on_submit {
+                    on_submit(s, &value);
+                }
+            });
+        }
+        // Let's keep the tree around,
+        // the callback will want to use it.
+        let tree = Rc::new(tree);
+
+        let focus = self.focus();
+        // This is the offset for the label text.
+        // We'll want to show the popup so that the text matches.
+        // It'll be soo cool.
+        let item_length = self.items[focus].label.len();
+        let text_offset = (self.last_size.x.saturating_sub(item_length)) / 2;
+        // The total offset for the window is:
+        // * the last absolute offset at which we drew this view
+        // * shifted to the right of the text offset
+        // * shifted to the top of the focus (so the line matches)
+        // * shifted top-left of the border+padding of the popup
+        let offset = self.last_offset.get();
+        let offset = offset + (text_offset, 0);
+        let offset = offset.saturating_sub((0, focus));
+        let offset = offset.saturating_sub((2, 1));
+        // And now, we can return the callback.
+        EventResult::with_cb(move |s| {
+            // The callback will want to work with a fresh Rc
+            let tree = tree.clone();
+            // We'll relativise the absolute position,
+            // So that we are locked to the parent view.
+            // A nice effect is that window resizes will keep both
+            // layers together.
+            let current_offset = s.screen().offset();
+            let offset = offset.signed() - current_offset;
+            // And finally, put the view in view!
+            s.screen_mut().add_layer_at(
+                Position::parent(offset),
+                MenuPopup::new(tree).focus(focus),
+            );
+        })
+    }
+
+    // A popup view only does one thing: open the popup on Enter.
+    fn on_event_popup(&mut self, event: Event) -> EventResult {
+        match event {
+            // TODO: add Left/Right support for quick-switch?
+            Event::Key(Key::Enter) => self.open_popup(),
+            Event::Mouse {
+                event: MouseEvent::Press(MouseButton::Left),
+                position,
+                offset,
+            } if position.fits_in_rect(offset, self.last_size) =>
+            {
+                self.open_popup()
+            }
+            _ => EventResult::Ignored,
+        }
+    }
 }
 
 impl SelectView<String> {
@@ -440,109 +631,9 @@ impl<T: 'static> View for SelectView<T> {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         if self.popup {
-            match event {
-                // TODO: add Left/Right support for quick-switch?
-                Event::Key(Key::Enter) => {
-                    // Build a shallow menu tree to mimick the items array.
-                    // TODO: cache it?
-                    let mut tree = MenuTree::new();
-                    for (i, item) in self.items.iter().enumerate() {
-                        let focus = self.focus.clone();
-                        let on_submit = self.on_submit.as_ref().cloned();
-                        let value = item.value.clone();
-                        tree.add_leaf(item.label.clone(), move |s| {
-                            focus.set(i);
-                            if let Some(ref on_submit) = on_submit {
-                                on_submit(s, &value);
-                            }
-                        });
-                    }
-                    // Let's keep the tree around,
-                    // the callback will want to use it.
-                    let tree = Rc::new(tree);
-
-                    let focus = self.focus();
-                    // This is the offset for the label text.
-                    // We'll want to show the popup so that the text matches.
-                    // It'll be soo cool.
-                    let item_length = self.items[focus].label.len();
-                    let text_offset =
-                        (self.last_size.x.saturating_sub(item_length)) / 2;
-                    // The total offset for the window is:
-                    // * the last absolute offset at which we drew this view
-                    // * shifted to the right of the text offset
-                    // * shifted to the top of the focus (so the line matches)
-                    // * shifted top-left of the border+padding of the popup
-                    let offset = self.last_offset.get();
-                    let offset = offset + (text_offset, 0);
-                    let offset = offset.saturating_sub((0, focus));
-                    let offset = offset.saturating_sub((2, 1));
-                    // And now, we can return the callback.
-                    EventResult::with_cb(move |s| {
-                        // The callback will want to work with a fresh Rc
-                        let tree = tree.clone();
-                        // We'll relativise the absolute position,
-                        // So that we are locked to the parent view.
-                        // A nice effect is that window resizes will keep both
-                        // layers together.
-                        let current_offset = s.screen().offset();
-                        let offset = offset.signed() - current_offset;
-                        // And finally, put the view in view!
-                        s.screen_mut().add_layer_at(
-                            Position::parent(offset),
-                            MenuPopup::new(tree).focus(focus),
-                        );
-                    })
-                }
-                _ => EventResult::Ignored,
-            }
+            self.on_event_popup(event)
         } else {
-            match event {
-                Event::Key(Key::Up) if self.focus() > 0 => self.focus_up(1),
-                Event::Key(Key::Down)
-                    if self.focus() + 1 < self.items.len() =>
-                {
-                    self.focus_down(1)
-                }
-                Event::Key(Key::PageUp) => self.focus_up(10),
-                Event::Key(Key::PageDown) => self.focus_down(10),
-                Event::Key(Key::Home) => self.focus.set(0),
-                Event::Key(Key::End) => {
-                    self.focus.set(self.items.len().saturating_sub(1))
-                }
-                Event::Key(Key::Enter) if self.on_submit.is_some() => {
-                    let cb = self.on_submit.clone().unwrap();
-                    let v = self.selection();
-                    // We return a Callback Rc<|s| cb(s, &*v)>
-                    return EventResult::Consumed(
-                        Some(Callback::from_fn(move |s| cb(s, &v))),
-                    );
-                }
-                Event::Char(c) => {
-                    // Starting from the current focus,
-                    // find the first item that match the char.
-                    // Cycle back to the beginning of
-                    // the list when we reach the end.
-                    // This is achieved by chaining twice the iterator
-                    let iter = self.items.iter().chain(self.items.iter());
-                    if let Some((i, _)) = iter.enumerate()
-                        .skip(self.focus() + 1)
-                        .find(|&(_, item)| item.label.starts_with(c))
-                    {
-                        // Apply modulo in case we have a hit
-                        // from the chained iterator
-                        self.focus.set(i % self.items.len());
-                    }
-                }
-                _ => return EventResult::Ignored,
-            }
-            let focus = self.focus();
-            self.scrollbase.scroll_to(focus);
-
-            EventResult::Consumed(self.on_select.clone().map(|cb| {
-                let v = self.selection();
-                Callback::from_fn(move |s| cb(s, &v))
-            }))
+            self.on_event_regular(event)
         }
     }
 

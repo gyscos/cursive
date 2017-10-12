@@ -297,16 +297,25 @@ impl View for TextView {
                 })
                 .unwrap_or(false) =>
             {
-                // Start scroll drag at the given position
+                // Only consume the event if the mouse hits the scrollbar.
+                // Start scroll drag at the given position.
             }
             Event::Mouse {
                 event: MouseEvent::Hold(MouseButton::Left),
                 position,
                 offset,
             } => {
+                // If the mouse is dragged, we always consume the event.
                 position
                     .checked_sub(offset)
                     .map(|position| self.scrollbase.drag(position));
+            }
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                position: _,
+                offset: _,
+            } => {
+                self.scrollbase.release_grab();
             }
             Event::Key(Key::PageDown) => self.scrollbase.scroll_down(10),
             Event::Key(Key::PageUp) => self.scrollbase.scroll_up(10),
