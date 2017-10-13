@@ -255,27 +255,7 @@ impl View for Menubar {
                 return self.select_child();
             }
             Event::Mouse {
-                event: MouseEvent::Press(_),
-                position,
-                offset,
-            } if position.fits(offset) && position.y == offset.y =>
-            {
-                position
-                    .checked_sub(offset)
-                    .and_then(|pos| self.child_at(pos.x))
-                    .map(|child| {
-                        self.focus = child;
-                    });
-            }
-            Event::Mouse {
-                event: MouseEvent::Press(_),
-                ..
-            } => {
-                self.hide();
-                return EventResult::with_cb(|s| s.clear());
-            }
-            Event::Mouse {
-                event: MouseEvent::Release(MouseButton::Left),
+                event: MouseEvent::Press(btn),
                 position,
                 offset,
             } if position.fits(offset) && position.y == offset.y =>
@@ -284,10 +264,18 @@ impl View for Menubar {
                     .checked_sub(offset)
                     .and_then(|pos| self.child_at(pos.x))
                 {
-                    if self.focus == child {
+                    self.focus = child;
+                    if btn == MouseButton::Left {
                         return self.select_child();
                     }
                 }
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(_),
+                ..
+            } => {
+                self.hide();
+                return EventResult::with_cb(|s| s.clear());
             }
             _ => return EventResult::Ignored,
         }
