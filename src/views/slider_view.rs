@@ -1,8 +1,7 @@
 use {Cursive, Printer};
-
 use With;
 use direction::{Direction, Orientation};
-use event::{Callback, Event, EventResult, Key};
+use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use std::rc::Rc;
 use theme::ColorStyle;
 use vec::Vec2;
@@ -15,6 +14,7 @@ pub struct SliderView {
     on_enter: Option<Rc<Fn(&mut Cursive, usize)>>,
     value: usize,
     max_value: usize,
+    dragging: bool,
 }
 
 impl SliderView {
@@ -29,6 +29,7 @@ impl SliderView {
             max_value: max_value,
             on_change: None,
             on_enter: None,
+            dragging: false,
         }
     }
 
@@ -55,12 +56,15 @@ impl SliderView {
     ///
     /// Chainable variant.
     pub fn value(self, value: usize) -> Self {
-        self.with(|s| { s.set_value(value); })
+        self.with(|s| {
+            s.set_value(value);
+        })
     }
 
     /// Sets a callback to be called when the slider is moved.
     pub fn on_change<F>(mut self, callback: F) -> Self
-        where F: Fn(&mut Cursive, usize) + 'static
+    where
+        F: Fn(&mut Cursive, usize) + 'static,
     {
         self.on_change = Some(Rc::new(callback));
         self
@@ -68,7 +72,8 @@ impl SliderView {
 
     /// Sets a callback to be called when the <Enter> key is pressed.
     pub fn on_enter<F>(mut self, callback: F) -> Self
-        where F: Fn(&mut Cursive, usize) + 'static
+    where
+        F: Fn(&mut Cursive, usize) + 'static,
     {
         self.on_enter = Some(Rc::new(callback));
         self
@@ -77,7 +82,9 @@ impl SliderView {
     fn get_change_result(&self) -> EventResult {
         EventResult::Consumed(self.on_change.clone().map(|cb| {
             let value = self.value;
-            Callback::from_fn(move |s| { cb(s, value); })
+            Callback::from_fn(move |s| {
+                cb(s, value);
+            })
         }))
     }
 
@@ -97,6 +104,10 @@ impl SliderView {
         } else {
             EventResult::Ignored
         }
+    }
+
+    fn req_size(&self) -> Vec2 {
+        self.orientation.make_vec(self.max_value, 1)
     }
 }
 
@@ -122,29 +133,71 @@ impl View for SliderView {
     }
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {
-        self.orientation.make_vec(self.max_value, 1)
+        self.req_size()
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Left) if self.orientation ==
-                                     Orientation::Horizontal => {
+            Event::Key(Key::Left)
+                if self.orientation == Orientation::Horizontal =>
+            {
                 self.slide_minus()
             }
-            Event::Key(Key::Right) if self.orientation ==
-                                      Orientation::Horizontal => {
+            Event::Key(Key::Right)
+                if self.orientation == Orientation::Horizontal =>
+            {
                 self.slide_plus()
             }
-            Event::Key(Key::Up) if self.orientation ==
-                                   Orientation::Vertical => self.slide_minus(),
-            Event::Key(Key::Down) if self.orientation ==
-                                     Orientation::Vertical => {
+            Event::Key(Key::Up)
+                if self.orientation == Orientation::Vertical =>
+            {
+                self.slide_minus()
+            }
+            Event::Key(Key::Down)
+                if self.orientation == Orientation::Vertical =>
+            {
                 self.slide_plus()
             }
             Event::Key(Key::Enter) if self.on_enter.is_some() => {
                 let value = self.value;
                 let cb = self.on_enter.clone().unwrap();
-                EventResult::with_cb(move |s| { cb(s, value); })
+                EventResult::with_cb(move |s| {
+                    cb(s, value);
+                })
+            }
+            Event::Mouse {
+                event: MouseEvent::Hold(MouseButton::Left),
+                position,
+                offset,
+            } if self.dragging =>
+            {
+                let position = position.saturating_sub(offset);
+                let position = self.orientation.get(&position);
+                let position = ::std::cmp::min(
+                    position,
+                    self.max_value.saturating_sub(1),
+                );
+                self.value = position;
+                self.get_change_result()
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(MouseButton::Left),
+                position,
+                offset,
+            } if position.fits_in_rect(offset, self.req_size()) =>
+            {
+                position.checked_sub(offset).map(|position| {
+                    self.dragging = true;
+                    self.value = self.orientation.get(&position);
+                });
+                self.get_change_result()
+            }
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                ..
+            } => {
+                self.dragging = false;
+                EventResult::Ignored
             }
             _ => EventResult::Ignored,
         }

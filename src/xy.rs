@@ -1,9 +1,8 @@
 use direction::Orientation;
-
 use std::iter;
 
 /// A generic structure with a value for each axis.
-#[derive(Debug,Clone,Copy,PartialEq,Eq,Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct XY<T> {
     /// X-axis value
     pub x: T,

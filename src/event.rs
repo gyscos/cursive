@@ -17,6 +17,7 @@
 use Cursive;
 use std::ops::Deref;
 use std::rc::Rc;
+use vec::Vec2;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
@@ -196,6 +197,66 @@ impl Key {
     }
 }
 
+/// One of the buttons present on the mouse
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
+pub enum MouseButton {
+    /// The left button, used for main actions.
+    Left,
+    /// Middle button, probably the wheel. Often pastes text in X11 on linux.
+    Middle,
+    /// The right button, for special actions.
+    Right,
+
+    /// Fourth button if the mouse supports it.
+    Button4,
+    /// Fifth button if the mouse supports it.
+    Button5,
+
+    // TODO: handle more buttons?
+    #[doc(hidden)] Other,
+}
+
+/// Represents a possible event sent by the mouse.
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
+pub enum MouseEvent {
+    /// A button was pressed.
+    Press(MouseButton),
+    /// A button was released.
+    Release(MouseButton),
+    /// A button is being held.
+    Hold(MouseButton),
+    /// The wheel was moved up.
+    WheelUp,
+    /// The wheel was moved down.
+    WheelDown,
+}
+
+impl MouseEvent {
+    /// Returns the button used by this event, if any.
+    ///
+    /// Returns `None` if `self` is `WheelUp` or `WheelDown`.
+    pub fn button(&self) -> Option<MouseButton> {
+        match *self {
+            MouseEvent::Press(btn) |
+            MouseEvent::Release(btn) |
+            MouseEvent::Hold(btn) => Some(btn),
+            _ => None,
+        }
+    }
+
+    /// Returns `true` if `self` is an event that can grab focus.
+    ///
+    /// This includes `Press`, `WheelUp` and `WheelDown`.
+    pub fn grabs_focus(self) -> bool {
+        match self {
+            MouseEvent::Press(_) |
+            MouseEvent::WheelUp |
+            MouseEvent::WheelDown => true,
+            _ => false,
+        }
+    }
+}
+
 /// Represents an event as seen by the application.
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub enum Event {
@@ -205,6 +266,7 @@ pub enum Event {
     /// Event fired regularly when a auto-refresh is set.
     Refresh,
 
+    // TODO: have Char(modifier, char) and Key(modifier, key) enums?
     /// A character was entered (includes numbers, punctuation, ...).
     Char(char),
     /// A character was entered with the Ctrl key pressed.
@@ -227,12 +289,62 @@ pub enum Event {
     /// A non-character key was pressed with the Ctrl and Alt keys pressed.
     CtrlAlt(Key),
 
+    /// A mouse event was sent.
+    Mouse {
+        /// Position of the top-left corner of the view receiving this event.
+        offset: Vec2,
+        /// Position of the mouse when this event was fired.
+        position: Vec2,
+        /// The mouse event itself.
+        event: MouseEvent,
+    },
+
+    // TODO: use a backend-dependent type for the unknown values?
     /// An unknown event was received.
     Unknown(Vec<u8>),
 
+    // Having a doc-hidden event prevents people from having exhaustive matches,
+    // allowing us to add events in the future.
     #[doc(hidden)]
     /// The application is about to exit.
     Exit,
+}
+
+impl Event {
+    /// Returns the position of the mouse, if `self` is a mouse event.
+    pub fn mouse_position(&self) -> Option<Vec2> {
+        if let Event::Mouse { position, .. } = *self {
+            Some(position)
+        } else {
+            None
+        }
+    }
+
+    /// Update `self` with the given offset.
+    ///
+    /// If `self` is a mouse event, adds `top_left` to its offset.
+    /// Otherwise, do nothing.
+    pub fn relativize<V>(&mut self, top_left: V)
+    where
+        V: Into<Vec2>,
+    {
+        if let Event::Mouse { ref mut offset, .. } = *self {
+            *offset = *offset + top_left;
+        }
+    }
+
+    /// Returns a cloned, relativized event.
+    ///
+    /// If `self` is a mouse event, adds `top_left` to its offset.
+    /// Otherwise, returns a simple clone.
+    pub fn relativized<V>(&self, top_left: V) -> Self
+    where
+        V: Into<Vec2>,
+    {
+        let mut result = self.clone();
+        result.relativize(top_left);
+        result
+    }
 }
 
 impl From<char> for Event {

@@ -1,5 +1,4 @@
 use std::io::{self, Read};
-
 use views::Counter;
 
 /// Wrapper around a `Read` that reports the progress made.

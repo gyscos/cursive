@@ -118,7 +118,6 @@ use std::fs::File;
 use std::io;
 use std::io::Read;
 use std::path::Path;
-
 use toml;
 
 /// Text effect
@@ -203,10 +202,9 @@ impl ColorStyle {
     pub fn resolve(&self, theme: &Theme) -> ColorPair {
         let c = &theme.colors;
         let (front, back) = match *self {
-            ColorStyle::TerminalDefault => (
-                Color::TerminalDefault,
-                Color::TerminalDefault,
-            ),
+            ColorStyle::TerminalDefault => {
+                (Color::TerminalDefault, Color::TerminalDefault)
+            }
             ColorStyle::Background => (c.view, c.background),
             ColorStyle::Shadow => (c.shadow, c.shadow),
             ColorStyle::Primary => (c.primary, c.view),
@@ -503,7 +501,6 @@ impl Color {
 
     fn parse_special(value: &str) -> Option<Color> {
         if value.starts_with('#') {
-
             let value = &value[1..];
             // Compute per-color length, and amplitude
             let (l, multiplier) = match value.len() {

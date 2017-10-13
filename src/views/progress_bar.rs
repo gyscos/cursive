@@ -5,7 +5,6 @@ use align::HAlign;
 use std::cmp;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
-
 use std::thread;
 use theme::{ColorStyle, Effect};
 use view::View;
@@ -118,14 +117,17 @@ impl ProgressBar {
     pub fn start<F: FnOnce(Counter) + Send + 'static>(&mut self, f: F) {
         let counter: Counter = self.value.clone();
 
-        thread::spawn(move || { f(counter); });
+        thread::spawn(move || {
+            f(counter);
+        });
     }
 
     /// Starts a function in a separate thread, and monitor the progress.
     ///
     /// Chainable variant.
-    pub fn with_task<F: FnOnce(Counter) + Send + 'static>(mut self, task: F)
-                                                          -> Self {
+    pub fn with_task<F: FnOnce(Counter) + Send + 'static>(
+        mut self, task: F
+    ) -> Self {
         self.start(task);
         self
     }
@@ -143,9 +145,9 @@ impl ProgressBar {
     ///     format!("{} %", percent)
     /// }
     /// ```
-    pub fn with_label<F: Fn(usize, (usize, usize)) -> String + 'static>
-        (mut self, label_maker: F)
-         -> Self {
+    pub fn with_label<F: Fn(usize, (usize, usize)) -> String + 'static>(
+        mut self, label_maker: F
+    ) -> Self {
         self.label_maker = Box::new(label_maker);
         self
     }

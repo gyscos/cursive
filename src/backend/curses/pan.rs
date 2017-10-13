@@ -3,7 +3,7 @@ extern crate pancurses;
 use self::super::find_closest;
 use backend;
 use event::{Event, Key};
-use std::cell::{RefCell, Cell};
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use theme::{Color, ColorPair, Effect};
 use utf8;
@@ -16,10 +16,9 @@ pub struct Concrete {
 
 impl Concrete {
     /// Save a new color pair.
-    fn insert_color(&self, pairs: &mut HashMap<ColorPair, i32>,
-                    pair: ColorPair)
-                    -> i32 {
-
+    fn insert_color(
+        &self, pairs: &mut HashMap<ColorPair, i32>, pair: ColorPair
+    ) -> i32 {
         let n = 1 + pairs.len() as i32;
 
         // TODO: when COLORS_PAIRS is available...
@@ -34,15 +33,16 @@ impl Concrete {
             target
         };
         pairs.insert(pair, target);
-        pancurses::init_pair(target as i16,
-                             find_closest(&pair.front),
-                             find_closest(&pair.back));
+        pancurses::init_pair(
+            target as i16,
+            find_closest(&pair.front),
+            find_closest(&pair.back),
+        );
         target
     }
 
     /// Checks the pair in the cache, or re-define a color if needed.
     fn get_or_create(&self, pair: ColorPair) -> i32 {
-
         let mut pairs = self.pairs.borrow_mut();
 
         // Find if we have this color in stock
@@ -55,7 +55,6 @@ impl Concrete {
     }
 
     fn set_colors(&self, pair: ColorPair) {
-
         let i = self.get_or_create(pair);
 
         self.current_style.set(pair);
@@ -121,9 +120,9 @@ impl backend::Backend for Concrete {
 
     fn clear(&self, color: Color) {
         let id = self.get_or_create(ColorPair {
-                                        front: color,
-                                        back: color,
-                                    });
+            front: color,
+            back: color,
+        });
         self.window.bkgd(pancurses::ColorPair(id as u8));
         self.window.clear();
     }
@@ -150,36 +149,33 @@ impl backend::Backend for Concrete {
                 }
                 pancurses::Input::Character('\u{9}') => Event::Key(Key::Tab),
                 pancurses::Input::Character('\u{1b}') => Event::Key(Key::Esc),
-                pancurses::Input::Character(c) if 32 <= (c as u32) &&
-                                                  (c as u32) <= 255 => {
-                    Event::Char(utf8::read_char(c as u8, || {
-                        self.window
-                            .getch()
-                            .and_then(|i| match i {
-                                          pancurses::Input::Character(c) => {
-                                              Some(c as u8)
-                                          }
-                                          _ => None,
-                                      })
-                    })
-                                        .unwrap())
+                pancurses::Input::Character(c)
+                    if 32 <= (c as u32) && (c as u32) <= 255 =>
+                {
+                    Event::Char(
+                        utf8::read_char(c as u8, || {
+                            self.window.getch().and_then(|i| match i {
+                                pancurses::Input::Character(c) => {
+                                    Some(c as u8)
+                                }
+                                _ => None,
+                            })
+                        }).unwrap(),
+                    )
                 }
                 pancurses::Input::Character(c) => {
                     let mut bytes = [0u8; 4];
-                    Event::Unknown(c.encode_utf8(&mut bytes)
-                                       .as_bytes()
-                                       .to_vec())
+                    Event::Unknown(
+                        c.encode_utf8(&mut bytes).as_bytes().to_vec(),
+                    )
                 }
                 // TODO: Some key combos are not recognized by pancurses,
                 // but are sent as Unknown. We could still parse them here.
-                pancurses::Input::Unknown(other) => {
-                    Event::Unknown((0..4)
-                                       .map(|i| {
-                                                ((other >> (8 * i)) & 0xFF) as
-                                                u8
-                                            })
-                                       .collect())
-                }
+                pancurses::Input::Unknown(other) => Event::Unknown(
+                    (0..4)
+                        .map(|i| ((other >> (8 * i)) & 0xFF) as u8)
+                        .collect(),
+                ),
                 // TODO: I honestly have no fucking idea what KeyCodeYes is
                 pancurses::Input::KeyCodeYes => Event::Refresh,
                 pancurses::Input::KeyBreak => Event::Key(Key::PauseBreak),

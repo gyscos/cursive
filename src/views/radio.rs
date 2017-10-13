@@ -1,7 +1,6 @@
 use {Printer, With};
 use direction::Direction;
-use event::{Event, EventResult, Key};
-
+use event::{Event, EventResult, Key, MouseButton, MouseEvent};
 use std::cell::RefCell;
 use std::rc::Rc;
 use theme::ColorStyle;
@@ -15,7 +14,7 @@ struct SharedState<T> {
 
 impl<T> SharedState<T> {
     pub fn selection(&self) -> Rc<T> {
-        self.values[self.selection].clone()
+        Rc::clone(&self.values[self.selection])
     }
 }
 
@@ -32,7 +31,7 @@ pub struct RadioGroup<T> {
     state: Rc<RefCell<SharedState<T>>>,
 }
 
-impl <T> Default for RadioGroup<T> {
+impl<T> Default for RadioGroup<T> {
     fn default() -> Self {
         Self::new()
     }
@@ -52,11 +51,12 @@ impl<T> RadioGroup<T> {
     /// Adds a new button to the group.
     ///
     /// The button will display `label` next to it, and will embed `value`.
-    pub fn button<S: Into<String>>(&mut self, value: T, label: S)
-                                   -> RadioButton<T> {
+    pub fn button<S: Into<String>>(
+        &mut self, value: T, label: S
+    ) -> RadioButton<T> {
         let count = self.state.borrow().values.len();
         self.state.borrow_mut().values.push(Rc::new(value));
-        RadioButton::new(self.state.clone(), count, label.into())
+        RadioButton::new(Rc::clone(&self.state), count, label.into())
     }
 
     /// Returns the id of the selected button.
@@ -74,8 +74,9 @@ impl<T> RadioGroup<T> {
 
 impl RadioGroup<String> {
     /// Adds a button, using the label itself as value.
-    pub fn button_str<S: Into<String>>(&mut self, text: S)
-                                       -> RadioButton<String> {
+    pub fn button_str<S: Into<String>>(
+        &mut self, text: S
+    ) -> RadioButton<String> {
         let text = text.into();
         self.button(text.clone(), text)
     }
@@ -103,8 +104,9 @@ pub struct RadioButton<T> {
 impl<T> RadioButton<T> {
     impl_enabled!(self.enabled);
 
-    fn new(state: Rc<RefCell<SharedState<T>>>, id: usize, label: String)
-           -> Self {
+    fn new(
+        state: Rc<RefCell<SharedState<T>>>, id: usize, label: String
+    ) -> Self {
         RadioButton {
             state: state,
             id: id,
@@ -142,15 +144,19 @@ impl<T> RadioButton<T> {
             printer.print((4, 0), &self.label);
         }
     }
-}
 
-impl<T> View for RadioButton<T> {
-    fn required_size(&mut self, _: Vec2) -> Vec2 {
+    fn req_size(&self) -> Vec2 {
         if self.label.is_empty() {
             Vec2::new(3, 1)
         } else {
             Vec2::new(3 + 1 + self.label.len(), 1)
         }
+    }
+}
+
+impl<T> View for RadioButton<T> {
+    fn required_size(&mut self, _: Vec2) -> Vec2 {
+        self.req_size()
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {
@@ -159,18 +165,30 @@ impl<T> View for RadioButton<T> {
 
     fn draw(&self, printer: &Printer) {
         if self.enabled {
-            printer.with_selection(printer.focused,
-                                   |printer| self.draw_internal(printer));
+            printer.with_selection(
+                printer.focused,
+                |printer| self.draw_internal(printer),
+            );
         } else {
-            printer.with_color(ColorStyle::Secondary,
-                               |printer| self.draw_internal(printer));
+            printer.with_color(
+                ColorStyle::Secondary,
+                |printer| self.draw_internal(printer),
+            );
         }
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Enter) |
-            Event::Char(' ') => {
+            Event::Key(Key::Enter) | Event::Char(' ') => {
+                self.select();
+                EventResult::Consumed(None)
+            }
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                position,
+                offset,
+            } if position.fits_in_rect(offset, self.req_size()) =>
+            {
                 self.select();
                 EventResult::Consumed(None)
             }

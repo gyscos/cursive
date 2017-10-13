@@ -10,6 +10,5 @@
 
 #[doc(no_inline)]
 pub use With;
-
 #[doc(no_inline)]
 pub use view::{Boxable, Finder, Identifiable, View};

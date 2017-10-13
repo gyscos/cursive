@@ -42,9 +42,11 @@ pub struct Prefix {
 /// prefix(my_text.graphemes(true), 5, "");
 /// # }
 /// ```
-pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str)
-                     -> Prefix
-    where I: Iterator<Item = &'a str>
+pub fn prefix<'a, I>(
+    iter: I, available_width: usize, delimiter: &str
+) -> Prefix
+where
+    I: Iterator<Item = &'a str>,
 {
     let delimiter_width = delimiter.width();
     let delimiter_len = delimiter.len();
@@ -53,17 +55,16 @@ pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str)
     // before the next token, including any space.
     let mut current_width = 0;
     let sum: usize = iter.take_while(|token| {
-            let width = token.width();
-            if current_width + width > available_width {
-                false
-            } else {
-                // Include the delimiter after this token.
-                current_width += width;
-                current_width += delimiter_width;
-                true
-            }
-        })
-        .map(|token| token.len() + delimiter_len)
+        let width = token.width();
+        if current_width + width > available_width {
+            false
+        } else {
+            // Include the delimiter after this token.
+            current_width += width;
+            current_width += delimiter_width;
+            true
+        }
+    }).map(|token| token.len() + delimiter_len)
         .sum();
 
     // We counted delimiter once too many times,
@@ -88,16 +89,24 @@ pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str)
 ///
 /// This is a shortcut for `prefix_length(iter.rev(), width, delimiter)`
 pub fn suffix<'a, I>(iter: I, width: usize, delimiter: &str) -> Prefix
-    where I: DoubleEndedIterator<Item = &'a str>
+where
+    I: DoubleEndedIterator<Item = &'a str>,
 {
     prefix(iter.rev(), width, delimiter)
 }
 
-/// Computes the length (number of bytes) and width of a suffix that fits in the given `width`.
+/// Computes a suffix that fits in the given `width`.
 ///
 /// Breaks between any two graphemes.
 pub fn simple_suffix(text: &str, width: usize) -> Prefix {
     suffix(text.graphemes(true), width, "")
+}
+
+/// Computes the longest prefix of the given text that fits in the given width.
+///
+/// Breaks between any two graphemes.
+pub fn simple_prefix(text: &str, width: usize) -> Prefix {
+    prefix(text.graphemes(true), width, "")
 }
 
 #[cfg(test)]

@@ -2,8 +2,7 @@ use Cursive;
 use Printer;
 use With;
 use direction::Direction;
-use event::{Event, EventResult, Key};
-
+use event::{Event, EventResult, Key, MouseButton, MouseEvent};
 use std::rc::Rc;
 use theme::ColorStyle;
 use vec::Vec2;
@@ -33,16 +32,18 @@ impl Checkbox {
     }
 
     /// Sets a callback to be used when the state changes.
-    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(&mut self,
-                                                              on_change: F) {
+    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(
+        &mut self, on_change: F
+    ) {
         self.on_change = Some(Rc::new(on_change));
     }
 
     /// Sets a callback to be used when the state changes.
     ///
     /// Chainable variant.
-    pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(self, on_change: F)
-                                                          -> Self {
+    pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(
+        self, on_change: F
+    ) -> Self {
         self.with(|s| s.set_on_change(on_change))
     }
 
@@ -61,7 +62,9 @@ impl Checkbox {
     ///
     /// Chainable variant.
     pub fn checked(self) -> Self {
-        self.with(|s| { s.check(); })
+        self.with(|s| {
+            s.check();
+        })
     }
 
     /// Returns `true` if the checkbox is checked.
@@ -78,14 +81,16 @@ impl Checkbox {
     ///
     /// Chainable variant.
     pub fn unchecked(self) -> Self {
-        self.with(|s| { s.uncheck(); })
+        self.with(|s| {
+            s.uncheck();
+        })
     }
 
     /// Sets the checkbox state.
     pub fn set_checked(&mut self, checked: bool) -> EventResult {
         self.checked = checked;
         if let Some(ref on_change) = self.on_change {
-            let on_change = on_change.clone();
+            let on_change = Rc::clone(on_change);
             EventResult::with_cb(move |s| on_change(s, checked))
         } else {
             EventResult::Consumed(None)
@@ -111,19 +116,29 @@ impl View for Checkbox {
 
     fn draw(&self, printer: &Printer) {
         if self.enabled {
-            printer.with_selection(printer.focused,
-                                   |printer| self.draw_internal(printer));
+            printer.with_selection(
+                printer.focused,
+                |printer| self.draw_internal(printer),
+            );
         } else {
-            printer.with_color(ColorStyle::Secondary,
-                               |printer| self.draw_internal(printer));
+            printer.with_color(
+                ColorStyle::Secondary,
+                |printer| self.draw_internal(printer),
+            );
         }
-
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Enter) |
-            Event::Char(' ') => self.toggle(),
+            Event::Key(Key::Enter) | Event::Char(' ') => self.toggle(),
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                position,
+                offset,
+            } if position.fits_in_rect(offset, (3, 1)) =>
+            {
+                self.toggle()
+            }
             _ => EventResult::Ignored,
         }
     }

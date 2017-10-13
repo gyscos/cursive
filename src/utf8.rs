@@ -8,7 +8,8 @@ use std::char::from_u32;
 /// Returns an error if the stream is invalid utf-8.
 #[allow(dead_code)]
 pub fn read_char<F>(first: u8, next: F) -> Result<char, String>
-    where F: Fn() -> Option<u8>
+where
+    F: Fn() -> Option<u8>,
 {
     if first < 0x80 {
         return Ok(first as char);
@@ -32,9 +33,11 @@ pub fn read_char<F>(first: u8, next: F) -> Result<char, String>
         let byte =
             try!(next().ok_or_else(|| "Missing UTF-8 byte".to_string()));
         if byte & 0xC0 != 0x80 {
-            return Err(format!("Found non-continuation byte after leading: \
-                                {}",
-                               byte));
+            return Err(format!(
+                "Found non-continuation byte after leading: \
+                 {}",
+                byte
+            ));
         }
         // We have 6 fresh new bits to read, make room.
         res <<= 6;

@@ -52,23 +52,18 @@ mod boxable;
 
 pub use self::boxable::Boxable;
 pub use self::identifiable::Identifiable;
-
 pub use self::position::{Offset, Position};
-
 pub use self::scroll::{ScrollBase, ScrollStrategy};
-
 pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
 pub use self::view_path::ViewPath;
 pub use self::view_wrapper::ViewWrapper;
 use Printer;
-
 use direction::Direction;
 use event::{Event, EventResult};
+use std::any::Any;
 use vec::Vec2;
 use views::IdView;
-
-use std::any::Any;
 
 /// Main trait defining a view behaviour.
 pub trait View {
@@ -161,13 +156,15 @@ pub trait Finder {
     /// If the view is not found, or if it is not of the asked type,
     /// it returns None.
     fn call_on<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
-        where V: View + Any,
-              F: FnOnce(&mut V) -> R;
+    where
+        V: View + Any,
+        F: FnOnce(&mut V) -> R;
 
     /// Convenient method to use `call_on` with a `view::Selector::Id`.
     fn find_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
-        where V: View + Any,
-              F: FnOnce(&mut V) -> R
+    where
+        V: View + Any,
+        F: FnOnce(&mut V) -> R,
     {
         self.call_on(&Selector::Id(id), callback)
     }
@@ -175,8 +172,9 @@ pub trait Finder {
 
 impl<T: View> Finder for T {
     fn call_on<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
-        where V: View + Any,
-              F: FnOnce(&mut V) -> R
+    where
+        V: View + Any,
+        F: FnOnce(&mut V) -> R,
     {
         let mut result = None;
         {
@@ -184,7 +182,8 @@ impl<T: View> Finder for T {
 
             let mut callback = Some(callback);
             let callback = |v: &mut Any| if let Some(callback) =
-                callback.take() {
+                callback.take()
+            {
                 if v.is::<V>() {
                     *result_ref = v.downcast_mut::<V>().map(|v| callback(v));
                 } else if v.is::<IdView<V>>() {

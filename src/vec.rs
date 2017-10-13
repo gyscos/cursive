@@ -2,8 +2,7 @@
 
 use XY;
 use num::traits::Zero;
-use std::cmp::{Ordering, max, min};
-
+use std::cmp::{max, min, Ordering};
 use std::ops::{Add, Div, Mul, Sub};
 
 /// Simple 2D size, in cells.
@@ -15,9 +14,9 @@ use std::ops::{Add, Div, Mul, Sub};
 /// [`XY`]: ../struct.XY.html
 pub type Vec2 = XY<usize>;
 
-impl PartialOrd for XY<usize> {
+impl<T: PartialOrd> PartialOrd for XY<T> {
     /// `a < b` <=> `a.x < b.x && a.y < b.y`
-    fn partial_cmp(&self, other: &Vec2) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &XY<T>) -> Option<Ordering> {
         if self == other {
             Some(Ordering::Equal)
         } else if self.x < other.x && self.y < other.y {
@@ -36,8 +35,10 @@ impl XY<usize> {
     /// Never panics.
     pub fn saturating_sub<O: Into<Self>>(&self, other: O) -> Self {
         let other = other.into();
-        Self::new(self.x.saturating_sub(other.x),
-                  self.y.saturating_sub(other.y))
+        Self::new(
+            self.x.saturating_sub(other.x),
+            self.y.saturating_sub(other.y),
+        )
     }
 
     /// Checked subtraction. Computes `self - other` if possible.
@@ -109,14 +110,28 @@ impl<T: Ord> XY<T> {
 impl<T: Ord + Add<Output = T> + Clone> XY<T> {
     /// Returns (max(self.x,other.x), self.y+other.y)
     pub fn stack_vertical(&self, other: &Self) -> Self {
-        Self::new(max(self.x.clone(), other.x.clone()),
-                  self.y.clone() + other.y.clone())
+        Self::new(
+            max(self.x.clone(), other.x.clone()),
+            self.y.clone() + other.y.clone(),
+        )
     }
 
     /// Returns (self.x+other.x, max(self.y,other.y))
     pub fn stack_horizontal(&self, other: &Self) -> Self {
-        Self::new(self.x.clone() + other.x.clone(),
-                  max(self.y.clone(), other.y.clone()))
+        Self::new(
+            self.x.clone() + other.x.clone(),
+            max(self.y.clone(), other.y.clone()),
+        )
+    }
+
+    /// Returns `true` if `self` fits in the given rectangle.
+    pub fn fits_in_rect<O1, O2>(&self, top_left: O1, size: O2) -> bool
+    where
+        O1: Into<Self>,
+        O2: Into<Self>,
+    {
+        let top_left = top_left.into();
+        self.fits(top_left.clone()) && self < &(top_left + size)
     }
 }
 
@@ -201,7 +216,7 @@ impl Mul<usize> for XY<usize> {
 }
 
 /// Four values representing each direction.
-#[derive(Clone,Copy)]
+#[derive(Clone, Copy)]
 pub struct Vec4 {
     /// Left margin
     pub left: usize,
@@ -268,8 +283,9 @@ impl From<((i32, i32), (i32, i32))> for Vec4 {
     }
 }
 impl From<((usize, usize), (usize, usize))> for Vec4 {
-    fn from(((left, right), (top, bottom)): ((usize, usize), (usize, usize)))
-            -> Vec4 {
+    fn from(
+        ((left, right), (top, bottom)): ((usize, usize), (usize, usize))
+    ) -> Vec4 {
         (left, right, top, bottom).into()
     }
 }

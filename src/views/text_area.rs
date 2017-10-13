@@ -2,12 +2,12 @@
 
 use {Printer, With, XY};
 use direction::Direction;
-use event::{Event, EventResult, Key};
+use event::{Event, EventResult, Key, MouseEvent};
 use odds::vec::VecExt;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::{LinesIterator, Row, prefix};
+use utils::{prefix, simple_prefix, LinesIterator, Row};
 use vec::Vec2;
 use view::{ScrollBase, SizeCache, View};
 
@@ -184,9 +184,8 @@ impl TextArea {
     // If the current line is full, adding a character will overflow into the next line. To
     // show that, we need to add a fake "ghost" row, just for the cursor.
     fn fix_ghost_row(&mut self) {
-
-        if self.rows.is_empty() ||
-            self.rows.last().unwrap().end != self.content.len()
+        if self.rows.is_empty()
+            || self.rows.last().unwrap().end != self.content.len()
         {
             // Add a fake, empty row at the end.
             self.rows.push(Row {
@@ -267,7 +266,6 @@ impl TextArea {
     }
 
     fn insert(&mut self, ch: char) {
-
         // First, we inject the data, but keep the cursor unmoved
         // (So the cursor is to the left of the injected char)
         self.content.insert(self.cursor, ch);
@@ -313,17 +311,14 @@ impl TextArea {
         // We don't need to go beyond a newline.
         // If we don't find one, end of the text it is.
         debug!("Cursor: {}", self.cursor);
-        let last_byte = self.content[self.cursor..].find('\n').map(|i| {
-            1 + i + self.cursor
-        });
-        let last_row = last_byte.map_or(self.rows.len(), |last_byte| {
-            self.row_at(last_byte)
-        });
+        let last_byte = self.content[self.cursor..]
+            .find('\n')
+            .map(|i| 1 + i + self.cursor);
+        let last_row = last_byte
+            .map_or(self.rows.len(), |last_byte| self.row_at(last_byte));
         let last_byte = last_byte.unwrap_or_else(|| self.content.len());
 
-        debug!("Content: `{}` (len={})",
-                        self.content,
-                        self.content.len());
+        debug!("Content: `{}` (len={})", self.content, self.content.len());
         debug!("start/end: {}/{}", first_byte, last_byte);
         debug!("start/end rows: {}/{}", first_row, last_row);
 
@@ -343,8 +338,8 @@ impl TextArea {
         // How much did this add?
         debug!("New rows: {:?}", new_rows);
         debug!("{}-{}", first_row, last_row);
-        let new_row_count = self.rows.len() + new_rows.len() + first_row -
-            last_row;
+        let new_row_count =
+            self.rows.len() + new_rows.len() + first_row - last_row;
         if !scrollable && new_row_count > size.y {
             // We just changed scrollable status.
             // This changes everything.
@@ -376,7 +371,8 @@ impl View for TextArea {
         debug!("{:?}", self.rows);
         let scroll_width = if self.rows.len() > constraint.y { 1 } else { 0 };
         Vec2::new(
-            scroll_width + 1 + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
+            scroll_width + 1
+                + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
             self.rows.len(),
         )
     }
@@ -408,24 +404,23 @@ impl View for TextArea {
                 debug!("row: {:?}", row);
                 let text = &self.content[row.start..row.end];
                 debug!("row text: `{}`", text);
-                printer.with_effect(
-                    effect,
-                    |printer| { printer.print((0, 0), text); },
-                );
+                printer.with_effect(effect, |printer| {
+                    printer.print((0, 0), text);
+                });
 
                 if printer.focused && i == self.selected_row() {
                     let cursor_offset = self.cursor - row.start;
                     let c = if cursor_offset == text.len() {
                         "_"
                     } else {
-                        text[cursor_offset..].graphemes(true).next().expect(
-                            "Found no char!",
-                        )
+                        text[cursor_offset..]
+                            .graphemes(true)
+                            .next()
+                            .expect("Found no char!")
                     };
                     let offset = text[..cursor_offset].width();
                     printer.print((offset, 0), c);
                 }
-
             });
         });
     }
@@ -442,8 +437,8 @@ impl View for TextArea {
             Event::Key(Key::End) => {
                 let row = self.selected_row();
                 self.cursor = self.rows[row].end;
-                if row + 1 < self.rows.len() &&
-                    self.cursor == self.rows[row + 1].start
+                if row + 1 < self.rows.len()
+                    && self.cursor == self.rows[row + 1].start
                 {
                     self.move_left();
                 }
@@ -455,7 +450,8 @@ impl View for TextArea {
             }
             Event::Key(Key::Up) if self.selected_row() > 0 => self.move_up(),
             Event::Key(Key::Down)
-                if self.selected_row() + 1 < self.rows.len() => {
+                if self.selected_row() + 1 < self.rows.len() =>
+            {
                 self.move_down()
             }
             Event::Key(Key::PageUp) => self.page_up(),
@@ -463,6 +459,26 @@ impl View for TextArea {
             Event::Key(Key::Left) if self.cursor > 0 => self.move_left(),
             Event::Key(Key::Right) if self.cursor < self.content.len() => {
                 self.move_right()
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(_),
+                position,
+                offset,
+            } if position.fits_in_rect(
+                offset,
+                self.last_size
+                    .map(|s| s.map(SizeCache::value))
+                    .unwrap_or_else(Vec2::zero),
+            ) =>
+            {
+                position.checked_sub(offset).map(|position| {
+                    let y = position.y + self.scrollbase.start_line;
+                    let x = position.x;
+                    let row = &self.rows[y];
+                    let content = &self.content[row.start..row.end];
+
+                    self.cursor = row.start + simple_prefix(content, x).length;
+                });
             }
             _ => return EventResult::Ignored,
         }

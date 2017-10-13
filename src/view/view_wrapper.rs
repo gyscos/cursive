@@ -1,5 +1,4 @@
 use Printer;
-
 use direction::Direction;
 use event::{Event, EventResult};
 use std::any::Any;
@@ -48,9 +47,8 @@ pub trait ViewWrapper {
 
     /// Wraps the `on_event` method.
     fn wrap_on_event(&mut self, ch: Event) -> EventResult {
-        self.with_view_mut(|v| v.on_event(ch)).unwrap_or(
-            EventResult::Ignored,
-        )
+        self.with_view_mut(|v| v.on_event(ch))
+            .unwrap_or(EventResult::Ignored)
     }
 
     /// Wraps the `layout` method.
@@ -60,21 +58,21 @@ pub trait ViewWrapper {
 
     /// Wraps the `take_focus` method.
     fn wrap_take_focus(&mut self, source: Direction) -> bool {
-        self.with_view_mut(|v| v.take_focus(source)).unwrap_or(
-            false,
-        )
+        self.with_view_mut(|v| v.take_focus(source))
+            .unwrap_or(false)
     }
 
     /// Wraps the `find` method.
-    fn wrap_call_on_any<'a>(&mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>) {
+    fn wrap_call_on_any<'a>(
+        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
+    ) {
         self.with_view_mut(|v| v.call_on_any(selector, callback));
     }
 
     /// Wraps the `focus_view` method.
     fn wrap_focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
-        self.with_view_mut(|v| v.focus_view(selector)).unwrap_or(
-            Err(()),
-        )
+        self.with_view_mut(|v| v.focus_view(selector))
+            .unwrap_or(Err(()))
     }
 
     /// Wraps the `needs_relayout` method.
@@ -126,7 +124,9 @@ impl<T: ViewWrapper> View for T {
         self.wrap_take_focus(source)
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>) {
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
+    ) {
         self.wrap_call_on_any(selector, callback)
     }
 

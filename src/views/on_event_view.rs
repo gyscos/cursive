@@ -2,7 +2,6 @@ use Cursive;
 use With;
 use event::{Callback, Event, EventResult};
 use std::collections::HashMap;
-
 use std::rc::Rc;
 use view::{View, ViewWrapper};
 
@@ -35,7 +34,7 @@ impl<T> Clone for Action<T> {
     fn clone(&self) -> Self {
         Action {
             phase: self.phase.clone(),
-            callback: self.callback.clone(),
+            callback: Rc::clone(&self.callback),
         }
     }
 }

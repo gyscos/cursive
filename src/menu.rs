@@ -42,8 +42,9 @@ impl MenuItem {
     pub fn label(&self) -> &str {
         match *self {
             MenuItem::Delimiter => "",
-            MenuItem::Leaf(ref label, _) |
-            MenuItem::Subtree(ref label, _) => label,
+            MenuItem::Leaf(ref label, _) | MenuItem::Subtree(ref label, _) => {
+                label
+            }
         }
     }
 
@@ -93,8 +94,9 @@ impl MenuTree {
 
     /// Adds a actionnable leaf to the end of this tree.
     pub fn add_leaf<S, F>(&mut self, title: S, cb: F)
-        where S: Into<String>,
-              F: 'static + Fn(&mut Cursive)
+    where
+        S: Into<String>,
+        F: 'static + Fn(&mut Cursive),
     {
         let i = self.children.len();
         self.insert_leaf(i, title, cb);
@@ -102,25 +104,29 @@ impl MenuTree {
 
     /// Inserts a leaf at the given position.
     pub fn insert_leaf<S, F>(&mut self, i: usize, title: S, cb: F)
-        where S: Into<String>,
-              F: 'static + Fn(&mut Cursive)
+    where
+        S: Into<String>,
+        F: 'static + Fn(&mut Cursive),
     {
         let title = title.into();
-        self.children.insert(i, MenuItem::Leaf(title, Callback::from_fn(cb)));
+        self.children
+            .insert(i, MenuItem::Leaf(title, Callback::from_fn(cb)));
     }
 
 
     /// Adds a actionnable leaf to the end of this tree - chainable variant.
     pub fn leaf<S, F>(self, title: S, cb: F) -> Self
-        where S: Into<String>,
-              F: 'static + Fn(&mut Cursive)
+    where
+        S: Into<String>,
+        F: 'static + Fn(&mut Cursive),
     {
         self.with(|menu| menu.add_leaf(title, cb))
     }
 
     /// Inserts a subtree at the given position.
     pub fn insert_subtree<S>(&mut self, i: usize, title: S, tree: MenuTree)
-        where S: Into<String>
+    where
+        S: Into<String>,
     {
         let title = title.into();
         let tree = MenuItem::Subtree(title, Rc::new(tree));
@@ -129,7 +135,8 @@ impl MenuTree {
 
     /// Adds a submenu to the end of this tree.
     pub fn add_subtree<S>(&mut self, title: S, tree: MenuTree)
-        where S: Into<String>
+    where
+        S: Into<String>,
     {
         let i = self.children.len();
         self.insert_subtree(i, title, tree);
@@ -137,7 +144,8 @@ impl MenuTree {
 
     /// Adds a submenu to the end of this tree - chainable variant.
     pub fn subtree<S>(self, title: S, tree: MenuTree) -> Self
-        where S: Into<String>
+    where
+        S: Into<String>,
     {
         self.with(|menu| menu.add_subtree(title, tree))
     }
@@ -165,13 +173,13 @@ impl MenuTree {
     /// Returns `None` if the given title was not found,
     /// or if it wasn't a subtree.
     pub fn find_subtree(&mut self, title: &str) -> Option<&mut MenuTree> {
-        self.find_item(title)
-            .and_then(|item| if let MenuItem::Subtree(_, ref mut tree) =
-                *item {
+        self.find_item(title).and_then(
+            |item| if let MenuItem::Subtree(_, ref mut tree) = *item {
                 Some(Rc::make_mut(tree))
             } else {
                 None
-            })
+            },
+        )
     }
 
     /// Removes the item at the given position.

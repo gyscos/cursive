@@ -29,23 +29,27 @@ impl Position {
     /// and a parent with the absolute coordinates `parent`, drawing the
     /// child with its top-left corner at the returned coordinates will
     /// position him appropriately.
-    pub fn compute_offset<S, A, P>(&self, size: S, available: A, parent: P)
-                                   -> Vec2
-        where S: Into<Vec2>,
-              A: Into<Vec2>,
-              P: Into<Vec2>
+    pub fn compute_offset<S, A, P>(
+        &self, size: S, available: A, parent: P
+    ) -> Vec2
+    where
+        S: Into<Vec2>,
+        A: Into<Vec2>,
+        P: Into<Vec2>,
     {
         let available = available.into();
         let size = size.into();
         let parent = parent.into();
 
-        Vec2::new(self.x.compute_offset(size.x, available.x, parent.x),
-                  self.y.compute_offset(size.y, available.y, parent.y))
+        Vec2::new(
+            self.x.compute_offset(size.x, available.x, parent.x),
+            self.y.compute_offset(size.y, available.y, parent.y),
+        )
     }
 }
 
 /// Single-dimensional offset policy.
-#[derive(PartialEq,Debug,Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum Offset {
     /// In the center of the screen
     Center,
@@ -60,9 +64,9 @@ pub enum Offset {
 
 impl Offset {
     /// Computes a single-dimension offset requred to draw a view.
-    pub fn compute_offset(&self, size: usize, available: usize,
-                          parent: usize)
-                          -> usize {
+    pub fn compute_offset(
+        &self, size: usize, available: usize, parent: usize
+    ) -> usize {
         if size > available {
             0
         } else {

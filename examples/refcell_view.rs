@@ -2,19 +2,22 @@ extern crate cursive;
 
 use cursive::Cursive;
 use cursive::view::{Boxable, Identifiable};
-use cursive::views::{LinearLayout, EditView, TextView, Dialog};
+use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 
 fn main() {
     let mut siv = Cursive::new();
 
     // Create a dialog with 2 edit fields, and a text view.
     // The text view indicates when the 2 fields content match.
-    siv.add_layer(Dialog::around(LinearLayout::vertical()
-            .child(EditView::new().on_edit(on_edit).with_id("1"))
-            .child(EditView::new().on_edit(on_edit).with_id("2"))
-            .child(TextView::new("match").with_id("match"))
-            .fixed_width(10))
-        .button("Quit", Cursive::quit));
+    siv.add_layer(
+        Dialog::around(
+            LinearLayout::vertical()
+                .child(EditView::new().on_edit(on_edit).with_id("1"))
+                .child(EditView::new().on_edit(on_edit).with_id("2"))
+                .child(TextView::new("match").with_id("match"))
+                .fixed_width(10),
+        ).button("Quit", Cursive::quit),
+    );
 
     siv.run();
 }
@@ -31,9 +34,7 @@ fn on_edit(siv: &mut Cursive, _content: &str, _cursor: usize) {
 
     // Directly compare references to edit_1 and edit_2.
     let matches = edit_1.get_content() == edit_2.get_content();
-    siv.call_on_id("match", |v: &mut TextView| v.set_content(if matches {
-        "match"
-    } else {
-        "no match"
-    }));
+    siv.call_on_id("match", |v: &mut TextView| {
+        v.set_content(if matches { "match" } else { "no match" })
+    });
 }

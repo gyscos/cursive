@@ -35,6 +35,11 @@ impl SizeCache {
         }
     }
 
+    /// Returns the value in the cache.
+    pub fn value(self) -> usize {
+        self.value
+    }
+
     /// Creates a new bi-dimensional cache.
     ///
     /// It will stay valid for the same request, and compatible ones.
@@ -49,7 +54,9 @@ impl SizeCache {
     /// * `size` must fit inside `req`.
     /// * for each dimension, `constrained = (size == req)`
     pub fn build(size: Vec2, req: Vec2) -> XY<Self> {
-        XY::new(SizeCache::new(size.x, size.x >= req.x),
-                SizeCache::new(size.y, size.y >= req.y))
+        XY::new(
+            SizeCache::new(size.x, size.x >= req.x),
+            SizeCache::new(size.y, size.y >= req.y),
+        )
     }
 }

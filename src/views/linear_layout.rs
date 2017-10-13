@@ -3,9 +3,9 @@ use With;
 use XY;
 use direction;
 use event::{Event, EventResult, Key};
-
 use std::any::Any;
 use std::cmp::min;
+use std::ops::Deref;
 use vec::Vec2;
 use view::{Selector, SizeCache};
 use view::View;
@@ -34,6 +34,25 @@ impl Child {
 
     fn as_view(&self) -> &View {
         &*self.view
+    }
+}
+
+struct ChildIterator<I> {
+    inner: I,
+    offset: usize,
+    orientation: direction::Orientation,
+}
+
+impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
+    for ChildIterator<I> {
+    type Item = (usize, T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|child| {
+            let previous = self.offset;
+            self.offset += *child.size.get(self.orientation);
+            (previous, child)
+        })
     }
 }
 
@@ -108,8 +127,9 @@ impl LinearLayout {
             Some(ref cache) => {
                 // Is our cache even valid?
                 // Also, is any child invalidating the layout?
-                if cache.zip_map(req, SizeCache::accept).both() &&
-                   self.children_are_sleeping() {
+                if cache.zip_map(req, SizeCache::accept).both()
+                    && self.children_are_sleeping()
+                {
                     Some(cache.map(|s| s.value))
                 } else {
                     None
@@ -126,10 +146,9 @@ impl LinearLayout {
     }
 
     /// Returns a cyclic mutable iterator starting with the child in focus
-    fn iter_mut<'a>(&'a mut self, from_focus: bool,
-                    source: direction::Relative)
-                    -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
-
+    fn iter_mut<'a>(
+        &'a mut self, from_focus: bool, source: direction::Relative
+    ) -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
         match source {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
@@ -148,9 +167,8 @@ impl LinearLayout {
     }
 
     fn move_focus(&mut self, source: direction::Direction) -> EventResult {
-
-        let i = if let Some(i) = source.relative(self.orientation)
-            .and_then(|rel| {
+        let i = if let Some(i) =
+            source.relative(self.orientation).and_then(|rel| {
                 // The iterator starts at the focused element.
                 // We don't want that one.
                 self.iter_mut(true, rel)
@@ -165,10 +183,48 @@ impl LinearLayout {
         self.focus = i;
         EventResult::Consumed(None)
     }
+
+    fn check_focus_grab(&mut self, event: &Event) {
+        if let Event::Mouse {
+            offset,
+            position,
+            event,
+        } = *event
+        {
+            if !event.grabs_focus() {
+                return;
+            }
+
+            let position = match position.checked_sub(offset) {
+                None => return,
+                Some(pos) => pos,
+            };
+
+            // Find the selected child
+            let position = *position.get(self.orientation);
+            let iterator = ChildIterator {
+                inner: self.children.iter_mut(),
+                offset: 0,
+                orientation: self.orientation,
+            };
+            for (i, (offset, child)) in iterator.enumerate() {
+                let child_size = child.size.get(self.orientation);
+                // eprintln!("Offset {:?}, size {:?}, position: {:?}", offset, child_size, position);
+                if (offset + child_size > position)
+                    && child.view.take_focus(direction::Direction::none())
+                {
+                    // eprintln!("It's a match!");
+                    self.focus = i;
+                    return;
+                }
+            }
+        }
+    }
 }
 
-fn try_focus((i, child): (usize, &mut Child), source: direction::Direction)
-             -> Option<usize> {
+fn try_focus(
+    (i, child): (usize, &mut Child), source: direction::Direction
+) -> Option<usize> {
     if child.view.take_focus(source) {
         Some(i)
     } else {
@@ -187,8 +243,8 @@ impl View for LinearLayout {
 
             // On the axis given by the orientation,
             // add the child size to the offset.
-            *self.orientation.get_ref(&mut offset) += self.orientation
-                .get(&child.size);
+            *self.orientation.get_ref(&mut offset) +=
+                self.orientation.get(&child.size);
         }
     }
 
@@ -257,10 +313,12 @@ impl View for LinearLayout {
         if !desperate.fits_in(req) {
             // Just give up...
             // TODO: hard-cut
-            cap(self.children
+            cap(
+                self.children
                     .iter_mut()
                     .map(|c| c.size.get_mut(orientation)),
-                *req.get(self.orientation));
+                *req.get(self.orientation),
+            );
 
             // TODO: print some error message or something
             debug!("Seriously? {:?} > {:?}???", desperate, req);
@@ -276,7 +334,8 @@ impl View for LinearLayout {
 
         // Here, we have to make a compromise between the ideal
         // and the desperate solutions.
-        let mut overweight: Vec<(usize, usize)> = sizes.iter()
+        let mut overweight: Vec<(usize, usize)> = sizes
+            .iter()
             .map(|v| self.orientation.get(v))
             .zip(min_sizes.iter().map(|v| self.orientation.get(v)))
             .map(|(a, b)| a.saturating_sub(b))
@@ -305,7 +364,8 @@ impl View for LinearLayout {
         debug!("Allocations: {:?}", allocations);
 
         // Final lengths are the minimum ones + generous allocations
-        let final_lengths: Vec<Vec2> = min_sizes.iter()
+        let final_lengths: Vec<Vec2> = min_sizes
+            .iter()
             .map(|v| self.orientation.get(v))
             .zip(allocations.iter())
             .map(|(a, b)| a + b)
@@ -335,11 +395,12 @@ impl View for LinearLayout {
         // In what order will we iterate on the children?
         let rel = source.relative(self.orientation);
         // We activate from_focus only if coming from the "sides".
-        let i = if let Some(i) = self.iter_mut(rel.is_none(),
-                      rel.unwrap_or(direction::Relative::Front))
-            .filter_map(|p| try_focus(p, source))
-            .next() {
-
+        let i = if let Some(i) = self.iter_mut(
+            rel.is_none(),
+            rel.unwrap_or(direction::Relative::Front),
+        ).filter_map(|p| try_focus(p, source))
+            .next()
+        {
             // ... we can't update `self.focus` here,
             // because rustc thinks we still borrow `self`.
             // :(
@@ -353,52 +414,66 @@ impl View for LinearLayout {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        match self.children[self.focus].view.on_event(event.clone()) {
-            EventResult::Ignored => {
-                match event {
-                    Event::Shift(Key::Tab) if self.focus > 0 => {
-                        self.move_focus(direction::Direction::back())
-                    }
-                    Event::Key(Key::Tab) if self.focus + 1 <
-                                            self.children.len() => {
-                        self.move_focus(direction::Direction::front())
-                    }
-                    Event::Key(Key::Left)
-                        if self.orientation ==
-                           direction::Orientation::Horizontal &&
-                           self.focus > 0 => {
-                        self.move_focus(direction::Direction::right())
-                    }
-                    Event::Key(Key::Up) if self.orientation ==
-                                           direction::Orientation::Vertical &&
-                                           self.focus > 0 => {
-                        self.move_focus(direction::Direction::down())
-                    }
-                    Event::Key(Key::Right)
-                        if self.orientation ==
-                           direction::Orientation::Horizontal &&
-                           self.focus + 1 <
-                           self.children.len() => {
-                        self.move_focus(direction::Direction::left())
-                    }
-                    Event::Key(Key::Down)
-                        if self.orientation ==
-                           direction::Orientation::Vertical &&
-                           self.focus + 1 <
-                           self.children.len() => {
-                        self.move_focus(direction::Direction::up())
-                    }
-                    _ => EventResult::Ignored,
+        self.check_focus_grab(&event);
+
+        let result = {
+            let mut iterator = ChildIterator {
+                inner: self.children.iter_mut(),
+                offset: 0,
+                orientation: self.orientation,
+            };
+            let (offset, child) = iterator.nth(self.focus).unwrap();
+            let offset = self.orientation.make_vec(offset, 0);
+            child.view.on_event(event.relativized(offset))
+        };
+        match result {
+            EventResult::Ignored => match event {
+                Event::Shift(Key::Tab) if self.focus > 0 => {
+                    self.move_focus(direction::Direction::back())
                 }
-            }
+                Event::Key(Key::Tab)
+                    if self.focus + 1 < self.children.len() =>
+                {
+                    self.move_focus(direction::Direction::front())
+                }
+                Event::Key(Key::Left)
+                    if self.orientation == direction::Orientation::Horizontal
+                        && self.focus > 0 =>
+                {
+                    self.move_focus(direction::Direction::right())
+                }
+                Event::Key(Key::Up)
+                    if self.orientation == direction::Orientation::Vertical
+                        && self.focus > 0 =>
+                {
+                    self.move_focus(direction::Direction::down())
+                }
+                Event::Key(Key::Right)
+                    if self.orientation == direction::Orientation::Horizontal
+                        && self.focus + 1 < self.children.len() =>
+                {
+                    self.move_focus(direction::Direction::left())
+                }
+                Event::Key(Key::Down)
+                    if self.orientation == direction::Orientation::Vertical
+                        && self.focus + 1 < self.children.len() =>
+                {
+                    self.move_focus(direction::Direction::up())
+                }
+                _ => EventResult::Ignored,
+            },
             res => res,
         }
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector,
-                    mut callback: Box<FnMut(&mut Any) + 'a>) {
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector,
+        mut callback: Box<FnMut(&mut Any) + 'a>,
+    ) {
         for child in &mut self.children {
-            child.view.call_on_any(selector, Box::new(|any| callback(any)));
+            child
+                .view
+                .call_on_any(selector, Box::new(|any| callback(any)));
         }
     }
 

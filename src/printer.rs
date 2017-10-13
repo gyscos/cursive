@@ -5,10 +5,8 @@ use backend::{self, Backend};
 use std::cell::Cell;
 use std::cmp::min;
 use std::rc::Rc;
-
 use theme::{BorderStyle, ColorStyle, Effect, Theme};
 use unicode_segmentation::UnicodeSegmentation;
-
 use utils::prefix;
 use vec::Vec2;
 
@@ -34,9 +32,9 @@ impl<'a> Printer<'a> {
     ///
     /// But nobody needs to know that.
     #[doc(hidden)]
-    pub fn new<T: Into<Vec2>>(size: T, theme: &'a Theme,
-                              backend: &'a backend::Concrete)
-                              -> Self {
+    pub fn new<T: Into<Vec2>>(
+        size: T, theme: &'a Theme, backend: &'a backend::Concrete
+    ) -> Self {
         Printer {
             offset: Vec2::zero(),
             size: size.into(),
@@ -130,7 +128,8 @@ impl<'a> Printer<'a> {
     /// });
     /// ```
     pub fn with_color<F>(&self, c: ColorStyle, f: F)
-        where F: FnOnce(&Printer)
+    where
+        F: FnOnce(&Printer),
     {
         self.backend.with_color(c.resolve(self.theme), || f(self));
     }
@@ -140,7 +139,8 @@ impl<'a> Printer<'a> {
     ///
     /// Will probably use a cursive enum some day.
     pub fn with_effect<F>(&self, effect: Effect, f: F)
-        where F: FnOnce(&Printer)
+    where
+        F: FnOnce(&Printer),
     {
         self.backend.with_effect(effect, || f(self));
     }
@@ -161,8 +161,9 @@ impl<'a> Printer<'a> {
     /// # let printer = Printer::new((6,4), &t, &b);
     /// printer.print_box((0,0), (6,4), false);
     /// ```
-    pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S,
-                                                   invert: bool) {
+    pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
+        &self, start: T, size: S, invert: bool
+    ) {
         self.new.set(false);
 
         let start = start.into();
@@ -195,7 +196,8 @@ impl<'a> Printer<'a> {
     ///   use `ColorStyle::Tertiary`.
     /// * Otherwise, use `ColorStyle::Primary`.
     pub fn with_high_border<F>(&self, invert: bool, f: F)
-        where F: FnOnce(&Printer)
+    where
+        F: FnOnce(&Printer),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
@@ -213,7 +215,8 @@ impl<'a> Printer<'a> {
     ///   use `ColorStyle::Tertiary`.
     /// * Otherwise, use `ColorStyle::Primary`.
     pub fn with_low_border<F>(&self, invert: bool, f: F)
-        where F: FnOnce(&Printer)
+    where
+        F: FnOnce(&Printer),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
@@ -232,16 +235,18 @@ impl<'a> Printer<'a> {
     ///       uses `ColorStyle::Highlight`.
     ///     * Otherwise, uses `ColorStyle::HighlightInactive`.
     pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
-        self.with_color(if selection {
-                            if self.focused {
-                                ColorStyle::Highlight
-                            } else {
-                                ColorStyle::HighlightInactive
-                            }
-                        } else {
-                            ColorStyle::Primary
-                        },
-                        f);
+        self.with_color(
+            if selection {
+                if self.focused {
+                    ColorStyle::Highlight
+                } else {
+                    ColorStyle::HighlightInactive
+                }
+            } else {
+                ColorStyle::Primary
+            },
+            f,
+        );
     }
 
     /// Prints a horizontal delimiter with side border `├` and `┤`.
@@ -253,9 +258,9 @@ impl<'a> Printer<'a> {
     }
 
     /// Returns a printer on a subset of this one's area.
-    pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(&'a self, offset: S,
-                                                     size: T, focused: bool)
-                                                     -> Printer<'a> {
+    pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(
+        &'a self, offset: S, size: T, focused: bool
+    ) -> Printer<'a> {
         let size = size.into();
         let offset = offset.into().or_min(self.size);
         let available = if !offset.fits_in(self.size) {
@@ -270,7 +275,7 @@ impl<'a> Printer<'a> {
             focused: self.focused && focused,
             theme: self.theme,
             backend: self.backend,
-            new: self.new.clone(),
+            new: Rc::clone(&self.new),
         }
     }
 

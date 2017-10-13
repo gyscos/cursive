@@ -1,4 +1,5 @@
 use Printer;
+use event::{Event, EventResult};
 use theme::ColorStyle;
 use vec::Vec2;
 use view::{View, ViewWrapper};
@@ -23,8 +24,11 @@ impl<T: View> ShadowView<T> {
     }
 
     fn padding(&self) -> Vec2 {
-        Vec2::new(1 + self.left_padding as usize,
-                  1 + self.top_padding as usize)
+        self.top_left_padding() + (1, 1)
+    }
+
+    fn top_left_padding(&self) -> Vec2 {
+        Vec2::new(self.left_padding as usize, self.top_padding as usize)
     }
 
     /// If set, adds an empty column to the left of the view.
@@ -58,17 +62,22 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         self.view.layout(size.saturating_sub(offset));
     }
 
-    fn wrap_draw(&self, printer: &Printer) {
+    fn wrap_on_event(&mut self, event: Event) -> EventResult {
+        let padding = self.top_left_padding();
+        self.view.on_event(event.relativized(padding))
+    }
 
-        if printer.size.y <= self.top_padding as usize ||
-           printer.size.x <= self.left_padding as usize {
+    fn wrap_draw(&self, printer: &Printer) {
+        if printer.size.y <= self.top_padding as usize
+            || printer.size.x <= self.left_padding as usize
+        {
             // Nothing to do if there's no place to draw.
             return;
         }
 
         // Skip the first row/column
-        let offset = Vec2::new(self.left_padding as usize,
-                               self.top_padding as usize);
+        let offset =
+            Vec2::new(self.left_padding as usize, self.top_padding as usize);
         let printer = &printer.offset(offset, true);
         if printer.theme.shadow {
             let h = printer.size.y;
@@ -85,9 +94,11 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         }
 
         // Draw the view background
-        let printer = printer.sub_printer(Vec2::zero(),
-                                          printer.size.saturating_sub((1, 1)),
-                                          true);
+        let printer = printer.sub_printer(
+            Vec2::zero(),
+            printer.size.saturating_sub((1, 1)),
+            true,
+        );
         self.view.draw(&printer);
     }
 }

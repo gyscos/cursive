@@ -20,8 +20,10 @@ fn main() {
     siv.add_global_callback('q', Cursive::quit);
     siv.set_theme(theme);
 
-    siv.add_layer(TextView::new("Hello World with default terminal background color!\n\
-                                Press q to quit the application."));
+    siv.add_layer(TextView::new(
+        "Hello World with default terminal background color!\n\
+         Press q to quit the application.",
+    ));
 
     siv.run();
 }
