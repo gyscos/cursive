@@ -515,7 +515,7 @@ impl Cursive {
         if let Event::Mouse {
             event,
             position,
-            offset: _,
+            ..
         } = event
         {
             if event.grabs_focus() && !self.menubar.autohide
