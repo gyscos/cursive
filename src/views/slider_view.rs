@@ -1,7 +1,7 @@
 use {Cursive, Printer};
 use With;
 use direction::{Direction, Orientation};
-use event::{Callback, Event, EventResult, Key};
+use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use std::rc::Rc;
 use theme::ColorStyle;
 use vec::Vec2;
@@ -14,6 +14,7 @@ pub struct SliderView {
     on_enter: Option<Rc<Fn(&mut Cursive, usize)>>,
     value: usize,
     max_value: usize,
+    dragging: bool,
 }
 
 impl SliderView {
@@ -28,6 +29,7 @@ impl SliderView {
             max_value: max_value,
             on_change: None,
             on_enter: None,
+            dragging: false,
         }
     }
 
@@ -103,6 +105,10 @@ impl SliderView {
             EventResult::Ignored
         }
     }
+
+    fn req_size(&self) -> Vec2 {
+        self.orientation.make_vec(self.max_value, 1)
+    }
 }
 
 impl View for SliderView {
@@ -127,7 +133,7 @@ impl View for SliderView {
     }
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {
-        self.orientation.make_vec(self.max_value, 1)
+        self.req_size()
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
@@ -158,6 +164,41 @@ impl View for SliderView {
                 EventResult::with_cb(move |s| {
                     cb(s, value);
                 })
+            }
+            Event::Mouse {
+                event: MouseEvent::Hold(MouseButton::Left),
+                position,
+                offset,
+            } if self.dragging =>
+            {
+                let position = position.saturating_sub(offset);
+                let position = self.orientation.get(&position);
+                let position = ::std::cmp::min(
+                    position,
+                    self.max_value.saturating_sub(1),
+                );
+                self.value = position;
+                self.get_change_result()
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(MouseButton::Left),
+                position,
+                offset,
+            } if position.fits_in_rect(offset, self.req_size()) =>
+            {
+                position.checked_sub(offset).map(|position| {
+                    self.dragging = true;
+                    self.value = self.orientation.get(&position);
+                });
+                self.get_change_result()
+            }
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                position: _,
+                offset: _,
+            } => {
+                self.dragging = false;
+                EventResult::Ignored
             }
             _ => EventResult::Ignored,
         }
