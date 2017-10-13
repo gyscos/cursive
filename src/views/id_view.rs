@@ -40,6 +40,9 @@ impl<V: View> IdView<V> {
     }
 }
 
+// Shortcut for a boxed callback (for the wrap_call_on_any method).
+type BoxedCallback<'a> = Box<for<'b> FnMut(&'b mut Any) + 'a>;
+
 impl<T: View + 'static> ViewWrapper for IdView<T> {
     type V = T;
 
@@ -59,8 +62,7 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
 
     // Some for<'b> weirdness here to please the borrow checker gods...
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector,
-        mut callback: Box<for<'b> FnMut(&'b mut Any) + 'a>,
+        &mut self, selector: &Selector, mut callback: BoxedCallback<'a>
     ) {
         match selector {
             &Selector::Id(id) if id == self.id => callback(self),
