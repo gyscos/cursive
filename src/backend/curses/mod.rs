@@ -31,11 +31,11 @@ fn find_closest(color: &Color) -> i16 {
         Color::Light(BaseColor::Cyan) => 14,
         Color::Light(BaseColor::White) => 15,
         Color::Rgb(r, g, b) => {
-            let r = 6 * r as u16 / 256;
-            let g = 6 * g as u16 / 256;
-            let b = 6 * b as u16 / 256;
+            let r = 6 * u16::from(r) / 256;
+            let g = 6 * u16::from(g) / 256;
+            let b = 6 * u16::from(b) / 256;
             (16 + 36 * r + 6 * g + b) as i16
         }
-        Color::RgbLowRes(r, g, b) => (16 + 36 * r + 6 * g + b) as i16,
+        Color::RgbLowRes(r, g, b) => i16::from(16 + 36 * r + 6 * g + b),
     }
 }
