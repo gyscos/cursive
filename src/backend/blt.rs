@@ -5,23 +5,164 @@ use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{self, state, Event as BltEvent,
                                         KeyCode};
 use backend;
-use event::{Event, Key};
-use std::collections::BTreeMap;
+use event::{Event, Key, MouseButton, MouseEvent};
 use theme::{BaseColor, Color, ColorPair, Effect};
+use vec::Vec2;
+use std::collections::HashSet;
 
 enum ColorRole {
     Foreground,
     Background,
 }
 
-pub struct Concrete {}
+pub struct Concrete {
+    mouse_position: Vec2,
+    buttons_pressed: HashSet<MouseButton>,
+}
+
+impl Concrete {
+    fn blt_keycode_to_ev(
+        &mut self, kc: KeyCode, shift: bool, ctrl: bool
+    ) -> Event {
+        match kc {
+            KeyCode::F1 |
+            KeyCode::F2 |
+            KeyCode::F3 |
+            KeyCode::F4 |
+            KeyCode::F5 |
+            KeyCode::F6 |
+            KeyCode::F7 |
+            KeyCode::F8 |
+            KeyCode::F9 |
+            KeyCode::F10 |
+            KeyCode::F11 |
+            KeyCode::F12 |
+            KeyCode::NumEnter |
+            KeyCode::Enter |
+            KeyCode::Escape |
+            KeyCode::Backspace |
+            KeyCode::Tab |
+            KeyCode::Pause |
+            KeyCode::Insert |
+            KeyCode::Home |
+            KeyCode::PageUp |
+            KeyCode::Delete |
+            KeyCode::End |
+            KeyCode::PageDown |
+            KeyCode::Right |
+            KeyCode::Left |
+            KeyCode::Down |
+            KeyCode::Up => match (shift, ctrl) {
+                (true, true) => Event::CtrlShift(blt_keycode_to_key(kc)),
+                (true, false) => Event::Shift(blt_keycode_to_key(kc)),
+                (false, true) => Event::Ctrl(blt_keycode_to_key(kc)),
+                (false, false) => Event::Key(blt_keycode_to_key(kc)),
+            },
+            // TODO: mouse support
+            KeyCode::MouseLeft |
+            KeyCode::MouseRight |
+            KeyCode::MouseMiddle |
+            KeyCode::MouseFourth |
+            KeyCode::MouseFifth => blt_keycode_to_mouse_button(kc)
+                .map(|btn| {
+                    self.buttons_pressed.insert(btn);
+                    Event::Mouse {
+                        event: MouseEvent::Press(btn),
+                        position: self.mouse_position,
+                        offset: Vec2::zero(),
+                    }
+                })
+                .unwrap_or(Event::Unknown(vec![])),
+            KeyCode::A |
+            KeyCode::B |
+            KeyCode::C |
+            KeyCode::D |
+            KeyCode::E |
+            KeyCode::F |
+            KeyCode::G |
+            KeyCode::H |
+            KeyCode::I |
+            KeyCode::J |
+            KeyCode::K |
+            KeyCode::L |
+            KeyCode::M |
+            KeyCode::N |
+            KeyCode::O |
+            KeyCode::P |
+            KeyCode::Q |
+            KeyCode::R |
+            KeyCode::S |
+            KeyCode::T |
+            KeyCode::U |
+            KeyCode::V |
+            KeyCode::W |
+            KeyCode::X |
+            KeyCode::Y |
+            KeyCode::Z |
+            KeyCode::Row1 |
+            KeyCode::Row2 |
+            KeyCode::Row3 |
+            KeyCode::Row4 |
+            KeyCode::Row5 |
+            KeyCode::Row6 |
+            KeyCode::Row7 |
+            KeyCode::Row8 |
+            KeyCode::Row9 |
+            KeyCode::Row0 |
+            KeyCode::Grave |
+            KeyCode::Minus |
+            KeyCode::Equals |
+            KeyCode::LeftBracket |
+            KeyCode::RightBracket |
+            KeyCode::Backslash |
+            KeyCode::Semicolon |
+            KeyCode::Apostrophe |
+            KeyCode::Comma |
+            KeyCode::Period |
+            KeyCode::Slash |
+            KeyCode::Space |
+            KeyCode::NumDivide |
+            KeyCode::NumMultiply |
+            KeyCode::NumMinus |
+            KeyCode::NumPlus |
+            KeyCode::NumPeriod |
+            KeyCode::Num1 |
+            KeyCode::Num2 |
+            KeyCode::Num3 |
+            KeyCode::Num4 |
+            KeyCode::Num5 |
+            KeyCode::Num6 |
+            KeyCode::Num7 |
+            KeyCode::Num8 |
+            KeyCode::Num9 |
+            KeyCode::Num0 => if ctrl {
+                Event::CtrlChar(blt_keycode_to_char(kc, shift))
+            } else {
+                Event::Char(blt_keycode_to_char(kc, shift))
+            },
+        }
+    }
+}
 
 impl backend::Backend for Concrete {
     fn init() -> Self {
         terminal::open("Cursive", 80, 24);
         terminal::set(terminal::config::Window::empty().resizeable(true));
+        terminal::set(vec![
+            terminal::config::InputFilter::Group {
+                group: terminal::config::InputFilterGroup::Keyboard,
+                both: false,
+            },
+            terminal::config::InputFilter::Group {
+                group: terminal::config::InputFilterGroup::Mouse,
+                both: true,
+            },
+        ]);
 
-        Concrete {}
+        Concrete {
+            mouse_position: Vec2::zero(),
+            buttons_pressed: HashSet::new(),
+        }
     }
 
     fn finish(&mut self) {
@@ -85,18 +226,50 @@ impl backend::Backend for Concrete {
                 BltEvent::Close => Event::Exit,
                 BltEvent::Resize { .. } => Event::WindowResize,
                 // TODO: mouse support
-                BltEvent::MouseMove { .. } => Event::Refresh,
-                BltEvent::MouseScroll { .. } => Event::Refresh,
+                BltEvent::MouseMove { x, y } => {
+                    self.mouse_position = Vec2::new(x as usize, y as usize);
+                    // TODO: find out if a button is pressed?
+                    match self.buttons_pressed.iter().next() {
+                        None => Event::Refresh,
+                        Some(btn) => Event::Mouse {
+                            event: MouseEvent::Hold(*btn),
+                            position: self.mouse_position,
+                            offset: Vec2::zero(),
+                        }
+                    }
+                }
+                BltEvent::MouseScroll { delta } => Event::Mouse {
+                    event: if delta < 0 {
+                        MouseEvent::WheelUp
+                    } else {
+                        MouseEvent::WheelDown
+                    },
+                    position: self.mouse_position,
+                    offset: Vec2::zero(),
+                },
                 BltEvent::KeyPressed { key, ctrl, shift } => {
-                    blt_keycode_to_ev(key, shift, ctrl)
+                    self.blt_keycode_to_ev(key, shift, ctrl)
                 }
                 // TODO: there's no Key::Shift/Ctrl for w/e reason
                 BltEvent::ShiftPressed => Event::Refresh,
                 BltEvent::ControlPressed => Event::Refresh,
                 // TODO: what should we do here?
-                BltEvent::KeyReleased { .. } |
-                BltEvent::ShiftReleased |
-                BltEvent::ControlReleased => Event::Refresh,
+                BltEvent::KeyReleased { key, .. } => {
+                    // It's probably a mouse key.
+                    blt_keycode_to_mouse_button(key)
+                        .map(|btn| {
+                            self.buttons_pressed.remove(&btn);
+                            Event::Mouse {
+                                event: MouseEvent::Release(btn),
+                                position: self.mouse_position,
+                                offset: Vec2::zero(),
+                            }
+                        })
+                        .unwrap_or(Event::Unknown(vec![]))
+                }
+                BltEvent::ShiftReleased | BltEvent::ControlReleased => {
+                    Event::Refresh
+                }
             }
         } else {
             Event::Refresh
@@ -143,117 +316,6 @@ fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
         ),
     };
     BltColor::from_rgb(r, g, b)
-}
-
-fn blt_keycode_to_ev(kc: KeyCode, shift: bool, ctrl: bool) -> Event {
-    match kc {
-        KeyCode::F1 |
-        KeyCode::F2 |
-        KeyCode::F3 |
-        KeyCode::F4 |
-        KeyCode::F5 |
-        KeyCode::F6 |
-        KeyCode::F7 |
-        KeyCode::F8 |
-        KeyCode::F9 |
-        KeyCode::F10 |
-        KeyCode::F11 |
-        KeyCode::F12 |
-        KeyCode::NumEnter |
-        KeyCode::Enter |
-        KeyCode::Escape |
-        KeyCode::Backspace |
-        KeyCode::Tab |
-        KeyCode::Pause |
-        KeyCode::Insert |
-        KeyCode::Home |
-        KeyCode::PageUp |
-        KeyCode::Delete |
-        KeyCode::End |
-        KeyCode::PageDown |
-        KeyCode::Right |
-        KeyCode::Left |
-        KeyCode::Down |
-        KeyCode::Up => match (shift, ctrl) {
-            (true, true) => Event::CtrlShift(blt_keycode_to_key(kc)),
-            (true, false) => Event::Shift(blt_keycode_to_key(kc)),
-            (false, true) => Event::Ctrl(blt_keycode_to_key(kc)),
-            (false, false) => Event::Key(blt_keycode_to_key(kc)),
-        },
-        // TODO: mouse support
-        KeyCode::MouseLeft |
-        KeyCode::MouseRight |
-        KeyCode::MouseMiddle |
-        KeyCode::MouseFourth |
-        KeyCode::MouseFifth => Event::Refresh,
-        KeyCode::A |
-        KeyCode::B |
-        KeyCode::C |
-        KeyCode::D |
-        KeyCode::E |
-        KeyCode::F |
-        KeyCode::G |
-        KeyCode::H |
-        KeyCode::I |
-        KeyCode::J |
-        KeyCode::K |
-        KeyCode::L |
-        KeyCode::M |
-        KeyCode::N |
-        KeyCode::O |
-        KeyCode::P |
-        KeyCode::Q |
-        KeyCode::R |
-        KeyCode::S |
-        KeyCode::T |
-        KeyCode::U |
-        KeyCode::V |
-        KeyCode::W |
-        KeyCode::X |
-        KeyCode::Y |
-        KeyCode::Z |
-        KeyCode::Row1 |
-        KeyCode::Row2 |
-        KeyCode::Row3 |
-        KeyCode::Row4 |
-        KeyCode::Row5 |
-        KeyCode::Row6 |
-        KeyCode::Row7 |
-        KeyCode::Row8 |
-        KeyCode::Row9 |
-        KeyCode::Row0 |
-        KeyCode::Grave |
-        KeyCode::Minus |
-        KeyCode::Equals |
-        KeyCode::LeftBracket |
-        KeyCode::RightBracket |
-        KeyCode::Backslash |
-        KeyCode::Semicolon |
-        KeyCode::Apostrophe |
-        KeyCode::Comma |
-        KeyCode::Period |
-        KeyCode::Slash |
-        KeyCode::Space |
-        KeyCode::NumDivide |
-        KeyCode::NumMultiply |
-        KeyCode::NumMinus |
-        KeyCode::NumPlus |
-        KeyCode::NumPeriod |
-        KeyCode::Num1 |
-        KeyCode::Num2 |
-        KeyCode::Num3 |
-        KeyCode::Num4 |
-        KeyCode::Num5 |
-        KeyCode::Num6 |
-        KeyCode::Num7 |
-        KeyCode::Num8 |
-        KeyCode::Num9 |
-        KeyCode::Num0 => if ctrl {
-            Event::CtrlChar(blt_keycode_to_char(kc, shift))
-        } else {
-            Event::Char(blt_keycode_to_char(kc, shift))
-        },
-    }
 }
 
 fn blt_keycode_to_char(kc: KeyCode, shift: bool) -> char {
@@ -544,4 +606,13 @@ fn blt_keycode_to_key(kc: KeyCode) -> Key {
         KeyCode::Up => Key::Up,
         _ => unreachable!(),
     }
+}
+
+fn blt_keycode_to_mouse_button(kc: KeyCode) -> Option<MouseButton> {
+    Some(match kc {
+        KeyCode::MouseLeft => MouseButton::Left,
+        KeyCode::MouseRight => MouseButton::Right,
+        KeyCode::MouseMiddle => MouseButton::Middle,
+        _ => return None,
+    })
 }
