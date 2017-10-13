@@ -2,12 +2,12 @@
 
 use {Printer, With, XY};
 use direction::Direction;
-use event::{Event, EventResult, Key};
+use event::{Event, EventResult, Key, MouseEvent};
 use odds::vec::VecExt;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::{prefix, LinesIterator, Row};
+use utils::{prefix, simple_prefix, LinesIterator, Row};
 use vec::Vec2;
 use view::{ScrollBase, SizeCache, View};
 
@@ -459,6 +459,26 @@ impl View for TextArea {
             Event::Key(Key::Left) if self.cursor > 0 => self.move_left(),
             Event::Key(Key::Right) if self.cursor < self.content.len() => {
                 self.move_right()
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(_),
+                position,
+                offset,
+            } if position.fits_in_rect(
+                offset,
+                self.last_size
+                    .map(|s| s.map(SizeCache::value))
+                    .unwrap_or_else(Vec2::zero),
+            ) =>
+            {
+                position.checked_sub(offset).map(|position| {
+                    let y = position.y + self.scrollbase.start_line;
+                    let x = position.x;
+                    let row = &self.rows[y];
+                    let content = &self.content[row.start..row.end];
+
+                    self.cursor = row.start + simple_prefix(content, x).length;
+                });
             }
             _ => return EventResult::Ignored,
         }

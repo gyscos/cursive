@@ -35,6 +35,11 @@ impl SizeCache {
         }
     }
 
+    /// Returns the value in the cache.
+    pub fn value(self) -> usize {
+        self.value
+    }
+
     /// Creates a new bi-dimensional cache.
     ///
     /// It will stay valid for the same request, and compatible ones.
