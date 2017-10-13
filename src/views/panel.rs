@@ -1,4 +1,5 @@
 use Printer;
+use event::{Event, EventResult};
 use vec::Vec2;
 use view::{View, ViewWrapper};
 
@@ -17,6 +18,10 @@ impl<V: View> Panel<V> {
 
 impl<V: View> ViewWrapper for Panel<V> {
     wrap_impl!(self.view: V);
+
+    fn wrap_on_event(&mut self, event: Event) -> EventResult {
+        self.view.on_event(event.relativized((1, 1)))
+    }
 
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
         // TODO: make borders conditional?
