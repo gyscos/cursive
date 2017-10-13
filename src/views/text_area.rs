@@ -1,5 +1,4 @@
-
-
+use std::cmp::min;
 use {Printer, With, XY};
 use direction::Direction;
 use event::{Event, EventResult, Key, MouseEvent};
@@ -472,7 +471,12 @@ impl View for TextArea {
             ) =>
             {
                 position.checked_sub(offset).map(|position| {
+                    if self.rows.is_empty() {
+                        return;
+                    }
+
                     let y = position.y + self.scrollbase.start_line;
+                    let y = min(y, self.rows.len() - 1);
                     let x = position.x;
                     let row = &self.rows[y];
                     let content = &self.content[row.start..row.end];
