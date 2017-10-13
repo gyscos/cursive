@@ -200,7 +200,7 @@ impl<T: 'static> SelectView<T> {
     ///
     /// Panics if the list is empty.
     pub fn selection(&self) -> Rc<T> {
-        self.items[self.focus()].value.clone()
+        Rc::clone(&self.items[self.focus()].value)
     }
 
     /// Removes all items from this view.
@@ -341,8 +341,7 @@ impl<T: 'static> SelectView<T> {
             }
             Event::Mouse {
                 event: MouseEvent::WheelDown,
-                position: _,
-                offset: _,
+                ..
             } if self.scrollbase.can_scroll_down() =>
             {
                 fix_scroll = false;
@@ -350,8 +349,7 @@ impl<T: 'static> SelectView<T> {
             }
             Event::Mouse {
                 event: MouseEvent::WheelUp,
-                position: _,
-                offset: _,
+                ..
             } if self.scrollbase.can_scroll_up() =>
             {
                 fix_scroll = false;
@@ -400,12 +398,11 @@ impl<T: 'static> SelectView<T> {
                 self.scrollbase.release_grab();
                 if self.on_submit.is_some() {
                     if let Some(position) = position.checked_sub(offset) {
-                        if position < self.last_size {
-                            if position.y + self.scrollbase.start_line
+                        if position < self.last_size
+                            && (position.y + self.scrollbase.start_line)
                                 == self.focus()
-                            {
-                                return self.submit();
-                            }
+                        {
+                            return self.submit();
                         }
                     }
                 }
@@ -447,9 +444,9 @@ impl<T: 'static> SelectView<T> {
         // TODO: cache it?
         let mut tree = MenuTree::new();
         for (i, item) in self.items.iter().enumerate() {
-            let focus = self.focus.clone();
+            let focus = Rc::clone(&self.focus);
             let on_submit = self.on_submit.as_ref().cloned();
-            let value = item.value.clone();
+            let value = Rc::clone(&item.value);
             tree.add_leaf(item.label.clone(), move |s| {
                 focus.set(i);
                 if let Some(ref on_submit) = on_submit {
@@ -480,7 +477,7 @@ impl<T: 'static> SelectView<T> {
         // And now, we can return the callback that will create the popup.
         EventResult::with_cb(move |s| {
             // The callback will want to work with a fresh Rc
-            let tree = tree.clone();
+            let tree = Rc::clone(&tree);
             // We'll relativise the absolute position,
             // So that we are locked to the parent view.
             // A nice effect is that window resizes will keep both

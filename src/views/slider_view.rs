@@ -194,8 +194,7 @@ impl View for SliderView {
             }
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
-                position: _,
-                offset: _,
+                ..
             } => {
                 self.dragging = false;
                 EventResult::Ignored

@@ -206,11 +206,11 @@ impl ListView {
     }
 
     fn check_focus_grab(&mut self, event: &Event) {
-        if let &Event::Mouse {
+        if let Event::Mouse {
             offset,
             position,
             event,
-        } = event
+        } = *event
         {
             if !event.grabs_focus() {
                 return;
@@ -229,9 +229,7 @@ impl ListView {
 
             // Now that we have a relative position, checks for buttons?
             let focus = position.y + self.scrollbase.start_line;
-            if let &mut ListChild::Row(_, ref mut view) =
-                &mut self.children[focus]
-            {
+            if let ListChild::Row(_, ref mut view) = self.children[focus] {
                 if view.take_focus(direction::Direction::none()) {
                     self.focus = focus;
                 }

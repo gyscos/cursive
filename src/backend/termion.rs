@@ -149,16 +149,14 @@ impl backend::Backend for Concrete {
             }
         });
 
-        let backend = Concrete {
+        Concrete {
             terminal: terminal,
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
             input: receiver,
             resize: resize,
             timeout: None,
             last_button: None,
-        };
-
-        backend
+        }
     }
 
     fn finish(&mut self) {

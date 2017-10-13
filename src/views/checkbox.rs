@@ -90,7 +90,7 @@ impl Checkbox {
     pub fn set_checked(&mut self, checked: bool) -> EventResult {
         self.checked = checked;
         if let Some(ref on_change) = self.on_change {
-            let on_change = on_change.clone();
+            let on_change = Rc::clone(on_change);
             EventResult::with_cb(move |s| on_change(s, checked))
         } else {
             EventResult::Consumed(None)

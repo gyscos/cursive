@@ -362,11 +362,11 @@ impl Dialog {
     }
 
     fn check_focus_grab(&mut self, event: &Event) {
-        if let &Event::Mouse {
+        if let Event::Mouse {
             offset,
             position,
             event,
-        } = event
+        } = *event
         {
             if !event.grabs_focus() {
                 return;

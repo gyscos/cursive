@@ -156,7 +156,7 @@ impl Menubar {
     fn select_child(&mut self) -> EventResult {
         // First, we need a new Rc to send the callback,
         // since we don't know when it will be called.
-        let menu = self.menus[self.focus].1.clone();
+        let menu = Rc::clone(&self.menus[self.focus].1);
         self.state = State::Submenu;
         let offset = (
             self.menus[..self.focus]
@@ -167,7 +167,7 @@ impl Menubar {
         );
         // Since the closure will be called multiple times,
         // we also need a new Rc on every call.
-        EventResult::with_cb(move |s| show_child(s, offset, menu.clone()))
+        EventResult::with_cb(move |s| show_child(s, offset, Rc::clone(&menu)))
     }
 }
 
@@ -264,8 +264,7 @@ impl View for Menubar {
             }
             Event::Mouse {
                 event: MouseEvent::Press(_),
-                position: _,
-                offset: _,
+                ..
             } => {
                 self.hide();
                 return EventResult::with_cb(|s| s.clear());

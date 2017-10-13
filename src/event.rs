@@ -313,12 +313,7 @@ pub enum Event {
 impl Event {
     /// Returns the position of the mouse, if `self` is a mouse event.
     pub fn mouse_position(&self) -> Option<Vec2> {
-        if let Event::Mouse {
-            offset: _,
-            position,
-            event: _,
-        } = *self
-        {
+        if let Event::Mouse { position, .. } = *self {
             Some(position)
         } else {
             None
@@ -333,12 +328,7 @@ impl Event {
     where
         V: Into<Vec2>,
     {
-        if let Event::Mouse {
-            ref mut offset,
-            position: _,
-            event: _,
-        } = *self
-        {
+        if let Event::Mouse { ref mut offset, .. } = *self {
             *offset = *offset + top_left;
         }
     }

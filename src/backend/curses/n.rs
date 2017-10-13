@@ -104,9 +104,9 @@ impl Concrete {
                 // The event is either a mouse drag event,
                 // or a weird double-release event. :S
                 self.last_mouse_button
-                    .map(|b| MouseEvent::Hold(b))
+                    .map(MouseEvent::Hold)
                     .map(&make_event)
-                    .unwrap_or(Event::Unknown(vec![]))
+                    .unwrap_or_else(|| Event::Unknown(vec![]))
             } else {
                 // Identify the button
                 let mut bare_event = mevent.bstate & ((1 << 25) - 1);

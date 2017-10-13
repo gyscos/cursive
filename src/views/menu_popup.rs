@@ -139,7 +139,7 @@ impl MenuPopup {
     }
 
     fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
-        let tree = tree.clone();
+        let tree = Rc::clone(tree);
         let max_width = 4
             + self.menu
                 .children
@@ -155,7 +155,7 @@ impl MenuPopup {
             s.screen_mut().add_layer_at(
                 Position::parent(offset),
                 OnEventView::new(
-                    MenuPopup::new(tree.clone()).on_action(move |s| {
+                    MenuPopup::new(Rc::clone(&tree)).on_action(move |s| {
                         // This will happen when the subtree popup
                         // activates something;
                         // First, remove ourselve.
@@ -271,9 +271,6 @@ impl View for MenuPopup {
     fn on_event(&mut self, event: Event) -> EventResult {
         let mut fix_scroll = true;
         match event {
-            Event::Key(Key::Esc) => {
-                return self.dismiss();
-            }
             Event::Key(Key::Up) => self.scroll_up(1, true),
             Event::Key(Key::PageUp) => self.scroll_up(5, false),
             Event::Key(Key::Down) => self.scroll_down(1, true),
@@ -301,8 +298,7 @@ impl View for MenuPopup {
             }
             Event::Mouse {
                 event: MouseEvent::WheelUp,
-                position: _,
-                offset: _,
+                ..
             } if self.scrollbase.can_scroll_up() =>
             {
                 fix_scroll = false;
@@ -310,8 +306,7 @@ impl View for MenuPopup {
             }
             Event::Mouse {
                 event: MouseEvent::WheelDown,
-                position: _,
-                offset: _,
+                ..
             } if self.scrollbase.can_scroll_down() =>
             {
                 fix_scroll = false;
@@ -373,20 +368,19 @@ impl View for MenuPopup {
                     if let Some(position) =
                         position.checked_sub(offset + (1, 1))
                     {
-                        if position < self.last_size.saturating_sub((2, 2)) {
-                            if position.y + self.scrollbase.start_line
-                                == self.focus
-                            {
-                                return self.submit();
-                            }
+                        if position < self.last_size.saturating_sub((2, 2))
+                            && (position.y + self.scrollbase.start_line
+                                == self.focus)
+                        {
+                            return self.submit();
                         }
                     }
                 }
             }
+            Event::Key(Key::Esc) |
             Event::Mouse {
                 event: MouseEvent::Press(_),
-                position: _,
-                offset: _,
+                ..
             } => {
                 return self.dismiss();
             }

@@ -14,7 +14,7 @@ struct SharedState<T> {
 
 impl<T> SharedState<T> {
     pub fn selection(&self) -> Rc<T> {
-        self.values[self.selection].clone()
+        Rc::clone(&self.values[self.selection])
     }
 }
 
@@ -56,7 +56,7 @@ impl<T> RadioGroup<T> {
     ) -> RadioButton<T> {
         let count = self.state.borrow().values.len();
         self.state.borrow_mut().values.push(Rc::new(value));
-        RadioButton::new(self.state.clone(), count, label.into())
+        RadioButton::new(Rc::clone(&self.state), count, label.into())
     }
 
     /// Returns the id of the selected button.

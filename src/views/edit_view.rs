@@ -335,7 +335,7 @@ impl EditView {
 
     /// Get the current text.
     pub fn get_content(&self) -> Rc<String> {
-        self.content.clone()
+        Rc::clone(&self.content)
     }
 
     /// Sets the current content to the given value.
@@ -573,7 +573,7 @@ impl View for EditView {
             }
             Event::Key(Key::Enter) if self.on_submit.is_some() => {
                 let cb = self.on_submit.clone().unwrap();
-                let content = self.content.clone();
+                let content = Rc::clone(&self.content);
                 return EventResult::with_cb(move |s| {
                     cb(s, &content);
                 });
@@ -599,7 +599,7 @@ impl View for EditView {
 
         let cb = self.on_edit.clone().map(|cb| {
             // Get a new Rc on the content
-            let content = self.content.clone();
+            let content = Rc::clone(&self.content);
             let cursor = self.cursor;
 
             Callback::from_fn(move |s| {

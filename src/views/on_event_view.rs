@@ -34,7 +34,7 @@ impl<T> Clone for Action<T> {
     fn clone(&self) -> Self {
         Action {
             phase: self.phase.clone(),
-            callback: self.callback.clone(),
+            callback: Rc::clone(&self.callback),
         }
     }
 }

@@ -275,7 +275,7 @@ impl<'a> Printer<'a> {
             focused: self.focused && focused,
             theme: self.theme,
             backend: self.backend,
-            new: self.new.clone(),
+            new: Rc::clone(&self.new),
         }
     }
 

@@ -34,7 +34,7 @@ impl<V: View> IdView<V> {
     ///
     /// Panics if another reference for this view already exists.
     pub fn get_mut(&mut self) -> ViewRef<V> {
-        let cell_ref = RcRef::new(self.view.clone());
+        let cell_ref = RcRef::new(Rc::clone(&self.view));
 
         OwningHandle::new_mut(cell_ref)
     }
@@ -57,6 +57,7 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
         self.view.try_borrow_mut().ok().map(|mut v| f(&mut *v))
     }
 
+    // Some for<'b> weirdness here to please the borrow checker gods...
     fn wrap_call_on_any<'a>(
         &mut self, selector: &Selector,
         mut callback: Box<for<'b> FnMut(&'b mut Any) + 'a>,

@@ -6,9 +6,9 @@ use self::bear_lib_terminal::terminal::{self, state, Event as BltEvent,
                                         KeyCode};
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
+use std::collections::HashSet;
 use theme::{BaseColor, Color, ColorPair, Effect};
 use vec::Vec2;
-use std::collections::HashSet;
 
 enum ColorRole {
     Foreground,
@@ -235,7 +235,7 @@ impl backend::Backend for Concrete {
                             event: MouseEvent::Hold(*btn),
                             position: self.mouse_position,
                             offset: Vec2::zero(),
-                        }
+                        },
                     }
                 }
                 BltEvent::MouseScroll { delta } => Event::Mouse {

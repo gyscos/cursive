@@ -43,7 +43,8 @@ struct ChildIterator<I> {
     orientation: direction::Orientation,
 }
 
-impl <'a,T: Deref<Target=Child>, I: Iterator<Item=T>> Iterator for ChildIterator<I> {
+impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
+    for ChildIterator<I> {
     type Item = (usize, T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -184,11 +185,11 @@ impl LinearLayout {
     }
 
     fn check_focus_grab(&mut self, event: &Event) {
-        if let &Event::Mouse {
+        if let Event::Mouse {
             offset,
             position,
             event,
-        } = event
+        } = *event
         {
             if !event.grabs_focus() {
                 return;
@@ -208,13 +209,13 @@ impl LinearLayout {
             };
             for (i, (offset, child)) in iterator.enumerate() {
                 let child_size = child.size.get(self.orientation);
-                        // eprintln!("Offset {:?}, size {:?}, position: {:?}", offset, child_size, position);
-                if offset + child_size > position {
-                    if child.view.take_focus(direction::Direction::none()) {
-                        // eprintln!("It's a match!");
-                        self.focus = i;
-                        return;
-                    }
+                // eprintln!("Offset {:?}, size {:?}, position: {:?}", offset, child_size, position);
+                if (offset + child_size > position)
+                    && child.view.take_focus(direction::Direction::none())
+                {
+                    // eprintln!("It's a match!");
+                    self.focus = i;
+                    return;
                 }
             }
         }

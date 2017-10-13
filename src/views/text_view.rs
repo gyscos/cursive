@@ -270,16 +270,14 @@ impl View for TextView {
             }
             Event::Mouse {
                 event: MouseEvent::WheelDown,
-                position: _,
-                offset: _,
+                ..
             } if self.scrollbase.can_scroll_down() =>
             {
                 self.scrollbase.scroll_down(5)
             }
             Event::Mouse {
                 event: MouseEvent::WheelUp,
-                position: _,
-                offset: _,
+                ..
             } if self.scrollbase.can_scroll_up() =>
             {
                 self.scrollbase.scroll_up(5)
@@ -312,8 +310,7 @@ impl View for TextView {
             }
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
-                position: _,
-                offset: _,
+                ..
             } => {
                 self.scrollbase.release_grab();
             }
