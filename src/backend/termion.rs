@@ -5,24 +5,28 @@ extern crate chan_signal;
 use self::termion::color as tcolor;
 use self::termion::event::Event as TEvent;
 use self::termion::event::Key as TKey;
-use self::termion::input::TermRead;
-use self::termion::raw::IntoRawMode;
+use self::termion::event::MouseButton as TMouseButton;
+use self::termion::event::MouseEvent as TMouseEvent;
+use self::termion::input::{MouseTerminal, TermRead};
+use self::termion::raw::{IntoRawMode, RawTerminal};
 use self::termion::screen::AlternateScreen;
 use self::termion::style as tstyle;
 use backend;
 use chan;
-use event::{Event, Key};
+use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::Cell;
-use std::io::Write;
+use std::io::{Stdout, Write};
 use std::thread;
 use theme;
+use vec::Vec2;
 
 pub struct Concrete {
-    terminal: AlternateScreen<termion::raw::RawTerminal<::std::io::Stdout>>,
+    terminal: AlternateScreen<MouseTerminal<RawTerminal<Stdout>>>,
     current_style: Cell<theme::ColorPair>,
-    input: chan::Receiver<Event>,
+    input: chan::Receiver<TEvent>,
     resize: chan::Receiver<chan_signal::Signal>,
     timeout: Option<u32>,
+    last_button: Option<MouseButton>,
 }
 
 trait Effectable {
@@ -51,6 +55,79 @@ impl Concrete {
         with_color(&colors.front, |c| print!("{}", tcolor::Fg(c)));
         with_color(&colors.back, |c| print!("{}", tcolor::Bg(c)));
     }
+    fn map_key(&mut self, event: TEvent) -> Event {
+        match event {
+            TEvent::Unsupported(bytes) => Event::Unknown(bytes),
+            TEvent::Key(TKey::Esc) => Event::Key(Key::Esc),
+            TEvent::Key(TKey::Backspace) => Event::Key(Key::Backspace),
+            TEvent::Key(TKey::Left) => Event::Key(Key::Left),
+            TEvent::Key(TKey::Right) => Event::Key(Key::Right),
+            TEvent::Key(TKey::Up) => Event::Key(Key::Up),
+            TEvent::Key(TKey::Down) => Event::Key(Key::Down),
+            TEvent::Key(TKey::Home) => Event::Key(Key::Home),
+            TEvent::Key(TKey::End) => Event::Key(Key::End),
+            TEvent::Key(TKey::PageUp) => Event::Key(Key::PageUp),
+            TEvent::Key(TKey::PageDown) => Event::Key(Key::PageDown),
+            TEvent::Key(TKey::Delete) => Event::Key(Key::Del),
+            TEvent::Key(TKey::Insert) => Event::Key(Key::Ins),
+            TEvent::Key(TKey::F(i)) if i < 12 => Event::Key(Key::from_f(i)),
+            TEvent::Key(TKey::F(j)) => Event::Unknown(vec![j]),
+            TEvent::Key(TKey::Char('\n')) => Event::Key(Key::Enter),
+            TEvent::Key(TKey::Char('\t')) => Event::Key(Key::Tab),
+            TEvent::Key(TKey::Char(c)) => Event::Char(c),
+            TEvent::Key(TKey::Ctrl('c')) => Event::Exit,
+            TEvent::Key(TKey::Ctrl(c)) => Event::CtrlChar(c),
+            TEvent::Key(TKey::Alt(c)) => Event::AltChar(c),
+            TEvent::Mouse(TMouseEvent::Press(btn, x, y)) => {
+                let position = (x - 1, y - 1).into();
+
+                let event = match btn {
+                    TMouseButton::Left => MouseEvent::Press(MouseButton::Left),
+                    TMouseButton::Middle => {
+                        MouseEvent::Press(MouseButton::Middle)
+                    }
+                    TMouseButton::Right => {
+                        MouseEvent::Press(MouseButton::Right)
+                    }
+                    TMouseButton::WheelUp => MouseEvent::WheelUp,
+                    TMouseButton::WheelDown => MouseEvent::WheelDown,
+                };
+
+                if let MouseEvent::Press(btn) = event {
+                    self.last_button = Some(btn);
+                }
+
+                Event::Mouse {
+                    event,
+                    position,
+                    offset: Vec2::zero(),
+                }
+            }
+            TEvent::Mouse(TMouseEvent::Release(x, y))
+                if self.last_button.is_some() =>
+            {
+                let event = MouseEvent::Release(self.last_button.unwrap());
+                let position = (x - 1, y - 1).into();
+                Event::Mouse {
+                    event,
+                    position,
+                    offset: Vec2::zero(),
+                }
+            }
+            TEvent::Mouse(TMouseEvent::Hold(x, y))
+                if self.last_button.is_some() =>
+            {
+                let event = MouseEvent::Hold(self.last_button.unwrap());
+                let position = (x - 1, y - 1).into();
+                Event::Mouse {
+                    event,
+                    position,
+                    offset: Vec2::zero(),
+                }
+            }
+            _ => Event::Unknown(vec![]),
+        }
+    }
 }
 
 impl backend::Backend for Concrete {
@@ -59,14 +136,16 @@ impl backend::Backend for Concrete {
 
         let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
 
-        let terminal = AlternateScreen::from(
+        // TODO: lock stdout
+        let terminal = AlternateScreen::from(MouseTerminal::from(
             ::std::io::stdout().into_raw_mode().unwrap(),
-        );
+        ));
+
         let (sender, receiver) = chan::async();
 
         thread::spawn(move || for key in ::std::io::stdin().events() {
             if let Ok(key) = key {
-                sender.send(map_key(key))
+                sender.send(key)
             }
         });
 
@@ -76,6 +155,7 @@ impl backend::Backend for Concrete {
             input: receiver,
             resize: resize,
             timeout: None,
+            last_button: None,
         };
 
         backend
@@ -148,49 +228,27 @@ impl backend::Backend for Concrete {
     }
 
     fn poll_event(&mut self) -> Event {
-        let input = &self.input;
-        let resize = &self.resize;
+        let result;
+        {
+            let input = &self.input;
+            let resize = &self.resize;
 
-        if let Some(timeout) = self.timeout {
-            let timeout = chan::after_ms(timeout);
-            chan_select!{
-                timeout.recv() => return Event::Refresh,
-                resize.recv() => return Event::WindowResize,
-                input.recv() -> input => return input.unwrap(),
-            }
-        } else {
-            chan_select!{
-                resize.recv() => return Event::WindowResize,
-                input.recv() -> input => return input.unwrap(),
+            if let Some(timeout) = self.timeout {
+                let timeout = chan::after_ms(timeout);
+                chan_select!{
+                    timeout.recv() => return Event::Refresh,
+                    resize.recv() => return Event::WindowResize,
+                    input.recv() -> input => result = Some(input.unwrap()),
+                }
+            } else {
+                chan_select!{
+                    resize.recv() => return Event::WindowResize,
+                    input.recv() -> input => result = Some(input.unwrap()),
+                }
             }
         }
-    }
-}
 
-fn map_key(event: TEvent) -> Event {
-    match event {
-        TEvent::Unsupported(bytes) => Event::Unknown(bytes),
-        TEvent::Key(TKey::Esc) => Event::Key(Key::Esc),
-        TEvent::Key(TKey::Backspace) => Event::Key(Key::Backspace),
-        TEvent::Key(TKey::Left) => Event::Key(Key::Left),
-        TEvent::Key(TKey::Right) => Event::Key(Key::Right),
-        TEvent::Key(TKey::Up) => Event::Key(Key::Up),
-        TEvent::Key(TKey::Down) => Event::Key(Key::Down),
-        TEvent::Key(TKey::Home) => Event::Key(Key::Home),
-        TEvent::Key(TKey::End) => Event::Key(Key::End),
-        TEvent::Key(TKey::PageUp) => Event::Key(Key::PageUp),
-        TEvent::Key(TKey::PageDown) => Event::Key(Key::PageDown),
-        TEvent::Key(TKey::Delete) => Event::Key(Key::Del),
-        TEvent::Key(TKey::Insert) => Event::Key(Key::Ins),
-        TEvent::Key(TKey::F(i)) if i < 12 => Event::Key(Key::from_f(i)),
-        TEvent::Key(TKey::F(j)) => Event::Unknown(vec![j]),
-        TEvent::Key(TKey::Char('\n')) => Event::Key(Key::Enter),
-        TEvent::Key(TKey::Char('\t')) => Event::Key(Key::Tab),
-        TEvent::Key(TKey::Char(c)) => Event::Char(c),
-        TEvent::Key(TKey::Ctrl('c')) => Event::Exit,
-        TEvent::Key(TKey::Ctrl(c)) => Event::CtrlChar(c),
-        TEvent::Key(TKey::Alt(c)) => Event::AltChar(c),
-        _ => Event::Unknown(vec![]),
+        self.map_key(result.unwrap())
     }
 }
 
