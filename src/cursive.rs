@@ -416,6 +416,8 @@ impl Cursive {
 
     fn layout(&mut self) {
         let size = self.screen_size();
+        let offset = if self.menubar.autohide { 0 } else { 1 };
+        let size = size.saturating_sub((0, offset));
         self.screen_mut().layout(size);
     }
 
@@ -431,7 +433,6 @@ impl Cursive {
 
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
-        let offset = if self.menubar.autohide { 0 } else { 1 };
         // Draw the menubar?
         if self.menubar.visible() {
             let printer = printer.sub_printer(
@@ -444,8 +445,8 @@ impl Cursive {
 
         let selected = self.menubar.receive_events();
 
-        let printer =
-            printer.sub_printer(Vec2::new(0, offset), printer.size, !selected);
+        let offset = if self.menubar.autohide { 0 } else { 1 };
+        let printer = printer.offset((0, offset), !selected);
         let id = self.active_screen;
         self.screens[id].draw(&printer);
     }
@@ -511,6 +512,20 @@ impl Cursive {
             self.clear();
         }
 
+        if let Event::Mouse {
+            event,
+            position,
+            offset: _,
+        } = event
+        {
+            if event.grabs_focus() && !self.menubar.autohide
+                && !self.menubar.has_submenu()
+                && position.y == 0
+            {
+                self.select_menubar();
+            }
+        }
+
         // Event dispatch order:
         // * Focused element:
         //     * Menubar (if active)
@@ -519,7 +534,8 @@ impl Cursive {
         if self.menubar.receive_events() {
             self.menubar.on_event(event).process(self);
         } else {
-            match self.screen_mut().on_event(event.clone()) {
+            let offset = if self.menubar.autohide { 0 } else { 1 };
+            match self.screen_mut().on_event(event.relativized((0, offset))) {
                 // If the event was ignored,
                 // it is our turn to play with it.
                 EventResult::Ignored => self.on_event(event),

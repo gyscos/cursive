@@ -66,6 +66,11 @@ impl Menubar {
         self.state == State::Selected
     }
 
+    /// True if some submenus are visible.
+    pub fn has_submenu(&self) -> bool {
+        self.state == State::Submenu
+    }
+
     /// Returns `true` if we should be drawn.
     pub fn visible(&self) -> bool {
         !self.autohide || self.state != State::Inactive
@@ -232,7 +237,7 @@ impl View for Menubar {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Esc) if self.autohide => {
+            Event::Key(Key::Esc) => {
                 self.hide();
                 return EventResult::with_cb(|s| s.clear());
             }
