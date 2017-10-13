@@ -95,11 +95,18 @@ where
     prefix(iter.rev(), width, delimiter)
 }
 
-/// Computes the length (number of bytes) and width of a suffix that fits in the given `width`.
+/// Computes a suffix that fits in the given `width`.
 ///
 /// Breaks between any two graphemes.
 pub fn simple_suffix(text: &str, width: usize) -> Prefix {
     suffix(text.graphemes(true), width, "")
+}
+
+/// Computes the longest prefix of the given text that fits in the given width.
+///
+/// Breaks between any two graphemes.
+pub fn simple_prefix(text: &str, width: usize) -> Prefix {
+    prefix(text.graphemes(true), width, "")
 }
 
 #[cfg(test)]

@@ -8,7 +8,7 @@ use std::rc::Rc;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::simple_suffix;
+use utils::{simple_prefix, simple_suffix};
 use vec::Vec2;
 use view::View;
 
@@ -569,6 +569,20 @@ impl View for EditView {
                 let content = self.content.clone();
                 return EventResult::with_cb(move |s| {
                     cb(s, &content);
+                });
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(_),
+                position,
+                offset,
+            } if position.fits_in_rect(offset, (self.last_length, 1)) =>
+            {
+                position.checked_sub(offset).map(|position| {
+                    self.cursor = self.offset
+                        + simple_prefix(
+                            &self.content[self.offset..],
+                            position.x,
+                        ).length;
                 });
             }
             _ => return EventResult::Ignored,
