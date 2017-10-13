@@ -5,6 +5,7 @@ use direction;
 use event::{Event, EventResult, Key};
 use std::any::Any;
 use std::cmp::min;
+use std::ops::Deref;
 use vec::Vec2;
 use view::{Selector, SizeCache};
 use view::View;
@@ -33,6 +34,24 @@ impl Child {
 
     fn as_view(&self) -> &View {
         &*self.view
+    }
+}
+
+struct ChildIterator<I> {
+    inner: I,
+    offset: usize,
+    orientation: direction::Orientation,
+}
+
+impl <'a,T: Deref<Target=Child>, I: Iterator<Item=T>> Iterator for ChildIterator<I> {
+    type Item = (usize, T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|child| {
+            let previous = self.offset;
+            self.offset += child.size.get(self.orientation);
+            (previous, child)
+        })
     }
 }
 
@@ -162,6 +181,43 @@ impl LinearLayout {
         };
         self.focus = i;
         EventResult::Consumed(None)
+    }
+
+    fn check_focus_grab(&mut self, event: &Event) {
+        if let &Event::Mouse {
+            offset,
+            position,
+            event,
+        } = event
+        {
+            if !event.grabs_focus() {
+                return;
+            }
+
+            let position = match position.checked_sub(offset) {
+                None => return,
+                Some(pos) => pos,
+            };
+
+            // Find the selected child
+            let position = *position.get(self.orientation);
+            let iterator = ChildIterator {
+                inner: self.children.iter_mut(),
+                offset: 0,
+                orientation: self.orientation,
+            };
+            for (i, (offset, child)) in iterator.enumerate() {
+                let child_size = child.size.get(self.orientation);
+                        // eprintln!("Offset {:?}, size {:?}, position: {:?}", offset, child_size, position);
+                if offset + child_size > position {
+                    if child.view.take_focus(direction::Direction::none()) {
+                        // eprintln!("It's a match!");
+                        self.focus = i;
+                        return;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -357,7 +413,19 @@ impl View for LinearLayout {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        match self.children[self.focus].view.on_event(event.clone()) {
+        self.check_focus_grab(&event);
+
+        let result = {
+            let mut iterator = ChildIterator {
+                inner: self.children.iter_mut(),
+                offset: 0,
+                orientation: self.orientation,
+            };
+            let (offset, child) = iterator.nth(self.focus).unwrap();
+            let offset = self.orientation.make_vec(offset, 0);
+            child.view.on_event(event.relativized(offset))
+        };
+        match result {
             EventResult::Ignored => match event {
                 Event::Shift(Key::Tab) if self.focus > 0 => {
                     self.move_focus(direction::Direction::back())
