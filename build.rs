@@ -1,3 +1,5 @@
+extern crate skeptic;
+
 fn main() {
     extern crate skeptic;
 
