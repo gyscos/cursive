@@ -1,6 +1,5 @@
 [package]
 authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
-build = "build.rs"
 categories = ["command-line-interface", "gui"]
 description = "A TUI (Text User Interface) library focused on ease-of-use."
 documentation = "https://gyscos.github.io/Cursive/cursive/index.html"
@@ -15,8 +14,6 @@ version = "0.6.5-pre"
 [badges.travis-ci]
 repository = "gyscos/Cursive"
 
-[build-dependencies]
-skeptic = "0.13"
 
 [dependencies]
 log = "0.3"
@@ -55,7 +52,6 @@ version = "1.5.0"
 
 [dev-dependencies]
 rand = "0.3"
-skeptic = "0.13"
 
 [features]
 default = ["ncurses-backend"]
