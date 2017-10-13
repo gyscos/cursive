@@ -2,7 +2,7 @@
 
 use {Cursive, Printer, With};
 use direction::Direction;
-use event::{Callback, Event, EventResult, Key};
+use event::{Callback, Event, EventResult, Key, MouseEvent};
 use std::cell::RefCell;
 use std::rc::Rc;
 use theme::{ColorStyle, Effect};

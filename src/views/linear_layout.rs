@@ -49,7 +49,7 @@ impl <'a,T: Deref<Target=Child>, I: Iterator<Item=T>> Iterator for ChildIterator
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|child| {
             let previous = self.offset;
-            self.offset += child.size.get(self.orientation);
+            self.offset += *child.size.get(self.orientation);
             (previous, child)
         })
     }
