@@ -22,7 +22,8 @@ pub struct TextView {
     // ScrollBase make many scrolling-related things easier
     scrollbase: ScrollBase,
     scroll_strategy: ScrollStrategy,
-    last_size: Option<XY<SizeCache>>,
+    size_cache: Option<XY<SizeCache>>,
+    last_size: Vec2,
     width: Option<usize>,
 }
 
@@ -46,7 +47,8 @@ impl TextView {
             scrollbase: ScrollBase::new(),
             scroll_strategy: ScrollStrategy::KeepRow,
             align: Align::top_left(),
-            last_size: None,
+            size_cache: None,
+            last_size: Vec2::zero(),
             width: None,
         }
     }
@@ -127,7 +129,7 @@ impl TextView {
     }
 
     fn is_cache_valid(&self, size: Vec2) -> bool {
-        match self.last_size {
+        match self.size_cache {
             None => false,
             Some(ref last) => last.x.accept(size.x) && last.y.accept(size.y),
         }
@@ -163,6 +165,8 @@ impl TextView {
         };
     }
 
+    // This must be non-destructive, as it may be called
+    // multiple times during layout.
     fn compute_rows(&mut self, size: Vec2) {
         if self.is_cache_valid(size) {
             return;
@@ -170,7 +174,7 @@ impl TextView {
 
         // Completely bust the cache
         // Just in case we fail, we don't want to leave a bad cache.
-        self.last_size = None;
+        self.size_cache = None;
 
         if size.x == 0 {
             // Nothing we can do at this point.
@@ -223,16 +227,12 @@ impl TextView {
 
 
         // Build a fresh cache.
-        self.last_size = Some(SizeCache::build(my_size, size));
-
-        // Adjust scrolling, in case we're sticking to the bottom for instance.
-        self.scrollbase.set_heights(size.y, self.rows.len());
-        self.adjust_scroll();
+        self.size_cache = Some(SizeCache::build(my_size, size));
     }
 
     // Invalidates the cache, so next call will recompute everything.
     fn invalidate(&mut self) {
-        self.last_size = None;
+        self.size_cache = None;
     }
 }
 
@@ -273,14 +273,14 @@ impl View for TextView {
                 ..
             } if self.scrollbase.can_scroll_down() =>
             {
-                self.scrollbase.scroll_down(5)
+                self.scrollbase.scroll_down(5);
             }
             Event::Mouse {
                 event: MouseEvent::WheelUp,
                 ..
             } if self.scrollbase.can_scroll_up() =>
             {
-                self.scrollbase.scroll_up(5)
+                self.scrollbase.scroll_up(5);
             }
             Event::Mouse {
                 event: MouseEvent::Press(MouseButton::Left),
@@ -288,10 +288,8 @@ impl View for TextView {
                 offset,
             } if position
                 .checked_sub(offset)
-                .and_then(|position| {
-                    self.width.map(
-                        |width| self.scrollbase.start_drag(position, width),
-                    )
+                .map(|position| {
+                        self.scrollbase.start_drag(position, self.last_size.x)
                 })
                 .unwrap_or(false) =>
             {
@@ -325,7 +323,7 @@ impl View for TextView {
     }
 
     fn needs_relayout(&self) -> bool {
-        self.last_size.is_none()
+        self.size_cache.is_none()
     }
 
     fn required_size(&mut self, size: Vec2) -> Vec2 {
@@ -347,7 +345,10 @@ impl View for TextView {
 
     fn layout(&mut self, size: Vec2) {
         // Compute the text rows.
+        self.last_size = size;
         self.compute_rows(size);
+        // Adjust scrolling, in case we're sticking to the bottom for instance.
         self.scrollbase.set_heights(size.y, self.rows.len());
+        self.adjust_scroll();
     }
 }

@@ -87,6 +87,8 @@ impl ScrollBase {
         self.view_height = view_height;
         self.content_height = content_height;
 
+        // eprintln!("Setting heights: {} in {}", content_height, view_height);
+
         if self.scrollable() {
             self.start_line =
                 min(self.start_line, self.content_height - self.view_height);
@@ -198,6 +200,7 @@ impl ScrollBase {
         // Our goal is self.scrollbar_thumb_y()+thumb_grab == position.y
         // Which means that position.y is the middle of the scrollbar.
         // eprintln!("Dragged: {:?}", position);
+        // eprintln!("thumb: {:?}", self.thumb_grab);
         if let Some(grab) = self.thumb_grab {
             let height = self.scrollbar_thumb_height();
             self.scroll_to_thumb(position.y.saturating_sub(grab), height);

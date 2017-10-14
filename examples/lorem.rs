@@ -3,7 +3,7 @@ extern crate cursive;
 use cursive::Cursive;
 use cursive::align::HAlign;
 use cursive::view::Boxable;
-use cursive::views::{Dialog, TextView};
+use cursive::views::{Dialog, TextView, Panel};
 
 fn main() {
     // Read some long text from a file.
@@ -17,7 +17,7 @@ fn main() {
     // The text is too long to fit on a line, so the view will wrap lines,
     // and will adapt to the terminal size.
     siv.add_fullscreen_layer(
-        Dialog::around(TextView::new(content))
+        Dialog::around(Panel::new(TextView::new(content)))
             .h_align(HAlign::Center)
             .button("Quit", |s| s.quit())
             .full_screen(),

@@ -398,7 +398,13 @@ impl<T: 'static> SelectView<T> {
                 self.scrollbase.release_grab();
                 if self.on_submit.is_some() {
                     if let Some(position) = position.checked_sub(offset) {
-                        if position < self.last_size
+                        let scrollbar_size = if self.scrollbase.scrollable() {
+                            (2, 0)
+                        } else {
+                            (0, 0)
+                        };
+                        let clickable_size = self.last_size.saturating_sub(scrollbar_size);
+                        if position < clickable_size
                             && (position.y + self.scrollbase.start_line)
                                 == self.focus()
                         {
