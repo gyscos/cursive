@@ -1,7 +1,7 @@
 use std::cmp::min;
 use {Printer, With, XY};
 use direction::Direction;
-use event::{Event, EventResult, Key, MouseEvent};
+use event::{Event, EventResult, Key, MouseEvent, MouseButton};
 use odds::vec::VecExt;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
@@ -28,7 +28,8 @@ pub struct TextArea {
     scrollbase: ScrollBase,
 
     /// Cache to avoid re-computing layout on no-op events
-    last_size: Option<XY<SizeCache>>,
+    size_cache: Option<XY<SizeCache>>,
+    last_size: Vec2,
 
     /// Byte offset of the currently selected grapheme.
     cursor: usize,
@@ -48,7 +49,8 @@ impl TextArea {
             rows: Vec::new(),
             enabled: true,
             scrollbase: ScrollBase::new().right_padding(0),
-            last_size: None,
+            size_cache: None,
+            last_size: Vec2::zero(),
             cursor: 0,
         }
     }
@@ -59,13 +61,13 @@ impl TextArea {
     }
 
     fn invalidate(&mut self) {
-        self.last_size = None;
+        self.size_cache = None;
     }
 
     /// Sets the content of the view.
     pub fn set_content<S: Into<String>>(&mut self, content: S) {
         self.content = content.into();
-        if let Some(size) = self.last_size.map(|s| s.map(|s| s.value)) {
+        if let Some(size) = self.size_cache.map(|s| s.map(|s| s.value)) {
             self.compute_rows(size);
         }
     }
@@ -172,7 +174,7 @@ impl TextArea {
     }
 
     fn is_cache_valid(&self, size: Vec2) -> bool {
-        match self.last_size {
+        match self.size_cache {
             None => false,
             Some(ref last) => last.x.accept(size.x) && last.y.accept(size.y),
         }
@@ -195,7 +197,8 @@ impl TextArea {
         }
     }
 
-    fn compute_rows(&mut self, size: Vec2) {
+    fn soft_compute_rows(&mut self, size: Vec2) {
+
         if self.is_cache_valid(size) {
             return;
         }
@@ -214,8 +217,12 @@ impl TextArea {
         }
 
         if !self.rows.is_empty() {
-            self.last_size = Some(SizeCache::build(size, size));
+            self.size_cache = Some(SizeCache::build(size, size));
         }
+    }
+
+    fn compute_rows(&mut self, size: Vec2) {
+        self.soft_compute_rows(size);
         self.scrollbase.set_heights(size.y, self.rows.len());
     }
 
@@ -289,13 +296,13 @@ impl TextArea {
     ///
     /// The only damages are assumed to have occured around the cursor.
     fn fix_damages(&mut self) {
-        if self.last_size.is_none() {
+        if self.size_cache.is_none() {
             // If we don't know our size, it means we'll get a layout command soon.
             // So no need to do that here.
             return;
         }
 
-        let size = self.last_size.unwrap().map(|s| s.value);
+        let size = self.size_cache.unwrap().map(|s| s.value);
 
         // Find affected text.
         // We know the damage started at this row, so it'll need to go.
@@ -362,7 +369,7 @@ impl TextArea {
 impl View for TextArea {
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
         // Make sure our structure is up to date
-        self.compute_rows(constraint);
+        self.soft_compute_rows(constraint);
 
         // Ideally, we'd want x = the longest row + 1
         // (we always keep a space at the end)
@@ -425,6 +432,7 @@ impl View for TextArea {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        let mut fix_scroll = true;
         match event {
             Event::Char(ch) => self.insert(ch),
             Event::Key(Key::Enter) => self.insert('\n'),
@@ -460,14 +468,45 @@ impl View for TextArea {
                 self.move_right()
             }
             Event::Mouse {
+                event: MouseEvent::WheelUp,
+                ..
+            } if self.scrollbase.can_scroll_up() => {
+                fix_scroll = false;
+                self.scrollbase.scroll_up(5);
+            }
+            Event::Mouse {
+                event: MouseEvent::WheelDown,
+                ..
+            } if self.scrollbase.can_scroll_down() => {
+                fix_scroll = false;
+                self.scrollbase.scroll_down(5);
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(MouseButton::Left),
+                position,
+                offset,
+            } if position.checked_sub(offset).map(|position| {
+                self.scrollbase.start_drag(position, self.last_size.x)
+            }).unwrap_or(false) => {
+                fix_scroll = false;
+            }
+            Event::Mouse {
+                event: MouseEvent::Hold(MouseButton::Left),
+                position,
+                offset
+            } => {
+                fix_scroll = false;
+                position
+                    .checked_sub(offset)
+                    .map(|position| self.scrollbase.drag(position));
+            }
+            Event::Mouse {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
             } if position.fits_in_rect(
                 offset,
-                self.last_size
-                    .map(|s| s.map(SizeCache::value))
-                    .unwrap_or_else(Vec2::zero),
+                self.last_size,
             ) =>
             {
                 position.checked_sub(offset).map(|position| {
@@ -488,8 +527,10 @@ impl View for TextArea {
         }
 
         debug!("Rows: {:?}", self.rows);
-        let focus = self.selected_row();
-        self.scrollbase.scroll_to(focus);
+        if fix_scroll {
+            let focus = self.selected_row();
+            self.scrollbase.scroll_to(focus);
+        }
 
         EventResult::Consumed(None)
     }
@@ -499,6 +540,7 @@ impl View for TextArea {
     }
 
     fn layout(&mut self, size: Vec2) {
+        self.last_size = size;
         self.compute_rows(size);
     }
 }
