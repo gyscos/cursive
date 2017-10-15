@@ -346,9 +346,8 @@ impl View for ListView {
                 offset,
             } if self.scrollbase.is_dragging() =>
             {
-                position
-                    .checked_sub(offset)
-                    .map(|position| self.scrollbase.drag(position));
+                let position = position.saturating_sub(offset);
+                self.scrollbase.drag(position);
                 return EventResult::Consumed(None);
             }
             Event::Mouse {
@@ -397,12 +396,10 @@ impl View for ListView {
                     direction::Direction::back(),
                 )
             }
-            Event::Key(Key::End) | Event::Ctrl(Key::End) => {
-                self.move_focus(
-                    usize::max_value(),
-                    direction::Direction::front(),
-                )
-            }
+            Event::Key(Key::End) | Event::Ctrl(Key::End) => self.move_focus(
+                usize::max_value(),
+                direction::Direction::front(),
+            ),
             Event::Key(Key::Tab) => {
                 self.move_focus(1, direction::Direction::front())
             }

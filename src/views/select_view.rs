@@ -375,9 +375,8 @@ impl<T: 'static> SelectView<T> {
             } => {
                 // If the mouse is dragged, we always consume the event.
                 fix_scroll = false;
-                position
-                    .checked_sub(offset)
-                    .map(|position| self.scrollbase.drag(position));
+                let position = position.saturating_sub(offset);
+                self.scrollbase.drag(position);
             }
             Event::Mouse {
                 event: MouseEvent::Press(_),

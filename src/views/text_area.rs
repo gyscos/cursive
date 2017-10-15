@@ -502,9 +502,8 @@ impl View for TextArea {
                 offset,
             } => {
                 fix_scroll = false;
-                position
-                    .checked_sub(offset)
-                    .map(|position| self.scrollbase.drag(position));
+                let position = position.saturating_sub(offset);
+                self.scrollbase.drag(position);
             }
             Event::Mouse {
                 event: MouseEvent::Press(_),

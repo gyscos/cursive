@@ -234,8 +234,8 @@ impl View for MenuPopup {
                         }
                         printer.print_hline((1, 0), printer.size.x - 2, " ");
                         printer.print((2, 0), label);
-                        printer.print((printer.size.x.saturating_sub(4), 0),
-                                      ">>");
+                        let x = printer.size.x.saturating_sub(4);
+                        printer.print((x, 0), ">>");
                     }
                     MenuItem::Leaf(ref label, _) => {
                         if printer.size.x < 2 {
@@ -333,9 +333,8 @@ impl View for MenuPopup {
             } => {
                 // If the mouse is dragged, we always consume the event.
                 fix_scroll = false;
-                position
-                    .checked_sub(offset + (0, 1))
-                    .map(|position| self.scrollbase.drag(position));
+                let position = position.saturating_sub(offset);
+                self.scrollbase.drag(position);
             }
             Event::Mouse {
                 event: MouseEvent::Press(_),

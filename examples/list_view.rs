@@ -57,9 +57,9 @@ fn main() {
                     )
                     .with(|list| for i in 0..50 {
                         list.add_child(
-                                &format!("Item {}", i),
-                                EditView::new(),
-                            );
+                            &format!("Item {}", i),
+                            EditView::new(),
+                        );
                     }),
             ),
     );

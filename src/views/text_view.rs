@@ -303,9 +303,8 @@ impl View for TextView {
                 offset,
             } => {
                 // If the mouse is dragged, we always consume the event.
-                position
-                    .checked_sub(offset)
-                    .map(|position| self.scrollbase.drag(position));
+                let position = position.saturating_sub(offset);
+                self.scrollbase.drag(position);
             }
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
