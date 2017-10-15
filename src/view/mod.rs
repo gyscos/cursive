@@ -111,7 +111,8 @@ pub trait View {
 
     /// Runs a closure on the view identified by the given selector.
     ///
-    /// See [`Finder::call_on`] for a nicer interface, implemented for all views.
+    /// See [`Finder::call_on`] for a nicer interface, implemented for all
+    /// views.
     ///
     /// [`Finder::call_on`]: trait.Finder.html#method.call_on
     ///

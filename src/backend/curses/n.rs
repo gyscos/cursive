@@ -151,7 +151,8 @@ impl Concrete {
             // Treat '\n' and the numpad Enter the same
             10 | ncurses::KEY_ENTER => Event::Key(Key::Enter),
             // This is the escape key when pressed by itself.
-            // When used for control sequences, it should have been caught earlier.
+            // When used for control sequences,
+            // it should have been caught earlier.
             27 => Event::Key(Key::Esc),
             // `Backspace` sends 127, but Ctrl-H sends `Backspace`
             127 | ncurses::KEY_BACKSPACE => Event::Key(Key::Backspace),
@@ -267,7 +268,8 @@ impl Concrete {
 
 impl backend::Backend for Concrete {
     fn init() -> Self {
-        // Change the locale. For some reasons it's mandatory to get some UTF-8 support.
+        // Change the locale.
+        // For some reasons it's mandatory to get some UTF-8 support.
         ncurses::setlocale(ncurses::LcCategory::all, "");
 
         // The delay is the time ncurses wait after pressing ESC

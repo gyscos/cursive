@@ -205,7 +205,8 @@ impl TextView {
             if self.rows.is_empty() && !self.content.is_empty() {
                 // We have some content, we we didn't find any row for it?
                 // This probably means we couldn't even make a single row
-                // (for instance we only have 1 column and we have a wide character).
+                // (for instance we only have 1 column and we have a wide
+                // character).
                 return;
             }
         }
@@ -258,7 +259,7 @@ impl View for TextView {
             return EventResult::Ignored;
         }
 
-        // We know we are scrollable, otherwise the event would just be ignored.
+        // We have a scrollbar, otherwise the event would just be ignored.
         match event {
             Event::Key(Key::Home) => self.scrollbase.scroll_top(),
             Event::Key(Key::End) => self.scrollbase.scroll_bottom(),
@@ -289,7 +290,7 @@ impl View for TextView {
             } if position
                 .checked_sub(offset)
                 .map(|position| {
-                        self.scrollbase.start_drag(position, self.last_size.x)
+                    self.scrollbase.start_drag(position, self.last_size.x)
                 })
                 .unwrap_or(false) =>
             {

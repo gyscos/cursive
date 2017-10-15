@@ -47,7 +47,8 @@ impl SizeCache {
     /// A compatible request is one where, for each axis, either:
     ///
     /// * the request is equal to the cached size, or
-    /// * the request is larger than the cached size and the cache is unconstrained
+    /// * the request is larger than the cached size and the cache is
+    ///   unconstrained
     ///
     /// Notes:
     ///

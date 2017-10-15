@@ -339,13 +339,19 @@ impl<T: 'static> SelectView<T> {
             Event::Key(Key::End) => {
                 self.focus.set(self.items.len().saturating_sub(1))
             }
-            Event::Mouse { event: MouseEvent::WheelDown, .. }
-                if self.scrollbase.can_scroll_down() => {
+            Event::Mouse {
+                event: MouseEvent::WheelDown,
+                ..
+            } if self.scrollbase.can_scroll_down() =>
+            {
                 fix_scroll = false;
                 self.scrollbase.scroll_down(5);
             }
-            Event::Mouse { event: MouseEvent::WheelUp, .. }
-                if self.scrollbase.can_scroll_up() => {
+            Event::Mouse {
+                event: MouseEvent::WheelUp,
+                ..
+            } if self.scrollbase.can_scroll_up() =>
+            {
                 fix_scroll = false;
                 self.scrollbase.scroll_up(5);
             }
@@ -353,13 +359,13 @@ impl<T: 'static> SelectView<T> {
                 event: MouseEvent::Press(MouseButton::Left),
                 position,
                 offset,
-            }
-                if position
-                       .checked_sub(offset)
-                       .map(|position| {
+            } if position
+                .checked_sub(offset)
+                .map(|position| {
                     self.scrollbase.start_drag(position, self.last_size.x)
                 })
-                       .unwrap_or(false) => {
+                .unwrap_or(false) =>
+            {
                 fix_scroll = false;
             }
             Event::Mouse {
@@ -369,31 +375,27 @@ impl<T: 'static> SelectView<T> {
             } => {
                 // If the mouse is dragged, we always consume the event.
                 fix_scroll = false;
-                position.checked_sub(offset).map(|position| {
-                    self.scrollbase.drag(position)
-                });
+                position
+                    .checked_sub(offset)
+                    .map(|position| self.scrollbase.drag(position));
             }
             Event::Mouse {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            } => {
-                if let Some(position) = position.checked_sub(offset) {
-                    let scrollbar_size = if self.scrollbase.scrollable() {
-                        (2, 0)
-                    } else {
-                        (0, 0)
-                    };
-                    let clickable_size =
-                        self.last_size.saturating_sub(scrollbar_size);
-                    if position < clickable_size {
-                        fix_scroll = false;
-                        self.focus.set(
-                            position.y + self.scrollbase.start_line,
-                        );
-                    }
+            } => if let Some(position) = position.checked_sub(offset) {
+                let scrollbar_size = if self.scrollbase.scrollable() {
+                    (2, 0)
+                } else {
+                    (0, 0)
+                };
+                let clickable_size =
+                    self.last_size.saturating_sub(scrollbar_size);
+                if position < clickable_size {
+                    fix_scroll = false;
+                    self.focus.set(position.y + self.scrollbase.start_line);
                 }
-            }
+            },
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
@@ -410,9 +412,9 @@ impl<T: 'static> SelectView<T> {
                         };
                         let clickable_size =
                             self.last_size.saturating_sub(scrollbar_size);
-                        if position < clickable_size &&
-                            (position.y + self.scrollbase.start_line) ==
-                                self.focus()
+                        if position < clickable_size
+                            && (position.y + self.scrollbase.start_line)
+                                == self.focus()
                         {
                             return self.submit();
                         }
@@ -429,12 +431,9 @@ impl<T: 'static> SelectView<T> {
                 // the list when we reach the end.
                 // This is achieved by chaining twice the iterator
                 let iter = self.items.iter().chain(self.items.iter());
-                if let Some((i, _)) =
-                    iter.enumerate().skip(self.focus() + 1).find(
-                        |&(_, item)| {
-                            item.label.starts_with(c)
-                        },
-                    )
+                if let Some((i, _)) = iter.enumerate()
+                    .skip(self.focus() + 1)
+                    .find(|&(_, item)| item.label.starts_with(c))
                 {
                     // Apply modulo in case we have a hit
                     // from the chained iterator
@@ -516,7 +515,8 @@ impl<T: 'static> SelectView<T> {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, self.last_size) => {
+            } if position.fits_in_rect(offset, self.last_size) =>
+            {
                 self.open_popup()
             }
             _ => EventResult::Ignored,
@@ -605,16 +605,15 @@ impl<T: 'static> View for SelectView<T> {
                 &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
 
             self.scrollbase.draw(printer, |printer, i| {
-                printer.with_selection(
-                    i == self.focus(),
-                    |printer| if i != self.focus() && !self.enabled {
+                printer.with_selection(i == self.focus(), |printer| {
+                    if i != self.focus() && !self.enabled {
                         printer.with_color(ColorStyle::Secondary, |printer| {
                             self.draw_item(printer, i)
                         });
                     } else {
                         self.draw_item(printer, i);
-                    },
-                );
+                    }
+                });
             });
         }
     }

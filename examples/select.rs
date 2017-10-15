@@ -30,7 +30,8 @@ fn main() {
 
     let mut siv = Cursive::new();
 
-    // Let's add a BoxView to keep the list at a reasonable size - it can scroll anyway.
+    // Let's add a BoxView to keep the list at a reasonable size
+    // (it can scroll anyway).
     siv.add_layer(
         Dialog::around(select.fixed_size((20, 10)))
             .title("Where are you from?"),
@@ -39,7 +40,8 @@ fn main() {
     siv.run();
 }
 
-// Let's put the callback in a separate function to keep it clean, but it's not required.
+// Let's put the callback in a separate function to keep it clean,
+// but it's not required.
 fn show_next_window(siv: &mut Cursive, city: &str) {
     siv.pop_layer();
     let text = format!("{} is a great city!", city);

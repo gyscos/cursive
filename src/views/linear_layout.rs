@@ -209,7 +209,12 @@ impl LinearLayout {
             };
             for (i, (offset, child)) in iterator.enumerate() {
                 let child_size = child.size.get(self.orientation);
-                // eprintln!("Offset {:?}, size {:?}, position: {:?}", offset, child_size, position);
+                // eprintln!(
+                //     "Offset {:?}, size {:?}, position: {:?}",
+                //     offset,
+                //     child_size,
+                //     position
+                // );
                 if (offset + child_size > position)
                     && child.view.take_focus(direction::Direction::none())
                 {

@@ -66,7 +66,7 @@ fn main() {
                  .leaf("About",
                        |s| s.add_layer(Dialog::info("Cursive v0.0.0"))));
 
-    // When `autohide` is on (default), the menu only appears when it is active.
+    // When `autohide` is on (default), the menu only appears when active.
     // Turning it off will leave the menu always visible.
 
     // siv.set_autohide_menu(false);

@@ -7,17 +7,23 @@ use cursive::views::{Dialog, OnEventView, TextView};
 
 fn show_popup(siv: &mut Cursive) {
     // Let's center the popup horizontally, but offset it down a few rows
-    siv.screen_mut()
-       .add_layer_at(Position::new(Offset::Center, Offset::Parent(3)),
-                     Dialog::around(TextView::new("Tak!"))
-                         .button("Change", |s| {
-                             // Look for a view tagged "text". We _know_ it's there, so unwrap it.
-                             s.call_on_id("text", |view: &mut TextView| {
-                                let content: String = view.get_content().chars().rev().collect();
-                                view.set_content(content);
-                             });
-                         })
-                         .dismiss_button("Ok"));
+    siv.screen_mut().add_layer_at(
+        Position::new(Offset::Center, Offset::Parent(3)),
+        Dialog::around(TextView::new("Tak!"))
+            .button("Change", |s| {
+                // Look for a view tagged "text".
+                // We _know_ it's there, so unwrap it.
+                s.call_on_id("text", |view: &mut TextView| {
+                    let content = reverse(view.get_content());
+                    view.set_content(content);
+                });
+            })
+            .dismiss_button("Ok"),
+    );
+}
+
+fn reverse(text: &str) -> String {
+    text.chars().rev().collect()
 }
 
 fn main() {

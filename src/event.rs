@@ -303,8 +303,8 @@ pub enum Event {
     /// An unknown event was received.
     Unknown(Vec<u8>),
 
-    // Having a doc-hidden event prevents people from having exhaustive matches,
-    // allowing us to add events in the future.
+    // Having a doc-hidden event prevents people from having exhaustive
+    // matches, allowing us to add events in the future.
     #[doc(hidden)]
     /// The application is about to exit.
     Exit,

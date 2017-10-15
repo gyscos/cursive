@@ -1,8 +1,8 @@
-use std::cmp::min;
 use {Printer, With, XY};
 use direction::Direction;
-use event::{Event, EventResult, Key, MouseEvent, MouseButton};
+use event::{Event, EventResult, Key, MouseButton, MouseEvent};
 use odds::vec::VecExt;
+use std::cmp::min;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -180,10 +180,11 @@ impl TextArea {
         }
     }
 
-    // If we are editing the text, we add a fake "space" character for the cursor to indicate
-    // where the next character will appear.
-    // If the current line is full, adding a character will overflow into the next line. To
-    // show that, we need to add a fake "ghost" row, just for the cursor.
+    // If we are editing the text, we add a fake "space" character for the
+    // cursor to indicate where the next character will appear.
+    // If the current line is full, adding a character will overflow into the
+    // next line. To show that, we need to add a fake "ghost" row, just for
+    // the cursor.
     fn fix_ghost_row(&mut self) {
         if self.rows.is_empty()
             || self.rows.last().unwrap().end != self.content.len()
@@ -198,7 +199,6 @@ impl TextArea {
     }
 
     fn soft_compute_rows(&mut self, size: Vec2) {
-
         if self.is_cache_valid(size) {
             return;
         }
@@ -297,7 +297,7 @@ impl TextArea {
     /// The only damages are assumed to have occured around the cursor.
     fn fix_damages(&mut self) {
         if self.size_cache.is_none() {
-            // If we don't know our size, it means we'll get a layout command soon.
+            // If we don't know our size, we'll get a layout command soon.
             // So no need to do that here.
             return;
         }
@@ -470,14 +470,16 @@ impl View for TextArea {
             Event::Mouse {
                 event: MouseEvent::WheelUp,
                 ..
-            } if self.scrollbase.can_scroll_up() => {
+            } if self.scrollbase.can_scroll_up() =>
+            {
                 fix_scroll = false;
                 self.scrollbase.scroll_up(5);
             }
             Event::Mouse {
                 event: MouseEvent::WheelDown,
                 ..
-            } if self.scrollbase.can_scroll_down() => {
+            } if self.scrollbase.can_scroll_down() =>
+            {
                 fix_scroll = false;
                 self.scrollbase.scroll_down(5);
             }
@@ -485,15 +487,19 @@ impl View for TextArea {
                 event: MouseEvent::Press(MouseButton::Left),
                 position,
                 offset,
-            } if position.checked_sub(offset).map(|position| {
-                self.scrollbase.start_drag(position, self.last_size.x)
-            }).unwrap_or(false) => {
+            } if position
+                .checked_sub(offset)
+                .map(|position| {
+                    self.scrollbase.start_drag(position, self.last_size.x)
+                })
+                .unwrap_or(false) =>
+            {
                 fix_scroll = false;
             }
             Event::Mouse {
                 event: MouseEvent::Hold(MouseButton::Left),
                 position,
-                offset
+                offset,
             } => {
                 fix_scroll = false;
                 position
@@ -504,10 +510,7 @@ impl View for TextArea {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            } if position.fits_in_rect(
-                offset,
-                self.last_size,
-            ) =>
+            } if position.fits_in_rect(offset, self.last_size) =>
             {
                 position.checked_sub(offset).map(|position| {
                     if self.rows.is_empty() {

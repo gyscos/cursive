@@ -81,8 +81,10 @@ impl<T: View> OnEventView<T> {
     /// Registers a callback when the given event is received.
     ///
     /// The given callback will be run before the child view sees the event.
-    /// If the result is `None`, then the child view is given the event as usual.
-    /// Otherwise, it bypasses the child view and directly processes the result.
+    /// * If the result is `None`, then the child view is given the event as
+    ///   usual.
+    /// * Otherwise, it bypasses the child view and directly processes the
+    ///   result.
     ///
     /// Chainable variant.
     pub fn on_pre_event_inner<F, E>(self, event: E, cb: F) -> Self
@@ -139,8 +141,10 @@ impl<T: View> OnEventView<T> {
     /// Registers a callback when the given event is received.
     ///
     /// The given callback will be run before the child view sees the event.
-    /// If the result is `None`, then the child view is given the event as usual.
-    /// Otherwise, it bypasses the child view and directly processes the result.
+    /// * If the result is `None`, then the child view is given the event as
+    ///   usual.
+    /// * Otherwise, it bypasses the child view and directly processes the
+    ///   result.
     pub fn set_on_pre_event_inner<F, E>(&mut self, event: E, cb: F)
     where
         E: Into<Event>,

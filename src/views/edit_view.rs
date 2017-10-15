@@ -12,21 +12,24 @@ use utils::{simple_prefix, simple_suffix};
 use vec::Vec2;
 use view::View;
 
-/// closure type for callbacks when the content is modified. Arguments are the
-/// `Cursive`, current content of the input and cursor position
+/// Closure type for callbacks when the content is modified.
+///
+/// Arguments are the `Cursive`, current content of the input and cursor
+/// position
 pub type OnEdit = Fn(&mut Cursive, &str, usize);
 
-/// closure type for callbacks when Enter is pressed. Arguments are the `Cursive`
-/// and the content of the input.
+/// Closure type for callbacks when Enter is pressed.
+///
+/// Arguments are the `Cursive` and the content of the input.
 pub type OnSubmit = Fn(&mut Cursive, &str);
 
 /// Input box where the user can enter and edit text.
 ///
 /// # Examples
 ///
-/// From the [edit example].
+/// From the [edit example][1].
 ///
-/// [edit example]: https://github.com/gyscos/Cursive/blob/master/examples/edit.rs
+/// [1]: https://github.com/gyscos/Cursive/blob/master/examples/edit.rs
 ///
 /// ```no_run
 /// # extern crate cursive;
@@ -39,18 +42,24 @@ pub type OnSubmit = Fn(&mut Cursive, &str);
 /// // Create a dialog with an edit text and a button.
 /// // The user can either hit the <Ok> button,
 /// // or press Enter on the edit text.
-/// siv.add_layer(Dialog::new()
-///     .title("Enter your name")
-///     .padding((1, 1, 1, 0))
-///     .content(EditView::new()
-///         .on_submit(show_popup)
-///         .with_id("name")
-///         .fixed_width(20))
-///     .button("Ok", |s| {
-///         let name = s.call_on_id("name", |view: &mut EditView| view.get_content())
-///             .unwrap();
-///         show_popup(s, &name);
-///     }));
+/// siv.add_layer(
+///     Dialog::new()
+///         .title("Enter your name")
+///         .padding((1, 1, 1, 0))
+///         .content(
+///             EditView::new()
+///                 .on_submit(show_popup)
+///                 .with_id("name")
+///                 .fixed_width(20),
+///         )
+///         .button("Ok", |s| {
+///             let name = s.call_on_id(
+///                 "name",
+///                 |view: &mut EditView| view.get_content(),
+///             ).unwrap();
+///             show_popup(s, &name);
+///         }),
+/// );
 ///
 /// fn show_popup(s: &mut Cursive, name: &str) {
 ///     if name.is_empty() {
@@ -145,8 +154,7 @@ impl EditView {
     ///
     /// ```rust
     /// # use cursive::views::EditView;
-    /// let edit = EditView::new()
-    ///             .filler(" ");
+    /// let edit = EditView::new().filler(" ");
     /// ```
     pub fn filler<S: Into<String>>(self, filler: S) -> Self {
         self.with(|s| s.set_filler(filler))

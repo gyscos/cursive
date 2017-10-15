@@ -3,7 +3,7 @@ extern crate cursive;
 use cursive::Cursive;
 use cursive::align::HAlign;
 use cursive::view::Boxable;
-use cursive::views::{Dialog, TextView, Panel};
+use cursive::views::{Dialog, Panel, TextView};
 
 fn main() {
     // Read some long text from a file.

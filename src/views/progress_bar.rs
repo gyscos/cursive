@@ -140,7 +140,7 @@ impl ProgressBar {
     /// The default one shows a percentage progress:
     ///
     /// ```
-    /// fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
+    /// fn make_progress(value: usize, (min, max): (usize, usize)) -> String {
     ///     let percent = 101 * (value - min) / (1 + max - min);
     ///     format!("{} %", percent)
     /// }

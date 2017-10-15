@@ -260,16 +260,21 @@ impl Cursive {
     /// # use cursive::{Cursive, views, view};
     /// # use cursive::traits::*;
     /// # fn main() {
-    /// let mut siv = Cursive::new();
+    /// fn main() {
+    ///     let mut siv = Cursive::new();
     ///
-    /// siv.add_layer(views::TextView::new("Text #1")
-    ///                               .with_id("text"));
+    ///     siv.add_layer(views::TextView::new("Text #1").with_id("text"));
     ///
-    /// siv.add_global_callback('p', |s| {
-    ///     s.call_on(&view::Selector::Id("text"), |view: &mut views::TextView| {
-    ///         view.set_content("Text #2");
+    ///     siv.add_global_callback('p', |s| {
+    ///         s.call_on(
+    ///             &view::Selector::Id("text"),
+    ///             |view: &mut views::TextView| {
+    ///                 view.set_content("Text #2");
+    ///             },
+    ///         );
     ///     });
-    /// });
+    ///
+    /// }
     /// # }
     /// ```
     pub fn call_on<V, F, R>(
@@ -513,9 +518,7 @@ impl Cursive {
         }
 
         if let Event::Mouse {
-            event,
-            position,
-            ..
+            event, position, ..
         } = event
         {
             if event.grabs_focus() && !self.menubar.autohide
