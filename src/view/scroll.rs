@@ -207,6 +207,11 @@ impl ScrollBase {
         }
     }
 
+    /// Returns `true` if we are in the process of dragging the scroll thumb.
+    pub fn is_dragging(&self) -> bool {
+        self.thumb_grab.is_some()
+    }
+
     /// Stops grabbing the scrollbar.
     pub fn release_grab(&mut self) {
         self.thumb_grab = None;

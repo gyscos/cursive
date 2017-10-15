@@ -2,7 +2,7 @@ use Cursive;
 use Printer;
 use With;
 use direction;
-use event::{Callback, Event, EventResult, Key};
+use event::{Callback, Event, EventResult, Key, MouseEvent, MouseButton};
 use std::any::Any;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
@@ -44,6 +44,7 @@ pub struct ListView {
     focus: usize,
     // This callback is called when the selection is changed.
     on_select: Option<Rc<Fn(&mut Cursive, &String)>>,
+    last_size: Vec2,
 }
 
 new_default!(ListView);
@@ -56,6 +57,7 @@ impl ListView {
             scrollbase: ScrollBase::new(),
             focus: 0,
             on_select: None,
+            last_size: Vec2::zero(),
         }
     }
 
@@ -94,8 +96,10 @@ impl ListView {
     /// Adds a view to the end of the list.
     pub fn add_child<V: View + 'static>(&mut self, label: &str, mut view: V) {
         view.take_focus(direction::Direction::none());
-        self.children
-            .push(ListChild::Row(label.to_string(), Box::new(view)));
+        self.children.push(ListChild::Row(
+            label.to_string(),
+            Box::new(view),
+        ));
     }
 
     /// Removes all children from this view.
@@ -148,9 +152,8 @@ impl ListView {
         self.focus
     }
 
-    fn iter_mut<'a>(
-        &'a mut self, from_focus: bool, source: direction::Relative
-    ) -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
+    fn iter_mut<'a>(&'a mut self, from_focus: bool, source: direction::Relative)
+        -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
@@ -168,9 +171,8 @@ impl ListView {
         }
     }
 
-    fn move_focus(
-        &mut self, n: usize, source: direction::Direction
-    ) -> EventResult {
+    fn move_focus(&mut self, n: usize, source: direction::Direction)
+        -> EventResult {
         let i = if let Some(i) = source
             .relative(direction::Orientation::Vertical)
             .and_then(|rel| {
@@ -181,7 +183,8 @@ impl ListView {
                     .filter_map(|p| try_focus(p, source))
                     .take(n)
                     .last()
-            }) {
+            })
+        {
             i
         } else {
             return EventResult::Ignored;
@@ -238,16 +241,17 @@ impl ListView {
     }
 }
 
-fn try_focus(
-    (i, child): (usize, &mut ListChild), source: direction::Direction
-) -> Option<usize> {
+fn try_focus((i, child): (usize, &mut ListChild), source: direction::Direction)
+    -> Option<usize> {
     match *child {
         ListChild::Delimiter => None,
-        ListChild::Row(_, ref mut view) => if view.take_focus(source) {
-            Some(i)
-        } else {
-            None
-        },
+        ListChild::Row(_, ref mut view) => {
+            if view.take_focus(source) {
+                Some(i)
+            } else {
+                None
+            }
+        }
     }
 }
 
@@ -260,14 +264,16 @@ impl View for ListView {
         let offset = self.labels_width() + 1;
 
         debug!("Offset: {}", offset);
-        self.scrollbase
-            .draw(printer, |printer, i| match self.children[i] {
+        self.scrollbase.draw(
+            printer,
+            |printer, i| match self.children[i] {
                 ListChild::Row(ref label, ref view) => {
                     printer.print((0, 0), label);
                     view.draw(&printer.offset((offset, 0), i == self.focus));
                 }
                 ListChild::Delimiter => (),
-            });
+            },
+        );
     }
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
@@ -294,6 +300,7 @@ impl View for ListView {
     }
 
     fn layout(&mut self, size: Vec2) {
+        self.last_size = size;
         self.scrollbase.set_heights(size.y, self.children.len());
 
         // We'll show 2 columns: the labels, and the views.
@@ -307,8 +314,9 @@ impl View for ListView {
         let spacing = 1;
         let scrollbar_width = if self.children.len() > size.y { 2 } else { 0 };
 
-        let available = size.x
-            .saturating_sub(label_width + spacing + scrollbar_width);
+        let available = size.x.saturating_sub(
+            label_width + spacing + scrollbar_width,
+        );
 
         debug!("Available: {}", available);
 
@@ -322,7 +330,43 @@ impl View for ListView {
             return EventResult::Ignored;
         }
 
-        // First: some events can move the focus around.
+        // First: some events can directly affect the ListView
+        match event {
+            Event::Mouse {
+                event: MouseEvent::Press(MouseButton::Left),
+                position,
+                offset,
+            }
+                if position
+                       .checked_sub(offset)
+                       .map(|position| {
+                    self.scrollbase.start_drag(position, self.last_size.x)
+                })
+                       .unwrap_or(false) => {
+                return EventResult::Consumed(None);
+            }
+            Event::Mouse {
+                event: MouseEvent::Hold(MouseButton::Left),
+                position,
+                offset,
+            } if self.scrollbase.is_dragging() => {
+                position.checked_sub(offset).map(|position| {
+                    self.scrollbase.drag(position)
+                });
+                return EventResult::Consumed(None);
+            }
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left), ..
+            } if self.scrollbase.is_dragging() => {
+                self.scrollbase.release_grab();
+                return EventResult::Consumed(None);
+            }
+            _ => (),
+
+        }
+
+
+        // Then: some events can move the focus around.
         self.check_focus_grab(&event);
 
         // Send the event to the focused child.
@@ -350,13 +394,15 @@ impl View for ListView {
             Event::Key(Key::PageDown) => {
                 self.move_focus(10, direction::Direction::up())
             }
-            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => {
+            Event::Key(Key::Home) |
+            Event::Ctrl(Key::Home) => {
                 self.move_focus(
                     usize::max_value(),
                     direction::Direction::back(),
                 )
             }
-            Event::Key(Key::End) | Event::Ctrl(Key::End) => {
+            Event::Key(Key::End) |
+            Event::Ctrl(Key::End) => {
                 self.move_focus(
                     usize::max_value(),
                     direction::Direction::front(),
@@ -368,32 +414,40 @@ impl View for ListView {
             Event::Shift(Key::Tab) => {
                 self.move_focus(1, direction::Direction::back())
             }
+            Event::Mouse { event: MouseEvent::WheelDown, .. }
+                if self.scrollbase.can_scroll_down() => {
+                self.scrollbase.scroll_down(5);
+                EventResult::Consumed(None)
+            }
+            Event::Mouse { event: MouseEvent::WheelUp, .. }
+                if self.scrollbase.can_scroll_up() => {
+                self.scrollbase.scroll_up(5);
+                EventResult::Consumed(None)
+            }
             _ => EventResult::Ignored,
         }
     }
 
     fn take_focus(&mut self, source: direction::Direction) -> bool {
         let rel = source.relative(direction::Orientation::Vertical);
-        let i = if let Some(i) = self.iter_mut(
-            rel.is_none(),
-            rel.unwrap_or(direction::Relative::Front),
-        ).filter_map(|p| try_focus(p, source))
-            .next()
-        {
-            i
-        } else {
-            // No one wants to be in focus
-            return false;
-        };
+        let i =
+            if let Some(i) = self.iter_mut(
+                rel.is_none(),
+                rel.unwrap_or(direction::Relative::Front),
+            ).filter_map(|p| try_focus(p, source))
+                .next()
+            {
+                i
+            } else {
+                // No one wants to be in focus
+                return false;
+            };
         self.focus = i;
         self.scrollbase.scroll_to(self.focus);
         true
     }
 
-    fn call_on_any<'a>(
-        &mut self, selector: &Selector,
-        mut callback: Box<FnMut(&mut Any) + 'a>,
-    ) {
+    fn call_on_any<'a>(&mut self, selector: &Selector, mut callback: Box<FnMut(&mut Any) + 'a>) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, Box::new(|any| callback(any)));
         }
