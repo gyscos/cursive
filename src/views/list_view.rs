@@ -231,6 +231,10 @@ impl ListView {
 
             // Now that we have a relative position, checks for buttons?
             let focus = position.y + self.scrollbase.start_line;
+            if focus >= self.children.len() {
+                return;
+            }
+
             if let ListChild::Row(_, ref mut view) = self.children[focus] {
                 if view.take_focus(direction::Direction::none()) {
                     self.focus = focus;
