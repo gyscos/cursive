@@ -437,6 +437,8 @@ impl<T: 'static> SelectView<T> {
                     // Apply modulo in case we have a hit
                     // from the chained iterator
                     self.focus.set(i % self.items.len());
+                } else {
+                    return EventResult::Ignored;
                 }
             }
             _ => return EventResult::Ignored,
