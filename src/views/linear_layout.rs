@@ -40,20 +40,56 @@ impl Child {
 }
 
 struct ChildIterator<I> {
+    // Actual iterator on the children
     inner: I,
+    // Current offset
     offset: usize,
+    // Available size
+    available: usize,
+    // Orientation for this layout
     orientation: direction::Orientation,
+}
+
+struct ChildItem<T> {
+    child: T,
+    offset: usize,
+    length: usize,
+}
+
+impl<T> ChildIterator<T> {
+    fn new(
+        inner: T, orientation: direction::Orientation, available: usize
+    ) -> Self {
+        ChildIterator {
+            inner,
+            available,
+            orientation,
+            offset: 0,
+        }
+    }
 }
 
 impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
     for ChildIterator<I> {
-    type Item = (usize, T);
+    type Item = ChildItem<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|child| {
-            let previous = self.offset;
-            self.offset += *child.size.get(self.orientation);
-            (previous, child)
+            // Save the current offset.
+            let offset = self.offset;
+
+            // Allocated width
+            self.available = self.available.saturating_sub(offset);
+
+            let length =
+                usize::min(self.available, *child.size.get(self.orientation));
+
+            self.offset += length;
+            ChildItem {
+                offset,
+                length,
+                child,
+            }
         })
     }
 }
@@ -186,6 +222,8 @@ impl LinearLayout {
         EventResult::Consumed(None)
     }
 
+    // If the event is a mouse event,
+    // move the focus to the selected view if needed.
     fn check_focus_grab(&mut self, event: &Event) {
         if let Event::Mouse {
             offset,
@@ -203,22 +241,24 @@ impl LinearLayout {
             };
 
             // Find the selected child
+            // Let's only care about the coordinate for our orientation.
             let position = *position.get(self.orientation);
-            let iterator = ChildIterator {
-                inner: self.children.iter_mut(),
-                offset: 0,
-                orientation: self.orientation,
-            };
-            for (i, (offset, child)) in iterator.enumerate() {
-                let child_size = child.size.get(self.orientation);
-                // eprintln!(
-                //     "Offset {:?}, size {:?}, position: {:?}",
-                //     offset,
-                //     child_size,
-                //     position
-                // );
-                if (offset + child_size > position)
-                    && child.view.take_focus(direction::Direction::none())
+
+            // Iterate on the views and find the one
+            // We need a mutable ref to call take_focus later on.
+            for (i, item) in ChildIterator::new(
+                self.children.iter_mut(),
+                self.orientation,
+                // TODO: get actual width (not super important)
+                usize::max_value(),
+            ).enumerate()
+            {
+                // Get the child size:
+                // this will give us the allowed window for a click.
+                let child_size = item.child.size.get(self.orientation);
+
+                if (item.offset + child_size > position)
+                    && item.child.view.take_focus(direction::Direction::none())
                 {
                     // eprintln!("It's a match!");
                     self.focus = i;
@@ -242,19 +282,21 @@ fn try_focus(
 impl View for LinearLayout {
     fn draw(&self, printer: &Printer) {
         // Use pre-computed sizes
-        let mut offset = Vec2::zero();
-        for (i, child) in self.children.iter().enumerate() {
+        for (i, item) in ChildIterator::new(
+            self.children.iter(),
+            self.orientation,
+            *printer.size.get(self.orientation),
+        ).enumerate()
+        {
             // eprintln!("Printer size: {:?}", printer.size);
             // eprintln!("Child size: {:?}", child.size);
             // eprintln!("Offset: {:?}", offset);
-            let printer =
-                &printer.sub_printer(offset, child.size, i == self.focus);
-            child.view.draw(printer);
-
-            // On the axis given by the orientation,
-            // add the child size to the offset.
-            *self.orientation.get_ref(&mut offset) +=
-                self.orientation.get(&child.size);
+            let printer = &printer.sub_printer(
+                self.orientation.make_vec(item.offset, 0),
+                item.child.size,
+                i == self.focus,
+            );
+            item.child.view.draw(printer);
         }
     }
 
@@ -273,12 +315,16 @@ impl View for LinearLayout {
             self.required_size(size);
         }
 
+        // We'll use this guy a few times, but it's a mouthful...
         let o = self.orientation;
 
-        for child in &mut self.children {
+        for item in
+            ChildIterator::new(self.children.iter_mut(), o, *size.get(o))
+        {
             // Every item has the same size orthogonal to the layout
-            child.size.set_axis_from(o.swap(), &size);
-            child.view.layout(Vec2::min(size, child.size));
+            item.child.size.set_axis_from(o.swap(), &size);
+
+            item.child.view.layout(size.with_axis(o, item.length));
         }
     }
 
@@ -435,14 +481,14 @@ impl View for LinearLayout {
         self.check_focus_grab(&event);
 
         let result = {
-            let mut iterator = ChildIterator {
-                inner: self.children.iter_mut(),
-                offset: 0,
-                orientation: self.orientation,
-            };
-            let (offset, child) = iterator.nth(self.focus).unwrap();
-            let offset = self.orientation.make_vec(offset, 0);
-            child.view.on_event(event.relativized(offset))
+            let mut iterator = ChildIterator::new(
+                self.children.iter_mut(),
+                self.orientation,
+                usize::max_value(),
+            );
+            let item = iterator.nth(self.focus).unwrap();
+            let offset = self.orientation.make_vec(item.offset, 0);
+            item.child.view.on_event(event.relativized(offset))
         };
         match result {
             EventResult::Ignored => match event {
