@@ -21,6 +21,8 @@ pub struct LinearLayout {
 
 struct Child {
     view: Box<View>,
+    // The last result from the child's required_size
+    // Doesn't have to be what the child actually gets.
     size: Vec2,
     weight: usize,
 }
@@ -242,6 +244,9 @@ impl View for LinearLayout {
         // Use pre-computed sizes
         let mut offset = Vec2::zero();
         for (i, child) in self.children.iter().enumerate() {
+            // eprintln!("Printer size: {:?}", printer.size);
+            // eprintln!("Child size: {:?}", child.size);
+            // eprintln!("Offset: {:?}", offset);
             let printer =
                 &printer.sub_printer(offset, child.size, i == self.focus);
             child.view.draw(printer);
@@ -263,6 +268,7 @@ impl View for LinearLayout {
 
     fn layout(&mut self, size: Vec2) {
         // If we can get away without breaking a sweat, you can bet we will.
+        // eprintln!("Laying out with {:?}", size);
         if self.get_cache(size).is_none() {
             self.required_size(size);
         }
@@ -272,7 +278,7 @@ impl View for LinearLayout {
         for child in &mut self.children {
             // Every item has the same size orthogonal to the layout
             child.size.set_axis_from(o.swap(), &size);
-            child.view.layout(size.with_axis_from(o, &child.size));
+            child.view.layout(Vec2::min(size, child.size));
         }
     }
 
@@ -283,12 +289,12 @@ impl View for LinearLayout {
         }
 
         // First, make a naive scenario: everything will work fine.
-        let sizes: Vec<Vec2> = self.children
+        let ideal_sizes: Vec<Vec2> = self.children
             .iter_mut()
             .map(|c| c.required_size(req))
             .collect();
-        debug!("Ideal sizes: {:?}", sizes);
-        let ideal = self.orientation.stack(sizes.iter());
+        debug!("Ideal sizes: {:?}", ideal_sizes);
+        let ideal = self.orientation.stack(ideal_sizes.iter());
         debug!("Ideal result: {:?}", ideal);
 
 
@@ -301,10 +307,12 @@ impl View for LinearLayout {
 
         // Ok, so maybe it didn't. Budget cuts, everyone.
         // Let's pretend we have almost no space in this direction.
+        // budget_req is the dummy requirements, in an extreme budget situation.
         let budget_req = req.with_axis(self.orientation, 1);
         debug!("Budget req: {:?}", budget_req);
 
-        // See how they like it that way
+        // See how they like it that way.
+        // This is, hopefully, the absolute minimum these views will accept.
         let min_sizes: Vec<Vec2> = self.children
             .iter_mut()
             .map(|c| c.required_size(budget_req))
@@ -332,6 +340,9 @@ impl View for LinearLayout {
             return desperate;
         }
 
+        // So now that we know we _can_ make it all fit, we can redistribute
+        // the extra space we have.
+
         // This here is how much we're generously offered
         // (We just checked that req >= desperate, so the subtraction is safe
         let mut available = self.orientation.get(&(req - desperate));
@@ -339,7 +350,9 @@ impl View for LinearLayout {
 
         // Here, we have to make a compromise between the ideal
         // and the desperate solutions.
-        let mut overweight: Vec<(usize, usize)> = sizes
+        // This is the vector of (ideal - minimum) sizes for each view.
+        // (which is how much they would like to grow)
+        let mut overweight: Vec<(usize, usize)> = ideal_sizes
             .iter()
             .map(|v| self.orientation.get(v))
             .zip(min_sizes.iter().map(|v| self.orientation.get(v)))
