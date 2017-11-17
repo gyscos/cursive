@@ -9,7 +9,7 @@ Cursive is a TUI (Text User Interface) library for rust. It is currently based o
 
 It allows you to build rich user interfaces for terminal applications.
 
-# [Documentation](http://gyscos.github.io/Cursive/cursive/index.html)
+# [Documentation](http://docs.rs/cursive)
 
 It is designed to be safe and easy to use:
 
