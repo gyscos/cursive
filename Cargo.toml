@@ -44,7 +44,7 @@ version = "5.86.0"
 [dependencies.pancurses]
 features = ["wide"]
 optional = true
-version = "0.11"
+version = "0.12"
 
 [dependencies.termion]
 optional = true
