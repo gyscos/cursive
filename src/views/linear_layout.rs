@@ -78,13 +78,16 @@ impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
             // Save the current offset.
             let offset = self.offset;
 
-            // Allocated width
-            self.available = self.available.saturating_sub(offset);
+            // eprintln!("Available: {}", self.available);
 
             let length =
                 usize::min(self.available, *child.size.get(self.orientation));
 
+            // Allocated width
+            self.available = self.available.saturating_sub(length);
+
             self.offset += length;
+
             ChildItem {
                 offset,
                 length,
@@ -282,6 +285,7 @@ fn try_focus(
 impl View for LinearLayout {
     fn draw(&self, printer: &Printer) {
         // Use pre-computed sizes
+        // eprintln!("Pre loop!");
         for (i, item) in ChildIterator::new(
             self.children.iter(),
             self.orientation,
@@ -289,8 +293,8 @@ impl View for LinearLayout {
         ).enumerate()
         {
             // eprintln!("Printer size: {:?}", printer.size);
-            // eprintln!("Child size: {:?}", child.size);
-            // eprintln!("Offset: {:?}", offset);
+            // eprintln!("Child size: {:?}", item.child.size);
+            // eprintln!("Offset: {:?}", item.offset);
             let printer = &printer.sub_printer(
                 self.orientation.make_vec(item.offset, 0),
                 item.child.size,
