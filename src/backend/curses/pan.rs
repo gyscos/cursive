@@ -485,7 +485,7 @@ where
 }
 
 /// Returns the Key enum corresponding to the given pancurses event.
-fn get_mouse_button(bare_event: u32) -> MouseButton {
+fn get_mouse_button(bare_event: mmask_t) -> MouseButton {
     match bare_event {
         pancurses::BUTTON1_RELEASED |
         pancurses::BUTTON1_PRESSED |
