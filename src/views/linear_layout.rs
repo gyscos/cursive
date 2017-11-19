@@ -81,7 +81,7 @@ impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
             // eprintln!("Available: {}", self.available);
 
             let length =
-                usize::min(self.available, *child.size.get(self.orientation));
+                min(self.available, *child.size.get(self.orientation));
 
             // Allocated width
             self.available = self.available.saturating_sub(length);
