@@ -1,7 +1,7 @@
 extern crate ncurses;
 
 use self::ncurses::mmask_t;
-use self::super::{find_closest, split_u32};
+use self::super::{find_closest, split_i32};
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
@@ -257,7 +257,7 @@ impl Concrete {
             c @ 1...25 => Event::CtrlChar((b'a' + (c - 1) as u8) as char),
             other => {
                 // Split the i32 into 4 bytes
-                Event::Unknown(split_u32(other))
+                Event::Unknown(split_i32(other))
             }
         }
     }

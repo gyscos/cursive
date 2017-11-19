@@ -1,7 +1,7 @@
 extern crate pancurses;
 
 use self::pancurses::mmask_t;
-use self::super::{find_closest, split_u32};
+use self::super::{find_closest, split_i32};
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
@@ -69,7 +69,7 @@ impl Concrete {
 
     fn parse_mouse_event(&mut self) -> Event {
         let mut mevent = match pancurses::getmouse() {
-            Err(code) => return Event::Unknown(split_u32(code)),
+            Err(code) => return Event::Unknown(split_i32(code)),
             Ok(event) => event,
         };
 
@@ -301,7 +301,7 @@ impl backend::Backend for Concrete {
                     270 => Event::CtrlShift(Key::Up),
                     other => {
                         eprintln!("Unknown: {}", other);
-                        Event::Unknown(split_u32(other))
+                        Event::Unknown(split_i32(other))
                     }
                 },
                 // TODO: I honestly have no fucking idea what KeyCodeYes is
