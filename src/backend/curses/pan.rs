@@ -439,7 +439,7 @@ impl backend::Backend for Concrete {
 /// the returned Vec will include those queued events.
 ///
 /// The main event is returned separately to avoid allocation in most cases.
-fn on_mouse_event<F>(bare_event: u32, mut f: F)
+fn on_mouse_event<F>(bare_event: mmask_t, mut f: F)
 where
     F: FnMut(MouseEvent),
 {
