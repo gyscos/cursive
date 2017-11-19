@@ -10,6 +10,9 @@ mod pan;
 #[cfg(feature = "pancurses")]
 pub use self::pan::*;
 
+fn split_u32(code: i32) -> Vec<u8> {
+    (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()
+}
 
 fn find_closest(color: &Color) -> i16 {
     match *color {

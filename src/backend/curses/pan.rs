@@ -1,17 +1,22 @@
 extern crate pancurses;
 
-use self::super::find_closest;
+use self::pancurses::mmask_t;
+use self::super::{find_closest, split_u32};
 use backend;
-use event::{Event, Key};
+use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use theme::{Color, ColorPair, Effect};
 use utf8;
+use vec::Vec2;
 
 pub struct Concrete {
     current_style: Cell<ColorPair>,
     pairs: RefCell<HashMap<ColorPair, i32>>,
     window: pancurses::Window,
+
+    last_mouse_button: Option<MouseButton>,
+    event_queue: Vec<Event>,
 }
 
 impl Concrete {
@@ -61,23 +66,102 @@ impl Concrete {
         let style = pancurses::COLOR_PAIR(i as pancurses::chtype);
         self.window.attron(style);
     }
+
+    fn parse_mouse_event(&mut self) -> Event {
+        let mut mevent = match pancurses::getmouse() {
+            Err(code) => return Event::Unknown(split_u32(code)),
+            Ok(event) => event,
+        };
+
+        let _shift =
+            (mevent.bstate & pancurses::BUTTON_SHIFT as mmask_t) != 0;
+        let _alt =
+            (mevent.bstate & pancurses::BUTTON_ALT as mmask_t) != 0;
+        let _ctrl =
+            (mevent.bstate & pancurses::BUTTON_CTRL as mmask_t) != 0;
+
+        mevent.bstate &= !(pancurses::BUTTON_SHIFT | pancurses::BUTTON_ALT
+            | pancurses::BUTTON_CTRL)
+            as mmask_t;
+
+        let make_event = |event| {
+            Event::Mouse {
+                offset: Vec2::zero(),
+                position: Vec2::new(mevent.x as usize, mevent.y as usize),
+                event: event,
+            }
+        };
+
+        if mevent.bstate == pancurses::REPORT_MOUSE_POSITION as mmask_t
+        {
+            // The event is either a mouse drag event,
+            // or a weird double-release event. :S
+            self.last_mouse_button
+                .map(MouseEvent::Hold)
+                .map(&make_event)
+                .unwrap_or_else(|| {
+                    debug!("We got a mouse drag, but no last mouse pressed?");
+                    Event::Unknown(vec![])
+                })
+        } else {
+            // Identify the button
+            let mut bare_event = mevent.bstate & ((1 << 25) - 1);
+
+            let mut event = None;
+            while bare_event != 0 {
+                let single_event = 1 << bare_event.trailing_zeros();
+                bare_event ^= single_event;
+
+                // Process single_event
+                on_mouse_event(single_event, |e| {
+                    if event.is_none() {
+                        event = Some(e);
+                    } else {
+                        self.event_queue.push(make_event(e));
+                    }
+                });
+            }
+            if let Some(event) = event {
+                if let Some(btn) = event.button() {
+                    self.last_mouse_button = Some(btn);
+                }
+                make_event(event)
+            } else {
+                debug!("No event parsed?...");
+                Event::Unknown(vec![])
+            }
+        }
+    }
 }
 
 impl backend::Backend for Concrete {
     fn init() -> Self {
-        let window = pancurses::initscr();
         ::std::env::set_var("ESCDELAY", "25");
+
+        let window = pancurses::initscr();
         window.keypad(true);
         pancurses::noecho();
         pancurses::cbreak();
         pancurses::start_color();
         pancurses::use_default_colors();
         pancurses::curs_set(0);
+        pancurses::mouseinterval(0);
+        pancurses::mousemask(
+            pancurses::ALL_MOUSE_EVENTS | pancurses::REPORT_MOUSE_POSITION,
+            ::std::ptr::null_mut(),
+        );
+
+        // This asks the terminal to provide us with mouse drag events
+        // (Mouse move when a button is pressed).
+        // Replacing 1002 with 1003 would give us ANY mouse move.
+        println!("\x1B[?1002h");
 
         Concrete {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
             pairs: RefCell::new(HashMap::new()),
             window: window,
+            last_mouse_button: None,
+            event_queue: Vec::new(),
         }
     }
 
@@ -136,8 +220,7 @@ impl backend::Backend for Concrete {
     }
 
     fn poll_event(&mut self) -> Event {
-        // TODO: there seems to not be any indication
-        // of Ctrl/Alt/Shift in these :v
+        self.event_queue.pop().unwrap_or_else(|| {
         if let Some(ev) = self.window.getch() {
             match ev {
                 pancurses::Input::Character('\n') => Event::Key(Key::Enter),
@@ -163,6 +246,9 @@ impl backend::Backend for Concrete {
                         }).unwrap(),
                     )
                 }
+                pancurses::Input::Character(c) if (c as u32) <= 26 => {
+                    Event::CtrlChar((b'a' - 1 + c as u8) as char)
+                }
                 pancurses::Input::Character(c) => {
                     let mut bytes = [0u8; 4];
                     Event::Unknown(
@@ -171,11 +257,53 @@ impl backend::Backend for Concrete {
                 }
                 // TODO: Some key combos are not recognized by pancurses,
                 // but are sent as Unknown. We could still parse them here.
-                pancurses::Input::Unknown(other) => Event::Unknown(
-                    (0..4)
-                        .map(|i| ((other >> (8 * i)) & 0xFF) as u8)
-                        .collect(),
-                ),
+                pancurses::Input::Unknown(code) => match code {
+                    220 => Event::Ctrl(Key::Del),
+
+                    224 => Event::Alt(Key::Down),
+                    225 => Event::AltShift(Key::Down),
+                    226 => Event::Ctrl(Key::Down),
+                    227 => Event::CtrlShift(Key::Down),
+
+                    229 => Event::Alt(Key::End),
+                    230 => Event::AltShift(Key::End),
+                    231 => Event::Ctrl(Key::End),
+                    232 => Event::CtrlShift(Key::End),
+
+                    235 => Event::Alt(Key::Home),
+                    236 => Event::AltShift(Key::Home),
+                    237 => Event::Ctrl(Key::Home),
+                    238 => Event::CtrlShift(Key::Home),
+
+                    246 => Event::Alt(Key::Left),
+                    247 => Event::AltShift(Key::Left),
+                    248 => Event::Ctrl(Key::Left),
+                    249 => Event::CtrlShift(Key::Left),
+
+                    251 => Event::Alt(Key::PageDown),
+                    252 => Event::AltShift(Key::PageDown),
+                    253 => Event::Ctrl(Key::PageDown),
+                    254 => Event::CtrlShift(Key::PageDown),
+
+                    256 => Event::Alt(Key::PageUp),
+                    257 => Event::AltShift(Key::PageUp),
+                    258 => Event::Ctrl(Key::PageUp),
+                    259 => Event::CtrlShift(Key::PageUp),
+
+                    261 => Event::Alt(Key::Right),
+                    262 => Event::AltShift(Key::Right),
+                    263 => Event::Ctrl(Key::Right),
+                    264 => Event::CtrlShift(Key::Right),
+
+                    267 => Event::Alt(Key::Up),
+                    268 => Event::AltShift(Key::Up),
+                    269 => Event::Ctrl(Key::Up),
+                    270 => Event::CtrlShift(Key::Up),
+                    other => {
+                        eprintln!("Unknown: {}", other);
+                        Event::Unknown(split_u32(other))
+                    }
+                },
                 // TODO: I honestly have no fucking idea what KeyCodeYes is
                 pancurses::Input::KeyCodeYes => Event::Refresh,
                 pancurses::Input::KeyBreak => Event::Key(Key::PauseBreak),
@@ -282,7 +410,7 @@ impl backend::Backend for Concrete {
                 pancurses::Input::KeyResize => Event::WindowResize,
                 pancurses::Input::KeyEvent => Event::Refresh,
                 // TODO: mouse support
-                pancurses::Input::KeyMouse => Event::Refresh,
+                pancurses::Input::KeyMouse => self.parse_mouse_event(),
                 pancurses::Input::KeyA1 => Event::Refresh,
                 pancurses::Input::KeyA3 => Event::Refresh,
                 pancurses::Input::KeyB2 => Event::Key(Key::NumpadCenter),
@@ -292,6 +420,7 @@ impl backend::Backend for Concrete {
         } else {
             Event::Refresh
         }
+    })
     }
 
     fn set_refresh_rate(&mut self, fps: u32) {
@@ -302,3 +431,88 @@ impl backend::Backend for Concrete {
         }
     }
 }
+
+/// Parse the given code into one or more event.
+///
+/// If the given event code should expend into multiple events
+/// (for instance click expends into PRESS + RELEASE),
+/// the returned Vec will include those queued events.
+///
+/// The main event is returned separately to avoid allocation in most cases.
+fn on_mouse_event<F>(bare_event: u32, mut f: F)
+where
+    F: FnMut(MouseEvent),
+{
+    let button = get_mouse_button(bare_event);
+    match bare_event {
+        pancurses::BUTTON4_PRESSED => f(MouseEvent::WheelUp),
+        pancurses::BUTTON5_PRESSED => f(MouseEvent::WheelDown),
+        pancurses::BUTTON1_RELEASED |
+        pancurses::BUTTON2_RELEASED |
+        pancurses::BUTTON3_RELEASED |
+        pancurses::BUTTON4_RELEASED |
+        pancurses::BUTTON5_RELEASED => f(MouseEvent::Release(button)),
+        pancurses::BUTTON1_PRESSED |
+        pancurses::BUTTON2_PRESSED |
+        pancurses::BUTTON3_PRESSED => f(MouseEvent::Press(button)),
+        pancurses::BUTTON1_CLICKED |
+        pancurses::BUTTON2_CLICKED |
+        pancurses::BUTTON3_CLICKED |
+        pancurses::BUTTON4_CLICKED |
+        pancurses::BUTTON5_CLICKED => {
+            f(MouseEvent::Press(button));
+            f(MouseEvent::Release(button));
+        }
+        // Well, we disabled click detection
+        pancurses::BUTTON1_DOUBLE_CLICKED |
+        pancurses::BUTTON2_DOUBLE_CLICKED |
+        pancurses::BUTTON3_DOUBLE_CLICKED |
+        pancurses::BUTTON4_DOUBLE_CLICKED |
+        pancurses::BUTTON5_DOUBLE_CLICKED => for _ in 0..2 {
+            f(MouseEvent::Press(button));
+            f(MouseEvent::Release(button));
+        },
+        pancurses::BUTTON1_TRIPLE_CLICKED |
+        pancurses::BUTTON2_TRIPLE_CLICKED |
+        pancurses::BUTTON3_TRIPLE_CLICKED |
+        pancurses::BUTTON4_TRIPLE_CLICKED |
+        pancurses::BUTTON5_TRIPLE_CLICKED => for _ in 0..3 {
+            f(MouseEvent::Press(button));
+            f(MouseEvent::Release(button));
+        },
+        _ => debug!("Unknown event: {:032b}", bare_event),
+    }
+}
+
+/// Returns the Key enum corresponding to the given pancurses event.
+fn get_mouse_button(bare_event: u32) -> MouseButton {
+    match bare_event {
+        pancurses::BUTTON1_RELEASED |
+        pancurses::BUTTON1_PRESSED |
+        pancurses::BUTTON1_CLICKED |
+        pancurses::BUTTON1_DOUBLE_CLICKED |
+        pancurses::BUTTON1_TRIPLE_CLICKED => MouseButton::Left,
+        pancurses::BUTTON2_RELEASED |
+        pancurses::BUTTON2_PRESSED |
+        pancurses::BUTTON2_CLICKED |
+        pancurses::BUTTON2_DOUBLE_CLICKED |
+        pancurses::BUTTON2_TRIPLE_CLICKED => MouseButton::Middle,
+        pancurses::BUTTON3_RELEASED |
+        pancurses::BUTTON3_PRESSED |
+        pancurses::BUTTON3_CLICKED |
+        pancurses::BUTTON3_DOUBLE_CLICKED |
+        pancurses::BUTTON3_TRIPLE_CLICKED => MouseButton::Right,
+        pancurses::BUTTON4_RELEASED |
+        pancurses::BUTTON4_PRESSED |
+        pancurses::BUTTON4_CLICKED |
+        pancurses::BUTTON4_DOUBLE_CLICKED |
+        pancurses::BUTTON4_TRIPLE_CLICKED => MouseButton::Button4,
+        pancurses::BUTTON5_RELEASED |
+        pancurses::BUTTON5_PRESSED |
+        pancurses::BUTTON5_CLICKED |
+        pancurses::BUTTON5_DOUBLE_CLICKED |
+        pancurses::BUTTON5_TRIPLE_CLICKED => MouseButton::Button5,
+        _ => MouseButton::Other,
+    }
+}
+

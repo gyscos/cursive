@@ -1,6 +1,7 @@
 extern crate ncurses;
 
-use self::super::find_closest;
+use self::ncurses::mmask_t;
+use self::super::{find_closest, split_u32};
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
@@ -78,17 +79,17 @@ impl Concrete {
             // eprintln!("{:032b}", mevent.bstate);
             // Currently unused
             let _shift = (mevent.bstate
-                & ncurses::BUTTON_SHIFT as ncurses::mmask_t)
+                & ncurses::BUTTON_SHIFT as mmask_t)
                 != 0;
             let _alt =
-                (mevent.bstate & ncurses::BUTTON_ALT as ncurses::mmask_t) != 0;
+                (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
             let _ctrl = (mevent.bstate
-                & ncurses::BUTTON_CTRL as ncurses::mmask_t)
+                & ncurses::BUTTON_CTRL as mmask_t)
                 != 0;
 
             mevent.bstate &= !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT
                 | ncurses::BUTTON_CTRL)
-                as ncurses::mmask_t;
+                as mmask_t;
 
             let make_event = |event| {
                 Event::Mouse {
@@ -99,7 +100,7 @@ impl Concrete {
             };
 
             if mevent.bstate
-                == ncurses::REPORT_MOUSE_POSITION as ncurses::mmask_t
+                == ncurses::REPORT_MOUSE_POSITION as mmask_t
             {
                 // The event is either a mouse drag event,
                 // or a weird double-release event. :S
@@ -117,7 +118,7 @@ impl Concrete {
                     bare_event ^= single_event;
 
                     // Process single_event
-                    get_event(single_event as i32, |e| if event.is_none() {
+                    on_mouse_event(single_event as i32, |e| if event.is_none() {
                         event = Some(e);
                     } else {
                         self.event_queue.push(make_event(e));
@@ -256,11 +257,7 @@ impl Concrete {
             c @ 1...25 => Event::CtrlChar((b'a' + (c - 1) as u8) as char),
             other => {
                 // Split the i32 into 4 bytes
-                Event::Unknown(
-                    (0..4)
-                        .map(|i| ((other >> (8 * i)) & 0xFF) as u8)
-                        .collect(),
-                )
+                Event::Unknown(split_u32(other))
             }
         }
     }
@@ -286,7 +283,7 @@ impl backend::Backend for Concrete {
         // Listen to all mouse events.
         ncurses::mousemask(
             (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION)
-                as ncurses::mmask_t,
+                as mmask_t,
             None,
         );
         ncurses::noecho();
@@ -395,7 +392,7 @@ impl backend::Backend for Concrete {
 }
 
 /// Returns the Key enum corresponding to the given ncurses event.
-fn get_button(bare_event: i32) -> MouseButton {
+fn get_mouse_button(bare_event: i32) -> MouseButton {
     match bare_event {
         ncurses::BUTTON1_RELEASED |
         ncurses::BUTTON1_PRESSED |
@@ -433,11 +430,11 @@ fn get_button(bare_event: i32) -> MouseButton {
 /// the returned Vec will include those queued events.
 ///
 /// The main event is returned separately to avoid allocation in most cases.
-fn get_event<F>(bare_event: i32, mut f: F)
+fn on_mouse_event<F>(bare_event: i32, mut f: F)
 where
     F: FnMut(MouseEvent),
 {
-    let button = get_button(bare_event);
+    let button = get_mouse_button(bare_event);
     match bare_event {
         ncurses::BUTTON4_PRESSED => f(MouseEvent::WheelUp),
         ncurses::BUTTON5_PRESSED => f(MouseEvent::WheelDown),
