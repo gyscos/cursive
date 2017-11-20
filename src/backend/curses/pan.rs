@@ -300,7 +300,7 @@ impl backend::Backend for Concrete {
                     269 => Event::Ctrl(Key::Up),
                     270 => Event::CtrlShift(Key::Up),
                     other => {
-                        eprintln!("Unknown: {}", other);
+                        warn!("Unknown: {}", other);
                         Event::Unknown(split_i32(other))
                     }
                 },
