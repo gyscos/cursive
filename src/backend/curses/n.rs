@@ -365,26 +365,6 @@ where
     }
 }
 
-fn parse_modifier(code: i32, key: Key) -> Event {
-    match code {
-        0 => Event::Alt(key),
-        1 => Event::AltShift(key),
-        2 => Event::Ctrl(key),
-        3 => Event::CtrlShift(key),
-        4 => Event::CtrlAlt(key),
-        _ => {
-            warn!("Parsing invalid modifier: {} for key {:?}", code, key);
-            Event::Unknown(split_i32(code))
-        }
-    }
-}
-
-fn add_modifiers(start: i32, key: Key, map: &mut HashMap<i32, Event>) {
-    for i in 0..5 {
-        map.insert(start + i, parse_modifier(i, key));
-    }
-}
-
 fn add_fn<F>(start: i32, with_key: F, map: &mut HashMap<i32, Event>)
 where
     F: Fn(Key) -> Event,
@@ -398,47 +378,47 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     // First, define the static mappings.
     let mut map = hashmap!{
 
-            // Value sent by ncurses when nothing happens
-            -1 => Event::Refresh,
+        // Value sent by ncurses when nothing happens
+        -1 => Event::Refresh,
 
-            // Values under 256 are chars and control values
-            //
-            // Tab is '\t'
-            9 => Event::Key(Key::Tab),
-            // Treat '\n' and the numpad Enter the same
-            10 => Event::Key(Key::Enter),
-            ncurses::KEY_ENTER => Event::Key(Key::Enter),
-            // This is the escape key when pressed by itself.
-            // When used for control sequences,
-            // it should have been caught earlier.
-            27 => Event::Key(Key::Esc),
-            // `Backspace` sends 127, but Ctrl-H sends `Backspace`
-            127 => Event::Key(Key::Backspace),
-            ncurses::KEY_BACKSPACE => Event::Key(Key::Backspace),
+        // Values under 256 are chars and control values
+        //
+        // Tab is '\t'
+        9 => Event::Key(Key::Tab),
+        // Treat '\n' and the numpad Enter the same
+        10 => Event::Key(Key::Enter),
+        ncurses::KEY_ENTER => Event::Key(Key::Enter),
+        // This is the escape key when pressed by itself.
+        // When used for control sequences,
+        // it should have been caught earlier.
+        27 => Event::Key(Key::Esc),
+        // `Backspace` sends 127, but Ctrl-H sends `Backspace`
+        127 => Event::Key(Key::Backspace),
+        ncurses::KEY_BACKSPACE => Event::Key(Key::Backspace),
 
-            410 => Event::WindowResize,
+        410 => Event::WindowResize,
 
-            ncurses::KEY_B2 => Event::Key(Key::NumpadCenter),
-            ncurses::KEY_DC => Event::Key(Key::Del),
-            ncurses::KEY_IC => Event::Key(Key::Ins),
-            ncurses::KEY_BTAB => Event::Shift(Key::Tab),
-            ncurses::KEY_SLEFT => Event::Shift(Key::Left),
-            ncurses::KEY_SRIGHT => Event::Shift(Key::Right),
-            ncurses::KEY_LEFT => Event::Key(Key::Left),
-            ncurses::KEY_RIGHT => Event::Key(Key::Right),
-            ncurses::KEY_UP => Event::Key(Key::Up),
-            ncurses::KEY_DOWN => Event::Key(Key::Down),
-            ncurses::KEY_SR => Event::Shift(Key::Up),
-            ncurses::KEY_SF => Event::Shift(Key::Down),
-            ncurses::KEY_PPAGE => Event::Key(Key::PageUp),
-            ncurses::KEY_NPAGE => Event::Key(Key::PageDown),
-            ncurses::KEY_HOME => Event::Key(Key::Home),
-            ncurses::KEY_END => Event::Key(Key::End),
-            ncurses::KEY_SHOME => Event::Shift(Key::Home),
-            ncurses::KEY_SEND => Event::Shift(Key::End),
-            ncurses::KEY_SDC => Event::Shift(Key::Del),
-            ncurses::KEY_SNEXT => Event::Shift(Key::PageDown),
-            ncurses::KEY_SPREVIOUS => Event::Shift(Key::PageUp),
+        ncurses::KEY_B2 => Event::Key(Key::NumpadCenter),
+        ncurses::KEY_DC => Event::Key(Key::Del),
+        ncurses::KEY_IC => Event::Key(Key::Ins),
+        ncurses::KEY_BTAB => Event::Shift(Key::Tab),
+        ncurses::KEY_SLEFT => Event::Shift(Key::Left),
+        ncurses::KEY_SRIGHT => Event::Shift(Key::Right),
+        ncurses::KEY_LEFT => Event::Key(Key::Left),
+        ncurses::KEY_RIGHT => Event::Key(Key::Right),
+        ncurses::KEY_UP => Event::Key(Key::Up),
+        ncurses::KEY_DOWN => Event::Key(Key::Down),
+        ncurses::KEY_SR => Event::Shift(Key::Up),
+        ncurses::KEY_SF => Event::Shift(Key::Down),
+        ncurses::KEY_PPAGE => Event::Key(Key::PageUp),
+        ncurses::KEY_NPAGE => Event::Key(Key::PageDown),
+        ncurses::KEY_HOME => Event::Key(Key::Home),
+        ncurses::KEY_END => Event::Key(Key::End),
+        ncurses::KEY_SHOME => Event::Shift(Key::Home),
+        ncurses::KEY_SEND => Event::Shift(Key::End),
+        ncurses::KEY_SDC => Event::Shift(Key::Del),
+        ncurses::KEY_SNEXT => Event::Shift(Key::PageDown),
+        ncurses::KEY_SPREVIOUS => Event::Shift(Key::PageUp),
     };
 
     // Then add some dynamic ones
@@ -455,25 +435,45 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     add_fn(313, Event::Alt, &mut map);
 
     // Those codes actually vary between ncurses versions...
-    // Use ncurses::keyname to find the key representing kDC3 (alt-DEL)
-    let del_offset = (512..1024)
-        .find(|&code| {
-            ncurses::keyname(code)
-                .map(|name| &name == "kDC3")
-                .unwrap_or(false)
-        })
-        .unwrap_or(522);
 
-    add_modifiers(del_offset, Key::Del, &mut map);
-    add_modifiers(del_offset + 6, Key::Down, &mut map);
-    add_modifiers(del_offset + 11, Key::End, &mut map);
-    add_modifiers(del_offset + 17, Key::Home, &mut map);
-    add_modifiers(del_offset + 23, Key::Ins, &mut map);
-    add_modifiers(del_offset + 28, Key::Left, &mut map);
-    add_modifiers(del_offset + 33, Key::PageDown, &mut map);
-    add_modifiers(del_offset + 38, Key::PageUp, &mut map);
-    add_modifiers(del_offset + 43, Key::Right, &mut map);
-    add_modifiers(del_offset + 49, Key::Up, &mut map);
+    let key_names = hashmap!{
+        "DC" => Key::Del,
+        "DN" => Key::Down,
+        "END" => Key::End,
+        "HOM" => Key::Home,
+        "IC" => Key::Ins,
+        "LFT" => Key::Left,
+        "NXT" => Key::PageDown,
+        "PRV" => Key::PageUp,
+        "RIT" => Key::Right,
+        "UP" => Key::Up,
+    };
+
+    for code in 512..1024 {
+        let name = match ncurses::keyname(code) {
+            Some(name) => name,
+            None => continue,
+        };
+
+        if !name.starts_with("k") {
+            continue;
+        }
+
+        let (key_name, modifier) = name[1..].split_at(name.len() - 2);
+        let key = match key_names.get(key_name) {
+            Some(&key) => key,
+            None => continue,
+        };
+        let event = match modifier {
+            "3" => Event::Alt(key),
+            "4" => Event::AltShift(key),
+            "5" => Event::Ctrl(key),
+            "6" => Event::CtrlShift(key),
+            "7" => Event::CtrlAlt(key),
+            _ => continue,
+        };
+        map.insert(code, event);
+    }
 
     map
 }
