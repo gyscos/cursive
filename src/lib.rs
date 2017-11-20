@@ -60,6 +60,8 @@
 #![deny(missing_docs)]
 
 #[macro_use]
+extern crate maplit;
+#[macro_use]
 extern crate log;
 extern crate num;
 extern crate odds;

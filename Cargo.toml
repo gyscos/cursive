@@ -27,6 +27,7 @@ repository = "gyscos/Cursive"
 
 [dependencies]
 log = "0.3"
+maplit = "1.0.0"
 num = "0.1"
 odds = "0.2"
 owning_ref = "0.3"

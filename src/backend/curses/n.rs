@@ -15,6 +15,8 @@ pub struct Concrete {
 
     pairs: RefCell<HashMap<ColorPair, i16>>,
 
+    key_codes: HashMap<i32, Event>,
+
     last_mouse_button: Option<MouseButton>,
     event_queue: Vec<Event>,
 }
@@ -78,14 +80,10 @@ impl Concrete {
         {
             // eprintln!("{:032b}", mevent.bstate);
             // Currently unused
-            let _shift = (mevent.bstate
-                & ncurses::BUTTON_SHIFT as mmask_t)
-                != 0;
-            let _alt =
-                (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
-            let _ctrl = (mevent.bstate
-                & ncurses::BUTTON_CTRL as mmask_t)
-                != 0;
+            let _shift =
+                (mevent.bstate & ncurses::BUTTON_SHIFT as mmask_t) != 0;
+            let _alt = (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
+            let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
 
             mevent.bstate &= !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT
                 | ncurses::BUTTON_CTRL)
@@ -99,9 +97,7 @@ impl Concrete {
                 }
             };
 
-            if mevent.bstate
-                == ncurses::REPORT_MOUSE_POSITION as mmask_t
-            {
+            if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as mmask_t {
                 // The event is either a mouse drag event,
                 // or a weird double-release event. :S
                 self.last_mouse_button
@@ -118,10 +114,12 @@ impl Concrete {
                     bare_event ^= single_event;
 
                     // Process single_event
-                    on_mouse_event(single_event as i32, |e| if event.is_none() {
-                        event = Some(e);
-                    } else {
-                        self.event_queue.push(make_event(e));
+                    on_mouse_event(single_event as i32, |e| {
+                        if event.is_none() {
+                            event = Some(e);
+                        } else {
+                            self.event_queue.push(make_event(e));
+                        }
                     });
                 }
                 if let Some(event) = event {
@@ -141,127 +139,13 @@ impl Concrete {
     }
 
     fn parse_ncurses_char(&mut self, ch: i32) -> Event {
-        match ch {
-            // Value sent by ncurses when nothing happens
-            -1 => Event::Refresh,
-
-            // Values under 256 are chars and control values
-            //
-            // Tab is '\t'
-            9 => Event::Key(Key::Tab),
-            // Treat '\n' and the numpad Enter the same
-            10 | ncurses::KEY_ENTER => Event::Key(Key::Enter),
-            // This is the escape key when pressed by itself.
-            // When used for control sequences,
-            // it should have been caught earlier.
-            27 => Event::Key(Key::Esc),
-            // `Backspace` sends 127, but Ctrl-H sends `Backspace`
-            127 | ncurses::KEY_BACKSPACE => Event::Key(Key::Backspace),
-
-            410 => Event::WindowResize,
-
-            // Values 512 and above are probably extensions
-            // Those keys don't seem to be documented...
-            // They often come in block of 5 bindings (A, AS, C, CS, CA)
-            522 => Event::Alt(Key::Del),
-            523 => Event::AltShift(Key::Del),
-            524 => Event::Ctrl(Key::Del),
-            525 => Event::CtrlShift(Key::Del),
-            526 => Event::CtrlAlt(Key::Del),
-            // 527?
-            528 => Event::Alt(Key::Down),
-            529 => Event::AltShift(Key::Down),
-            530 => Event::Ctrl(Key::Down),
-            531 => Event::CtrlShift(Key::Down),
-            532 => Event::CtrlAlt(Key::Down),
-
-            533 => Event::Alt(Key::End),
-            534 => Event::AltShift(Key::End),
-            535 => Event::Ctrl(Key::End),
-            536 => Event::CtrlShift(Key::End),
-            537 => Event::CtrlAlt(Key::End),
-            // 538?
-
-            539 => Event::Alt(Key::Home),
-            540 => Event::AltShift(Key::Home),
-            541 => Event::Ctrl(Key::Home),
-            542 => Event::CtrlShift(Key::Home),
-            543 => Event::CtrlAlt(Key::Home),
-            // 544?
-
-            545 => Event::Alt(Key::Ins),
-            546 => Event::AltShift(Key::Ins),
-            547 => Event::Ctrl(Key::Ins),
-            548 => Event::CtrlShift(Key::Ins),
-            549 => Event::CtrlAlt(Key::Ins),
-
-            550 => Event::Alt(Key::Left),
-            551 => Event::AltShift(Key::Left),
-            552 => Event::Ctrl(Key::Left),
-            553 => Event::CtrlShift(Key::Left),
-            554 => Event::CtrlAlt(Key::Left),
-
-            555 => Event::Alt(Key::PageDown),
-            556 => Event::AltShift(Key::PageDown),
-            557 => Event::Ctrl(Key::PageDown),
-            558 => Event::CtrlShift(Key::PageDown),
-            559 => Event::CtrlAlt(Key::PageDown),
-
-            560 => Event::Alt(Key::PageUp),
-            561 => Event::AltShift(Key::PageUp),
-            562 => Event::Ctrl(Key::PageUp),
-            563 => Event::CtrlShift(Key::PageUp),
-            564 => Event::CtrlAlt(Key::PageUp),
-
-            565 => Event::Alt(Key::Right),
-            566 => Event::AltShift(Key::Right),
-            567 => Event::Ctrl(Key::Right),
-            568 => Event::CtrlShift(Key::Right),
-            569 => Event::CtrlAlt(Key::Right),
-            // 570?
-            571 => Event::Alt(Key::Up),
-            572 => Event::AltShift(Key::Up),
-            573 => Event::Ctrl(Key::Up),
-            574 => Event::CtrlShift(Key::Up),
-            575 => Event::CtrlAlt(Key::Up),
-
-            ncurses::KEY_MOUSE => self.parse_mouse_event(),
-            ncurses::KEY_B2 => Event::Key(Key::NumpadCenter),
-            ncurses::KEY_DC => Event::Key(Key::Del),
-            ncurses::KEY_IC => Event::Key(Key::Ins),
-            ncurses::KEY_BTAB => Event::Shift(Key::Tab),
-            ncurses::KEY_SLEFT => Event::Shift(Key::Left),
-            ncurses::KEY_SRIGHT => Event::Shift(Key::Right),
-            ncurses::KEY_LEFT => Event::Key(Key::Left),
-            ncurses::KEY_RIGHT => Event::Key(Key::Right),
-            ncurses::KEY_UP => Event::Key(Key::Up),
-            ncurses::KEY_DOWN => Event::Key(Key::Down),
-            ncurses::KEY_SR => Event::Shift(Key::Up),
-            ncurses::KEY_SF => Event::Shift(Key::Down),
-            ncurses::KEY_PPAGE => Event::Key(Key::PageUp),
-            ncurses::KEY_NPAGE => Event::Key(Key::PageDown),
-            ncurses::KEY_HOME => Event::Key(Key::Home),
-            ncurses::KEY_END => Event::Key(Key::End),
-            ncurses::KEY_SHOME => Event::Shift(Key::Home),
-            ncurses::KEY_SEND => Event::Shift(Key::End),
-            ncurses::KEY_SDC => Event::Shift(Key::Del),
-            ncurses::KEY_SNEXT => Event::Shift(Key::PageDown),
-            ncurses::KEY_SPREVIOUS => Event::Shift(Key::PageUp),
-            // All Fn keys use the same enum with associated number
-            f @ ncurses::KEY_F1...ncurses::KEY_F12 => {
-                Event::Key(Key::from_f((f - ncurses::KEY_F0) as u8))
-            }
-            f @ 277...288 => Event::Shift(Key::from_f((f - 276) as u8)),
-            f @ 289...300 => Event::Ctrl(Key::from_f((f - 288) as u8)),
-            f @ 301...312 => Event::CtrlShift(Key::from_f((f - 300) as u8)),
-            f @ 313...324 => Event::Alt(Key::from_f((f - 312) as u8)),
-            // Values 8-10 (H,I,J) are used by other commands,
-            // so we probably won't receive them. Meh~
-            c @ 1...25 => Event::CtrlChar((b'a' + (c - 1) as u8) as char),
-            other => {
-                // Split the i32 into 4 bytes
-                Event::Unknown(split_i32(other))
-            }
+        if ch == ncurses::KEY_MOUSE {
+            self.parse_mouse_event()
+        } else {
+            self.key_codes
+                .get(&ch)
+                .cloned()
+                .unwrap_or_else(|| Event::Unknown(split_i32(ch)))
         }
     }
 }
@@ -308,6 +192,8 @@ impl backend::Backend for Concrete {
 
             last_mouse_button: None,
             event_queue: Vec::new(),
+
+            key_codes: initialize_keymap(),
         }
     }
 
@@ -476,4 +362,111 @@ where
         },
         _ => debug!("Unknown event: {:032b}", bare_event),
     }
+}
+
+fn parse_modifier(code: i32, key: Key) -> Event {
+    match code {
+        0 => Event::Alt(key),
+        1 => Event::AltShift(key),
+        2 => Event::Ctrl(key),
+        3 => Event::CtrlShift(key),
+        4 => Event::CtrlAlt(key),
+        _ => {
+            warn!("Parsing invalid modifier: {} for key {:?}", code, key);
+            Event::Unknown(split_i32(code))
+        }
+    }
+}
+
+fn add_modifiers(start: i32, key: Key, map: &mut HashMap<i32, Event>) {
+    for i in 0..5 {
+        map.insert(start + i, parse_modifier(i, key));
+    }
+}
+
+fn add_fn<F>(start: i32, with_key: F, map: &mut HashMap<i32, Event>)
+where
+    F: Fn(Key) -> Event,
+{
+    for i in 0..12 {
+        map.insert(start + i, with_key(Key::from_f((i + 1) as u8)));
+    }
+}
+
+fn initialize_keymap() -> HashMap<i32, Event> {
+    // First, define the static mappings.
+    let mut map = hashmap!{
+
+            // Value sent by ncurses when nothing happens
+            -1 => Event::Refresh,
+
+            // Values under 256 are chars and control values
+            //
+            // Tab is '\t'
+            9 => Event::Key(Key::Tab),
+            // Treat '\n' and the numpad Enter the same
+            10 => Event::Key(Key::Enter),
+            ncurses::KEY_ENTER => Event::Key(Key::Enter),
+            // This is the escape key when pressed by itself.
+            // When used for control sequences,
+            // it should have been caught earlier.
+            27 => Event::Key(Key::Esc),
+            // `Backspace` sends 127, but Ctrl-H sends `Backspace`
+            127 => Event::Key(Key::Backspace),
+            ncurses::KEY_BACKSPACE => Event::Key(Key::Backspace),
+
+            410 => Event::WindowResize,
+
+            ncurses::KEY_B2 => Event::Key(Key::NumpadCenter),
+            ncurses::KEY_DC => Event::Key(Key::Del),
+            ncurses::KEY_IC => Event::Key(Key::Ins),
+            ncurses::KEY_BTAB => Event::Shift(Key::Tab),
+            ncurses::KEY_SLEFT => Event::Shift(Key::Left),
+            ncurses::KEY_SRIGHT => Event::Shift(Key::Right),
+            ncurses::KEY_LEFT => Event::Key(Key::Left),
+            ncurses::KEY_RIGHT => Event::Key(Key::Right),
+            ncurses::KEY_UP => Event::Key(Key::Up),
+            ncurses::KEY_DOWN => Event::Key(Key::Down),
+            ncurses::KEY_SR => Event::Shift(Key::Up),
+            ncurses::KEY_SF => Event::Shift(Key::Down),
+            ncurses::KEY_PPAGE => Event::Key(Key::PageUp),
+            ncurses::KEY_NPAGE => Event::Key(Key::PageDown),
+            ncurses::KEY_HOME => Event::Key(Key::Home),
+            ncurses::KEY_END => Event::Key(Key::End),
+            ncurses::KEY_SHOME => Event::Shift(Key::Home),
+            ncurses::KEY_SEND => Event::Shift(Key::End),
+            ncurses::KEY_SDC => Event::Shift(Key::Del),
+            ncurses::KEY_SNEXT => Event::Shift(Key::PageDown),
+            ncurses::KEY_SPREVIOUS => Event::Shift(Key::PageUp),
+    };
+
+    // Then add some dynamic ones
+
+    for c in 1..26 {
+        map.insert(c, Event::CtrlChar((b'a' - 1 + c as u8) as char));
+    }
+
+    // Ncurses provides a F1 variable, but no modifiers
+    add_fn(ncurses::KEY_F1, Event::Key, &mut map);
+    add_fn(277, Event::Shift, &mut map);
+    add_fn(289, Event::Ctrl, &mut map);
+    add_fn(301, Event::CtrlShift, &mut map);
+    add_fn(313, Event::Alt, &mut map);
+
+    // Those codes actually vary between ncurses versions...
+    // TODO: load that at compile/runtime...
+    let del_offset = 522;
+
+    add_modifiers(del_offset, Key::Del, &mut map);
+    add_modifiers(del_offset + 6, Key::Down, &mut map);
+    add_modifiers(del_offset + 11, Key::End, &mut map);
+    add_modifiers(del_offset + 17, Key::Home, &mut map);
+    add_modifiers(del_offset + 23, Key::Ins, &mut map);
+    add_modifiers(del_offset + 28, Key::Left, &mut map);
+    add_modifiers(del_offset + 33, Key::PageDown, &mut map);
+    add_modifiers(del_offset + 38, Key::PageUp, &mut map);
+    add_modifiers(del_offset + 43, Key::Right, &mut map);
+    add_modifiers(del_offset + 49, Key::Up, &mut map);
+
+    map
 }
