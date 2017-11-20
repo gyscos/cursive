@@ -139,6 +139,7 @@ impl Concrete {
     }
 
     fn parse_ncurses_char(&mut self, ch: i32) -> Event {
+        // eprintln!("Found {:?}", ncurses::keyname(ch));
         if ch == ncurses::KEY_MOUSE {
             self.parse_mouse_event()
         } else {
@@ -454,8 +455,14 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     add_fn(313, Event::Alt, &mut map);
 
     // Those codes actually vary between ncurses versions...
-    // TODO: load that at compile/runtime...
-    let del_offset = 522;
+    // Use ncurses::keyname to find the key representing kDC3 (alt-DEL)
+    let del_offset = (512..1024)
+        .find(|&code| {
+            ncurses::keyname(code)
+                .map(|name| &name == "kDC3")
+                .unwrap_or(false)
+        })
+        .unwrap_or(522);
 
     add_modifiers(del_offset, Key::Del, &mut map);
     add_modifiers(del_offset + 6, Key::Down, &mut map);
