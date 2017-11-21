@@ -5,7 +5,7 @@ categories = [
     "gui",
 ]
 description = "A TUI (Text User Interface) library focused on ease-of-use."
-documentation = "https://gyscos.github.io/Cursive/cursive/index.html"
+documentation = "https://docs.rs/cursive"
 exclude = [
     "doc/**",
     "assets/**",
