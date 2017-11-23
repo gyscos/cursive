@@ -64,7 +64,6 @@ extern crate maplit;
 #[macro_use]
 extern crate log;
 extern crate num;
-extern crate odds;
 extern crate owning_ref;
 extern crate toml;
 extern crate unicode_segmentation;

@@ -1,7 +1,6 @@
 use {Printer, With, XY};
 use direction::Direction;
 use event::{Event, EventResult, Key, MouseButton, MouseEvent};
-use odds::vec::VecExt;
 use std::cmp::min;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
@@ -360,7 +359,7 @@ impl TextArea {
         let affected_rows = first_row..last_row;
         let replacement_rows =
             new_rows.into_iter().map(|row| row.shifted(first_byte));
-        VecExt::splice(&mut self.rows, affected_rows, replacement_rows);
+        self.rows.splice(affected_rows, replacement_rows);
         self.fix_ghost_row();
         self.scrollbase.set_heights(size.y, self.rows.len());
     }
