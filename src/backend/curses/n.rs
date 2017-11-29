@@ -424,7 +424,12 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     // Then add some dynamic ones
 
     for c in 1..26 {
-        map.insert(c, Event::CtrlChar((b'a' - 1 + c as u8) as char));
+        let event = match c {
+            9 => Event::Key(Key::Tab),
+            10 => Event::Key(Key::Enter),
+            other => Event::CtrlChar((b'a' - 1 + other as u8) as char),
+        };
+        map.insert(c, event);
     }
 
     // Ncurses provides a F1 variable, but no modifiers

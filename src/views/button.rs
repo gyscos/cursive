@@ -31,6 +31,15 @@ impl Button {
     where
         F: Fn(&mut Cursive) + 'static,
     {
+        let label = label.into();
+        Self::new_raw(format!("<{}>", label), cb)
+    }
+
+    /// Creates a new button without angle brackets.
+    pub fn new_raw<F, S: Into<String>>(label: S, cb: F) -> Self
+    where
+        F: Fn(&mut Cursive) + 'static,
+    {
         Button {
             label: label.into(),
             callback: Callback::from_fn(cb),
@@ -78,7 +87,7 @@ impl Button {
     }
 
     fn req_size(&self) -> Vec2 {
-        Vec2::new(2 + self.label.width(), 1)
+        Vec2::new(self.label.width(), 1)
     }
 }
 
@@ -97,10 +106,10 @@ impl View for Button {
         };
 
         let offset =
-            HAlign::Center.get_offset(self.label.len() + 2, printer.size.x);
+            HAlign::Center.get_offset(self.label.len(), printer.size.x);
 
         printer.with_color(style, |printer| {
-            printer.print((offset, 0), &format!("<{}>", self.label));
+            printer.print((offset, 0), &self.label);
         });
     }
 

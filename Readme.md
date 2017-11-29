@@ -56,7 +56,7 @@ Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/exa
 <a href="examples/lorem.rs"><img src="doc/examples/lorem.png" alt="lorem.rs example", width="48%" /></a>
 <a href="examples/menubar.rs"><img src="doc/examples/menubar.png" alt="menubar.rs example", width="48%" /></a>
 <a href="examples/select.rs"><img src="doc/examples/select.png" alt="select.rs example", width="48%" /></a>
-<a href="examples/list_view.rs"><img src="doc/examples/list_view.png" alt="list_view.rs example", width="48%" /></a>
+<a href="examples/mines/"><img src="doc/examples/mines.png" alt="mines example", width="48%" /></a>
 <a href="examples/theme.rs"><img src="doc/examples/theme.png" alt="theme.rs example", width="48%" /></a>
 </div>
 

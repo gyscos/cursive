@@ -21,6 +21,16 @@ impl<T> XY<T> {
         XY::new(f(self.x), f(self.y))
     }
 
+    /// Creates a new `XY` by applying `f` to `x`, and carrying `y` over.
+    pub fn map_x<F: Fn(T) -> T>(self, f: F) -> Self {
+        XY::new(f(self.x), self.y)
+    }
+
+    /// Creates a new `XY` by applying `f` to `y`, and carrying `x` over.
+    pub fn map_y<F: Fn(T) -> T>(self, f: F) -> Self {
+        XY::new(self.x, f(self.y))
+    }
+
     /// Destructure self into a pair.
     pub fn pair(self) -> (T, T) {
         (self.x, self.y)

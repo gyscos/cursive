@@ -76,7 +76,15 @@ impl EventResult {
     pub fn is_consumed(&self) -> bool {
         match *self {
             EventResult::Consumed(_) => true,
-            EventResult::Ignored => false,
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if `self` contains a callback.
+    pub fn has_callback(&self) -> bool {
+        match *self {
+            EventResult::Consumed(Some(_)) => true,
+            _ => false,
         }
     }
 
