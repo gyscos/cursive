@@ -460,7 +460,7 @@ fn initialize_keymap() -> HashMap<i32, Event> {
             None => continue,
         };
 
-        if !name.starts_with("k") {
+        if !name.starts_with('k') {
             continue;
         }
 
