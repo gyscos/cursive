@@ -66,6 +66,7 @@ impl TextArea {
     /// Sets the content of the view.
     pub fn set_content<S: Into<String>>(&mut self, content: S) {
         self.content = content.into();
+        self.cursor = min(self.cursor, self.content.len());
         if let Some(size) = self.size_cache.map(|s| s.map(|s| s.value)) {
             self.compute_rows(size);
         }
