@@ -333,7 +333,7 @@ impl View for MenuPopup {
             } => {
                 // If the mouse is dragged, we always consume the event.
                 fix_scroll = false;
-                let position = position.saturating_sub(offset);
+                let position = position.saturating_sub(offset + (0, 1));
                 self.scrollbase.drag(position);
             }
             Event::Mouse {
