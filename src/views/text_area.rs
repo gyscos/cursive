@@ -63,10 +63,37 @@ impl TextArea {
         self.size_cache = None;
     }
 
+    /// Returns the position of the cursor in the content string.
+    pub fn cursor(&self) -> usize {
+        self.cursor
+    }
+
+    /// Moves the cursor to the given position.
+    ///
+    /// # Panics
+    ///
+    /// This method panics if `cursor` is not the beginning of a character in
+    /// the content string.
+    pub fn set_cursor(&mut self, cursor: usize) {
+        self.cursor = cursor;
+
+        let focus = self.selected_row();
+        self.scrollbase.scroll_to(focus);
+    }
+
     /// Sets the content of the view.
     pub fn set_content<S: Into<String>>(&mut self, content: S) {
         self.content = content.into();
+
+        // First, make sure we are within the bounds.
         self.cursor = min(self.cursor, self.content.len());
+
+        // We have no guarantee cursor is now at a correct UTF8 location.
+        // So look backward until we find a valid grapheme start.
+        while !self.content.is_char_boundary(self.cursor) {
+            self.cursor -= 1;
+        }
+
         if let Some(size) = self.size_cache.map(|s| s.map(|s| s.value)) {
             self.compute_rows(size);
         }
