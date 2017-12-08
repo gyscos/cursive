@@ -5,9 +5,29 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use view::{View, ViewWrapper};
 
-/// A simple wrapper view that catches some ignored event from its child.
+/// A wrapper view that can react to events.
 ///
-/// If the event doesn't have a corresponding callback, it will stay ignored.
+/// This view registers a set of callbacks tied to specific events, to be run
+/// in certain conditions.
+///
+/// * Some callbacks are called only for vents ignored by the wrapped view
+///   (those registered by [`on_event`] or [`on_event_inner`])
+/// * Others are processed first, and can control whether the child view should
+///   be given the event (those registered by [`on_pre_event`] or
+///   [`on_pre_event_inner`]).
+///
+/// "Inner" callbacks ([`on_event_inner`] and [`on_pre_event_inner`]) are given
+/// a reference to the inner wrapped view (but not to the `Cursive` root). They
+/// can then return another callback, taking only a `&mut Cursive` root as 
+/// argument.
+///
+/// "Simple" callbacks ([`on_event`] and [`on_pre_event`]) skip this first
+/// phase and are only called with a `&mut Cursive`.
+///
+/// [`on_event`]: struct.OnEventView.html#method.on_event
+/// [`on_pre_event`]: struct.OnEventView.html#method.on_pre_event
+/// [`on_event_inner`]: struct.OnEventView.html#method.on_event_inner
+/// [`on_pre_event_inner`]: struct.OnEventView.html#method.on_pre_event_inner
 ///
 /// # Examples
 ///
@@ -81,6 +101,7 @@ impl<T: View> OnEventView<T> {
     /// Registers a callback when the given event is received.
     ///
     /// The given callback will be run before the child view sees the event.
+    ///
     /// * If the result is `None`, then the child view is given the event as
     ///   usual.
     /// * Otherwise, it bypasses the child view and directly processes the
@@ -141,6 +162,7 @@ impl<T: View> OnEventView<T> {
     /// Registers a callback when the given event is received.
     ///
     /// The given callback will be run before the child view sees the event.
+    ///
     /// * If the result is `None`, then the child view is given the event as
     ///   usual.
     /// * Otherwise, it bypasses the child view and directly processes the
