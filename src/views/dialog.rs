@@ -154,7 +154,7 @@ impl Dialog {
 
     /// Shortcut method to add a button that will dismiss the dialog.
     pub fn dismiss_button<S: Into<String>>(self, label: S) -> Self {
-        self.button(label, |s| s.screen_mut().pop_layer())
+        self.button(label, |s| { s.screen_mut().pop_layer(); })
     }
 
     /// Sets the title of the dialog.

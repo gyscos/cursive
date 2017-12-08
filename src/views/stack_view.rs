@@ -134,8 +134,9 @@ impl StackView {
     }
 
     /// Remove the top-most layer.
-    pub fn pop_layer(&mut self) {
-        self.layers.pop();
+    pub fn pop_layer(&mut self) -> Option<Box<View>> {
+        self.layers.pop()
+            .map(|child| child.view)
     }
 
     /// Computes the offset of the current top view.
