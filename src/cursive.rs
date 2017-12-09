@@ -393,10 +393,12 @@ impl Cursive {
         self.screen_mut().add_fullscreen_layer(view);
     }
 
-    /// Convenient method to remove a layer from the current screen.
-    pub fn pop_layer(&mut self) {
-        self.screen_mut().pop_layer();
+    /// Convenient method to remove a layer from the current screen. The removed layer is returned,
+    /// if there was any.
+    pub fn pop_layer(&mut self) -> Option<Box<View>> {
+        let popped = self.screen_mut().pop_layer();
         self.clear();
+        popped
     }
 
     // Handles a key event when it was ignored by the current view

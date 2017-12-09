@@ -106,14 +106,15 @@ impl StackView {
     }
 
     /// Adds a view on top of the stack.
-    pub fn add_layer_at<T>(&mut self, position: Position, view: T)
+    pub fn add_layer_at<V, T>(&mut self, position: Position, view: T)
     where
-        T: 'static + View,
+        V: View + 'static,
+        T: Into<Box<V>>,
     {
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
             view: Box::new(
-                ShadowView::new(Layer::new(view))
+                ShadowView::new(Layer::new(*view.into()))
                     .top_padding(position.y == Offset::Center)
                     .left_padding(position.x == Offset::Center),
             ),
@@ -133,10 +134,10 @@ impl StackView {
         self.with(|s| s.add_layer_at(position, view))
     }
 
-    /// Remove the top-most layer.
+    /// Attempts to remove the top-most layer, returning it if there was one.
     pub fn pop_layer(&mut self) -> Option<Box<View>> {
         self.layers.pop()
-            .map(|child| child.view)
+            .map(|child| { child.view })
     }
 
     /// Computes the offset of the current top view.
