@@ -138,6 +138,19 @@ impl StackView {
         self.layers.pop();
     }
 
+    /// Moves the bottom layer of the stack to be on the top.
+    pub fn rotate_down(&mut self) {
+        let item = self.layers.remove(0);
+        self.layers.push(item);
+    }
+
+    /// Moves the top layer of the stack to be on the bottom.
+    pub fn rotate_up(&mut self) {
+        let item = self.layers.pop()
+            .expect("rotate_up expects there to be at least one item on top of the StackView");
+        self.layers.insert(0, item);
+    }
+
     /// Computes the offset of the current top view.
     pub fn offset(&self) -> Vec2 {
         let mut previous = Vec2::zero();
