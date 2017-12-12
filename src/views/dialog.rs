@@ -174,11 +174,13 @@ impl Dialog {
     }
 
     /// Sets the horizontal position of the title in the dialog.
+    /// The default position is `HAlign::Center`
     pub fn title_position(self, align: HAlign) -> Self {
         self.with(|s| s.set_title_position(align))
     }
 
     /// Sets the horizontal position of the title in the dialog.
+    /// The default position is `HAlign::Center`
     pub fn set_title_position(&mut self, align: HAlign) {
         self.title_position = align;
     }
