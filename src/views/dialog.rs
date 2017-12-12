@@ -49,6 +49,9 @@ pub struct Dialog {
     // Possibly empty title.
     title: String,
 
+    // Where to put the title position
+    title_position: HAlign,
+
     // The actual inner view.
     content: SizedView<Box<View>>,
 
@@ -85,6 +88,7 @@ impl Dialog {
             content: SizedView::new(Box::new(view)),
             buttons: Vec::new(),
             title: String::new(),
+            title_position: HAlign::Center,
             focus: Focus::Content,
             padding: Vec4::new(1, 1, 0, 0),
             borders: Vec4::new(1, 1, 1, 1),
@@ -167,6 +171,18 @@ impl Dialog {
     /// Sets the title of the dialog.
     pub fn set_title<S: Into<String>>(&mut self, label: S) {
         self.title = label.into();
+    }
+
+    /// Sets the horizontal position of the title in the dialog.
+    /// The default position is `HAlign::Center`
+    pub fn title_position(self, align: HAlign) -> Self {
+        self.with(|s| s.set_title_position(align))
+    }
+
+    /// Sets the horizontal position of the title in the dialog.
+    /// The default position is `HAlign::Center`
+    pub fn set_title_position(&mut self, align: HAlign) {
+        self.title_position = align;
     }
 
     /// Sets the padding in the dialog (around content and buttons).
@@ -348,7 +364,8 @@ impl Dialog {
             if len + 4 > printer.size.x {
                 return;
             }
-            let x = (printer.size.x - len) / 2;
+            let spacing = 3; //minimum distance to borders
+            let x = spacing + self.title_position.get_offset(len, printer.size.x - 2 * spacing);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
