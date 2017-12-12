@@ -173,7 +173,7 @@ impl<T> Canvas<T> {
     }
 }
 
-impl<T> View for Canvas<T> {
+impl<T: 'static> View for Canvas<T> {
     fn draw(&self, printer: &Printer) {
         (self.draw)(&self.state, printer);
     }

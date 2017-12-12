@@ -14,7 +14,7 @@ use view::{Selector, View};
 /// `with_view_mut` for you.
 ///
 /// [`wrap_impl!`]: ../macro.wrap_impl.html
-pub trait ViewWrapper {
+pub trait ViewWrapper: 'static {
     /// Type that this view wraps.
     type V: View + ?Sized;
 
@@ -96,7 +96,7 @@ pub trait ViewWrapper {
 // Some types easily implement ViewWrapper.
 // This includes Box<T: View>
 use std::ops::{Deref, DerefMut};
-impl<U: View + ?Sized, T: Deref<Target = U> + DerefMut> ViewWrapper for T {
+impl<U: View + ?Sized, T: Deref<Target = U> + DerefMut + 'static> ViewWrapper for T {
     type V = U;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>

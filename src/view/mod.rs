@@ -66,7 +66,7 @@ use vec::Vec2;
 use views::IdView;
 
 /// Main trait defining a view behaviour.
-pub trait View {
+pub trait View: Any {
     /// Called when a key was pressed.
     ///
     /// Default implementation just ignores it.

@@ -1,6 +1,7 @@
 use owning_ref::{OwningHandle, RcRef};
 use std::any::Any;
 use std::cell::{RefCell, RefMut};
+use std::ops::DerefMut;
 use std::rc::Rc;
 use view::{Selector, View, ViewWrapper};
 
@@ -69,18 +70,14 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
                 // Whoops! Abort! Undo!
                 self.view = rc;
                 Err(self)
-            },
-            Ok(cell) => {
-                Ok(cell.into_inner())
             }
+            Ok(cell) => Ok(cell.into_inner()),
         }
     }
 
     // Some for<'b> weirdness here to please the borrow checker gods...
     fn wrap_call_on_any<'a>(
-        &mut self,
-        selector: &Selector,
-        mut callback: BoxedCallback<'a>,
+        &mut self, selector: &Selector, mut callback: BoxedCallback<'a>
     ) {
         match selector {
             &Selector::Id(id) if id == self.id => callback(self),
@@ -88,7 +85,7 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
                 self.view
                     .try_borrow_mut()
                     .ok()
-                    .map(|mut v| v.call_on_any(s, callback));
+                    .map(|mut v| v.deref_mut().call_on_any(s, callback));
             }
         }
     }
@@ -99,7 +96,7 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
             s => self.view
                 .try_borrow_mut()
                 .map_err(|_| ())
-                .and_then(|mut v| v.focus_view(s)),
+                .and_then(|mut v| v.deref_mut().focus_view(s)),
         }
     }
 }
