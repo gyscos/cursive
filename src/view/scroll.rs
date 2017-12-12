@@ -8,7 +8,7 @@ use vec::Vec2;
 ///
 /// You're not supposed to use this directly,
 /// but it can be helpful if you create your own Views.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ScrollBase {
     /// First line visible
     pub start_line: usize,
@@ -36,6 +36,7 @@ pub struct ScrollBase {
 }
 
 /// Defines the scrolling behaviour on content or size change
+#[derive(Debug)]
 pub enum ScrollStrategy {
     /// Keeps the same row number
     KeepRow,

@@ -10,6 +10,7 @@ use vec::Vec2;
 use view::{ScrollBase, ScrollStrategy, SizeCache, View};
 
 /// A simple view showing a fixed text
+#[derive(Debug)]
 pub struct TextView {
     content: String,
     rows: Vec<Row>,

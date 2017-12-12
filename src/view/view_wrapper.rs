@@ -34,6 +34,16 @@ pub trait ViewWrapper {
     where
         F: FnOnce(&mut Self::V) -> R;
 
+
+    /// Attempts to retrieve the inner view.
+    fn into_inner(self) -> Result<Self::V, Self>
+    where
+        Self: Sized,
+        Self::V: Sized,
+    {
+        Err(self)
+    }
+
     /// Wraps the `draw` method.
     fn wrap_draw(&self, printer: &Printer) {
         self.with_view(|v| v.draw(printer));
@@ -64,7 +74,9 @@ pub trait ViewWrapper {
 
     /// Wraps the `find` method.
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
+        &mut self,
+        selector: &Selector,
+        callback: Box<FnMut(&mut Any) + 'a>,
     ) {
         self.with_view_mut(|v| v.call_on_any(selector, callback));
     }
@@ -125,7 +137,9 @@ impl<T: ViewWrapper> View for T {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
+        &mut self,
+        selector: &Selector,
+        callback: Box<FnMut(&mut Any) + 'a>,
     ) {
         self.wrap_call_on_any(selector, callback)
     }
@@ -175,6 +189,10 @@ macro_rules! wrap_impl {
             where F: FnOnce(&mut Self::V) -> R
         {
             Some(f(&mut self.$v))
+        }
+
+        fn into_inner(self) -> Result<Self::V, Self> where Self::V: Sized {
+            Ok(self.$v)
         }
     };
 }

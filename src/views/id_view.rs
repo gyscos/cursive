@@ -60,9 +60,27 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
         self.view.try_borrow_mut().ok().map(|mut v| f(&mut *v))
     }
 
+    fn into_inner(mut self) -> Result<Self::V, Self>
+    where
+        Self::V: Sized,
+    {
+        match Rc::try_unwrap(self.view) {
+            Err(rc) => {
+                // Whoops! Abort! Undo!
+                self.view = rc;
+                Err(self)
+            },
+            Ok(cell) => {
+                Ok(cell.into_inner())
+            }
+        }
+    }
+
     // Some for<'b> weirdness here to please the borrow checker gods...
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: BoxedCallback<'a>
+        &mut self,
+        selector: &Selector,
+        mut callback: BoxedCallback<'a>,
     ) {
         match selector {
             &Selector::Id(id) if id == self.id => callback(self),

@@ -4,6 +4,7 @@ use vec::Vec2;
 use view::{View, ViewWrapper};
 
 /// Draws a border around a wrapped view.
+#[derive(Debug)]
 pub struct Panel<V: View> {
     view: V,
 }
