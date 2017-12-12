@@ -362,11 +362,8 @@ impl Dialog {
             if len + 4 > printer.size.x {
                 return;
             }
-            let x = match self.title_position {
-                HAlign::Left => 3,
-                HAlign::Center => (printer.size.x - len) / 2,
-                HAlign::Right => printer.size.x - len - 3,
-            };
+            let spacing = 3; //minimum distance to borders
+            let x = spacing + self.title_position.get_offset(len, printer.size.x - 2 * spacing);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
