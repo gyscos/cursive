@@ -9,7 +9,7 @@ use cursive::direction::Direction;
 use cursive::event::{Event, EventResult, MouseButton, MouseEvent};
 use cursive::theme::{BaseColor, Color, ColorStyle};
 use cursive::vec::Vec2;
-use cursive::views::{Button, Dialog, LinearLayout, SelectView, Panel};
+use cursive::views::{Button, Dialog, LinearLayout, Panel, SelectView};
 
 fn main() {
     let mut siv = Cursive::new();
@@ -285,4 +285,11 @@ fn new_game(siv: &mut Cursive, options: game::Options) {
                 s.pop_layer();
             }),
     );
+
+    siv.add_layer(Dialog::info(
+        "Controls:
+Reveal cell:                  left click
+Mark as mine:                 right-click
+Reveal nearby unmarked cells: middle-click",
+    ));
 }
