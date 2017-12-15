@@ -39,8 +39,73 @@ impl Placement {
     }
 }
 
+// A child view can be wrapped in multiple ways.
+enum ChildWrapper<T: View> {
+    // Some views include a shadow around.
+    Shadow(ShadowView<Layer<T>>),
+    // Some views don't (fullscreen views mostly)
+    Plain(Layer<T>),
+}
+
+// TODO: use macros to make this less ugly?
+impl <T: View> View for ChildWrapper<T> {
+
+    fn draw(&self, printer: &Printer) {
+        match *self {
+            ChildWrapper::Shadow(ref v) => v.draw(printer),
+            ChildWrapper::Plain(ref v) => v.draw(printer),
+        }
+    }
+
+    fn on_event(&mut self, event: Event) -> EventResult {
+        match *self {
+            ChildWrapper::Shadow(ref mut v) => v.on_event(event),
+            ChildWrapper::Plain(ref mut v) => v.on_event(event),
+        }
+    }
+
+    fn layout(&mut self, size: Vec2) {
+        match *self {
+            ChildWrapper::Shadow(ref mut v) => v.layout(size),
+            ChildWrapper::Plain(ref mut v) => v.layout(size),
+        }
+    }
+
+    fn required_size(&mut self, size: Vec2) -> Vec2 {
+        match *self {
+            ChildWrapper::Shadow(ref mut v) => v.required_size(size),
+            ChildWrapper::Plain(ref mut v) => v.required_size(size),
+        }
+    }
+
+    fn take_focus(&mut self, source: Direction) -> bool {
+        match *self {
+            ChildWrapper::Shadow(ref mut v) => v.take_focus(source),
+            ChildWrapper::Plain(ref mut v) => v.take_focus(source),
+        }
+    }
+
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector,
+        callback: Box<FnMut(&mut Any) + 'a>,
+    ) {
+        match *self {
+            ChildWrapper::Shadow(ref mut v) => v.call_on_any(selector, callback),
+            ChildWrapper::Plain(ref mut v) => v.call_on_any(selector, callback),
+        }
+    }
+
+    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        match *self {
+            ChildWrapper::Shadow(ref mut v) => v.focus_view(selector),
+            ChildWrapper::Plain(ref mut v) => v.focus_view(selector),
+        }
+    }
+
+}
+
 struct Child {
-    view: Box<View>,
+    view: ChildWrapper<Box<View>>,
     size: Vec2,
     placement: Placement,
 
@@ -69,8 +134,9 @@ impl StackView {
     where
         T: 'static + View,
     {
+        let boxed: Box<View> = Box::new(view);
         self.layers.push(Child {
-            view: Box::new(Layer::new(view)),
+            view: ChildWrapper::Plain(Layer::new(boxed)),
             size: Vec2::zero(),
             placement: Placement::Fullscreen,
             virgin: true,
@@ -110,10 +176,11 @@ impl StackView {
     where
         T: 'static + View,
     {
+        let boxed: Box<View> = Box::new(view);
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
-            view: Box::new(
-                ShadowView::new(Layer::new(view))
+            view: ChildWrapper::Shadow(
+                ShadowView::new(Layer::new(boxed))
                     .top_padding(position.y == Offset::Center)
                     .left_padding(position.x == Offset::Center),
             ),
