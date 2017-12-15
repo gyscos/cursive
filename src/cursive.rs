@@ -394,9 +394,10 @@ impl Cursive {
     }
 
     /// Convenient method to remove a layer from the current screen.
-    pub fn pop_layer(&mut self) {
-        self.screen_mut().pop_layer();
+    pub fn pop_layer(&mut self) -> Option<Box<View>> {
+        let result = self.screen_mut().pop_layer();
         self.clear();
+        result
     }
 
     // Handles a key event when it was ignored by the current view

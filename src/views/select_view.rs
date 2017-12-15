@@ -152,12 +152,14 @@ impl<T: 'static> SelectView<T> {
     /// The item currently selected will be given to the callback.
     ///
     /// Here, `V` can be `T` itself, or a type that can be borrowed from `T`.
-    pub fn set_on_submit<F, V: ?Sized>(&mut self, cb: F)
+    pub fn set_on_submit<F, R, V: ?Sized>(&mut self, cb: F)
     where
-        F: Fn(&mut Cursive, &V) + 'static,
+        F: 'static + Fn(&mut Cursive, &V) -> R,
         T: Borrow<V>,
     {
-        self.on_submit = Some(Rc::new(move |s, t| cb(s, t.borrow())));
+        self.on_submit = Some(Rc::new(move |s, t| {
+            cb(s, t.borrow());
+        }));
     }
 
     /// Sets a callback to be used when `<Enter>` is pressed.

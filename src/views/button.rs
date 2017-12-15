@@ -27,18 +27,18 @@ pub struct Button {
 
 impl Button {
     /// Creates a new button with the given content and callback.
-    pub fn new<F, S: Into<String>>(label: S, cb: F) -> Self
+    pub fn new<F, R, S: Into<String>>(label: S, cb: F) -> Self
     where
-        F: Fn(&mut Cursive) + 'static,
+        F: 'static + Fn(&mut Cursive) -> R,
     {
         let label = label.into();
         Self::new_raw(format!("<{}>", label), cb)
     }
 
     /// Creates a new button without angle brackets.
-    pub fn new_raw<F, S: Into<String>>(label: S, cb: F) -> Self
+    pub fn new_raw<F, R, S: Into<String>>(label: S, cb: F) -> Self
     where
-        F: Fn(&mut Cursive) + 'static,
+        F: 'static + Fn(&mut Cursive) -> R,
     {
         Button {
             label: label.into(),

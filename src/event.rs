@@ -27,8 +27,13 @@ pub struct Callback(Rc<Box<Fn(&mut Cursive)>>);
 
 impl Callback {
     /// Wraps the given function into a `Callback` object.
-    pub fn from_fn<F: Fn(&mut Cursive) + 'static>(f: F) -> Self {
-        Callback(Rc::new(Box::new(f)))
+    pub fn from_fn<F, R>(f: F) -> Self
+    where
+        F: 'static + Fn(&mut Cursive) -> R,
+    {
+        Callback(Rc::new(Box::new(move |siv| {
+            f(siv);
+        })))
     }
 }
 
@@ -68,7 +73,10 @@ pub enum EventResult {
 
 impl EventResult {
     /// Convenient method to create `Consumed(Some(f))`
-    pub fn with_cb<F: 'static + Fn(&mut Cursive)>(f: F) -> Self {
+    pub fn with_cb<F, R>(f: F) -> Self
+    where
+        F: 'static + Fn(&mut Cursive) -> R,
+    {
         EventResult::Consumed(Some(Callback::from_fn(f)))
     }
 
@@ -245,9 +253,9 @@ impl MouseEvent {
     /// Returns `None` if `self` is `WheelUp` or `WheelDown`.
     pub fn button(&self) -> Option<MouseButton> {
         match *self {
-            MouseEvent::Press(btn) |
-            MouseEvent::Release(btn) |
-            MouseEvent::Hold(btn) => Some(btn),
+            MouseEvent::Press(btn)
+            | MouseEvent::Release(btn)
+            | MouseEvent::Hold(btn) => Some(btn),
             _ => None,
         }
     }
@@ -257,9 +265,9 @@ impl MouseEvent {
     /// This includes `Press`, `WheelUp` and `WheelDown`.
     pub fn grabs_focus(self) -> bool {
         match self {
-            MouseEvent::Press(_) |
-            MouseEvent::WheelUp |
-            MouseEvent::WheelDown => true,
+            MouseEvent::Press(_)
+            | MouseEvent::WheelUp
+            | MouseEvent::WheelDown => true,
             _ => false,
         }
     }

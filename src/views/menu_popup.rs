@@ -1,5 +1,3 @@
-
-
 use Cursive;
 use Printer;
 use With;
@@ -376,8 +374,8 @@ impl View for MenuPopup {
                     }
                 }
             }
-            Event::Key(Key::Esc) |
-            Event::Mouse {
+            Event::Key(Key::Esc)
+            | Event::Mouse {
                 event: MouseEvent::Press(_),
                 ..
             } => {

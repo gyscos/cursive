@@ -25,9 +25,9 @@ struct ChildButton {
 }
 
 impl ChildButton {
-    pub fn new<F, S: Into<String>>(label: S, cb: F) -> Self
+    pub fn new<F, R, S: Into<String>>(label: S, cb: F) -> Self
     where
-        F: Fn(&mut Cursive) + 'static,
+        F: 'static + Fn(&mut Cursive) -> R,
     {
         ChildButton {
             button: SizedView::new(Button::new(label, cb)),
@@ -125,9 +125,9 @@ impl Dialog {
     /// Adds a button to the dialog with the given label and callback.
     ///
     /// Consumes and returns self for easy chaining.
-    pub fn button<F, S: Into<String>>(mut self, label: S, cb: F) -> Self
+    pub fn button<F, R, S: Into<String>>(mut self, label: S, cb: F) -> Self
     where
-        F: Fn(&mut Cursive) + 'static,
+        F: 'static + Fn(&mut Cursive) -> R,
     {
         self.buttons.push(ChildButton::new(label, cb));
 
@@ -158,7 +158,7 @@ impl Dialog {
 
     /// Shortcut method to add a button that will dismiss the dialog.
     pub fn dismiss_button<S: Into<String>>(self, label: S) -> Self {
-        self.button(label, |s| s.screen_mut().pop_layer())
+        self.button(label, |s| s.pop_layer())
     }
 
     /// Sets the title of the dialog.
@@ -226,9 +226,9 @@ impl Dialog {
         ) {
             EventResult::Ignored if !self.buttons.is_empty() => {
                 match event {
-                    Event::Key(Key::Down) |
-                    Event::Key(Key::Tab) |
-                    Event::Shift(Key::Tab) => {
+                    Event::Key(Key::Down)
+                    | Event::Key(Key::Tab)
+                    | Event::Shift(Key::Tab) => {
                         // Default to leftmost button when going down.
                         self.focus = Focus::Button(0);
                         EventResult::Consumed(None)
@@ -365,7 +365,9 @@ impl Dialog {
                 return;
             }
             let spacing = 3; //minimum distance to borders
-            let x = spacing + self.title_position.get_offset(len, printer.size.x - 2 * spacing);
+            let x = spacing
+                + self.title_position
+                    .get_offset(len, printer.size.x - 2 * spacing);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");

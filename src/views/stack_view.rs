@@ -6,7 +6,7 @@ use std::any::Any;
 use std::ops::Deref;
 use theme::ColorStyle;
 use vec::Vec2;
-use view::{Offset, Position, Selector, View};
+use view::{Offset, Position, Selector, View, ViewWrapper};
 use views::{Layer, ShadowView};
 
 /// Simple stack of views.
@@ -47,9 +47,20 @@ enum ChildWrapper<T: View> {
     Plain(Layer<T>),
 }
 
-// TODO: use macros to make this less ugly?
-impl <T: View> View for ChildWrapper<T> {
+impl<T: View> ChildWrapper<T> {
+    fn unwrap(self) -> T {
+        match self {
+            // ShadowView::into_inner and Layer::into_inner can never fail.
+            ChildWrapper::Shadow(shadow) => {
+                shadow.into_inner().ok().unwrap().into_inner().ok().unwrap()
+            }
+            ChildWrapper::Plain(layer) => layer.into_inner().ok().unwrap(),
+        }
+    }
+}
 
+// TODO: use macros to make this less ugly?
+impl<T: View> View for ChildWrapper<T> {
     fn draw(&self, printer: &Printer) {
         match *self {
             ChildWrapper::Shadow(ref v) => v.draw(printer),
@@ -86,12 +97,15 @@ impl <T: View> View for ChildWrapper<T> {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector,
-        callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
     ) {
         match *self {
-            ChildWrapper::Shadow(ref mut v) => v.call_on_any(selector, callback),
-            ChildWrapper::Plain(ref mut v) => v.call_on_any(selector, callback),
+            ChildWrapper::Shadow(ref mut v) => {
+                v.call_on_any(selector, callback)
+            }
+            ChildWrapper::Plain(ref mut v) => {
+                v.call_on_any(selector, callback)
+            }
         }
     }
 
@@ -101,7 +115,6 @@ impl <T: View> View for ChildWrapper<T> {
             ChildWrapper::Plain(ref mut v) => v.focus_view(selector),
         }
     }
-
 }
 
 struct Child {
@@ -201,8 +214,8 @@ impl StackView {
     }
 
     /// Remove the top-most layer.
-    pub fn pop_layer(&mut self) {
-        self.layers.pop();
+    pub fn pop_layer(&mut self) -> Option<Box<View>> {
+        self.layers.pop().map(|child| child.view.unwrap())
     }
 
     /// Computes the offset of the current top view.

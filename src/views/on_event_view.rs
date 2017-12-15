@@ -18,7 +18,7 @@ use view::{View, ViewWrapper};
 ///
 /// "Inner" callbacks ([`on_event_inner`] and [`on_pre_event_inner`]) are given
 /// a reference to the inner wrapped view (but not to the `Cursive` root). They
-/// can then return another callback, taking only a `&mut Cursive` root as 
+/// can then return another callback, taking only a `&mut Cursive` root as
 /// argument.
 ///
 /// "Simple" callbacks ([`on_event`] and [`on_pre_event`]) skip this first
@@ -77,10 +77,10 @@ impl<T: View> OnEventView<T> {
     /// Registers a callback when the given event is ignored by the child.
     ///
     /// Chainable variant.
-    pub fn on_event<F, E>(self, event: E, cb: F) -> Self
+    pub fn on_event<F, R, E>(self, event: E, cb: F) -> Self
     where
         E: Into<Event>,
-        F: Fn(&mut Cursive) + 'static,
+        F: 'static + Fn(&mut Cursive) -> R,
     {
         self.with(|s| s.set_on_event(event, cb))
     }
@@ -90,10 +90,10 @@ impl<T: View> OnEventView<T> {
     /// The child will never receive this event.
     ///
     /// Chainable variant.
-    pub fn on_pre_event<F, E>(self, event: E, cb: F) -> Self
+    pub fn on_pre_event<F, R, E>(self, event: E, cb: F) -> Self
     where
         E: Into<Event>,
-        F: Fn(&mut Cursive) + 'static,
+        F: 'static + Fn(&mut Cursive) -> R,
     {
         self.with(|s| s.set_on_pre_event(event, cb))
     }
@@ -132,10 +132,10 @@ impl<T: View> OnEventView<T> {
     }
 
     /// Registers a callback when the given event is ignored by the child.
-    pub fn set_on_event<F, E>(&mut self, event: E, cb: F)
+    pub fn set_on_event<F, R, E>(&mut self, event: E, cb: F)
     where
         E: Into<Event>,
-        F: Fn(&mut Cursive) + 'static,
+        F: Fn(&mut Cursive) -> R + 'static,
     {
         let cb = Callback::from_fn(cb);
         let action =
@@ -147,12 +147,13 @@ impl<T: View> OnEventView<T> {
     /// Registers a callback when the given event is received.
     ///
     /// The child will never receive this event.
-    pub fn set_on_pre_event<F, E>(&mut self, event: E, cb: F)
+    pub fn set_on_pre_event<F, R, E>(&mut self, event: E, cb: F)
     where
         E: Into<Event>,
-        F: Fn(&mut Cursive) + 'static,
+        F: 'static + Fn(&mut Cursive) -> R,
     {
         let cb = Callback::from_fn(cb);
+        // We want to clone the Callback every time we call the closure
         let action =
             move |_: &mut T| Some(EventResult::Consumed(Some(cb.clone())));
 
