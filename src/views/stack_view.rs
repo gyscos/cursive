@@ -12,6 +12,7 @@ use views::{Layer, ShadowView};
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
 pub struct StackView {
+    // Store layers from back to front.
     layers: Vec<Child>,
     last_size: Vec2,
 }
@@ -19,6 +20,15 @@ pub struct StackView {
 enum Placement {
     Floating(Position),
     Fullscreen,
+}
+
+/// Identifies a layer in a `StackView`.
+#[derive(Clone, Copy, Debug)]
+pub enum LayerPosition {
+    /// Starts from the back (bottom) of the stack.
+    FromBack(usize),
+    /// Starts from the front (top) of the stack.
+    FromFront(usize),
 }
 
 impl Placement {
@@ -235,6 +245,44 @@ impl StackView {
     /// Returns the size for each layer in this view.
     pub fn layer_sizes(&self) -> Vec<Vec2> {
         self.layers.iter().map(|layer| layer.size).collect()
+    }
+
+    fn get_index(&self, pos: LayerPosition) -> usize {
+        match pos {
+            LayerPosition::FromBack(i) => i,
+            LayerPosition::FromFront(i) => self.layers.len() - i - 1,
+        }
+    }
+
+    /// Moves a layer to a new position in the stack.
+    /// 
+    /// This only affects the elevation of a layer (whether it is drawn over
+    /// or under other views).
+    pub fn move_layer(&mut self, from: LayerPosition, to: LayerPosition) {
+        // Convert relative positions to indices in the array
+        let from_i = self.get_index(from);
+        let to_i = self.get_index(to);
+
+        let removed = self.layers.remove(from_i);
+
+        // Shift the position if needed
+        let to_i = if to_i > from_i {
+            to_i - 1
+        } else {
+            to_i
+        };
+
+        self.layers.insert(to_i, removed);
+    }
+
+    /// Brings the given view to the front of the stack.
+    pub fn move_to_front(&mut self, layer: LayerPosition) {
+        self.move_layer(layer, LayerPosition::FromFront(0));
+    }
+
+    /// Pushes the given view to the back of the stack.
+    pub fn move_to_back(&mut self, layer: LayerPosition) {
+        self.move_layer(layer, LayerPosition::FromBack(0));
     }
 }
 

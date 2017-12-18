@@ -82,7 +82,7 @@ pub use self::select_view::SelectView;
 pub use self::shadow_view::ShadowView;
 pub use self::sized_view::SizedView;
 pub use self::slider_view::SliderView;
-pub use self::stack_view::StackView;
+pub use self::stack_view::{StackView, LayerPosition};
 pub use self::text_area::TextArea;
 pub use self::text_view::TextView;
 pub use self::tracked_view::TrackedView;
