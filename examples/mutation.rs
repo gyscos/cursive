@@ -14,7 +14,7 @@ fn show_popup(siv: &mut Cursive) {
                 // Look for a view tagged "text".
                 // We _know_ it's there, so unwrap it.
                 s.call_on_id("text", |view: &mut TextView| {
-                    let content = reverse(view.get_content());
+                    let content = reverse(&view.get_content());
                     view.set_content(content);
                 });
             })
@@ -41,7 +41,6 @@ fn main() {
         OnEventView::new(TextView::new(content).with_id("text"))
             .on_event('p', |s| show_popup(s)),
     );
-
 
     siv.run();
 }

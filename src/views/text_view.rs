@@ -4,15 +4,104 @@ use XY;
 use align::*;
 use direction::Direction;
 use event::*;
+use owning_ref::{ArcRef, OwningHandle};
+use std::ops::Deref;
+use std::sync::{Mutex, MutexGuard};
+use std::sync::Arc;
 use unicode_width::UnicodeWidthStr;
 use utils::{LinesIterator, Row};
 use vec::Vec2;
 use view::{ScrollBase, ScrollStrategy, SizeCache, View};
 
-/// A simple view showing a fixed text
-#[derive(Debug)]
-pub struct TextView {
+/// Provides access to the content of a TextView.
+#[derive(Clone)]
+pub struct TextContent {
+    content: Arc<Mutex<TextContentInner>>,
+}
+
+impl TextContent {
+    /// Creates a new text content around the given value.
+    pub fn new<S: Into<String>>(content: S) -> Self {
+        TextContent {
+            content: Arc::new(Mutex::new(TextContentInner {
+                content: content.into(),
+                size_cache: None,
+            })),
+        }
+    }
+}
+
+/// A reference to the text content.
+///
+/// This keeps the content locked. Do not store this!
+pub struct TextContentRef {
+    handle: OwningHandle<
+        ArcRef<Mutex<TextContentInner>>,
+        MutexGuard<'static, TextContentInner>,
+    >,
+}
+
+impl Deref for TextContentRef {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.handle.content
+    }
+}
+
+impl TextContent {
+    /// Replaces the content with the given value.
+    pub fn set_content<S: Into<String>>(&mut self, content: S) {
+        self.with_content(|c| *c = content.into());
+    }
+
+    /// Append `content` to the end of a `TextView`.
+    pub fn append_content(&mut self, content: &str) {
+        self.with_content(|c| c.push_str(content));
+    }
+
+    /// Returns a reference to the content.
+    ///
+    /// This locks the data while the returned value is alive,
+    /// so don't keep it too long.
+    pub fn get_content(&self) -> TextContentRef {
+        TextContentInner::get_content(&self.content)
+    }
+
+    fn with_content<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut String),
+    {
+        let mut lock = self.content.lock().unwrap();
+
+        f(&mut lock.content);
+
+        lock.size_cache = None;
+    }
+}
+
+struct TextContentInner {
     content: String,
+    size_cache: Option<XY<SizeCache>>,
+}
+
+impl TextContentInner {
+    fn get_content(content: &Arc<Mutex<TextContentInner>>) -> TextContentRef {
+        let arc_ref: ArcRef<Mutex<TextContentInner>> =
+            ArcRef::new(Arc::clone(content));
+
+        TextContentRef {
+            handle: OwningHandle::new_with_fn(arc_ref, |mutex| unsafe {
+                (*mutex).lock().unwrap()
+            }),
+        }
+    }
+}
+
+/// A simple view showing a fixed text
+pub struct TextView {
+    // content: String,
+    content: Arc<Mutex<TextContentInner>>,
     rows: Vec<Row>,
 
     align: Align,
@@ -23,7 +112,6 @@ pub struct TextView {
     // ScrollBase make many scrolling-related things easier
     scrollbase: ScrollBase,
     scroll_strategy: ScrollStrategy,
-    size_cache: Option<XY<SizeCache>>,
     last_size: Vec2,
     width: Option<usize>,
 }
@@ -40,15 +128,18 @@ fn strip_last_newline(content: &str) -> &str {
 impl TextView {
     /// Creates a new TextView with the given content.
     pub fn new<S: Into<String>>(content: S) -> Self {
-        let content = content.into();
+        TextView::new_with_content(TextContent::new(content))
+    }
+
+    /// Creates a new TextView using the given `Arc<Mutex<String>>`.
+    pub fn new_with_content(content: TextContent) -> Self {
         TextView {
-            content: content,
+            content: Arc::clone(&content.content),
             rows: Vec::new(),
             scrollable: true,
             scrollbase: ScrollBase::new(),
             scroll_strategy: ScrollStrategy::KeepRow,
             align: Align::top_left(),
-            size_cache: None,
             last_size: Vec2::zero(),
             width: None,
         }
@@ -114,23 +205,35 @@ impl TextView {
     /// Replace the text in this view.
     pub fn set_content<S: Into<String>>(&mut self, content: S) {
         let content = content.into();
-        self.content = content;
+        self.content.lock().unwrap().content = content;
         self.invalidate();
     }
 
-    /// Append content to the end of a TextView.
+    /// Append `content` to the end of a `TextView`.
     pub fn append_content(&mut self, content: &str) {
-        self.content.push_str(content);
+        self.content.lock().unwrap().content.push_str(content);
         self.invalidate();
     }
 
     /// Returns the current text in this view.
-    pub fn get_content(&self) -> &str {
-        &self.content
+    pub fn get_content(&self) -> TextContentRef {
+        TextContentInner::get_content(&self.content)
+    }
+
+    /// Returns a shared reference to the content, allowing content mutation.
+    pub fn get_shared_content(&mut self) -> TextContent {
+        // We take &mut here without really needing it,
+        // because it sort of "makes sense".
+
+        TextContent {
+            content: Arc::clone(&self.content),
+        }
     }
 
     fn is_cache_valid(&self, size: Vec2) -> bool {
-        match self.size_cache {
+        let content = self.content.lock().unwrap();
+
+        match content.size_cache {
             None => false,
             Some(ref last) => last.x.accept(size.x) && last.y.accept(size.y),
         }
@@ -169,13 +272,14 @@ impl TextView {
     // This must be non-destructive, as it may be called
     // multiple times during layout.
     fn compute_rows(&mut self, size: Vec2) {
+        let mut content = self.content.lock().unwrap();
         if self.is_cache_valid(size) {
             return;
         }
 
         // Completely bust the cache
         // Just in case we fail, we don't want to leave a bad cache.
-        self.size_cache = None;
+        content.size_cache = None;
 
         if size.x == 0 {
             // Nothing we can do at this point.
@@ -185,7 +289,7 @@ impl TextView {
         // First attempt: naively hope that we won't need a scrollbar_width
         // (This means we try to use the entire available width for text).
         self.rows =
-            LinesIterator::new(strip_last_newline(&self.content), size.x)
+            LinesIterator::new(strip_last_newline(&content.content), size.x)
                 .collect();
 
         // Width taken by the scrollbar. Without a scrollbar, it's 0.
@@ -201,9 +305,10 @@ impl TextView {
                 None => return,
             };
 
-            self.rows = LinesIterator::new(&self.content, available).collect();
+            self.rows =
+                LinesIterator::new(&content.content, available).collect();
 
-            if self.rows.is_empty() && !self.content.is_empty() {
+            if self.rows.is_empty() && !content.content.is_empty() {
                 // We have some content, we we didn't find any row for it?
                 // This probably means we couldn't even make a single row
                 // (for instance we only have 1 column and we have a wide
@@ -227,17 +332,16 @@ impl TextView {
             my_size.y = size.y;
         }
 
-
         // Build a fresh cache.
-        self.size_cache = Some(SizeCache::build(my_size, size));
+        content.size_cache = Some(SizeCache::build(my_size, size));
     }
 
     // Invalidates the cache, so next call will recompute everything.
     fn invalidate(&mut self) {
-        self.size_cache = None;
+        let mut content = self.content.lock().unwrap();
+        content.size_cache = None;
     }
 }
-
 
 impl View for TextView {
     fn draw(&self, printer: &Printer) {
@@ -246,9 +350,11 @@ impl View for TextView {
         let offset = self.align.v.get_offset(h, printer.size.y);
         let printer = &printer.offset((0, offset), true);
 
+        let content = self.content.lock().unwrap();
+
         self.scrollbase.draw(printer, |printer, i| {
             let row = &self.rows[i];
-            let text = &self.content[row.start..row.end];
+            let text = &content.content[row.start..row.end];
             let l = text.width();
             let x = self.align.h.get_offset(l, printer.size.x);
             printer.print((x, 0), text);
@@ -324,7 +430,8 @@ impl View for TextView {
     }
 
     fn needs_relayout(&self) -> bool {
-        self.size_cache.is_none()
+        let content = self.content.lock().unwrap();
+        content.size_cache.is_none()
     }
 
     fn required_size(&mut self, size: Vec2) -> Vec2 {

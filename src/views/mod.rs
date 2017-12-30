@@ -84,5 +84,5 @@ pub use self::sized_view::SizedView;
 pub use self::slider_view::SliderView;
 pub use self::stack_view::{StackView, LayerPosition};
 pub use self::text_area::TextArea;
-pub use self::text_view::TextView;
+pub use self::text_view::{TextView, TextContent, TextContentRef};
 pub use self::tracked_view::TrackedView;

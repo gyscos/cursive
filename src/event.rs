@@ -319,6 +319,8 @@ pub enum Event {
     /// An unknown event was received.
     Unknown(Vec<u8>),
 
+    // Maybe add a `Custom(Rc<Any>)` ?
+
     // Having a doc-hidden event prevents people from having exhaustive
     // matches, allowing us to add events in the future.
     #[doc(hidden)]
