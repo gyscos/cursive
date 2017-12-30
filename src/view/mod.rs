@@ -49,7 +49,6 @@ mod scroll;
 mod identifiable;
 mod boxable;
 
-
 pub use self::boxable::Boxable;
 pub use self::identifiable::Identifiable;
 pub use self::position::{Offset, Position};
@@ -182,14 +181,15 @@ impl<T: View> Finder for T {
             let result_ref = &mut result;
 
             let mut callback = Some(callback);
-            let callback = |v: &mut Any| if let Some(callback) =
-                callback.take()
-            {
-                if v.is::<V>() {
-                    *result_ref = v.downcast_mut::<V>().map(|v| callback(v));
-                } else if v.is::<IdView<V>>() {
-                    *result_ref = v.downcast_mut::<IdView<V>>()
-                        .and_then(|v| v.with_view_mut(callback));
+            let callback = |v: &mut Any| {
+                if let Some(callback) = callback.take() {
+                    if v.is::<V>() {
+                        *result_ref =
+                            v.downcast_mut::<V>().map(|v| callback(v));
+                    } else if v.is::<IdView<V>>() {
+                        *result_ref = v.downcast_mut::<IdView<V>>()
+                            .and_then(|v| v.with_view_mut(callback));
+                    }
                 }
             };
             self.call_on_any(sel, Box::new(callback));

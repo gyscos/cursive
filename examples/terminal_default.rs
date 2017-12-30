@@ -1,10 +1,8 @@
 extern crate cursive;
 
-
 use cursive::Cursive;
 use cursive::theme::{Color, Theme};
 use cursive::views::TextView;
-
 
 fn custom_theme_from_cursive(siv: &Cursive) -> Theme {
     let mut theme = siv.current_theme().clone();

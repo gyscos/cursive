@@ -4,7 +4,6 @@ use cursive::{Cursive, Printer};
 use cursive::event::{Event, EventResult};
 use cursive::traits::*;
 
-
 fn main() {
     let mut siv = Cursive::new();
 

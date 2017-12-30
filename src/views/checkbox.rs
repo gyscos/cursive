@@ -8,7 +8,6 @@ use theme::ColorStyle;
 use vec::Vec2;
 use view::View;
 
-
 /// Checkable box.
 pub struct Checkbox {
     checked: bool,
@@ -116,15 +115,13 @@ impl View for Checkbox {
 
     fn draw(&self, printer: &Printer) {
         if self.enabled {
-            printer.with_selection(
-                printer.focused,
-                |printer| self.draw_internal(printer),
-            );
+            printer.with_selection(printer.focused, |printer| {
+                self.draw_internal(printer)
+            });
         } else {
-            printer.with_color(
-                ColorStyle::Secondary,
-                |printer| self.draw_internal(printer),
-            );
+            printer.with_color(ColorStyle::Secondary, |printer| {
+                self.draw_internal(printer)
+            });
         }
     }
 

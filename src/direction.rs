@@ -198,10 +198,10 @@ impl Absolute {
     /// orientation (ex: `Left` and `Vertical`).
     pub fn relative(self, orientation: Orientation) -> Option<Relative> {
         match (orientation, self) {
-            (Orientation::Horizontal, Absolute::Left) |
-            (Orientation::Vertical, Absolute::Up) => Some(Relative::Front),
-            (Orientation::Horizontal, Absolute::Right) |
-            (Orientation::Vertical, Absolute::Down) => Some(Relative::Back),
+            (Orientation::Horizontal, Absolute::Left)
+            | (Orientation::Vertical, Absolute::Up) => Some(Relative::Front),
+            (Orientation::Horizontal, Absolute::Right)
+            | (Orientation::Vertical, Absolute::Down) => Some(Relative::Back),
             _ => None,
         }
     }

@@ -255,7 +255,7 @@ impl StackView {
     }
 
     /// Moves a layer to a new position in the stack.
-    /// 
+    ///
     /// This only affects the elevation of a layer (whether it is drawn over
     /// or under other views).
     pub fn move_layer(&mut self, from: LayerPosition, to: LayerPosition) {
@@ -266,11 +266,7 @@ impl StackView {
         let removed = self.layers.remove(from_i);
 
         // Shift the position if needed
-        let to_i = if to_i > from_i {
-            to_i - 1
-        } else {
-            to_i
-        };
+        let to_i = if to_i > from_i { to_i - 1 } else { to_i };
 
         self.layers.insert(to_i, removed);
     }
@@ -333,8 +329,11 @@ impl View for StackView {
                 StackPositionIterator::new(self.layers.iter(), printer.size)
                     .enumerate()
             {
-                v.view
-                    .draw(&printer.sub_printer(offset, v.size, i + 1 == last));
+                v.view.draw(&printer.sub_printer(
+                    offset,
+                    v.size,
+                    i + 1 == last,
+                ));
             }
         });
     }

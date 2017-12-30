@@ -73,7 +73,6 @@ impl ListView {
         self.children.is_empty()
     }
 
-
     /// Returns a reference to the children
     pub fn children(&self) -> &[ListChild] {
         &self.children[..]
@@ -155,7 +154,11 @@ impl ListView {
     ) -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
-                let start = if from_focus { self.focus } else { 0 };
+                let start = if from_focus {
+                    self.focus
+                } else {
+                    0
+                };
 
                 Box::new(self.children.iter_mut().enumerate().skip(start))
             }
@@ -364,7 +367,6 @@ impl View for ListView {
             }
             _ => (),
         }
-
 
         // Then: some events can move the focus around.
         self.check_focus_grab(&event);

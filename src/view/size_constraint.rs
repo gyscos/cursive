@@ -25,9 +25,9 @@ impl SizeConstraint {
     /// When `available` is offered to the `BoxView`.
     pub fn available(self, available: usize) -> usize {
         match self {
-            SizeConstraint::Free |
-            SizeConstraint::Full |
-            SizeConstraint::AtLeast(_) => available,
+            SizeConstraint::Free
+            | SizeConstraint::Full
+            | SizeConstraint::AtLeast(_) => available,
             // If the available space is too small, always give in.
             SizeConstraint::Fixed(value) | SizeConstraint::AtMost(value) => {
                 min(value, available)

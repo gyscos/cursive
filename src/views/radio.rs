@@ -100,7 +100,6 @@ pub struct RadioButton<T> {
     label: String,
 }
 
-
 impl<T> RadioButton<T> {
     impl_enabled!(self.enabled);
 
@@ -165,15 +164,13 @@ impl<T: 'static> View for RadioButton<T> {
 
     fn draw(&self, printer: &Printer) {
         if self.enabled {
-            printer.with_selection(
-                printer.focused,
-                |printer| self.draw_internal(printer),
-            );
+            printer.with_selection(printer.focused, |printer| {
+                self.draw_internal(printer)
+            });
         } else {
-            printer.with_color(
-                ColorStyle::Secondary,
-                |printer| self.draw_internal(printer),
-            );
+            printer.with_color(ColorStyle::Secondary, |printer| {
+                self.draw_internal(printer)
+            });
         }
     }
 

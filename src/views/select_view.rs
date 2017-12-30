@@ -175,7 +175,6 @@ impl<T: 'static> SelectView<T> {
         self.with(|s| s.set_on_submit(cb))
     }
 
-
     /// Sets the alignment for this view.
     pub fn align(mut self, align: Align) -> Self {
         self.align = align;

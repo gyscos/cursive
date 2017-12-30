@@ -34,7 +34,6 @@ pub trait ViewWrapper: 'static {
     where
         F: FnOnce(&mut Self::V) -> R;
 
-
     /// Attempts to retrieve the inner view.
     fn into_inner(self) -> Result<Self::V, Self>
     where
@@ -74,9 +73,7 @@ pub trait ViewWrapper: 'static {
 
     /// Wraps the `find` method.
     fn wrap_call_on_any<'a>(
-        &mut self,
-        selector: &Selector,
-        callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
     ) {
         self.with_view_mut(|v| v.call_on_any(selector, callback));
     }
@@ -96,7 +93,8 @@ pub trait ViewWrapper: 'static {
 // Some types easily implement ViewWrapper.
 // This includes Box<T: View>
 use std::ops::{Deref, DerefMut};
-impl<U: View + ?Sized, T: Deref<Target = U> + DerefMut + 'static> ViewWrapper for T {
+impl<U: View + ?Sized, T: Deref<Target = U> + DerefMut + 'static> ViewWrapper
+    for T {
     type V = U;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
@@ -137,9 +135,7 @@ impl<T: ViewWrapper> View for T {
     }
 
     fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector,
-        callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
     ) {
         self.wrap_call_on_any(selector, callback)
     }

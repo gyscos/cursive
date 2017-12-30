@@ -1,5 +1,3 @@
-
-
 use {Cursive, Printer, With};
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key, MouseEvent};
@@ -188,7 +186,6 @@ impl EditView {
         self.style = style;
     }
 
-
     /// Sets the style used for this view.
     ///
     /// When the view is enabled, the style will be reversed.
@@ -278,11 +275,11 @@ impl EditView {
         // Instead, have some generic function immutify()
         // or something that wraps a FnMut closure.
         let callback = RefCell::new(callback);
-        self.set_on_submit(
-            move |s, text| if let Ok(mut f) = callback.try_borrow_mut() {
+        self.set_on_submit(move |s, text| {
+            if let Ok(mut f) = callback.try_borrow_mut() {
                 (&mut *f)(s, text);
-            },
-        );
+            }
+        });
     }
 
     /// Sets a callback to be called when `<Enter>` is pressed.
@@ -516,8 +513,7 @@ impl View for EditView {
                         .next()
                         .expect(&format!(
                             "Found no char at cursor {} in {}",
-                            self.cursor,
-                            &self.content
+                            self.cursor, &self.content
                         ));
                     if self.secret {
                         make_small_stars(selected.width())

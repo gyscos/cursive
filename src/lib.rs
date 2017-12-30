@@ -60,9 +60,9 @@
 #![deny(missing_docs)]
 
 #[macro_use]
-extern crate maplit;
-#[macro_use]
 extern crate log;
+#[macro_use]
+extern crate maplit;
 extern crate num;
 extern crate owning_ref;
 extern crate toml;
@@ -108,7 +108,6 @@ mod utf8;
 
 #[doc(hidden)]
 pub mod backend;
-
 
 pub use cursive::{Cursive, ScreenId};
 pub use printer::Printer;

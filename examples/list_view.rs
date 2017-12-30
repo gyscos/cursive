@@ -17,16 +17,16 @@ fn main() {
                     .child("Name", EditView::new().fixed_width(10))
                     .child(
                         "Receive spam?",
-                        Checkbox::new().on_change(
-                            |s, checked| for name in &["email1", "email2"] {
+                        Checkbox::new().on_change(|s, checked| {
+                            for name in &["email1", "email2"] {
                                 s.call_on_id(name, |view: &mut EditView| {
                                     view.set_enabled(checked)
                                 });
                                 if checked {
                                     s.focus_id("email1").unwrap();
                                 }
-                            },
-                        ),
+                            }
+                        }),
                     )
                     .child(
                         "Email",
@@ -55,11 +55,13 @@ fn main() {
                             .item_str("31-40")
                             .item_str("41+"),
                     )
-                    .with(|list| for i in 0..50 {
-                        list.add_child(
-                            &format!("Item {}", i),
-                            EditView::new(),
-                        );
+                    .with(|list| {
+                        for i in 0..50 {
+                            list.add_child(
+                                &format!("Item {}", i),
+                                EditView::new(),
+                            );
+                        }
                     }),
             ),
     );

@@ -464,7 +464,6 @@ impl Cursive {
         self.running
     }
 
-
     /// Runs the event loop.
     ///
     /// It will wait for user input (key presses)

@@ -1,5 +1,3 @@
-
-
 use Printer;
 use align::HAlign;
 use std::cmp;
@@ -67,7 +65,6 @@ pub struct ProgressBar {
     // TODO: use a Promise instead?
     label_maker: Box<Fn(usize, (usize, usize)) -> String>,
 }
-
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
     if value < min {

@@ -16,7 +16,6 @@ impl<V: View> Panel<V> {
     }
 }
 
-
 impl<V: View> ViewWrapper for Panel<V> {
     wrap_impl!(self.view: V);
 

@@ -1,5 +1,3 @@
-
-
 use {Cursive, Printer, With};
 use align::HAlign;
 use direction::Direction;

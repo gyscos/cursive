@@ -33,6 +33,8 @@ impl TextContent {
 
 /// A reference to the text content.
 ///
+/// It implements `Deref<Target=str>`.
+///
 /// This keeps the content locked. Do not store this!
 pub struct TextContentRef {
     handle: OwningHandle<

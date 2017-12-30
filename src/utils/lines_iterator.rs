@@ -1,5 +1,3 @@
-
-
 use With;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;

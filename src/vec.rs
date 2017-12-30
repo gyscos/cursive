@@ -320,7 +320,6 @@ impl<T: Into<Vec4>> Sub<T> for Vec4 {
     }
 }
 
-
 impl Div<usize> for Vec4 {
     type Output = Vec4;
 

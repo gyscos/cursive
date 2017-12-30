@@ -1,6 +1,5 @@
 //! Makes drawing on ncurses windows easier.
 
-
 use backend::{self, Backend};
 use std::cell::Cell;
 use std::cmp::min;

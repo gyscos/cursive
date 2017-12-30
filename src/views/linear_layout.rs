@@ -192,7 +192,11 @@ impl LinearLayout {
     ) -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
         match source {
             direction::Relative::Front => {
-                let start = if from_focus { self.focus } else { 0 };
+                let start = if from_focus {
+                    self.focus
+                } else {
+                    0
+                };
 
                 Box::new(self.children.iter_mut().enumerate().skip(start))
             }
@@ -346,7 +350,6 @@ impl View for LinearLayout {
         debug!("Ideal sizes: {:?}", ideal_sizes);
         let ideal = self.orientation.stack(ideal_sizes.iter());
         debug!("Ideal result: {:?}", ideal);
-
 
         // Does it fit?
         if ideal.fits_in(req) {

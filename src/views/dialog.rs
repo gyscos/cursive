@@ -216,7 +216,6 @@ impl Dialog {
         self
     }
 
-
     // Private methods
 
     // An event is received while the content is in focus
@@ -373,10 +372,9 @@ impl Dialog {
                 printer.print((x + len, 0), " ├");
             });
 
-            printer.with_color(
-                ColorStyle::TitlePrimary,
-                |p| p.print((x, 0), &self.title),
-            );
+            printer.with_color(ColorStyle::TitlePrimary, |p| {
+                p.print((x, 0), &self.title)
+            });
         }
     }
 

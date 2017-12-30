@@ -113,7 +113,6 @@ impl MenuTree {
             .insert(i, MenuItem::Leaf(title, Callback::from_fn(cb)));
     }
 
-
     /// Adds a actionnable leaf to the end of this tree - chainable variant.
     pub fn leaf<S, F>(self, title: S, cb: F) -> Self
     where
@@ -173,13 +172,13 @@ impl MenuTree {
     /// Returns `None` if the given title was not found,
     /// or if it wasn't a subtree.
     pub fn find_subtree(&mut self, title: &str) -> Option<&mut MenuTree> {
-        self.find_item(title).and_then(
-            |item| if let MenuItem::Subtree(_, ref mut tree) = *item {
+        self.find_item(title).and_then(|item| {
+            if let MenuItem::Subtree(_, ref mut tree) = *item {
                 Some(Rc::make_mut(tree))
             } else {
                 None
-            },
-        )
+            }
+        })
     }
 
     /// Removes the item at the given position.

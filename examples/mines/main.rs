@@ -31,7 +31,6 @@ fn main() {
     siv.run();
 }
 
-
 fn show_options(siv: &mut Cursive) {
     siv.add_layer(
         Dialog::new()

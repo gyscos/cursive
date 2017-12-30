@@ -89,12 +89,10 @@ impl Concrete {
                 | ncurses::BUTTON_CTRL)
                 as mmask_t;
 
-            let make_event = |event| {
-                Event::Mouse {
-                    offset: Vec2::zero(),
-                    position: Vec2::new(mevent.x as usize, mevent.y as usize),
-                    event: event,
-                }
+            let make_event = |event| Event::Mouse {
+                offset: Vec2::zero(),
+                position: Vec2::new(mevent.x as usize, mevent.y as usize),
+                event: event,
             };
 
             if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as mmask_t {
@@ -214,7 +212,6 @@ impl backend::Backend for Concrete {
         ncurses::endwin();
     }
 
-
     fn with_color<F: FnOnce()>(&self, colors: ColorPair, f: F) {
         let current = self.current_style.get();
         if current != colors {
@@ -284,31 +281,31 @@ impl backend::Backend for Concrete {
 /// Returns the Key enum corresponding to the given ncurses event.
 fn get_mouse_button(bare_event: i32) -> MouseButton {
     match bare_event {
-        ncurses::BUTTON1_RELEASED |
-        ncurses::BUTTON1_PRESSED |
-        ncurses::BUTTON1_CLICKED |
-        ncurses::BUTTON1_DOUBLE_CLICKED |
-        ncurses::BUTTON1_TRIPLE_CLICKED => MouseButton::Left,
-        ncurses::BUTTON2_RELEASED |
-        ncurses::BUTTON2_PRESSED |
-        ncurses::BUTTON2_CLICKED |
-        ncurses::BUTTON2_DOUBLE_CLICKED |
-        ncurses::BUTTON2_TRIPLE_CLICKED => MouseButton::Middle,
-        ncurses::BUTTON3_RELEASED |
-        ncurses::BUTTON3_PRESSED |
-        ncurses::BUTTON3_CLICKED |
-        ncurses::BUTTON3_DOUBLE_CLICKED |
-        ncurses::BUTTON3_TRIPLE_CLICKED => MouseButton::Right,
-        ncurses::BUTTON4_RELEASED |
-        ncurses::BUTTON4_PRESSED |
-        ncurses::BUTTON4_CLICKED |
-        ncurses::BUTTON4_DOUBLE_CLICKED |
-        ncurses::BUTTON4_TRIPLE_CLICKED => MouseButton::Button4,
-        ncurses::BUTTON5_RELEASED |
-        ncurses::BUTTON5_PRESSED |
-        ncurses::BUTTON5_CLICKED |
-        ncurses::BUTTON5_DOUBLE_CLICKED |
-        ncurses::BUTTON5_TRIPLE_CLICKED => MouseButton::Button5,
+        ncurses::BUTTON1_RELEASED
+        | ncurses::BUTTON1_PRESSED
+        | ncurses::BUTTON1_CLICKED
+        | ncurses::BUTTON1_DOUBLE_CLICKED
+        | ncurses::BUTTON1_TRIPLE_CLICKED => MouseButton::Left,
+        ncurses::BUTTON2_RELEASED
+        | ncurses::BUTTON2_PRESSED
+        | ncurses::BUTTON2_CLICKED
+        | ncurses::BUTTON2_DOUBLE_CLICKED
+        | ncurses::BUTTON2_TRIPLE_CLICKED => MouseButton::Middle,
+        ncurses::BUTTON3_RELEASED
+        | ncurses::BUTTON3_PRESSED
+        | ncurses::BUTTON3_CLICKED
+        | ncurses::BUTTON3_DOUBLE_CLICKED
+        | ncurses::BUTTON3_TRIPLE_CLICKED => MouseButton::Right,
+        ncurses::BUTTON4_RELEASED
+        | ncurses::BUTTON4_PRESSED
+        | ncurses::BUTTON4_CLICKED
+        | ncurses::BUTTON4_DOUBLE_CLICKED
+        | ncurses::BUTTON4_TRIPLE_CLICKED => MouseButton::Button4,
+        ncurses::BUTTON5_RELEASED
+        | ncurses::BUTTON5_PRESSED
+        | ncurses::BUTTON5_CLICKED
+        | ncurses::BUTTON5_DOUBLE_CLICKED
+        | ncurses::BUTTON5_TRIPLE_CLICKED => MouseButton::Button5,
         _ => MouseButton::Other,
     }
 }
@@ -328,36 +325,36 @@ where
     match bare_event {
         ncurses::BUTTON4_PRESSED => f(MouseEvent::WheelUp),
         ncurses::BUTTON5_PRESSED => f(MouseEvent::WheelDown),
-        ncurses::BUTTON1_RELEASED |
-        ncurses::BUTTON2_RELEASED |
-        ncurses::BUTTON3_RELEASED |
-        ncurses::BUTTON4_RELEASED |
-        ncurses::BUTTON5_RELEASED => f(MouseEvent::Release(button)),
-        ncurses::BUTTON1_PRESSED |
-        ncurses::BUTTON2_PRESSED |
-        ncurses::BUTTON3_PRESSED => f(MouseEvent::Press(button)),
-        ncurses::BUTTON1_CLICKED |
-        ncurses::BUTTON2_CLICKED |
-        ncurses::BUTTON3_CLICKED |
-        ncurses::BUTTON4_CLICKED |
-        ncurses::BUTTON5_CLICKED => {
+        ncurses::BUTTON1_RELEASED
+        | ncurses::BUTTON2_RELEASED
+        | ncurses::BUTTON3_RELEASED
+        | ncurses::BUTTON4_RELEASED
+        | ncurses::BUTTON5_RELEASED => f(MouseEvent::Release(button)),
+        ncurses::BUTTON1_PRESSED
+        | ncurses::BUTTON2_PRESSED
+        | ncurses::BUTTON3_PRESSED => f(MouseEvent::Press(button)),
+        ncurses::BUTTON1_CLICKED
+        | ncurses::BUTTON2_CLICKED
+        | ncurses::BUTTON3_CLICKED
+        | ncurses::BUTTON4_CLICKED
+        | ncurses::BUTTON5_CLICKED => {
             f(MouseEvent::Press(button));
             f(MouseEvent::Release(button));
         }
         // Well, we disabled click detection
-        ncurses::BUTTON1_DOUBLE_CLICKED |
-        ncurses::BUTTON2_DOUBLE_CLICKED |
-        ncurses::BUTTON3_DOUBLE_CLICKED |
-        ncurses::BUTTON4_DOUBLE_CLICKED |
-        ncurses::BUTTON5_DOUBLE_CLICKED => for _ in 0..2 {
+        ncurses::BUTTON1_DOUBLE_CLICKED
+        | ncurses::BUTTON2_DOUBLE_CLICKED
+        | ncurses::BUTTON3_DOUBLE_CLICKED
+        | ncurses::BUTTON4_DOUBLE_CLICKED
+        | ncurses::BUTTON5_DOUBLE_CLICKED => for _ in 0..2 {
             f(MouseEvent::Press(button));
             f(MouseEvent::Release(button));
         },
-        ncurses::BUTTON1_TRIPLE_CLICKED |
-        ncurses::BUTTON2_TRIPLE_CLICKED |
-        ncurses::BUTTON3_TRIPLE_CLICKED |
-        ncurses::BUTTON4_TRIPLE_CLICKED |
-        ncurses::BUTTON5_TRIPLE_CLICKED => for _ in 0..3 {
+        ncurses::BUTTON1_TRIPLE_CLICKED
+        | ncurses::BUTTON2_TRIPLE_CLICKED
+        | ncurses::BUTTON3_TRIPLE_CLICKED
+        | ncurses::BUTTON4_TRIPLE_CLICKED
+        | ncurses::BUTTON5_TRIPLE_CLICKED => for _ in 0..3 {
             f(MouseEvent::Press(button));
             f(MouseEvent::Release(button));
         },

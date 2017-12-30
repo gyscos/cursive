@@ -87,7 +87,6 @@ impl MenuPopup {
         }
     }
 
-
     /// Sets the alignment for this view.
     ///
     /// Chainable variant.
@@ -152,8 +151,8 @@ impl MenuPopup {
             let action_cb = action_cb.clone();
             s.screen_mut().add_layer_at(
                 Position::parent(offset),
-                OnEventView::new(
-                    MenuPopup::new(Rc::clone(&tree)).on_action(move |s| {
+                OnEventView::new(MenuPopup::new(Rc::clone(&tree)).on_action(
+                    move |s| {
                         // This will happen when the subtree popup
                         // activates something;
                         // First, remove ourselve.
@@ -161,8 +160,8 @@ impl MenuPopup {
                         if let Some(ref action_cb) = action_cb {
                             action_cb.clone()(s);
                         }
-                    }),
-                ).on_event(Key::Left, |s| s.pop_layer()),
+                    },
+                )).on_event(Key::Left, |s| s.pop_layer()),
             );
         })
     }
@@ -258,7 +257,6 @@ impl View for MenuPopup {
                 .unwrap_or(1);
         let h = 2 + self.menu.children.len();
 
-
         let scrolling = req.y < h;
 
         let w = if scrolling { w + 1 } else { w };
@@ -346,10 +344,13 @@ impl View for MenuPopup {
                 position.checked_sub(offset + (1, 1)).map(
                     // `position` is not relative to the content
                     // (It's inside the border)
-                    |position| if position < inner_size {
-                        let focus = position.y + self.scrollbase.start_line;
-                        if !self.menu.children[focus].is_delimiter() {
-                            self.focus = focus;
+                    |position| {
+                        if position < inner_size {
+                            let focus =
+                                position.y + self.scrollbase.start_line;
+                            if !self.menu.children[focus].is_delimiter() {
+                                self.focus = focus;
+                            }
                         }
                     },
                 );

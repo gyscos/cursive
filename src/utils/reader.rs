@@ -10,7 +10,6 @@ pub struct ProgressReader<R: Read> {
     counter: Counter,
 }
 
-
 impl<R: Read> ProgressReader<R> {
     /// Creates a new `ProgressReader` around `reader`.
     ///

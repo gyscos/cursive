@@ -178,7 +178,6 @@ impl ScrollBase {
             return false;
         }
 
-
         // Now, did we hit the thumb? Or should we direct-jump?
         let height = self.scrollbar_thumb_height();
         let thumb_y = self.scrollbar_thumb_y(height);
@@ -217,7 +216,6 @@ impl ScrollBase {
     pub fn release_grab(&mut self) {
         self.thumb_grab = None;
     }
-
 
     /// Draws the scroll bar and the content using the given drawer.
     ///
@@ -268,7 +266,6 @@ impl ScrollBase {
                 y + self.start_line,
             );
         }
-
 
         // And draw the scrollbar if needed
         if self.view_height < self.content_height {

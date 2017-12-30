@@ -143,9 +143,11 @@ impl backend::Backend for Concrete {
 
         let (sender, receiver) = chan::async();
 
-        thread::spawn(move || for key in ::std::io::stdin().events() {
-            if let Ok(key) = key {
-                sender.send(key)
+        thread::spawn(move || {
+            for key in ::std::io::stdin().events() {
+                if let Ok(key) = key {
+                    sender.send(key)
+                }
             }
         });
 

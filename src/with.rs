@@ -1,4 +1,3 @@
-
 /// Generic trait to enable chainable API
 pub trait With: Sized {
     /// Calls the given closure on `self`.

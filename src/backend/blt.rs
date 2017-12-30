@@ -25,45 +25,45 @@ impl Concrete {
         &mut self, kc: KeyCode, shift: bool, ctrl: bool
     ) -> Event {
         match kc {
-            KeyCode::F1 |
-            KeyCode::F2 |
-            KeyCode::F3 |
-            KeyCode::F4 |
-            KeyCode::F5 |
-            KeyCode::F6 |
-            KeyCode::F7 |
-            KeyCode::F8 |
-            KeyCode::F9 |
-            KeyCode::F10 |
-            KeyCode::F11 |
-            KeyCode::F12 |
-            KeyCode::NumEnter |
-            KeyCode::Enter |
-            KeyCode::Escape |
-            KeyCode::Backspace |
-            KeyCode::Tab |
-            KeyCode::Pause |
-            KeyCode::Insert |
-            KeyCode::Home |
-            KeyCode::PageUp |
-            KeyCode::Delete |
-            KeyCode::End |
-            KeyCode::PageDown |
-            KeyCode::Right |
-            KeyCode::Left |
-            KeyCode::Down |
-            KeyCode::Up => match (shift, ctrl) {
+            KeyCode::F1
+            | KeyCode::F2
+            | KeyCode::F3
+            | KeyCode::F4
+            | KeyCode::F5
+            | KeyCode::F6
+            | KeyCode::F7
+            | KeyCode::F8
+            | KeyCode::F9
+            | KeyCode::F10
+            | KeyCode::F11
+            | KeyCode::F12
+            | KeyCode::NumEnter
+            | KeyCode::Enter
+            | KeyCode::Escape
+            | KeyCode::Backspace
+            | KeyCode::Tab
+            | KeyCode::Pause
+            | KeyCode::Insert
+            | KeyCode::Home
+            | KeyCode::PageUp
+            | KeyCode::Delete
+            | KeyCode::End
+            | KeyCode::PageDown
+            | KeyCode::Right
+            | KeyCode::Left
+            | KeyCode::Down
+            | KeyCode::Up => match (shift, ctrl) {
                 (true, true) => Event::CtrlShift(blt_keycode_to_key(kc)),
                 (true, false) => Event::Shift(blt_keycode_to_key(kc)),
                 (false, true) => Event::Ctrl(blt_keycode_to_key(kc)),
                 (false, false) => Event::Key(blt_keycode_to_key(kc)),
             },
             // TODO: mouse support
-            KeyCode::MouseLeft |
-            KeyCode::MouseRight |
-            KeyCode::MouseMiddle |
-            KeyCode::MouseFourth |
-            KeyCode::MouseFifth => blt_keycode_to_mouse_button(kc)
+            KeyCode::MouseLeft
+            | KeyCode::MouseRight
+            | KeyCode::MouseMiddle
+            | KeyCode::MouseFourth
+            | KeyCode::MouseFifth => blt_keycode_to_mouse_button(kc)
                 .map(|btn| {
                     self.buttons_pressed.insert(btn);
                     Event::Mouse {
@@ -73,69 +73,69 @@ impl Concrete {
                     }
                 })
                 .unwrap_or(Event::Unknown(vec![])),
-            KeyCode::A |
-            KeyCode::B |
-            KeyCode::C |
-            KeyCode::D |
-            KeyCode::E |
-            KeyCode::F |
-            KeyCode::G |
-            KeyCode::H |
-            KeyCode::I |
-            KeyCode::J |
-            KeyCode::K |
-            KeyCode::L |
-            KeyCode::M |
-            KeyCode::N |
-            KeyCode::O |
-            KeyCode::P |
-            KeyCode::Q |
-            KeyCode::R |
-            KeyCode::S |
-            KeyCode::T |
-            KeyCode::U |
-            KeyCode::V |
-            KeyCode::W |
-            KeyCode::X |
-            KeyCode::Y |
-            KeyCode::Z |
-            KeyCode::Row1 |
-            KeyCode::Row2 |
-            KeyCode::Row3 |
-            KeyCode::Row4 |
-            KeyCode::Row5 |
-            KeyCode::Row6 |
-            KeyCode::Row7 |
-            KeyCode::Row8 |
-            KeyCode::Row9 |
-            KeyCode::Row0 |
-            KeyCode::Grave |
-            KeyCode::Minus |
-            KeyCode::Equals |
-            KeyCode::LeftBracket |
-            KeyCode::RightBracket |
-            KeyCode::Backslash |
-            KeyCode::Semicolon |
-            KeyCode::Apostrophe |
-            KeyCode::Comma |
-            KeyCode::Period |
-            KeyCode::Slash |
-            KeyCode::Space |
-            KeyCode::NumDivide |
-            KeyCode::NumMultiply |
-            KeyCode::NumMinus |
-            KeyCode::NumPlus |
-            KeyCode::NumPeriod |
-            KeyCode::Num1 |
-            KeyCode::Num2 |
-            KeyCode::Num3 |
-            KeyCode::Num4 |
-            KeyCode::Num5 |
-            KeyCode::Num6 |
-            KeyCode::Num7 |
-            KeyCode::Num8 |
-            KeyCode::Num9 |
-            KeyCode::Num0 => if ctrl {
+            KeyCode::A
+            | KeyCode::B
+            | KeyCode::C
+            | KeyCode::D
+            | KeyCode::E
+            | KeyCode::F
+            | KeyCode::G
+            | KeyCode::H
+            | KeyCode::I
+            | KeyCode::J
+            | KeyCode::K
+            | KeyCode::L
+            | KeyCode::M
+            | KeyCode::N
+            | KeyCode::O
+            | KeyCode::P
+            | KeyCode::Q
+            | KeyCode::R
+            | KeyCode::S
+            | KeyCode::T
+            | KeyCode::U
+            | KeyCode::V
+            | KeyCode::W
+            | KeyCode::X
+            | KeyCode::Y
+            | KeyCode::Z
+            | KeyCode::Row1
+            | KeyCode::Row2
+            | KeyCode::Row3
+            | KeyCode::Row4
+            | KeyCode::Row5
+            | KeyCode::Row6
+            | KeyCode::Row7
+            | KeyCode::Row8
+            | KeyCode::Row9
+            | KeyCode::Row0
+            | KeyCode::Grave
+            | KeyCode::Minus
+            | KeyCode::Equals
+            | KeyCode::LeftBracket
+            | KeyCode::RightBracket
+            | KeyCode::Backslash
+            | KeyCode::Semicolon
+            | KeyCode::Apostrophe
+            | KeyCode::Comma
+            | KeyCode::Period
+            | KeyCode::Slash
+            | KeyCode::Space
+            | KeyCode::NumDivide
+            | KeyCode::NumMultiply
+            | KeyCode::NumMinus
+            | KeyCode::NumPlus
+            | KeyCode::NumPeriod
+            | KeyCode::Num1
+            | KeyCode::Num2
+            | KeyCode::Num3
+            | KeyCode::Num4
+            | KeyCode::Num5
+            | KeyCode::Num6
+            | KeyCode::Num7
+            | KeyCode::Num8
+            | KeyCode::Num9
+            | KeyCode::Num0 => if ctrl {
                 Event::CtrlChar(blt_keycode_to_char(kc, shift))
             } else {
                 Event::Char(blt_keycode_to_char(kc, shift))
@@ -200,9 +200,10 @@ impl backend::Backend for Concrete {
     }
 
     fn clear(&self, color: Color) {
-        terminal::set_background(
-            colour_to_blt_colour(color, ColorRole::Background),
-        );
+        terminal::set_background(colour_to_blt_colour(
+            color,
+            ColorRole::Background,
+        ));
         terminal::clear(None);
     }
 

@@ -423,12 +423,11 @@ impl View for TextArea {
             } else {
                 printer.size.x
             };
-            printer.with_effect(
-                effect,
-                |printer| for y in 0..printer.size.y {
+            printer.with_effect(effect, |printer| {
+                for y in 0..printer.size.y {
                     printer.print_hline((0, y), w, " ");
-                },
-            );
+                }
+            });
 
             debug!("Content: `{}`", &self.content);
             self.scrollbase.draw(printer, |printer, i| {

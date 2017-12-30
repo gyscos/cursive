@@ -161,7 +161,6 @@ impl<T> Canvas<T> {
         self.needs_relayout = Box::new(f);
     }
 
-
     /// Sets the closure for `needs_relayout()`.
     ///
     /// Chainable variant.
