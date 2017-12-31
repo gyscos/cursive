@@ -13,7 +13,23 @@ use utils::{LinesIterator, Row};
 use vec::Vec2;
 use view::{ScrollBase, ScrollStrategy, SizeCache, View};
 
-/// Provides access to the content of a TextView.
+/// Provides access to the content of a [`TextView`].
+///
+/// Cloning this object will still point to the same content.
+///
+/// [`TextView`]: struct.TextView.html
+///
+/// # Examples
+///
+/// ```rust
+/// # use cursive::views::{TextView, TextContent};
+/// let mut content = TextContent::new("content");
+/// let view = TextView::new_with_content(content.clone());
+///
+/// // Later, possibly in a different thread
+/// content.set_content("new content");
+/// assert!(content.get_content().contains("new"));
+/// ```
 #[derive(Clone)]
 pub struct TextContent {
     content: Arc<Mutex<TextContentInner>>,
@@ -100,7 +116,17 @@ impl TextContentInner {
     }
 }
 
-/// A simple view showing a fixed text
+/// A simple view showing a fixed text.
+///
+/// # Examples
+///
+/// ```rust
+/// # use cursive::Cursive;
+/// # use cursive::views::TextView;
+/// let mut siv = Cursive::new();
+///
+/// siv.add_layer(TextView::new("Hello world!"));
+/// ```
 pub struct TextView {
     // content: String,
     content: Arc<Mutex<TextContentInner>>,
@@ -134,6 +160,21 @@ impl TextView {
     }
 
     /// Creates a new TextView using the given `Arc<Mutex<String>>`.
+    ///
+    /// If you kept a clone of the given content, you'll be able to update it
+    /// remotely.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::views::{TextView, TextContent};
+    /// let mut content = TextContent::new("content");
+    /// let view = TextView::new_with_content(content.clone());
+    ///
+    /// // Later, possibly in a different thread
+    /// content.set_content("new content");
+    /// assert!(content.get_content().contains("new"));
+    /// ```
     pub fn new_with_content(content: TextContent) -> Self {
         TextView {
             content: content.content,
