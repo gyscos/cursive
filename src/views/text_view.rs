@@ -136,7 +136,7 @@ impl TextView {
     /// Creates a new TextView using the given `Arc<Mutex<String>>`.
     pub fn new_with_content(content: TextContent) -> Self {
         TextView {
-            content: Arc::clone(&content.content),
+            content: content.content,
             rows: Vec::new(),
             scrollable: true,
             scrollbase: ScrollBase::new(),
