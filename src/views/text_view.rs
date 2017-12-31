@@ -120,7 +120,7 @@ impl TextContentInner {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```rust,no_run
 /// # use cursive::Cursive;
 /// # use cursive::views::TextView;
 /// let mut siv = Cursive::new();
