@@ -7,11 +7,16 @@ use view::{Selector, View};
 
 /// Generic wrapper around a view.
 ///
-/// Default implementation forwards all calls to the child view.
-/// Overrides some methods as desired.
+/// This trait is a shortcut to implement `View` on a type by forwarding
+/// calls to a wrapped view.
 ///
-/// You can use the [`wrap_impl!`] macro to define `with_view` and
-/// `with_view_mut` for you.
+/// You only need to define `with_view` and `with_view_mut`
+/// (the [`wrap_impl!`] macro can help you with that), and you will get
+/// the `View` implementation for free.
+///
+/// You can also override any of the `wrap_*` methods for more specific
+/// behaviors (the default implementations simply forwards the calls to the
+/// child view).
 ///
 /// [`wrap_impl!`]: ../macro.wrap_impl.html
 pub trait ViewWrapper: 'static {
