@@ -14,6 +14,11 @@ pub trait Identifiable: View + Sized {
     /// # Examples
     ///
     /// ```rust,no_run
+    /// # use cursive::Cursive;
+    /// # use cursive::views::TextView;
+    /// # use cursive::view::Boxable;
+    /// use cursive::view::Identifiable;
+    ///
     /// let mut siv = Cursive::new();
     /// siv.add_layer(
     ///     TextView::new("foo")
