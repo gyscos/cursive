@@ -114,6 +114,13 @@ impl TextContentInner {
             }),
         }
     }
+
+    fn is_cache_valid(&self, size: Vec2) -> bool {
+        match self.size_cache {
+            None => false,
+            Some(ref last) => last.x.accept(size.x) && last.y.accept(size.y),
+        }
+    }
 }
 
 /// A simple view showing a fixed text.
@@ -273,15 +280,6 @@ impl TextView {
         }
     }
 
-    fn is_cache_valid(&self, size: Vec2) -> bool {
-        let content = self.content.lock().unwrap();
-
-        match content.size_cache {
-            None => false,
-            Some(ref last) => last.x.accept(size.x) && last.y.accept(size.y),
-        }
-    }
-
     /// Defines the way scrolling is adjusted on content or size change.
     ///
     /// The scroll strategy defines how the scrolling position is adjusted
@@ -316,7 +314,7 @@ impl TextView {
     // multiple times during layout.
     fn compute_rows(&mut self, size: Vec2) {
         let mut content = self.content.lock().unwrap();
-        if self.is_cache_valid(size) {
+        if content.is_cache_valid(size) {
             return;
         }
 
