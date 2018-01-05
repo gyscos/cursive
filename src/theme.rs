@@ -127,7 +127,12 @@ pub enum Effect {
     Simple,
     /// Reverses foreground and background colors
     Reverse,
-    // TODO: bold, italic, underline
+    /// Prints foreground in bold
+    Bold,
+    /// Prints foreground in italic
+    Italic,
+    /// Prints foreground with underline
+    Underline,
 }
 
 /// Combines a front and back color.

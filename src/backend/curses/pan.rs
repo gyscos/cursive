@@ -187,8 +187,11 @@ impl backend::Backend for Concrete {
 
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
         let style = match effect {
-            Effect::Reverse => pancurses::Attribute::Reverse,
             Effect::Simple => pancurses::Attribute::Normal,
+            Effect::Reverse => pancurses::Attribute::Reverse,
+            Effect::Bold => pancurses::Attribute::Bold,
+            Effect::Italic => pancurses::Attribute::Italic,
+            Effect::Underline => pancurses::Attribute::Underline,
         };
         self.window.attron(style);
         f();

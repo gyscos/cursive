@@ -39,6 +39,9 @@ impl Effectable for theme::Effect {
         match *self {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => print!("{}", tstyle::Invert),
+            theme::Effect::Bold => print!("{}", tstyle::Bold),
+            theme::Effect::Italic => print!("{}", tstyle::Italic),
+            theme::Effect::Underline => print!("{}", tstyle::Underline),
         }
     }
 
@@ -46,6 +49,9 @@ impl Effectable for theme::Effect {
         match *self {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => print!("{}", tstyle::NoInvert),
+            theme::Effect::Bold => print!("{}", tstyle::NoBold),
+            theme::Effect::Italic => print!("{}", tstyle::NoItalic),
+            theme::Effect::Underline => print!("{}", tstyle::NoUnderline),
         }
     }
 }
