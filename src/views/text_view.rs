@@ -8,6 +8,7 @@ use owning_ref::{ArcRef, OwningHandle};
 use std::ops::Deref;
 use std::sync::{Mutex, MutexGuard};
 use std::sync::Arc;
+use theme::Effect;
 use unicode_width::UnicodeWidthStr;
 use utils::{LinesIterator, Row};
 use vec::Vec2;
@@ -140,6 +141,7 @@ pub struct TextView {
     rows: Vec<Row>,
 
     align: Align,
+    effect: Effect,
 
     // If `false`, disable scrolling.
     scrollable: bool,
@@ -185,6 +187,7 @@ impl TextView {
     pub fn new_with_content(content: TextContent) -> Self {
         TextView {
             content: content.content,
+            effect: Effect::Simple,
             rows: Vec::new(),
             scrollable: true,
             scrollbase: ScrollBase::new(),
@@ -216,6 +219,18 @@ impl TextView {
     /// Chainable variant.
     pub fn scrollable(self, scrollable: bool) -> Self {
         self.with(|s| s.set_scrollable(scrollable))
+    }
+
+    /// Sets the effect for the entire content.
+    pub fn set_effect(&mut self, effect: Effect) {
+        self.effect = effect;
+    }
+
+    /// Sets the effect for the entire content.
+    ///
+    /// Chainable variant.
+    pub fn effect(self, effect: Effect) -> Self {
+        self.with(|s| s.set_effect(effect))
     }
 
     /// Sets the horizontal alignment for this view.
@@ -393,12 +408,14 @@ impl View for TextView {
 
         let content = self.content.lock().unwrap();
 
-        self.scrollbase.draw(printer, |printer, i| {
-            let row = &self.rows[i];
-            let text = &content.content[row.start..row.end];
-            let l = text.width();
-            let x = self.align.h.get_offset(l, printer.size.x);
-            printer.print((x, 0), text);
+        printer.with_effect(self.effect, |printer| {
+            self.scrollbase.draw(printer, |printer, i| {
+                let row = &self.rows[i];
+                let text = &content.content[row.start..row.end];
+                let l = text.width();
+                let x = self.align.h.get_offset(l, printer.size.x);
+                printer.print((x, 0), text);
+            });
         });
     }
 
