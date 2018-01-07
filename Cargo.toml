@@ -33,6 +33,7 @@ owning_ref = "0.3"
 toml = "0.4"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
+xi-unicode = "0.1.0"
 
 [dependencies.bear-lib-terminal]
 optional = true

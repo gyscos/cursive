@@ -26,8 +26,8 @@ impl<'a> LinesIterator<'a> {
     /// Yields rows of `width` cells or less.
     pub fn new(content: &'a str, width: usize) -> Self {
         LinesIterator {
-            content: content,
-            width: width,
+            content,
+            width,
             offset: 0,
             show_spaces: false,
         }

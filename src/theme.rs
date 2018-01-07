@@ -123,7 +123,7 @@ use toml;
 /// Combine a color and an effect.
 ///
 /// Represents any transformation that can be applied to text.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Style {
     /// Effect to apply.
     ///
@@ -165,7 +165,7 @@ impl From<ColorStyle> for Style {
 }
 
 /// Text effect
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Effect {
     /// No effect
     Simple,

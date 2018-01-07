@@ -5,6 +5,7 @@ use unicode_width::UnicodeWidthStr;
 
 mod lines_iterator;
 mod reader;
+pub mod span_lines_iterator;
 
 pub use self::lines_iterator::{LinesIterator, Row};
 pub use self::reader::ProgressReader;
