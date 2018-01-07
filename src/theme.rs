@@ -120,6 +120,50 @@ use std::io::Read;
 use std::path::Path;
 use toml;
 
+/// Combine a color and an effect.
+///
+/// Represents any transformation that can be applied to text.
+#[derive(Clone, Copy, Debug)]
+pub struct Style {
+    /// Effect to apply.
+    ///
+    /// `None` to keep using previous effects.
+    pub effect: Option<Effect>,
+
+    /// Color style to apply.
+    ///
+    /// `None` to keep using the previous colors.
+    pub color: Option<ColorStyle>,
+}
+
+impl Style {
+    /// Returns a new `Style` that doesn't apply anything.
+    pub fn none() -> Self {
+        Style {
+            effect: None,
+            color: None,
+        }
+    }
+}
+
+impl From<Effect> for Style {
+    fn from(effect: Effect) -> Self {
+        Style {
+            effect: Some(effect),
+            color: None,
+        }
+    }
+}
+
+impl From<ColorStyle> for Style {
+    fn from(color: ColorStyle) -> Self {
+        Style {
+            effect: None,
+            color: Some(color),
+        }
+    }
+}
+
 /// Text effect
 #[derive(Clone, Copy, Debug)]
 pub enum Effect {
