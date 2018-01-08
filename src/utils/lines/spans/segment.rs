@@ -16,7 +16,7 @@ pub struct Segment {
 
 impl Segment {
     #[cfg(test)]
-    fn with_text<'a>(self, text: &'a str) -> SegmentWithText<'a> {
+    pub fn with_text<'a>(self, text: &'a str) -> SegmentWithText<'a> {
         SegmentWithText { text, seg: self }
     }
 }

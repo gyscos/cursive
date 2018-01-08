@@ -37,7 +37,7 @@ pub struct Span {
 /// extern crate unicode_segmentation;
 /// use unicode_segmentation::UnicodeSegmentation;
 ///
-/// # use cursive::utils::prefix;
+/// # use cursive::utils::lines::simple::prefix;
 /// # fn main() {
 /// let my_text = "blah...";
 /// // This returns the number of bytes for a prefix of `my_text` that
@@ -108,4 +108,16 @@ pub fn simple_suffix(text: &str, width: usize) -> Span {
 /// Breaks between any two graphemes.
 pub fn simple_prefix(text: &str, width: usize) -> Span {
     prefix(text.graphemes(true), width, "")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::prefix;
+
+    #[test]
+    fn test_prefix() {
+        assert_eq!(prefix(" abra ".split(' '), 5, " ").length, 5);
+        assert_eq!(prefix("abra a".split(' '), 5, " ").length, 4);
+        assert_eq!(prefix("a a br".split(' '), 5, " ").length, 3);
+    }
 }

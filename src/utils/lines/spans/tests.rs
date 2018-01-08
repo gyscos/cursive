@@ -1,4 +1,13 @@
-use super::*;
+use theme::Style;
+use super::Span;
+use super::chunk::Chunk;
+use super::row::Row;
+use super::chunk_iterator::ChunkIterator;
+use super::segment::Segment;
+
+use super::SpanLinesIterator;
+
+use std::borrow::Cow;
 
 fn input() -> Vec<Span<'static>> {
     vec![
