@@ -314,9 +314,29 @@ impl TextView {
         self.with(|s| s.set_scroll_strategy(strategy))
     }
 
-    // Apply the scrolling strategy to the current scroll position.
-    //
-    // Called when computing rows and when applying a new strategy.
+    /// Scroll up by `n` lines.
+    pub fn scroll_up(&mut self, n: usize) {
+        self.scrollbase.scroll_up(n);
+    }
+
+    /// Scroll down by `n` lines.
+    pub fn scroll_down(&mut self, n: usize) {
+        self.scrollbase.scroll_down(n);
+    }
+
+    /// Scroll to the bottom of the content.
+    pub fn scroll_bottom(&mut self) {
+        self.scrollbase.scroll_bottom();
+    }
+
+    /// Scroll to the top of the view.
+    pub fn scroll_top(&mut self) {
+        self.scrollbase.scroll_top();
+    }
+
+    /// Apply the scrolling strategy to the current scroll position.
+    ///
+    /// Called when computing rows and when applying a new strategy.
     fn adjust_scroll(&mut self) {
         match self.scroll_strategy {
             ScrollStrategy::StickToTop => self.scrollbase.scroll_top(),
@@ -420,7 +440,7 @@ impl View for TextView {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        if !self.scrollbase.scrollable() {
+        if !self.scrollable || !self.scrollbase.scrollable() {
             return EventResult::Ignored;
         }
 
@@ -513,8 +533,14 @@ impl View for TextView {
         // Compute the text rows.
         self.last_size = size;
         self.compute_rows(size);
-        // Adjust scrolling, in case we're sticking to the bottom for instance.
-        self.scrollbase.set_heights(size.y, self.rows.len());
+        // Adjust scrolling, in case we're sticking to the bottom or something
+        let available_height = if self.scrollable {
+            size.y
+        } else {
+            self.rows.len()
+        };
+
+        self.scrollbase.set_heights(available_height, self.rows.len());
         self.adjust_scroll();
     }
 }
