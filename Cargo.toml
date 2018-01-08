@@ -34,6 +34,7 @@ toml = "0.4"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
 xi-unicode = "0.1.0"
+pulldown-cmark = { version = "0.1.0", optional = true, default-features = false }
 enumset = "0.3.3"
 
 [dependencies.bear-lib-terminal]
@@ -75,6 +76,7 @@ termion-backend = [
     "chan",
     "chan-signal",
 ]
+markdown = ["pulldown-cmark"]
 
 [lib]
 name = "cursive"
