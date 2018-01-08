@@ -1,3 +1,9 @@
+//! Compute lines on simple text.
+//!
+//! The input is a single `&str`.
+//!
+//! Computed rows will include start/end byte offsets in the input string.
+
 use With;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;

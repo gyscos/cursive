@@ -3,11 +3,9 @@
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-mod lines_iterator;
 mod reader;
-pub mod span_lines_iterator;
+pub mod lines;
 
-pub use self::lines_iterator::{LinesIterator, Row};
 pub use self::reader::ProgressReader;
 
 /// The length and width of a part of a string.

@@ -10,7 +10,7 @@ use std::sync::{Mutex, MutexGuard};
 use std::sync::Arc;
 use theme::Effect;
 use unicode_width::UnicodeWidthStr;
-use utils::{LinesIterator, Row};
+use utils::lines::simple::{LinesIterator, Row};
 use vec::Vec2;
 use view::{ScrollBase, ScrollStrategy, SizeCache, View};
 

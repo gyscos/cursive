@@ -1,4 +1,10 @@
-//! bla
+//! Compute lines on multiple spans of text.
+//!
+//! The input is a list of consecutive text spans.
+//!
+//! Computed rows will include a list of span segments.
+//! Each segment include the source span ID, and start/end byte offsets.
+
 use std::borrow::Cow;
 use std::iter::Peekable;
 use theme::Style;
@@ -253,6 +259,25 @@ pub struct Row {
     pub segments: Vec<Segment>,
     /// Total width for this row
     pub width: usize,
+}
+
+impl Row {
+    /// Resolve the row indices into styled spans.
+    pub fn resolve<'a: 'b, 'b>(&self, spans: &'b [Span<'a>]) -> Vec<Span<'b>> {
+        self.segments
+            .iter()
+            .map(|seg| {
+                let span: &'b Span<'a> = &spans[seg.span_id];
+                let text: &'b str = &span.text;
+                let text: &'b str = &text[seg.start..seg.end];
+
+                Span {
+                    text: Cow::Borrowed(text),
+                    style: span.style,
+                }
+            })
+            .collect()
+    }
 }
 
 /// Generates rows of text in constrainted width.
@@ -584,6 +609,46 @@ mod tests {
 
         let iter = SpanLinesIterator::new(&input, 16);
         let rows: Vec<Row> = iter.collect();
+        let spans: Vec<_> =
+            rows.iter().map(|row| row.resolve(&input)).collect();
+
+        assert_eq!(
+            &spans[..],
+            &[
+                vec![
+                    Span {
+                        text: Cow::Borrowed("A beautiful "),
+                        style: Style::none(),
+                    },
+                    Span {
+                        text: Cow::Borrowed("boat"),
+                        style: Style::none(),
+                    }
+                ],
+                vec![
+                    Span {
+                        text: Cow::Borrowed("isn\'t it?"),
+                        style: Style::none(),
+                    }
+                ],
+                vec![
+                    Span {
+                        text: Cow::Borrowed("Yes indeed, my "),
+                        style: Style::none(),
+                    }
+                ],
+                vec![
+                    Span {
+                        text: Cow::Borrowed("Super"),
+                        style: Style::none(),
+                    },
+                    Span {
+                        text: Cow::Borrowed("Captain !"),
+                        style: Style::none(),
+                    }
+                ]
+            ]
+        );
 
         assert_eq!(
             &rows[..],

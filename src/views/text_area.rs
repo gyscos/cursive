@@ -5,7 +5,8 @@ use std::cmp::min;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::{prefix, simple_prefix, LinesIterator, Row};
+use utils::{prefix, simple_prefix};
+use utils::lines::simple::{LinesIterator, Row};
 use vec::Vec2;
 use view::{ScrollBase, SizeCache, View};
 
