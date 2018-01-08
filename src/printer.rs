@@ -6,7 +6,7 @@ use std::cmp::min;
 use std::rc::Rc;
 use theme::{BorderStyle, ColorStyle, Effect, Theme};
 use unicode_segmentation::UnicodeSegmentation;
-use utils::prefix;
+use utils::lines::simple::prefix;
 use vec::Vec2;
 
 /// Convenient interface to draw on a subset of the screen.

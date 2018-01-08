@@ -1,13 +1,6 @@
-//! Compute lines on simple text.
-//!
-//! The input is a single `&str`.
-//!
-//! Computed rows will include start/end byte offsets in the input string.
-
-use With;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::prefix;
+use super::{prefix, Row};
 
 /// Generates rows of text in constrained width.
 ///
@@ -46,41 +39,6 @@ impl<'a> LinesIterator<'a> {
     pub fn show_spaces(mut self) -> Self {
         self.show_spaces = true;
         self
-    }
-}
-
-/// Represents a row of text within a `String`.
-///
-/// A row is made of offsets into a parent `String`.
-/// The corresponding substring should take `width` cells when printed.
-#[derive(Debug, Clone, Copy)]
-pub struct Row {
-    /// Beginning of the row in the parent `String`.
-    pub start: usize,
-    /// End of the row (excluded)
-    pub end: usize,
-    /// Width of the row, in cells.
-    pub width: usize,
-}
-
-impl Row {
-    /// Shift a row start and end by `offset`.
-    pub fn shift(&mut self, offset: usize) {
-        self.start += offset;
-        self.end += offset;
-    }
-
-    /// Shift a row start and end by `offset`.
-    ///
-    /// Chainable variant;
-    pub fn shifted(self, offset: usize) -> Self {
-        self.with(|s| s.shift(offset))
-    }
-
-    /// Shift back a row start and end by `offset`.
-    pub fn rev_shift(&mut self, offset: usize) {
-        self.start -= offset;
-        self.end -= offset;
     }
 }
 
@@ -154,11 +112,4 @@ impl<'a> Iterator for LinesIterator<'a> {
             width: self.width,
         })
     }
-}
-
-#[cfg(test)]
-mod tests {
-
-    #[test]
-    fn test_layout() {}
 }

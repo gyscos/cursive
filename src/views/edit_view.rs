@@ -6,7 +6,7 @@ use std::rc::Rc;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::{simple_prefix, simple_suffix};
+use utils::lines::simple::{simple_prefix, simple_suffix};
 use vec::Vec2;
 use view::View;
 
