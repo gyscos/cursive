@@ -1,10 +1,11 @@
 //! Makes drawing on ncurses windows easier.
 
 use backend::{self, Backend};
+use enumset::EnumSet;
 use std::cell::Cell;
 use std::cmp::min;
 use std::rc::Rc;
-use theme::{BorderStyle, ColorStyle, Effect, Theme};
+use theme::{BorderStyle, ColorStyle, Effect, Style, Theme};
 use unicode_segmentation::UnicodeSegmentation;
 use utils::lines::simple::prefix;
 use vec::Vec2;
@@ -133,15 +134,47 @@ impl<'a> Printer<'a> {
         self.backend.with_color(c.resolve(self.theme), || f(self));
     }
 
-    /// Same as `with_color`, but apply a ncurses style instead,
-    /// like `ncurses::A_BOLD()` or `ncurses::A_REVERSE()`.
-    ///
-    /// Will probably use a cursive enum some day.
+    /// Call the given closure with a styled printer,
+    /// that will apply the given style on prints.
+    pub fn with_style<F>(&self, style: Style, f: F)
+    where
+        F: FnOnce(&Printer),
+    {
+        let color = style.color;
+        let effects = style.effects;
+
+        if let Some(color) = color {
+            self.with_color(color, |printer| {
+                printer.with_effects(effects, f);
+            });
+        } else {
+            self.with_effects(effects, f);
+        }
+    }
+
+    /// Call the given closure with a modified printer
+    /// that will apply the given effect on prints.
     pub fn with_effect<F>(&self, effect: Effect, f: F)
     where
         F: FnOnce(&Printer),
     {
         self.backend.with_effect(effect, || f(self));
+    }
+
+    /// Call the given closure with a modified printer
+    /// that will apply each given effect on prints.
+    pub fn with_effects<F>(&self, effects: EnumSet<Effect>, f: F)
+    where
+        F: FnOnce(&Printer),
+    {
+        match effects.iter().next() {
+            None => f(self),
+            Some(effect) => {
+                let mut effects = effects;
+                effects.remove(effect);
+                self.with_effects(effects, f);
+            }
+        }
     }
 
     /// Prints a rectangular box.

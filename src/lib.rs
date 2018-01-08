@@ -60,15 +60,17 @@
 #![deny(missing_docs)]
 
 #[macro_use]
+extern crate enumset;
+#[macro_use]
 extern crate log;
 #[macro_use]
 extern crate maplit;
-extern crate xi_unicode;
 extern crate num;
 extern crate owning_ref;
 extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
+extern crate xi_unicode;
 
 #[cfg(feature = "termion")]
 #[macro_use]

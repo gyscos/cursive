@@ -114,6 +114,7 @@
 //! 	highlight_inactive = "#5555FF"
 //! ```
 
+use enumset::EnumSet;
 use std::fs::File;
 use std::io;
 use std::io::Read;
@@ -128,7 +129,7 @@ pub struct Style {
     /// Effect to apply.
     ///
     /// `None` to keep using previous effects.
-    pub effect: Option<Effect>,
+    pub effects: EnumSet<Effect>,
 
     /// Color style to apply.
     ///
@@ -140,7 +141,7 @@ impl Style {
     /// Returns a new `Style` that doesn't apply anything.
     pub fn none() -> Self {
         Style {
-            effect: None,
+            effects: EnumSet::new(),
             color: None,
         }
     }
@@ -149,7 +150,7 @@ impl Style {
 impl From<Effect> for Style {
     fn from(effect: Effect) -> Self {
         Style {
-            effect: Some(effect),
+            effects: enum_set!(Effect, effect),
             color: None,
         }
     }
@@ -158,25 +159,26 @@ impl From<Effect> for Style {
 impl From<ColorStyle> for Style {
     fn from(color: ColorStyle) -> Self {
         Style {
-            effect: None,
+            effects: EnumSet::new(),
             color: Some(color),
         }
     }
 }
 
-/// Text effect
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Effect {
-    /// No effect
-    Simple,
-    /// Reverses foreground and background colors
-    Reverse,
-    /// Prints foreground in bold
-    Bold,
-    /// Prints foreground in italic
-    Italic,
-    /// Prints foreground with underline
-    Underline,
+enum_set_type! {
+    /// Text effect
+    pub enum Effect {
+        /// No effect
+        Simple,
+        /// Reverses foreground and background colors
+        Reverse,
+        /// Prints foreground in bold
+        Bold,
+        /// Prints foreground in italic
+        Italic,
+        /// Prints foreground with underline
+        Underline,
+    }
 }
 
 /// Combines a front and back color.
