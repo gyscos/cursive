@@ -108,7 +108,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust,no_run
     /// # extern crate cursive;
     /// #
     /// # use cursive::{Cursive, event};
@@ -255,7 +255,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust,no_run
     /// # extern crate cursive;
     /// # use cursive::{Cursive, views, view};
     /// # use cursive::traits::*;
@@ -293,7 +293,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust,no_run
     /// # extern crate cursive;
     /// # use cursive::{Cursive, views};
     /// # use cursive::traits::*;
@@ -326,7 +326,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// # use cursive::Cursive;
     /// # use cursive::views::TextView;
     /// # let mut siv = Cursive::new();
@@ -366,7 +366,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust,no_run
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {
@@ -387,7 +387,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust,no_run
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {
