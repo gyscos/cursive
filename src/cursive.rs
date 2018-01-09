@@ -321,9 +321,26 @@ impl Cursive {
     /// Convenient method to find a view wrapped in [`IdView`].
     ///
     /// This looks for a `IdView<V>` with the given ID, and return
-    /// a mutable reference to the wrapped view.
+    /// a [`ViewRef`] to the wrapped view. The `ViewRef` implements
+    /// `DerefMut<Target=T>`, so you can treat it just like a `&mut T`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::Cursive;
+    /// # use cursive::views::TextView;
+    /// # let mut siv = Cursive::new();
+    /// use cursive::trait::Identifiable;
+    ///
+    /// siv.add_layer(TextView::new("foo").with_id("id"));
+    ///
+    /// // Could be called in a callback
+    /// let ref: ViewRef<TextView> = siv.find_id("id").unwrap();
+    /// ref.set_content("bar");
+    /// ```
     ///
     /// [`IdView`]: views/struct.IdView.html
+    /// [`ViewRef`]: views/type.ViewRef.html
     pub fn find_id<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
     where
         V: View + Any,
