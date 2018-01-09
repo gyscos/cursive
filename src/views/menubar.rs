@@ -2,7 +2,7 @@ use Cursive;
 use Printer;
 use direction;
 use event::*;
-use menu::MenuTree;
+use menu::{MenuItem, MenuTree};
 use std::rc::Rc;
 use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
@@ -33,7 +33,7 @@ enum State {
 /// [`Cursive`]: ../struct.Cursive.html#method.menubar
 pub struct Menubar {
     /// Menu items in this menubar.
-    menus: Vec<(String, Rc<MenuTree>)>,
+    root: MenuTree,
 
     /// TODO: move this out of this view.
     pub autohide: bool,
@@ -49,7 +49,7 @@ impl Menubar {
     /// Creates a new, empty menubar.
     pub fn new() -> Self {
         Menubar {
-            menus: Vec::new(),
+            root: MenuTree::new(),
             autohide: true,
             state: State::Inactive,
             focus: 0,
@@ -80,66 +80,99 @@ impl Menubar {
     ///
     /// The item will use the given title, and on selection, will open a
     /// popup-menu with the given menu tree.
-    pub fn add_subtree(&mut self, title: &str, menu: MenuTree) -> &mut Self {
-        let i = self.menus.len();
+    pub fn add_subtree<S>(&mut self, title: S, menu: MenuTree) -> &mut Self
+    where
+        S: Into<String>,
+    {
+        let i = self.root.len();
         self.insert_subtree(i, title, menu)
     }
 
+    /// Adds a delimiter to the menubar.
+    pub fn add_delimiter(&mut self) -> &mut Self {
+        let i = self.root.len();
+        self.insert_delimiter(i)
+    }
+
+    /// Adds a leaf node to the menubar.
+    pub fn add_leaf<S, F>(&mut self, title: S, cb: F) -> &mut Self
+    where
+        S: Into<String>,
+        F: 'static + Fn(&mut Cursive),
+    {
+        let i = self.root.len();
+        self.insert_leaf(i, title, cb)
+    }
+
     /// Insert a new item at the given position.
-    pub fn insert_subtree(
-        &mut self, i: usize, title: &str, menu: MenuTree
-    ) -> &mut Self {
-        self.menus.insert(i, (title.to_string(), Rc::new(menu)));
+    pub fn insert_subtree<S>(
+        &mut self, i: usize, title: S, menu: MenuTree
+    ) -> &mut Self
+    where
+        S: Into<String>,
+    {
+        self.root.insert_subtree(i, title, menu);
+        self
+    }
+
+    /// Inserts a new delimiter at the given position.
+    ///
+    /// It will show up as `|`.
+    pub fn insert_delimiter(&mut self, i: usize) -> &mut Self {
+        self.root.insert_delimiter(i);
+        self
+    }
+
+    /// Inserts a new leaf node at the given position.
+    ///
+    /// It will be directly actionable.
+    pub fn insert_leaf<S, F>(&mut self, i: usize, title: S, cb: F) -> &mut Self
+    where
+        S: Into<String>,
+        F: 'static + Fn(&mut Cursive),
+    {
+        self.root.insert_leaf(i, title, cb);
         self
     }
 
     /// Removes all menu items from this menubar.
     pub fn clear(&mut self) {
-        self.menus.clear();
+        self.root.clear();
         self.focus = 0;
     }
 
     /// Returns the number of items in this menubar.
     pub fn len(&self) -> usize {
-        self.menus.len()
+        self.root.len()
     }
 
     /// Returns `true` if this menubar is empty.
     pub fn is_empty(&self) -> bool {
-        self.menus.is_empty()
+        self.root.is_empty()
     }
 
     /// Returns the item at the given position.
     ///
     /// Returns `None` if `i > self.len()`
     pub fn get_subtree(&mut self, i: usize) -> Option<&mut MenuTree> {
-        self.menus
-            .get_mut(i)
-            .map(|&mut (_, ref mut tree)| Rc::make_mut(tree))
+        self.root.get_subtree(i)
     }
 
     /// Looks for an item with the given label.
     pub fn find_subtree(&mut self, label: &str) -> Option<&mut MenuTree> {
-        // Look for the menu with the correct label,
-        // then call Rc::make_mut on the tree.
-        // If another Rc on this tree existed, this will clone
-        // the tree and keep the forked version.
-        self.menus
-            .iter_mut()
-            .find(|&&mut (ref l, _)| l == label)
-            .map(|&mut (_, ref mut tree)| Rc::make_mut(tree))
+        self.root.find_subtree(label)
     }
 
     /// Returns the position of the item with the given label.
     ///
     /// Returns `None` if no such label was found.
     pub fn find_position(&mut self, label: &str) -> Option<usize> {
-        self.menus.iter().position(|&(ref l, _)| l == label)
+        self.root.find_position(label)
     }
 
     /// Remove the item at the given position.
     pub fn remove(&mut self, i: usize) {
-        self.menus.remove(i);
+        self.root.remove(i);
     }
 
     fn child_at(&self, x: usize) -> Option<usize> {
@@ -147,9 +180,9 @@ impl Menubar {
             return None;
         }
         let mut offset = 1;
-        for (i, &(ref title, _)) in self.menus.iter().enumerate() {
-            offset += title.width() + 2;
 
+        for (i, child) in self.root.children.iter().enumerate() {
+            offset += child.label().width() + 2;
             if x < offset {
                 return Some(i);
             }
@@ -158,25 +191,36 @@ impl Menubar {
         None
     }
 
-    fn select_child(&mut self) -> EventResult {
-        // First, we need a new Rc to send the callback,
-        // since we don't know when it will be called.
-        let menu = Rc::clone(&self.menus[self.focus].1);
-        self.state = State::Submenu;
-        let offset = (
-            self.menus[..self.focus]
-                .iter()
-                .map(|&(ref title, _)| title.width() + 2)
-                .fold(0, |a, b| a + b),
-            if self.autohide { 1 } else { 0 },
-        );
-        // Since the closure will be called multiple times,
-        // we also need a new Rc on every call.
-        EventResult::with_cb(move |s| show_child(s, offset, Rc::clone(&menu)))
+    fn select_child(&mut self, open_only: bool) -> EventResult {
+        match self.root.children[self.focus] {
+            MenuItem::Leaf(_, ref cb) if !open_only => {
+                EventResult::Consumed(Some(cb.clone()))
+            }
+            MenuItem::Subtree(_, ref tree) => {
+                // First, we need a new Rc to send the callback,
+                // since we don't know when it will be called.
+                let menu = Rc::clone(tree);
+
+                self.state = State::Submenu;
+                let offset = Vec2::new(
+                    self.root.children[..self.focus]
+                        .iter()
+                        .map(|child| child.label().width() + 2)
+                        .sum(),
+                    if self.autohide { 1 } else { 0 },
+                );
+                // Since the closure will be called multiple times,
+                // we also need a new Rc on every call.
+                EventResult::with_cb(move |s| {
+                    show_child(s, offset, Rc::clone(&menu))
+                })
+            }
+            _ => EventResult::Ignored,
+        }
     }
 }
 
-fn show_child(s: &mut Cursive, offset: (usize, usize), menu: Rc<MenuTree>) {
+fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
     // Adds a new layer located near the item title with the menu popup.
     // Also adds two key callbacks on this new view, to handle `left` and
     // `right` key presses.
@@ -223,7 +267,9 @@ impl View for Menubar {
 
         // TODO: draw the rest
         let mut offset = 1;
-        for (i, &(ref title, _)) in self.menus.iter().enumerate() {
+        for (i, item) in self.root.children.iter().enumerate() {
+            let title = item.label();
+
             // We don't want to show HighlightInactive when we're not selected,
             // because it's ugly on the menubar.
             let selected =
@@ -241,18 +287,31 @@ impl View for Menubar {
                 self.hide();
                 return EventResult::with_cb(|s| s.clear());
             }
-            Event::Key(Key::Left) => if self.focus > 0 {
-                self.focus -= 1
-            } else {
-                self.focus = self.menus.len() - 1
+            Event::Key(Key::Left) => loop {
+                if self.focus > 0 {
+                    self.focus -= 1;
+                } else {
+                    self.focus = self.root.len() - 1;
+                }
+                if !self.root.children[self.focus].is_delimiter() {
+                    break;
+                }
             },
-            Event::Key(Key::Right) => if self.focus + 1 < self.menus.len() {
-                self.focus += 1
-            } else {
-                self.focus = 0
+            Event::Key(Key::Right) => loop {
+                if self.focus + 1 < self.root.len() {
+                    self.focus += 1;
+                } else {
+                    self.focus = 0;
+                }
+                if !self.root.children[self.focus].is_delimiter() {
+                    break;
+                }
             },
-            Event::Key(Key::Down) | Event::Key(Key::Enter) => {
-                return self.select_child();
+            Event::Key(Key::Down) => {
+                return self.select_child(true);
+            }
+            Event::Key(Key::Enter) => {
+                return self.select_child(false);
             }
             Event::Mouse {
                 event: MouseEvent::Press(btn),
@@ -266,7 +325,7 @@ impl View for Menubar {
                 {
                     self.focus = child;
                     if btn == MouseButton::Left {
-                        return self.select_child();
+                        return self.select_child(false);
                     }
                 }
             }
@@ -293,10 +352,11 @@ impl View for Menubar {
         // We add 2 to the length of every label for marin.
         // Also, we add 1 at the beginning.
         // (See the `draw()` method)
-        let width = self.menus
+        let width = self.root
+            .children
             .iter()
-            .map(|&(ref title, _)| title.len() + 2)
-            .fold(1, |a, b| a + b);
+            .map(|item| item.label().len() + 2)
+            .sum();
 
         Vec2::new(width, 1)
     }

@@ -41,7 +41,7 @@ impl MenuItem {
     /// Returns an empty string if `self` is a delimiter.
     pub fn label(&self) -> &str {
         match *self {
-            MenuItem::Delimiter => "",
+            MenuItem::Delimiter => "│",
             MenuItem::Leaf(ref label, _) | MenuItem::Subtree(ref label, _) => {
                 label
             }
@@ -63,6 +63,16 @@ impl MenuItem {
             _ => false,
         }
     }
+
+    /// Return a mutable reference to the subtree, if applicable.
+    ///
+    /// Returns `None` if `self` is not a `MenuItem::Subtree`.
+    pub fn as_subtree(&mut self) -> Option<&mut MenuTree> {
+        match *self {
+            MenuItem::Subtree(_, ref mut tree) => Some(Rc::make_mut(tree)),
+            _ => None,
+        }
+    }
 }
 
 impl MenuTree {
@@ -76,9 +86,14 @@ impl MenuTree {
         self.children.clear();
     }
 
+    /// Inserts an item at the given position.
+    pub fn insert(&mut self, i: usize, item: MenuItem) {
+        self.children.insert(i, item);
+    }
+
     /// Inserts a delimiter at the given position.
     pub fn insert_delimiter(&mut self, i: usize) {
-        self.children.insert(i, MenuItem::Delimiter);
+        self.insert(i, MenuItem::Delimiter);
     }
 
     /// Adds a delimiter to the end of this tree.
@@ -109,8 +124,7 @@ impl MenuTree {
         F: 'static + Fn(&mut Cursive),
     {
         let title = title.into();
-        self.children
-            .insert(i, MenuItem::Leaf(title, Callback::from_fn(cb)));
+        self.insert(i, MenuItem::Leaf(title, Callback::from_fn(cb)));
     }
 
     /// Adds a actionnable leaf to the end of this tree - chainable variant.
@@ -129,7 +143,7 @@ impl MenuTree {
     {
         let title = title.into();
         let tree = MenuItem::Subtree(title, Rc::new(tree));
-        self.children.insert(i, tree);
+        self.insert(i, tree);
     }
 
     /// Adds a submenu to the end of this tree.
@@ -149,6 +163,20 @@ impl MenuTree {
         self.with(|menu| menu.add_subtree(title, tree))
     }
 
+    /// Looks for the child at the given position.
+    ///
+    /// Returns `None` if `i >= self.len()`.
+    pub fn get_mut(&mut self, i: usize) -> Option<&mut MenuItem> {
+        self.children.get_mut(i)
+    }
+
+    /// Returns the item at the given position.
+    ///
+    /// Returns `None` if `i > self.len()` or if the item is not a subtree.
+    pub fn get_subtree(&mut self, i: usize) -> Option<&mut MenuTree> {
+        self.get_mut(i).and_then(MenuItem::as_subtree)
+    }
+
     /// Looks for a child with the given title.
     ///
     /// Returns `None` if no such label was found.
@@ -158,6 +186,15 @@ impl MenuTree {
             .find(|child| child.label() == title)
     }
 
+    /// Looks for a subtree with the given title.
+    pub fn find_subtree(&mut self, title: &str) -> Option<&mut MenuTree> {
+        self.children
+            .iter_mut()
+            .filter(|child| child.label() == title)
+            .filter_map(MenuItem::as_subtree)
+            .next()
+    }
+
     /// Returns the position of a child with the given label.
     ///
     /// Returns `None` if no such label was found.
@@ -165,20 +202,6 @@ impl MenuTree {
         self.children
             .iter()
             .position(|child| child.label() == title)
-    }
-
-    /// Looks for a subtree child with the given label.
-    ///
-    /// Returns `None` if the given title was not found,
-    /// or if it wasn't a subtree.
-    pub fn find_subtree(&mut self, title: &str) -> Option<&mut MenuTree> {
-        self.find_item(title).and_then(|item| {
-            if let MenuItem::Subtree(_, ref mut tree) = *item {
-                Some(Rc::make_mut(tree))
-            } else {
-                None
-            }
-        })
     }
 
     /// Removes the item at the given position.

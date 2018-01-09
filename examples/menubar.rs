@@ -48,9 +48,7 @@ fn main() {
                      for i in 1..10 {
                          tree.add_leaf(format!("Option {}", i), |_| ());
                      }
-                 })
-                 .delimiter()
-                 .leaf("Quit", |s| s.quit()))
+                 }))
         .add_subtree("Help",
              MenuTree::new()
                  .subtree("Help",
@@ -64,7 +62,9 @@ fn main() {
                                   s.add_layer(Dialog::info(text))
                               }))
                  .leaf("About",
-                       |s| s.add_layer(Dialog::info("Cursive v0.0.0"))));
+                       |s| s.add_layer(Dialog::info("Cursive v0.0.0"))))
+        .add_delimiter()
+        .add_leaf("Quit", |s| s.quit());
 
     // When `autohide` is on (default), the menu only appears when active.
     // Turning it off will leave the menu always visible.
