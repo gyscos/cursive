@@ -323,9 +323,30 @@ impl View for Menubar {
                     .checked_sub(offset)
                     .and_then(|pos| self.child_at(pos.x))
                 {
-                    self.focus = child;
-                    if btn == MouseButton::Left {
-                        return self.select_child(false);
+                    if !self.root.children[child].is_delimiter() {
+                        self.focus = child;
+                        if btn == MouseButton::Left {
+                            return self.select_child(true);
+                        }
+                    }
+                }
+            }
+            Event::Mouse {
+                event: MouseEvent::Release(btn),
+                position,
+                offset,
+            } if position.fits(offset) && position.y == offset.y =>
+            {
+                if let Some(child) = position
+                    .checked_sub(offset)
+                    .and_then(|pos| self.child_at(pos.x))
+                {
+                    if self.root.children[child].is_leaf() {
+                        if self.focus == child {
+                            if btn == MouseButton::Left {
+                                return self.select_child(false);
+                            }
+                        }
                     }
                 }
             }

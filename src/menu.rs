@@ -56,6 +56,14 @@ impl MenuItem {
         }
     }
 
+    /// Returns `true` if `self` is a leaf node.
+    pub fn is_leaf(&self) -> bool {
+        match *self {
+            MenuItem::Leaf(_, _) => true,
+            _ => false,
+        }
+    }
+
     /// Returns `true` if `self` is a subtree.
     pub fn is_subtree(&self) -> bool {
         match *self {
