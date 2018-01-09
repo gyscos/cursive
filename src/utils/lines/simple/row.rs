@@ -34,4 +34,3 @@ impl Row {
         self.end -= offset;
     }
 }
-

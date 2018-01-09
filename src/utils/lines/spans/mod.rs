@@ -15,12 +15,11 @@ mod segment;
 #[cfg(test)]
 mod tests;
 
-use std::borrow::Cow;
-use theme::Style;
-
 pub use self::lines_iterator::SpanLinesIterator;
 pub use self::row::Row;
 pub use self::segment::Segment;
+use std::borrow::Cow;
+use theme::Style;
 
 /// Input to the algorithm
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,4 +36,3 @@ pub struct Span<'a> {
     /// Style to apply to this span of text.
     pub style: Style,
 }
-

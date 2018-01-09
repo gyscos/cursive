@@ -109,4 +109,3 @@ fn consider_chunk(available: usize, chunk: &Chunk) -> ChunkFitResult {
         ChunkFitResult::DoesNotFit
     }
 }
-

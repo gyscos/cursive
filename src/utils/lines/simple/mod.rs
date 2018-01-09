@@ -9,7 +9,6 @@ mod row;
 
 pub use self::lines_iterator::LinesIterator;
 pub use self::row::Row;
-
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 

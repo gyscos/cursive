@@ -68,6 +68,7 @@ fn main() {
 
     // When `autohide` is on (default), the menu only appears when active.
     // Turning it off will leave the menu always visible.
+    // Try uncommenting this line!
 
     // siv.set_autohide_menu(false);
 

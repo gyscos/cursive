@@ -540,7 +540,8 @@ impl View for TextView {
             self.rows.len()
         };
 
-        self.scrollbase.set_heights(available_height, self.rows.len());
+        self.scrollbase
+            .set_heights(available_height, self.rows.len());
         self.adjust_scroll();
     }
 }

@@ -24,4 +24,3 @@ impl<S: Deref<Target = String>> From<S> for BorderStyle {
         }
     }
 }
-

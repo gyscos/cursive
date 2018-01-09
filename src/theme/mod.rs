@@ -121,14 +121,13 @@ mod color_style;
 mod border_style;
 mod palette;
 
-pub use self::color::{Color, BaseColor};
 pub use self::border_style::BorderStyle;
+pub use self::color::{BaseColor, Color};
 pub use self::color_pair::ColorPair;
 pub use self::color_style::ColorStyle;
 pub use self::effect::Effect;
 pub use self::palette::Palette;
 pub use self::style::Style;
-
 use std::fs::File;
 use std::io;
 use std::io::Read;
@@ -183,8 +182,6 @@ impl Theme {
     }
 }
 
-
-
 /// Possible error returned when loading a theme.
 #[derive(Debug)]
 pub enum Error {
@@ -205,7 +202,6 @@ impl From<toml::de::Error> for Error {
         Error::Parse(err)
     }
 }
-
 
 /// Loads a theme from file and sets it as active.
 pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
@@ -233,4 +229,3 @@ pub fn load_theme(content: &str) -> Result<Theme, Error> {
 pub fn load_default() -> Theme {
     Theme::default()
 }
-

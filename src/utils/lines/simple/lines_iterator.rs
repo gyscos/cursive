@@ -1,6 +1,6 @@
+use super::{prefix, Row};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use super::{prefix, Row};
 
 /// Generates rows of text in constrained width.
 ///

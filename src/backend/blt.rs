@@ -178,10 +178,10 @@ impl backend::Backend for Concrete {
     fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
         match effect {
             // TODO: does BLT support bold/italic/underline?
-            Effect::Bold |
-            Effect::Italic |
-            Effect::Underline |
-            Effect::Simple => f(),
+            Effect::Bold
+            | Effect::Italic
+            | Effect::Underline
+            | Effect::Simple => f(),
             // TODO: how to do this correctly?`
             //       BLT itself doesn't do this kind of thing,
             //       we'd need the colours in our position,

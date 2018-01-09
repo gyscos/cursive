@@ -1,4 +1,3 @@
-
 /// Refers to a part of a span
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Segment {

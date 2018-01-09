@@ -1,6 +1,5 @@
+use super::{Segment, Span};
 use std::borrow::Cow;
-
-use super::{Span, Segment};
 
 /// A list of segments representing a row of text
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,5 +28,3 @@ impl Row {
             .collect()
     }
 }
-
-
