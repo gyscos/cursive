@@ -414,7 +414,11 @@ impl backend::Backend for Concrete {
                     pancurses::Input::KeySuspend => Event::Refresh,
                     pancurses::Input::KeyUndo => Event::Refresh,
                     pancurses::Input::KeyResize => {
-                        pancurses::resize_term(0, 0);
+                        // Let pancurses adjust their structures when the window is resized.
+                        // Do it for Windows only, as 'resize_term' is not implemented for Unix
+                        if cfg!(target_os = "windows") {
+                            pancurses::resize_term(0, 0);
+                        }
                         Event::WindowResize
                     },
                     pancurses::Input::KeyEvent => Event::Refresh,
