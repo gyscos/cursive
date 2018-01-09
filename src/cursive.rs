@@ -328,15 +328,15 @@ impl Cursive {
     ///
     /// ```rust,no_run
     /// # use cursive::Cursive;
-    /// # use cursive::views::TextView;
+    /// # use cursive::views::{TextView, ViewRef};
     /// # let mut siv = Cursive::new();
-    /// use cursive::trait::Identifiable;
+    /// use cursive::traits::Identifiable;
     ///
     /// siv.add_layer(TextView::new("foo").with_id("id"));
     ///
     /// // Could be called in a callback
-    /// let ref: ViewRef<TextView> = siv.find_id("id").unwrap();
-    /// ref.set_content("bar");
+    /// let mut view: ViewRef<TextView> = siv.find_id("id").unwrap();
+    /// view.set_content("bar");
     /// ```
     ///
     /// [`IdView`]: views/struct.IdView.html
