@@ -31,7 +31,7 @@ impl<'a> Chunk<'a> {
                 // Empty this segment
                 segment.seg.start = segment.seg.end;
                 segment.seg.width = 0;
-                segment.text = &"";
+                segment.text = "";
             }
         }
     }

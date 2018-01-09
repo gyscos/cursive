@@ -341,12 +341,10 @@ impl View for Menubar {
                     .checked_sub(offset)
                     .and_then(|pos| self.child_at(pos.x))
                 {
-                    if self.root.children[child].is_leaf() {
-                        if self.focus == child {
-                            if btn == MouseButton::Left {
-                                return self.select_child(false);
-                            }
-                        }
+                    if self.focus == child && btn == MouseButton::Left
+                        && self.root.children[child].is_leaf()
+                    {
+                        return self.select_child(false);
                     }
                 }
             }
