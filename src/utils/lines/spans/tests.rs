@@ -1,13 +1,11 @@
-use theme::Style;
 use super::Span;
-use super::chunk::Chunk;
-use super::row::Row;
-use super::chunk_iterator::ChunkIterator;
-use super::segment::Segment;
-
 use super::SpanLinesIterator;
-
+use super::chunk::Chunk;
+use super::chunk_iterator::ChunkIterator;
+use super::row::Row;
+use super::segment::Segment;
 use std::borrow::Cow;
+use theme::Style;
 
 fn input() -> Vec<Span<'static>> {
     vec![
@@ -32,6 +30,62 @@ fn input() -> Vec<Span<'static>> {
             style: Style::none(),
         },
     ]
+}
+
+#[cfg(feature = "markdown")]
+#[test]
+fn test_lines_markdown() {
+    let input = r"
+A beautiful *boat* isn't it?
+Yes indeed, my **Super**Captain !";
+
+    let input_spans = ::utils::markup::markdown::parse(input);
+    let iter = SpanLinesIterator::new(&input_spans, 16);
+    let rows: Vec<Row> = iter.collect();
+    let output_spans: Vec<_> =
+        rows.iter().map(|row| row.resolve(&input_spans)).collect();
+
+    assert_eq!(
+        &output_spans[..],
+        &[
+            vec![
+                Span {
+                    text: Cow::Borrowed("A beautiful "),
+                    style: Style::none(),
+                },
+                Span {
+                    text: Cow::Borrowed("boat"),
+                    style: Style::from(Effect::Italic),
+                },
+            ],
+            vec![
+                Span {
+                    text: Cow::Borrowed("isn\'t it?"),
+                    style: Style::none(),
+                },
+            ],
+            vec![
+                Span {
+                    text: Cow::Borrowed("Yes indeed, my "),
+                    style: Style::none(),
+                },
+            ],
+            vec![
+                Span {
+                    text: Cow::Borrowed("Super"),
+                    style: Style::from(Effect::Bold),
+                },
+                Span {
+                    text: Cow::Borrowed("Captain "),
+                    style: Style::none(),
+                },
+                Span {
+                    text: Cow::Borrowed("!"),
+                    style: Style::none(),
+                },
+            ]
+        ]
+    );
 }
 
 #[test]
