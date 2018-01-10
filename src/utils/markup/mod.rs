@@ -9,8 +9,9 @@ pub mod markdown;
 pub use self::markdown::Markdown;
 use owning_ref::OwningHandle;
 use owning_ref::StringRef;
-use std::marker::PhantomData;
 use utils::lines::spans::Span;
+use theme::Style;
+use std::borrow::Cow;
 
 /// Trait for parsing text into styled spans.
 pub trait Markup {
@@ -32,6 +33,20 @@ pub trait Markup {
         OwningHandle::try_new(StringRef::new(input), |input| {
             Self::parse(unsafe { &*input })
         })
+    }
+}
+
+/// Dummy `Markup` implementation that returns the text as-is.
+pub struct Plain;
+
+impl Markup for Plain {
+    type Error = ();
+
+    fn parse<'a>(input: &'a str) -> Result<Vec<Span<'a>>, Self::Error> {
+        Ok(vec![Span {
+            text: Cow::Borrowed(input),
+            style: Style::none(),
+        }])
     }
 }
 

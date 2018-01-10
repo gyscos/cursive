@@ -5,7 +5,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Gitter chat](https://badges.gitter.im/gyscos/cursive.png)](https://gitter.im/cursive-rs/cursive)
 
-Cursive is a TUI (Text User Interface) library for rust. It is currently based on jeaye's [ncurses-rs](https://github.com/jeaye/ncurses-rs), but [other backends are available](https://github.com/gyscos/Cursive/wiki/Backends).
+Cursive is a TUI (Text User Interface) library for rust. It uses ncurses by default, but [other backends are available](https://github.com/gyscos/Cursive/wiki/Backends).
 
 It allows you to build rich user interfaces for terminal applications.
 
