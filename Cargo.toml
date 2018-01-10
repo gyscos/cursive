@@ -29,7 +29,7 @@ repository = "gyscos/Cursive"
 log = "0.4"
 maplit = "1.0.0"
 num = "0.1"
-owning_ref = "0.3"
+owning_ref = { git = "https://github.com/gyscos/owning-ref-rs" }
 toml = "0.4"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
