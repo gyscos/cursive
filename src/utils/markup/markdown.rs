@@ -9,7 +9,7 @@ use std::borrow::Cow;
 use theme::{Effect, Style};
 use utils::lines::spans::Span;
 
-/// Parse markdown string into spans of styled text.
+/// Iterator that parse a markdown text and outputs styled spans.
 pub struct Parser<'a> {
     first: bool,
     stack: Vec<Style>,
@@ -116,6 +116,19 @@ impl<'a> Iterator for Parser<'a> {
 /// This is a shortcut for `Parser::new(input).collect()`.
 pub fn parse<'a>(input: &'a str) -> Vec<Span<'a>> {
     Parser::new(input).collect()
+}
+
+/// `Markup` trait implementation for markdown text.
+///
+/// Requires the `markdown` feature.
+pub struct Markdown;
+
+impl super::Markup for Markdown {
+    type Error = ();
+
+    fn parse<'a>(input: &'a str) -> Result<Vec<Span<'a>>, Self::Error> {
+        Ok(parse(input))
+    }
 }
 
 #[cfg(test)]
