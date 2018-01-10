@@ -44,6 +44,13 @@ where
     type Item = Chunk<'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // Protect agains empty spans
+        while self.current_span < self.spans.len()
+            && self.spans[self.current_span].text.is_empty()
+        {
+            self.current_span += 1;
+        }
+
         if self.current_span >= self.spans.len() {
             return None;
         }
@@ -110,6 +117,13 @@ where
                 // If we reached the end of the slice,
                 // we need to look at the next span first.
                 self.current_span += 1;
+
+                // Skip empty spans
+                while self.current_span < self.spans.len()
+                    && self.spans[self.current_span].text.is_empty()
+                {
+                    self.current_span += 1;
+                }
 
                 if self.current_span >= self.spans.len() {
                     // If this was the last chunk, return as is!

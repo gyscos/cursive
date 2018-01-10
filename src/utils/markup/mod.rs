@@ -7,7 +7,6 @@ pub mod markdown;
 
 #[cfg(feature = "markdown")]
 pub use self::markdown::MarkdownText;
-
 use owning_ref::OwningHandle;
 use owning_ref::StringRef;
 use std::borrow::Cow;
@@ -43,7 +42,6 @@ pub trait Markup {
 /// This only wraps the text and indicates how it should be parsed;
 /// it does not parse the text itself.
 pub trait MarkupText {
-
     /// Markup format to use to parse the string.
     type M: Markup;
 
@@ -67,12 +65,16 @@ impl Markup for Plain {
     type Error = ();
 
     fn parse<'a>(input: &'a str) -> Result<Vec<Span<'a>>, Self::Error> {
-        Ok(vec![
-            Span {
-                text: Cow::Borrowed(input),
-                style: Style::none(),
-            },
-        ])
+        Ok(if input.is_empty() {
+            Vec::new()
+        } else {
+            vec![
+                Span {
+                    text: Cow::Borrowed(input),
+                    style: Style::none(),
+                },
+            ]
+        })
     }
 }
 
@@ -109,8 +111,9 @@ impl StyledString {
     /// Returns a plain StyledString without any style.
     ///
     /// > You got no style, Dutch. You know that.
-    pub fn plain<S>(content: S) -> Self 
-    where S: Into<String>
+    pub fn plain<S>(content: S) -> Self
+    where
+        S: Into<String>,
     {
         Self::new(content).unwrap()
     }
@@ -138,16 +141,21 @@ impl StyledString {
     }
 
     /// Sets the content of this string to plain text.
-    pub fn set_plain<S>(&mut self, content: S) where S: Into<String> {
+    pub fn set_plain<S>(&mut self, content: S)
+    where
+        S: Into<String>,
+    {
         self.set_content(content).unwrap();
     }
 
     /// Append `content` to the end.
     ///
     /// Re-parse everything after.
-    pub fn append_content<T>(&mut self, content: T) -> Result<(), <T::M as Markup>::Error>
+    pub fn append_content<T>(
+        &mut self, content: T
+    ) -> Result<(), <T::M as Markup>::Error>
     where
-        T: MarkupText
+        T: MarkupText,
     {
         self.with_content::<T::M, _, _>(|c| c.push_str(&content.to_string()))
     }
