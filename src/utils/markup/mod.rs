@@ -6,12 +6,14 @@
 pub mod markdown;
 
 #[cfg(feature = "markdown")]
-pub use self::markdown::Markdown;
+pub use self::markdown::MarkdownText;
+
 use owning_ref::OwningHandle;
 use owning_ref::StringRef;
-use utils::lines::spans::Span;
-use theme::Style;
 use std::borrow::Cow;
+use std::ops::Deref;
+use theme::Style;
+use utils::lines::spans::Span;
 
 /// Trait for parsing text into styled spans.
 pub trait Markup {
@@ -36,6 +38,28 @@ pub trait Markup {
     }
 }
 
+/// Thin wrapper around a string, with a markup format.
+///
+/// This only wraps the text and indicates how it should be parsed;
+/// it does not parse the text itself.
+pub trait MarkupText {
+
+    /// Markup format to use to parse the string.
+    type M: Markup;
+
+    /// Access the inner string.
+    fn to_string(self) -> String;
+}
+
+/// Unwrapped text gets the "Plain" markup for free.
+impl<S: Into<String>> MarkupText for S {
+    type M = Plain;
+
+    fn to_string(self) -> String {
+        self.into()
+    }
+}
+
 /// Dummy `Markup` implementation that returns the text as-is.
 pub struct Plain;
 
@@ -43,10 +67,12 @@ impl Markup for Plain {
     type Error = ();
 
     fn parse<'a>(input: &'a str) -> Result<Vec<Span<'a>>, Self::Error> {
-        Ok(vec![Span {
-            text: Cow::Borrowed(input),
-            style: Style::none(),
-        }])
+        Ok(vec![
+            Span {
+                text: Cow::Borrowed(input),
+                style: Style::none(),
+            },
+        ])
     }
 }
 
@@ -57,37 +83,105 @@ pub type StyledHandle = OwningHandle<StringRef, Vec<Span<'static>>>;
 
 /// A String that parses a markup language.
 pub struct StyledString {
-    content: StyledHandle,
+    content: Option<StyledHandle>,
 }
 
 impl StyledString {
-
     /// Creates a new styled string, parsing the given content.
-    pub fn new<S, M>(content: S) -> Result<Self, M::Error>
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::utils::markup::StyledString;
+    /// let styled_string = StyledString::new("*plain* text");
+    /// ```
+    pub fn new<T>(content: T) -> Result<Self, <T::M as Markup>::Error>
     where
-        S: Into<String>,
-        M: Markup,
+        T: MarkupText,
     {
-        let content = M::make_handle(content)?;
+        let content = content.to_string();
+
+        let content = Some(T::M::make_handle(content)?);
+
         Ok(StyledString { content })
+    }
+
+    /// Returns a plain StyledString without any style.
+    ///
+    /// > You got no style, Dutch. You know that.
+    pub fn plain<S>(content: S) -> Self 
+    where S: Into<String>
+    {
+        Self::new(content).unwrap()
     }
 
     /// Sets the content of this string.
     ///
-    /// The content will be parsed; if an error is found,
-    /// it will be returned here (and the content will be unchanged).
-    pub fn set_content<S, M>(&mut self, content: S) -> Result<(), M::Error>
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::utils::markup::StyledString;
+    /// # let mut styled_string = StyledString::new("").unwrap();
+    /// styled_string.set_content("*plain* text").unwrap();
+    /// ```
+    pub fn set_content<T>(
+        &mut self, content: T
+    ) -> Result<(), <<T as MarkupText>::M as Markup>::Error>
     where
-        S: Into<String>,
-        M: Markup,
+        T: MarkupText,
     {
-        self.content = M::make_handle(content)?;
+        let content = content.to_string();
+
+        self.content = Some(T::M::make_handle(content)?);
 
         Ok(())
     }
 
+    /// Sets the content of this string to plain text.
+    pub fn set_plain<S>(&mut self, content: S) where S: Into<String> {
+        self.set_content(content).unwrap();
+    }
+
+    /// Append `content` to the end.
+    ///
+    /// Re-parse everything after.
+    pub fn append_content<T>(&mut self, content: T) -> Result<(), <T::M as Markup>::Error>
+    where
+        T: MarkupText
+    {
+        self.with_content::<T::M, _, _>(|c| c.push_str(&content.to_string()))
+    }
+
+    /// Run a closure on the text content.
+    ///
+    /// And re-parse everything after.
+    pub fn with_content<M, F, O>(&mut self, f: F) -> Result<O, M::Error>
+    where
+        M: Markup,
+        F: FnOnce(&mut String) -> O,
+    {
+        // Get hold of the StyledHandle
+        let content = self.content.take().unwrap();
+        // Get the inner String
+        let mut content = content.into_inner().into_inner();
+        // Do what we have to do
+        let out = f(&mut content);
+        // And re-parse everything
+        self.content = Some(M::make_handle(content)?);
+
+        Ok(out)
+    }
+
     /// Gives access to the parsed styled spans.
     pub fn spans<'a>(&'a self) -> &'a [Span<'a>] {
-        &self.content
+        &self.content.as_ref().unwrap()
+    }
+}
+
+impl Deref for StyledString {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.content.as_ref().unwrap().owner()
     }
 }

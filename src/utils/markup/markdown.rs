@@ -9,6 +9,47 @@ use std::borrow::Cow;
 use theme::{Effect, Style};
 use utils::lines::spans::Span;
 
+/// `Markup` trait implementation for markdown text.
+///
+/// Requires the `markdown` feature.
+pub struct Markdown;
+
+impl super::Markup for Markdown {
+    type Error = ();
+
+    fn parse<'a>(input: &'a str) -> Result<Vec<Span<'a>>, Self::Error> {
+        Ok(parse(input))
+    }
+}
+
+/// Thin wrapper around text that should be parsed as Markdown.
+///
+/// This does not parse the text here, but indicates how it should be parsed.
+///
+/// # Examples
+///
+/// ```rust
+/// // Can use `&str`
+/// let text = MarkdownText("*Markdown* text!");
+///
+/// // Or `String`
+/// let text = MarkdownText(String::from("*Right __here__!"));
+/// ```
+pub struct MarkdownText<S>(pub S)
+where
+    S: Into<String>;
+
+impl<S> super::MarkupText for MarkdownText<S>
+where
+    S: Into<String>,
+{
+    type M = Markdown;
+
+    fn to_string(self) -> String {
+        self.0.into()
+    }
+}
+
 /// Iterator that parse a markdown text and outputs styled spans.
 pub struct Parser<'a> {
     first: bool,
@@ -116,19 +157,7 @@ impl<'a> Iterator for Parser<'a> {
 /// This is a shortcut for `Parser::new(input).collect()`.
 pub fn parse<'a>(input: &'a str) -> Vec<Span<'a>> {
     Parser::new(input).collect()
-}
-
-/// `Markup` trait implementation for markdown text.
-///
-/// Requires the `markdown` feature.
-pub struct Markdown;
-
-impl super::Markup for Markdown {
-    type Error = ();
-
-    fn parse<'a>(input: &'a str) -> Result<Vec<Span<'a>>, Self::Error> {
-        Ok(parse(input))
-    }
+    // Parser::new(input).inspect(|span| eprintln!("{:?}", span)).collect()
 }
 
 #[cfg(test)]

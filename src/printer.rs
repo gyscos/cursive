@@ -143,6 +143,8 @@ impl<'a> Printer<'a> {
         let color = style.color;
         let effects = style.effects;
 
+        // eprintln!("{:?}", effects);
+
         if let Some(color) = color {
             self.with_color(color, |printer| {
                 printer.with_effects(effects, f);
@@ -172,7 +174,8 @@ impl<'a> Printer<'a> {
             Some(effect) => {
                 let mut effects = effects;
                 effects.remove(effect);
-                self.with_effects(effects, f);
+
+                self.with_effect(effect, |s| s.with_effects(effects, f));
             }
         }
     }
