@@ -127,6 +127,9 @@ where
 
                 if self.current_span >= self.spans.len() {
                     // If this was the last chunk, return as is!
+                    // Well, make sure we don't end with a newline...
+                    let hard_stop = hard_stop || span.text.ends_with('\n');
+
                     return Some(Chunk {
                         width: total_width,
                         segments,

@@ -9,7 +9,6 @@ use std::ops::Deref;
 use std::sync::{Mutex, MutexGuard};
 use std::sync::Arc;
 use theme::Effect;
-use unicode_width::UnicodeWidthStr;
 use utils::lines::spans::{Row, SpanLinesIterator};
 use utils::markup::{Markup, MarkupText, StyledString};
 use vec::Vec2;
@@ -192,15 +191,6 @@ pub struct TextView {
     scroll_strategy: ScrollStrategy,
     last_size: Vec2,
     width: Option<usize>,
-}
-
-// If the last character is a newline, strip it.
-fn strip_last_newline(content: &str) -> &str {
-    if content.ends_with('\n') {
-        &content[..content.len() - 1]
-    } else {
-        content
-    }
 }
 
 impl TextView {
