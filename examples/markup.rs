@@ -1,6 +1,7 @@
 extern crate cursive;
 
 use cursive::Cursive;
+#[cfg(feature = "markdown")]
 use cursive::utils::markup::MarkdownText;
 use cursive::views::{Dialog, TextView};
 
@@ -11,7 +12,11 @@ use cursive::views::{Dialog, TextView};
 fn main() {
     let mut siv = Cursive::new();
 
+    #[cfg(feature = "markdown")]
     let text = MarkdownText("Isn't *that* **cool**?");
+
+    #[cfg(not(feature = "markdown"))]
+    let text = "Rebuild with --features markdown ;)";
 
     siv.add_layer(
         Dialog::around(TextView::styled(text).unwrap())
