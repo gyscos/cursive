@@ -55,9 +55,9 @@ impl Cursive {
 
         let (tx, rx) = mpsc::channel();
 
-        let mut res = Cursive {
+        Cursive {
             theme: theme,
-            screens: Vec::new(),
+            screens: vec![views::StackView::new()],
             last_sizes: Vec::new(),
             global_callbacks: HashMap::new(),
             menubar: views::Menubar::new(),
@@ -66,11 +66,7 @@ impl Cursive {
             cb_source: rx,
             cb_sink: tx,
             backend: backend,
-        };
-
-        res.screens.push(views::StackView::new());
-
-        res
+        }
     }
 
     /// Returns a sink for asynchronous callbacks.
@@ -216,6 +212,11 @@ impl Cursive {
     pub fn screen_mut(&mut self) -> &mut views::StackView {
         let id = self.active_screen;
         &mut self.screens[id]
+    }
+
+    /// Returns the id of the currently active screen.
+    pub fn active_screen(&self) -> ScreenId {
+        self.active_screen
     }
 
     /// Adds a new screen, and returns its ID.
