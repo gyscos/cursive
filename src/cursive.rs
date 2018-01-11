@@ -25,7 +25,7 @@ pub type ScreenId = usize;
 pub struct Cursive {
     theme: theme::Theme,
     screens: Vec<views::StackView>,
-    global_callbacks: HashMap<Event, Callback>,
+    global_callbacks: HashMap<Event, Vec<Callback>>,
     menubar: views::Menubar,
 
     // Last layer sizes of the stack view.
@@ -381,7 +381,9 @@ impl Cursive {
         F: Fn(&mut Cursive) + 'static,
     {
         self.global_callbacks
-            .insert(event.into(), Callback::from_fn(cb));
+            .entry(event.into())
+            .or_insert(Vec::new())
+            .push(Callback::from_fn(cb));
     }
 
     /// Add a layer to the current screen.
@@ -420,12 +422,14 @@ impl Cursive {
 
     // Handles a key event when it was ignored by the current view
     fn on_event(&mut self, event: Event) {
-        let cb = match self.global_callbacks.get(&event) {
+        let cb_list = match self.global_callbacks.get(&event) {
             None => return,
-            Some(cb) => cb.clone(),
+            Some(cb_list) => cb_list.clone(),
         };
         // Not from a view, so no viewpath here
-        cb(self);
+        for cb in cb_list {
+            cb(self);
+        }
     }
 
     /// Returns the size of the screen, in characters.
