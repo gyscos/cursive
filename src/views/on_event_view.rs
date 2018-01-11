@@ -10,6 +10,9 @@ use view::{View, ViewWrapper};
 /// This view registers a set of callbacks tied to specific events, to be run
 /// in certain conditions.
 ///
+/// **Note**: only one callback can be registered per event. Trying to register
+/// a new one will replace any existing one for that event.
+///
 /// * Some callbacks are called only for vents ignored by the wrapped view
 ///   (those registered by [`on_event`] or [`on_event_inner`])
 /// * Others are processed first, and can control whether the child view should
