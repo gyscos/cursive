@@ -84,6 +84,21 @@ impl Button {
         self.enabled
     }
 
+    /// Returns the label for this button.
+    ///
+    /// Includes brackets.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::views::Button;
+    /// let button = Button::new("Quit", |s| s.quit());
+    /// assert_eq!(button.label(), "<Quit>");
+    /// ```
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+
     fn req_size(&self) -> Vec2 {
         Vec2::new(self.label.width(), 1)
     }
