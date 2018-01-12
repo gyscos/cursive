@@ -216,6 +216,13 @@ impl Dialog {
         self
     }
 
+    /// Returns an iterator on this buttons for this dialog.
+    pub fn buttons_mut<'a>(
+        &'a mut self
+    ) -> Box<'a + Iterator<Item = &'a mut Button>> {
+        Box::new(self.buttons.iter_mut().map(|b| &mut b.button.view))
+    }
+
     // Private methods
 
     // An event is received while the content is in focus
