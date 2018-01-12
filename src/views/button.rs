@@ -25,9 +25,10 @@ pub struct Button {
 
 impl Button {
     /// Creates a new button with the given content and callback.
-    pub fn new<F, R, S: Into<String>>(label: S, cb: F) -> Self
+    pub fn new<F, R, S>(label: S, cb: F) -> Self
     where
         F: 'static + Fn(&mut Cursive) -> R,
+        S: Into<String>,
     {
         let label = label.into();
         Self::new_raw(format!("<{}>", label), cb)
@@ -97,6 +98,26 @@ impl Button {
     /// ```
     pub fn label(&self) -> &str {
         &self.label
+    }
+
+    /// Sets the label to the given value.
+    ///
+    /// This will include brackets.
+    pub fn set_label<S>(&mut self, label: S)
+    where
+        S: Into<String>,
+    {
+        self.set_label_raw(format!("<{}>", label.into()));
+    }
+
+    /// Sets the label exactly to the given value.
+    ///
+    /// This will not include brackets.
+    pub fn set_label_raw<S>(&mut self, label: S)
+    where
+        S: Into<String>,
+    {
+        self.label = label.into();
     }
 
     fn req_size(&self) -> Vec2 {
