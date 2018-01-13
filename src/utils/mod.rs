@@ -1,6 +1,7 @@
 //! Toolbox to make text layout easier.
 
 mod reader;
+pub mod span;
 pub mod lines;
 pub mod markup;
 

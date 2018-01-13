@@ -1,3 +1,5 @@
+use utils::span::{Span, SpannedString};
+
 /// Refers to a part of a span
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Segment {
@@ -17,6 +19,19 @@ impl Segment {
     #[cfg(test)]
     pub fn with_text<'a>(self, text: &'a str) -> SegmentWithText<'a> {
         SegmentWithText { text, seg: self }
+    }
+
+    /// Resolve this segment to a string slice and an attribute.
+    pub fn resolve<'a, T>(&self, source: &'a SpannedString<T>) -> Span<'a, T> {
+        let span = &source.spans_raw()[self.span_id];
+
+        let content = span.content.resolve(source.source());
+        let content = &content[self.start..self.end];
+
+        Span {
+            content,
+            attr: &span.attr,
+        }
     }
 }
 

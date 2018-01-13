@@ -15,24 +15,6 @@ mod segment;
 #[cfg(test)]
 mod tests;
 
-pub use self::lines_iterator::SpanLinesIterator;
+pub use self::lines_iterator::LinesIterator;
 pub use self::row::Row;
 pub use self::segment::Segment;
-use std::borrow::Cow;
-use theme::Style;
-
-/// Input to the algorithm
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Span<'a> {
-    /// Text for this span.
-    ///
-    /// It can be either a reference to some input text,
-    /// or an owned string.
-    ///
-    /// The owned string is mostly useful when parsing marked-up text that
-    /// contains escape codes.
-    pub text: Cow<'a, str>,
-
-    /// Style to apply to this span of text.
-    pub style: Style,
-}

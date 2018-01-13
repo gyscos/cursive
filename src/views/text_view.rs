@@ -9,8 +9,9 @@ use std::ops::Deref;
 use std::sync::{Mutex, MutexGuard};
 use std::sync::Arc;
 use theme::Effect;
-use utils::lines::spans::{Row, SpanLinesIterator};
-use utils::markup::{Markup, MarkupText, StyledString};
+use unicode_width::UnicodeWidthStr;
+use utils::lines::spans::{LinesIterator, Row};
+use utils::markup::StyledString;
 use vec::Vec2;
 use view::{ScrollBase, ScrollStrategy, SizeCache, View};
 
@@ -29,7 +30,7 @@ use view::{ScrollBase, ScrollStrategy, SizeCache, View};
 ///
 /// // Later, possibly in a different thread
 /// content.set_content("new content");
-/// assert!(content.get_content().contains("new"));
+/// assert!(content.get_content().source().contains("new"));
 /// ```
 #[derive(Clone)]
 pub struct TextContent {
@@ -38,34 +39,28 @@ pub struct TextContent {
 
 impl TextContent {
     /// Creates a new text content around the given value.
-    pub fn new<S>(content: S) -> Self
-    where
-        S: Into<String>,
-    {
-        Self::styled(content).unwrap()
-    }
-
-    /// Creates a new text content around the given value.
     ///
     /// Parses the given value.
-    pub fn styled<T>(content: T) -> Result<Self, <T::M as Markup>::Error>
+    pub fn new<S>(content: S) -> Self
     where
-        T: MarkupText,
+        S: Into<StyledString>,
     {
-        let content = StyledString::new(content)?;
+        let content = content.into();
 
-        Ok(TextContent {
+        TextContent {
             content: Arc::new(Mutex::new(TextContentInner {
                 content,
                 size_cache: None,
             })),
-        })
+        }
     }
 }
 
 /// A reference to the text content.
 ///
-/// It implements `Deref<Target=str>`.
+/// This can be deref'ed into a [`StyledString`].
+///
+/// [`StyledString`]: ../utils/markup/type.StyledString.html
 ///
 /// This keeps the content locked. Do not store this!
 pub struct TextContentRef {
@@ -76,42 +71,29 @@ pub struct TextContentRef {
 }
 
 impl Deref for TextContentRef {
-    type Target = str;
+    type Target = StyledString;
 
-    fn deref(&self) -> &str {
+    fn deref(&self) -> &StyledString {
         &self.handle.content
     }
+
 }
 
 impl TextContent {
     /// Replaces the content with the given value.
     pub fn set_content<S>(&mut self, content: S)
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
-        self.with_content(|c| c.set_plain(content));
-    }
-
-    /// Replaces the content with the given value.
-    ///
-    /// The given markup text will be parsed.
-    pub fn set_markup<T>(
-        &mut self, content: T
-    ) -> Result<(), <T::M as Markup>::Error>
-    where
-        T: MarkupText,
-    {
-        self.with_content(|c| c.set_content(content))
+        self.with_content(|c| *c = content.into());
     }
 
     /// Append `content` to the end of a `TextView`.
-    pub fn append_content<T>(
-        &mut self, content: T
-    ) -> Result<(), <T::M as Markup>::Error>
+    pub fn append<S>(&mut self, content: S)
     where
-        T: MarkupText,
+        S: Into<StyledString>,
     {
-        self.with_content(|c| c.append_content(content))
+        self.with_content(|c| c.append(content))
     }
 
     /// Returns a reference to the content.
@@ -136,6 +118,11 @@ impl TextContent {
     }
 }
 
+/// Internel representation of the content for a TextView.
+///
+/// This is mostly just a StyledString.
+///
+/// Can be shared (through a `Arc<Mutex>`).
 struct TextContentInner {
     // content: String,
     content: StyledString,
@@ -145,6 +132,7 @@ struct TextContentInner {
 }
 
 impl TextContentInner {
+    /// From a shareable content (Arc + Mutex), return a
     fn get_content(content: &Arc<Mutex<TextContentInner>>) -> TextContentRef {
         let arc_ref: ArcRef<Mutex<TextContentInner>> =
             ArcRef::new(Arc::clone(content));
@@ -197,26 +185,9 @@ impl TextView {
     /// Creates a new TextView with the given content.
     pub fn new<S>(content: S) -> Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
-        Self::styled(content).unwrap()
-    }
-
-    /// Creates a new TextView by parsing the given content.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// # use cursive::views::TextView;
-    /// use cursive::utils::markup::MarkdownText;
-    /// // This will require the `markdown` feature!
-    /// let view = TextView::styled(MarkdownText("**Bold** text"));
-    /// ```
-    pub fn styled<T>(content: T) -> Result<Self, <T::M as Markup>::Error>
-    where
-        T: MarkupText,
-    {
-        TextContent::styled(content).map(TextView::new_with_content)
+        Self::new_with_content(TextContent::new(content))
     }
 
     /// Creates a new TextView using the given `Arc<Mutex<String>>`.
@@ -233,7 +204,7 @@ impl TextView {
     ///
     /// // Later, possibly in a different thread
     /// content.set_content("new content");
-    /// assert!(content.get_content().contains("new"));
+    /// assert!(content.get_content().source().contains("new"));
     /// ```
     pub fn new_with_content(content: TextContent) -> Self {
         TextView {
@@ -318,58 +289,25 @@ impl TextView {
     where
         S: Into<String>,
     {
-        self.markup(content).unwrap()
-    }
-
-    /// Replace the text in this view.
-    ///
-    /// Parse the given markup text.
-    ///
-    /// Chainable variant.
-    pub fn markup<T>(self, content: T) -> Result<Self, <T::M as Markup>::Error>
-    where
-        T: MarkupText,
-    {
-        self.try_with(|s| s.set_markup(content))
+        self.with(|s| s.set_content(content))
     }
 
     /// Replace the text in this view.
     pub fn set_content<S>(&mut self, content: S)
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
-        self.set_markup(content).unwrap();
-    }
-
-    /// Replace the text in this view.
-    ///
-    /// Parses the given markup text.
-    pub fn set_markup<T>(
-        &mut self, content: T
-    ) -> Result<(), <T::M as Markup>::Error>
-    where
-        T: MarkupText,
-    {
-        self.content.lock().unwrap().content.set_content(content)?;
+        self.content.lock().unwrap().content = content.into();
         self.invalidate();
-
-        Ok(())
     }
 
     /// Append `content` to the end of a `TextView`.
-    pub fn append_content<T>(
-        &mut self, content: T
-    ) -> Result<(), <T::M as Markup>::Error>
+    pub fn append<S>(&mut self, content: S)
     where
-        T: MarkupText,
+        S: Into<StyledString>,
     {
-        self.content
-            .lock()
-            .unwrap()
-            .content
-            .append_content(content)?;
+        self.content.lock().unwrap().content.append(content.into());
         self.invalidate();
-        Ok(())
     }
 
     /// Returns the current text in this view.
@@ -456,8 +394,7 @@ impl TextView {
 
         // First attempt: naively hope that we won't need a scrollbar_width
         // (This means we try to use the entire available width for text).
-        self.rows =
-            SpanLinesIterator::new(content.content.spans(), size.x).collect();
+        self.rows = LinesIterator::new(&content.content, size.x).collect();
 
         // Width taken by the scrollbar. Without a scrollbar, it's 0.
         let mut scrollbar_width = 0;
@@ -473,8 +410,7 @@ impl TextView {
             };
 
             self.rows =
-                SpanLinesIterator::new(content.content.spans(), available)
-                    .collect();
+                LinesIterator::new(&content.content, available).collect();
 
             if self.rows.is_empty() && !content.content.is_empty() {
                 // We have some content, we we didn't find any row for it?
@@ -526,10 +462,10 @@ impl View for TextView {
                 let l = row.width;
                 let mut x = self.align.h.get_offset(l, printer.size.x);
 
-                for span in row.resolve(content.content.spans()) {
-                    printer.with_style(span.style, |printer| {
-                        printer.print((x, 0), &span.text);
-                        x += span.text.len();
+                for span in row.resolve(&content.content) {
+                    printer.with_style(*span.attr, |printer| {
+                        printer.print((x, 0), &span.content);
+                        x += span.content.width();
                     });
                 }
                 // let text = &content.content[row.start..row.end];

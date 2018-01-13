@@ -136,10 +136,13 @@ impl<'a> Printer<'a> {
 
     /// Call the given closure with a styled printer,
     /// that will apply the given style on prints.
-    pub fn with_style<F>(&self, style: Style, f: F)
+    pub fn with_style<F, T>(&self, style: T, f: F)
     where
         F: FnOnce(&Printer),
+        T: Into<Style>,
     {
+        let style = style.into();
+
         let color = style.color;
         let effects = style.effects;
 

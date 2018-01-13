@@ -22,11 +22,13 @@ impl<'a> Chunk<'a> {
                 segment.seg.start += to_remove.length;
                 segment.seg.width -= to_remove.width;
                 segment.text = &segment.text[to_remove.length..];
+                self.width -= to_remove.width;
                 break;
             } else {
                 // This segment is too small, so it'll disapear entirely.
                 to_remove.length -= segment.seg.end - segment.seg.start;
                 to_remove.width -= segment.seg.width;
+                self.width -= segment.seg.width;
 
                 // Empty this segment
                 segment.seg.start = segment.seg.end;

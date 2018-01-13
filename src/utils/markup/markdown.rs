@@ -5,55 +5,27 @@
 extern crate pulldown_cmark;
 
 use self::pulldown_cmark::{Event, Tag};
-use std::borrow::Cow;
 use theme::{Effect, Style};
-use utils::lines::spans::Span;
+use utils::markup::{StyledString, StyledIndexedSpan};
+use utils::span::IndexedCow;
 
-/// `Markup` trait implementation for markdown text.
-///
-/// Requires the `markdown` feature.
-pub struct Markdown;
-
-impl super::Markup for Markdown {
-    type Error = ();
-
-    fn parse<'a>(input: &'a str) -> Result<Vec<Span<'a>>, Self::Error> {
-        Ok(parse(input))
-    }
-}
-
-/// Thin wrapper around text that should be parsed as Markdown.
-///
-/// This does not parse the text here, but indicates how it should be parsed.
-///
-/// # Examples
-///
-/// ```rust
-/// // Can use `&str`
-/// let text = MarkdownText("*Markdown* text!");
-///
-/// // Or `String`
-/// let text = MarkdownText(String::from("*Right __here__!"));
-/// ```
-pub struct MarkdownText<S>(pub S)
-where
-    S: Into<String>;
-
-impl<S> super::MarkupText for MarkdownText<S>
+/// Parses the given string as markdown text.
+pub fn parse<S>(input: S) -> StyledString
 where
     S: Into<String>,
 {
-    type M = Markdown;
+    let input = input.into();
 
-    fn to_string(self) -> String {
-        self.0.into()
-    }
+    let spans = parse_spans(&input);
+
+    StyledString::new(input, spans)
 }
 
 /// Iterator that parse a markdown text and outputs styled spans.
 pub struct Parser<'a> {
     first: bool,
     stack: Vec<Style>,
+    input: &'a str,
     parser: pulldown_cmark::Parser<'a>,
 }
 
@@ -61,23 +33,21 @@ impl<'a> Parser<'a> {
     /// Creates a new parser with the given input text.
     pub fn new(input: &'a str) -> Self {
         Parser {
+            input,
             first: true,
             parser: pulldown_cmark::Parser::new(input),
             stack: Vec::new(),
         }
     }
 
-    fn literal_string<'b>(&self, text: String) -> Span<'b> {
-        Span {
-            text: Cow::Owned(text),
-            style: Style::merge(&self.stack),
-        }
-    }
-
-    fn literal<'b>(&self, text: &'b str) -> Span<'b> {
-        Span {
-            text: Cow::Borrowed(text),
-            style: Style::merge(&self.stack),
+    /// Creates a new span with the given value
+    fn literal<S>(&self, text: S) -> StyledIndexedSpan
+    where
+        S: Into<String>,
+    {
+        StyledIndexedSpan {
+            content: IndexedCow::Owned(text.into()),
+            attr: Style::merge(&self.stack),
         }
     }
 }
@@ -87,7 +57,7 @@ fn header(level: usize) -> &'static str {
 }
 
 impl<'a> Iterator for Parser<'a> {
-    type Item = Span<'a>;
+    type Item = StyledIndexedSpan;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -103,7 +73,7 @@ impl<'a> Iterator for Parser<'a> {
                         self.stack.push(Style::from(Effect::Italic))
                     }
                     Tag::Header(level) => {
-                        return Some(self.literal_string(format!(
+                        return Some(self.literal(format!(
                             "{} ",
                             header(level as usize)
                         )))
@@ -123,10 +93,7 @@ impl<'a> Iterator for Parser<'a> {
                     Tag::Paragraph if self.first => self.first = false,
                     Tag::Header(_) => return Some(self.literal("\n\n")),
                     Tag::Link(link, _) => {
-                        return Some(self.literal_string(format!(
-                            "]({})",
-                            link
-                        )))
+                        return Some(self.literal(format!("]({})", link)))
                     }
                     Tag::Code => return Some(self.literal("```")),
                     Tag::Emphasis | Tag::Strong => {
@@ -142,9 +109,9 @@ impl<'a> Iterator for Parser<'a> {
                 | Event::Html(text)
                 | Event::Text(text) => {
                     // Return something!
-                    return Some(Span {
-                        text,
-                        style: Style::merge(&self.stack),
+                    return Some(StyledIndexedSpan {
+                        content: IndexedCow::from_cow(text, self.input),
+                        attr: Style::merge(&self.stack),
                     });
                 }
             }
@@ -155,7 +122,7 @@ impl<'a> Iterator for Parser<'a> {
 /// Parse the given markdown text into a list of spans.
 ///
 /// This is a shortcut for `Parser::new(input).collect()`.
-pub fn parse<'a>(input: &'a str) -> Vec<Span<'a>> {
+pub fn parse_spans<'a>(input: &'a str) -> Vec<StyledIndexedSpan> {
     Parser::new(input).collect()
     // Parser::new(input).inspect(|span| eprintln!("{:?}", span)).collect()
 }
@@ -163,6 +130,7 @@ pub fn parse<'a>(input: &'a str) -> Vec<Span<'a>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use utils::span::Span;
 
     #[test]
     fn test_parse() {
@@ -170,43 +138,44 @@ mod tests {
 Attention
 ====
 I *really* love __Cursive__!";
-        let spans = parse(input);
+        let spans = parse_spans(input);
+        let spans: Vec<_> = spans.iter().map(|span| span.resolve(input)).collect();
 
         // println!("{:?}", spans);
         assert_eq!(
             &spans[..],
             &[
                 Span {
-                    text: Cow::Borrowed("# "),
-                    style: Style::none(),
+                    content: "# ",
+                    attr: &Style::none(),
                 },
                 Span {
-                    text: Cow::Borrowed("Attention"),
-                    style: Style::none(),
+                    content: "Attention",
+                    attr: &Style::none(),
                 },
                 Span {
-                    text: Cow::Borrowed("\n\n"),
-                    style: Style::none(),
+                    content: "\n\n",
+                    attr: &Style::none(),
                 },
                 Span {
-                    text: Cow::Borrowed("I "),
-                    style: Style::none(),
+                    content: "I ",
+                    attr: &Style::none(),
                 },
                 Span {
-                    text: Cow::Borrowed("really"),
-                    style: Style::from(Effect::Italic),
+                    content: "really",
+                    attr: &Style::from(Effect::Italic),
                 },
                 Span {
-                    text: Cow::Borrowed(" love "),
-                    style: Style::none(),
+                    content: " love ",
+                    attr: &Style::none(),
                 },
                 Span {
-                    text: Cow::Borrowed("Cursive"),
-                    style: Style::from(Effect::Bold),
+                    content: "Cursive",
+                    attr: &Style::from(Effect::Bold),
                 },
                 Span {
-                    text: Cow::Borrowed("!"),
-                    style: Style::none(),
+                    content: "!",
+                    attr: &Style::none(),
                 }
             ]
         );

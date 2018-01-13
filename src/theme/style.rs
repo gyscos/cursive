@@ -17,6 +17,12 @@ pub struct Style {
     pub color: Option<ColorStyle>,
 }
 
+impl Default for Style {
+    fn default() -> Self {
+        Self::none()
+    }
+}
+
 impl Style {
     /// Returns a new `Style` that doesn't apply anything.
     pub fn none() -> Self {

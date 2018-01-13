@@ -1,4 +1,3 @@
-use super::Span;
 use super::chunk::{Chunk, ChunkPart};
 use super::chunk_iterator::ChunkIterator;
 use super::prefix::prefix;
@@ -8,15 +7,16 @@ use super::segment_merge_iterator::SegmentMergeIterator;
 use std::iter::Peekable;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
+use utils::span::SpannedString;
 
 /// Generates rows of text in constrainted width.
 ///
 /// Works on spans of text.
-pub struct SpanLinesIterator<'a, 'b>
+pub struct LinesIterator<'a, T>
 where
-    'a: 'b,
+    T: 'a,
 {
-    iter: Peekable<ChunkIterator<'a, 'b>>,
+    iter: Peekable<ChunkIterator<'a, T>>,
 
     /// Available width
     width: usize,
@@ -26,24 +26,18 @@ where
     chunk_offset: ChunkPart,
 }
 
-impl<'a, 'b> SpanLinesIterator<'a, 'b>
-where
-    'a: 'b,
-{
+impl<'a, T> LinesIterator<'a, T> {
     /// Creates a new iterator with the given content and width.
-    pub fn new(spans: &'b [Span<'a>], width: usize) -> Self {
-        SpanLinesIterator {
-            iter: ChunkIterator::new(spans).peekable(),
+    pub fn new(source: &'a SpannedString<T>, width: usize) -> Self {
+        LinesIterator {
+            iter: ChunkIterator::new(source).peekable(),
             width,
             chunk_offset: ChunkPart::default(),
         }
     }
 }
 
-impl<'a, 'b> Iterator for SpanLinesIterator<'a, 'b>
-where
-    'a: 'b,
-{
+impl<'a, T> Iterator for LinesIterator<'a, T> {
     type Item = Row;
 
     fn next(&mut self) -> Option<Row> {

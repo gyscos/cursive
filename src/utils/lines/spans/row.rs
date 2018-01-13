@@ -1,5 +1,5 @@
-use super::{Segment, Span};
-use std::borrow::Cow;
+use super::Segment;
+use utils::span::{Span, SpannedString};
 
 /// A list of segments representing a row of text
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -11,20 +11,13 @@ pub struct Row {
 }
 
 impl Row {
-    /// Resolve the row indices into styled spans.
-    pub fn resolve<'a: 'b, 'b>(&self, spans: &'b [Span<'a>]) -> Vec<Span<'b>> {
+    /// Resolve the row indices into string slices and attributes.
+    pub fn resolve<'a, T>(
+        &self, source: &'a SpannedString<T>
+    ) -> Vec<Span<'a, T>> {
         self.segments
             .iter()
-            .map(|seg| {
-                let span: &'b Span<'a> = &spans[seg.span_id];
-                let text: &'b str = &span.text;
-                let text: &'b str = &text[seg.start..seg.end];
-
-                Span {
-                    text: Cow::Borrowed(text),
-                    style: span.style,
-                }
-            })
+            .map(|seg| seg.resolve(source))
             .collect()
     }
 }
