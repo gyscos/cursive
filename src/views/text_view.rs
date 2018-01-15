@@ -287,7 +287,7 @@ impl TextView {
     /// Chainable variant.
     pub fn content<S>(self, content: S) -> Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         self.with(|s| s.set_content(content))
     }
