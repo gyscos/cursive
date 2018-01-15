@@ -75,18 +75,29 @@ impl Color {
     ///
     /// * Colors 0-7 are base dark colors.
     /// * Colors 8-15 are base light colors.
-    /// * Colors 16-255 are rgb colors with 6 values per channel.
+    /// * Colors 16-231 are rgb colors with 6 values per channel (216 colors).
+    /// * Colors 232-255 are grayscale colors.
     pub fn from_256colors(n: u8) -> Self {
         if n < 8 {
             Color::Dark(BaseColor::from(n))
         } else if n < 16 {
             Color::Light(BaseColor::from(n))
+        } else if n >= 232 {
+            let n = n - 232;
+            let value = 8 + 10 * n;
+
+            // TODO: returns a Grayscale value?
+            Color::Rgb(value, value, value)
         } else {
             let n = n - 16;
 
             let r = n / 36;
             let g = (n % 36) / 6;
             let b = n % 6;
+
+            assert!(r < 5);
+            assert!(g < 5);
+            assert!(b < 5);
 
             Color::RgbLowRes(r, g, b)
         }
