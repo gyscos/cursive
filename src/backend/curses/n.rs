@@ -230,8 +230,7 @@ impl backend::Backend for Concrete {
             Effect::Reverse => ncurses::A_REVERSE(),
             Effect::Simple => ncurses::A_NORMAL(),
             Effect::Bold => ncurses::A_BOLD(),
-            // Effect::Italic => ncurses::A_ITALIC(),
-            Effect::Italic => ncurses::A_NORMAL(),
+            Effect::Italic => ncurses::A_ITALIC(),
             Effect::Underline => ncurses::A_UNDERLINE(),
         };
         ncurses::attron(style);
