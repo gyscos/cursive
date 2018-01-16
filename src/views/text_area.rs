@@ -95,6 +95,7 @@ impl TextArea {
         }
 
         if let Some(size) = self.size_cache.map(|s| s.map(|s| s.value)) {
+            self.invalidate();
             self.compute_rows(size);
         }
     }
@@ -227,6 +228,7 @@ impl TextArea {
 
     fn soft_compute_rows(&mut self, size: Vec2) {
         if self.is_cache_valid(size) {
+            debug!("Cache is still valid.");
             return;
         }
         debug!("Computing! Oh yeah!");
