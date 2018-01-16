@@ -18,6 +18,7 @@ fn main() {
     // and will adapt to the terminal size.
     siv.add_fullscreen_layer(
         Dialog::around(Panel::new(TextView::new(content)))
+            // This is the alignment for the button
             .h_align(HAlign::Center)
             .button("Quit", |s| s.quit())
             .full_screen(),

@@ -13,6 +13,7 @@ fn main() {
     siv.add_layer(
         Dialog::new()
             .title("Enter your name")
+            // Padding is (left, right, top, bottom)
             .padding((1, 1, 1, 0))
             .content(
                 EditView::new()
@@ -21,9 +22,14 @@ fn main() {
                     .fixed_width(20),
             )
             .button("Ok", |s| {
+                // This will run the given closure, *ONLY* if a view with the
+                // correct type and the given ID is found.
                 let name = s.call_on_id("name", |view: &mut EditView| {
+                    // We can return content from the closure!
                     view.get_content()
                 }).unwrap();
+
+                // Run the next step
                 show_popup(s, &name);
             }),
     );
@@ -31,6 +37,8 @@ fn main() {
     siv.run();
 }
 
+// This will replace the current layer with a new popup.
+// If the name is empty, we'll show an error message instead.
 fn show_popup(s: &mut Cursive, name: &str) {
     if name.is_empty() {
         s.add_layer(Dialog::info("Please enter a name!"));

@@ -10,6 +10,12 @@ use std::cmp::min;
 use std::thread;
 use std::time::Duration;
 
+// This example shows a ProgressBar reporting the status from an asynchronous
+// job.
+//
+// It works by sharing a counter with the job thread. This counter can be
+// "ticked" to indicate progress.
+
 fn main() {
     let mut siv = Cursive::new();
 
@@ -27,15 +33,6 @@ fn main() {
     siv.run();
 }
 
-// Function to simulate a long process.
-fn fake_load(n_max: usize, counter: &Counter) {
-    for _ in 0..n_max {
-        thread::sleep(Duration::from_millis(5));
-        // The `counter.tick()` method increases the progress value
-        counter.tick(1);
-    }
-}
-
 fn phase_1(s: &mut Cursive) {
     // Phase 1 is easy: a simple pre-loading.
 
@@ -48,6 +45,7 @@ fn phase_1(s: &mut Cursive) {
     s.pop_layer();
     s.add_layer(Dialog::around(
         ProgressBar::new()
+            // We need to know how many ticks represent a full bar.
             .range(0, n_max)
             .with_task(move |counter| {
                 // This closure will be called in a separate thread.
@@ -130,4 +128,13 @@ fn final_step(s: &mut Cursive) {
             )
             .button("That's it?", |s| s.quit()),
     );
+}
+
+// Function to simulate a long process.
+fn fake_load(n_max: usize, counter: &Counter) {
+    for _ in 0..n_max {
+        thread::sleep(Duration::from_millis(5));
+        // The `counter.tick()` method increases the progress value
+        counter.tick(1);
+    }
 }

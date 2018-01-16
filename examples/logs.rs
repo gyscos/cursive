@@ -8,6 +8,10 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
+// This example will print a stream of logs generated from a separate thread.
+//
+// We will use a custom view using a channel to receive data asynchronously.
+
 fn main() {
     // As usual, create the Cursive root
     let mut siv = Cursive::new();

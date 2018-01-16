@@ -7,12 +7,16 @@ use cursive::views::{Dialog, SliderView};
 fn main() {
     let mut siv = Cursive::new();
 
+    siv.add_global_callback('q', |s| s.quit());
+
     // Let's add a simple slider in a dialog.
     // Moving the slider will update the dialog's title.
     // And pressing "Enter" will show a new dialog.
     siv.add_layer(
         Dialog::around(
+            // We give the number of steps in the constructor
             SliderView::horizontal(15)
+                // Sets the initial value
                 .value(7)
                 .on_change(|s, v| {
                     let title = format!("[ {} ]", v);

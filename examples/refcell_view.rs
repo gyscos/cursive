@@ -4,6 +4,8 @@ use cursive::Cursive;
 use cursive::view::{Boxable, Identifiable};
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 
+// This example shows a way to access multiple views at the same time.
+
 fn main() {
     let mut siv = Cursive::new();
 
@@ -34,6 +36,7 @@ fn on_edit(siv: &mut Cursive, _content: &str, _cursor: usize) {
 
     // Directly compare references to edit_1 and edit_2.
     let matches = edit_1.get_content() == edit_2.get_content();
+
     siv.call_on_id("match", |v: &mut TextView| {
         v.set_content(if matches { "match" } else { "no match" })
     });

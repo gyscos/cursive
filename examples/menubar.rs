@@ -7,6 +7,9 @@ use cursive::traits::*;
 use cursive::views::Dialog;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+// This examples shows how to configure and use a menubar at the top of the
+// application.
+
 fn main() {
     let mut siv = Cursive::new();
 

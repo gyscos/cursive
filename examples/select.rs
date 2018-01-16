@@ -6,6 +6,11 @@ use cursive::event::EventResult;
 use cursive::traits::*;
 use cursive::views::{Dialog, OnEventView, SelectView, TextView};
 
+// We'll use a SelectView here.
+//
+// A SelectView is a scrollable list of items, from which the user can select
+// one.
+
 fn main() {
     let mut select = SelectView::new().h_align(HAlign::Center);
 
