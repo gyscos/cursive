@@ -413,7 +413,7 @@ impl View for TextArea {
     }
 
     fn draw(&self, printer: &Printer) {
-        printer.with_color(ColorStyle::Secondary, |printer| {
+        printer.with_color(ColorStyle::secondary(), |printer| {
             let effect = if self.enabled {
                 Effect::Reverse
             } else {

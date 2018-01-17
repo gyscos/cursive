@@ -119,7 +119,7 @@ impl EditView {
             secret: false,
             filler: "_".to_string(),
             enabled: true,
-            style: ColorStyle::Secondary,
+            style: ColorStyle::secondary(),
         }
     }
 

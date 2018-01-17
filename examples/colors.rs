@@ -34,10 +34,10 @@ fn draw(_: &(), p: &Printer) {
     for x in 0..x_max {
         for y in 0..y_max {
             // We'll use a different style for each cell
-            let style = ColorStyle::Custom {
-                front: front_color(x, y, x_max, y_max),
-                back: back_color(x, y, x_max, y_max),
-            };
+            let style = ColorStyle::new(
+                front_color(x, y, x_max, y_max),
+                back_color(x, y, x_max, y_max),
+            );
 
             p.with_color(style, |printer| {
                 printer.print((x, y), "+");

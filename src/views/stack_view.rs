@@ -324,7 +324,7 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
 impl View for StackView {
     fn draw(&self, printer: &Printer) {
         let last = self.layers.len();
-        printer.with_color(ColorStyle::Primary, |printer| {
+        printer.with_color(ColorStyle::primary(), |printer| {
             for (i, (v, offset)) in
                 StackPositionIterator::new(self.layers.iter(), printer.size)
                     .enumerate()

@@ -1,31 +1,21 @@
 [package]
 authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
-categories = [
-    "command-line-interface",
-    "gui",
-]
+categories = ["command-line-interface", "gui"]
 description = "A TUI (Text User Interface) library focused on ease-of-use."
 documentation = "https://docs.rs/cursive"
-exclude = [
-    "doc/**",
-    "assets/**",
-    "examples/**",
-]
-keywords = [
-    "ncurses",
-    "TUI",
-    "UI",
-]
+exclude = ["doc/**", "assets/**", "examples/**"]
+keywords = ["ncurses", "TUI", "UI"]
 license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
 version = "0.7.6-alpha.0"
-
 [badges.travis-ci]
 repository = "gyscos/Cursive"
 
 [dependencies]
+enum-map = "0.2.24"
+enumset = "0.3.3"
 log = "0.4"
 maplit = "1.0.0"
 num = "0.1"
@@ -34,8 +24,6 @@ toml = "0.4"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
 xi-unicode = "0.1.0"
-pulldown-cmark = { version = "0.1.0", optional = true, default-features = false }
-enumset = "0.3.3"
 
 [dependencies.bear-lib-terminal]
 optional = true
@@ -59,6 +47,11 @@ features = ["wide"]
 optional = true
 version = "0.13"
 
+[dependencies.pulldown-cmark]
+default-features = false
+optional = true
+version = "0.1.0"
+
 [dependencies.termion]
 optional = true
 version = "1.5.0"
@@ -69,14 +62,10 @@ rand = "0.4"
 [features]
 blt-backend = ["bear-lib-terminal"]
 default = ["ncurses-backend"]
+markdown = ["pulldown-cmark"]
 ncurses-backend = ["ncurses"]
 pancurses-backend = ["pancurses"]
-termion-backend = [
-    "termion",
-    "chan",
-    "chan-signal",
-]
-markdown = ["pulldown-cmark"]
+termion-backend = ["termion", "chan", "chan-signal"]
 
 [lib]
 name = "cursive"

@@ -5,6 +5,7 @@ use super::Color;
 pub struct ColorPair {
     /// Color used for the foreground.
     pub front: Color,
+
     /// Color used for the background.
     pub back: Color,
 }

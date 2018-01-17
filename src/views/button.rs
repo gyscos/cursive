@@ -132,11 +132,11 @@ impl View for Button {
         }
 
         let style = if !self.enabled {
-            ColorStyle::Secondary
+            ColorStyle::secondary()
         } else if !printer.focused {
-            ColorStyle::Primary
+            ColorStyle::primary()
         } else {
-            ColorStyle::Highlight
+            ColorStyle::highlight()
         };
 
         let offset =

@@ -5,7 +5,7 @@ use enumset::EnumSet;
 use std::cell::Cell;
 use std::cmp::min;
 use std::rc::Rc;
-use theme::{BorderStyle, ColorStyle, Effect, Style, Theme};
+use theme::{BorderStyle, ColorStyle, Effect, Style, Theme, PaletteColor};
 use unicode_segmentation::UnicodeSegmentation;
 use utils::lines::simple::prefix;
 use vec::Vec2;
@@ -51,7 +51,7 @@ impl<'a> Printer<'a> {
     ///
     /// Users rarely need to call this directly.
     pub fn clear(&self) {
-        self.backend.clear(self.theme.colors.background);
+        self.backend.clear(self.theme.palette.colors[PaletteColor::Background]);
     }
 
     /// Returns `true` if nothing has been printed yet.
@@ -123,7 +123,7 @@ impl<'a> Printer<'a> {
     /// # let b = backend::Concrete::init();
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((6,4), &t, &b);
-    /// printer.with_color(theme::ColorStyle::Highlight, |printer| {
+    /// printer.with_color(theme::ColorStyle::highlight(), |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
     /// ```
@@ -131,7 +131,7 @@ impl<'a> Printer<'a> {
     where
         F: FnOnce(&Printer),
     {
-        self.backend.with_color(c.resolve(self.theme), || f(self));
+        self.backend.with_color(c.resolve(&self.theme.palette), || f(self));
     }
 
     /// Call the given closure with a styled printer,
@@ -239,8 +239,8 @@ impl<'a> Printer<'a> {
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
-            BorderStyle::Outset if !invert => ColorStyle::Tertiary,
-            _ => ColorStyle::Primary,
+            BorderStyle::Outset if !invert => ColorStyle::tertiary(),
+            _ => ColorStyle::primary(),
         };
 
         self.with_color(color, f);
@@ -250,16 +250,16 @@ impl<'a> Printer<'a> {
     ///
     /// * If the theme's borders is `None`, return without calling `f`.
     /// * If the theme's borders is "outset" and `invert` is `true`,
-    ///   use `ColorStyle::Tertiary`.
-    /// * Otherwise, use `ColorStyle::Primary`.
+    ///   use `ColorStyle::tertiary()`.
+    /// * Otherwise, use `ColorStyle::primary()`.
     pub fn with_low_border<F>(&self, invert: bool, f: F)
     where
         F: FnOnce(&Printer),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
-            BorderStyle::Outset if invert => ColorStyle::Tertiary,
-            _ => ColorStyle::Primary,
+            BorderStyle::Outset if invert => ColorStyle::tertiary(),
+            _ => ColorStyle::primary(),
         };
 
         self.with_color(color, f);
@@ -267,21 +267,21 @@ impl<'a> Printer<'a> {
 
     /// Apply a selection style and call the given function.
     ///
-    /// * If `selection` is `false`, simply uses `ColorStyle::Primary`.
+    /// * If `selection` is `false`, simply uses `ColorStyle::primary()`.
     /// * If `selection` is `true`:
     ///     * If the printer currently has the focus,
-    ///       uses `ColorStyle::Highlight`.
-    ///     * Otherwise, uses `ColorStyle::HighlightInactive`.
+    ///       uses `ColorStyle::highlight()`.
+    ///     * Otherwise, uses `ColorStyle::highlight_inactive()`.
     pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
         self.with_color(
             if selection {
                 if self.focused {
-                    ColorStyle::Highlight
+                    ColorStyle::highlight()
                 } else {
-                    ColorStyle::HighlightInactive
+                    ColorStyle::highlight_inactive()
                 }
             } else {
-                ColorStyle::Primary
+                ColorStyle::primary()
             },
             f,
         );

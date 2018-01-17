@@ -1,4 +1,4 @@
-use super::{ColorStyle, Effect, Color};
+use super::{ColorStyle, Effect, Color, PaletteColor, ColorType};
 use enumset::EnumSet;
 
 /// Combine a color and an effect.
@@ -71,5 +71,23 @@ impl From<ColorStyle> for Style {
             effects: EnumSet::new(),
             color: Some(color),
         }
+    }
+}
+
+impl From<Color> for Style {
+    fn from(color: Color) -> Self {
+        ColorStyle::from(color).into()
+    }
+}
+
+impl From<PaletteColor> for Style {
+    fn from(color: PaletteColor) -> Self {
+        ColorStyle::from(color).into()
+    }
+}
+
+impl From<ColorType> for Style {
+    fn from(color: ColorType) -> Self {
+        ColorStyle::from(color).into()
     }
 }

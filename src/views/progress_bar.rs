@@ -211,7 +211,7 @@ impl View for ProgressBar {
         let label = (self.label_maker)(value, (self.min, self.max));
         let offset = HAlign::Center.get_offset(label.len(), printer.size.x);
 
-        printer.with_color(ColorStyle::Highlight, |printer| {
+        printer.with_color(ColorStyle::highlight(), |printer| {
             printer.with_effect(Effect::Reverse, |printer| {
                 printer.print((offset, 0), &label);
             });

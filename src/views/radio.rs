@@ -168,7 +168,7 @@ impl<T: 'static> View for RadioButton<T> {
                 self.draw_internal(printer)
             });
         } else {
-            printer.with_color(ColorStyle::Secondary, |printer| {
+            printer.with_color(ColorStyle::secondary(), |printer| {
                 self.draw_internal(printer)
             });
         }

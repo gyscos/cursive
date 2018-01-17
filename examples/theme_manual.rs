@@ -10,10 +10,10 @@ fn main() {
     let layout = LinearLayout::vertical()
         .child(TextView::new("This is a dynamic theme example!"))
         .child(EditView::new().content("Woo! colors!").style(
-            ColorStyle::Custom {
-                front: Color::Rgb(200, 150, 150),
-                back: Color::Dark(BaseColor::Blue),
-            },
+            ColorStyle::new(
+                Color::Rgb(200, 150, 150),
+                Color::Dark(BaseColor::Blue),
+            ),
         ));
 
     siv.add_layer(

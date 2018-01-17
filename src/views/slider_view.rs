@@ -123,9 +123,9 @@ impl View for SliderView {
         }
 
         let color = if printer.focused {
-            ColorStyle::Highlight
+            ColorStyle::highlight()
         } else {
-            ColorStyle::HighlightInactive
+            ColorStyle::highlight_inactive()
         };
         printer.with_color(color, |printer| {
             printer.print(self.orientation.make_vec(self.value, 0), " ");

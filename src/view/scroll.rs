@@ -277,9 +277,9 @@ impl ScrollBase {
             let start = self.scrollbar_thumb_y(height);
 
             let color = if printer.focused {
-                ColorStyle::Highlight
+                ColorStyle::highlight()
             } else {
-                ColorStyle::HighlightInactive
+                ColorStyle::highlight_inactive()
             };
 
             let scrollbar_x = self.scrollbar_x(printer.size.x);

@@ -56,12 +56,16 @@ impl From<u8> for BaseColor {
 pub enum Color {
     /// Represents a color, preset by terminal.
     TerminalDefault,
+
     /// One of the 8 base colors.
     Dark(BaseColor),
+
     /// Lighter version of a base color.
     Light(BaseColor),
+
     /// True-color, 24-bit.
     Rgb(u8, u8, u8),
+
     /// Low-resolution
     ///
     /// Each value should be `<= 5` (you'll get panics otherwise).

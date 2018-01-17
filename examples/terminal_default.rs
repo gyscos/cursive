@@ -1,7 +1,7 @@
 extern crate cursive;
 
 use cursive::Cursive;
-use cursive::theme::{Color, Theme};
+use cursive::theme::{Color, PaletteColor, Theme};
 use cursive::views::TextView;
 
 // This example sets the background color to the terminal default.
@@ -30,7 +30,7 @@ fn custom_theme_from_cursive(siv: &Cursive) -> Theme {
     // We'll return the current theme with a small modification.
     let mut theme = siv.current_theme().clone();
 
-    theme.colors.background = Color::TerminalDefault;
+    theme.palette.colors[PaletteColor::Background] = Color::TerminalDefault;
 
     theme
 }

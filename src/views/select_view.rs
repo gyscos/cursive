@@ -575,11 +575,11 @@ impl<T: 'static> View for SelectView<T> {
 
         if self.popup {
             let style = if !self.enabled {
-                ColorStyle::Secondary
+                ColorStyle::secondary()
             } else if !printer.focused {
-                ColorStyle::Primary
+                ColorStyle::primary()
             } else {
-                ColorStyle::Highlight
+                ColorStyle::highlight()
             };
             let x = match printer.size.x.checked_sub(1) {
                 Some(x) => x,
@@ -609,7 +609,7 @@ impl<T: 'static> View for SelectView<T> {
             self.scrollbase.draw(printer, |printer, i| {
                 printer.with_selection(i == self.focus(), |printer| {
                     if i != self.focus() && !self.enabled {
-                        printer.with_color(ColorStyle::Secondary, |printer| {
+                        printer.with_color(ColorStyle::secondary(), |printer| {
                             self.draw_item(printer, i)
                         });
                     } else {

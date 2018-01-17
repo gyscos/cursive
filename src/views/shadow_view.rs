@@ -87,7 +87,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
                 return;
             }
 
-            printer.with_color(ColorStyle::Shadow, |printer| {
+            printer.with_color(ColorStyle::shadow(), |printer| {
                 printer.print_hline((1, h - 1), w - 1, " ");
                 printer.print_vline((w - 1, 1), h - 1, " ");
             });

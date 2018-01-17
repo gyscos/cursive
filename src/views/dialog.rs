@@ -379,7 +379,7 @@ impl Dialog {
                 printer.print((x + len, 0), " ├");
             });
 
-            printer.with_color(ColorStyle::TitlePrimary, |p| {
+            printer.with_color(ColorStyle::title_primary(), |p| {
                 p.print((x, 0), &self.title)
             });
         }

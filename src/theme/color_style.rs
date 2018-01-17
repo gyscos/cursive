@@ -1,4 +1,4 @@
-use super::{Color, ColorPair, Theme};
+use super::{Color, ColorPair, Palette, PaletteColor};
 
 /// Possible color style for a cell.
 ///
@@ -6,57 +6,141 @@ use super::{Color, ColorPair, Theme};
 ///
 /// The current theme will assign each role a foreground and background color.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum ColorStyle {
-    /// Style set by terminal before entering a Cursive program.
-    TerminalDefault,
-    /// Application background, where no view is present.
-    Background,
-    /// Color used by view shadows. Only background matters.
-    Shadow,
-    /// Main text with default background.
-    Primary,
-    /// Secondary text color, with default background.
-    Secondary,
-    /// Tertiary text color, with default background.
-    Tertiary,
-    /// Title text color with default background.
-    TitlePrimary,
-    /// Alternative color for a title.
-    TitleSecondary,
-    /// Alternate text with highlight background.
-    Highlight,
-    /// Highlight color for inactive views (not in focus).
-    HighlightInactive,
-    /// Directly specifies colors, independently of the theme.
-    Custom {
-        /// Foreground color
-        front: Color,
-        /// Background color
-        back: Color,
-    },
+pub struct ColorStyle {
+    /// Color used for the foreground (the text itself).
+    pub front: ColorType,
+
+    /// Color used for the background.
+    pub back: ColorType,
 }
 
 impl ColorStyle {
+    /// Creates
+    pub fn new<F, B>(front: F, back: B) -> Self
+    where
+        F: Into<ColorType>,
+        B: Into<ColorType>,
+    {
+        let front = front.into();
+        let back = back.into();
+        Self { front, back }
+    }
+
+    /// Style set by terminal before entering a Cursive program.
+    pub fn terminal_default() -> Self {
+        Self::new(Color::TerminalDefault, Color::TerminalDefault)
+    }
+
+    /// Application background, where no view is present.
+    pub fn background() -> Self {
+        Self::new(PaletteColor::Background, PaletteColor::Background)
+    }
+
+    /// Color used by view shadows. Only background matters.
+    pub fn shadow() -> Self {
+        Self::new(PaletteColor::Shadow, PaletteColor::Shadow)
+    }
+
+    /// Main text with default background.
+    pub fn primary() -> Self {
+        Self::new(PaletteColor::Primary, PaletteColor::View)
+    }
+
+    /// Secondary text color, with default background.
+    pub fn secondary() -> Self {
+        Self::new(PaletteColor::Secondary, PaletteColor::View)
+    }
+
+    /// Tertiary text color, with default background.
+    pub fn tertiary() -> Self {
+        Self::new(PaletteColor::Tertiary, PaletteColor::View)
+    }
+
+    /// Title text color with default background.
+    pub fn title_primary() -> Self {
+        Self::new(PaletteColor::TitlePrimary, PaletteColor::View)
+    }
+
+    /// Alternative color for a title.
+    pub fn title_secondary() -> Self {
+        Self::new(PaletteColor::TitleSecondary, PaletteColor::View)
+    }
+
+    /// Alternate text with highlight background.
+    pub fn highlight() -> Self {
+        Self::new(PaletteColor::View, PaletteColor::Highlight)
+    }
+
+    /// Highlight color for inactive views (not in focus).
+    pub fn highlight_inactive() -> Self {
+        Self::new(PaletteColor::View, PaletteColor::HighlightInactive)
+    }
+
     /// Return the color pair that this style represents.
-    ///
-    /// Returns `(front, back)`.
-    pub fn resolve(&self, theme: &Theme) -> ColorPair {
-        let c = &theme.colors;
-        let (front, back) = match *self {
-            ColorStyle::TerminalDefault => {
-                (Color::TerminalDefault, Color::TerminalDefault)
-            }
-            ColorStyle::Background => (c.view, c.background),
-            ColorStyle::Shadow => (c.shadow, c.shadow),
-            ColorStyle::Primary => (c.primary, c.view),
-            ColorStyle::Secondary => (c.secondary, c.view),
-            ColorStyle::Tertiary => (c.tertiary, c.view),
-            ColorStyle::TitlePrimary => (c.title_primary, c.view),
-            ColorStyle::TitleSecondary => (c.title_secondary, c.view),
-            ColorStyle::Highlight => (c.view, c.highlight),
-            ColorStyle::HighlightInactive => (c.view, c.highlight_inactive),
-            ColorStyle::Custom { front, back } => (front, back),
-        };
-        ColorPair { front, back }
+    pub fn resolve(&self, palette: &Palette) -> ColorPair {
+        ColorPair {
+            front: self.front.resolve(palette),
+            back: self.back.resolve(palette),
+        }
+    }
+}
+
+impl From<Color> for ColorStyle {
+    fn from(color: Color) -> Self {
+        Self::new(color, PaletteColor::View)
+    }
+}
+
+impl From<PaletteColor> for ColorStyle {
+    fn from(color: PaletteColor) -> Self {
+        Self::new(color, PaletteColor::View)
+    }
+}
+
+impl From<ColorType> for ColorStyle {
+    fn from(color: ColorType) -> Self {
+        Self::new(color, PaletteColor::View)
+    }
+}
+
+impl<F, B> From<(F, B)> for ColorStyle
+where
+    F: Into<ColorType>,
+    B: Into<ColorType>,
+{
+    fn from((front, back): (F, B)) -> Self {
+        Self::new(front, back)
+    }
+}
+
+/// Either a color from the palette, or a direct color.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ColorType {
+    /// Uses a color from the application palette.
+    Palette(PaletteColor),
+
+    /// Uses a direct color, independent of the current palette.
+    Color(Color),
+}
+
+impl ColorType {
+    /// Given a palette, resolve `self` to a concrete color.
+    pub fn resolve(self, palette: &Palette) -> Color {
+        match self {
+            ColorType::Color(color) => color,
+            ColorType::Palette(color) => color.resolve(palette),
+        }
+    }
+}
+
+impl From<Color> for ColorType {
+    fn from(color: Color) -> Self {
+        ColorType::Color(color)
+    }
+}
+
+impl From<PaletteColor> for ColorType {
+    fn from(color: PaletteColor) -> Self {
+        ColorType::Palette(color)
     }
 }

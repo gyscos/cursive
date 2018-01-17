@@ -1,28 +1,28 @@
 extern crate cursive;
 
 use cursive::Cursive;
-#[cfg(feature = "markdown")]
-use cursive::utils::markup::markdown;
 use cursive::views::{Dialog, TextView};
 
-// Make sure you compile with the `markdown` feature!
-//
-// cargo run --example markup --features markdown
+use cursive::theme::Color;
+use cursive::theme::BaseColor;
+use cursive::theme::Style;
+use cursive::theme::Effect;
+use cursive::utils::markup::StyledString;
 
 fn main() {
     let mut siv = Cursive::new();
 
-    // If markdown is enabled, parse a small text.
-
-    #[cfg(feature = "markdown")]
-    let text = markdown::parse("Isn't *that* **cool**?");
-
-    #[cfg(not(feature = "markdown"))]
-    let text = "Rebuild with --features markdown ;)";
+    let mut styled = StyledString::plain("Isn't ");
+    styled.append(StyledString::styled("that ", Color::Dark(BaseColor::Red)));
+    styled.append(StyledString::styled(
+        "cool?",
+        Style::from(Color::Light(BaseColor::Blue)).add(Effect::Bold),
+    ));
 
     // TextView can natively accept StyledString.
     siv.add_layer(
-        Dialog::around(TextView::new(text)).button("Hell yeah!", |s| s.quit()),
+        Dialog::around(TextView::new(styled))
+            .button("Hell yeah!", |s| s.quit()),
     );
 
     siv.run();

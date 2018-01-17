@@ -65,6 +65,9 @@ extern crate enumset;
 extern crate log;
 #[macro_use]
 extern crate maplit;
+#[macro_use]
+extern crate enum_map;
+
 extern crate num;
 extern crate owning_ref;
 extern crate toml;

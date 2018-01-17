@@ -167,14 +167,16 @@ impl Cursive {
     ///
     /// Users rarely have to call this directly.
     pub fn clear(&self) {
-        self.backend.clear(self.theme.colors.background);
+        self.backend
+            .clear(self.theme.palette.colors[theme::PaletteColor::Background]);
     }
 
     /// Loads a theme from the given file.
     ///
     /// `filename` must point to a valid toml file.
     pub fn load_theme_file<P: AsRef<Path>>(
-        &mut self, filename: P
+        &mut self,
+        filename: P,
     ) -> Result<(), theme::Error> {
         self.set_theme(try!(theme::load_theme_file(filename)));
         Ok(())
@@ -279,7 +281,9 @@ impl Cursive {
     /// # }
     /// ```
     pub fn call_on<V, F, R>(
-        &mut self, sel: &view::Selector, callback: F
+        &mut self,
+        sel: &view::Selector,
+        callback: F,
     ) -> Option<R>
     where
         V: View + Any,

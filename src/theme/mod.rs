@@ -124,9 +124,9 @@ mod palette;
 pub use self::border_style::BorderStyle;
 pub use self::color::{BaseColor, Color};
 pub use self::color_pair::ColorPair;
-pub use self::color_style::ColorStyle;
+pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::Effect;
-pub use self::palette::Palette;
+pub use self::palette::{Palette, PaletteColor};
 pub use self::style::Style;
 use std::fs::File;
 use std::io;
@@ -142,7 +142,7 @@ pub struct Theme {
     /// How view borders should be drawn.
     pub borders: BorderStyle,
     /// What colors should be used through the application?
-    pub colors: Palette,
+    pub palette: Palette,
 }
 
 impl Default for Theme {
@@ -150,18 +150,7 @@ impl Default for Theme {
         Theme {
             shadow: true,
             borders: BorderStyle::Simple,
-            colors: Palette {
-                background: Color::Dark(BaseColor::Blue),
-                shadow: Color::Dark(BaseColor::Black),
-                view: Color::Dark(BaseColor::White),
-                primary: Color::Dark(BaseColor::Black),
-                secondary: Color::Dark(BaseColor::Blue),
-                tertiary: Color::Light(BaseColor::White),
-                title_primary: Color::Dark(BaseColor::Red),
-                title_secondary: Color::Dark(BaseColor::Yellow),
-                highlight: Color::Dark(BaseColor::Red),
-                highlight_inactive: Color::Dark(BaseColor::Blue),
-            },
+            palette: Palette::default(),
         }
     }
 }
@@ -177,7 +166,7 @@ impl Theme {
         }
 
         if let Some(&toml::Value::Table(ref table)) = table.get("colors") {
-            self.colors.load(table);
+            self.palette.load(table);
         }
     }
 }
