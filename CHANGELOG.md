@@ -5,14 +5,16 @@
 ### New features
 
 - Style
-    - Add support for bold/italic/underlined text
+    - Added support for bold/italic/underlined text
     - Added `StyledString` for markup text
+- Colors:
+    - Added ColorTyle and PaletteColor for more flexible colored text
 - Buttons:
     - Added `Dialog::buttons` to iterate on buttons
     - Added `Button::set_label` and `Button::label`
 - TextView:
-    - Add TextContent, a way to separate model and view for TextView
-    - Add manual scrolling methods
+    - Added TextContent, a way to separate model and view for TextView
+    - Added manual scrolling methods
 - Allow multiple global callbacks per event
 - Allow buttons and delimiters in top-level menubar
 - StackView:
