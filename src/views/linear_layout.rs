@@ -160,6 +160,16 @@ impl LinearLayout {
         LinearLayout::new(direction::Orientation::Horizontal)
     }
 
+    /// Returns a reference to a child.
+    pub fn get_child(&self, i: usize) -> Option<&View> {
+        self.children.get(i).map(|child| &*child.view)
+    }
+
+    /// Returns a mutable reference to a child.
+    pub fn get_child_mut(&mut self, i: usize) -> Option<&mut View> {
+        self.children.get_mut(i).map(|child| &mut *child.view)
+    }
+
     // If the cache can be used, return the cached size.
     // Otherwise, return None.
     fn get_cache(&self, req: Vec2) -> Option<Vec2> {
