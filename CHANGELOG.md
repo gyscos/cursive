@@ -4,11 +4,12 @@
 
 ### New features
 
-- Style
+- Style (breaking change):
     - Added support for bold/italic/underlined text
     - Added `StyledString` for markup text
-- Colors:
-    - Added ColorTyle and PaletteColor for more flexible colored text
+    - Refactored line-break module
+- Colors (breaking change):
+    - Added ColorStyle and PaletteColor for more flexible colored text
 - Buttons:
     - Added `Dialog::buttons` to iterate on buttons
     - Added `Button::set_label` and `Button::label`

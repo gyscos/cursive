@@ -61,6 +61,10 @@ This shows a use of a `ListView`, used to build simple forms.
 
 This example uses a `TextArea`, where the user can input a block of text.
 
+## [`markup`](markup.rs)
+
+This example prints a text with markup decorations.
+
 ## [`theme`](theme.rs)
 
 This loads a theme file at runtime to change default colors.
@@ -93,3 +97,7 @@ This shows how to use `RadioGroup` and `RadioButton`.
 ## [`slider`](slider.rs)
 
 This is a demonstration of the `SliderView`.
+
+## [`mines`](mines) (**Work in progress**)
+
+A larger example showing an implementation of minesweeper.
