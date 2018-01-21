@@ -30,7 +30,7 @@ fn custom_theme_from_cursive(siv: &Cursive) -> Theme {
     // We'll return the current theme with a small modification.
     let mut theme = siv.current_theme().clone();
 
-    theme.palette.colors[PaletteColor::Background] = Color::TerminalDefault;
+    theme.palette[PaletteColor::Background] = Color::TerminalDefault;
 
     theme
 }

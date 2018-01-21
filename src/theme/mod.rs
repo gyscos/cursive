@@ -167,7 +167,7 @@ pub use self::color::{BaseColor, Color};
 pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::Effect;
-pub use self::palette::{Palette, PaletteColor};
+pub use self::palette::{Palette, PaletteColor, default_palette};
 pub use self::style::Style;
 use std::fs::File;
 use std::io;
@@ -191,7 +191,7 @@ impl Default for Theme {
         Theme {
             shadow: true,
             borders: BorderStyle::Simple,
-            palette: Palette::default(),
+            palette: default_palette(),
         }
     }
 }
@@ -207,7 +207,7 @@ impl Theme {
         }
 
         if let Some(&toml::Value::Table(ref table)) = table.get("colors") {
-            self.palette.load(table);
+            palette::load_table(&mut self.palette, table);
         }
     }
 }

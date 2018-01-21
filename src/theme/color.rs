@@ -58,9 +58,13 @@ pub enum Color {
     TerminalDefault,
 
     /// One of the 8 base colors.
+    ///
+    /// Note: the actual color used depends on the terminal configuration.
     Dark(BaseColor),
 
     /// Lighter version of a base color.
+    ///
+    /// Note: the actual color used depends on the terminal configuration.
     Light(BaseColor),
 
     /// True-color, 24-bit.
