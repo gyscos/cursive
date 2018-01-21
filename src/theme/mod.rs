@@ -1,78 +1,116 @@
 //! Handle colors and themes in the UI.
 //!
-//! # Color palette
+//! # Colors
+//!
+//! Characters can be printed in the terminal with a specific color.
+//! The [`Color`] enum represents the ways this can be set.
+//!
+//! [`Color`]: enum.Color.html
+//!
+//! # Palette
 //!
 //! To achieve a customizable, yet unified look, Cursive uses a configurable
 //! palette of colors to be used through the entire application.
 //!
-//! These colors are:
+//! The [`PaletteColor`] enum defines possible entries in this palette.
 //!
-//! * **`background`**: used to color the application background
+//! [`PaletteColor`]: enum.PaletteColor.html
+//!
+//! These entries are:
+//!
+//! * **`Background`**: used to color the application background
 //!   (around views).
 //!   Defaults to **blue**.
-//! * **`shadow`**: used to color shadow around views.
+//! * **`Shadow`**: used to color shadow around views.
 //!   Defaults to **black**.
-//! * **`view`**: used to color the background for views.
+//! * **`View`**: used to color the background for views.
 //!   Defaults to **white**.
-//! * **`primary`**: used to print primary text.
+//! * **`Primary`**: used to print primary text.
 //!   Defaults to **black**.
-//! * **`secondary`**: used to print secondary text.
+//! * **`Secondary`**: used to print secondary text.
 //!   Defaults to **blue**.
-//! * **`tertiary`**: used to print tertiary text.
+//! * **`Tertiary`**: used to print tertiary text.
 //!   Defaults to **white**.
-//! * **`title_primary`**: used to print primary titles.
+//! * **`TitlePrimary`**: used to print primary titles.
 //!   Defaults to **red**.
-//! * **`title_secondary`**: used to print secondary titles.
+//! * **`TitleSecondary`**: used to print secondary titles.
 //!   Defaults to **yellow**.
-//! * **`highlight`**: used to highlight selected items.
+//! * **`Highlight`**: used to highlight selected items.
 //!   Defaults to **red**.
-//! * **`highlight_inactive`**: used to highlight selected but inactive items.
+//! * **`HighlightInactive`**: used to highlight selected but inactive items.
 //!   Defaults to **blue**.
+//!
+//! A [`Palette`] then maps each of these to an actual [`Color`].
+//!
+//! [`Palette`]: struct.Palette.html
+//! [`Color`]: enum.Color.html
+//!
+//! # Color Types
+//!
+//! When drawing views, color can be picked in two way:
+//!
+//! * An exact [`Color`] can be given directly
+//! * A [`PaletteColor`] entry can be given, which will fetch whatever color
+//!   is currently defined for this.
+//!
+//! The [`ColorType`] enum abstract over these two choices.
+//!
+//! [`ColorType`]: enum.ColorType.html
 //!
 //! # Color Styles
 //!
-//! Each cell of the terminal uses two colors: *foreground* and *background*.
+//! To actually print anything, two colors must be picked: one for the
+//! foreground, and one for the background.
 //!
-//! Color styles are defined to easily refer to a pair of colors from the
-//! palette.
+//! As such, a [`ColorStyle`] is made of a pair of `ColorType`.
 //!
-//! * **`Background`**: style used to print the application background.
-//!     * Its *background* color is `background`.
+//! Since some pairs are frequently used, `ColorStyle` defines some methods to
+//! create these usual values:
+//!
+//! * **`ColorStyle::background()`**: style used to print the application background.
+//!     * Its *background* color is `Background`.
 //!     * Its *foreground* color is unimportant as no characters are ever
 //!       printed in the background.
-//! * **`Shadow`**: style used to print shadows behind views.
-//!     * Its *background* color is `shadow`.
+//! * **`ColorStyle::shadow()`**: style used to print shadows behind views.
+//!     * Its *background* color is `Shadow`.
 //!     * Here again, the *foreground* color is unimportant.
-//! * **`Primary`**: style used to print primary text.
-//!     * Its *background* color is `view`.
-//!     * Its *foreground* color is `primary`.
-//! * **`Secondary`**: style used to print secondary text.
-//!     * Its *background* color is `view`.
-//!     * Its *foreground* color is `secondary`.
-//! * **`Tertiary`**: style used to print tertiary text.
-//!     * Its *background* color is `view`.
-//!     * Its *foreground* color is `tertiary`.
-//! * **`TitlePrimary`**: style used to print titles.
-//!     * Its *background* color is `view`.
-//!     * Its *foreground* color is `title_primary`.
-//! * **`TitleSecondary`**: style used to print secondary titles.
-//!     * Its *background* color is `view`.
-//!     * Its *foreground* color is `title_secondary`.
-//! * **`Highlight`**: style used to print selected items.
-//!     * Its *background* color is `highlight`.
-//!     * Its *foreground* color is `view`.
-//! * **`HighlightInactive`**: style used to print selected,
+//! * **`ColorStyle::primary()`**: style used to print primary text.
+//!     * Its *background* color is `View`.
+//!     * Its *foreground* color is `Primary`.
+//! * **`ColorStyle::secondary()`**: style used to print secondary text.
+//!     * Its *background* color is `View`.
+//!     * Its *foreground* color is `Secondary`.
+//! * **`ColorStyle::tertiary()`**: style used to print tertiary text.
+//!     * Its *background* color is `View`.
+//!     * Its *foreground* color is `Tertiary`.
+//! * **`ColorStyle::title_primary()`**: style used to print titles.
+//!     * Its *background* color is `View`.
+//!     * Its *foreground* color is `TitlePrimary`.
+//! * **`ColorStyle::title_secondary()`**: style used to print secondary titles.
+//!     * Its *background* color is `View`.
+//!     * Its *foreground* color is `TitleSecondary`.
+//! * **`ColorStyle::highlight()`**: style used to print selected items.
+//!     * Its *background* color is `Highlight`.
+//!     * Its *foreground* color is `View`.
+//! * **`ColorStyle::highlight_inactive()`**: style used to print selected,
 //!   but inactive items.
-//!     * Its *background* color is `highlight_inactive`.
-//!     * Its *foreground* color is `view`.
+//!     * Its *background* color is `HighlightInactive`.
+//!     * Its *foreground* color is `View`.
 //!
 //! Using one of these pairs when styling your application helps give it a
 //! coherent look.
+//!
+//! [`ColorStyle`]: struct.ColorStyle.html
 //!
 //! # Effects
 //!
 //! On top of a color style, some effects can be applied on cells: `Reverse`,
 //! for instance, swaps the foreground and background colors of a cell.
+//!
+//! # Style
+//!
+//! Finally, a style combine a [`ColorType`] and a set of [`Effect`]s, to
+//! represent any way text should be printed on screen.
 //!
 //! # Themes
 //!
