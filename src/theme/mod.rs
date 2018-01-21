@@ -42,7 +42,7 @@
 //!
 //! A [`Palette`] then maps each of these to an actual [`Color`].
 //!
-//! [`Palette`]: struct.Palette.html
+//! [`Palette`]: type.Palette.html
 //! [`Color`]: enum.Color.html
 //!
 //! # Color Types
