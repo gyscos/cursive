@@ -107,10 +107,13 @@
 //! On top of a color style, some effects can be applied on cells: `Reverse`,
 //! for instance, swaps the foreground and background colors of a cell.
 //!
+//!
 //! # Style
 //!
 //! Finally, a style combine a [`ColorType`] and a set of [`Effect`]s, to
 //! represent any way text should be printed on screen.
+//!
+//! [`Effect`]: enum.Effect.html
 //!
 //! # Themes
 //!
