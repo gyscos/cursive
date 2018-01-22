@@ -103,6 +103,18 @@ impl Dialog {
         self.with(|s| s.set_content(view))
     }
 
+    /// Gets the content of this dialog.
+    ///
+    /// ```
+    /// use cursive::views::{Dialog, TextView};
+    /// let dialog = Dialog::around(TextView::new("Hello!"));
+    /// let text_view: &TextView = dialog.get_content().as_any().downcast_ref::<TextView>().unwrap();
+    /// assert_eq!(text_view.get_content().source(), "Hello!");
+    /// ```
+    pub fn get_content(&self) -> &View {
+        &*self.content.view
+    }
+
     /// Sets the content for this dialog.
     ///
     /// Previous content will be dropped.
