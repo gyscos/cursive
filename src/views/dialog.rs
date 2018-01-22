@@ -111,8 +111,13 @@ impl Dialog {
     /// let text_view: &TextView = dialog.get_content().as_any().downcast_ref::<TextView>().unwrap();
     /// assert_eq!(text_view.get_content().source(), "Hello!");
     /// ```
-    pub fn get_content(&self) -> &View {
+    pub fn get_content(&self) -> &AnyView {
         &*self.content.view
+    }
+
+    /// Gets mutable access to the content.
+    pub fn get_content_mut(&mut self) -> &mut AnyView {
+        &mut *self.content.view
     }
 
     /// Sets the content for this dialog.

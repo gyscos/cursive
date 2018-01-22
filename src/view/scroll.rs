@@ -154,7 +154,7 @@ impl ScrollBase {
         self.start_line = min(
             div_up(
                 (1 + self.content_height - self.view_height) * thumb_y,
-                (self.view_height - thumb_height + 1),
+                self.view_height - thumb_height + 1,
             ),
             self.content_height - self.view_height,
         );
