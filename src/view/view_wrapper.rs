@@ -119,6 +119,8 @@ impl<U: View + ?Sized, T: Deref<Target = U> + DerefMut + 'static> ViewWrapper
 
 // The main point of implementing ViewWrapper is to have View for free.
 impl<T: ViewWrapper> View for T {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         self.wrap_draw(printer);
     }

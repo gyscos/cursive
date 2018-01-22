@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate cursive;
 
 use cursive::{Cursive, Printer};
@@ -80,6 +81,8 @@ impl BufferView {
 }
 
 impl View for BufferView {
+    view_any!();
+
     fn layout(&mut self, _: Vec2) {
         // Before drawing, we'll want to update the buffer
         self.update();

@@ -448,6 +448,8 @@ impl TextView {
 }
 
 impl View for TextView {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         let h = self.rows.len();
         // If the content is smaller than the view, align it somewhere.

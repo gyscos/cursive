@@ -423,6 +423,8 @@ impl Dialog {
 }
 
 impl View for Dialog {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         // This will be the buttons_height used by the buttons.
         let buttons_height = match self.draw_buttons(printer) {

@@ -112,6 +112,8 @@ impl SliderView {
 }
 
 impl View for SliderView {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         match self.orientation {
             Orientation::Vertical => {

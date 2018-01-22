@@ -261,6 +261,9 @@ fn try_focus(
 }
 
 impl View for ListView {
+    view_any!();
+
+
     fn draw(&self, printer: &Printer) {
         if self.children.is_empty() {
             return;

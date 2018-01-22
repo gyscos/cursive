@@ -297,6 +297,8 @@ fn try_focus(
 }
 
 impl View for LinearLayout {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         // Use pre-computed sizes
         // eprintln!("Pre loop!");

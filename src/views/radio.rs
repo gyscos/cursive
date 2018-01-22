@@ -154,6 +154,9 @@ impl<T> RadioButton<T> {
 }
 
 impl<T: 'static> View for RadioButton<T> {
+    view_any!();
+
+
     fn required_size(&mut self, _: Vec2) -> Vec2 {
         self.req_size()
     }

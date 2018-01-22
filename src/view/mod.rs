@@ -35,6 +35,15 @@
 //!   no matter what the request is. This means calling `View::layout()` with
 //!   a size returned by `required_size` is **never** an error.
 
+/// Helper macro to implement `View::as_any` and `View::as_any_mut`
+#[macro_export]
+macro_rules! view_any {
+    () => {
+        fn as_any(&self) -> &::std::any::Any { self }
+        fn as_any_mut(&mut self) -> &mut ::std::any::Any { self }
+    }
+}
+
 #[macro_use]
 mod view_wrapper;
 
@@ -72,6 +81,12 @@ pub trait View: Any {
     fn on_event(&mut self, Event) -> EventResult {
         EventResult::Ignored
     }
+
+    /// Downcast self to a `Any`.
+    fn as_any(&self) -> &Any;
+
+    /// Downcast self to a mutable `Any`.
+    fn as_any_mut(&mut self) -> &mut Any;
 
     /// Returns the minimum size the view requires with the given restrictions.
     ///

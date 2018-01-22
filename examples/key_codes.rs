@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate cursive;
 
 use cursive::{Cursive, Printer};
@@ -30,6 +31,8 @@ impl KeyCodeView {
 }
 
 impl View for KeyCodeView {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         // We simply draw every event from the history.
         for (y, line) in self.history.iter().enumerate() {

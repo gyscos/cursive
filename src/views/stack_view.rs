@@ -71,6 +71,8 @@ impl<T: View> ChildWrapper<T> {
 
 // TODO: use macros to make this less ugly?
 impl<T: View> View for ChildWrapper<T> {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         match *self {
             ChildWrapper::Shadow(ref v) => v.draw(printer),
@@ -322,6 +324,8 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
 }
 
 impl View for StackView {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         let last = self.layers.len();
         printer.with_color(ColorStyle::primary(), |printer| {

@@ -259,6 +259,8 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
 }
 
 impl View for Menubar {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         // Draw the bar at the top
         printer.with_color(ColorStyle::primary(), |printer| {

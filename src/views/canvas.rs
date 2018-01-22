@@ -173,6 +173,8 @@ impl<T> Canvas<T> {
 }
 
 impl<T: 'static> View for Canvas<T> {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         (self.draw)(&self.state, printer);
     }

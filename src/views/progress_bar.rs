@@ -193,6 +193,8 @@ impl ProgressBar {
 }
 
 impl View for ProgressBar {
+    view_any!();
+
     fn draw(&self, printer: &Printer) {
         // Now, the bar itself...
         let available = printer.size.x;
