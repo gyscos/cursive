@@ -7,7 +7,5 @@ use view::View;
 pub struct DummyView;
 
 impl View for DummyView {
-    view_any!();
-
     fn draw(&self, _: &Printer) {}
 }

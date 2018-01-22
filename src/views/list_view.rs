@@ -7,16 +7,14 @@ use std::any::Any;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
-use view::ScrollBase;
-use view::Selector;
-use view::View;
+use view::{AnyView, ScrollBase, Selector, View};
 
 /// Represents a child from a [`ListView`].
 ///
 /// [`ListView`]: struct.ListView.html
 pub enum ListChild {
     /// A single row, with a label and a view.
-    Row(String, Box<View>),
+    Row(String, Box<AnyView>),
     /// A delimiter between groups.
     Delimiter,
 }
@@ -29,7 +27,7 @@ impl ListChild {
         }
     }
 
-    fn view(&mut self) -> Option<&mut View> {
+    fn view(&mut self) -> Option<&mut AnyView> {
         match *self {
             ListChild::Row(_, ref mut view) => Some(view.as_mut()),
             _ => None,
@@ -150,7 +148,9 @@ impl ListView {
     }
 
     fn iter_mut<'a>(
-        &'a mut self, from_focus: bool, source: direction::Relative
+        &'a mut self,
+        from_focus: bool,
+        source: direction::Relative,
     ) -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
@@ -174,7 +174,9 @@ impl ListView {
     }
 
     fn move_focus(
-        &mut self, n: usize, source: direction::Direction
+        &mut self,
+        n: usize,
+        source: direction::Direction,
     ) -> EventResult {
         let i = if let Some(i) = source
             .relative(direction::Orientation::Vertical)
@@ -248,7 +250,8 @@ impl ListView {
 }
 
 fn try_focus(
-    (i, child): (usize, &mut ListChild), source: direction::Direction
+    (i, child): (usize, &mut ListChild),
+    source: direction::Direction,
 ) -> Option<usize> {
     match *child {
         ListChild::Delimiter => None,
@@ -261,9 +264,6 @@ fn try_focus(
 }
 
 impl View for ListView {
-    view_any!();
-
-
     fn draw(&self, printer: &Printer) {
         if self.children.is_empty() {
             return;
@@ -454,7 +454,8 @@ impl View for ListView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector,
+        &mut self,
+        selector: &Selector,
         mut callback: Box<FnMut(&mut Any) + 'a>,
     ) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {

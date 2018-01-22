@@ -105,8 +105,6 @@ impl Checkbox {
 }
 
 impl View for Checkbox {
-    view_any!();
-
     fn required_size(&mut self, _: Vec2) -> Vec2 {
         Vec2::new(3, 1)
     }

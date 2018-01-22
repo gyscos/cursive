@@ -199,8 +199,6 @@ impl MenuPopup {
 }
 
 impl View for MenuPopup {
-    view_any!();
-
     fn draw(&self, printer: &Printer) {
         if !printer.size.fits((2, 2)) {
             return;

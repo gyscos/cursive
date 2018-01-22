@@ -396,8 +396,6 @@ impl TextArea {
 }
 
 impl View for TextArea {
-    view_any!();
-
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
         // Make sure our structure is up to date
         self.soft_compute_rows(constraint);

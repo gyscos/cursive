@@ -7,8 +7,7 @@ use std::any::Any;
 use std::cmp::min;
 use std::ops::Deref;
 use vec::Vec2;
-use view::{Selector, SizeCache};
-use view::View;
+use view::{AnyView, View, Selector, SizeCache};
 
 /// Arranges its children linearly according to its orientation.
 pub struct LinearLayout {
@@ -20,7 +19,7 @@ pub struct LinearLayout {
 }
 
 struct Child {
-    view: Box<View>,
+    view: Box<AnyView>,
     // The last result from the child's required_size
     // Doesn't have to be what the child actually gets.
     size: Vec2,
@@ -34,7 +33,7 @@ impl Child {
         self.size
     }
 
-    fn as_view(&self) -> &View {
+    fn as_view(&self) -> &AnyView {
         &*self.view
     }
 }
@@ -161,12 +160,12 @@ impl LinearLayout {
     }
 
     /// Returns a reference to a child.
-    pub fn get_child(&self, i: usize) -> Option<&View> {
+    pub fn get_child(&self, i: usize) -> Option<&AnyView> {
         self.children.get(i).map(|child| &*child.view)
     }
 
     /// Returns a mutable reference to a child.
-    pub fn get_child_mut(&mut self, i: usize) -> Option<&mut View> {
+    pub fn get_child_mut(&mut self, i: usize) -> Option<&mut AnyView> {
         self.children.get_mut(i).map(|child| &mut *child.view)
     }
 
@@ -297,8 +296,6 @@ fn try_focus(
 }
 
 impl View for LinearLayout {
-    view_any!();
-
     fn draw(&self, printer: &Printer) {
         // Use pre-computed sizes
         // eprintln!("Pre loop!");

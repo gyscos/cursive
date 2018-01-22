@@ -434,8 +434,6 @@ fn make_small_stars(length: usize) -> &'static str {
 }
 
 impl View for EditView {
-    view_any!();
-
     fn draw(&self, printer: &Printer) {
         assert_eq!(
             printer.size.x,

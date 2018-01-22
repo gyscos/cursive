@@ -10,7 +10,7 @@ use std::cmp::max;
 use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
 use vec::{Vec2, Vec4};
-use view::{Selector, View};
+use view::{AnyView, Selector, View};
 use views::{Button, DummyView, SizedView, TextView};
 
 #[derive(PartialEq)]
@@ -53,7 +53,7 @@ pub struct Dialog {
     title_position: HAlign,
 
     // The actual inner view.
-    content: SizedView<Box<View>>,
+    content: SizedView<Box<AnyView>>,
 
     // Optional list of buttons under the main view.
     // Include the top-left corner.
@@ -423,8 +423,6 @@ impl Dialog {
 }
 
 impl View for Dialog {
-    view_any!();
-
     fn draw(&self, printer: &Printer) {
         // This will be the buttons_height used by the buttons.
         let buttons_height = match self.draw_buttons(printer) {

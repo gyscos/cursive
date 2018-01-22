@@ -570,8 +570,6 @@ impl SelectView<String> {
 }
 
 impl<T: 'static> View for SelectView<T> {
-    view_any!();
-
 
     fn draw(&self, printer: &Printer) {
         self.last_offset.set(printer.offset);

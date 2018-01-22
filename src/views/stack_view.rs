@@ -6,7 +6,7 @@ use std::any::Any;
 use std::ops::Deref;
 use theme::ColorStyle;
 use vec::Vec2;
-use view::{Offset, Position, Selector, View, ViewWrapper};
+use view::{AnyView, Offset, Position, Selector, View, ViewWrapper};
 use views::{Layer, ShadowView};
 
 /// Simple stack of views.
@@ -71,8 +71,6 @@ impl<T: View> ChildWrapper<T> {
 
 // TODO: use macros to make this less ugly?
 impl<T: View> View for ChildWrapper<T> {
-    view_any!();
-
     fn draw(&self, printer: &Printer) {
         match *self {
             ChildWrapper::Shadow(ref v) => v.draw(printer),
@@ -130,7 +128,7 @@ impl<T: View> View for ChildWrapper<T> {
 }
 
 struct Child {
-    view: ChildWrapper<Box<View>>,
+    view: ChildWrapper<Box<AnyView>>,
     size: Vec2,
     placement: Placement,
 
@@ -159,7 +157,7 @@ impl StackView {
     where
         T: 'static + View,
     {
-        let boxed: Box<View> = Box::new(view);
+        let boxed: Box<AnyView> = Box::new(view);
         self.layers.push(Child {
             view: ChildWrapper::Plain(Layer::new(boxed)),
             size: Vec2::zero(),
@@ -201,7 +199,7 @@ impl StackView {
     where
         T: 'static + View,
     {
-        let boxed: Box<View> = Box::new(view);
+        let boxed: Box<AnyView> = Box::new(view);
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
             view: ChildWrapper::Shadow(
@@ -226,7 +224,7 @@ impl StackView {
     }
 
     /// Remove the top-most layer.
-    pub fn pop_layer(&mut self) -> Option<Box<View>> {
+    pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
         self.layers.pop().map(|child| child.view.unwrap())
     }
 
@@ -324,8 +322,6 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
 }
 
 impl View for StackView {
-    view_any!();
-
     fn draw(&self, printer: &Printer) {
         let last = self.layers.len();
         printer.with_color(ColorStyle::primary(), |printer| {
