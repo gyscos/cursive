@@ -76,7 +76,6 @@ impl Deref for TextContentRef {
     fn deref(&self) -> &StyledString {
         &self.handle.content
     }
-
 }
 
 impl TextContent {

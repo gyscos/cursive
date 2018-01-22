@@ -77,7 +77,9 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
 
     // Some for<'b> weirdness here to please the borrow checker gods...
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: BoxedCallback<'a>
+        &mut self,
+        selector: &Selector,
+        mut callback: BoxedCallback<'a>,
     ) {
         match selector {
             &Selector::Id(id) if id == self.id => callback(self),

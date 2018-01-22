@@ -218,7 +218,7 @@ impl Dialog {
 
     /// Returns an iterator on this buttons for this dialog.
     pub fn buttons_mut<'a>(
-        &'a mut self
+        &'a mut self,
     ) -> Box<'a + Iterator<Item = &'a mut Button>> {
         Box::new(self.buttons.iter_mut().map(|b| &mut b.button.view))
     }
@@ -248,7 +248,9 @@ impl Dialog {
 
     // An event is received while a button is in focus
     fn on_event_button(
-        &mut self, event: Event, button_id: usize
+        &mut self,
+        event: Event,
+        button_id: usize,
     ) -> EventResult {
         let result = {
             let button = &mut self.buttons[button_id];
@@ -531,7 +533,9 @@ impl View for Dialog {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
+        &mut self,
+        selector: &Selector,
+        callback: Box<FnMut(&mut Any) + 'a>,
     ) {
         self.content.call_on_any(selector, callback);
     }

@@ -30,7 +30,10 @@ impl Position {
     /// child with its top-left corner at the returned coordinates will
     /// position him appropriately.
     pub fn compute_offset<S, A, P>(
-        &self, size: S, available: A, parent: P
+        &self,
+        size: S,
+        available: A,
+        parent: P,
     ) -> Vec2
     where
         S: Into<Vec2>,
@@ -65,7 +68,10 @@ pub enum Offset {
 impl Offset {
     /// Computes a single-dimension offset requred to draw a view.
     pub fn compute_offset(
-        &self, size: usize, available: usize, parent: usize
+        &self,
+        size: usize,
+        available: usize,
+        parent: usize,
     ) -> usize {
         if size > available {
             0

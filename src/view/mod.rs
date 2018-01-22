@@ -73,12 +73,16 @@ pub trait AnyView: View {
     fn as_any_mut(&mut self) -> &mut Any;
 }
 
-impl <T: View> AnyView for T {
+impl<T: View> AnyView for T {
     /// Downcast self to a `Any`.
-    fn as_any(&self) -> &Any { self }
+    fn as_any(&self) -> &Any {
+        self
+    }
 
     /// Downcast self to a mutable `Any`.
-    fn as_any_mut(&mut self) -> &mut Any { self }
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
 }
 
 /// Main trait defining a view behaviour.

@@ -6,7 +6,7 @@ extern crate pulldown_cmark;
 
 use self::pulldown_cmark::{Event, Tag};
 use theme::{Effect, Style};
-use utils::markup::{StyledString, StyledIndexedSpan};
+use utils::markup::{StyledIndexedSpan, StyledString};
 use utils::span::IndexedCow;
 
 /// Parses the given string as markdown text.
@@ -139,7 +139,8 @@ Attention
 ====
 I *really* love __Cursive__!";
         let spans = parse_spans(input);
-        let spans: Vec<_> = spans.iter().map(|span| span.resolve(input)).collect();
+        let spans: Vec<_> =
+            spans.iter().map(|span| span.resolve(input)).collect();
 
         // println!("{:?}", spans);
         assert_eq!(

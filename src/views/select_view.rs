@@ -570,7 +570,6 @@ impl SelectView<String> {
 }
 
 impl<T: 'static> View for SelectView<T> {
-
     fn draw(&self, printer: &Printer) {
         self.last_offset.set(printer.offset);
 
@@ -610,9 +609,10 @@ impl<T: 'static> View for SelectView<T> {
             self.scrollbase.draw(printer, |printer, i| {
                 printer.with_selection(i == self.focus(), |printer| {
                     if i != self.focus() && !self.enabled {
-                        printer.with_color(ColorStyle::secondary(), |printer| {
-                            self.draw_item(printer, i)
-                        });
+                        printer
+                            .with_color(ColorStyle::secondary(), |printer| {
+                                self.draw_item(printer, i)
+                            });
                     } else {
                         self.draw_item(printer, i);
                     }

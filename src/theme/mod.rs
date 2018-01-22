@@ -67,7 +67,8 @@
 //! Since some pairs are frequently used, `ColorStyle` defines some methods to
 //! create these usual values:
 //!
-//! * **`ColorStyle::background()`**: style used to print the application background.
+//! * **`ColorStyle::background()`**: style used to print the application
+//!   background.
 //!     * Its *background* color is `Background`.
 //!     * Its *foreground* color is unimportant as no characters are ever
 //!       printed in the background.
@@ -86,7 +87,8 @@
 //! * **`ColorStyle::title_primary()`**: style used to print titles.
 //!     * Its *background* color is `View`.
 //!     * Its *foreground* color is `TitlePrimary`.
-//! * **`ColorStyle::title_secondary()`**: style used to print secondary titles.
+//! * **`ColorStyle::title_secondary()`**: style used to print secondary
+//!   titles.
 //!     * Its *background* color is `View`.
 //!     * Its *foreground* color is `TitleSecondary`.
 //! * **`ColorStyle::highlight()`**: style used to print selected items.
@@ -167,7 +169,7 @@ pub use self::color::{BaseColor, Color};
 pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::Effect;
-pub use self::palette::{Palette, PaletteColor, default_palette};
+pub use self::palette::{default_palette, Palette, PaletteColor};
 pub use self::style::Style;
 use std::fs::File;
 use std::io;

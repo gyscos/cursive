@@ -513,7 +513,8 @@ impl View for EditView {
                         .next()
                         .expect(&format!(
                             "Found no char at cursor {} in {}",
-                            self.cursor, &self.content
+                            self.cursor,
+                            &self.content
                         ));
                     if self.secret {
                         make_small_stars(selected.width())

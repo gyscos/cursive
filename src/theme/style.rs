@@ -1,4 +1,4 @@
-use super::{ColorStyle, Effect, Color, PaletteColor, ColorType};
+use super::{Color, ColorStyle, ColorType, Effect, PaletteColor};
 use enumset::EnumSet;
 
 /// Combine a color and an effect.
@@ -51,7 +51,10 @@ impl Style {
     }
 
     /// Returns a combination of `self` and `other`.
-    pub fn add<S>(self, other: S) -> Self where S: Into<Style> {
+    pub fn add<S>(self, other: S) -> Self
+    where
+        S: Into<Style>,
+    {
         Self::merge(&[self, other.into()])
     }
 }

@@ -13,7 +13,8 @@ pub struct Row {
 impl Row {
     /// Resolve the row indices into string slices and attributes.
     pub fn resolve<'a, T>(
-        &self, source: &'a SpannedString<T>
+        &self,
+        source: &'a SpannedString<T>,
     ) -> Vec<Span<'a, T>> {
         self.segments
             .iter()
