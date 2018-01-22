@@ -436,11 +436,9 @@ fn make_small_stars(length: usize) -> &'static str {
 impl View for EditView {
     fn draw(&self, printer: &Printer) {
         assert_eq!(
-            printer.size.x,
-            self.last_length,
+            printer.size.x, self.last_length,
             "Was promised {}, received {}",
-            self.last_length,
-            printer.size.x
+            self.last_length, printer.size.x
         );
 
         let width = self.content.width();
@@ -513,8 +511,7 @@ impl View for EditView {
                         .next()
                         .expect(&format!(
                             "Found no char at cursor {} in {}",
-                            self.cursor,
-                            &self.content
+                            self.cursor, &self.content
                         ));
                     if self.secret {
                         make_small_stars(selected.width())

@@ -22,9 +22,7 @@ pub struct Concrete {
 impl Concrete {
     /// Save a new color pair.
     fn insert_color(
-        &self,
-        pairs: &mut HashMap<ColorPair, i32>,
-        pair: ColorPair,
+        &self, pairs: &mut HashMap<ColorPair, i32>, pair: ColorPair
     ) -> i32 {
         let n = 1 + pairs.len() as i32;
 
@@ -82,12 +80,10 @@ impl Concrete {
         mevent.bstate &= !(pancurses::BUTTON_SHIFT | pancurses::BUTTON_ALT
             | pancurses::BUTTON_CTRL) as mmask_t;
 
-        let make_event = |event| {
-            Event::Mouse {
-                offset: Vec2::zero(),
-                position: Vec2::new(mevent.x as usize, mevent.y as usize),
-                event: event,
-            }
+        let make_event = |event| Event::Mouse {
+            offset: Vec2::zero(),
+            position: Vec2::new(mevent.x as usize, mevent.y as usize),
+            event: event,
         };
 
         if mevent.bstate == pancurses::REPORT_MOUSE_POSITION as mmask_t {

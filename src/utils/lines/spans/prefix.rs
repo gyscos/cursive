@@ -3,9 +3,7 @@ use std::iter::Peekable;
 
 /// Concatenates chunks as long as they fit in the given width.
 pub fn prefix<'a, I>(
-    tokens: &mut Peekable<I>,
-    width: usize,
-    offset: &mut ChunkPart,
+    tokens: &mut Peekable<I>, width: usize, offset: &mut ChunkPart
 ) -> Vec<Chunk<'a>>
 where
     I: Iterator<Item = Chunk<'a>>,

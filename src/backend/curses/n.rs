@@ -24,9 +24,7 @@ pub struct Concrete {
 impl Concrete {
     /// Save a new color pair.
     fn insert_color(
-        &self,
-        pairs: &mut HashMap<ColorPair, i16>,
-        pair: ColorPair,
+        &self, pairs: &mut HashMap<ColorPair, i16>, pair: ColorPair
     ) -> i16 {
         let n = 1 + pairs.len() as i16;
         let target = if ncurses::COLOR_PAIRS() > i32::from(n) {
@@ -91,12 +89,10 @@ impl Concrete {
                 | ncurses::BUTTON_CTRL)
                 as mmask_t;
 
-            let make_event = |event| {
-                Event::Mouse {
-                    offset: Vec2::zero(),
-                    position: Vec2::new(mevent.x as usize, mevent.y as usize),
-                    event: event,
-                }
+            let make_event = |event| Event::Mouse {
+                offset: Vec2::zero(),
+                position: Vec2::new(mevent.x as usize, mevent.y as usize),
+                event: event,
             };
 
             if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as mmask_t {

@@ -57,9 +57,7 @@ struct ChildItem<T> {
 
 impl<T> ChildIterator<T> {
     fn new(
-        inner: T,
-        orientation: direction::Orientation,
-        available: usize,
+        inner: T, orientation: direction::Orientation, available: usize
     ) -> Self {
         ChildIterator {
             inner,
@@ -71,7 +69,8 @@ impl<T> ChildIterator<T> {
 }
 
 impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
-    for ChildIterator<I> {
+    for ChildIterator<I>
+{
     type Item = ChildItem<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -199,9 +198,7 @@ impl LinearLayout {
 
     /// Returns a cyclic mutable iterator starting with the child in focus
     fn iter_mut<'a>(
-        &'a mut self,
-        from_focus: bool,
-        source: direction::Relative,
+        &'a mut self, from_focus: bool, source: direction::Relative
     ) -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
         match source {
             direction::Relative::Front => {
@@ -290,8 +287,7 @@ impl LinearLayout {
 }
 
 fn try_focus(
-    (i, child): (usize, &mut Child),
-    source: direction::Direction,
+    (i, child): (usize, &mut Child), source: direction::Direction
 ) -> Option<usize> {
     if child.view.take_focus(source) {
         Some(i)
@@ -553,8 +549,7 @@ impl View for LinearLayout {
     }
 
     fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector,
+        &mut self, selector: &Selector,
         mut callback: Box<FnMut(&mut Any) + 'a>,
     ) {
         for child in &mut self.children {

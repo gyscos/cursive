@@ -33,9 +33,7 @@ impl<'a> Printer<'a> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T,
-        theme: &'a Theme,
-        backend: &'a backend::Concrete,
+        size: T, theme: &'a Theme, backend: &'a backend::Concrete
     ) -> Self {
         Printer {
             offset: Vec2::zero(),
@@ -204,10 +202,7 @@ impl<'a> Printer<'a> {
     /// printer.print_box((0,0), (6,4), false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
-        &self,
-        start: T,
-        size: S,
-        invert: bool,
+        &self, start: T, size: S, invert: bool
     ) {
         self.new.set(false);
 
@@ -304,10 +299,7 @@ impl<'a> Printer<'a> {
 
     /// Returns a printer on a subset of this one's area.
     pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(
-        &'a self,
-        offset: S,
-        size: T,
-        focused: bool,
+        &'a self, offset: S, size: T, focused: bool
     ) -> Printer<'a> {
         let size = size.into();
         let offset = offset.into().or_min(self.size);

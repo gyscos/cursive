@@ -106,10 +106,7 @@ impl Menubar {
 
     /// Insert a new item at the given position.
     pub fn insert_subtree<S>(
-        &mut self,
-        i: usize,
-        title: S,
-        menu: MenuTree,
+        &mut self, i: usize, title: S, menu: MenuTree
     ) -> &mut Self
     where
         S: Into<String>,

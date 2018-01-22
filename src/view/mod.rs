@@ -94,7 +94,6 @@ pub trait View: Any {
         EventResult::Ignored
     }
 
-
     /// Returns the minimum size the view requires with the given restrictions.
     ///
     /// If the view is flexible (it has multiple size options), it can try

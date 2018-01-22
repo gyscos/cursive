@@ -17,7 +17,6 @@ fn main() {
     // We can quit by pressing `q`
     siv.add_global_callback('q', Cursive::quit);
 
-
     siv.add_layer(TextView::new(
         "Hello World with default terminal background color!\n\
          Press q to quit the application.",

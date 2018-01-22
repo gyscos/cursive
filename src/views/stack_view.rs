@@ -33,10 +33,7 @@ pub enum LayerPosition {
 
 impl Placement {
     pub fn compute_offset<S, A, P>(
-        &self,
-        size: S,
-        available: A,
-        parent: P,
+        &self, size: S, available: A, parent: P
     ) -> Vec2
     where
         S: Into<Vec2>,
@@ -110,9 +107,7 @@ impl<T: View> View for ChildWrapper<T> {
     }
 
     fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector,
-        callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
     ) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => {
@@ -294,7 +289,8 @@ struct StackPositionIterator<R: Deref<Target = Child>, I: Iterator<Item = R>> {
 }
 
 impl<R: Deref<Target = Child>, I: Iterator<Item = R>>
-    StackPositionIterator<R, I> {
+    StackPositionIterator<R, I>
+{
     /// Returns a new StackPositionIterator
     pub fn new(inner: I, total_size: Vec2) -> Self {
         let previous = Vec2::zero();
@@ -307,7 +303,8 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>>
 }
 
 impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
-    for StackPositionIterator<R, I> {
+    for StackPositionIterator<R, I>
+{
     type Item = (R, Vec2);
 
     fn next(&mut self) -> Option<(R, Vec2)> {
@@ -396,8 +393,7 @@ impl View for StackView {
     }
 
     fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector,
+        &mut self, selector: &Selector,
         mut callback: Box<FnMut(&mut Any) + 'a>,
     ) {
         for layer in &mut self.layers {

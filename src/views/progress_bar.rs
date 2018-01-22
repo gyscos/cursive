@@ -123,8 +123,7 @@ impl ProgressBar {
     ///
     /// Chainable variant.
     pub fn with_task<F: FnOnce(Counter) + Send + 'static>(
-        mut self,
-        task: F,
+        mut self, task: F
     ) -> Self {
         self.start(task);
         self
@@ -144,8 +143,7 @@ impl ProgressBar {
     /// }
     /// ```
     pub fn with_label<F: Fn(usize, (usize, usize)) -> String + 'static>(
-        mut self,
-        label_maker: F,
+        mut self, label_maker: F
     ) -> Self {
         self.label_maker = Box::new(label_maker);
         self

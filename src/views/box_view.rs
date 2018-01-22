@@ -39,9 +39,7 @@ impl<T: View> BoxView<T> {
     ///
     /// `None` values will use the wrapped view's preferences.
     pub fn new(
-        width: SizeConstraint,
-        height: SizeConstraint,
-        view: T,
+        width: SizeConstraint, height: SizeConstraint, view: T
     ) -> Self {
         BoxView {
             size: (width, height).into(),

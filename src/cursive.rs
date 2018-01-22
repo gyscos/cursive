@@ -175,8 +175,7 @@ impl Cursive {
     ///
     /// `filename` must point to a valid toml file.
     pub fn load_theme_file<P: AsRef<Path>>(
-        &mut self,
-        filename: P,
+        &mut self, filename: P
     ) -> Result<(), theme::Error> {
         self.set_theme(try!(theme::load_theme_file(filename)));
         Ok(())
@@ -281,9 +280,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn call_on<V, F, R>(
-        &mut self,
-        sel: &view::Selector,
-        callback: F,
+        &mut self, sel: &view::Selector, callback: F
     ) -> Option<R>
     where
         V: View + Any,

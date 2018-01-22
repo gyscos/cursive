@@ -22,10 +22,7 @@ pub struct Concrete {
 
 impl Concrete {
     fn blt_keycode_to_ev(
-        &mut self,
-        kc: KeyCode,
-        shift: bool,
-        ctrl: bool,
+        &mut self, kc: KeyCode, shift: bool, ctrl: bool
     ) -> Event {
         match kc {
             KeyCode::F1

@@ -6,7 +6,6 @@
 pub mod markdown;
 
 use theme::Style;
-
 use utils::span::{IndexedSpan, Span, SpannedString};
 
 /// A parsed string with markup style.

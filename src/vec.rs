@@ -284,7 +284,7 @@ impl From<((i32, i32), (i32, i32))> for Vec4 {
 }
 impl From<((usize, usize), (usize, usize))> for Vec4 {
     fn from(
-        ((left, right), (top, bottom)): ((usize, usize), (usize, usize)),
+        ((left, right), (top, bottom)): ((usize, usize), (usize, usize))
     ) -> Vec4 {
         (left, right, top, bottom).into()
     }

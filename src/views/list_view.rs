@@ -148,9 +148,7 @@ impl ListView {
     }
 
     fn iter_mut<'a>(
-        &'a mut self,
-        from_focus: bool,
-        source: direction::Relative,
+        &'a mut self, from_focus: bool, source: direction::Relative
     ) -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
@@ -174,9 +172,7 @@ impl ListView {
     }
 
     fn move_focus(
-        &mut self,
-        n: usize,
-        source: direction::Direction,
+        &mut self, n: usize, source: direction::Direction
     ) -> EventResult {
         let i = if let Some(i) = source
             .relative(direction::Orientation::Vertical)
@@ -250,8 +246,7 @@ impl ListView {
 }
 
 fn try_focus(
-    (i, child): (usize, &mut ListChild),
-    source: direction::Direction,
+    (i, child): (usize, &mut ListChild), source: direction::Direction
 ) -> Option<usize> {
     match *child {
         ListChild::Delimiter => None,
@@ -454,8 +449,7 @@ impl View for ListView {
     }
 
     fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector,
+        &mut self, selector: &Selector,
         mut callback: Box<FnMut(&mut Any) + 'a>,
     ) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
