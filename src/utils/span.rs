@@ -37,7 +37,7 @@ impl<T> SpannedString<T> {
         // Make sure the spans are within bounds.
         // This should disapear when compiled in release mode.
         for span in &spans {
-            if let IndexedCow::Borrowed { start: _, end } = span.content {
+            if let IndexedCow::Borrowed { end, .. } = span.content {
                 assert!(end <= source.len());
             }
         }
@@ -66,14 +66,14 @@ impl<T> SpannedString<T> {
         S: Into<Self>,
     {
         let other = other.into();
-        self.append_raw(other.source, other.spans);
+        self.append_raw(&other.source, other.spans);
     }
 
     /// Appends `content` and its corresponding spans to the end.
     ///
     /// It is not recommended to use this directly;
     /// instead, look at the `append` method.
-    pub fn append_raw(&mut self, source: String, spans: Vec<IndexedSpan<T>>) {
+    pub fn append_raw(&mut self, source: &str, spans: Vec<IndexedSpan<T>>) {
         let offset = self.source.len();
         let mut spans = spans;
 
@@ -170,7 +170,7 @@ impl IndexedCow {
     pub fn resolve<'a>(&'a self, source: &'a str) -> &'a str {
         match *self {
             IndexedCow::Borrowed { start, end } => &source[start..end],
-            IndexedCow::Owned(ref content) => &content,
+            IndexedCow::Owned(ref content) => content,
         }
     }
 

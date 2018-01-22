@@ -477,7 +477,7 @@ impl View for EditView {
                             }
                         })
                         .map(|g| g.len())
-                        .fold(0, |a, b| a + b);
+                        .sum();
 
                     let content = &content[..display_bytes];
                     let width = content.width();

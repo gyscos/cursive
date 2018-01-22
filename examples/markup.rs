@@ -15,7 +15,7 @@ fn main() {
     styled.append(StyledString::styled("that ", Color::Dark(BaseColor::Red)));
     styled.append(StyledString::styled(
         "cool?",
-        Style::from(Color::Light(BaseColor::Blue)).add(Effect::Bold),
+        Style::from(Color::Light(BaseColor::Blue)).combine(Effect::Bold),
     ));
 
     // TextView can natively accept StyledString.

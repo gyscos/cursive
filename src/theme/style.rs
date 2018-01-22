@@ -51,7 +51,7 @@ impl Style {
     }
 
     /// Returns a combination of `self` and `other`.
-    pub fn add<S>(self, other: S) -> Self
+    pub fn combine<S>(self, other: S) -> Self
     where
         S: Into<Style>,
     {

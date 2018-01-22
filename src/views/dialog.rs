@@ -331,7 +331,7 @@ impl Dialog {
         let width = self.buttons
             .iter()
             .map(|button| button.button.size.x)
-            .fold(0, |a, b| a + b)
+            .sum::<usize>()
             + self.buttons.len().saturating_sub(1);
         let overhead = self.padding + self.borders;
         if printer.size.x < overhead.horizontal() {

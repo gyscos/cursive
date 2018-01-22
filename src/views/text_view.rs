@@ -117,9 +117,9 @@ impl TextContent {
     }
 }
 
-/// Internel representation of the content for a TextView.
+/// Internel representation of the content for a `TextView`.
 ///
-/// This is mostly just a StyledString.
+/// This is mostly just a `StyledString`.
 ///
 /// Can be shared (through a `Arc<Mutex>`).
 struct TextContentInner {
@@ -463,7 +463,7 @@ impl View for TextView {
 
                 for span in row.resolve(&content.content) {
                     printer.with_style(*span.attr, |printer| {
-                        printer.print((x, 0), &span.content);
+                        printer.print((x, 0), span.content);
                         x += span.content.width();
                     });
                 }

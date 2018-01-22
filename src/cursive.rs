@@ -383,7 +383,7 @@ impl Cursive {
     {
         self.global_callbacks
             .entry(event.into())
-            .or_insert(Vec::new())
+            .or_insert_with(Vec::new)
             .push(Callback::from_fn(cb));
     }
 
