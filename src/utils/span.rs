@@ -81,11 +81,12 @@ impl<T> SpannedString<T> {
             span.content.offset(offset);
         }
 
-        self.source.push_str(&source);
+        self.source.push_str(source);
         self.spans.append(&mut spans);
     }
 
     /// Gives access to the parsed styled spans.
+    #[cfg_attr(feature = "cargo-clippy", allow(needless_lifetimes))]
     pub fn spans<'a>(&'a self) -> Vec<Span<'a, T>> {
         self.spans
             .iter()
