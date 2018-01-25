@@ -263,4 +263,15 @@ mod tests {
         assert_eq!(Vec2::new(10, 1), full.required_size(Vec2::new(10, 1)));
         assert_eq!(Vec2::new(10, 10), full.required_size(Vec2::new(10, 10)));
     }
+
+    #[test]
+    //TODO: rm this or use it
+    fn xxx() {
+        use views::{BoxView,TextView};
+        use view::{ViewWrapper};
+        let parent: BoxView<TextView> = TextView::new("abc").full_screen();
+        //let child: TextView = parent.view;
+        let child: &TextView = parent.get_view();
+        1/0;
+    }
 }

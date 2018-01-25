@@ -99,4 +99,11 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
                 .and_then(|mut v| v.deref_mut().focus_view(s)),
         }
     }
+
+    fn get_view(&self) -> &Self::V {
+        use std::ops::Deref;
+        let view = self.view.try_borrow().unwrap()
+            ;
+        view.deref()
+    }
 }

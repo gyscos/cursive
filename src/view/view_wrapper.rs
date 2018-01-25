@@ -39,6 +39,9 @@ pub trait ViewWrapper: 'static {
     where
         F: FnOnce(&mut Self::V) -> R;
 
+    /// Gets the reference to the wrapped view.
+    fn get_view(&self) -> &Self::V;
+
     /// Attempts to retrieve the inner view.
     fn into_inner(self) -> Result<Self::V, Self>
     where
@@ -119,6 +122,10 @@ where
     {
         Some(f(self.deref_mut()))
     }
+
+    fn get_view(&self) -> &Self::V {
+        self.deref()
+    }
 }
 
 // The main point of implementing ViewWrapper is to have View for free.
@@ -196,8 +203,8 @@ macro_rules! wrap_impl {
             Some(f(&mut self.$v))
         }
 
-        fn into_inner(self) -> Result<Self::V, Self> where Self::V: Sized {
-            Ok(self.$v)
+        fn get_view(&self) -> &Self::V {
+            &self.$v
         }
     };
 }
