@@ -1,8 +1,10 @@
 //! # Cursive
 //!
-//! [Cursive](https://github.com/gyscos/Cursive) is a TUI library built on top
-//! of ncurses-rs.
-//! It allows to easily build layouts for text-based applications.
+//! [Cursive] is a [TUI] library - it lets you easily build rich interfaces
+//! for use in a terminal.
+//!
+//! [Cursive]: https://github.com/gyscos/Cursive
+//! [TUI]: https://en.wikipedia.org/wiki/Text-based_user_interface
 //!
 //! ## Getting started
 //!
