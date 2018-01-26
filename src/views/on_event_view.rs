@@ -42,7 +42,7 @@ use view::{View, ViewWrapper};
 ///                         .on_event(event::Key::Esc, |s| s.quit());
 /// ```
 pub struct OnEventView<T: View> {
-    inner: T,
+    view: T,
     callbacks: HashMap<Event, Action<T>>,
 }
 
@@ -72,7 +72,7 @@ impl<T: View> OnEventView<T> {
     /// Wraps the given view in a new OnEventView.
     pub fn new(view: T) -> Self {
         OnEventView {
-            inner: view,
+            view: view,
             callbacks: HashMap::new(),
         }
     }
@@ -216,7 +216,7 @@ impl<T: View> OnEventView<T> {
 }
 
 impl<T: View> ViewWrapper for OnEventView<T> {
-    wrap_impl!(self.inner: T);
+    wrap_impl!(self.view: T);
 
     fn wrap_on_event(&mut self, event: Event) -> EventResult {
         let action = self.callbacks.get(&event).cloned();
@@ -227,12 +227,12 @@ impl<T: View> ViewWrapper for OnEventView<T> {
 
         if pre_child {
             action
-                .and_then(|a| (*a.callback)(&mut self.inner))
-                .unwrap_or_else(|| self.inner.on_event(event))
+                .and_then(|a| (*a.callback)(&mut self.view))
+                .unwrap_or_else(|| self.view.on_event(event))
         } else {
-            self.inner.on_event(event).or_else(|| {
+            self.view.on_event(event).or_else(|| {
                 action
-                    .and_then(|a| (*a.callback)(&mut self.inner))
+                    .and_then(|a| (*a.callback)(&mut self.view))
                     .unwrap_or(EventResult::Ignored)
             })
         }
