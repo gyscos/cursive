@@ -196,6 +196,9 @@ macro_rules! wrap_impl {
             Some(f(&mut self.$v))
         }
 
+        fn into_inner(self) -> Result<Self::V, Self> where Self::V: Sized {
+            Ok(self.$v)
+        }
     };
 }
 
