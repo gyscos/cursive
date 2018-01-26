@@ -225,7 +225,9 @@ impl<T: 'static> SelectView<T> {
     /// assert_eq!(select.get_item(0), Some(("Short", &1)));
     /// ```
     pub fn get_item(&self, i: usize) -> Option<(&str, &T)> {
-        self.items.get(i).map(|item| (item.label.as_ref(), &*item.value))
+        self.items
+            .get(i)
+            .map(|item| (item.label.as_ref(), &*item.value))
     }
 
     /// Gets a mut item at given idx or None.
