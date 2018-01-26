@@ -203,6 +203,16 @@ impl<T: View> OnEventView<T> {
             },
         );
     }
+
+    /// Gets access to the inner view.
+    pub fn get_inner(&self) -> &T {
+        &self.inner
+    }
+
+    /// Gets mutable access to the inner view.
+    pub fn get_inner_mut(&mut self) -> &mut T {
+        &mut self.inner
+    }
 }
 
 impl<T: View> ViewWrapper for OnEventView<T> {

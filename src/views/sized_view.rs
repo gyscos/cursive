@@ -18,6 +18,8 @@ impl<T: View> SizedView<T> {
             size: Vec2::zero(),
         }
     }
+
+    inner_getters!(T);
 }
 
 impl<T: View> ViewWrapper for SizedView<T> {

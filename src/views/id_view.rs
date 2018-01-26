@@ -99,5 +99,4 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
                 .and_then(|mut v| v.deref_mut().focus_view(s)),
         }
     }
-
 }

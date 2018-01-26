@@ -46,6 +46,8 @@ impl<T: View> ShadowView<T> {
         self.top_padding = value;
         self
     }
+
+    inner_getters!(T);
 }
 
 impl<T: View> ViewWrapper for ShadowView<T> {

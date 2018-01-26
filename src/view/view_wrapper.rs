@@ -119,7 +119,6 @@ where
     {
         Some(f(self.deref_mut()))
     }
-
 }
 
 // The main point of implementing ViewWrapper is to have View for free.

@@ -16,6 +16,8 @@ impl<T: View> Layer<T> {
     pub fn new(view: T) -> Self {
         Layer { view: view }
     }
+
+    inner_getters!(T);
 }
 
 impl<T: View> ViewWrapper for Layer<T> {
