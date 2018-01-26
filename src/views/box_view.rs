@@ -162,6 +162,8 @@ impl<T: View> BoxView<T> {
             view,
         )
     }
+
+    inner_getters!(T);
 }
 
 impl<T: View> ViewWrapper for BoxView<T> {
@@ -265,13 +267,23 @@ mod tests {
     }
 
     #[test]
-    //TODO: rm this or use it
-    fn xxx() {
-        use views::{BoxView,TextView};
-        use view::{ViewWrapper};
-        let parent: BoxView<TextView> = TextView::new("abc").full_screen();
-        //let child: TextView = parent.view;
-        let child: &TextView = parent.get_view();
-        1/0;
+    fn test_get_inner() {
+        use views::TextView;
+
+        let parent = TextView::new("abc").full_screen();
+        let child = parent.get_inner();
+        assert_eq!(child.get_content().source(), "abc");
+    }
+    #[test]
+    fn test_get_inner_mut() {
+        use views::TextView;
+
+        let mut parent = TextView::new("").full_screen();
+        let new_value = "new";
+        let child = parent.get_inner_mut();
+
+        child.set_content(new_value);
+
+        assert_eq!(child.get_content().source(), new_value);
     }
 }

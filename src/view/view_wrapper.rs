@@ -39,9 +39,6 @@ pub trait ViewWrapper: 'static {
     where
         F: FnOnce(&mut Self::V) -> R;
 
-    /// Gets the reference to the wrapped view.
-    fn get_view(&self) -> &Self::V;
-
     /// Attempts to retrieve the inner view.
     fn into_inner(self) -> Result<Self::V, Self>
     where
@@ -123,9 +120,6 @@ where
         Some(f(self.deref_mut()))
     }
 
-    fn get_view(&self) -> &Self::V {
-        self.deref()
-    }
 }
 
 // The main point of implementing ViewWrapper is to have View for free.
@@ -203,8 +197,44 @@ macro_rules! wrap_impl {
             Some(f(&mut self.$v))
         }
 
-        fn get_view(&self) -> &Self::V {
-            &self.$v
-        }
     };
+}
+
+/// Convenient macro to implement the getters for inner [`View`] in [`ViewWrapper`].
+///
+/// It defines the `get_inner` and `get_inner_mut` implementations.
+///
+/// [`ViewWrapper`]: view/trait.ViewWrapper.html
+/// [`View`]: view/trait.View.html
+///
+/// # Examples
+///
+/// ```no_run
+/// # #[macro_use] extern crate cursive;
+/// # use cursive::view::{View,ViewWrapper};
+/// struct FooView<T: View> {
+///     view: T,
+/// }
+///
+/// impl<T: View> FooView<T> {
+///     inner_getters!(T);
+/// }
+///
+/// impl <T: View> ViewWrapper for FooView<T> {
+///     wrap_impl!(self.view: T);
+/// }
+/// # fn main() { }
+/// ```
+#[macro_export]
+macro_rules! inner_getters {
+    ($t:ty) => {
+        /// Gets access to the inner view.
+        pub fn get_inner(&self) -> &$t {
+            &self.view
+        }
+        /// Gets mutable access to the inner view.
+        pub fn get_inner_mut(&mut self) -> &mut $t {
+            &mut self.view
+        }
+    }
 }
