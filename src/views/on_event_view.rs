@@ -203,6 +203,8 @@ impl<T: View> OnEventView<T> {
             },
         );
     }
+
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> ViewWrapper for OnEventView<T> {

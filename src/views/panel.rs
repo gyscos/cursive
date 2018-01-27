@@ -14,6 +14,8 @@ impl<V: View> Panel<V> {
     pub fn new(view: V) -> Self {
         Panel { view: view }
     }
+
+    inner_getters!(self.view: V);
 }
 
 impl<V: View> ViewWrapper for Panel<V> {

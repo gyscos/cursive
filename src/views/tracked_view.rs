@@ -17,6 +17,8 @@ impl<T: View> TrackedView<T> {
     pub fn offset(&self) -> Vec2 {
         self.offset.get()
     }
+
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> TrackedView<T> {

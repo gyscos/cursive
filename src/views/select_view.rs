@@ -215,6 +215,36 @@ impl<T: 'static> SelectView<T> {
         self.items.push(Item::new(label.into(), value));
     }
 
+    /// Gets an item at given idx or None.
+    ///
+    /// ```
+    /// use cursive::Cursive;
+    /// use cursive::views::{SelectView, TextView};
+    /// let select = SelectView::new()
+    ///     .item("Short", 1);
+    /// assert_eq!(select.get_item(0), Some(("Short", &1)));
+    /// ```
+    pub fn get_item(&self, i: usize) -> Option<(&str, &T)> {
+        self.items
+            .get(i)
+            .map(|item| (item.label.as_ref(), &*item.value))
+    }
+
+    /// Gets a mut item at given idx or None.
+    pub fn get_item_mut(&mut self, i: usize) -> Option<(&mut String, &mut T)> {
+        if i >= self.items.len() {
+            None
+        } else {
+            let item = &mut self.items[i];
+            if let Some(t) = Rc::get_mut(&mut item.value) {
+                let label = &mut item.label;
+                Some((label, t))
+            } else {
+                None
+            }
+        }
+    }
+
     /// Removes an item from the list.
     pub fn remove_item(&mut self, id: usize) {
         self.items.remove(id);

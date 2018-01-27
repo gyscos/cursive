@@ -162,6 +162,8 @@ impl<T: View> BoxView<T> {
             view,
         )
     }
+
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> ViewWrapper for BoxView<T> {
@@ -262,5 +264,26 @@ mod tests {
         assert_eq!(Vec2::new(1, 10), full.required_size(Vec2::new(1, 10)));
         assert_eq!(Vec2::new(10, 1), full.required_size(Vec2::new(10, 1)));
         assert_eq!(Vec2::new(10, 10), full.required_size(Vec2::new(10, 10)));
+    }
+
+    #[test]
+    fn test_get_inner() {
+        use views::TextView;
+
+        let parent = TextView::new("abc").full_screen();
+        let child = parent.get_inner();
+        assert_eq!(child.get_content().source(), "abc");
+    }
+    #[test]
+    fn test_get_inner_mut() {
+        use views::TextView;
+
+        let mut parent = TextView::new("").full_screen();
+        let new_value = "new";
+        let child = parent.get_inner_mut();
+
+        child.set_content(new_value);
+
+        assert_eq!(child.get_content().source(), new_value);
     }
 }
