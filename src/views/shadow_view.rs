@@ -47,7 +47,7 @@ impl<T: View> ShadowView<T> {
         self
     }
 
-    inner_getters!(T);
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> ViewWrapper for ShadowView<T> {

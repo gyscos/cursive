@@ -15,7 +15,7 @@ impl<V: View> Panel<V> {
         Panel { view: view }
     }
 
-    inner_getters!(V);
+    inner_getters!(self.view: V);
 }
 
 impl<V: View> ViewWrapper for Panel<V> {

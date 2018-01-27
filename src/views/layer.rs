@@ -17,7 +17,7 @@ impl<T: View> Layer<T> {
         Layer { view: view }
     }
 
-    inner_getters!(T);
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> ViewWrapper for Layer<T> {

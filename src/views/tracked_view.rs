@@ -18,7 +18,7 @@ impl<T: View> TrackedView<T> {
         self.offset.get()
     }
 
-    inner_getters!(T);
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> TrackedView<T> {

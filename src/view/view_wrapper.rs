@@ -219,7 +219,7 @@ macro_rules! wrap_impl {
 /// }
 ///
 /// impl<T: View> FooView<T> {
-///     inner_getters!(T);
+///     inner_getters!(self.view: T);
 /// }
 ///
 /// impl <T: View> ViewWrapper for FooView<T> {
@@ -229,7 +229,7 @@ macro_rules! wrap_impl {
 /// ```
 #[macro_export]
 macro_rules! inner_getters {
-    ($t:ty) => {
+    (self.$v:ident: $t:ty) => {
         /// Gets access to the inner view.
         pub fn get_inner(&self) -> &$t {
             &self.view

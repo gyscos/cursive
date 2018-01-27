@@ -163,7 +163,7 @@ impl<T: View> BoxView<T> {
         )
     }
 
-    inner_getters!(T);
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> ViewWrapper for BoxView<T> {
