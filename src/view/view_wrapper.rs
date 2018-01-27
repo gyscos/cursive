@@ -232,11 +232,11 @@ macro_rules! inner_getters {
     (self.$v:ident: $t:ty) => {
         /// Gets access to the inner view.
         pub fn get_inner(&self) -> &$t {
-            &self.view
+            &self.$v
         }
         /// Gets mutable access to the inner view.
         pub fn get_inner_mut(&mut self) -> &mut $t {
-            &mut self.view
+            &mut self.$v
         }
     }
 }
