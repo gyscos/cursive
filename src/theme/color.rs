@@ -98,14 +98,17 @@ impl Color {
             Color::Rgb(value, value, value)
         } else {
             let n = n - 16;
+            // We support 6*6*6 = 216 colors here
+            assert!(n < 216);
 
             let r = n / 36;
             let g = (n % 36) / 6;
             let b = n % 6;
 
-            assert!(r < 5);
-            assert!(g < 5);
-            assert!(b < 5);
+            // Each color is in the range [0, 5] (6 possible values)
+            assert!(r < 6);
+            assert!(g < 6);
+            assert!(b < 6);
 
             Color::RgbLowRes(r, g, b)
         }
