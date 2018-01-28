@@ -48,10 +48,6 @@ fn find_closest(color: &Color) -> i16 {
                 (16 + 36 * r + 6 * g + b) as i16
             }
         }
-        Color::RgbLowRes(r, g, b) => {
-            let a = i16::from(16 + 36 * r + 6 * g + b);
-            eprintln!("{:?} => {}", color, a);
-            a
-        }
+        Color::RgbLowRes(r, g, b) => i16::from(16 + 36 * r + 6 * g + b),
     }
 }

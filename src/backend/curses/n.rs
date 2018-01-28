@@ -213,7 +213,7 @@ impl backend::Backend for Concrete {
     }
 
     fn with_color<F: FnOnce()>(&self, colors: ColorPair, f: F) {
-        eprintln!("Color used: {:?}", colors);
+        // eprintln!("Color used: {:?}", colors);
         let current = self.current_style.get();
         if current != colors {
             self.set_colors(colors);
