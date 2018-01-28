@@ -48,6 +48,26 @@ impl<T: View> BoxView<T> {
         }
     }
 
+    /// Sets the size constraints for this view.
+    pub fn set_constraints(&mut self, width: SizeConstraint, height: SizeConstraint) {
+        self.set_width(width);
+        self.set_height(height);
+    }
+
+    /// Sets the width constraint for this view.
+    ///
+    /// Leaves the height unchanged.
+    pub fn set_width(&mut self, width: SizeConstraint) {
+        self.size.x = width;
+    }
+
+    /// Sets the height constraint for this view.
+    ///
+    /// Leaves the width unchanged.
+    pub fn set_height(&mut self, height: SizeConstraint) {
+        self.size.y = height;
+    }
+
     /// Sets `self` to be squishable.
     ///
     /// A squishable `BoxView` will take a smaller size than it should when
