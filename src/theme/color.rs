@@ -184,3 +184,18 @@ fn load_hex(s: &str) -> u16 {
 
     sum as u16
 }
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_256_colors() {
+        // Make sure Color::from_256colors never panics
+        use super::Color;
+
+        // TODO: use inclusive range when it gets stable
+        for i in 0..256u16 {
+            Color::from_256colors(i as u8);
+        }
+    }
+}
