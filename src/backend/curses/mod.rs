@@ -34,11 +34,24 @@ fn find_closest(color: &Color) -> i16 {
         Color::Light(BaseColor::Cyan) => 14,
         Color::Light(BaseColor::White) => 15,
         Color::Rgb(r, g, b) => {
-            let r = 6 * u16::from(r) / 256;
-            let g = 6 * u16::from(g) / 256;
-            let b = 6 * u16::from(b) / 256;
-            (16 + 36 * r + 6 * g + b) as i16
+            // If r = g = b, it may be a grayscale value!
+            if r == g && g == b && r != 0 && r < 250 {
+                // (r = g = b) = 8 + 10 * n
+                // (r - 8) / 10 = n
+                //
+                let n = (r - 8) / 10;
+                (232 + n) as i16
+            } else {
+                let r = 6 * u16::from(r) / 256;
+                let g = 6 * u16::from(g) / 256;
+                let b = 6 * u16::from(b) / 256;
+                (16 + 36 * r + 6 * g + b) as i16
+            }
         }
-        Color::RgbLowRes(r, g, b) => i16::from(16 + 36 * r + 6 * g + b),
+        Color::RgbLowRes(r, g, b) => {
+            let a = i16::from(16 + 36 * r + 6 * g + b);
+            eprintln!("{:?} => {}", color, a);
+            a
+        }
     }
 }
