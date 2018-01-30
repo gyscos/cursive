@@ -18,10 +18,6 @@ impl<T: View> TrackedView<T> {
         self.offset.get()
     }
 
-    inner_getters!(self.view: T);
-}
-
-impl<T: View> TrackedView<T> {
     /// Creates a new `TrackedView` around `view`.
     pub fn new(view: T) -> Self {
         TrackedView {
@@ -34,6 +30,8 @@ impl<T: View> TrackedView<T> {
     pub fn with_id(self, id: &str) -> IdView<Self> {
         IdView::new(id, self)
     }
+
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> ViewWrapper for TrackedView<T> {
