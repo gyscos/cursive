@@ -281,6 +281,19 @@ impl StackView {
         self.move_layer(layer, LayerPosition::FromBack(0));
     }
 
+    /// Gets screen coords of thingy.
+    pub fn get_layer_position(&mut self, layer: LayerPosition,) -> Option<&Position> {
+        let i = self.get_index(layer);
+        let child =  match self.layers.get_mut(i) {
+            Some(i) => i,
+            None => return None,
+        };
+        match child.placement {
+            Placement::Floating(ref p) => Some(p),
+            Placement::Fullscreen => None,
+        }
+    }
+    
     /// Moves a layer to a new position on the screen.
     ///
     /// Has no effect on fullscreen layers
