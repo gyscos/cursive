@@ -280,6 +280,22 @@ impl StackView {
     pub fn move_to_back(&mut self, layer: LayerPosition) {
         self.move_layer(layer, LayerPosition::FromBack(0));
     }
+
+    /// Moves a layer to a new position on the screen.
+    ///
+    /// Has no effect on fullscreen layers
+    /// Has no effect if layer is not found
+    pub fn reposition_layer(&mut self, layer: LayerPosition, position: Position) {
+        let i = self.get_index(layer);
+        let child =  match self.layers.get_mut(i) {
+            Some(i) => i,
+            None => return,
+        };
+        match child.placement {
+            Placement::Floating(_) => child.placement = Placement::Floating(position),
+            Placement::Fullscreen => (),
+        }
+    }
 }
 
 struct StackPositionIterator<R: Deref<Target = Child>, I: Iterator<Item = R>> {
