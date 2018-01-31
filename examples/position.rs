@@ -5,47 +5,28 @@ use cursive::views::TextView;
 use cursive::views::LayerPosition;
 use cursive::view::Position;
 
-fn move_a(mut c: &mut Cursive) {
-    let mut s = c.screen_mut();
-    let l = LayerPosition::FromFront(0);
-    let (x,y) = s.offset().pair();
-    let x = x - 1;
 
-    let p = Position::absolute((x,y));
-    s.reposition_layer(l, p);
-}
-
-fn move_w(mut c: &mut Cursive) {
-    let mut s = c.screen_mut();
-    let l = LayerPosition::FromFront(0);
-    let (x,y) = s.offset().pair();
-    let y = y - 1;
-
-    let p = Position::absolute((x,y));
-    s.reposition_layer(l, p);
-}
-
-fn move_s(mut c: &mut Cursive) {
+/// Moves top layer by the specifyed amount
+fn move_top(mut c: &mut Cursive, x_in: isize, y_in: isize) {
     {
+        // Step 1. Get the current position of the layer.
         let mut s = c.screen_mut();
         let l = LayerPosition::FromFront(0);
         let (x,y) = s.offset().pair();
-        let y = y + 1;
 
+        // Step 2. add the specifed amount
+        // (unsigned math in Rust is a mess.)
+        let x = (if x_in < 0 { x - (-x_in) as usize } else { x + x_in as usize });
+        let y = (if y_in < 0 { y - (-y_in) as usize } else { y + y_in as usize });
+        
+        // convert the new x and y into a position
         let p = Position::absolute((x,y));
+
+        // Step 3. Apply the new position
         s.reposition_layer(l, p);
     }
+    // Step 4. clean the screen cos we made it dirty.
     c.clear();
-}
-
-fn move_d(mut c: &mut Cursive) {
-    let mut s = c.screen_mut();
-    let l = LayerPosition::FromFront(0);
-    let (x,y) = s.offset().pair();
-    let x = x + 1;
-
-    let p = Position::absolute((x,y));
-    s.reposition_layer(l, p);
 }
 
 fn main() {
@@ -53,10 +34,10 @@ fn main() {
 
     // We can quit by pressing `q`
     siv.add_global_callback('q', Cursive::quit);
-    siv.add_global_callback('w', |s| move_w(s));
-    siv.add_global_callback('a', |s| move_a(s));
-    siv.add_global_callback('s', |s| move_s(s));
-    siv.add_global_callback('d', |s| move_d(s));
+    siv.add_global_callback('w', |s| move_top(s, 0, -1));
+    siv.add_global_callback('a', |s| move_top(s, -1, 0));
+    siv.add_global_callback('s', |s| move_top(s, 0, 1));
+    siv.add_global_callback('d', |s| move_top(s, 1, 0));
 
     // Add a simple view
     siv.add_layer(TextView::new(
