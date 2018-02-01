@@ -12,33 +12,30 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Moves top layer by the specifyed amount
 fn move_top(c: &mut Cursive, x_in: isize, y_in: isize) {
-    {
-        // Step 1. Get the current position of the layer.
-        let s = c.screen_mut();
-        let l = LayerPosition::FromFront(0);
-        let (x, y) = s.offset().pair();
+    // Step 1. Get the current position of the layer.
+    let s = c.screen_mut();
+    let l = LayerPosition::FromFront(0);
 
-        // Step 2. add the specifed amount
-        // (unsigned math in Rust is a mess.)
-        let x = if x_in < 0 {
-            x - (-x_in) as usize
-        } else {
-            x + x_in as usize
-        };
-        let y = if y_in < 0 {
-            y - (-y_in) as usize
-        } else {
-            y + y_in as usize
-        };
+    let (x, y) = s.offset().pair();
 
-        // convert the new x and y into a position
-        let p = Position::absolute((x, y));
+    // Step 2. add the specifed amount
+    // (unsigned math in Rust is a mess.)
+    let x = if x_in < 0 {
+        x - (-x_in) as usize
+    } else {
+        x + x_in as usize
+    };
+    let y = if y_in < 0 {
+        y - (-y_in) as usize
+    } else {
+        y + y_in as usize
+    };
 
-        // Step 3. Apply the new position
-        s.reposition_layer(l, p);
-    }
-    // Step 4. clean the screen cos we made it dirty.
-    //c.clear();
+    // convert the new x and y into a position
+    let p = Position::absolute((x, y));
+
+    // Step 3. Apply the new position
+    s.reposition_layer(l, p);
 }
 
 fn main() {
@@ -47,6 +44,8 @@ fn main() {
 
     // We'll use a counter to name new files.
     let counter = AtomicUsize::new(1);
+
+    // This is a direct copy of the menubar example.
 
     // The menubar is a list of (label, menu tree) pairs.
     siv.menubar()
@@ -108,6 +107,8 @@ fn main() {
     // siv.set_autohide_menu(false);
 
     siv.add_global_callback(Key::Esc, |s| s.select_menubar());
+
+    // END OF MENUBAR
 
     // We can quit by pressing `q`
     siv.add_global_callback('q', Cursive::quit);

@@ -9,8 +9,8 @@ use std::path::Path;
 use std::sync::mpsc;
 use theme;
 use vec::Vec2;
-use view::{self, AnyView, Finder, View};
-use views;
+use view::{self, AnyView, Finder, Position, View};
+use views::{self, LayerPosition};
 
 /// Identifies a screen in the cursive root.
 pub type ScreenId = usize;
@@ -417,6 +417,13 @@ impl Cursive {
     /// Convenient method to remove a layer from the current screen.
     pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
         self.screen_mut().pop_layer()
+    }
+
+    /// Convenient stub forwaring layer repositioning.
+    pub fn reposition_layer(
+        &mut self, layer: LayerPosition, position: Position
+    ) {
+        self.screen_mut().reposition_layer(layer, position);
     }
 
     // Handles a key event when it was ignored by the current view
