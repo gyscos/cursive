@@ -3,6 +3,7 @@ use With;
 use direction::Direction;
 use event::{Event, EventResult};
 use std::any::Any;
+use std::cell;
 use std::ops::Deref;
 use theme::ColorStyle;
 use vec::Vec2;
@@ -15,7 +16,7 @@ pub struct StackView {
     // Store layers from back to front.
     layers: Vec<Child>,
     last_size: Vec2,
-    dirty: bool,
+    dirty: cell::Cell<bool>,
 }
 
 enum Placement {
@@ -148,7 +149,7 @@ impl StackView {
         StackView {
             layers: Vec::new(),
             last_size: Vec2::zero(),
-            dirty: true,
+            dirty: cell::Cell::new(true),
         }
     }
 
@@ -227,7 +228,7 @@ impl StackView {
 
     /// Remove the top-most layer.
     pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
-        self.dirty = true;
+        self.dirty.set(true);
         self.layers.pop().map(|child| child.view.unwrap())
     }
 
@@ -299,7 +300,7 @@ impl StackView {
         match child.placement {
             Placement::Floating(_) => {
                 child.placement = Placement::Floating(position);
-                self.dirty = true;
+                self.dirty.set(true);
             }
             Placement::Fullscreen => (),
         }
@@ -313,8 +314,7 @@ struct StackPositionIterator<R: Deref<Target = Child>, I: Iterator<Item = R>> {
 }
 
 impl<R: Deref<Target = Child>, I: Iterator<Item = R>>
-    StackPositionIterator<R, I>
-{
+    StackPositionIterator<R, I> {
     /// Returns a new StackPositionIterator
     pub fn new(inner: I, total_size: Vec2) -> Self {
         let previous = Vec2::zero();
@@ -327,8 +327,7 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>>
 }
 
 impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
-    for StackPositionIterator<R, I>
-{
+    for StackPositionIterator<R, I> {
     type Item = (R, Vec2);
 
     fn next(&mut self) -> Option<(R, Vec2)> {
@@ -350,7 +349,7 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
 impl View for StackView {
     fn draw(&self, printer: &Printer) {
         // If the background is dirty draw a new background
-        if self.dirty {
+        if self.dirty.get() {
             for y in 0..printer.size.y {
                 printer.with_color(ColorStyle::background(), |printer| {
                     printer.print_hline((0, y), printer.size.x, " ");
@@ -358,8 +357,7 @@ impl View for StackView {
             }
 
             // set background as clean, so we don't need to do this every frame
-            // self.dirty = false;
-            // Damn Mutability.
+            self.dirty.set(false);
         }
 
         let last = self.layers.len();
@@ -378,6 +376,9 @@ impl View for StackView {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        if event == Event::WindowResize {
+            self.dirty.set(true);
+        }
         // Use the stack position iterator to get the offset of the top layer.
         // TODO: save it instead when drawing?
         match StackPositionIterator::new(

@@ -43,6 +43,7 @@ fn move_top(c: &mut Cursive, x_in: isize, y_in: isize) {
 
 fn main() {
     let mut siv = Cursive::new();
+    siv.set_fps(60);
 
     // We'll use a counter to name new files.
     let counter = AtomicUsize::new(1);
