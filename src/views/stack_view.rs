@@ -15,6 +15,7 @@ pub struct StackView {
     // Store layers from back to front.
     layers: Vec<Child>,
     last_size: Vec2,
+    dirty: bool,
 }
 
 enum Placement {
@@ -147,6 +148,7 @@ impl StackView {
         StackView {
             layers: Vec::new(),
             last_size: Vec2::zero(),
+            dirty: true,
         }
     }
 
@@ -225,6 +227,7 @@ impl StackView {
 
     /// Remove the top-most layer.
     pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
+        self.dirty = true;
         self.layers.pop().map(|child| child.view.unwrap())
     }
 
@@ -281,19 +284,23 @@ impl StackView {
         self.move_layer(layer, LayerPosition::FromBack(0));
     }
 
-
     /// Moves a layer to a new position on the screen.
     ///
     /// Has no effect on fullscreen layers
     /// Has no effect if layer is not found
-    pub fn reposition_layer(&mut self, layer: LayerPosition, position: Position) {
+    pub fn reposition_layer(
+        &mut self, layer: LayerPosition, position: Position
+    ) {
         let i = self.get_index(layer);
-        let child =  match self.layers.get_mut(i) {
+        let child = match self.layers.get_mut(i) {
             Some(i) => i,
             None => return,
         };
         match child.placement {
-            Placement::Floating(_) => child.placement = Placement::Floating(position),
+            Placement::Floating(_) => {
+                child.placement = Placement::Floating(position);
+                self.dirty = true;
+            }
             Placement::Fullscreen => (),
         }
     }
@@ -342,6 +349,19 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
 
 impl View for StackView {
     fn draw(&self, printer: &Printer) {
+        // If the background is dirty draw a new background
+        if self.dirty {
+            for y in 0..printer.size.y {
+                printer.with_color(ColorStyle::background(), |printer| {
+                    printer.print_hline((0, y), printer.size.x, " ");
+                });
+            }
+
+            // set background as clean, so we don't need to do this every frame
+            // self.dirty = false;
+            // Damn Mutability.
+        }
+
         let last = self.layers.len();
         printer.with_color(ColorStyle::primary(), |printer| {
             for (i, (v, offset)) in

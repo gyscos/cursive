@@ -416,9 +416,7 @@ impl Cursive {
 
     /// Convenient method to remove a layer from the current screen.
     pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
-        let result = self.screen_mut().pop_layer();
-        self.clear();
-        result
+        self.screen_mut().pop_layer()
     }
 
     // Handles a key event when it was ignored by the current view
@@ -460,6 +458,15 @@ impl Cursive {
         let printer =
             Printer::new(self.screen_size(), &self.theme, &self.backend);
 
+        let selected = self.menubar.receive_events();
+
+        // Print the screen before the menubar
+        // else the screen might draw over it and hide it
+        let offset = if self.menubar.autohide { 0 } else { 1 };
+        let printer = printer.offset((0, offset), !selected);
+        let id = self.active_screen;
+        self.screens[id].draw(&printer);
+
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
         // Draw the menubar?
@@ -471,13 +478,6 @@ impl Cursive {
             );
             self.menubar.draw(&printer);
         }
-
-        let selected = self.menubar.receive_events();
-
-        let offset = if self.menubar.autohide { 0 } else { 1 };
-        let printer = printer.offset((0, offset), !selected);
-        let id = self.active_screen;
-        self.screens[id].draw(&printer);
     }
 
     /// Returns `true` until [`quit(&mut self)`] is called.
