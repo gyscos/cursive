@@ -16,7 +16,9 @@ pub struct StackView {
     // Store layers from back to front.
     layers: Vec<Child>,
     last_size: Vec2,
-    dirty: cell::Cell<bool>,
+    // Flag indicates if undrawn areas of the background are exposed
+    // and therefore need redrawing.
+    bg_dirty: cell::Cell<bool>,
 }
 
 enum Placement {
@@ -149,7 +151,7 @@ impl StackView {
         StackView {
             layers: Vec::new(),
             last_size: Vec2::zero(),
-            dirty: cell::Cell::new(true),
+            bg_dirty: cell::Cell::new(true),
         }
     }
 
@@ -228,7 +230,7 @@ impl StackView {
 
     /// Remove the top-most layer.
     pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
-        self.dirty.set(true);
+        self.bg_dirty.set(true);
         self.layers.pop().map(|child| child.view.unwrap())
     }
 
@@ -300,10 +302,48 @@ impl StackView {
         match child.placement {
             Placement::Floating(_) => {
                 child.placement = Placement::Floating(position);
-                self.dirty.set(true);
+                self.bg_dirty.set(true);
             }
             Placement::Fullscreen => (),
         }
+    }
+
+    /// Background drawing
+    /// Drawing functions are split into forground and background to
+    /// ease inserting layers under the stackview but above it's background
+    /// you probably just want to call draw()
+    pub fn draw_bg(&self, printer: &Printer) {
+        // If the background is dirty draw a new background
+        if self.bg_dirty.get() {
+            for y in 0..printer.size.y {
+                printer.with_color(ColorStyle::background(), |printer| {
+                    printer.print_hline((0, y), printer.size.x, " ");
+                });
+            }
+
+            // set background as clean, so we don't need to do this every frame
+            self.bg_dirty.set(false);
+        }
+    }
+
+    /// Forground drawing
+    /// Drawing functions are split into forground and background to
+    /// ease inserting layers under the stackview but above it's background
+    /// you probably just want to call draw()
+    pub fn draw_fg(&self, printer: &Printer) {
+        let last = self.layers.len();
+        printer.with_color(ColorStyle::primary(), |printer| {
+            for (i, (v, offset)) in
+                StackPositionIterator::new(self.layers.iter(), printer.size)
+                    .enumerate()
+            {
+                v.view.draw(&printer.sub_printer(
+                    offset,
+                    v.size,
+                    i + 1 == last,
+                ));
+            }
+        });
     }
 }
 
@@ -314,7 +354,8 @@ struct StackPositionIterator<R: Deref<Target = Child>, I: Iterator<Item = R>> {
 }
 
 impl<R: Deref<Target = Child>, I: Iterator<Item = R>>
-    StackPositionIterator<R, I> {
+    StackPositionIterator<R, I>
+{
     /// Returns a new StackPositionIterator
     pub fn new(inner: I, total_size: Vec2) -> Self {
         let previous = Vec2::zero();
@@ -327,7 +368,8 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>>
 }
 
 impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
-    for StackPositionIterator<R, I> {
+    for StackPositionIterator<R, I>
+{
     type Item = (R, Vec2);
 
     fn next(&mut self) -> Option<(R, Vec2)> {
@@ -348,36 +390,16 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
 
 impl View for StackView {
     fn draw(&self, printer: &Printer) {
-        // If the background is dirty draw a new background
-        if self.dirty.get() {
-            for y in 0..printer.size.y {
-                printer.with_color(ColorStyle::background(), |printer| {
-                    printer.print_hline((0, y), printer.size.x, " ");
-                });
-            }
-
-            // set background as clean, so we don't need to do this every frame
-            self.dirty.set(false);
-        }
-
-        let last = self.layers.len();
-        printer.with_color(ColorStyle::primary(), |printer| {
-            for (i, (v, offset)) in
-                StackPositionIterator::new(self.layers.iter(), printer.size)
-                    .enumerate()
-            {
-                v.view.draw(&printer.sub_printer(
-                    offset,
-                    v.size,
-                    i + 1 == last,
-                ));
-            }
-        });
+        // This function is included for compat with the view trait,
+        // it should behave the same as calling them seperately, but does
+        // not pause to let you insert in between the layers.
+        self.draw_bg(printer);
+        self.draw_fg(printer);
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
         if event == Event::WindowResize {
-            self.dirty.set(true);
+            self.bg_dirty.set(true);
         }
         // Use the stack position iterator to get the offset of the top layer.
         // TODO: save it instead when drawing?

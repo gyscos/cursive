@@ -419,7 +419,7 @@ impl Cursive {
         self.screen_mut().pop_layer()
     }
 
-    /// Convenient stub forwaring layer repositioning.
+    /// Convenient stub forwarding layer repositioning.
     pub fn reposition_layer(
         &mut self, layer: LayerPosition, position: Position
     ) {
@@ -467,12 +467,12 @@ impl Cursive {
 
         let selected = self.menubar.receive_events();
 
-        // Print the screen before the menubar
-        // else the screen might draw over it and hide it
+        // Print the stackview background before the menubar
         let offset = if self.menubar.autohide { 0 } else { 1 };
-        let printer = printer.offset((0, offset), !selected);
         let id = self.active_screen;
-        self.screens[id].draw(&printer);
+        let sv_printer = printer.offset((0, offset), !selected);
+
+        self.screens[id].draw_bg(&sv_printer);
 
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
@@ -485,6 +485,10 @@ impl Cursive {
             );
             self.menubar.draw(&printer);
         }
+
+        // finally draw stackview layers
+        // using variables from above
+        self.screens[id].draw_fg(&sv_printer);
     }
 
     /// Returns `true` until [`quit(&mut self)`] is called.
