@@ -145,6 +145,11 @@ impl LinearLayout {
         self.invalidate();
     }
 
+    /// Returns index of focused inner view
+    pub fn get_focus_index(&self) -> usize {
+       self.focus
+    }
+
     // Invalidate the view, to request a layout next time
     fn invalidate(&mut self) {
         self.cache = None;
