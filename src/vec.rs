@@ -35,10 +35,22 @@ impl XY<usize> {
     /// Never panics.
     pub fn saturating_sub<O: Into<Self>>(&self, other: O) -> Self {
         let other = other.into();
-        Self::new(
-            self.x.saturating_sub(other.x),
-            self.y.saturating_sub(other.y),
-        )
+        self.zip_map(other, usize::saturating_sub)
+    }
+
+    /// Saturating addition with a signed vec.
+    ///
+    /// Any coordinates saturates to 0.
+    pub fn saturating_add<O: Into<XY<isize>>>(&self, other: O) -> Self {
+        let other = other.into();
+
+        self.zip_map(other, |s, o| {
+            if o > 0 {
+                s + o as usize
+            } else {
+                s.saturating_sub((-o) as usize)
+            }
+        })
     }
 
     /// Checked subtraction. Computes `self - other` if possible.
@@ -152,7 +164,11 @@ impl<T: Zero + Clone> XY<T> {
     }
 }
 
-impl<T: Into<XY<usize>>> From<T> for XY<isize> {
+// Anything that can become XY<usize> can also become XY<isize>
+impl<T> From<T> for XY<isize>
+where
+    T: Into<XY<usize>>,
+{
     fn from(t: T) -> Self {
         let other = t.into();
         Self::new(other.x as isize, other.y as isize)
@@ -183,7 +199,12 @@ impl From<(u16, u16)> for XY<usize> {
     }
 }
 
-impl<T: Add<Output = T>, O: Into<XY<T>>> Add<O> for XY<T> {
+// Allow xy + (into xy)
+impl<T, O> Add<O> for XY<T>
+where
+    T: Add<Output = T>,
+    O: Into<XY<T>>,
+{
     type Output = Self;
 
     fn add(self, other: O) -> Self {
@@ -191,7 +212,11 @@ impl<T: Add<Output = T>, O: Into<XY<T>>> Add<O> for XY<T> {
     }
 }
 
-impl<T: Sub<Output = T>, O: Into<XY<T>>> Sub<O> for XY<T> {
+impl<T, O> Sub<O> for XY<T>
+where
+    T: Sub<Output = T>,
+    O: Into<XY<T>>,
+{
     type Output = Self;
 
     fn sub(self, other: O) -> Self {

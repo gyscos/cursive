@@ -11,23 +11,12 @@ fn move_top(c: &mut Cursive, x_in: isize, y_in: isize) {
     let s = c.screen_mut();
     let l = LayerPosition::FromFront(0);
 
-    let (x, y) = s.offset().pair();
 
     // Step 2. add the specifed amount
-    // (unsigned math in Rust is a mess.)
-    let x = if x_in < 0 {
-        x - (-x_in) as usize
-    } else {
-        x + x_in as usize
-    };
-    let y = if y_in < 0 {
-        y - (-y_in) as usize
-    } else {
-        y + y_in as usize
-    };
+    let pos = s.offset().saturating_add((x_in, y_in));
 
     // convert the new x and y into a position
-    let p = Position::absolute((x, y));
+    let p = Position::absolute(pos);
 
     // Step 3. Apply the new position
     s.reposition_layer(l, p);
