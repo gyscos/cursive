@@ -9,8 +9,8 @@ use std::path::Path;
 use std::sync::mpsc;
 use theme;
 use vec::Vec2;
-use view::{self, AnyView, Finder, View};
-use views;
+use view::{self, AnyView, Finder, Position, View};
+use views::{self, LayerPosition};
 
 /// Identifies a screen in the cursive root.
 pub type ScreenId = usize;
@@ -416,9 +416,14 @@ impl Cursive {
 
     /// Convenient method to remove a layer from the current screen.
     pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
-        let result = self.screen_mut().pop_layer();
-        self.clear();
-        result
+        self.screen_mut().pop_layer()
+    }
+
+    /// Convenient stub forwarding layer repositioning.
+    pub fn reposition_layer(
+        &mut self, layer: LayerPosition, position: Position
+    ) {
+        self.screen_mut().reposition_layer(layer, position);
     }
 
     // Handles a key event when it was ignored by the current view
@@ -460,6 +465,15 @@ impl Cursive {
         let printer =
             Printer::new(self.screen_size(), &self.theme, &self.backend);
 
+        let selected = self.menubar.receive_events();
+
+        // Print the stackview background before the menubar
+        let offset = if self.menubar.autohide { 0 } else { 1 };
+        let id = self.active_screen;
+        let sv_printer = printer.offset((0, offset), !selected);
+
+        self.screens[id].draw_bg(&sv_printer);
+
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
         // Draw the menubar?
@@ -472,12 +486,9 @@ impl Cursive {
             self.menubar.draw(&printer);
         }
 
-        let selected = self.menubar.receive_events();
-
-        let offset = if self.menubar.autohide { 0 } else { 1 };
-        let printer = printer.offset((0, offset), !selected);
-        let id = self.active_screen;
-        self.screens[id].draw(&printer);
+        // finally draw stackview layers
+        // using variables from above
+        self.screens[id].draw_fg(&sv_printer);
     }
 
     /// Returns `true` until [`quit(&mut self)`] is called.
