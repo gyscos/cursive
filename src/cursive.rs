@@ -15,6 +15,24 @@ use views::{self, LayerPosition};
 /// Identifies a screen in the cursive root.
 pub type ScreenId = usize;
 
+/// Asynchronous callback function trait.
+///
+/// Every `FnOnce(&mut Cursive) -> () + Send` automatically
+/// implements this.
+///
+/// This is a workaround only because `Box<FnOnce()>` is not
+/// working and `FnBox` is unstable.
+pub trait CbFunc: Send {
+    /// Calls the function.
+    fn call_box(self: Box<Self>, &mut Cursive);
+}
+
+impl<F: FnOnce(&mut Cursive) -> () + Send> CbFunc for F {
+    fn call_box(self: Box<Self>, siv: &mut Cursive) {
+        (*self)(siv)
+    }
+}
+
 /// Central part of the cursive library.
 ///
 /// It initializes ncurses on creation and cleans up on drop.
@@ -38,8 +56,8 @@ pub struct Cursive {
 
     backend: backend::Concrete,
 
-    cb_source: mpsc::Receiver<Box<Fn(&mut Cursive) + Send>>,
-    cb_sink: mpsc::Sender<Box<Fn(&mut Cursive) + Send>>,
+    cb_source: mpsc::Receiver<Box<CbFunc>>,
+    cb_sink: mpsc::Sender<Box<CbFunc>>,
 }
 
 new_default!(Cursive);
@@ -80,8 +98,22 @@ impl Cursive {
     /// Note that you currently need to call [`set_fps`] to force cursive to
     /// regularly check for messages.
     ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # extern crate cursive;
+    /// # use cursive::*;
+    /// # fn main() {
+    /// let mut siv = Cursive::new();
+    /// siv.set_fps(10);
+    ///
+    /// // quit() will be called during the next event cycle
+    /// siv.cb_sink().send(Box::new(|s: &mut Cursive| s.quit()));
+    /// # }
+    /// ```
+    ///
     /// [`set_fps`]: #method.set_fps
-    pub fn cb_sink(&self) -> &mpsc::Sender<Box<Fn(&mut Cursive) + Send>> {
+    pub fn cb_sink(&self) -> &mpsc::Sender<Box<CbFunc>> {
         &self.cb_sink
     }
 
@@ -527,7 +559,7 @@ impl Cursive {
     /// [`run(&mut self)`]: #method.run
     pub fn step(&mut self) {
         while let Ok(cb) = self.cb_source.try_recv() {
-            cb(self);
+            cb.call_box(self);
         }
 
         // Do we need to redraw everytime?
