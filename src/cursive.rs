@@ -526,7 +526,7 @@ impl Cursive {
     ///
     /// [`run(&mut self)`]: #method.run
     pub fn step(&mut self) {
-        if let Ok(cb) = self.cb_source.try_recv() {
+        while let Ok(cb) = self.cb_source.try_recv() {
             cb(self);
         }
 
