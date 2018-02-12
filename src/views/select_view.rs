@@ -324,6 +324,13 @@ impl<T: 'static> SelectView<T> {
         self.scrollbase.scroll_to(i);
     }
 
+    /// Sets the selection to the given position.
+    ///
+    /// Chainable variant.
+    pub fn selected(self, i: usize) -> Self {
+        self.with(|s| s.set_selection(i))
+    }
+
     /// Moves the selection up by the given number of rows.
     pub fn select_up(&mut self, n: usize) {
         self.focus_up(n);
