@@ -3,6 +3,7 @@
 //! This module defines various structs describing a span of text from a
 //! larger string.
 use std::borrow::Cow;
+use std::marker::PhantomData;
 
 /// A string with associated spans.
 ///
@@ -11,6 +12,78 @@ use std::borrow::Cow;
 pub struct SpannedString<T> {
     source: String,
     spans: Vec<IndexedSpan<T>>,
+}
+
+/// The immutable, borrowed equivalent of `SpannedString`.
+#[derive(Debug, PartialEq, Eq)]
+pub struct SpannedStr<'a, T>
+where
+    T: 'a,
+{
+    source: &'a str,
+    spans: &'a [IndexedSpan<T>],
+}
+
+/// Describes an object that appears like a `SpannedStr`.
+pub trait SpannedText<T> {
+    /// Returns the source text.
+    fn source(&self) -> &str;
+
+    /// Returns the spans for this text.
+    fn spans(&self) -> &[IndexedSpan<T>];
+
+    /// Returns a `SpannedText` by reference.
+    fn as_ref<'a>(&'a self) -> SpannedTextRef<'a, T, Self> {
+        SpannedTextRef {
+            r: self,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+/// A reference to another `SpannedText`.
+pub struct SpannedTextRef<'a, T, C>
+where
+    C: 'a + SpannedText<T> + ?Sized,
+{
+    r: &'a C,
+    _phantom: PhantomData<T>,
+}
+
+impl<'a, T> SpannedText<T> for &'a SpannedString<T> {
+    fn source(&self) -> &str {
+        &self.source
+    }
+
+    fn spans(&self) -> &[IndexedSpan<T>] {
+        &self.spans
+    }
+}
+
+impl<'a, T, C> SpannedText<T> for SpannedTextRef<'a, T, C>
+where
+    C: 'a + SpannedText<T> + ?Sized,
+{
+    fn source(&self) -> &str {
+        self.r.source()
+    }
+
+    fn spans(&self) -> &[IndexedSpan<T>] {
+        self.r.spans()
+    }
+}
+
+impl<'a, T> SpannedText<T> for SpannedStr<'a, T>
+where
+    T: 'a,
+{
+    fn source(&self) -> &str {
+        self.source
+    }
+
+    fn spans(&self) -> &[IndexedSpan<T>] {
+        self.spans
+    }
 }
 
 impl<S, T> From<S> for SpannedString<T>
@@ -23,12 +96,72 @@ where
     }
 }
 
+impl<'a, T> SpannedStr<'a, T>
+where
+    T: 'a,
+{
+    /// Creates a new `SpannedStr` from the given references.
+    pub fn new(source: &'a str, spans: &'a [IndexedSpan<T>]) -> Self {
+        SpannedStr { source, spans }
+    }
+
+    /// Gives access to the parsed styled spans.
+    #[cfg_attr(feature = "cargo-clippy", allow(needless_lifetimes))]
+    pub fn spans<'b>(&self) -> Vec<Span<'a, T>> {
+        self.spans
+            .iter()
+            .map(|span| span.resolve(self.source))
+            .collect()
+    }
+
+    /// Returns a reference to the indexed spans.
+    pub fn spans_raw(&self) -> &'a [IndexedSpan<T>] {
+        self.spans
+    }
+
+    /// Returns a reference to the source (non-parsed) string.
+    pub fn source(&self) -> &'a str {
+        self.source
+    }
+
+    /// Returns `true` if `self` is empty.
+    ///
+    /// Can be caused by an empty source, or no span.
+    pub fn is_empty(&self) -> bool {
+        self.source.is_empty() || self.spans.is_empty()
+    }
+}
+
+impl<'a, T> Clone for SpannedStr<'a, T> {
+    fn clone(&self) -> Self {
+        SpannedStr {
+            source: self.source,
+            spans: self.spans,
+        }
+    }
+}
+
+impl SpannedString<()> {
+    /// Returns a simple spanned string without any attribute.
+    pub fn plain<S>(content: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self::single_span(content, ())
+    }
+}
+
 impl<T> SpannedString<T> {
+    /// Returns an empty `SpannedString`.
+    pub fn new() -> Self {
+        Self::with_spans(String::new(), Vec::new())
+    }
+
     /// Creates a new `SpannedString` manually.
     ///
     /// It is not recommended to use this directly.
     /// Instead, look for methods like `Markdown::parse`.
-    pub fn new<S>(source: S, spans: Vec<IndexedSpan<T>>) -> Self
+    pub fn with_spans<S>(source: S, spans: Vec<IndexedSpan<T>>) -> Self
     where
         S: Into<String>,
     {
@@ -46,7 +179,12 @@ impl<T> SpannedString<T> {
     }
 
     /// Returns a new SpannedString with a single span.
-    pub fn single_span(source: String, attr: T) -> Self {
+    pub fn single_span<S>(source: S, attr: T) -> Self
+    where
+        S: Into<String>,
+    {
+        let source = source.into();
+
         let spans = vec![
             IndexedSpan {
                 content: IndexedCow::Borrowed {
@@ -57,7 +195,7 @@ impl<T> SpannedString<T> {
             },
         ];
 
-        Self::new(source, spans)
+        Self::with_spans(source, spans)
     }
 
     /// Appends the given `StyledString` to `self`.
@@ -110,6 +248,11 @@ impl<T> SpannedString<T> {
     pub fn is_empty(&self) -> bool {
         self.source.is_empty() || self.spans.is_empty()
     }
+
+    /// Returns a `SpannedStr` referencing `self`.
+    pub fn as_spanned_str<'a>(&'a self) -> SpannedStr<'a, T> {
+        SpannedStr::new(&self.source, &self.spans)
+    }
 }
 
 /// An indexed span with an associated attribute.
@@ -147,6 +290,17 @@ impl<T> IndexedSpan<T> {
     /// Returns `true` if `self` is an empty span.
     pub fn is_empty(&self) -> bool {
         self.content.is_empty()
+    }
+
+    /// Returns a single span around the entire text.
+    pub fn simple(content: &str, attr: T) -> Self {
+        IndexedSpan {
+            content: IndexedCow::Borrowed {
+                start: 0,
+                end: content.len(),
+            },
+            attr,
+        }
     }
 }
 
