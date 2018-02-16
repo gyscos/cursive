@@ -3,7 +3,6 @@
 //! This module defines various structs describing a span of text from a
 //! larger string.
 use std::borrow::Cow;
-use std::marker::PhantomData;
 
 /// A string with associated spans.
 ///
@@ -25,32 +24,33 @@ where
 }
 
 /// Describes an object that appears like a `SpannedStr`.
-pub trait SpannedText<T> {
+pub trait SpannedText {
+    /// Type of span returned by `SpannedText::spans()`.
+    type S: AsRef<IndexedCow>;
+
     /// Returns the source text.
     fn source(&self) -> &str;
 
     /// Returns the spans for this text.
-    fn spans(&self) -> &[IndexedSpan<T>];
+    fn spans(&self) -> &[Self::S];
 
     /// Returns a `SpannedText` by reference.
-    fn as_ref<'a>(&'a self) -> SpannedTextRef<'a, T, Self> {
-        SpannedTextRef {
-            r: self,
-            _phantom: PhantomData,
-        }
+    fn as_ref<'a>(&'a self) -> SpannedTextRef<'a, Self> {
+        SpannedTextRef { r: self }
     }
 }
 
 /// A reference to another `SpannedText`.
-pub struct SpannedTextRef<'a, T, C>
+pub struct SpannedTextRef<'a, C>
 where
-    C: 'a + SpannedText<T> + ?Sized,
+    C: 'a + SpannedText + ?Sized,
 {
     r: &'a C,
-    _phantom: PhantomData<T>,
 }
 
-impl<'a, T> SpannedText<T> for &'a SpannedString<T> {
+impl<'a, T> SpannedText for &'a SpannedString<T> {
+    type S = IndexedSpan<T>;
+
     fn source(&self) -> &str {
         &self.source
     }
@@ -60,23 +60,27 @@ impl<'a, T> SpannedText<T> for &'a SpannedString<T> {
     }
 }
 
-impl<'a, T, C> SpannedText<T> for SpannedTextRef<'a, T, C>
+impl<'a, C> SpannedText for SpannedTextRef<'a, C>
 where
-    C: 'a + SpannedText<T> + ?Sized,
+    C: 'a + SpannedText + ?Sized,
 {
+    type S = C::S;
+
     fn source(&self) -> &str {
         self.r.source()
     }
 
-    fn spans(&self) -> &[IndexedSpan<T>] {
+    fn spans(&self) -> &[C::S] {
         self.r.spans()
     }
 }
 
-impl<'a, T> SpannedText<T> for SpannedStr<'a, T>
+impl<'a, T> SpannedText for SpannedStr<'a, T>
 where
     T: 'a,
 {
+    type S = IndexedSpan<T>;
+
     fn source(&self) -> &str {
         self.source
     }
@@ -263,6 +267,12 @@ pub struct IndexedSpan<T> {
 
     /// Attribute applied to the span.
     pub attr: T,
+}
+
+impl<T> AsRef<IndexedCow> for IndexedSpan<T> {
+    fn as_ref(&self) -> &IndexedCow {
+        &self.content
+    }
 }
 
 /// A resolved span borrowing its source string.
