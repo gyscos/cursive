@@ -1,16 +1,16 @@
 use super::{prefix, Row};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
+use utils::lines::spans;
+use utils::span::{IndexedSpan, SpannedText};
 
 /// Generates rows of text in constrained width.
 ///
 /// Given a long text and a width constraint, it iterates over
 /// substrings of the text, each within the constraint.
 pub struct LinesIterator<'a> {
-    /// Content to iterate on.
-    content: &'a str,
-    /// Current offset in the content.
-    offset: usize,
+    iter: spans::LinesIterator<DummySpannedText<'a>>,
+
     /// Available width. Don't output lines wider than that.
     width: usize,
 
@@ -19,16 +19,42 @@ pub struct LinesIterator<'a> {
     show_spaces: bool,
 }
 
+struct DummySpannedText<'a> {
+    content: &'a str,
+    attrs: Vec<IndexedSpan<()>>,
+}
+
+impl<'a> DummySpannedText<'a> {
+    fn new(content: &'a str) -> Self {
+        let attrs = vec![IndexedSpan::simple(content, ())];
+        DummySpannedText { content, attrs }
+    }
+}
+
+impl<'a> SpannedText for DummySpannedText<'a> {
+    type S = IndexedSpan<()>;
+
+    fn source(&self) -> &str {
+        self.content
+    }
+
+    fn spans(&self) -> &[IndexedSpan<()>] {
+        &self.attrs
+    }
+}
+
 impl<'a> LinesIterator<'a> {
     /// Returns a new `LinesIterator` on `content`.
     ///
     /// Yields rows of `width` cells or less.
     pub fn new(content: &'a str, width: usize) -> Self {
+        let iter =
+            spans::LinesIterator::new(DummySpannedText::new(content), width);
+        let show_spaces = false;
         LinesIterator {
-            content,
+            iter,
             width,
-            offset: 0,
-            show_spaces: false,
+            show_spaces,
         }
     }
 
@@ -46,70 +72,13 @@ impl<'a> Iterator for LinesIterator<'a> {
     type Item = Row;
 
     fn next(&mut self) -> Option<Row> {
-        if self.offset >= self.content.len() {
-            // This is the end.
-            return None;
-        }
+        let row = self.iter.next()?;
 
-        // We start at the current offset.
-        let start = self.offset;
-        let content = &self.content[start..];
+        let start = row.segments.first()?.start;
+        let end = row.segments.last()?.end;
 
-        // Find the ideal line, in an infinitely wide world.
-        // We'll make a line larger than that.
-        let next = content.find('\n').unwrap_or_else(|| content.len());
-        let content = &content[..next];
+        let width = row.width;
 
-        let allowed_width = if self.show_spaces {
-            // Remove 1 from the available space, if possible.
-            self.width.saturating_sub(1)
-        } else {
-            self.width
-        };
-
-        let line_width = content.width();
-        if line_width <= allowed_width {
-            // We found a newline before the allowed limit.
-            // Break early.
-            // Advance the cursor to after the newline.
-            self.offset += next + 1;
-            return Some(Row {
-                start: start,
-                end: start + next,
-                width: line_width,
-            });
-        }
-
-        // First attempt: only break on spaces.
-        let prefix_length =
-            match prefix(content.split(' '), allowed_width, " ").length {
-                // If this fail, fallback: only break on graphemes.
-                // There's no whitespace to skip there.
-                // And don't reserve the white space anymore.
-                0 => prefix(content.graphemes(true), self.width, "").length,
-                other => {
-                    // If it works, advance the cursor by 1
-                    // to jump the whitespace.
-                    // We don't want to add 1 to `prefix_length` though, it
-                    // would include the whitespace in the row.
-                    self.offset += 1;
-                    other
-                }
-            };
-
-        if prefix_length == 0 {
-            // This mean we can't even get a single char?
-            // Sucks. Let's bail.
-            return None;
-        }
-
-        // Advance the offset to the end of the line.
-        self.offset += prefix_length;
-
-        Some(Row {
-            start: start,
-            end: start + prefix_length,
-            width: self.width,
-        })
+        Some(Row { start, end, width })
     }
 }

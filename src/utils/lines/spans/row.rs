@@ -31,7 +31,7 @@ impl Row {
     where
         S: AsRef<IndexedCow>,
     {
-        let (start, _) = self.segments.get(0)?.source_indices(spans)?;
+        let (start, _) = self.segments.first()?.source_indices(spans)?;
         let (_, end) = self.segments.last()?.source_indices(spans)?;
 
         Some((start, end))
