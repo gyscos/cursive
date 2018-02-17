@@ -1,5 +1,5 @@
 use super::Segment;
-use utils::span::{Span, AsSpannedStr};
+use utils::span::{AsSpannedStr, IndexedCow, Span};
 
 /// A list of segments representing a row of text
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,5 +22,18 @@ impl Row {
             .iter()
             .map(|seg| seg.resolve(source.clone()))
             .collect()
+    }
+
+    /// Returns indices in the source string, if possible.
+    ///
+    /// Returns overall `(start, end)`, or `None` if the segments are owned.
+    pub fn overall_indices<S>(&self, spans: &[S]) -> Option<(usize, usize)>
+    where
+        S: AsRef<IndexedCow>,
+    {
+        let (start, _) = self.segments.get(0)?.source_indices(spans)?;
+        let (_, end) = self.segments.last()?.source_indices(spans)?;
+
+        Some((start, end))
     }
 }

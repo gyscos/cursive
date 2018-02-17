@@ -1,4 +1,4 @@
-use utils::span::{SpannedStr, Span, SpannedText};
+use utils::span::{Span, SpannedStr, SpannedText, IndexedCow};
 
 /// Refers to a part of a span
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,9 +17,7 @@ pub struct Segment {
 
 impl Segment {
     /// Resolve this segment to a string slice and an attribute.
-    pub fn resolve<'a, T>(
-        &self, source: SpannedStr<'a, T>
-    ) -> Span<'a, T> {
+    pub fn resolve<'a, T>(&self, source: SpannedStr<'a, T>) -> Span<'a, T> {
         let span = &source.spans_raw()[self.span_id];
 
         let content = span.content.resolve(source.source());
@@ -42,5 +40,21 @@ impl Segment {
         let content = &content[self.start..self.end];
 
         content
+    }
+
+    /// Returns indices in the source string, if possible.
+    ///
+    /// Returns `(start, end)`, or `None` if the target span is an owned string.
+    pub fn source_indices<S>(&self, spans: &[S]) -> Option<(usize, usize)>
+    where
+        S: AsRef<IndexedCow>,
+    {
+        let span = spans[self.span_id].as_ref();
+
+        if let &IndexedCow::Borrowed { start, .. } = span {
+            Some((self.start + start, self.end + start))
+        } else {
+            None
+        }
     }
 }
