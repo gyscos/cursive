@@ -23,9 +23,7 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         if self.current.is_none() {
             self.current = self.inner.next();
-            if self.current.is_none() {
-                return None;
-            }
+            self.current?;
         }
 
         loop {

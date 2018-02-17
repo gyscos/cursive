@@ -50,7 +50,7 @@ impl Segment {
     {
         let span = spans[self.span_id].as_ref();
 
-        if let &IndexedCow::Borrowed { start, .. } = span {
+        if let IndexedCow::Borrowed { start, .. } = *span {
             Some((self.start + start, self.end + start))
         } else {
             None

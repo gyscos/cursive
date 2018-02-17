@@ -49,6 +49,12 @@ where
     r: &'a C,
 }
 
+impl<T> Default for SpannedString<T> {
+    fn default() -> Self {
+        SpannedString::new()
+    }
+}
+
 impl<'a, T> SpannedText for &'a SpannedString<T> {
     type S = IndexedSpan<T>;
 
@@ -254,7 +260,7 @@ impl<T> SpannedString<T> {
     }
 }
 
-impl <'a, T> From<&'a SpannedString<T>> for SpannedStr<'a, T> {
+impl<'a, T> From<&'a SpannedString<T>> for SpannedStr<'a, T> {
     fn from(other: &'a SpannedString<T>) -> Self {
         SpannedStr::new(&other.source, &other.spans)
     }
