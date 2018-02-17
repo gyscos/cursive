@@ -1,6 +1,4 @@
-use super::{prefix, Row};
-use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::UnicodeWidthStr;
+use super::Row;
 use utils::lines::spans;
 use utils::span::{IndexedSpan, SpannedText};
 
@@ -13,10 +11,6 @@ pub struct LinesIterator<'a> {
 
     /// Available width. Don't output lines wider than that.
     width: usize,
-
-    /// If `true`, keep a blank cell at the end of lines
-    /// when a whitespace or newline should be.
-    show_spaces: bool,
 }
 
 struct DummySpannedText<'a> {
@@ -50,21 +44,17 @@ impl<'a> LinesIterator<'a> {
     pub fn new(content: &'a str, width: usize) -> Self {
         let iter =
             spans::LinesIterator::new(DummySpannedText::new(content), width);
-        let show_spaces = false;
-        LinesIterator {
-            iter,
-            width,
-            show_spaces,
-        }
+        LinesIterator { iter, width }
     }
 
     /// Leave a blank cell at the end of lines.
     ///
     /// Unless a word had to be truncated, in which case
     /// it takes the entire width.
-    pub fn show_spaces(mut self) -> Self {
-        self.show_spaces = true;
-        self
+    pub fn show_spaces(self) -> Self {
+        let iter = self.iter.show_spaces();
+        let width = self.width;
+        LinesIterator { iter, width }
     }
 }
 

@@ -2,7 +2,7 @@ use super::chunk::{Chunk, ChunkPart};
 use super::chunk_iterator::ChunkIterator;
 use super::prefix::prefix;
 use super::row::Row;
-use super::segment::{Segment};
+use super::segment::Segment;
 use super::segment_merge_iterator::SegmentMergeIterator;
 use std::iter::Peekable;
 use std::rc::Rc;
@@ -26,6 +26,10 @@ where
     /// If a chunk wouldn't fit, we had to cut it in pieces.
     /// This is how far in the current chunk we are.
     chunk_offset: ChunkPart,
+
+    /// If `true`, keep a blank cell at the end of lines
+    /// when a whitespace or newline should be.
+    show_spaces: bool,
 }
 
 impl<S> LinesIterator<S>
@@ -41,7 +45,17 @@ where
             source,
             width,
             chunk_offset: ChunkPart::default(),
+            show_spaces: false,
         }
+    }
+
+    /// Leave a blank cell at the end of lines.
+    ///
+    /// Unless a word had to be truncated, in which case
+    /// it can take the entire width.
+    pub fn show_spaces(mut self) -> Self {
+        self.show_spaces = true;
+        self
     }
 }
 
@@ -53,9 +67,17 @@ where
 
     fn next(&mut self) -> Option<Row> {
         // Let's build a beautiful row.
+        let allowed_width = if self.show_spaces {
+            // Remove 1 from the available space, if possible.
+            // But only for regular words.
+            // If we have to split a chunk, forget about that.
+            self.width.saturating_sub(1)
+        } else {
+            self.width
+        };
 
         let mut chunks =
-            prefix(&mut self.iter, self.width, &mut self.chunk_offset);
+            prefix(&mut self.iter, allowed_width, &mut self.chunk_offset);
 
         if chunks.is_empty() {
             // Desperate action to make something fit:
@@ -71,31 +93,32 @@ where
 
                     // Try to fit part of it?
                     let source = self.source.as_ref();
-                    let graphemes = chunk.segments.iter().flat_map(move |seg| {
-                        let mut offset = seg.start;
+                    let graphemes =
+                        chunk.segments.iter().flat_map(move |seg| {
+                            let mut offset = seg.start;
 
-                        let text = seg.resolve_plain(source);
+                            let text = seg.resolve_plain(source);
 
-                        text.graphemes(true).map(move |g| {
-                            let width = g.width();
-                            let start = offset;
-                            let end = offset + g.len();
-                            offset = end;
-                            Chunk {
-                                width,
-                                segments: vec![
-                                    Segment {
-                                        width,
-                                        span_id: seg.span_id,
-                                        start,
-                                        end,
-                                    },
-                                ],
-                                hard_stop: false,
-                                ends_with_space: false,
-                            }
-                        })
-                    });
+                            text.graphemes(true).map(move |g| {
+                                let width = g.width();
+                                let start = offset;
+                                let end = offset + g.len();
+                                offset = end;
+                                Chunk {
+                                    width,
+                                    segments: vec![
+                                        Segment {
+                                            width,
+                                            span_id: seg.span_id,
+                                            start,
+                                            end,
+                                        },
+                                    ],
+                                    hard_stop: false,
+                                    ends_with_space: false,
+                                }
+                            })
+                        });
                     chunks = prefix(
                         &mut graphemes.peekable(),
                         self.width,
