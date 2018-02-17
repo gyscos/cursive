@@ -23,12 +23,6 @@ where
     spans: &'a [IndexedSpan<T>],
 }
 
-/// Represents a type that can be converted to a `SpannedStr`.
-pub trait AsSpannedStr<'a, T> {
-    /// Returns a view of `self`
-    fn as_spanned_str(&self) -> SpannedStr<'a, T>;
-}
-
 /// Describes an object that appears like a `SpannedStr`.
 pub trait SpannedText {
     /// Type of span returned by `SpannedText::spans()`.
@@ -41,6 +35,7 @@ pub trait SpannedText {
     fn spans(&self) -> &[Self::S];
 
     /// Returns a `SpannedText` by reference.
+    #[cfg_attr(feature = "cargo-clippy", allow(needless_lifetimes))]
     fn as_ref<'a>(&'a self) -> SpannedTextRef<'a, Self> {
         SpannedTextRef { r: self }
     }
@@ -116,8 +111,7 @@ where
     }
 
     /// Gives access to the parsed styled spans.
-    #[cfg_attr(feature = "cargo-clippy", allow(needless_lifetimes))]
-    pub fn spans<'b>(&self) -> Vec<Span<'a, T>> {
+    pub fn spans(&self) -> Vec<Span<'a, T>> {
         self.spans
             .iter()
             .map(|span| span.resolve(self.source))
@@ -260,18 +254,11 @@ impl<T> SpannedString<T> {
     }
 }
 
-impl<'a, T> AsSpannedStr<'a, T> for &'a SpannedString<T> {
-    fn as_spanned_str(&self) -> SpannedStr<'a, T> {
-        SpannedStr::new(&self.source, &self.spans)
+impl <'a, T> From<&'a SpannedString<T>> for SpannedStr<'a, T> {
+    fn from(other: &'a SpannedString<T>) -> Self {
+        SpannedStr::new(&other.source, &other.spans)
     }
 }
-
-impl<'a, T> AsSpannedStr<'a, T> for SpannedStr<'a, T> {
-    fn as_spanned_str(&self) -> SpannedStr<'a, T> {
-        SpannedStr::new(&self.source, &self.spans)
-    }
-}
-
 
 /// An indexed span with an associated attribute.
 #[derive(Debug, Clone, PartialEq, Eq)]

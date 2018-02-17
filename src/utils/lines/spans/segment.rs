@@ -17,7 +17,7 @@ pub struct Segment {
 
 impl Segment {
     /// Resolve this segment to a string slice and an attribute.
-    pub fn resolve<'a, T>(&self, source: SpannedStr<'a, T>) -> Span<'a, T> {
+    pub fn resolve<'a, T>(&self, source: &SpannedStr<'a, T>) -> Span<'a, T> {
         let span = &source.spans_raw()[self.span_id];
 
         let content = span.content.resolve(source.source());
@@ -37,9 +37,8 @@ impl Segment {
         let span = &source.spans()[self.span_id];
 
         let content = span.as_ref().resolve(source.source());
-        let content = &content[self.start..self.end];
 
-        content
+        &content[self.start..self.end]
     }
 
     /// Returns indices in the source string, if possible.
