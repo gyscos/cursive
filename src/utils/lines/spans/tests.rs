@@ -21,7 +21,8 @@ fn test_line_breaks() {
 
     let iter = LinesIterator::new(&input, 17);
 
-    let rows: Vec<_> = iter.map(|row| row.resolve(input.as_spanned_str())).collect();
+    let rows: Vec<_> = iter.map(|row| row.resolve(&input))
+        .collect();
 
     assert_eq!(
         &rows[..],

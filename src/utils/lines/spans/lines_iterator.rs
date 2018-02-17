@@ -2,7 +2,7 @@ use super::chunk::{Chunk, ChunkPart};
 use super::chunk_iterator::ChunkIterator;
 use super::prefix::prefix;
 use super::row::Row;
-use super::segment::{Segment, SegmentWithText};
+use super::segment::{Segment};
 use super::segment_merge_iterator::SegmentMergeIterator;
 use std::iter::Peekable;
 use std::rc::Rc;

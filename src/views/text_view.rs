@@ -461,7 +461,7 @@ impl View for TextView {
                 let l = row.width;
                 let mut x = self.align.h.get_offset(l, printer.size.x);
 
-                for span in row.resolve(content.content.as_spanned_str()) {
+                for span in row.resolve(&content.content) {
                     printer.with_style(*span.attr, |printer| {
                         printer.print((x, 0), span.content);
                         x += span.content.width();

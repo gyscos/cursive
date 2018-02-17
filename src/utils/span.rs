@@ -23,6 +23,12 @@ where
     spans: &'a [IndexedSpan<T>],
 }
 
+/// Represents a type that can be converted to a `SpannedStr`.
+pub trait AsSpannedStr<'a, T> {
+    /// Returns a view of `self`
+    fn as_spanned_str(&self) -> SpannedStr<'a, T>;
+}
+
 /// Describes an object that appears like a `SpannedStr`.
 pub trait SpannedText {
     /// Type of span returned by `SpannedText::spans()`.
@@ -252,12 +258,20 @@ impl<T> SpannedString<T> {
     pub fn is_empty(&self) -> bool {
         self.source.is_empty() || self.spans.is_empty()
     }
+}
 
-    /// Returns a `SpannedStr` referencing `self`.
-    pub fn as_spanned_str<'a>(&'a self) -> SpannedStr<'a, T> {
+impl<'a, T> AsSpannedStr<'a, T> for &'a SpannedString<T> {
+    fn as_spanned_str(&self) -> SpannedStr<'a, T> {
         SpannedStr::new(&self.source, &self.spans)
     }
 }
+
+impl<'a, T> AsSpannedStr<'a, T> for SpannedStr<'a, T> {
+    fn as_spanned_str(&self) -> SpannedStr<'a, T> {
+        SpannedStr::new(&self.source, &self.spans)
+    }
+}
+
 
 /// An indexed span with an associated attribute.
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -16,11 +16,6 @@ pub struct Segment {
 }
 
 impl Segment {
-    #[cfg(test)]
-    pub fn with_text<'a>(self, text: &'a str) -> SegmentWithText<'a> {
-        SegmentWithText { text, seg: self }
-    }
-
     /// Resolve this segment to a string slice and an attribute.
     pub fn resolve<'a, T>(
         &self, source: SpannedStr<'a, T>
@@ -48,10 +43,4 @@ impl Segment {
 
         content
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct SegmentWithText<'a> {
-    pub seg: Segment,
-    pub text: &'a str,
 }
