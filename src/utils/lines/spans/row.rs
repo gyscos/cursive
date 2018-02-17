@@ -1,5 +1,5 @@
 use super::Segment;
-use utils::span::{SpannedStr, IndexedCow, Span};
+use utils::span::{IndexedCow, Span, SpannedStr};
 
 /// A list of segments representing a row of text
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,7 +14,7 @@ impl Row {
     /// Resolve the row indices into string slices and attributes.
     pub fn resolve<'a, T, S>(&self, source: S) -> Vec<Span<'a, T>>
     where
-        S: Into<SpannedStr<'a, T>>
+        S: Into<SpannedStr<'a, T>>,
     {
         let source = source.into();
 

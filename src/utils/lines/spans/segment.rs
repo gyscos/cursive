@@ -1,4 +1,4 @@
-use utils::span::{Span, SpannedStr, SpannedText, IndexedCow};
+use utils::span::{IndexedCow, Span, SpannedStr, SpannedText};
 
 /// Refers to a part of a span
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

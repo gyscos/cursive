@@ -49,7 +49,9 @@ impl<T: View> BoxView<T> {
     }
 
     /// Sets the size constraints for this view.
-    pub fn set_constraints(&mut self, width: SizeConstraint, height: SizeConstraint) {
+    pub fn set_constraints(
+        &mut self, width: SizeConstraint, height: SizeConstraint
+    ) {
         self.set_width(width);
         self.set_height(height);
     }

@@ -373,11 +373,10 @@ impl View for ListView {
         // Send the event to the focused child.
         let labels_width = self.labels_width();
         if let ListChild::Row(_, ref mut view) = self.children[self.focus] {
-
             // If self.focus < self.scrollbase.start_line, it means the focus is not
             // in view. Something's fishy, so don't send the event.
-            if let Some(y) = self.focus.checked_sub(self.scrollbase.start_line) {
-
+            if let Some(y) = self.focus.checked_sub(self.scrollbase.start_line)
+            {
                 let offset = (labels_width + 1, y);
                 let result = view.on_event(event.relativized(offset));
                 if result.is_consumed() {

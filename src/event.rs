@@ -228,7 +228,8 @@ pub enum MouseButton {
     Button5,
 
     // TODO: handle more buttons?
-    #[doc(hidden)] Other,
+    #[doc(hidden)]
+    Other,
 }
 
 /// Represents a possible event sent by the mouse.

@@ -11,7 +11,6 @@ fn move_top(c: &mut Cursive, x_in: isize, y_in: isize) {
     let s = c.screen_mut();
     let l = LayerPosition::FromFront(0);
 
-
     // Step 2. add the specifed amount
     let pos = s.offset().saturating_add((x_in, y_in));
 

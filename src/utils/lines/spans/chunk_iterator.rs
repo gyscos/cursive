@@ -1,5 +1,5 @@
 use super::chunk::Chunk;
-use super::segment::{Segment};
+use super::segment::Segment;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 use utils::span::SpannedText;
