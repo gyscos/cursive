@@ -5,18 +5,20 @@ use super::row::Row;
 use super::segment::{Segment, SegmentWithText};
 use super::segment_merge_iterator::SegmentMergeIterator;
 use std::iter::Peekable;
+use std::rc::Rc;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::span::SpannedString;
+use utils::span::SpannedText;
 
 /// Generates rows of text in constrainted width.
 ///
 /// Works on spans of text.
-pub struct LinesIterator<'a, T>
+pub struct LinesIterator<S>
 where
-    T: 'a,
+    S: SpannedText,
 {
-    iter: Peekable<ChunkIterator<'a, T>>,
+    iter: Peekable<ChunkIterator<S>>,
+    source: Rc<S>,
 
     /// Available width
     width: usize,
@@ -26,18 +28,27 @@ where
     chunk_offset: ChunkPart,
 }
 
-impl<'a, T> LinesIterator<'a, T> {
+impl<S> LinesIterator<S>
+where
+    S: SpannedText,
+{
     /// Creates a new iterator with the given content and width.
-    pub fn new(source: &'a SpannedString<T>, width: usize) -> Self {
+    pub fn new(source: S, width: usize) -> Self {
+        let source = Rc::new(source);
+        let chunk_source = source.clone();
         LinesIterator {
-            iter: ChunkIterator::new(source).peekable(),
+            iter: ChunkIterator::new(chunk_source).peekable(),
+            source,
             width,
             chunk_offset: ChunkPart::default(),
         }
     }
 }
 
-impl<'a, T> Iterator for LinesIterator<'a, T> {
+impl<S> Iterator for LinesIterator<S>
+where
+    S: SpannedText,
+{
     type Item = Row;
 
     fn next(&mut self) -> Option<Row> {
@@ -59,9 +70,13 @@ impl<'a, T> Iterator for LinesIterator<'a, T> {
                     chunk.remove_front(self.chunk_offset);
 
                     // Try to fit part of it?
-                    let graphemes = chunk.segments.iter().flat_map(|seg| {
-                        let mut offset = seg.seg.start;
-                        seg.text.graphemes(true).map(move |g| {
+                    let source = self.source.as_ref();
+                    let graphemes = chunk.segments.iter().flat_map(move |seg| {
+                        let mut offset = seg.start;
+
+                        let text = seg.resolve_plain(source);
+
+                        text.graphemes(true).map(move |g| {
                             let width = g.width();
                             let start = offset;
                             let end = offset + g.len();
@@ -69,14 +84,11 @@ impl<'a, T> Iterator for LinesIterator<'a, T> {
                             Chunk {
                                 width,
                                 segments: vec![
-                                    SegmentWithText {
-                                        text: g,
-                                        seg: Segment {
-                                            width,
-                                            span_id: seg.seg.span_id,
-                                            start,
-                                            end,
-                                        },
+                                    Segment {
+                                        width,
+                                        span_id: seg.span_id,
+                                        start,
+                                        end,
                                     },
                                 ],
                                 hard_stop: false,
@@ -103,7 +115,7 @@ impl<'a, T> Iterator for LinesIterator<'a, T> {
                     let length: usize = chunks
                         .iter()
                         .flat_map(|chunk| chunk.segments.iter())
-                        .map(|segment| segment.text.len())
+                        .map(|segment| segment.end - segment.start)
                         .sum();
 
                     self.chunk_offset.width += width;
@@ -120,7 +132,6 @@ impl<'a, T> Iterator for LinesIterator<'a, T> {
             chunks
                 .into_iter()
                 .flat_map(|chunk| chunk.segments)
-                .map(|segment| segment.seg)
                 .filter(|segment| segment.start != segment.end),
         ).collect();
 

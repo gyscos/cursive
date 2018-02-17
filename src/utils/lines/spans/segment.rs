@@ -1,4 +1,4 @@
-use utils::span::{Span, SpannedString};
+use utils::span::{SpannedStr, Span, SpannedText};
 
 /// Refers to a part of a span
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,7 +22,9 @@ impl Segment {
     }
 
     /// Resolve this segment to a string slice and an attribute.
-    pub fn resolve<'a, T>(&self, source: &'a SpannedString<T>) -> Span<'a, T> {
+    pub fn resolve<'a, T>(
+        &self, source: SpannedStr<'a, T>
+    ) -> Span<'a, T> {
         let span = &source.spans_raw()[self.span_id];
 
         let content = span.content.resolve(source.source());
@@ -32,6 +34,19 @@ impl Segment {
             content,
             attr: &span.attr,
         }
+    }
+
+    /// Resolves this segment to plain text.
+    pub fn resolve_plain<'a, S>(&self, source: &'a S) -> &'a str
+    where
+        S: SpannedText,
+    {
+        let span = &source.spans()[self.span_id];
+
+        let content = span.as_ref().resolve(source.source());
+        let content = &content[self.start..self.end];
+
+        content
     }
 }
 

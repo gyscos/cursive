@@ -1,5 +1,5 @@
 use super::Segment;
-use utils::span::{Span, SpannedString};
+use utils::span::{Span, SpannedStr};
 
 /// A list of segments representing a row of text
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,11 +13,11 @@ pub struct Row {
 impl Row {
     /// Resolve the row indices into string slices and attributes.
     pub fn resolve<'a, T>(
-        &self, source: &'a SpannedString<T>
+        &self, source: SpannedStr<'a, T>
     ) -> Vec<Span<'a, T>> {
         self.segments
             .iter()
-            .map(|seg| seg.resolve(source))
+            .map(|seg| seg.resolve(source.clone()))
             .collect()
     }
 }

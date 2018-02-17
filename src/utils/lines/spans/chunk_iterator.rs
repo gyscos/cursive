@@ -1,18 +1,16 @@
 use super::chunk::Chunk;
-use super::segment::{Segment, SegmentWithText};
+use super::segment::{Segment};
+use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
-use utils::span::SpannedString;
+use utils::span::SpannedText;
 use xi_unicode::LineBreakLeafIter;
 
 /// Iterator that returns non-breakable chunks of text.
 ///
 /// Works accross spans of text.
-pub struct ChunkIterator<'a, T>
-where
-    T: 'a,
-{
+pub struct ChunkIterator<S> {
     /// Input that we want to chunk.
-    source: &'a SpannedString<T>,
+    source: Rc<S>,
 
     /// ID of the span we are processing.
     current_span: usize,
@@ -21,12 +19,9 @@ where
     offset: usize,
 }
 
-impl<'a, T> ChunkIterator<'a, T>
-where
-    T: 'a,
-{
+impl<S> ChunkIterator<S> {
     /// Creates a new ChunkIterator on the given styled string.
-    pub fn new(source: &'a SpannedString<T>) -> Self {
+    pub fn new(source: Rc<S>) -> Self {
         ChunkIterator {
             source,
             current_span: 0,
@@ -39,30 +34,30 @@ where
 ///
 /// These chunks may go accross spans (a single word may be broken into more
 /// than one span, for instance if parts of it are marked up differently).
-impl<'a, T> Iterator for ChunkIterator<'a, T>
+impl<S> Iterator for ChunkIterator<S>
 where
-    T: 'a,
+    S: SpannedText,
 {
-    type Item = Chunk<'a>;
+    type Item = Chunk;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_span >= self.source.spans_raw().len() {
+        if self.current_span >= self.source.spans().len() {
             return None;
         }
 
         // Protect agains empty spans
-        if self.source.spans_raw()[self.current_span].is_empty() {
+        if self.source.spans()[self.current_span].as_ref().is_empty() {
             self.current_span += 1;
             return self.next();
         }
 
-        let mut span = &self.source.spans_raw()[self.current_span];
-        let mut span_text = span.content.resolve(self.source.source());
+        let mut span = self.source.spans()[self.current_span].as_ref();
+        let mut span_text = span.resolve(self.source.source());
 
         let mut total_width = 0;
 
         // We'll use an iterator from xi-unicode to detect possible breaks.
-        let text = span.content.resolve(self.source.source());
+        let text = span.resolve(self.source.source());
         let mut iter = LineBreakLeafIter::new(text, self.offset);
 
         // We'll accumulate segments from spans.
@@ -89,9 +84,8 @@ where
             let (width, ends_with_space) = if pos == 0 {
                 // If pos = 0, we had a span before.
                 let prev_span =
-                    &self.source.spans_raw()[self.current_span - 1];
-                let prev_text =
-                    prev_span.content.resolve(self.source.source());
+                    self.source.spans()[self.current_span - 1].as_ref();
+                let prev_text = prev_span.resolve(self.source.source());
                 (0, prev_text.ends_with(' '))
             } else {
                 // We actually got something.
@@ -108,14 +102,11 @@ where
             if pos != 0 {
                 // If pos != 0, we got an actual segment of a span.
                 total_width += width;
-                segments.push(SegmentWithText {
-                    seg: Segment {
-                        span_id: self.current_span,
-                        start: self.offset,
-                        end: pos,
-                        width,
-                    },
-                    text: &span_text[self.offset..pos],
+                segments.push(Segment {
+                    span_id: self.current_span,
+                    start: self.offset,
+                    end: pos,
+                    width,
                 });
             }
 
@@ -125,19 +116,17 @@ where
                 self.current_span += 1;
 
                 // Skip empty spans
-                while let Some(true) = self.source
-                    .spans_raw()
-                    .get(self.current_span)
-                    .map(|span| {
-                        span.content.resolve(self.source.source()).is_empty()
+                while let Some(true) =
+                    self.source.spans().get(self.current_span).map(|span| {
+                        span.as_ref().resolve(self.source.source()).is_empty()
                     }) {
                     self.current_span += 1;
                 }
 
-                if self.current_span >= self.source.spans_raw().len() {
+                if self.current_span >= self.source.spans().len() {
                     // If this was the last chunk, return as is!
                     // Well, make sure we don't end with a newline...
-                    let text = span.content.resolve(self.source.source());
+                    let text = span.resolve(self.source.source());
                     let hard_stop = hard_stop || text.ends_with('\n');
 
                     return Some(Chunk {
@@ -148,8 +137,8 @@ where
                     });
                 }
 
-                span = &self.source.spans_raw()[self.current_span];
-                span_text = span.content.resolve(self.source.source());
+                span = self.source.spans()[self.current_span].as_ref();
+                span_text = span.resolve(self.source.source());
                 self.offset = 0;
                 continue;
             }

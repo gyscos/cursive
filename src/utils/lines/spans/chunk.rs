@@ -1,39 +1,37 @@
-use super::segment::SegmentWithText;
+use super::segment::Segment;
 
 /// Non-splittable piece of text.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Chunk<'a> {
+pub struct Chunk {
     pub width: usize,
-    pub segments: Vec<SegmentWithText<'a>>,
+    pub segments: Vec<Segment>,
     pub hard_stop: bool,
     pub ends_with_space: bool,
 }
 
-impl<'a> Chunk<'a> {
+impl Chunk {
     /// Remove some text from the front.
     ///
     /// We're given the length (number of bytes) and the width.
     pub fn remove_front(&mut self, mut to_remove: ChunkPart) {
         // Remove something from each segment until we've removed enough.
         for segment in &mut self.segments {
-            if to_remove.length <= segment.seg.end - segment.seg.start {
+            if to_remove.length <= segment.end - segment.start {
                 // This segment is bigger than what we need to remove
                 // So just trim the prefix and stop there.
-                segment.seg.start += to_remove.length;
-                segment.seg.width -= to_remove.width;
-                segment.text = &segment.text[to_remove.length..];
+                segment.start += to_remove.length;
+                segment.width -= to_remove.width;
                 self.width -= to_remove.width;
                 break;
             } else {
                 // This segment is too small, so it'll disapear entirely.
-                to_remove.length -= segment.seg.end - segment.seg.start;
-                to_remove.width -= segment.seg.width;
-                self.width -= segment.seg.width;
+                to_remove.length -= segment.end - segment.start;
+                to_remove.width -= segment.width;
+                self.width -= segment.width;
 
                 // Empty this segment
-                segment.seg.start = segment.seg.end;
-                segment.seg.width = 0;
-                segment.text = "";
+                segment.start = segment.end;
+                segment.width = 0;
             }
         }
     }
@@ -59,11 +57,11 @@ impl<'a> Chunk<'a> {
         // If yes, just drop it.
         let last_empty = {
             let last = self.segments.last_mut().unwrap();
-            last.seg.end -= 1;
+            last.end -= 1;
             if self.ends_with_space {
-                last.seg.width -= 1;
+                last.width -= 1;
             }
-            last.seg.start == last.seg.end
+            last.start == last.end
         };
         if last_empty {
             self.segments.pop().unwrap();
