@@ -13,9 +13,14 @@ use vec::{Vec2, Vec4};
 use view::{AnyView, Selector, View};
 use views::{Button, DummyView, SizedView, TextView};
 
-#[derive(PartialEq)]
-enum Focus {
+/// Identifies currently focused element in [`Dialog`].
+///
+/// [`Dialog`]: struct.Dialog.html
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DialogFocus {
+    /// Content element focused
     Content,
+    /// One of buttons focused
     Button(usize),
 }
 
@@ -66,7 +71,7 @@ pub struct Dialog {
     borders: Vec4,
 
     // The current element in focus
-    focus: Focus,
+    focus: DialogFocus,
 
     // How to align the buttons under the view.
     align: Align,
@@ -89,7 +94,7 @@ impl Dialog {
             buttons: Vec::new(),
             title: String::new(),
             title_position: HAlign::Center,
-            focus: Focus::Content,
+            focus: DialogFocus::Content,
             padding: Vec4::new(1, 1, 0, 0),
             borders: Vec4::new(1, 1, 1, 1),
             align: Align::top_right(),
@@ -244,6 +249,11 @@ impl Dialog {
         Box::new(self.buttons.iter_mut().map(|b| &mut b.button.view))
     }
 
+    /// Returns currently focused element
+    pub fn focus(&self) -> DialogFocus {
+        self.focus
+    }
+
     // Private methods
 
     // An event is received while the content is in focus
@@ -257,7 +267,7 @@ impl Dialog {
                     | Event::Key(Key::Tab)
                     | Event::Shift(Key::Tab) => {
                         // Default to leftmost button when going down.
-                        self.focus = Focus::Button(0);
+                        self.focus = DialogFocus::Button(0);
                         EventResult::Consumed(None)
                     }
                     _ => EventResult::Ignored,
@@ -283,7 +293,7 @@ impl Dialog {
                     // Up goes back to the content
                     Event::Key(Key::Up) => {
                         if self.content.take_focus(Direction::down()) {
-                            self.focus = Focus::Content;
+                            self.focus = DialogFocus::Content;
                             EventResult::Consumed(None)
                         } else {
                             EventResult::Ignored
@@ -291,7 +301,7 @@ impl Dialog {
                     }
                     Event::Shift(Key::Tab) => {
                         if self.content.take_focus(Direction::back()) {
-                            self.focus = Focus::Content;
+                            self.focus = DialogFocus::Content;
                             EventResult::Consumed(None)
                         } else {
                             EventResult::Ignored
@@ -299,7 +309,7 @@ impl Dialog {
                     }
                     Event::Key(Key::Tab) => {
                         if self.content.take_focus(Direction::front()) {
-                            self.focus = Focus::Content;
+                            self.focus = DialogFocus::Content;
                             EventResult::Consumed(None)
                         } else {
                             EventResult::Ignored
@@ -309,11 +319,11 @@ impl Dialog {
                     Event::Key(Key::Right)
                         if button_id + 1 < self.buttons.len() =>
                     {
-                        self.focus = Focus::Button(button_id + 1);
+                        self.focus = DialogFocus::Button(button_id + 1);
                         EventResult::Consumed(None)
                     }
                     Event::Key(Key::Left) if button_id > 0 => {
-                        self.focus = Focus::Button(button_id - 1);
+                        self.focus = DialogFocus::Button(button_id - 1);
                         EventResult::Consumed(None)
                     }
                     _ => EventResult::Ignored,
@@ -357,7 +367,7 @@ impl Dialog {
             button.button.draw(&printer.sub_printer(
                 position,
                 size,
-                self.focus == Focus::Button(i),
+                self.focus == DialogFocus::Button(i),
             ));
             // Keep 1 blank between two buttons
             offset += size.x + 1;
@@ -381,7 +391,7 @@ impl Dialog {
         self.content.draw(&printer.sub_printer(
             self.borders.top_left() + self.padding.top_left(),
             inner_size,
-            self.focus == Focus::Content,
+            self.focus == DialogFocus::Content,
         ));
     }
 
@@ -429,7 +439,7 @@ impl Dialog {
                 // If position fits there...
                 position.fits_in_rect(btn.offset.get(), btn.button.size)
             }) {
-                self.focus = Focus::Button(i);
+                self.focus = DialogFocus::Button(i);
             } else if position.fits_in_rect(
                 (self.padding + self.borders).top_left(),
                 self.content.size,
@@ -437,7 +447,7 @@ impl Dialog {
                 && self.content.take_focus(Direction::none())
             {
                 // Or did we click the content?
-                self.focus = Focus::Content;
+                self.focus = DialogFocus::Content;
             }
         }
     }
@@ -531,9 +541,9 @@ impl View for Dialog {
         match self.focus {
             // If we are on the content, we can only go down.
             // TODO: Careful if/when we add buttons elsewhere on the dialog!
-            Focus::Content => self.on_event_content(event),
+            DialogFocus::Content => self.on_event_content(event),
             // If we are on a button, we have more choice
-            Focus::Button(i) => self.on_event_button(event, i),
+            DialogFocus::Button(i) => self.on_event_button(event, i),
         }
     }
 
@@ -541,10 +551,10 @@ impl View for Dialog {
         // Dialogs aren't meant to be used in layouts, so...
         // Let's be super lazy and not even care about the focus source.
         if self.content.take_focus(source) {
-            self.focus = Focus::Content;
+            self.focus = DialogFocus::Content;
             true
         } else if !self.buttons.is_empty() {
-            self.focus = Focus::Button(0);
+            self.focus = DialogFocus::Button(0);
             true
         } else {
             false
