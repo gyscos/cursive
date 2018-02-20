@@ -6,6 +6,7 @@ use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
+use std::io::{stdout, Write};
 use theme::{Color, ColorPair, Effect};
 use utf8;
 use vec::Vec2;
@@ -183,7 +184,8 @@ impl backend::Backend for Concrete {
         // This asks the terminal to provide us with mouse drag events
         // (Mouse move when a button is pressed).
         // Replacing 1002 with 1003 would give us ANY mouse move.
-        println!("\x1B[?1002h");
+        print!("\x1B[?1002h");
+        stdout().flush().expect("could not flush stdout");
 
         Concrete {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
@@ -208,7 +210,8 @@ impl backend::Backend for Concrete {
     }
 
     fn finish(&mut self) {
-        println!("\x1B[?1002l");
+        print!("\x1B[?1002l");
+        stdout().flush().expect("could not flush stdout");
         ncurses::endwin();
     }
 
