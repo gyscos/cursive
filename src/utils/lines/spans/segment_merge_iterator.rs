@@ -21,11 +21,13 @@ where
     type Item = Segment;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // Always work on an segment.
         if self.current.is_none() {
             self.current = self.inner.next();
             self.current?;
         }
 
+        // Keep growing our current segment until we find something else.
         loop {
             match self.inner.next() {
                 None => return self.current.take(),

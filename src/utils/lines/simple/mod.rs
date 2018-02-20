@@ -20,6 +20,13 @@ pub struct Span {
     pub width: usize,
 }
 
+/// Compute lines for the given content and width.
+///
+/// Equivalent to constructing a new `LinesIterator` and collecting it.
+pub fn make_lines(content: &str, width: usize) -> Vec<Row> {
+    LinesIterator::new(content, width).collect()
+}
+
 /// Computes a prefix that fits in the given `width`.
 ///
 /// Takes non-breakable elements from `iter`, while keeping the string width
@@ -110,13 +117,4 @@ pub fn simple_prefix(text: &str, width: usize) -> Span {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::prefix;
-
-    #[test]
-    fn test_prefix() {
-        assert_eq!(prefix(" abra ".split(' '), 5, " ").length, 5);
-        assert_eq!(prefix("abra a".split(' '), 5, " ").length, 4);
-        assert_eq!(prefix("a a br".split(' '), 5, " ").length, 3);
-    }
-}
+mod tests;

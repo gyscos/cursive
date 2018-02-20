@@ -10,6 +10,7 @@ fn input() -> StyledString {
     text.append(StyledString::styled("half", Effect::Italic));
     text.append(StyledString::plain(" the things people say I did."));
     text.append(StyledString::plain("\n"));
+    text.append(StyledString::plain("\n"));
     text.append(StyledString::plain("    - A. Einstein"));
 
     text
@@ -22,6 +23,8 @@ fn test_line_breaks() {
     let iter = LinesIterator::new(&input, 17);
 
     let rows: Vec<_> = iter.map(|row| row.resolve(&input)).collect();
+
+    // println!("{:?}", rows);
 
     assert_eq!(
         &rows[..],
@@ -56,6 +59,7 @@ fn test_line_breaks() {
                     attr: &Style::none(),
                 },
             ],
+            vec![],
             vec![
                 Span {
                     content: "    - A. Einstein",

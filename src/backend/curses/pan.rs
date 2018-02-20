@@ -147,7 +147,7 @@ impl backend::Backend for Concrete {
         // This asks the terminal to provide us with mouse drag events
         // (Mouse move when a button is pressed).
         // Replacing 1002 with 1003 would give us ANY mouse move.
-        println!("\x1B[?1002h");
+        print!("\x1B[?1002h");
 
         Concrete {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),

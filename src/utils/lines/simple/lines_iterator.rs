@@ -63,6 +63,7 @@ impl<'a> Iterator for LinesIterator<'a> {
 
     fn next(&mut self) -> Option<Row> {
         let row = self.iter.next()?;
+        // println!("Got a row: {:?}", row);
 
         let start = row.segments.first()?.start;
         let end = row.segments.last()?.end;

@@ -63,8 +63,9 @@ impl Chunk {
             }
             last.start == last.end
         };
+
         if last_empty {
-            self.segments.pop().unwrap();
+            // self.segments.pop().unwrap();
         }
     }
 }

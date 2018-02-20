@@ -79,6 +79,8 @@ where
         let mut chunks =
             prefix(&mut self.iter, allowed_width, &mut self.chunk_offset);
 
+        // println!("Chunks..: {:?}", chunks);
+
         if chunks.is_empty() {
             // Desperate action to make something fit:
             // Look at the current chunk. We'll try to return a part of it.
@@ -155,7 +157,7 @@ where
             chunks
                 .into_iter()
                 .flat_map(|chunk| chunk.segments)
-                .filter(|segment| segment.start != segment.end),
+                //.filter(|segment| segment.start != segment.end),
         ).collect();
 
         // TODO: merge consecutive segments of the same span

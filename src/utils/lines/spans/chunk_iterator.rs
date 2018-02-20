@@ -41,32 +41,36 @@ where
     type Item = Chunk;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // Stop when we processed all spans
         if self.current_span >= self.source.spans().len() {
             return None;
         }
 
-        // Protect agains empty spans
+        // Skip empty spans
         if self.source.spans()[self.current_span].as_ref().is_empty() {
             self.current_span += 1;
             return self.next();
         }
 
+        // Current span & associated text
         let mut span = self.source.spans()[self.current_span].as_ref();
         let mut span_text = span.resolve(self.source.source());
 
         let mut total_width = 0;
 
-        // We'll use an iterator from xi-unicode to detect possible breaks.
-        let text = span.resolve(self.source.source());
-        let mut iter = LineBreakLeafIter::new(text, self.offset);
-
         // We'll accumulate segments from spans.
         let mut segments = Vec::new();
 
+        // We'll use an iterator from xi-unicode to detect possible breaks.
+        let mut iter = LineBreakLeafIter::new(span_text, self.offset);
+
         // When we reach the end of a span, xi-unicode returns a break, but it
         // actually depends on the next span. Such breaks are "fake" breaks.
+        //
         // So we'll loop until we find a "true" break
         // (a break that doesn't happen an the end of a span).
+        // Note that if a break is a "hard" stop, then it is always a "true" break.
+        //
         // Most of the time, it will happen on the first iteration.
         loop {
             // Look at next possible break
@@ -126,8 +130,7 @@ where
                 if self.current_span >= self.source.spans().len() {
                     // If this was the last chunk, return as is!
                     // Well, make sure we don't end with a newline...
-                    let text = span.resolve(self.source.source());
-                    let hard_stop = hard_stop || text.ends_with('\n');
+                    let hard_stop = hard_stop || span_text.ends_with('\n');
 
                     return Some(Chunk {
                         width: total_width,

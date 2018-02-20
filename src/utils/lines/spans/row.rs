@@ -21,6 +21,7 @@ impl Row {
         self.segments
             .iter()
             .map(|seg| seg.resolve(&source))
+            .filter(|span| !span.content.is_empty())
             .collect()
     }
 
