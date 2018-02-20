@@ -241,16 +241,18 @@ impl backend::Backend for Concrete {
                     pancurses::Input::Character(c)
                         if 32 <= (c as u32) && (c as u32) <= 255 =>
                     {
-                        Event::Char(
-                            utf8::read_char(c as u8, || {
-                                self.window.getch().and_then(|i| match i {
-                                    pancurses::Input::Character(c) => {
-                                        Some(c as u8)
-                                    }
-                                    _ => None,
-                                })
-                            }).unwrap(),
-                        )
+                        utf8::read_char(c as u8, || {
+                            self.window.getch().and_then(|i| match i {
+                                pancurses::Input::Character(c) => {
+                                    Some(c as u8)
+                                }
+                                _ => None,
+                            })
+                        }).map(Event::Char)
+                            .unwrap_or_else(|e| {
+                                warn!("Error reading input: {}", e);
+                                Event::Unknown(vec![c as u8])
+                            })
                     }
                     pancurses::Input::Character(c) if (c as u32) <= 26 => {
                         Event::CtrlChar((b'a' - 1 + c as u8) as char)

@@ -266,10 +266,12 @@ impl backend::Backend for Concrete {
 
             // Is it a UTF-8 starting point?
             if 32 <= ch && ch <= 255 && ch != 127 {
-                Event::Char(
-                    utf8::read_char(ch as u8, || Some(ncurses::getch() as u8))
-                        .unwrap(),
-                )
+                utf8::read_char(ch as u8, || Some(ncurses::getch() as u8))
+                    .map(Event::Char)
+                    .unwrap_or_else(|e| {
+                        warn!("Error reading input: {}", e);
+                        Event::Unknown(vec![ch as u8])
+                    })
             } else {
                 self.parse_ncurses_char(ch)
             }
