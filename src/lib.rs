@@ -67,6 +67,8 @@ extern crate enum_map;
 extern crate enumset;
 #[macro_use]
 extern crate log;
+
+#[cfg(feature = "ncurses")]
 #[macro_use]
 extern crate maplit;
 

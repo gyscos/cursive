@@ -17,13 +17,16 @@ repository = "gyscos/Cursive"
 enum-map = "0.2.24"
 enumset = "0.3.3"
 log = "0.4"
-maplit = "1.0.0"
 num = "0.1"
 owning_ref = "0.3.3"
 toml = "0.4"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
 xi-unicode = "0.1.0"
+
+[dependencies.maplit]
+optional = true
+version = "1.0.0"
 
 [dependencies.bear-lib-terminal]
 optional = true
@@ -63,7 +66,7 @@ rand = "0.4"
 blt-backend = ["bear-lib-terminal"]
 default = ["ncurses-backend"]
 markdown = ["pulldown-cmark"]
-ncurses-backend = ["ncurses"]
+ncurses-backend = ["ncurses", "maplit"]
 pancurses-backend = ["pancurses"]
 termion-backend = ["termion", "chan", "chan-signal"]
 
