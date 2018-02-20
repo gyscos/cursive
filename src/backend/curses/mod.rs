@@ -1,4 +1,6 @@
 use theme::{BaseColor, Color};
+use event::{Event, Key};
+use std::collections::HashMap;
 
 #[cfg(feature = "ncurses")]
 mod n;
@@ -12,6 +14,51 @@ pub use self::pan::*;
 
 fn split_i32(code: i32) -> Vec<u8> {
     (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()
+}
+
+fn fill_key_codes<F>(target: &mut HashMap<i32, Event>, f: F)
+where
+    F: Fn(i32) -> Option<String>,
+{
+    let key_names = hashmap!{
+        "DC" => Key::Del,
+        "DN" => Key::Down,
+        "END" => Key::End,
+        "HOM" => Key::Home,
+        "IC" => Key::Ins,
+        "LFT" => Key::Left,
+        "NXT" => Key::PageDown,
+        "PRV" => Key::PageUp,
+        "RIT" => Key::Right,
+        "UP" => Key::Up,
+    };
+
+    for code in 512..1024 {
+        let name = match f(code) {
+            Some(name) => name,
+            None => continue,
+        };
+
+        if !name.starts_with('k') {
+            continue;
+        }
+
+        let (key_name, modifier) = name[1..].split_at(name.len() - 2);
+        let key = match key_names.get(key_name) {
+            Some(&key) => key,
+            None => continue,
+        };
+        let event = match modifier {
+            "3" => Event::Alt(key),
+            "4" => Event::AltShift(key),
+            "5" => Event::Ctrl(key),
+            "6" => Event::CtrlShift(key),
+            "7" => Event::CtrlAlt(key),
+            _ => continue,
+        };
+        target.insert(code, event);
+    }
+
 }
 
 fn find_closest(color: &Color) -> i16 {

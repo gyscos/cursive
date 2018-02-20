@@ -12,12 +12,17 @@ use utf8;
 use vec::Vec2;
 
 pub struct Concrete {
+    // Used
     current_style: Cell<ColorPair>,
     pairs: RefCell<HashMap<ColorPair, i32>>,
-    window: pancurses::Window,
+
+    key_codes: HashMap<i32, Event>,
 
     last_mouse_button: Option<MouseButton>,
     event_queue: Vec<Event>,
+
+    // pancurses needs a handle to the current window.
+    window: pancurses::Window,
 }
 
 impl Concrete {
@@ -157,6 +162,7 @@ impl backend::Backend for Concrete {
             window: window,
             last_mouse_button: None,
             event_queue: Vec::new(),
+            key_codes: initialize_keymap(),
         }
     }
 
@@ -241,6 +247,8 @@ impl backend::Backend for Concrete {
                     pancurses::Input::Character(c)
                         if 32 <= (c as u32) && (c as u32) <= 255 =>
                     {
+                        // TODO: pancurses may start parsing the input.
+                        // In this case, return as-is.
                         utf8::read_char(c as u8, || {
                             self.window.getch().and_then(|i| match i {
                                 pancurses::Input::Character(c) => {
@@ -265,53 +273,14 @@ impl backend::Backend for Concrete {
                     }
                     // TODO: Some key combos are not recognized by pancurses,
                     // but are sent as Unknown. We could still parse them here.
-                    pancurses::Input::Unknown(code) => match code {
-                        220 => Event::Ctrl(Key::Del),
-
-                        224 => Event::Alt(Key::Down),
-                        225 => Event::AltShift(Key::Down),
-                        226 => Event::Ctrl(Key::Down),
-                        227 => Event::CtrlShift(Key::Down),
-
-                        229 => Event::Alt(Key::End),
-                        230 => Event::AltShift(Key::End),
-                        231 => Event::Ctrl(Key::End),
-                        232 => Event::CtrlShift(Key::End),
-
-                        235 => Event::Alt(Key::Home),
-                        236 => Event::AltShift(Key::Home),
-                        237 => Event::Ctrl(Key::Home),
-                        238 => Event::CtrlShift(Key::Home),
-
-                        246 => Event::Alt(Key::Left),
-                        247 => Event::AltShift(Key::Left),
-                        248 => Event::Ctrl(Key::Left),
-                        249 => Event::CtrlShift(Key::Left),
-
-                        251 => Event::Alt(Key::PageDown),
-                        252 => Event::AltShift(Key::PageDown),
-                        253 => Event::Ctrl(Key::PageDown),
-                        254 => Event::CtrlShift(Key::PageDown),
-
-                        256 => Event::Alt(Key::PageUp),
-                        257 => Event::AltShift(Key::PageUp),
-                        258 => Event::Ctrl(Key::PageUp),
-                        259 => Event::CtrlShift(Key::PageUp),
-
-                        261 => Event::Alt(Key::Right),
-                        262 => Event::AltShift(Key::Right),
-                        263 => Event::Ctrl(Key::Right),
-                        264 => Event::CtrlShift(Key::Right),
-
-                        267 => Event::Alt(Key::Up),
-                        268 => Event::AltShift(Key::Up),
-                        269 => Event::Ctrl(Key::Up),
-                        270 => Event::CtrlShift(Key::Up),
-                        other => {
-                            warn!("Unknown: {}", other);
-                            Event::Unknown(split_i32(other))
-                        }
-                    },
+                    pancurses::Input::Unknown(code) => self.key_codes
+                        // pancurses does some weird keycode mapping
+                        .get(&(code + 256 + 48))
+                        .cloned()
+                        .unwrap_or_else(|| {
+                            warn!("Unknown: {}", code);
+                            Event::Unknown(split_i32(code))
+                        }),
                     // TODO: I honestly have no fucking idea what KeyCodeYes is
                     pancurses::Input::KeyCodeYes => Event::Refresh,
                     pancurses::Input::KeyBreak => Event::Key(Key::PauseBreak),
@@ -535,4 +504,13 @@ fn get_mouse_button(bare_event: mmask_t) -> MouseButton {
         | pancurses::BUTTON5_TRIPLE_CLICKED => MouseButton::Button5,
         _ => MouseButton::Other,
     }
+}
+
+fn initialize_keymap() -> HashMap<i32, Event> {
+
+    let mut map = HashMap::new();
+
+    super::fill_key_codes(&mut map, pancurses::keyname);
+
+    map
 }

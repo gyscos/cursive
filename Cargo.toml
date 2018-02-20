@@ -48,7 +48,7 @@ version = "5.91.0"
 [dependencies.pancurses]
 features = ["wide"]
 optional = true
-version = "0.13"
+version = "0.14"
 
 [dependencies.pulldown-cmark]
 default-features = false
@@ -67,7 +67,7 @@ blt-backend = ["bear-lib-terminal"]
 default = ["ncurses-backend"]
 markdown = ["pulldown-cmark"]
 ncurses-backend = ["ncurses", "maplit"]
-pancurses-backend = ["pancurses"]
+pancurses-backend = ["pancurses", "maplit"]
 termion-backend = ["termion", "chan", "chan-signal"]
 
 [lib]

@@ -68,7 +68,7 @@ extern crate enumset;
 #[macro_use]
 extern crate log;
 
-#[cfg(feature = "ncurses")]
+#[cfg(any(feature = "ncurses", feature = "pancurses"))]
 #[macro_use]
 extern crate maplit;
 

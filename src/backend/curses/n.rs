@@ -13,7 +13,6 @@ use vec::Vec2;
 
 pub struct Concrete {
     current_style: Cell<ColorPair>,
-
     pairs: RefCell<HashMap<ColorPair, i16>>,
 
     key_codes: HashMap<i32, Event>,
@@ -446,45 +445,7 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     add_fn(313, Event::Alt, &mut map);
 
     // Those codes actually vary between ncurses versions...
-
-    let key_names = hashmap!{
-        "DC" => Key::Del,
-        "DN" => Key::Down,
-        "END" => Key::End,
-        "HOM" => Key::Home,
-        "IC" => Key::Ins,
-        "LFT" => Key::Left,
-        "NXT" => Key::PageDown,
-        "PRV" => Key::PageUp,
-        "RIT" => Key::Right,
-        "UP" => Key::Up,
-    };
-
-    for code in 512..1024 {
-        let name = match ncurses::keyname(code) {
-            Some(name) => name,
-            None => continue,
-        };
-
-        if !name.starts_with('k') {
-            continue;
-        }
-
-        let (key_name, modifier) = name[1..].split_at(name.len() - 2);
-        let key = match key_names.get(key_name) {
-            Some(&key) => key,
-            None => continue,
-        };
-        let event = match modifier {
-            "3" => Event::Alt(key),
-            "4" => Event::AltShift(key),
-            "5" => Event::Ctrl(key),
-            "6" => Event::CtrlShift(key),
-            "7" => Event::CtrlAlt(key),
-            _ => continue,
-        };
-        map.insert(code, event);
-    }
+    super::fill_key_codes(&mut map, ncurses::keyname);
 
     map
 }
