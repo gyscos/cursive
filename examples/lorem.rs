@@ -21,6 +21,7 @@ fn main() {
             // This is the alignment for the button
             .h_align(HAlign::Center)
             .button("Quit", |s| s.quit())
+            .title("Unicode and wide-character support")
             .full_screen(),
     );
     // Show a popup on top of the view.
