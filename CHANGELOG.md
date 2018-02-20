@@ -1,6 +1,10 @@
 # Changelog
 
-## Next version: 0.8.0
+## Next version: 0.8.1
+
+No change yet
+
+## 0.8.0
 
 ### New features
 
@@ -19,14 +23,20 @@
 - Allow multiple global callbacks per event
 - Allow buttons and delimiters in top-level menubar
 - StackView:
-    - Added `StackView::move_layer`
+    - Added `StackView::move_layer` to re-order layers
     - `StackView::pop_layer` now returns the pop'ed view
+    - Added `StackView::reposition_layer` to move a layer around
+- Dialog: added `Dialog::focus(&self)`
+- SelectView: added `SelectView::selected`
+- `Cursive::cb_sink` now accepts `FnOnce` (previously `Fn` only)
 
 ### Bugfixes
 
 - Fix a bug in `TextArea::set_content`
 - Fix `Color::from_256colors` for grayscale colors
 - Fix resize detection on windows
+- Fix possible panic with weird input on pancurses
+- Fix possible panic in ListView layout
 
 ### Doc
 
@@ -34,3 +44,4 @@
 - Improved comments in examples
 - Improve doc for `Cursive::find_id`
 - Improve doc for `Identifiable::with_id`
+- Include Changelog
