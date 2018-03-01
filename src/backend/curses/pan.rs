@@ -8,7 +8,6 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::io::{stdout, Write};
 use theme::{Color, ColorPair, Effect};
-use utf8;
 use vec::Vec2;
 
 pub struct Concrete {
@@ -244,33 +243,10 @@ impl backend::Backend for Concrete {
                     pancurses::Input::Character('\u{1b}') => {
                         Event::Key(Key::Esc)
                     }
-                    pancurses::Input::Character(c)
-                        if 32 <= (c as u32) && (c as u32) <= 255 =>
-                    {
-                        // TODO: pancurses may start parsing the input.
-                        // In this case, return as-is.
-                        utf8::read_char(c as u8, || {
-                            self.window.getch().and_then(|i| match i {
-                                pancurses::Input::Character(c) => {
-                                    Some(c as u8)
-                                }
-                                _ => None,
-                            })
-                        }).map(Event::Char)
-                            .unwrap_or_else(|e| {
-                                warn!("Error reading input: {}", e);
-                                Event::Unknown(vec![c as u8])
-                            })
-                    }
                     pancurses::Input::Character(c) if (c as u32) <= 26 => {
                         Event::CtrlChar((b'a' - 1 + c as u8) as char)
                     }
-                    pancurses::Input::Character(c) => {
-                        let mut bytes = [0u8; 4];
-                        Event::Unknown(
-                            c.encode_utf8(&mut bytes).as_bytes().to_vec(),
-                        )
-                    }
+                    pancurses::Input::Character(c) => Event::Char(c),
                     // TODO: Some key combos are not recognized by pancurses,
                     // but are sent as Unknown. We could still parse them here.
                     pancurses::Input::Unknown(code) => self.key_codes
@@ -507,7 +483,6 @@ fn get_mouse_button(bare_event: mmask_t) -> MouseButton {
 }
 
 fn initialize_keymap() -> HashMap<i32, Event> {
-
     let mut map = HashMap::new();
 
     super::fill_key_codes(&mut map, pancurses::keyname);

@@ -48,7 +48,7 @@ version = "5.91.0"
 [dependencies.pancurses]
 features = ["wide"]
 optional = true
-version = "0.14"
+version = "0.15"
 
 [dependencies.pulldown-cmark]
 default-features = false
