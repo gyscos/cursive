@@ -677,7 +677,9 @@ impl<T: 'static> View for SelectView<T> {
             // Add 2 spaces for the scrollbar if we need
             let w = if scrolling { w + 2 } else { w };
 
-            Vec2::new(w, h)
+            // Don't request more than we're offered - we can scroll,
+            // after all
+            Vec2::new(w, min(h, req.y))
         }
     }
 
