@@ -271,9 +271,6 @@ impl StackView {
 
         let removed = self.layers.remove(from_i);
 
-        // Shift the position if needed
-        let to_i = if to_i > from_i { to_i - 1 } else { to_i };
-
         self.layers.insert(to_i, removed);
     }
 
