@@ -419,6 +419,28 @@ impl Cursive {
             .push(Callback::from_fn(cb));
     }
 
+    /// Removes any callback tied to the given event.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # extern crate cursive;
+    /// # use cursive::*;
+    /// # fn main() {
+    /// let mut siv = Cursive::new();
+    ///
+    /// siv.add_global_callback('q', |s| s.quit());
+    /// siv.clear_global_callbacks('q');
+    /// # }
+    /// ```
+    pub fn clear_global_callbacks<E>(&mut self, event: E)
+    where
+        E: Into<Event>,
+    {
+        let event = event.into();
+        self.global_callbacks.remove(&event);
+    }
+
     /// Add a layer to the current screen.
     ///
     /// # Examples
