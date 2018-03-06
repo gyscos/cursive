@@ -470,3 +470,26 @@ impl View for StackView {
         Err(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use views::TextView;
+
+    #[test]
+    fn move_layer_works() {
+        let mut stack = StackView::new()
+            .layer(TextView::new("1"))
+            .layer(TextView::new("2"))
+            .layer(TextView::new("3"));
+
+        stack.move_layer(LayerPosition::FromFront(0), LayerPosition::FromBack(0));
+        stack.move_layer(LayerPosition::FromBack(0), LayerPosition::FromFront(0));
+        stack.move_layer(LayerPosition::FromFront(1), LayerPosition::FromFront(0));
+
+        let layer = stack.pop_layer().unwrap();
+        let box_view = layer.as_any().downcast_ref::<Box<AnyView>>().unwrap();
+        let text_view = (**box_view).as_any().downcast_ref::<TextView>().unwrap();
+        assert_eq!(text_view.get_content().source(), "2");
+    }
+}
