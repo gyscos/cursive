@@ -541,6 +541,7 @@ impl<T: 'static> SelectView<T> {
             s.screen_mut().add_layer_at(
                 Position::parent(offset),
                 MenuPopup::new(tree).focus(focus),
+                None,
             );
         })
     }

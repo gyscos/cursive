@@ -154,6 +154,7 @@ impl<T: View> View for ChildWrapper<T> {
 struct Child {
     view: ChildWrapper<Box<AnyView>>,
     size: Vec2,
+    id: Option<String>,
     placement: Placement,
 
     // We cannot call `take_focus` until we've called `layout()`
@@ -175,16 +176,34 @@ impl StackView {
         }
     }
 
+    /// Pushes the view with the given ID to the front of the stack
+    pub fn child_pos_with_view_id(&mut self, id:&str) -> Option<usize> {
+        self.layers.iter()
+            .position(|l| {
+                if let Some(c) = l.id.clone() {
+                    if c.as_str() == id {
+                        return true;
+                    }
+                }
+                false
+            })
+    }
+
     /// Adds a new full-screen layer on top of the stack.
     ///
     /// Fullscreen layers have no shadow.
-    pub fn add_fullscreen_layer<T>(&mut self, view: T)
+    pub fn add_fullscreen_layer<T>(&mut self, view: T, id: Option<&str>)
     where
         T: 'static + View,
     {
         let boxed: Box<AnyView> = Box::new(view);
+        let id = match id {
+            Some(s) => Some(s.to_string()),
+            None => None,
+        };
         self.layers.push(Child {
             view: ChildWrapper::Plain(Layer::new(boxed)),
+            id: id,
             size: Vec2::zero(),
             placement: Placement::Fullscreen,
             virgin: true,
@@ -192,21 +211,21 @@ impl StackView {
     }
 
     /// Adds new view on top of the stack in the center of the screen.
-    pub fn add_layer<T>(&mut self, view: T)
+    pub fn add_layer<T>(&mut self, view: T, id: Option<&str>)
     where
         T: 'static + View,
     {
-        self.add_layer_at(Position::center(), view);
+        self.add_layer_at(Position::center(), view, id);
     }
 
     /// Adds new view on top of the stack in the center of the screen.
     ///
     /// Chainable variant.
-    pub fn layer<T>(self, view: T) -> Self
+    pub fn layer<T>(self, view: T, id: Option<&str>) -> Self
     where
         T: 'static + View,
     {
-        self.with(|s| s.add_layer(view))
+        self.with(|s| s.add_layer(view, id))
     }
 
     /// Returns a reference to the layer at the given position.
@@ -263,19 +282,23 @@ impl StackView {
     /// Adds a new full-screen layer on top of the stack.
     ///
     /// Chainable variant.
-    pub fn fullscreen_layer<T>(self, view: T) -> Self
+    pub fn fullscreen_layer<T>(self, view: T, id: Option<&str>) -> Self
     where
         T: 'static + View,
     {
-        self.with(|s| s.add_fullscreen_layer(view))
+        self.with(|s| s.add_fullscreen_layer(view, id))
     }
 
     /// Adds a view on top of the stack.
-    pub fn add_layer_at<T>(&mut self, position: Position, view: T)
+    pub fn add_layer_at<T>(&mut self, position: Position, view: T, id: Option<&str>)
     where
         T: 'static + View,
     {
         let boxed: Box<AnyView> = Box::new(view);
+        let id = match id {
+            Some(s) => Some(s.to_string()),
+            None => None,
+        };
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
             view: ChildWrapper::Shadow(
@@ -283,6 +306,7 @@ impl StackView {
                     .top_padding(position.y == Offset::Center)
                     .left_padding(position.x == Offset::Center),
             ),
+            id: id ,
             size: Vec2::new(0, 0),
             placement: Placement::Floating(position),
             virgin: true,
@@ -292,11 +316,11 @@ impl StackView {
     /// Adds a view on top of the stack.
     ///
     /// Chainable variant.
-    pub fn layer_at<T>(self, position: Position, view: T) -> Self
+    pub fn layer_at<T>(self, position: Position, view: T, id: Option<&str>) -> Self
     where
         T: 'static + View,
     {
-        self.with(|s| s.add_layer_at(position, view))
+        self.with(|s| s.add_layer_at(position, view, id))
     }
 
     /// Remove the top-most layer.
@@ -353,6 +377,20 @@ impl StackView {
     /// Pushes the given view to the back of the stack.
     pub fn move_to_back(&mut self, layer: LayerPosition) {
         self.move_layer(layer, LayerPosition::FromBack(0));
+    }
+
+    /// Pushes the view with the given ID to the front of the stack
+    pub fn move_id_to_front(&mut self, id:&str) {
+        if let Some(p) = self.child_pos_with_view_id(id) {
+            self.move_layer(LayerPosition::FromBack(p), LayerPosition::FromFront(0));
+        }
+    }
+
+    /// Pushes the view with the given ID to the back of the stack
+    pub fn move_id_to_back(&mut self, id:&str) {
+        if let Some(p) = self.child_pos_with_view_id(id) {
+            self.move_layer(LayerPosition::FromBack(p), LayerPosition::FromBack(0));
+        }
     }
 
     /// Moves a layer to a new position on the screen.
@@ -552,9 +590,9 @@ mod tests {
     #[test]
     fn move_layer_works() {
         let mut stack = StackView::new()
-            .layer(TextView::new("1"))
-            .layer(TextView::new("2"))
-            .layer(TextView::new("3"));
+            .layer(TextView::new("1"), None)
+            .layer(TextView::new("2"), None)
+            .layer(TextView::new("3"), None);
 
         stack.move_layer(
             LayerPosition::FromFront(0),
@@ -574,5 +612,32 @@ mod tests {
         let text_view =
             (**box_view).as_any().downcast_ref::<TextView>().unwrap();
         assert_eq!(text_view.get_content().source(), "2");
+    }
+
+    #[test]
+    fn move_by_id() {
+        let mut stack = StackView::new()
+            .layer(TextView::new("1"), Some("layer_1"))
+            .layer(TextView::new("2"), Some("layer_2"))
+            .layer(TextView::new("3"), Some("layer_3"));
+
+        stack.move_id_to_front("layer_2");
+
+        let layer = stack.pop_layer().unwrap();
+        let box_view = layer.as_any().downcast_ref::<Box<AnyView>>().unwrap();
+        let text_view = (**box_view).as_any().downcast_ref::<TextView>().unwrap();
+        assert_eq!(text_view.get_content().source(), "2");
+
+        stack.move_id_to_back("layer_2");
+
+        let layer = stack.pop_layer().unwrap();
+        let box_view = layer.as_any().downcast_ref::<Box<AnyView>>().unwrap();
+        let text_view = (**box_view).as_any().downcast_ref::<TextView>().unwrap();
+        assert_eq!(text_view.get_content().source(), "3");
+
+        let layer = stack.pop_layer().unwrap();
+        let box_view = layer.as_any().downcast_ref::<Box<AnyView>>().unwrap();
+        let text_view = (**box_view).as_any().downcast_ref::<TextView>().unwrap();
+        assert_eq!(text_view.get_content().source(), "1");
     }
 }
