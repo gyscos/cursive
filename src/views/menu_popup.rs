@@ -162,7 +162,7 @@ impl MenuPopup {
                         }
                     },
                 )).on_event(Key::Left, |s| s.pop_layer()),
-            );
+            None);
         })
     }
 

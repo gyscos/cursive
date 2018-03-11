@@ -255,6 +255,7 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
                     cb(s);
                 }
             }),
+        None
     );
 }
 

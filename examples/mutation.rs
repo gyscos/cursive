@@ -41,6 +41,7 @@ fn show_popup(siv: &mut Cursive) {
                 });
             })
             .dismiss_button("Ok"),
+        None,
     );
 }
 

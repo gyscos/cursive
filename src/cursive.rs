@@ -455,7 +455,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn add_layer<T: 'static + View>(&mut self, view: T) {
-        self.screen_mut().add_layer(view);
+        self.screen_mut().add_layer(view, None);
     }
 
     /// Adds a new full-screen layer to the current screen.
@@ -465,7 +465,7 @@ impl Cursive {
     where
         T: 'static + View,
     {
-        self.screen_mut().add_fullscreen_layer(view);
+        self.screen_mut().add_fullscreen_layer(view, None);
     }
 
     /// Convenient method to remove a layer from the current screen.
