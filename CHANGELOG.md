@@ -1,8 +1,20 @@
 # Changelog
 
-## Next version: 0.8.1
+## Next version: 0.8.2
 
-No change yet
+
+## 0.8.1
+
+### New features
+
+- Add `Cursive::clear_global_callbacks`
+
+### Bugfixes
+
+- Fix non-ASCII input with pancurses backend
+- Fix `StackView::move_layer`
+- Fix layout computation for `SelectView`
+- Remove unused `maplit` dependency for termion and blt backends
 
 ## 0.8.0
 
