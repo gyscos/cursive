@@ -27,7 +27,7 @@ enum Placement {
 }
 
 /// Identifies a layer in a `StackView`.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LayerPosition {
     /// Starts from the back (bottom) of the stack.
     FromBack(usize),
@@ -69,6 +69,26 @@ impl<T: View> ChildWrapper<T> {
                 shadow.into_inner().ok().unwrap().into_inner().ok().unwrap()
             }
             ChildWrapper::Plain(layer) => layer.into_inner().ok().unwrap(),
+        }
+    }
+}
+
+impl<T: AnyView> ChildWrapper<T> {
+    /// Returns a reference to the inner view
+    pub fn get_inner(&self) -> &AnyView {
+        match *self {
+            ChildWrapper::Shadow(ref shadow) => shadow.get_inner().get_inner(),
+            ChildWrapper::Plain(ref layer) => layer.get_inner(),
+        }
+    }
+
+    /// Returns a mutable reference to the inner view
+    pub fn get_inner_mut(&mut self) -> &mut AnyView {
+        match *self {
+            ChildWrapper::Shadow(ref mut shadow) => {
+                shadow.get_inner_mut().get_inner_mut()
+            }
+            ChildWrapper::Plain(ref mut layer) => layer.get_inner_mut(),
         }
     }
 }
@@ -189,6 +209,57 @@ impl StackView {
         self.with(|s| s.add_layer(view))
     }
 
+    /// Returns a reference to the layer at the given position.
+    pub fn get(&self, pos: LayerPosition) -> Option<&AnyView> {
+        let i = self.get_index(pos);
+        self.layers.get(i).map(|child| child.view.get_inner())
+    }
+
+    /// Returns a mutable reference to the layer at the given position.
+    pub fn get_mut(&mut self, pos: LayerPosition) -> Option<&mut AnyView> {
+        let i = self.get_index(pos);
+        self.layers
+            .get_mut(i)
+            .map(|child| child.view.get_inner_mut())
+    }
+
+    /// Looks for the layer containing a view with the given ID.
+    ///
+    /// Returns `Some(pos)` if `self.get(pos)` has the given ID,
+    /// or is a parent of a view with this ID.
+    ///
+    /// Returns `None` if the given ID is not found.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::views::{TextView, StackView, Dialog, LayerPosition};
+    /// # use cursive::view::Identifiable;
+    /// # fn main() {
+    /// let mut stack = StackView::new();
+    /// stack.add_layer(TextView::new("Back"));
+    /// stack.add_layer(Dialog::around(TextView::new("Middle").with_id("text")));
+    /// stack.add_layer(TextView::new("Front"));
+    ///
+    /// assert_eq!(stack.find_layer_from_id("text"), Some(LayerPosition::FromBack(1)));
+    /// # }
+    /// ```
+    pub fn find_layer_from_id(&mut self, id: &str) -> Option<LayerPosition> {
+        let selector = Selector::Id(id);
+
+        for (i, child) in self.layers.iter_mut().enumerate() {
+            let mut found = false;
+            child
+                .view
+                .call_on_any(&selector, Box::new(|_| found = true));
+            if found {
+                return Some(LayerPosition::FromBack(i));
+            }
+        }
+
+        None
+    }
+
     /// Adds a new full-screen layer on top of the stack.
     ///
     /// Chainable variant.
@@ -306,6 +377,7 @@ impl StackView {
     }
 
     /// Background drawing
+    ///
     /// Drawing functions are split into forground and background to
     /// ease inserting layers under the stackview but above it's background
     /// you probably just want to call draw()
@@ -324,6 +396,7 @@ impl StackView {
     }
 
     /// Forground drawing
+    ///
     /// Drawing functions are split into forground and background to
     /// ease inserting layers under the stackview but above it's background
     /// you probably just want to call draw()
@@ -483,13 +556,23 @@ mod tests {
             .layer(TextView::new("2"))
             .layer(TextView::new("3"));
 
-        stack.move_layer(LayerPosition::FromFront(0), LayerPosition::FromBack(0));
-        stack.move_layer(LayerPosition::FromBack(0), LayerPosition::FromFront(0));
-        stack.move_layer(LayerPosition::FromFront(1), LayerPosition::FromFront(0));
+        stack.move_layer(
+            LayerPosition::FromFront(0),
+            LayerPosition::FromBack(0),
+        );
+        stack.move_layer(
+            LayerPosition::FromBack(0),
+            LayerPosition::FromFront(0),
+        );
+        stack.move_layer(
+            LayerPosition::FromFront(1),
+            LayerPosition::FromFront(0),
+        );
 
         let layer = stack.pop_layer().unwrap();
         let box_view = layer.as_any().downcast_ref::<Box<AnyView>>().unwrap();
-        let text_view = (**box_view).as_any().downcast_ref::<TextView>().unwrap();
+        let text_view =
+            (**box_view).as_any().downcast_ref::<TextView>().unwrap();
         assert_eq!(text_view.get_content().source(), "2");
     }
 }
