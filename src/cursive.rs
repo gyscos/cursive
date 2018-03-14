@@ -9,7 +9,7 @@ use std::path::Path;
 use std::sync::mpsc;
 use theme;
 use vec::Vec2;
-use view::{self, AnyView, BoxableView, Finder, Position, View};
+use view::{self, AnyView, IntoBoxedView, Finder, Position, View};
 use views::{self, LayerPosition};
 
 /// Identifies a screen in the cursive root.
@@ -456,7 +456,7 @@ impl Cursive {
     /// ```
     pub fn add_layer<T>(&mut self, view: T)
     where
-        T: BoxableView,
+        T: IntoBoxedView,
     {
         self.screen_mut().add_layer(view);
     }
@@ -466,7 +466,7 @@ impl Cursive {
     /// Fullscreen layers have no shadow.
     pub fn add_fullscreen_layer<T>(&mut self, view: T)
     where
-        T: BoxableView,
+        T: IntoBoxedView,
     {
         self.screen_mut().add_fullscreen_layer(view);
     }

@@ -7,7 +7,7 @@ use std::cell;
 use std::ops::Deref;
 use theme::ColorStyle;
 use vec::Vec2;
-use view::{AnyView, BoxableView, Offset, Position, Selector, View,
+use view::{AnyView, IntoBoxedView, Offset, Position, Selector, View,
            ViewWrapper};
 use views::{AnyBox, Layer, ShadowView};
 
@@ -181,7 +181,7 @@ impl StackView {
     /// Fullscreen layers have no shadow.
     pub fn add_fullscreen_layer<T>(&mut self, view: T)
     where
-        T: BoxableView,
+        T: IntoBoxedView,
     {
         let boxed = AnyBox::boxed(view);
         self.layers.push(Child {
@@ -195,7 +195,7 @@ impl StackView {
     /// Adds new view on top of the stack in the center of the screen.
     pub fn add_layer<T>(&mut self, view: T)
     where
-        T: BoxableView,
+        T: IntoBoxedView,
     {
         self.add_layer_at(Position::center(), view);
     }
@@ -205,7 +205,7 @@ impl StackView {
     /// Chainable variant.
     pub fn layer<T>(self, view: T) -> Self
     where
-        T: BoxableView,
+        T: IntoBoxedView,
     {
         self.with(|s| s.add_layer(view))
     }
@@ -266,7 +266,7 @@ impl StackView {
     /// Chainable variant.
     pub fn fullscreen_layer<T>(self, view: T) -> Self
     where
-        T: BoxableView,
+        T: IntoBoxedView,
     {
         self.with(|s| s.add_fullscreen_layer(view))
     }
@@ -274,7 +274,7 @@ impl StackView {
     /// Adds a view on top of the stack.
     pub fn add_layer_at<T>(&mut self, position: Position, view: T)
     where
-        T: BoxableView,
+        T: IntoBoxedView,
     {
         let boxed = AnyBox::boxed(view);
         self.layers.push(Child {
@@ -295,7 +295,7 @@ impl StackView {
     /// Chainable variant.
     pub fn layer_at<T>(self, position: Position, view: T) -> Self
     where
-        T: BoxableView,
+        T: IntoBoxedView,
     {
         self.with(|s| s.add_layer_at(position, view))
     }
