@@ -570,9 +570,7 @@ mod tests {
         );
 
         let layer = stack.pop_layer().unwrap();
-        let box_view = layer.as_any().downcast_ref::<Box<AnyView>>().unwrap();
-        let text_view =
-            (**box_view).as_any().downcast_ref::<TextView>().unwrap();
-        assert_eq!(text_view.get_content().source(), "2");
+        let text: Box<TextView> = layer.as_boxed_any().downcast().unwrap();
+        assert_eq!(text.get_content().source(), "2");
     }
 }

@@ -71,6 +71,22 @@ pub trait AnyView: View {
 
     /// Downcast self to a mutable `Any`.
     fn as_any_mut(&mut self) -> &mut Any;
+
+    /// Returns a boxed any from a boxed self.
+    ///
+    /// Can be used before `Box::downcast()`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::views::TextView;
+    /// # use cursive::view::AnyView;
+    /// # fn main() {
+    /// let boxed: Box<AnyView> = Box::new(TextView::new("text"));
+    /// let text: Box<TextView> = boxed.as_boxed_any().downcast().unwrap();
+    /// # }
+    /// ```
+    fn as_boxed_any(self: Box<Self>) -> Box<Any>;
 }
 
 impl<T: View> AnyView for T {
@@ -81,6 +97,10 @@ impl<T: View> AnyView for T {
 
     /// Downcast self to a mutable `Any`.
     fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
+
+    fn as_boxed_any(self: Box<Self>) -> Box<Any> {
         self
     }
 }
