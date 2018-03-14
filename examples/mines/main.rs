@@ -208,7 +208,7 @@ impl cursive::view::View for BoardView {
             };
 
             printer.with_color(
-                ColorStyle::new(color, Color::Dark(BaseColor::Black)),
+                ColorStyle::new(Color::Dark(BaseColor::Black), color),
                 |printer| printer.print((x, y), text),
             );
         }
