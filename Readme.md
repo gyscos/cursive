@@ -52,12 +52,12 @@ fn main() {
 Check out the other [examples](https://github.com/gyscos/Cursive/tree/master/examples) to get these results, and more:
 
 <div>
-<a href="examples/edit.rs"><img src="doc/examples/edit.png" alt="edit.rs example", width="48%" /></a>
-<a href="examples/lorem.rs"><img src="doc/examples/lorem.png" alt="lorem.rs example", width="48%" /></a>
-<a href="examples/menubar.rs"><img src="doc/examples/menubar.png" alt="menubar.rs example", width="48%" /></a>
-<a href="examples/select.rs"><img src="doc/examples/select.png" alt="select.rs example", width="48%" /></a>
-<a href="examples/mines/"><img src="doc/examples/mines.png" alt="mines example", width="48%" /></a>
-<a href="examples/theme.rs"><img src="doc/examples/theme.png" alt="theme.rs example", width="48%" /></a>
+<a href="examples/edit.rs"><img src="https://imgur.com/CQgSwly.png" alt="edit.rs example", width="48%" /></a>
+<a href="examples/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
+<a href="examples/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
+<a href="examples/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
+<a href="examples/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
+<a href="examples/theme.rs"><img src="https://i.imgur.com/3Yleozc.png" alt="theme.rs example", width="48%" /></a>
 </div>
 
 _(Colors may depend on your terminal configuration.)_
