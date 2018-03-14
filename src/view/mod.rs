@@ -65,6 +65,8 @@ use vec::Vec2;
 use views::IdView;
 
 /// A view that can be downcasted to its concrete type.
+///
+/// This trait is automatically implemented for any `T: View`.
 pub trait AnyView: View {
     /// Downcast self to a `Any`.
     fn as_any(&self) -> &Any;
@@ -105,7 +107,30 @@ impl<T: View> AnyView for T {
     }
 }
 
+/// Represents a type that can be made into a `Box<AnyView>`.
+pub trait BoxableView {
+    /// Returns a `Box<AnyView>`.
+    fn as_boxed_view(self) -> Box<AnyView>;
+}
+
+impl<T> BoxableView for T
+where
+    T: View,
+{
+    fn as_boxed_view(self) -> Box<AnyView> {
+        Box::new(self)
+    }
+}
+
+impl BoxableView for Box<AnyView> {
+    fn as_boxed_view(self) -> Box<AnyView> {
+        self
+    }
+}
+
 /// Main trait defining a view behaviour.
+///
+/// This is what you should implement to define a custom View.
 pub trait View: Any {
     /// Called when a key was pressed.
     ///

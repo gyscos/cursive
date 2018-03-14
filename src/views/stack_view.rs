@@ -8,7 +8,7 @@ use std::ops::Deref;
 use theme::ColorStyle;
 use vec::Vec2;
 use view::{AnyView, Offset, Position, Selector, View, ViewWrapper};
-use views::{Layer, ShadowView};
+use views::{AnyBox, Layer, ShadowView};
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -152,7 +152,7 @@ impl<T: View> View for ChildWrapper<T> {
 }
 
 struct Child {
-    view: ChildWrapper<Box<AnyView>>,
+    view: ChildWrapper<AnyBox>,
     size: Vec2,
     placement: Placement,
 
@@ -182,7 +182,7 @@ impl StackView {
     where
         T: 'static + View,
     {
-        let boxed: Box<AnyView> = Box::new(view);
+        let boxed = AnyBox::boxed(view);
         self.layers.push(Child {
             view: ChildWrapper::Plain(Layer::new(boxed)),
             size: Vec2::zero(),
@@ -275,7 +275,7 @@ impl StackView {
     where
         T: 'static + View,
     {
-        let boxed: Box<AnyView> = Box::new(view);
+        let boxed = AnyBox::boxed(view);
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
             view: ChildWrapper::Shadow(
@@ -302,7 +302,11 @@ impl StackView {
     /// Remove the top-most layer.
     pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
         self.bg_dirty.set(true);
-        self.layers.pop().map(|child| child.view.unwrap())
+        self.layers
+            .pop()
+            .map(|child| child.view)
+            .map(ChildWrapper::unwrap)
+            .map(AnyBox::unwrap)
     }
 
     /// Computes the offset of the current top view.

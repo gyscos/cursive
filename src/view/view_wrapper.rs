@@ -95,32 +95,6 @@ pub trait ViewWrapper: 'static {
     }
 }
 
-// Some types easily implement ViewWrapper.
-// This includes Box<T: View>
-use std::ops::{Deref, DerefMut};
-
-impl<U, T> ViewWrapper for T
-where
-    U: View + ?Sized,
-    T: Deref<Target = U> + DerefMut + 'static,
-{
-    type V = U;
-
-    fn with_view<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&Self::V) -> R,
-    {
-        Some(f(self.deref()))
-    }
-
-    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: FnOnce(&mut Self::V) -> R,
-    {
-        Some(f(self.deref_mut()))
-    }
-}
-
 // The main point of implementing ViewWrapper is to have View for free.
 impl<T: ViewWrapper> View for T {
     fn draw(&self, printer: &Printer) {
