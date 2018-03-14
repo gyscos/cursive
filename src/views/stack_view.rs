@@ -555,17 +555,19 @@ mod tests {
 
     #[test]
     fn pop_add() {
-        let mut stack = StackView::new();
+        // Start with a simple stack
+        let mut stack = StackView::new().layer(TextView::new("1"));
 
-        stack.add_layer(TextView::new("1"));
-
+        // And keep poping and re-pushing the view
         for _ in 0..20 {
             let layer = stack.pop_layer().unwrap();
             stack.add_layer(layer);
         }
 
+        // We want to make sure we don't add any layer of Box'ing
         let layer = stack.pop_layer().unwrap();
         let text: Box<TextView> = layer.as_boxed_any().downcast().unwrap();
+
         assert_eq!(text.get_content().source(), "1");
     }
 
@@ -574,23 +576,45 @@ mod tests {
         let mut stack = StackView::new()
             .layer(TextView::new("1"))
             .layer(TextView::new("2"))
-            .layer(TextView::new("3"));
+            .layer(TextView::new("3"))
+            .layer(TextView::new("4"));
 
+        // Try moving views around, make sure we have the expected result
+
+        // 1,2,3,4
         stack.move_layer(
             LayerPosition::FromFront(0),
             LayerPosition::FromBack(0),
         );
+
+        // 4,1,2,3
         stack.move_layer(
             LayerPosition::FromBack(0),
             LayerPosition::FromFront(0),
         );
+        // 1,2,3,4
         stack.move_layer(
             LayerPosition::FromFront(1),
             LayerPosition::FromFront(0),
         );
+        // 1,2,4,3
+
+        let layer = stack.pop_layer().unwrap();
+        let text: Box<TextView> = layer.as_boxed_any().downcast().unwrap();
+        assert_eq!(text.get_content().source(), "3");
+
+        let layer = stack.pop_layer().unwrap();
+        let text: Box<TextView> = layer.as_boxed_any().downcast().unwrap();
+        assert_eq!(text.get_content().source(), "4");
 
         let layer = stack.pop_layer().unwrap();
         let text: Box<TextView> = layer.as_boxed_any().downcast().unwrap();
         assert_eq!(text.get_content().source(), "2");
+
+        let layer = stack.pop_layer().unwrap();
+        let text: Box<TextView> = layer.as_boxed_any().downcast().unwrap();
+        assert_eq!(text.get_content().source(), "1");
+
+        assert!(stack.pop_layer().is_none());
     }
 }
