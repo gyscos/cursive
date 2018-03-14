@@ -1,5 +1,5 @@
 use std::ops::{Deref, DerefMut};
-use view::{AnyView, View, ViewWrapper};
+use view::{AnyView, BoxableView, ViewWrapper};
 
 /// A boxed `AnyView`.
 pub struct AnyBox {
@@ -13,8 +13,8 @@ impl AnyBox {
     }
 
     /// Box the given view
-    pub fn boxed<T: View>(view: T) -> Self {
-        AnyBox::new(Box::new(view))
+    pub fn boxed<T: BoxableView>(view: T) -> Self {
+        AnyBox::new(view.as_boxed_view())
     }
 
     /// Returns the inner boxed view.
