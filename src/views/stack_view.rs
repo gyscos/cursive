@@ -7,9 +7,9 @@ use std::cell;
 use std::ops::Deref;
 use theme::ColorStyle;
 use vec::Vec2;
-use view::{AnyView, IntoBoxedView, Offset, Position, Selector, View,
-           ViewWrapper};
-use views::{AnyBox, Layer, ShadowView};
+use view::{View, Offset, Position, Selector,
+           ViewWrapper, IntoBoxedView};
+use views::{ViewBox, Layer, ShadowView};
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -74,9 +74,9 @@ impl<T: View> ChildWrapper<T> {
     }
 }
 
-impl<T: AnyView> ChildWrapper<T> {
+impl<T: View> ChildWrapper<T> {
     /// Returns a reference to the inner view
-    pub fn get_inner(&self) -> &AnyView {
+    pub fn get_inner(&self) -> &View {
         match *self {
             ChildWrapper::Shadow(ref shadow) => shadow.get_inner().get_inner(),
             ChildWrapper::Plain(ref layer) => layer.get_inner(),
@@ -84,7 +84,7 @@ impl<T: AnyView> ChildWrapper<T> {
     }
 
     /// Returns a mutable reference to the inner view
-    pub fn get_inner_mut(&mut self) -> &mut AnyView {
+    pub fn get_inner_mut(&mut self) -> &mut View {
         match *self {
             ChildWrapper::Shadow(ref mut shadow) => {
                 shadow.get_inner_mut().get_inner_mut()
@@ -153,7 +153,7 @@ impl<T: View> View for ChildWrapper<T> {
 }
 
 struct Child {
-    view: ChildWrapper<AnyBox>,
+    view: ChildWrapper<ViewBox>,
     size: Vec2,
     placement: Placement,
 
@@ -183,7 +183,7 @@ impl StackView {
     where
         T: IntoBoxedView,
     {
-        let boxed = AnyBox::boxed(view);
+        let boxed = ViewBox::boxed(view);
         self.layers.push(Child {
             view: ChildWrapper::Plain(Layer::new(boxed)),
             size: Vec2::zero(),
@@ -211,13 +211,13 @@ impl StackView {
     }
 
     /// Returns a reference to the layer at the given position.
-    pub fn get(&self, pos: LayerPosition) -> Option<&AnyView> {
+    pub fn get(&self, pos: LayerPosition) -> Option<&View> {
         let i = self.get_index(pos);
         self.layers.get(i).map(|child| child.view.get_inner())
     }
 
     /// Returns a mutable reference to the layer at the given position.
-    pub fn get_mut(&mut self, pos: LayerPosition) -> Option<&mut AnyView> {
+    pub fn get_mut(&mut self, pos: LayerPosition) -> Option<&mut View> {
         let i = self.get_index(pos);
         self.layers
             .get_mut(i)
@@ -276,7 +276,7 @@ impl StackView {
     where
         T: IntoBoxedView,
     {
-        let boxed = AnyBox::boxed(view);
+        let boxed = ViewBox::boxed(view);
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
             view: ChildWrapper::Shadow(
@@ -301,13 +301,13 @@ impl StackView {
     }
 
     /// Remove the top-most layer.
-    pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
+    pub fn pop_layer(&mut self) -> Option<Box<View>> {
         self.bg_dirty.set(true);
         self.layers
             .pop()
             .map(|child| child.view)
             .map(ChildWrapper::unwrap)
-            .map(AnyBox::unwrap)
+            .map(ViewBox::unwrap)
     }
 
     /// Computes the offset of the current top view.
@@ -553,6 +553,22 @@ impl View for StackView {
 mod tests {
     use super::*;
     use views::TextView;
+
+    #[test]
+    fn pop_add() {
+        let mut stack = StackView::new();
+
+        stack.add_layer(TextView::new("1"));
+
+        for _ in 0..20 {
+            let layer = stack.pop_layer().unwrap();
+            stack.add_layer(layer);
+        }
+
+        let layer = stack.pop_layer().unwrap();
+        let text: Box<TextView> = layer.as_boxed_any().downcast().unwrap();
+        assert_eq!(text.get_content().source(), "1");
+    }
 
     #[test]
     fn move_layer_works() {

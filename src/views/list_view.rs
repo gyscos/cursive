@@ -7,14 +7,14 @@ use std::any::Any;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
-use view::{AnyView, ScrollBase, Selector, View};
+use view::{ScrollBase, Selector, View};
 
 /// Represents a child from a [`ListView`].
 ///
 /// [`ListView`]: struct.ListView.html
 pub enum ListChild {
     /// A single row, with a label and a view.
-    Row(String, Box<AnyView>),
+    Row(String, Box<View>),
     /// A delimiter between groups.
     Delimiter,
 }
@@ -27,7 +27,7 @@ impl ListChild {
         }
     }
 
-    fn view(&mut self) -> Option<&mut AnyView> {
+    fn view(&mut self) -> Option<&mut View> {
         match *self {
             ListChild::Row(_, ref mut view) => Some(view.as_mut()),
             _ => None,

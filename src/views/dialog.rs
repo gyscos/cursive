@@ -10,8 +10,8 @@ use std::cmp::max;
 use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
 use vec::{Vec2, Vec4};
-use view::{AnyView, Selector, View};
-use views::{AnyBox, Button, DummyView, SizedView, TextView};
+use view::{View, Selector};
+use views::{ViewBox, Button, DummyView, SizedView, TextView};
 
 /// Identifies currently focused element in [`Dialog`].
 ///
@@ -58,7 +58,7 @@ pub struct Dialog {
     title_position: HAlign,
 
     // The actual inner view.
-    content: SizedView<AnyBox>,
+    content: SizedView<ViewBox>,
 
     // Optional list of buttons under the main view.
     // Include the top-left corner.
@@ -90,7 +90,7 @@ impl Dialog {
     /// Creates a new `Dialog` with the given content.
     pub fn around<V: View + 'static>(view: V) -> Self {
         Dialog {
-            content: SizedView::new(AnyBox::boxed(view)),
+            content: SizedView::new(ViewBox::boxed(view)),
             buttons: Vec::new(),
             title: String::new(),
             title_position: HAlign::Center,
@@ -120,12 +120,12 @@ impl Dialog {
     ///     .unwrap();
     /// assert_eq!(text_view.get_content().source(), "Hello!");
     /// ```
-    pub fn get_content(&self) -> &AnyView {
+    pub fn get_content(&self) -> &View {
         &*self.content.view
     }
 
     /// Gets mutable access to the content.
-    pub fn get_content_mut(&mut self) -> &mut AnyView {
+    pub fn get_content_mut(&mut self) -> &mut View {
         &mut *self.content.view
     }
 
@@ -133,7 +133,7 @@ impl Dialog {
     ///
     /// Previous content will be dropped.
     pub fn set_content<V: View + 'static>(&mut self, view: V) {
-        self.content = SizedView::new(AnyBox::boxed(view));
+        self.content = SizedView::new(ViewBox::boxed(view));
     }
 
     /// Convenient method to create a dialog with a simple text content.

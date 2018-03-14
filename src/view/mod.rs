@@ -51,8 +51,6 @@ mod boxable;
 
 mod into_boxed_view;
 
-pub mod internal;
-
 pub use self::into_boxed_view::IntoBoxedView;
 pub use self::boxable::Boxable;
 pub use self::identifiable::Identifiable;
@@ -72,7 +70,7 @@ use views::IdView;
 /// A view that can be downcasted to its concrete type.
 ///
 /// This trait is automatically implemented for any `T: View`.
-pub trait AnyView: View {
+pub trait AnyView {
     /// Downcast self to a `Any`.
     fn as_any(&self) -> &Any;
 
@@ -115,10 +113,7 @@ impl<T: View> AnyView for T {
 /// Main trait defining a view behaviour.
 ///
 /// This is what you should implement to define a custom View.
-///
-/// You can ignore the `Any` and `ToAny` trait bound;
-/// they are implementation details, and will be implemented automatically.
-pub trait View: Any + internal::ToAny {
+pub trait View: Any + AnyView {
     /// Called when a key was pressed.
     ///
     /// Default implementation just ignores it.

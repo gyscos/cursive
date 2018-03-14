@@ -35,7 +35,7 @@ macro_rules! impl_enabled {
     }
 }
 
-mod any_box;
+mod view_box;
 mod box_view;
 mod button;
 mod canvas;
@@ -62,7 +62,7 @@ mod text_area;
 mod text_view;
 mod tracked_view;
 
-pub use self::any_box::AnyBox;
+pub use self::view_box::ViewBox;
 pub use self::box_view::BoxView;
 pub use self::button::Button;
 pub use self::canvas::Canvas;

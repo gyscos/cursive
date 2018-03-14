@@ -9,7 +9,7 @@ use std::path::Path;
 use std::sync::mpsc;
 use theme;
 use vec::Vec2;
-use view::{self, AnyView, IntoBoxedView, Finder, Position, View};
+use view::{self, Finder, IntoBoxedView, Position, View};
 use views::{self, LayerPosition};
 
 /// Identifies a screen in the cursive root.
@@ -472,7 +472,7 @@ impl Cursive {
     }
 
     /// Convenient method to remove a layer from the current screen.
-    pub fn pop_layer(&mut self) -> Option<Box<AnyView>> {
+    pub fn pop_layer(&mut self) -> Option<Box<View>> {
         self.screen_mut().pop_layer()
     }
 
