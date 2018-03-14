@@ -176,7 +176,8 @@ macro_rules! wrap_impl {
     };
 }
 
-/// Convenient macro to implement the getters for inner [`View`] in [`ViewWrapper`].
+/// Convenient macro to implement the getters for inner [`View`] in
+/// [`ViewWrapper`].
 ///
 /// It defines the `get_inner` and `get_inner_mut` implementations.
 ///

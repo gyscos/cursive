@@ -1,8 +1,8 @@
-use view::{View};
+use view::View;
 
-/// Represents a type that can be made into a `Box<AnyView>`.
+/// Represents a type that can be made into a `Box<View>`.
 pub trait IntoBoxedView {
-    /// Returns a `Box<AnyView>`.
+    /// Returns a `Box<View>`.
     fn as_boxed_view(self) -> Box<View>;
 }
 

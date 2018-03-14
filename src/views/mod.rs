@@ -62,7 +62,6 @@ mod text_area;
 mod text_view;
 mod tracked_view;
 
-pub use self::view_box::ViewBox;
 pub use self::box_view::BoxView;
 pub use self::button::Button;
 pub use self::canvas::Canvas;
@@ -88,3 +87,4 @@ pub use self::stack_view::{LayerPosition, StackView};
 pub use self::text_area::TextArea;
 pub use self::text_view::{TextContent, TextContentRef, TextView};
 pub use self::tracked_view::TrackedView;
+pub use self::view_box::ViewBox;

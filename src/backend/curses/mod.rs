@@ -1,6 +1,6 @@
-use theme::{BaseColor, Color};
 use event::{Event, Key};
 use std::collections::HashMap;
+use theme::{BaseColor, Color};
 
 #[cfg(feature = "ncurses")]
 mod n;
@@ -58,7 +58,6 @@ where
         };
         target.insert(code, event);
     }
-
 }
 
 fn find_closest(color: &Color) -> i16 {

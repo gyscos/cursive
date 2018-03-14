@@ -7,9 +7,8 @@ use std::cell;
 use std::ops::Deref;
 use theme::ColorStyle;
 use vec::Vec2;
-use view::{View, Offset, Position, Selector,
-           ViewWrapper, IntoBoxedView};
-use views::{ViewBox, Layer, ShadowView};
+use view::{IntoBoxedView, Offset, Position, Selector, View, ViewWrapper};
+use views::{Layer, ShadowView, ViewBox};
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.

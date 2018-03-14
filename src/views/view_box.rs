@@ -1,5 +1,5 @@
 use std::ops::{Deref, DerefMut};
-use view::{View, ViewWrapper, IntoBoxedView};
+use view::{IntoBoxedView, View, ViewWrapper};
 
 /// A boxed `View`.
 ///
@@ -15,8 +15,10 @@ impl ViewBox {
     }
 
     /// Box the given view
-    pub fn boxed<T>(view: T) -> Self 
-    where T: IntoBoxedView {
+    pub fn boxed<T>(view: T) -> Self
+    where
+        T: IntoBoxedView,
+    {
         ViewBox::new(view.as_boxed_view())
     }
 
