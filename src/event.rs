@@ -34,6 +34,11 @@ impl Callback {
             f(siv);
         })))
     }
+
+    /// Returns a dummy callback that doesn't run anything.
+    pub fn dummy() -> Self {
+        Callback::from_fn(|_| ())
+    }
 }
 
 impl Deref for Callback {

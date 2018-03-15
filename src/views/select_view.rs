@@ -246,12 +246,18 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Removes an item from the list.
-    pub fn remove_item(&mut self, id: usize) {
+    ///
+    /// Returns a callback in response to the selection change.
+    ///
+    /// You should run this callback with a `&mut Cursive`:
+    pub fn remove_item(&mut self, id: usize) -> Callback {
         self.items.remove(id);
         let focus = self.focus();
         if focus >= id && focus > 0 {
             self.focus.set(focus - 1);
         }
+
+        self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Chainable variant of add_item
@@ -318,7 +324,11 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Moves the selection to the given position.
-    pub fn set_selection(&mut self, i: usize) {
+    ///
+    /// Returns a callback in response to the selection change.
+    ///
+    /// You should run this callback with a `&mut Cursive`:
+    pub fn set_selection(&mut self, i: usize) -> Callback {
         // TODO: Check if `i >= self.len()` ?
         // assert!(i < self.len(), "SelectView: trying to select out-of-bound");
         // Or just cap the ID?
@@ -329,27 +339,54 @@ impl<T: 'static> SelectView<T> {
         };
         self.focus.set(i);
         self.scrollbase.scroll_to(i);
+
+        self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Sets the selection to the given position.
     ///
     /// Chainable variant.
+    ///
+    /// Does not apply `on_select` callbacks.
     pub fn selected(self, i: usize) -> Self {
-        self.with(|s| s.set_selection(i))
+        self.with(|s| {
+            s.set_selection(i);
+        })
     }
 
     /// Moves the selection up by the given number of rows.
-    pub fn select_up(&mut self, n: usize) {
+    ///
+    /// Returns a callback in response to the selection change.
+    ///
+    /// You should run this callback with a `&mut Cursive`:
+    ///
+    /// ```rust
+    /// # use cursive::{Cursive, views::SelectView};
+    /// # fn main() {}
+    /// fn select_up(siv: &mut Cursive, view: &mut SelectView<()>) {
+    ///     let cb = view.select_up(1);
+    ///     cb(siv);
+    /// }
+    /// ```
+    pub fn select_up(&mut self, n: usize) -> Callback {
         self.focus_up(n);
         let focus = self.focus();
         self.scrollbase.scroll_to(focus);
+
+        self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Moves the selection down by the given number of rows.
-    pub fn select_down(&mut self, n: usize) {
+    ///
+    /// Returns a callback in response to the selection change.
+    ///
+    /// You should run this callback with a `&mut Cursive`.
+    pub fn select_down(&mut self, n: usize) -> Callback {
         self.focus_down(n);
         let focus = self.focus();
         self.scrollbase.scroll_to(focus);
+
+        self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
     // Low-level focus change. Does not fix scrollbase.
@@ -497,10 +534,15 @@ impl<T: 'static> SelectView<T> {
             self.scrollbase.scroll_to(focus);
         }
 
-        EventResult::Consumed(self.on_select.clone().map(|cb| {
+        EventResult::Consumed(self.make_select_cb())
+    }
+
+    /// Returns a callback from selection change.
+    fn make_select_cb(&self) -> Option<Callback> {
+        self.on_select.clone().map(|cb| {
             let v = self.selection();
             Callback::from_fn(move |s| cb(s, &v))
-        }))
+        })
     }
 
     fn open_popup(&mut self) -> EventResult {
