@@ -319,7 +319,14 @@ impl<T: 'static> SelectView<T> {
 
     /// Moves the selection to the given position.
     pub fn set_selection(&mut self, i: usize) {
-        // TODO: Check if `i > self.len()` ?
+        // TODO: Check if `i >= self.len()` ?
+        // assert!(i < self.len(), "SelectView: trying to select out-of-bound");
+        // Or just cap the ID?
+        let i = if self.len() == 0 {
+            0
+        } else {
+            min(i, self.len() - 1)
+        };
         self.focus.set(i);
         self.scrollbase.scroll_to(i);
     }
@@ -430,7 +437,11 @@ impl<T: 'static> SelectView<T> {
                     self.last_size.saturating_sub(scrollbar_size);
                 if position < clickable_size {
                     fix_scroll = false;
-                    self.focus.set(position.y + self.scrollbase.start_line);
+                    let focus = position.y + self.scrollbase.start_line;
+                    if focus < self.len() {
+                        // Only select actual items
+                        self.focus.set(focus);
+                    }
                 }
             },
             Event::Mouse {
@@ -501,6 +512,7 @@ impl<T: 'static> SelectView<T> {
             let on_submit = self.on_submit.as_ref().cloned();
             let value = Rc::clone(&item.value);
             tree.add_leaf(item.label.clone(), move |s| {
+                // TODO: What if an item was removed in the meantime?
                 focus.set(i);
                 if let Some(ref on_submit) = on_submit {
                     on_submit(s, &value);
