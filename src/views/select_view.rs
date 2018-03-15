@@ -361,7 +361,8 @@ impl<T: 'static> SelectView<T> {
     /// You should run this callback with a `&mut Cursive`:
     ///
     /// ```rust
-    /// # use cursive::{Cursive, views::SelectView};
+    /// # use cursive::Cursive;
+    /// # use cursive::views::SelectView;
     /// # fn main() {}
     /// fn select_up(siv: &mut Cursive, view: &mut SelectView<()>) {
     ///     let cb = view.select_up(1);
