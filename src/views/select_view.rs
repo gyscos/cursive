@@ -249,7 +249,7 @@ impl<T: 'static> SelectView<T> {
     ///
     /// Returns a callback in response to the selection change.
     ///
-    /// You should run this callback with a `&mut Cursive`:
+    /// You should run this callback with a `&mut Cursive`.
     pub fn remove_item(&mut self, id: usize) -> Callback {
         self.items.remove(id);
         let focus = self.focus();
@@ -327,7 +327,7 @@ impl<T: 'static> SelectView<T> {
     ///
     /// Returns a callback in response to the selection change.
     ///
-    /// You should run this callback with a `&mut Cursive`:
+    /// You should run this callback with a `&mut Cursive`.
     pub fn set_selection(&mut self, i: usize) -> Callback {
         // TODO: Check if `i >= self.len()` ?
         // assert!(i < self.len(), "SelectView: trying to select out-of-bound");

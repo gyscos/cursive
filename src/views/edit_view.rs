@@ -329,13 +329,19 @@ impl EditView {
     }
 
     /// Replace the entire content of the view with the given one.
-    pub fn set_content<S: Into<String>>(&mut self, content: S) {
+    ///
+    /// Returns a callback in response to content change.
+    ///
+    /// You should run this callback with a `&mut Cursive`.
+    pub fn set_content<S: Into<String>>(&mut self, content: S) -> Callback {
         let content = content.into();
         let len = content.len();
 
         self.content = Rc::new(content);
         self.offset = 0;
         self.set_cursor(len);
+
+        self.make_edit_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Get the current text.
@@ -346,6 +352,8 @@ impl EditView {
     /// Sets the current content to the given value.
     ///
     /// Convenient chainable method.
+    ///
+    /// Does not run the `on_edit` callback.
     pub fn content<S: Into<String>>(mut self, content: S) -> Self {
         self.set_content(content);
         self
@@ -359,19 +367,43 @@ impl EditView {
     }
 
     /// Insert `ch` at the current cursor position.
-    pub fn insert(&mut self, ch: char) {
+    ///
+    /// Returns a callback in response to content change.
+    ///
+    /// You should run this callback with a `&mut Cursive`.
+    pub fn insert(&mut self, ch: char) -> Callback {
         // `make_mut` applies copy-on-write
         // It means it'll just return a ref if no one else has a ref,
         // and it will clone it into `self.content` otherwise.
         Rc::make_mut(&mut self.content).insert(self.cursor, ch);
         self.cursor += ch.len_utf8();
+
+        self.make_edit_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Remove the character at the current cursor position.
-    pub fn remove(&mut self, len: usize) {
+    ///
+    /// Returns a callback in response to content change.
+    ///
+    /// You should run this callback with a `&mut Cursive`.
+    pub fn remove(&mut self, len: usize) -> Callback {
         let start = self.cursor;
         let end = self.cursor + len;
         for _ in Rc::make_mut(&mut self.content).drain(start..end) {}
+
+        self.make_edit_cb().unwrap_or_else(Callback::dummy)
+    }
+
+    fn make_edit_cb(&self) -> Option<Callback> {
+        self.on_edit.clone().map(|cb| {
+            // Get a new Rc on the content
+            let content = Rc::clone(&self.content);
+            let cursor = self.cursor;
+
+            Callback::from_fn(move |s| {
+                cb(s, &content, cursor);
+            })
+        })
     }
 
     fn keep_cursor_in_view(&mut self) {
@@ -536,7 +568,9 @@ impl View for EditView {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Char(ch) => self.insert(ch),
+            Event::Char(ch) => {
+                self.insert(ch);
+            }
             // TODO: handle ctrl-key?
             Event::Key(Key::Home) => self.cursor = 0,
             Event::Key(Key::End) => self.cursor = self.content.len(),
@@ -599,15 +633,6 @@ impl View for EditView {
 
         self.keep_cursor_in_view();
 
-        let cb = self.on_edit.clone().map(|cb| {
-            // Get a new Rc on the content
-            let content = Rc::clone(&self.content);
-            let cursor = self.cursor;
-
-            Callback::from_fn(move |s| {
-                cb(s, &content, cursor);
-            })
-        });
-        EventResult::Consumed(cb)
+        EventResult::Consumed(self.make_edit_cb())
     }
 }
