@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::UnicodeWidthStr;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 use utils::lines::simple::{simple_prefix, simple_suffix};
 use vec::Vec2;
 use view::View;
@@ -75,6 +75,7 @@ pub type OnSubmit = Fn(&mut Cursive, &str);
 pub struct EditView {
     /// Current content.
     content: Rc<String>,
+
     /// Cursor position in the content, in bytes.
     cursor: usize,
 
@@ -82,6 +83,12 @@ pub struct EditView {
     ///
     /// (When the content is too long for the display, we hide part of it)
     offset: usize,
+
+    /// Optional limit to the content width.
+    ///
+    /// Input will be rejected if it would make the content exceed this width.
+    max_content_width: Option<usize>,
+
     /// Last display length, to know the possible offset range
     last_length: usize,
 
@@ -116,11 +123,30 @@ impl EditView {
             last_length: 0, // scrollable: false,
             on_edit: None,
             on_submit: None,
+            max_content_width: None,
             secret: false,
             filler: "_".to_string(),
             enabled: true,
             style: ColorStyle::secondary(),
         }
+    }
+
+    /// Sets a maximum width for the content.
+    ///
+    /// Input will be rejected if it would make the content exceed this width.
+    ///
+    /// Giving `None` means no maximum width is applied.
+    pub fn set_max_content_width(&mut self, width: Option<usize>) {
+        self.max_content_width = width;
+    }
+
+    /// Sets a maximum width for the content.
+    ///
+    /// Input will be rejected if it would make the content exceed this width.
+    ///
+    /// Chainable variant.
+    pub fn max_content_width(self, width: usize) -> Self {
+        self.with(|s| s.set_max_content_width(Some(width)))
     }
 
     /// If `secret` is `true`, the content won't be displayed in clear.
@@ -372,11 +398,26 @@ impl EditView {
     ///
     /// You should run this callback with a `&mut Cursive`.
     pub fn insert(&mut self, ch: char) -> Callback {
+        // First, make sure we can actually insert anything.
+        if let Some(width) = self.max_content_width {
+            // XXX: we assume here that the widths are linearly additive.
+            // Is that true? What about weird combined unicode thingies?
+            // Also, say the user copy+paste some content, do we want to
+            // stop halfway through a possibly split grapheme?
+            if ch.width().unwrap_or(0) + self.content.width() > width {
+                // ABORT
+                return Callback::dummy();
+            }
+        }
+
         // `make_mut` applies copy-on-write
         // It means it'll just return a ref if no one else has a ref,
         // and it will clone it into `self.content` otherwise.
+
         Rc::make_mut(&mut self.content).insert(self.cursor, ch);
         self.cursor += ch.len_utf8();
+
+        self.keep_cursor_in_view();
 
         self.make_edit_cb().unwrap_or_else(Callback::dummy)
     }
@@ -390,6 +431,8 @@ impl EditView {
         let start = self.cursor;
         let end = self.cursor + len;
         for _ in Rc::make_mut(&mut self.content).drain(start..end) {}
+
+        self.keep_cursor_in_view();
 
         self.make_edit_cb().unwrap_or_else(Callback::dummy)
     }
@@ -569,7 +612,7 @@ impl View for EditView {
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
             Event::Char(ch) => {
-                self.insert(ch);
+                return EventResult::Consumed(Some(self.insert(ch)));
             }
             // TODO: handle ctrl-key?
             Event::Key(Key::Home) => self.cursor = 0,
@@ -597,7 +640,7 @@ impl View for EditView {
                     .unwrap()
                     .len();
                 self.cursor -= len;
-                self.remove(len);
+                return EventResult::Consumed(Some(self.remove(len)));
             }
             Event::Key(Key::Del) if self.cursor < self.content.len() => {
                 let len = self.content[self.cursor..]
@@ -605,7 +648,7 @@ impl View for EditView {
                     .next()
                     .unwrap()
                     .len();
-                self.remove(len);
+                return EventResult::Consumed(Some(self.remove(len)));
             }
             Event::Key(Key::Enter) if self.on_submit.is_some() => {
                 let cb = self.on_submit.clone().unwrap();
@@ -631,7 +674,7 @@ impl View for EditView {
             _ => return EventResult::Ignored,
         }
 
-        self.keep_cursor_in_view();
+        // self.keep_cursor_in_view();
 
         EventResult::Consumed(self.make_edit_cb())
     }
