@@ -242,7 +242,7 @@ impl Mul<usize> for XY<usize> {
 
 /// Four values representing each direction.
 #[derive(Clone, Copy)]
-pub struct Vec4 {
+pub struct Margins {
     /// Left margin
     pub left: usize,
     /// Right margin
@@ -253,10 +253,10 @@ pub struct Vec4 {
     pub bottom: usize,
 }
 
-impl Vec4 {
-    /// Creates a new Vec4.
+impl Margins {
+    /// Creates a new Margins.
     pub fn new(left: usize, right: usize, top: usize, bottom: usize) -> Self {
-        Vec4 {
+        Margins {
             left: left,
             right: right,
             top: top,
@@ -290,38 +290,38 @@ impl Vec4 {
     }
 }
 
-impl From<(usize, usize, usize, usize)> for Vec4 {
-    fn from((left, right, top, bottom): (usize, usize, usize, usize)) -> Vec4 {
-        Vec4::new(left, right, top, bottom)
+impl From<(usize, usize, usize, usize)> for Margins {
+    fn from((left, right, top, bottom): (usize, usize, usize, usize)) -> Margins {
+        Margins::new(left, right, top, bottom)
     }
 }
 
-impl From<(i32, i32, i32, i32)> for Vec4 {
-    fn from((left, right, top, bottom): (i32, i32, i32, i32)) -> Vec4 {
+impl From<(i32, i32, i32, i32)> for Margins {
+    fn from((left, right, top, bottom): (i32, i32, i32, i32)) -> Margins {
         (left as usize, right as usize, top as usize, bottom as usize).into()
     }
 }
 
-impl From<((i32, i32), (i32, i32))> for Vec4 {
-    fn from(((left, right), (top, bottom)): ((i32, i32), (i32, i32))) -> Vec4 {
+impl From<((i32, i32), (i32, i32))> for Margins {
+    fn from(((left, right), (top, bottom)): ((i32, i32), (i32, i32))) -> Margins {
         (left, right, top, bottom).into()
     }
 }
-impl From<((usize, usize), (usize, usize))> for Vec4 {
+impl From<((usize, usize), (usize, usize))> for Margins {
     fn from(
         ((left, right), (top, bottom)): ((usize, usize), (usize, usize))
-    ) -> Vec4 {
+    ) -> Margins {
         (left, right, top, bottom).into()
     }
 }
 
-impl<T: Into<Vec4>> Add<T> for Vec4 {
-    type Output = Vec4;
+impl<T: Into<Margins>> Add<T> for Margins {
+    type Output = Margins;
 
-    fn add(self, other: T) -> Vec4 {
+    fn add(self, other: T) -> Margins {
         let ov = other.into();
 
-        Vec4 {
+        Margins {
             left: self.left + ov.left,
             right: self.right + ov.right,
             top: self.top + ov.top,
@@ -330,13 +330,13 @@ impl<T: Into<Vec4>> Add<T> for Vec4 {
     }
 }
 
-impl<T: Into<Vec4>> Sub<T> for Vec4 {
-    type Output = Vec4;
+impl<T: Into<Margins>> Sub<T> for Margins {
+    type Output = Margins;
 
-    fn sub(self, other: T) -> Vec4 {
+    fn sub(self, other: T) -> Margins {
         let ov = other.into();
 
-        Vec4 {
+        Margins {
             left: self.left - ov.left,
             right: self.right - ov.right,
             top: self.top - ov.top,
@@ -345,11 +345,11 @@ impl<T: Into<Vec4>> Sub<T> for Vec4 {
     }
 }
 
-impl Div<usize> for Vec4 {
-    type Output = Vec4;
+impl Div<usize> for Margins {
+    type Output = Margins;
 
-    fn div(self, other: usize) -> Vec4 {
-        Vec4 {
+    fn div(self, other: usize) -> Margins {
+        Margins {
             left: self.left / other,
             right: self.right / other,
             top: self.top / other,
@@ -358,11 +358,11 @@ impl Div<usize> for Vec4 {
     }
 }
 
-impl Mul<usize> for Vec4 {
-    type Output = Vec4;
+impl Mul<usize> for Margins {
+    type Output = Margins;
 
-    fn mul(self, other: usize) -> Vec4 {
-        Vec4 {
+    fn mul(self, other: usize) -> Margins {
+        Margins {
             left: self.left * other,
             right: self.right * other,
             top: self.top * other,

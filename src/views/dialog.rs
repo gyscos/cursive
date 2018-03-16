@@ -9,7 +9,7 @@ use std::cell::Cell;
 use std::cmp::max;
 use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
-use vec::{Vec2, Vec4};
+use vec::{Vec2, Margins};
 use view::{Selector, View};
 use views::{Button, DummyView, SizedView, TextView, ViewBox};
 
@@ -65,10 +65,10 @@ pub struct Dialog {
     buttons: Vec<ChildButton>,
 
     // Padding around the inner view.
-    padding: Vec4,
+    padding: Margins,
 
     // Borders around everything.
-    borders: Vec4,
+    borders: Margins,
 
     // The current element in focus
     focus: DialogFocus,
@@ -95,8 +95,8 @@ impl Dialog {
             title: String::new(),
             title_position: HAlign::Center,
             focus: DialogFocus::Content,
-            padding: Vec4::new(1, 1, 0, 0),
-            borders: Vec4::new(1, 1, 1, 1),
+            padding: Margins::new(1, 1, 0, 0),
+            borders: Margins::new(1, 1, 1, 1),
             align: Align::top_right(),
         }
     }
@@ -214,7 +214,7 @@ impl Dialog {
     }
 
     /// Sets the padding in the dialog (around content and buttons).
-    pub fn padding<T: Into<Vec4>>(mut self, padding: T) -> Self {
+    pub fn padding<T: Into<Margins>>(mut self, padding: T) -> Self {
         self.padding = padding.into();
 
         self

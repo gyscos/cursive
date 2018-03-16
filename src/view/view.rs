@@ -9,24 +9,21 @@ use view::{AnyView, Selector};
 ///
 /// This is what you should implement to define a custom View.
 pub trait View: Any + AnyView {
-    /// Called when a key was pressed.
-    ///
-    /// Default implementation just ignores it.
-    fn on_event(&mut self, Event) -> EventResult {
-        EventResult::Ignored
-    }
 
-    /// Returns the minimum size the view requires with the given restrictions.
+    /// Draws the view with the given printer (includes bounds) and focus.
     ///
-    /// If the view is flexible (it has multiple size options), it can try
-    /// to return one that fits the given `constraint`.
-    /// It's also fine to ignore it and return a fixed value.
+    /// This is the only *required* method to implement.
+    fn draw(&self, printer: &Printer);
+
+    /// Called once the size for this view has been decided.
     ///
-    /// Default implementation always return `(1,1)`.
-    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
-        let _ = constraint;
-        Vec2::new(1, 1)
-    }
+    /// It can be used to pre-compute the configuration of child views.
+    ///
+    /// View groups should propagate the information to their children.
+    ///
+    /// At this point, the given size is final and cannot be negociated.
+    /// It is guaranteed to be the size available for the call to `draw()`.
+    fn layout(&mut self, Vec2) {}
 
     /// Returns `true` if the view content changed since last layout phase.
     ///
@@ -43,13 +40,29 @@ pub trait View: Any + AnyView {
         true
     }
 
-    /// Called once the size for this view has been decided,
+    /// Returns the minimum size the view requires with the given restrictions.
     ///
-    /// View groups should propagate the information to their children.
-    fn layout(&mut self, Vec2) {}
+    /// This is the main way a view communicate its size to its parent.
+    ///
+    /// If the view is flexible (it has multiple size options), it can try
+    /// to return one that fits the given `constraint`.
+    /// It's also fine to ignore it and return a fixed value.
+    ///
+    /// Default implementation always return `(1,1)`.
+    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+        let _ = constraint;
+        Vec2::new(1, 1)
+    }
 
-    /// Draws the view with the given printer (includes bounds) and focus.
-    fn draw(&self, printer: &Printer);
+    /// Called when an event is received (key press, mouse event, ...).
+    ///
+    /// You can return an `EventResult`, with an optional callback to be run.
+    ///
+    /// Default implementation just ignores it.
+    fn on_event(&mut self, Event) -> EventResult {
+        EventResult::Ignored
+    }
+
 
     /// Runs a closure on the view identified by the given selector.
     ///
