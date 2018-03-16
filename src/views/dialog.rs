@@ -9,8 +9,8 @@ use std::cell::Cell;
 use std::cmp::max;
 use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
-use vec::{Vec2, Margins};
-use view::{Selector, View};
+use vec::Vec2;
+use view::{Margins, Selector, View};
 use views::{Button, DummyView, SizedView, TextView, ViewBox};
 
 /// Identifies currently focused element in [`Dialog`].
