@@ -30,9 +30,9 @@ struct ChildButton {
 }
 
 impl ChildButton {
-    pub fn new<F, R, S: Into<String>>(label: S, cb: F) -> Self
+    pub fn new<F, S: Into<String>>(label: S, cb: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive) -> R,
+        F: 'static + Fn(&mut Cursive),
     {
         ChildButton {
             button: SizedView::new(Button::new(label, cb)),
@@ -151,9 +151,9 @@ impl Dialog {
     /// Adds a button to the dialog with the given label and callback.
     ///
     /// Consumes and returns self for easy chaining.
-    pub fn button<F, R, S: Into<String>>(mut self, label: S, cb: F) -> Self
+    pub fn button<F, S: Into<String>>(mut self, label: S, cb: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive) -> R,
+        F: 'static + Fn(&mut Cursive),
     {
         self.buttons.push(ChildButton::new(label, cb));
 
@@ -184,7 +184,9 @@ impl Dialog {
 
     /// Shortcut method to add a button that will dismiss the dialog.
     pub fn dismiss_button<S: Into<String>>(self, label: S) -> Self {
-        self.button(label, |s| s.pop_layer())
+        self.button(label, |s| {
+            s.pop_layer();
+        })
     }
 
     /// Sets the title of the dialog.

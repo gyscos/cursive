@@ -161,7 +161,9 @@ impl MenuPopup {
                             action_cb.clone()(s);
                         }
                     },
-                )).on_event(Key::Left, |s| s.pop_layer()),
+                )).on_event(Key::Left, |s| {
+                    s.pop_layer();
+                }),
             );
         })
     }

@@ -63,7 +63,7 @@ fn show_options(siv: &mut Cursive) {
                         new_game(s, *option);
                     }),
             )
-            .button("Back", |s| s.pop_layer()),
+            .dismiss_button("Back"),
     );
 }
 

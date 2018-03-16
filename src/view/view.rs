@@ -5,7 +5,6 @@ use std::any::Any;
 use vec::Vec2;
 use view::{AnyView, Selector};
 
-
 /// Main trait defining a view behaviour.
 ///
 /// This is what you should implement to define a custom View.
@@ -86,4 +85,3 @@ pub trait View: Any + AnyView {
         false
     }
 }
-

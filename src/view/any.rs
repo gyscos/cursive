@@ -43,4 +43,3 @@ impl<T: View> AnyView for T {
         self
     }
 }
-

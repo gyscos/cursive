@@ -63,6 +63,6 @@ pub use self::position::{Offset, Position};
 pub use self::scroll::{ScrollBase, ScrollStrategy};
 pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
+pub use self::view::View;
 pub use self::view_path::ViewPath;
 pub use self::view_wrapper::ViewWrapper;
-pub use self::view::View;

@@ -41,8 +41,10 @@ fn main() {
                         ).unwrap();
                         find(s, &text);
                     })
-                    .button("Cancel", |s| s.pop_layer()),
-            ).on_event(Event::Key(Key::Esc), |s| s.pop_layer()),
+                    .dismiss_button("Cancel"),
+            ).on_event(Event::Key(Key::Esc), |s| {
+                s.pop_layer();
+            }),
         )
     });
 

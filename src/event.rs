@@ -26,9 +26,9 @@ pub struct Callback(Rc<Box<Fn(&mut Cursive)>>);
 
 impl Callback {
     /// Wraps the given function into a `Callback` object.
-    pub fn from_fn<F, R>(f: F) -> Self
+    pub fn from_fn<F>(f: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive) -> R,
+        F: 'static + Fn(&mut Cursive),
     {
         Callback(Rc::new(Box::new(move |siv| {
             f(siv);
@@ -77,9 +77,9 @@ pub enum EventResult {
 
 impl EventResult {
     /// Convenient method to create `Consumed(Some(f))`
-    pub fn with_cb<F, R>(f: F) -> Self
+    pub fn with_cb<F>(f: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive) -> R,
+        F: 'static + Fn(&mut Cursive),
     {
         EventResult::Consumed(Some(Callback::from_fn(f)))
     }
