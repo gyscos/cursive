@@ -101,6 +101,7 @@ pub mod view;
 
 pub mod views;
 pub mod vec;
+pub mod rect;
 pub mod theme;
 pub mod align;
 pub mod menu;
