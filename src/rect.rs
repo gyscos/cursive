@@ -79,6 +79,13 @@ impl Rect {
         self
     }
 
+    /// Adds the given offset to this rectangle.
+    pub fn offset<V>(&mut self, offset: V) where V: Into<Vec2> {
+        let offset = offset.into();
+        self.top_left = self.top_left + offset;
+        self.bottom_right = self.bottom_right + offset;
+    }
+
     /// Returns the size of the rectangle.
     pub fn size(self) -> Vec2 {
         self.bottom_right - self.top_left + (1, 1)
