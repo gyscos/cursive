@@ -103,11 +103,11 @@ This way of chaining method to set-up the view is very common in cursive. Most
 views provide chainable variants of their methods, to allow creating the view
 and configuring it in one spot.
 
-[`TextView`]: http://gyscos.github.io/Cursive/cursive/views/struct.TextView
-[`Dialog`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html
-[`Dialog::around`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.around
-[`Dialog::text`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.text
-[`Dialog::title`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.title
+[`TextView`]: https://docs.rs/cursive/0/cursive/views/struct.TextView
+[`Dialog`]: https://docs.rs/cursive/0/cursive/views/struct.Dialog.html
+[`Dialog::around`]: https://docs.rs/cursive/0/cursive/views/struct.Dialog.html#method.around
+[`Dialog::text`]: https://docs.rs/cursive/0/cursive/views/struct.Dialog.html#method.text
+[`Dialog::title`]: https://docs.rs/cursive/0/cursive/views/struct.Dialog.html#method.title
 
 ## Buttons
 
@@ -149,7 +149,7 @@ fn show_next(_: &mut Cursive) {
 }
 ```
 
-[`Dialog::button`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.button
+[`Dialog::button`]: https://docs.rs/cursive/0/cursive/views/struct.Dialog.html#method.button
 
 ## Layers
 
@@ -210,7 +210,7 @@ fn show_answer(s: &mut Cursive, msg: &str) {
 Here, `show_answer()` does the same thing: remove the previous layer, and add
 a new `Dialog` instead.
 
-[`Cursive::pop_layer`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.pop_layer
+[`Cursive::pop_layer`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.pop_layer
 
 ## Conclusion
 

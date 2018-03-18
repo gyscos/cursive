@@ -138,11 +138,11 @@ not on the `BoxView` returned by `fixed_size`!)
 What we do there should be pretty familiar by now:
 replace the layer with a simple dialog.
 
-[`SelectView`]: http://gyscos.github.io/Cursive/cursive/views/struct.SelectView.html
-[`BoxView`]: http://gyscos.github.io/Cursive/cursive/views/struct.BoxView.html
-[`Boxable`]: http://gyscos.github.io/Cursive/cursive/view/trait.Boxable.html
-[`traits`]: http://gyscos.github.io/Cursive/cursive/traits/index.html
-[`SelectView::on_submit`]: http://gyscos.github.io/Cursive/cursive/views/struct.SelectView.html#method.on_submit
+[`SelectView`]: https://docs.rs/cursive/0/cursive/views/struct.SelectView.html
+[`BoxView`]: https://docs.rs/cursive/0/cursive/views/struct.BoxView.html
+[`Boxable`]: https://docs.rs/cursive/0/cursive/view/trait.Boxable.html
+[`traits`]: https://docs.rs/cursive/0/cursive/traits/index.html
+[`SelectView::on_submit`]: https://docs.rs/cursive/0/cursive/views/struct.SelectView.html#method.on_submit
 
 ## Linear layouts
 
@@ -188,10 +188,10 @@ We've added a `DummyView` again to add some space between the list and the
 buttons. Though with an empty list, it doesn't look like much yet. Let's fill
 this list with names!
 
-[`Button`]: http://gyscos.github.io/Cursive/cursive/views/struct.Button.html
-[`Dialog::around`]: http://gyscos.github.io/Cursive/cursive/views/struct.Dialog.html#method.new
-[`LinearLayout`]: http://gyscos.github.io/Cursive/cursive/views/struct.LinearLayout.html
-[`DummyView`]: http://gyscos.github.io/Cursive/cursive/views/struct.DummyView.html
+[`Button`]: https://docs.rs/cursive/0/cursive/views/struct.Button.html
+[`Dialog::around`]: https://docs.rs/cursive/0/cursive/views/struct.Dialog.html#method.new
+[`LinearLayout`]: https://docs.rs/cursive/0/cursive/views/struct.LinearLayout.html
+[`DummyView`]: https://docs.rs/cursive/0/cursive/views/struct.DummyView.html
 
 ## IDs
 
@@ -311,14 +311,14 @@ this method returns a handle, through which we can mutate the view.
 It uses `Rc` and `RefCell` under the hood to provide mutable access to the
 view without borrowing the `Cursive` root, leaving us free to pop layers.
 
-[`EditView`]: http://gyscos.github.io/Cursive/cursive/views/struct.EditView.html
-[`IdView`]: http://gyscos.github.io/Cursive/cursive/views/struct.IdView.html
-[`IdView::new`]: http://gyscos.github.io/Cursive/cursive/prelude/struct.IdView.html#method.around
-[`Identifiable`]: http://gyscos.github.io/Cursive/cursive/view/trait.Identifiable.html
-[`Cursive::find_id`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.find_id
-[`Cursive::call_on_id`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.call_on_id
-[`SelectView::selected_id`]: http://gyscos.github.io/Cursive/cursive/views/struct.SelectView.html#method.selected_id
-[`SelectView::remove_item`]: http://gyscos.github.io/Cursive/cursive/views/struct.SelectView.html#method.remove_item
+[`EditView`]: https://docs.rs/cursive/0/cursive/views/struct.EditView.html
+[`IdView`]: https://docs.rs/cursive/0/cursive/views/struct.IdView.html
+[`IdView::new`]: https://docs.rs/cursive/0/cursive/prelude/struct.IdView.html#method.around
+[`Identifiable`]: https://docs.rs/cursive/0/cursive/view/trait.Identifiable.html
+[`Cursive::find_id`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.find_id
+[`Cursive::call_on_id`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.call_on_id
+[`SelectView::selected_id`]: https://docs.rs/cursive/0/cursive/views/struct.SelectView.html#method.selected_id
+[`SelectView::remove_item`]: https://docs.rs/cursive/0/cursive/views/struct.SelectView.html#method.remove_item
 
 ## Conclusion
 

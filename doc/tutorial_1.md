@@ -91,7 +91,7 @@ It's rather easy to identify the two steps involved.
 If you run this, you'll get an empty blue terminal, with no way of properly
 leaving the application (you'll have to press <Ctrl-C> to kill it).
 
-[`Cursive`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html
+[`Cursive`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html
 
 ## Interactivity
 
@@ -128,10 +128,10 @@ fn main() {
 As expected, running it show no visible change, but hitting the `q` key at
 least closes the application.
 
-[`add_global_callback`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.add_global_callback
-[`event::Event`]: http://gyscos.github.io/Cursive/cursive/event/enum.Event.html
-[`event::Key`]: http://gyscos.github.io/Cursive/cursive/event/enum.Key.html
-[`Cursive::quit`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.quit
+[`add_global_callback`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.add_global_callback
+[`event::Event`]: https://docs.rs/cursive/0/cursive/event/enum.Event.html
+[`event::Key`]: https://docs.rs/cursive/0/cursive/event/enum.Key.html
+[`Cursive::quit`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.quit
 
 ## Views
 
@@ -169,9 +169,9 @@ fn main() {
 }
 ```
 
-[`View`s]: http://gyscos.github.io/Cursive/cursive/view/trait.View.html
-[`TextView`]: http://gyscos.github.io/Cursive/cursive/views/struct.TextView.html
-[`StackView`]: http://gyscos.github.io/Cursive/cursive/views/struct.StackView.html
-[`Cursive::add_layer`]: http://gyscos.github.io/Cursive/cursive/struct.Cursive.html#method.add_layer
+[`View`s]: https://docs.rs/cursive/0/cursive/view/trait.View.html
+[`TextView`]: https://docs.rs/cursive/0/cursive/views/struct.TextView.html
+[`StackView`]: https://docs.rs/cursive/0/cursive/views/struct.StackView.html
+[`Cursive::add_layer`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.add_layer
 
 Next: [Starting with Cursive (2/3)](./tutorial_2.md)
