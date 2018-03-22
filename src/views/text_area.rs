@@ -1,6 +1,7 @@
 use {Printer, With, XY};
 use direction::Direction;
 use event::{Event, EventResult, Key, MouseButton, MouseEvent};
+use rect::Rect;
 use std::cmp::min;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
@@ -131,6 +132,10 @@ impl TextArea {
     /// Finds the row containing the cursor
     fn selected_row(&self) -> usize {
         self.row_at(self.cursor)
+    }
+
+    fn selected_col(&self) -> usize {
+        self.col_at(self.cursor)
     }
 
     fn page_up(&mut self) {
@@ -592,5 +597,25 @@ impl View for TextArea {
     fn layout(&mut self, size: Vec2) {
         self.last_size = size;
         self.compute_rows(size);
+    }
+
+    fn important_area(&self, _: Vec2) -> Rect {
+        // The important area is a single character
+        let char_width = if self.cursor >= self.content.len() {
+            // If we're are the end of the content, it'll be a space
+            1
+        } else {
+            // Otherwise it's the selected grapheme
+            self.content[self.cursor..]
+                .graphemes(true)
+                .next()
+                .unwrap()
+                .width()
+        };
+
+        Rect::from_size(
+            (self.selected_col(), self.selected_row()),
+            (char_width, 1),
+        )
     }
 }

@@ -597,16 +597,28 @@ impl View for LinearLayout {
     }
 
     fn important_area(&self, _: Vec2) -> Rect {
-        let mut iterator = ChildIterator::new(
-            self.children.iter(),
-            self.orientation,
-            usize::max_value(),
-        );
-        let item = iterator.nth(self.focus).unwrap();
+        if self.children.is_empty() {
+            // Return dummy area if we are empty.
+            return Rect::from((0, 0));
+        }
 
-        let rect = item.child.view.important_area(item.child.size);
+        // Pick the focused item, with its offset
+        let item = {
+            let mut iterator = ChildIterator::new(
+                self.children.iter(),
+                self.orientation,
+                usize::max_value(),
+            );
+            iterator.nth(self.focus).unwrap()
+        };
+
+        // Make a vector offset from the scalar value
         let offset = self.orientation.make_vec(item.offset, 0);
 
+        // And ask the child its own area.
+        let rect = item.child.view.important_area(item.child.size);
+
+        // Add `offset` to the rect.
         rect + offset
     }
 }
