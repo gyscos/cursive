@@ -4,6 +4,7 @@ use With;
 use align::*;
 use direction::Direction;
 use event::*;
+use rect::Rect;
 use std::any::Any;
 use std::cell::Cell;
 use std::cmp::max;
@@ -575,5 +576,10 @@ impl View for Dialog {
 
     fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
         self.content.focus_view(selector)
+    }
+
+    fn important_area(&self, _: Vec2) -> Rect {
+        self.content.important_area(self.content.size)
+            + self.borders.top_left() + self.padding.top_left()
     }
 }
