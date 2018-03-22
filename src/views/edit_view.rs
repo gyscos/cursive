@@ -1,6 +1,7 @@
 use {Cursive, Printer, With};
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key, MouseEvent};
+use rect::Rect;
 use std::cell::RefCell;
 use std::rc::Rc;
 use theme::{ColorStyle, Effect};
@@ -680,5 +681,23 @@ impl View for EditView {
         // self.keep_cursor_in_view();
 
         EventResult::Consumed(self.make_edit_cb())
+    }
+
+    fn important_area(&self, _: Vec2) -> Rect {
+        let char_width = if self.cursor >= self.content.len() {
+            // Show a space if we're at the end of the content
+            1
+        } else {
+            // Otherwise look at the selected character.
+            self.content[self.cursor..]
+                .graphemes(true)
+                .next()
+                .unwrap()
+                .width()
+        };
+
+        let x = self.content[..self.cursor].width();
+
+        Rect::from_size((x, 0), (char_width, 1))
     }
 }
