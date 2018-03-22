@@ -3,6 +3,7 @@ use Printer;
 use direction;
 use event::*;
 use menu::{MenuItem, MenuTree};
+use rect::Rect;
 use std::rc::Rc;
 use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
@@ -382,5 +383,22 @@ impl View for Menubar {
             .sum();
 
         Vec2::new(width, 1)
+    }
+
+    fn important_area(&self, _: Vec2) -> Rect {
+        if self.root.is_empty() {
+            return Rect::from((0, 0));
+        }
+
+        // X position is 1 (margin before the first item) + sum of widths
+        // And each item has a 2 cells padding.
+        let x = 1 + self.root.children[..self.focus]
+            .iter()
+            .map(|child| child.label().width() + 2)
+            .sum::<usize>();
+
+        let width = self.root.children[self.focus].label().width();
+
+        Rect::from_size((x, 0), (width, 1))
     }
 }
