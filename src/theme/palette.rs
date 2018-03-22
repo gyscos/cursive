@@ -62,14 +62,26 @@ pub(crate) fn load_table(palette: &mut Palette, table: &toml::value::Table) {
         &mut palette[PaletteColor::Background],
         table.get("background"),
     );
-    load_color(&mut palette[PaletteColor::Shadow], table.get("shadow"));
-    load_color(&mut palette[PaletteColor::View], table.get("view"));
-    load_color(&mut palette[PaletteColor::Primary], table.get("primary"));
+    load_color(
+        &mut palette[PaletteColor::Shadow],
+        table.get("shadow"),
+    );
+    load_color(
+        &mut palette[PaletteColor::View],
+        table.get("view"),
+    );
+    load_color(
+        &mut palette[PaletteColor::Primary],
+        table.get("primary"),
+    );
     load_color(
         &mut palette[PaletteColor::Secondary],
         table.get("secondary"),
     );
-    load_color(&mut palette[PaletteColor::Tertiary], table.get("tertiary"));
+    load_color(
+        &mut palette[PaletteColor::Tertiary],
+        table.get("tertiary"),
+    );
     load_color(
         &mut palette[PaletteColor::TitlePrimary],
         table.get("title_primary"),
@@ -134,9 +146,9 @@ fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
                     false
                 }
             }
-            toml::Value::Array(ref array) => {
-                array.iter().any(|item| load_color(target, Some(item)))
-            }
+            toml::Value::Array(ref array) => array
+                .iter()
+                .any(|item| load_color(target, Some(item))),
             _ => false,
         }
     } else {

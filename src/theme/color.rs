@@ -152,8 +152,10 @@ impl Color {
             Some(Color::Rgb(r as u8, g as u8, b as u8))
         } else if value.len() == 3 {
             // RGB values between 0 and 5 maybe?
-            let rgb: Vec<_> =
-                value.chars().map(|c| c as i16 - '0' as i16).collect();
+            let rgb: Vec<_> = value
+                .chars()
+                .map(|c| c as i16 - '0' as i16)
+                .collect();
             if rgb.iter().all(|&i| i >= 0 && i < 6) {
                 Some(Color::RgbLowRes(
                     rgb[0] as u8,

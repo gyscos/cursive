@@ -58,7 +58,10 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
     where
         F: FnOnce(&mut Self::V) -> R,
     {
-        self.view.try_borrow_mut().ok().map(|mut v| f(&mut *v))
+        self.view
+            .try_borrow_mut()
+            .ok()
+            .map(|mut v| f(&mut *v))
     }
 
     fn into_inner(mut self) -> Result<Self::V, Self>

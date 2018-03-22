@@ -1,6 +1,5 @@
 //! Rectangles on the 2D character grid.
 use std::ops::Add;
-
 use vec::Vec2;
 
 /// A non-empty rectangle on the 2D grid.
@@ -22,8 +21,10 @@ where
     }
 }
 
-impl <T> Add<T> for Rect
-where T: Into<Vec2> {
+impl<T> Add<T> for Rect
+where
+    T: Into<Vec2>,
+{
     type Output = Rect;
 
     fn add(mut self, rhs: T) -> Self {
@@ -91,7 +92,10 @@ impl Rect {
     }
 
     /// Adds the given offset to this rectangle.
-    pub fn offset<V>(&mut self, offset: V) where V: Into<Vec2> {
+    pub fn offset<V>(&mut self, offset: V)
+    where
+        V: Into<Vec2>,
+    {
         let offset = offset.into();
         self.top_left = self.top_left + offset;
         self.bottom_right = self.bottom_right + offset;

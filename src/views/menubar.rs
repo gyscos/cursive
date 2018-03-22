@@ -237,7 +237,9 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
             s.pop_layer();
             s.select_menubar();
             // Act as if we sent "Right" then "Down"
-            s.menubar().on_event(Event::Key(Key::Right)).process(s);
+            s.menubar()
+                .on_event(Event::Key(Key::Right))
+                .process(s);
             if let EventResult::Consumed(Some(cb)) =
                 s.menubar().on_event(Event::Key(Key::Down))
             {
@@ -248,7 +250,9 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
                 s.pop_layer();
                 s.select_menubar();
                 // Act as if we sent "Left" then "Down"
-                s.menubar().on_event(Event::Key(Key::Left)).process(s);
+                s.menubar()
+                    .on_event(Event::Key(Key::Left))
+                    .process(s);
                 if let EventResult::Consumed(Some(cb)) =
                     s.menubar().on_event(Event::Key(Key::Down))
                 {

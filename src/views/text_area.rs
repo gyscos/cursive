@@ -35,7 +35,9 @@ pub struct TextArea {
 }
 
 fn make_rows(text: &str, width: usize) -> Vec<Row> {
-    LinesIterator::new(text, width).show_spaces().collect()
+    LinesIterator::new(text, width)
+        .show_spaces()
+        .collect()
 }
 
 new_default!(TextArea);
@@ -252,7 +254,8 @@ impl TextArea {
 
     fn compute_rows(&mut self, size: Vec2) {
         self.soft_compute_rows(size);
-        self.scrollbase.set_heights(size.y, self.rows.len());
+        self.scrollbase
+            .set_heights(size.y, self.rows.len());
     }
 
     fn backspace(&mut self) {
@@ -349,11 +352,16 @@ impl TextArea {
         let last_byte = self.content[self.cursor..]
             .find('\n')
             .map(|i| 1 + i + self.cursor);
-        let last_row = last_byte
-            .map_or(self.rows.len(), |last_byte| self.row_at(last_byte));
+        let last_row = last_byte.map_or(self.rows.len(), |last_byte| {
+            self.row_at(last_byte)
+        });
         let last_byte = last_byte.unwrap_or_else(|| self.content.len());
 
-        debug!("Content: `{}` (len={})", self.content, self.content.len());
+        debug!(
+            "Content: `{}` (len={})",
+            self.content,
+            self.content.len()
+        );
         debug!("start/end: {}/{}", first_byte, last_byte);
         debug!("start/end rows: {}/{}", first_row, last_row);
 
@@ -387,11 +395,14 @@ impl TextArea {
 
         // Otherwise, replace stuff.
         let affected_rows = first_row..last_row;
-        let replacement_rows =
-            new_rows.into_iter().map(|row| row.shifted(first_byte));
-        self.rows.splice(affected_rows, replacement_rows);
+        let replacement_rows = new_rows
+            .into_iter()
+            .map(|row| row.shifted(first_byte));
+        self.rows
+            .splice(affected_rows, replacement_rows);
         self.fix_ghost_row();
-        self.scrollbase.set_heights(size.y, self.rows.len());
+        self.scrollbase
+            .set_heights(size.y, self.rows.len());
     }
 }
 
@@ -404,10 +415,18 @@ impl View for TextArea {
         // (we always keep a space at the end)
         // And y = number of rows
         debug!("{:?}", self.rows);
-        let scroll_width = if self.rows.len() > constraint.y { 1 } else { 0 };
+        let scroll_width = if self.rows.len() > constraint.y {
+            1
+        } else {
+            0
+        };
         Vec2::new(
             scroll_width + 1
-                + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
+                + self.rows
+                    .iter()
+                    .map(|r| r.width)
+                    .max()
+                    .unwrap_or(1),
             self.rows.len(),
         )
     }
@@ -518,7 +537,8 @@ impl View for TextArea {
             } if position
                 .checked_sub(offset)
                 .map(|position| {
-                    self.scrollbase.start_drag(position, self.last_size.x)
+                    self.scrollbase
+                        .start_drag(position, self.last_size.x)
                 })
                 .unwrap_or(false) =>
             {

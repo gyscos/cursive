@@ -168,7 +168,11 @@ impl backend::Backend for Concrete {
     }
 
     fn finish(&mut self) {
-        print!("{}{}", termion::cursor::Show, termion::cursor::Goto(1, 1));
+        print!(
+            "{}{}",
+            termion::cursor::Show,
+            termion::cursor::Goto(1, 1)
+        );
         print!(
             "{}[49m{}[39m{}",
             27 as char,

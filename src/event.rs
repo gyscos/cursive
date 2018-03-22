@@ -351,7 +351,10 @@ impl Event {
     where
         V: Into<Vec2>,
     {
-        if let Event::Mouse { ref mut offset, .. } = *self {
+        if let Event::Mouse {
+            ref mut offset, ..
+        } = *self
+        {
             *offset = *offset + top_left;
         }
     }

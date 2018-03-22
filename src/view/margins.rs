@@ -1,5 +1,5 @@
-use vec::Vec2;
 use std::ops::{Add, Div, Mul, Sub};
+use vec::Vec2;
 
 /// Four values representing each direction.
 #[derive(Clone, Copy)]
@@ -52,19 +52,28 @@ impl Margins {
 }
 
 impl From<(usize, usize, usize, usize)> for Margins {
-    fn from((left, right, top, bottom): (usize, usize, usize, usize)) -> Margins {
+    fn from(
+        (left, right, top, bottom): (usize, usize, usize, usize)
+    ) -> Margins {
         Margins::new(left, right, top, bottom)
     }
 }
 
 impl From<(i32, i32, i32, i32)> for Margins {
     fn from((left, right, top, bottom): (i32, i32, i32, i32)) -> Margins {
-        (left as usize, right as usize, top as usize, bottom as usize).into()
+        (
+            left as usize,
+            right as usize,
+            top as usize,
+            bottom as usize,
+        ).into()
     }
 }
 
 impl From<((i32, i32), (i32, i32))> for Margins {
-    fn from(((left, right), (top, bottom)): ((i32, i32), (i32, i32))) -> Margins {
+    fn from(
+        ((left, right), (top, bottom)): ((i32, i32), (i32, i32))
+    ) -> Margins {
         (left, right, top, bottom).into()
     }
 }
@@ -131,5 +140,3 @@ impl Mul<usize> for Margins {
         }
     }
 }
-
-

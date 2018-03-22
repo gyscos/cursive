@@ -248,7 +248,11 @@ impl Dialog {
     pub fn buttons_mut<'a>(
         &'a mut self
     ) -> Box<'a + Iterator<Item = &'a mut Button>> {
-        Box::new(self.buttons.iter_mut().map(|b| &mut b.button.view))
+        Box::new(
+            self.buttons
+                .iter_mut()
+                .map(|b| &mut b.button.view),
+        )
     }
 
     /// Returns currently focused element

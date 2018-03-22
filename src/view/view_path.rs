@@ -10,7 +10,9 @@ new_default!(ViewPath);
 impl ViewPath {
     /// Creates a new empty path.
     pub fn new() -> Self {
-        ViewPath { path: Vec::new() }
+        ViewPath {
+            path: Vec::new(),
+        }
     }
 
     /// Creates a path from the given item.

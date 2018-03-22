@@ -19,7 +19,11 @@ use cursive::views::Canvas;
 fn main() {
     let mut siv = Cursive::new();
 
-    siv.add_layer(Canvas::new(()).with_draw(draw).fixed_size((20, 10)));
+    siv.add_layer(
+        Canvas::new(())
+            .with_draw(draw)
+            .fixed_size((20, 10)),
+    );
 
     siv.add_global_callback('q', |s| s.quit());
 

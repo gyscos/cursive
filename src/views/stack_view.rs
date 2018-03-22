@@ -65,9 +65,13 @@ impl<T: View> ChildWrapper<T> {
     fn unwrap(self) -> T {
         match self {
             // ShadowView::into_inner and Layer::into_inner can never fail.
-            ChildWrapper::Shadow(shadow) => {
-                shadow.into_inner().ok().unwrap().into_inner().ok().unwrap()
-            }
+            ChildWrapper::Shadow(shadow) => shadow
+                .into_inner()
+                .ok()
+                .unwrap()
+                .into_inner()
+                .ok()
+                .unwrap(),
             ChildWrapper::Plain(layer) => layer.into_inner().ok().unwrap(),
         }
     }
@@ -212,7 +216,9 @@ impl StackView {
     /// Returns a reference to the layer at the given position.
     pub fn get(&self, pos: LayerPosition) -> Option<&View> {
         let i = self.get_index(pos);
-        self.layers.get(i).map(|child| child.view.get_inner())
+        self.layers
+            .get(i)
+            .map(|child| child.view.get_inner())
     }
 
     /// Returns a mutable reference to the layer at the given position.
@@ -325,7 +331,10 @@ impl StackView {
 
     /// Returns the size for each layer in this view.
     pub fn layer_sizes(&self) -> Vec<Vec2> {
-        self.layers.iter().map(|layer| layer.size).collect()
+        self.layers
+            .iter()
+            .map(|layer| layer.size)
+            .collect()
     }
 
     fn get_index(&self, pos: LayerPosition) -> usize {

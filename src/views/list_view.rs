@@ -93,8 +93,10 @@ impl ListView {
     /// Adds a view to the end of the list.
     pub fn add_child<V: View + 'static>(&mut self, label: &str, mut view: V) {
         view.take_focus(direction::Direction::none());
-        self.children
-            .push(ListChild::Row(label.to_string(), Box::new(view)));
+        self.children.push(ListChild::Row(
+            label.to_string(),
+            Box::new(view),
+        ));
     }
 
     /// Removes all children from this view.
@@ -166,7 +168,12 @@ impl ListView {
                 } else {
                     self.children.len()
                 };
-                Box::new(self.children[..end].iter_mut().enumerate().rev())
+                Box::new(
+                    self.children[..end]
+                        .iter_mut()
+                        .enumerate()
+                        .rev(),
+                )
             }
         }
     }
@@ -303,7 +310,8 @@ impl View for ListView {
 
     fn layout(&mut self, size: Vec2) {
         self.last_size = size;
-        self.scrollbase.set_heights(size.y, self.children.len());
+        self.scrollbase
+            .set_heights(size.y, self.children.len());
 
         // We'll show 2 columns: the labels, and the views.
         let label_width = self.children
@@ -314,14 +322,21 @@ impl View for ListView {
             .unwrap_or(0);
 
         let spacing = 1;
-        let scrollbar_width = if self.children.len() > size.y { 2 } else { 0 };
+        let scrollbar_width = if self.children.len() > size.y {
+            2
+        } else {
+            0
+        };
 
         let available = size.x
             .saturating_sub(label_width + spacing + scrollbar_width);
 
         debug!("Available: {}", available);
 
-        for child in self.children.iter_mut().filter_map(ListChild::view) {
+        for child in self.children
+            .iter_mut()
+            .filter_map(ListChild::view)
+        {
             child.layout(Vec2::new(available, 1));
         }
     }
@@ -340,7 +355,8 @@ impl View for ListView {
             } if position
                 .checked_sub(offset)
                 .map(|position| {
-                    self.scrollbase.start_drag(position, self.last_size.x)
+                    self.scrollbase
+                        .start_drag(position, self.last_size.x)
                 })
                 .unwrap_or(false) =>
             {
@@ -375,7 +391,8 @@ impl View for ListView {
         if let ListChild::Row(_, ref mut view) = self.children[self.focus] {
             // If self.focus < self.scrollbase.start_line, it means the focus is not
             // in view. Something's fishy, so don't send the event.
-            if let Some(y) = self.focus.checked_sub(self.scrollbase.start_line)
+            if let Some(y) = self.focus
+                .checked_sub(self.scrollbase.start_line)
             {
                 let offset = (labels_width + 1, y);
                 let result = view.on_event(event.relativized(offset));
@@ -399,12 +416,10 @@ impl View for ListView {
             Event::Key(Key::PageDown) => {
                 self.move_focus(10, direction::Direction::up())
             }
-            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => {
-                self.move_focus(
-                    usize::max_value(),
-                    direction::Direction::back(),
-                )
-            }
+            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => self.move_focus(
+                usize::max_value(),
+                direction::Direction::back(),
+            ),
             Event::Key(Key::End) | Event::Ctrl(Key::End) => self.move_focus(
                 usize::max_value(),
                 direction::Direction::front(),
@@ -457,7 +472,10 @@ impl View for ListView {
         &mut self, selector: &Selector,
         mut callback: Box<FnMut(&mut Any) + 'a>,
     ) {
-        for view in self.children.iter_mut().filter_map(ListChild::view) {
+        for view in self.children
+            .iter_mut()
+            .filter_map(ListChild::view)
+        {
             view.call_on_any(selector, Box::new(|any| callback(any)));
         }
     }

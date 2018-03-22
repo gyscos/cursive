@@ -189,7 +189,9 @@ impl cursive::view::View for BoardView {
                 Cell::Unknown => "[]",
                 Cell::Flag => "()",
                 Cell::Visible(n) => {
-                    ["  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"][n]
+                    [
+                        "  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"
+                    ][n]
                 }
             };
 

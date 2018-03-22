@@ -224,8 +224,16 @@ impl<'a> Printer<'a> {
         self.with_low_border(invert, |s| {
             s.print(start + size.keep_x(), "┐");
             s.print(start + size, "┘");
-            s.print_hline(start + (1, 0) + size.keep_y(), size.x - 1, "─");
-            s.print_vline(start + (0, 1) + size.keep_x(), size.y - 1, "│");
+            s.print_hline(
+                start + (1, 0) + size.keep_y(),
+                size.x - 1,
+                "─",
+            );
+            s.print_vline(
+                start + (0, 1) + size.keep_x(),
+                size.y - 1,
+                "│",
+            );
         });
     }
 

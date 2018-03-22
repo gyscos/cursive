@@ -305,7 +305,11 @@ impl TextView {
     where
         S: Into<StyledString>,
     {
-        self.content.lock().unwrap().content.append(content.into());
+        self.content
+            .lock()
+            .unwrap()
+            .content
+            .append(content.into());
         self.invalidate();
     }
 
@@ -509,7 +513,8 @@ impl View for TextView {
             } if position
                 .checked_sub(offset)
                 .map(|position| {
-                    self.scrollbase.start_drag(position, self.last_size.x)
+                    self.scrollbase
+                        .start_drag(position, self.last_size.x)
                 })
                 .unwrap_or(false) =>
             {

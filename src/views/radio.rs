@@ -55,7 +55,10 @@ impl<T> RadioGroup<T> {
         &mut self, value: T, label: S
     ) -> RadioButton<T> {
         let count = self.state.borrow().values.len();
-        self.state.borrow_mut().values.push(Rc::new(value));
+        self.state
+            .borrow_mut()
+            .values
+            .push(Rc::new(value));
         RadioButton::new(Rc::clone(&self.state), count, label.into())
     }
 

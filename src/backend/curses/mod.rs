@@ -13,7 +13,9 @@ mod pan;
 pub use self::pan::*;
 
 fn split_i32(code: i32) -> Vec<u8> {
-    (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()
+    (0..4)
+        .map(|i| ((code >> (8 * i)) & 0xFF) as u8)
+        .collect()
 }
 
 fn fill_key_codes<F>(target: &mut HashMap<i32, Event>, f: F)

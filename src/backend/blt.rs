@@ -252,9 +252,11 @@ impl backend::Backend for Concrete {
                     position: self.mouse_position,
                     offset: Vec2::zero(),
                 },
-                BltEvent::KeyPressed { key, ctrl, shift } => {
-                    self.blt_keycode_to_ev(key, shift, ctrl)
-                }
+                BltEvent::KeyPressed {
+                    key,
+                    ctrl,
+                    shift,
+                } => self.blt_keycode_to_ev(key, shift, ctrl),
                 // TODO: there's no Key::Shift/Ctrl for w/e reason
                 BltEvent::ShiftPressed => Event::Refresh,
                 BltEvent::ControlPressed => Event::Refresh,

@@ -28,7 +28,9 @@ impl MenuPopup {
         MenuPopup {
             menu: menu,
             focus: 0,
-            scrollbase: ScrollBase::new().scrollbar_offset(1).right_padding(0),
+            scrollbase: ScrollBase::new()
+                .scrollbar_offset(1)
+                .right_padding(0),
             align: Align::top_left(),
             on_dismiss: None,
             on_action: None,
@@ -137,13 +139,12 @@ impl MenuPopup {
 
     fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
         let tree = Rc::clone(tree);
-        let max_width = 4
-            + self.menu
-                .children
-                .iter()
-                .map(Self::item_width)
-                .max()
-                .unwrap_or(1);
+        let max_width = 4 + self.menu
+            .children
+            .iter()
+            .map(Self::item_width)
+            .max()
+            .unwrap_or(1);
         let offset = Vec2::new(max_width, self.focus);
         let action_cb = self.on_action.clone();
 
@@ -250,13 +251,12 @@ impl View for MenuPopup {
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
         // We can't really shrink our items here, so it's not flexible.
-        let w = 4
-            + self.menu
-                .children
-                .iter()
-                .map(Self::item_width)
-                .max()
-                .unwrap_or(1);
+        let w = 4 + self.menu
+            .children
+            .iter()
+            .map(Self::item_width)
+            .max()
+            .unwrap_or(1);
         let h = 2 + self.menu.children.len();
 
         let scrolling = req.y < h;
@@ -318,7 +318,8 @@ impl View for MenuPopup {
                 && position
                     .checked_sub(offset + (0, 1))
                     .map(|position| {
-                        self.scrollbase.start_drag(position, self.last_size.x)
+                        self.scrollbase
+                            .start_drag(position, self.last_size.x)
                     })
                     .unwrap_or(false) =>
             {
@@ -397,7 +398,9 @@ impl View for MenuPopup {
 
     fn layout(&mut self, size: Vec2) {
         self.last_size = size;
-        self.scrollbase
-            .set_heights(size.y.saturating_sub(2), self.menu.children.len());
+        self.scrollbase.set_heights(
+            size.y.saturating_sub(2),
+            self.menu.children.len(),
+        );
     }
 }

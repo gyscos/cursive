@@ -33,7 +33,10 @@ impl ColorStyle {
 
     /// Application background, where no view is present.
     pub fn background() -> Self {
-        Self::new(PaletteColor::Background, PaletteColor::Background)
+        Self::new(
+            PaletteColor::Background,
+            PaletteColor::Background,
+        )
     }
 
     /// Color used by view shadows. Only background matters.
@@ -73,7 +76,10 @@ impl ColorStyle {
 
     /// Highlight color for inactive views (not in focus).
     pub fn highlight_inactive() -> Self {
-        Self::new(PaletteColor::View, PaletteColor::HighlightInactive)
+        Self::new(
+            PaletteColor::View,
+            PaletteColor::HighlightInactive,
+        )
     }
 
     /// Return the color pair that this style represents.

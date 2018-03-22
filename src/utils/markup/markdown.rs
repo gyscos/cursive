@@ -139,8 +139,10 @@ Attention
 ====
 I *really* love __Cursive__!";
         let spans = parse_spans(input);
-        let spans: Vec<_> =
-            spans.iter().map(|span| span.resolve(input)).collect();
+        let spans: Vec<_> = spans
+            .iter()
+            .map(|span| span.resolve(input))
+            .collect();
 
         // println!("{:?}", spans);
         assert_eq!(

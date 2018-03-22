@@ -76,8 +76,11 @@ where
             self.width
         };
 
-        let mut chunks =
-            prefix(&mut self.iter, allowed_width, &mut self.chunk_offset);
+        let mut chunks = prefix(
+            &mut self.iter,
+            allowed_width,
+            &mut self.chunk_offset,
+        );
 
         // println!("Chunks..: {:?}", chunks);
 
@@ -162,6 +165,9 @@ where
 
         // TODO: merge consecutive segments of the same span
 
-        Some(Row { segments, width })
+        Some(Row {
+            segments,
+            width,
+        })
     }
 }

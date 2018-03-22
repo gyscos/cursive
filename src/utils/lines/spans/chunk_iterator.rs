@@ -47,7 +47,10 @@ where
         }
 
         // Skip empty spans
-        if self.source.spans()[self.current_span].as_ref().is_empty() {
+        if self.source.spans()[self.current_span]
+            .as_ref()
+            .is_empty()
+        {
             self.current_span += 1;
             return self.next();
         }
@@ -120,9 +123,13 @@ where
                 self.current_span += 1;
 
                 // Skip empty spans
-                while let Some(true) =
-                    self.source.spans().get(self.current_span).map(|span| {
-                        span.as_ref().resolve(self.source.source()).is_empty()
+                while let Some(true) = self.source
+                    .spans()
+                    .get(self.current_span)
+                    .map(|span| {
+                        span.as_ref()
+                            .resolve(self.source.source())
+                            .is_empty()
                     }) {
                     self.current_span += 1;
                 }

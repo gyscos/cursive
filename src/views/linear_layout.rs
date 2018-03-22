@@ -81,8 +81,10 @@ impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
 
             // eprintln!("Available: {}", self.available);
 
-            let length =
-                min(self.available, *child.size.get(self.orientation));
+            let length = min(
+                self.available,
+                *child.size.get(self.orientation),
+            );
 
             // Allocated width
             self.available = self.available.saturating_sub(length);
@@ -173,7 +175,9 @@ impl LinearLayout {
 
     /// Returns a mutable reference to a child.
     pub fn get_child_mut(&mut self, i: usize) -> Option<&mut View> {
-        self.children.get_mut(i).map(|child| &mut *child.view)
+        self.children
+            .get_mut(i)
+            .map(|child| &mut *child.view)
     }
 
     // If the cache can be used, return the cached size.
@@ -222,21 +226,27 @@ impl LinearLayout {
                 } else {
                     self.children.len()
                 };
-                Box::new(self.children[..end].iter_mut().enumerate().rev())
+                Box::new(
+                    self.children[..end]
+                        .iter_mut()
+                        .enumerate()
+                        .rev(),
+                )
             }
         }
     }
 
     fn move_focus(&mut self, source: direction::Direction) -> EventResult {
-        let i = if let Some(i) =
-            source.relative(self.orientation).and_then(|rel| {
+        let i = if let Some(i) = source.relative(self.orientation).and_then(
+            |rel| {
                 // The iterator starts at the focused element.
                 // We don't want that one.
                 self.iter_mut(true, rel)
                     .skip(1)
                     .filter_map(|p| try_focus(p, source))
                     .next()
-            }) {
+            },
+        ) {
             i
         } else {
             return EventResult::Ignored;
@@ -281,7 +291,9 @@ impl LinearLayout {
                 let child_size = item.child.size.get(self.orientation);
 
                 if (item.offset + child_size > position)
-                    && item.child.view.take_focus(direction::Direction::none())
+                    && item.child
+                        .view
+                        .take_focus(direction::Direction::none())
                 {
                     // eprintln!("It's a match!");
                     self.focus = i;
@@ -348,7 +360,9 @@ impl View for LinearLayout {
             // Every item has the same size orthogonal to the layout
             item.child.size.set_axis_from(o.swap(), &size);
 
-            item.child.view.layout(size.with_axis(o, item.length));
+            item.child
+                .view
+                .layout(size.with_axis(o, item.length));
         }
     }
 
@@ -425,7 +439,11 @@ impl View for LinearLayout {
         let mut overweight: Vec<(usize, usize)> = ideal_sizes
             .iter()
             .map(|v| self.orientation.get(v))
-            .zip(min_sizes.iter().map(|v| self.orientation.get(v)))
+            .zip(
+                min_sizes
+                    .iter()
+                    .map(|v| self.orientation.get(v)),
+            )
             .map(|(a, b)| a.saturating_sub(b))
             .enumerate()
             .collect();
@@ -512,7 +530,9 @@ impl View for LinearLayout {
             );
             let item = iterator.nth(self.focus).unwrap();
             let offset = self.orientation.make_vec(item.offset, 0);
-            item.child.view.on_event(event.relativized(offset))
+            item.child
+                .view
+                .on_event(event.relativized(offset))
         };
         match result {
             EventResult::Ignored => match event {
@@ -577,7 +597,11 @@ impl View for LinearLayout {
     }
 
     fn important_area(&self, _: Vec2) -> Rect {
-        let mut iterator = ChildIterator::new(self.children.iter(), self.orientation, usize::max_value());
+        let mut iterator = ChildIterator::new(
+            self.children.iter(),
+            self.orientation,
+            usize::max_value(),
+        );
         let item = iterator.nth(self.focus).unwrap();
 
         let rect = item.child.view.important_area(item.child.size);

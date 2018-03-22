@@ -87,7 +87,11 @@ fn phase_2(s: &mut Cursive) {
     // Let's prepare the progress bars...
     let mut linear = LinearLayout::vertical();
     for c in &counters {
-        linear.add_child(ProgressBar::new().max(n_max).with_value(c.clone()));
+        linear.add_child(
+            ProgressBar::new()
+                .max(n_max)
+                .with_value(c.clone()),
+        );
     }
 
     s.pop_layer();

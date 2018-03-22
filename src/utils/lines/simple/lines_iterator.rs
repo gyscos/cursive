@@ -70,6 +70,10 @@ impl<'a> Iterator for LinesIterator<'a> {
 
         let width = row.width;
 
-        Some(Row { start, end, width })
+        Some(Row {
+            start,
+            end,
+            width,
+        })
     }
 }
