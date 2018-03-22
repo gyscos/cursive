@@ -1,6 +1,7 @@
 use Printer;
 use direction::Direction;
 use event::{Event, EventResult};
+use rect::Rect;
 use std::any::Any;
 use vec::Vec2;
 use view::{Selector, View};
@@ -94,6 +95,12 @@ pub trait ViewWrapper: 'static {
         self.with_view(|v| v.needs_relayout())
             .unwrap_or(true)
     }
+
+    /// Wraps the `important_area` method.
+    fn wrap_important_area(&self, size: Vec2) -> Rect {
+        self.with_view(|v| v.important_area(size))
+            .unwrap_or(Rect::from((0, 0)))
+    }
 }
 
 // The main point of implementing ViewWrapper is to have View for free.
@@ -130,6 +137,10 @@ impl<T: ViewWrapper> View for T {
 
     fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
         self.wrap_focus_view(selector)
+    }
+
+    fn important_area(&self, size: Vec2) -> Rect {
+        self.wrap_important_area(size)
     }
 }
 
