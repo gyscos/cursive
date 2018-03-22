@@ -5,6 +5,7 @@ use align::{Align, HAlign, VAlign};
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use menu::MenuTree;
+use rect::Rect;
 use std::borrow::Borrow;
 use std::cell::Cell;
 use std::cmp::min;
@@ -764,6 +765,12 @@ impl<T: 'static> View for SelectView<T> {
             self.scrollbase
                 .set_heights(size.y, self.items.len());
         }
+    }
+
+    fn important_area(&self, size: Vec2) -> Rect {
+        self.selected_id()
+            .map(|i| Rect::from_size((0, i), (size.x, 1)))
+            .unwrap_or(Rect::from((0, 0)))
     }
 }
 

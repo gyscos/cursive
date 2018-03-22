@@ -4,6 +4,7 @@ use With;
 use align::Align;
 use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use menu::{MenuItem, MenuTree};
+use rect::Rect;
 use std::cmp::min;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
@@ -402,5 +403,13 @@ impl View for MenuPopup {
             size.y.saturating_sub(2),
             self.menu.children.len(),
         );
+    }
+
+    fn important_area(&self, size: Vec2) -> Rect {
+        if self.menu.is_empty() {
+            return Rect::from((0, 0));
+        }
+
+        Rect::from_size((0, self.focus), (size.x, 1))
     }
 }
