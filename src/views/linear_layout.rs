@@ -3,6 +3,7 @@ use With;
 use XY;
 use direction;
 use event::{Event, EventResult, Key};
+use rect::Rect;
 use std::any::Any;
 use std::cmp::min;
 use std::ops::Deref;
@@ -573,5 +574,15 @@ impl View for LinearLayout {
         }
 
         Err(())
+    }
+
+    fn important_area(&self, _: Vec2) -> Rect {
+        let mut iterator = ChildIterator::new(self.children.iter(), self.orientation, usize::max_value());
+        let item = iterator.nth(self.focus).unwrap();
+
+        let rect = item.child.view.important_area(item.child.size);
+        let offset = self.orientation.make_vec(item.offset, 0);
+
+        rect + offset
     }
 }

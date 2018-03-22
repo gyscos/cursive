@@ -1,4 +1,5 @@
 //! Rectangles on the 2D character grid.
+use std::ops::Add;
 
 use vec::Vec2;
 
@@ -18,6 +19,16 @@ where
     fn from(other: T) -> Self {
         // From a point, we can create a 1-by-1 rectangle.
         Self::from_size(other, (1, 1))
+    }
+}
+
+impl <T> Add<T> for Rect
+where T: Into<Vec2> {
+    type Output = Rect;
+
+    fn add(mut self, rhs: T) -> Self {
+        self.offset(rhs);
+        self
     }
 }
 
