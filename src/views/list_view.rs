@@ -3,6 +3,7 @@ use Printer;
 use With;
 use direction;
 use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
+use rect::Rect;
 use std::any::Any;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
@@ -493,5 +494,23 @@ impl View for ListView {
         } else {
             Err(())
         }
+    }
+
+    fn important_area(&self, size: Vec2) -> Rect {
+        if self.children.is_empty() {
+            return Rect::from((0, 0));
+        }
+
+        let labels_width = self.labels_width();
+
+        let area = match self.children[self.focus] {
+            ListChild::Row(_, ref view) => {
+                let available = Vec2::new(size.x - labels_width - 1, 1);
+                view.important_area(available) + (labels_width, 0)
+            }
+            ListChild::Delimiter => Rect::from_size((0, 0), (size.x, 1)),
+        };
+
+        area + (0, self.focus)
     }
 }
