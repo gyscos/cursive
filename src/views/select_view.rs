@@ -260,6 +260,15 @@ impl<T: 'static> SelectView<T> {
         self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
+    /// Inserts an item at position `index`, shifting all elements after it to
+    /// the right.
+    pub fn insert_item<S>(&mut self, index: usize, label: S, value: T)
+    where
+        S: Into<String>,
+    {
+        self.items.insert(index, Item::new(label.into(), value));
+    }
+
     /// Chainable variant of add_item
     pub fn item<S: Into<String>>(self, label: S, value: T) -> Self {
         self.with(|s| s.add_item(label, value))
@@ -628,6 +637,12 @@ impl SelectView<String> {
     /// Chainable variant of add_item_str
     pub fn item_str<S: Into<String>>(self, label: S) -> Self {
         self.with(|s| s.add_item_str(label))
+    }
+
+    /// Convenient method to use the label as value.
+    pub fn insert_item_str<S>(&mut self, index: usize, label: S) where S: Into<String> {
+        let label = label.into();
+        self.insert_item(index, label.clone(), label);
     }
 
     /// Adds all strings from an iterator.
