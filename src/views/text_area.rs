@@ -107,6 +107,37 @@ impl TextArea {
         self.with(|s| s.set_content(content))
     }
 
+    /// Disables this view.
+    ///
+    /// A disabled view cannot be selected.
+    pub fn disable(&mut self) {
+        self.enabled = false;
+    }
+
+    /// Disables this view.
+    ///
+    /// Chainable variant.
+    pub fn disabled(self) -> Self {
+        self.with(Self::disable)
+    }
+
+    /// Re-enables this view.
+    pub fn enable(&mut self) {
+        self.enabled = true;
+    }
+
+    /// Re-enables this view.
+    ///
+    /// Chainable variant.
+    pub fn enabled(self) -> Self {
+        self.with(Self::enable)
+    }
+
+    /// Returns `true` if this view is enabled.
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+
     /// Finds the row containing the grapheme at the given offset
     fn row_at(&self, offset: usize) -> usize {
         debug!("Offset: {}", offset);
