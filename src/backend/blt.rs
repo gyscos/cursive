@@ -145,7 +145,7 @@ impl Concrete {
 }
 
 impl backend::Backend for Concrete {
-    fn init() -> Self {
+    fn init() -> Box<Self> {
         terminal::open("Cursive", 80, 24);
         terminal::set(terminal::config::Window::empty().resizeable(true));
         terminal::set(vec![
@@ -159,37 +159,59 @@ impl backend::Backend for Concrete {
             },
         ]);
 
-        Concrete {
+        let c = Concrete {
             mouse_position: Vec2::zero(),
             buttons_pressed: HashSet::new(),
-        }
+        };
+
+        Box::new(c)
     }
 
     fn finish(&mut self) {
         terminal::close();
     }
 
-    fn with_color<F: FnOnce()>(&self, color: ColorPair, f: F) {
+    fn set_color(&self, color: ColorPair) -> ColorPair {
+        let current = ColorPair {
+            front: blt_colour_to_colour(state::foreground()),
+            back:  blt_colour_to_colour(state::background())
+        }
+        
         let fg = colour_to_blt_colour(color.front, ColorRole::Foreground);
         let bg = colour_to_blt_colour(color.back, ColorRole::Background);
-        terminal::with_colors(fg, bg, f);
+        
+        terminal::set_colors(fg, bg);
+
+        current
     }
 
-    fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
+    fn set_effect(&self, effect: Effect) {
         match effect {
             // TODO: does BLT support bold/italic/underline?
             Effect::Bold
             | Effect::Italic
             | Effect::Underline
-            | Effect::Simple => f(),
+            | Effect::Simple => {},
             // TODO: how to do this correctly?`
             //       BLT itself doesn't do this kind of thing,
             //       we'd need the colours in our position,
             //       but `f()` can do whatever
-            Effect::Reverse => terminal::with_colors(
-                BltColor::from_rgb(0, 0, 0),
-                BltColor::from_rgb(255, 255, 255),
-                f,
+            Effect::Reverse => terminal::set_colors(
+                state::background(), state::foreground()
+            ),
+        }
+    }
+
+    fn unset_effect(&self, effect: Effect) {
+        match effect {
+            // TODO: does BLT support bold/italic/underline?
+            Effect::Bold
+            | Effect::Italic
+            | Effect::Underline
+            | Effect::Simple => {},
+            // The process of reversing is the same as unreversing
+            Effect::Reverse => terminal::set_colors(
+                state::background(), state::foreground()
             ),
         }
     }
@@ -280,6 +302,10 @@ impl backend::Backend for Concrete {
             Event::Refresh
         }
     }
+}
+
+fn blt_colour_to_colour(c: BltColor) -> Color {
+    Color::Rgb(c.red, c.green, c.blue)
 }
 
 fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {

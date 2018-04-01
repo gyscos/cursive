@@ -16,7 +16,7 @@ pub use self::curses::*;
 pub use self::termion::*;
 
 pub trait Backend {
-    fn init() -> Self;
+    fn init() -> Box<Self> where Self: Sized;
     // TODO: take `self` by value?
     // Or implement Drop?
     fn finish(&mut self);
@@ -34,7 +34,9 @@ pub trait Backend {
     fn clear(&self, color: theme::Color);
 
     fn set_refresh_rate(&mut self, fps: u32);
-    // TODO: unify those into a single method?
-    fn with_color<F: FnOnce()>(&self, colors: theme::ColorPair, f: F);
-    fn with_effect<F: FnOnce()>(&self, effect: theme::Effect, f: F);
+
+    fn set_color(&self, colors: theme::ColorPair) -> theme::ColorPair;
+
+    fn set_effect(&self, effect: theme::Effect);
+    fn reset_effect(&self, effect: theme::Effect);
 }

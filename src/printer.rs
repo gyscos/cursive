@@ -24,7 +24,7 @@ pub struct Printer<'a> {
     /// `true` if nothing has been drawn yet.
     new: Rc<Cell<bool>>,
     /// Backend used to actually draw things
-    backend: &'a backend::Concrete,
+    backend: &'a Box<backend::Backend>,
 }
 
 impl<'a> Printer<'a> {
@@ -33,7 +33,7 @@ impl<'a> Printer<'a> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'a backend::Concrete
+        size: T, theme: &'a Theme, backend: &'a Box<backend::Backend>
     ) -> Self {
         Printer {
             offset: Vec2::zero(),
@@ -132,8 +132,9 @@ impl<'a> Printer<'a> {
     where
         F: FnOnce(&Printer),
     {
-        self.backend
-            .with_color(c.resolve(&self.theme.palette), || f(self));
+        let old = self.backend.set_color(c.resolve(&self.theme.palette));
+        f(self);
+        self.backend.set_color(old);
     }
 
     /// Call the given closure with a styled printer,
@@ -165,7 +166,9 @@ impl<'a> Printer<'a> {
     where
         F: FnOnce(&Printer),
     {
-        self.backend.with_effect(effect, || f(self));
+        self.backend.set_effect(effect);
+        f(self);
+        self.backend.reset_effect(effect);
     }
 
     /// Call the given closure with a modified printer

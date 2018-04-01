@@ -54,7 +54,7 @@ pub struct Cursive {
 
     running: bool,
 
-    backend: backend::Concrete,
+    backend: Box<backend::Backend>,
 
     cb_source: mpsc::Receiver<Box<CbFunc>>,
     cb_sink: mpsc::Sender<Box<CbFunc>>,

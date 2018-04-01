@@ -150,7 +150,7 @@ impl Concrete {
 }
 
 impl backend::Backend for Concrete {
-    fn init() -> Self {
+    fn init() -> Box<Self> {
         // Change the locale.
         // For some reasons it's mandatory to get some UTF-8 support.
         ncurses::setlocale(ncurses::LcCategory::all, "");
@@ -186,7 +186,7 @@ impl backend::Backend for Concrete {
         print!("\x1B[?1002h");
         stdout().flush().expect("could not flush stdout");
 
-        Concrete {
+        let c = Concrete {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
             pairs: RefCell::new(HashMap::new()),
 
@@ -194,7 +194,9 @@ impl backend::Backend for Concrete {
             event_queue: Vec::new(),
 
             key_codes: initialize_keymap(),
-        }
+        };
+
+        Box::new(c)
     }
 
     fn screen_size(&self) -> (usize, usize) {
@@ -214,21 +216,16 @@ impl backend::Backend for Concrete {
         ncurses::endwin();
     }
 
-    fn with_color<F: FnOnce()>(&self, colors: ColorPair, f: F) {
+    fn set_color(&self, colors: ColorPair) -> ColorPair {
         // eprintln!("Color used: {:?}", colors);
         let current = self.current_style.get();
         if current != colors {
             self.set_colors(colors);
         }
-
-        f();
-
-        if current != colors {
-            self.set_colors(current);
-        }
+        return current;
     }
 
-    fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
+    fn set_effect(&self, effect: Effect) {
         let style = match effect {
             Effect::Reverse => ncurses::A_REVERSE(),
             Effect::Simple => ncurses::A_NORMAL(),
@@ -237,7 +234,16 @@ impl backend::Backend for Concrete {
             Effect::Underline => ncurses::A_UNDERLINE(),
         };
         ncurses::attron(style);
-        f();
+    }
+
+    fn reset_effect(&self, effect: Effect) {
+        let style = match effect {
+            Effect::Reverse => ncurses::A_REVERSE(),
+            Effect::Simple => ncurses::A_NORMAL(),
+            Effect::Bold => ncurses::A_BOLD(),
+            Effect::Italic => ncurses::A_ITALIC(),
+            Effect::Underline => ncurses::A_UNDERLINE(),
+        };
         ncurses::attroff(style);
     }
 

@@ -137,7 +137,7 @@ impl Concrete {
 }
 
 impl backend::Backend for Concrete {
-    fn init() -> Self {
+    fn init() -> Box<Self> {
         print!("{}", termion::cursor::Hide);
 
         let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
@@ -157,14 +157,16 @@ impl backend::Backend for Concrete {
             }
         });
 
-        Concrete {
+        let c = Concrete {
             terminal: terminal,
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
             input: receiver,
             resize: resize,
             timeout: None,
             last_button: None,
-        }
+        };
+
+        Box::new(c)
     }
 
     fn finish(&mut self) {
@@ -177,7 +179,7 @@ impl backend::Backend for Concrete {
         );
     }
 
-    fn with_color<F: FnOnce()>(&self, color: theme::ColorPair, f: F) {
+    fn with_color<F: FnOnce()>(&self, color: theme::ColorPair, f: F) -> theme::ColorPair {
         let current_style = self.current_style.get();
 
         if current_style != color {
@@ -185,17 +187,14 @@ impl backend::Backend for Concrete {
             self.current_style.set(color);
         }
 
-        f();
-
-        if current_style != color {
-            self.current_style.set(current_style);
-            self.apply_colors(current_style);
-        }
+        return current_style;
     }
 
-    fn with_effect<F: FnOnce()>(&self, effect: theme::Effect, f: F) {
+    fn set_effect(&self, effect: theme::Effect) {
         effect.on();
-        f();
+    }
+
+    fn reset_effect(&self, effect: theme::Effect) {
         effect.off();
     }
 
