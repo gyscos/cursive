@@ -179,7 +179,7 @@ impl backend::Backend for Concrete {
         );
     }
 
-    fn with_color<F: FnOnce()>(&self, color: theme::ColorPair, f: F) -> theme::ColorPair {
+    fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
         let current_style = self.current_style.get();
 
         if current_style != color {

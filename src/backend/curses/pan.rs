@@ -162,8 +162,8 @@ impl backend::Backend for Concrete {
             last_mouse_button: None,
             event_queue: Vec::new(),
             key_codes: initialize_keymap(),
-        }
-        
+        };
+
         Box::new(c)
     }
 

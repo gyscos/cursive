@@ -175,7 +175,7 @@ impl backend::Backend for Concrete {
         let current = ColorPair {
             front: blt_colour_to_colour(state::foreground()),
             back:  blt_colour_to_colour(state::background())
-        }
+        };
         
         let fg = colour_to_blt_colour(color.front, ColorRole::Foreground);
         let bg = colour_to_blt_colour(color.back, ColorRole::Background);
@@ -202,7 +202,7 @@ impl backend::Backend for Concrete {
         }
     }
 
-    fn unset_effect(&self, effect: Effect) {
+    fn reset_effect(&self, effect: Effect) {
         match effect {
             // TODO: does BLT support bold/italic/underline?
             Effect::Bold

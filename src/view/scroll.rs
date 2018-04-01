@@ -232,7 +232,7 @@ impl ScrollBase {
     /// # use cursive::theme;
     /// # use cursive::backend::{self, Backend};
     /// # let scrollbase = ScrollBase::new();
-    /// # let b = backend::Concrete::init();
+    /// # let b: Box<Backend> = backend::Concrete::init();
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((5,1), &t, &b);
     /// # let printer = &printer;
