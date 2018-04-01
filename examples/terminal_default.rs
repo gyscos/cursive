@@ -9,7 +9,7 @@ use cursive::views::TextView;
 // This way, it looks more natural.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     let theme = custom_theme_from_cursive(&siv);
     siv.set_theme(theme);

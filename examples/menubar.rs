@@ -11,7 +11,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 // application.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // We'll use a counter to name new files.
     let counter = AtomicUsize::new(1);

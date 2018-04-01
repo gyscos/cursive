@@ -17,7 +17,7 @@ use std::time::Duration;
 // "ticked" to indicate progress.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // We'll start slowly with a simple start button...
     siv.add_layer(

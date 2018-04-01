@@ -117,11 +117,11 @@ impl<'a> Printer<'a> {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::backend::{self, Backend};
-    /// # let b: Box<Backend> = backend::Concrete::init();
+    /// # use cursive::backend;
+    /// # let b = backend::dummy::Backend::init();
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((6,4), &t, &b);
     /// printer.with_color(theme::ColorStyle::highlight(), |printer| {
@@ -195,11 +195,11 @@ impl<'a> Printer<'a> {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::backend::{self, Backend};
-    /// # let b: Box<Backend> = backend::Concrete::init();
+    /// # use cursive::backend;
+    /// # let b = backend::dummy::Backend::init();
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((6,4), &t, &b);
     /// printer.print_box((0,0), (6,4), false);

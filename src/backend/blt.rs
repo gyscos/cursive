@@ -15,12 +15,34 @@ enum ColorRole {
     Background,
 }
 
-pub struct Concrete {
+pub struct Backend {
     mouse_position: Vec2,
     buttons_pressed: HashSet<MouseButton>,
 }
 
-impl Concrete {
+impl Backend {
+    pub fn init() -> Box<Self> {
+        terminal::open("Cursive", 80, 24);
+        terminal::set(terminal::config::Window::empty().resizeable(true));
+        terminal::set(vec![
+            terminal::config::InputFilter::Group {
+                group: terminal::config::InputFilterGroup::Keyboard,
+                both: false,
+            },
+            terminal::config::InputFilter::Group {
+                group: terminal::config::InputFilterGroup::Mouse,
+                both: true,
+            },
+        ]);
+
+        let c = Backend {
+            mouse_position: Vec2::zero(),
+            buttons_pressed: HashSet::new(),
+        };
+
+        Box::new(c)
+    }
+
     fn blt_keycode_to_ev(
         &mut self, kc: KeyCode, shift: bool, ctrl: bool
     ) -> Event {
@@ -144,29 +166,7 @@ impl Concrete {
     }
 }
 
-impl backend::Backend for Concrete {
-    fn init() -> Box<Self> {
-        terminal::open("Cursive", 80, 24);
-        terminal::set(terminal::config::Window::empty().resizeable(true));
-        terminal::set(vec![
-            terminal::config::InputFilter::Group {
-                group: terminal::config::InputFilterGroup::Keyboard,
-                both: false,
-            },
-            terminal::config::InputFilter::Group {
-                group: terminal::config::InputFilterGroup::Mouse,
-                both: true,
-            },
-        ]);
-
-        let c = Concrete {
-            mouse_position: Vec2::zero(),
-            buttons_pressed: HashSet::new(),
-        };
-
-        Box::new(c)
-    }
-
+impl backend::Backend for Backend {
     fn finish(&mut self) {
         terminal::close();
     }

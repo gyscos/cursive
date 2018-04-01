@@ -5,7 +5,7 @@ use cursive::traits::*;
 use cursive::views::{Dialog, SliderView};
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     siv.add_global_callback('q', |s| s.quit());
 

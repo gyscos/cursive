@@ -1,22 +1,20 @@
 use event;
 use theme;
 
-#[cfg(feature = "termion")]
-mod termion;
-#[cfg(feature = "bear-lib-terminal")]
-mod blt;
-#[cfg(any(feature = "ncurses", feature = "pancurses"))]
-mod curses;
+pub mod dummy;
 
-#[cfg(feature = "bear-lib-terminal")]
-pub use self::blt::*;
-#[cfg(any(feature = "ncurses", feature = "pancurses"))]
-pub use self::curses::*;
+/// Backend using the pure-rust termion library.
 #[cfg(feature = "termion")]
-pub use self::termion::*;
+pub mod termion;
+
+/// Backend using BearLibTerminal
+#[cfg(feature = "bear-lib-terminal")]
+pub mod blt;
+
+#[cfg(any(feature = "ncurses", feature = "pancurses"))]
+pub mod curses;
 
 pub trait Backend {
-    fn init() -> Box<Self> where Self: Sized;
     // TODO: take `self` by value?
     // Or implement Drop?
     fn finish(&mut self);

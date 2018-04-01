@@ -5,7 +5,7 @@ use cursive::traits::*;
 use cursive::views::{Dialog, EditView, TextView};
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // Create a dialog with an edit text and a button.
     // The user can either hit the <Ok> button,

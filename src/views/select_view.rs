@@ -21,7 +21,7 @@ use views::MenuPopup;
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```rust
 /// # extern crate cursive;
 /// # use cursive::Cursive;
 /// # use cursive::views::{SelectView, Dialog, TextView};
@@ -39,7 +39,7 @@ use views::MenuPopup;
 ///                     .button("Quit", |s| s.quit()));
 /// });
 ///
-/// let mut siv = Cursive::new();
+/// let mut siv = Cursive::dummy();
 /// siv.add_layer(Dialog::around(time_select)
 ///                      .title("How long is your wait?"));
 /// # }

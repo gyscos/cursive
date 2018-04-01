@@ -32,14 +32,14 @@
 //!
 //! ## Examples
 //!
-//! ```no_run
+//! ```rust
 //! extern crate cursive;
 //!
 //! use cursive::Cursive;
 //! use cursive::views::TextView;
 //!
 //! fn main() {
-//!     let mut siv = Cursive::new();
+//!     let mut siv = Cursive::dummy();
 //!
 //!     siv.add_layer(TextView::new("Hello World!\nPress q to quit."));
 //!

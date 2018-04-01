@@ -6,7 +6,7 @@ use cursive::traits::*;
 use cursive::views::{Dialog, EditView, OnEventView, TextArea};
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // The main dialog will just have a textarea.
     // Its size expand automatically with the content.

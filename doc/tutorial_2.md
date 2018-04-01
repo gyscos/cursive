@@ -12,7 +12,7 @@ use cursive::Cursive;
 use cursive::views::Dialog;
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     siv.add_layer(Dialog::text("This is a survey!\nPress <Next> when you're ready.")
         .title("Important survey")
@@ -51,7 +51,7 @@ extern crate cursive;
 use cursive::Cursive;
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     siv.run();
 }
@@ -74,7 +74,7 @@ use cursive::views::Dialog;
 use cursive::views::TextView;
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     siv.add_layer(Dialog::around(TextView::new("...")));
 
@@ -135,7 +135,7 @@ use cursive::Cursive;
 use cursive::views::Dialog;
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     siv.add_layer(Dialog::text("This is a survey!\nPress <Next> when you're ready.")
         .title("Important survey")

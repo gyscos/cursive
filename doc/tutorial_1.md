@@ -12,7 +12,7 @@ use cursive::Cursive;
 use cursive::views::TextView;
 
 fn main() {
-	let mut siv = Cursive::new();
+	let mut siv = Cursive::default();
 
 	siv.add_global_callback('q', |s| s.quit());
 
@@ -80,7 +80,7 @@ extern crate cursive;
 use cursive::Cursive;
 
 fn main() {
-	let mut siv = Cursive::new();
+	let mut siv = Cursive::default();
 
 	siv.run();
 }
@@ -117,7 +117,7 @@ extern crate cursive;
 use cursive::Cursive;
 
 fn main() {
-	let mut siv = Cursive::new();
+	let mut siv = Cursive::default();
 
 	siv.add_global_callback('q', |s| s.quit());
 
@@ -159,7 +159,7 @@ use cursive::Cursive;
 use cursive::views::TextView;
 
 fn main() {
-	let mut siv = Cursive::new();
+	let mut siv = Cursive::default();
 
 	siv.add_global_callback('q', |s| s.quit());
 

@@ -11,7 +11,7 @@ use theme::{Color, ColorPair, Effect};
 use utf8;
 use vec::Vec2;
 
-pub struct Concrete {
+pub struct Backend {
     current_style: Cell<ColorPair>,
     pairs: RefCell<HashMap<ColorPair, i16>>,
 
@@ -21,7 +21,56 @@ pub struct Concrete {
     event_queue: Vec<Event>,
 }
 
-impl Concrete {
+impl Backend {
+    pub fn init() -> Box<backend::Backend> {
+        // Change the locale.
+        // For some reasons it's mandatory to get some UTF-8 support.
+        ncurses::setlocale(ncurses::LcCategory::all, "");
+
+        // The delay is the time ncurses wait after pressing ESC
+        // to see if it's an escape sequence.
+        // Default delay is way too long. 25 is imperceptible yet works fine.
+        ::std::env::set_var("ESCDELAY", "25");
+
+        ncurses::initscr();
+        ncurses::keypad(ncurses::stdscr(), true);
+
+        // This disables mouse click detection,
+        // and provides 0-delay access to mouse presses.
+        ncurses::mouseinterval(0);
+        // Listen to all mouse events.
+        ncurses::mousemask(
+            (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION)
+                as mmask_t,
+            None,
+        );
+        ncurses::noecho();
+        ncurses::cbreak();
+        ncurses::start_color();
+        // Pick up background and text color from the terminal theme.
+        ncurses::use_default_colors();
+        // No cursor
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+
+        // This asks the terminal to provide us with mouse drag events
+        // (Mouse move when a button is pressed).
+        // Replacing 1002 with 1003 would give us ANY mouse move.
+        print!("\x1B[?1002h");
+        stdout().flush().expect("could not flush stdout");
+
+        let c = Backend {
+            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
+            pairs: RefCell::new(HashMap::new()),
+
+            last_mouse_button: None,
+            event_queue: Vec::new(),
+
+            key_codes: initialize_keymap(),
+        };
+
+        Box::new(c)
+    }
+
     /// Save a new color pair.
     fn insert_color(
         &self, pairs: &mut HashMap<ColorPair, i16>, pair: ColorPair
@@ -149,56 +198,7 @@ impl Concrete {
     }
 }
 
-impl backend::Backend for Concrete {
-    fn init() -> Box<Self> {
-        // Change the locale.
-        // For some reasons it's mandatory to get some UTF-8 support.
-        ncurses::setlocale(ncurses::LcCategory::all, "");
-
-        // The delay is the time ncurses wait after pressing ESC
-        // to see if it's an escape sequence.
-        // Default delay is way too long. 25 is imperceptible yet works fine.
-        ::std::env::set_var("ESCDELAY", "25");
-
-        ncurses::initscr();
-        ncurses::keypad(ncurses::stdscr(), true);
-
-        // This disables mouse click detection,
-        // and provides 0-delay access to mouse presses.
-        ncurses::mouseinterval(0);
-        // Listen to all mouse events.
-        ncurses::mousemask(
-            (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION)
-                as mmask_t,
-            None,
-        );
-        ncurses::noecho();
-        ncurses::cbreak();
-        ncurses::start_color();
-        // Pick up background and text color from the terminal theme.
-        ncurses::use_default_colors();
-        // No cursor
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-
-        // This asks the terminal to provide us with mouse drag events
-        // (Mouse move when a button is pressed).
-        // Replacing 1002 with 1003 would give us ANY mouse move.
-        print!("\x1B[?1002h");
-        stdout().flush().expect("could not flush stdout");
-
-        let c = Concrete {
-            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
-            pairs: RefCell::new(HashMap::new()),
-
-            last_mouse_button: None,
-            event_queue: Vec::new(),
-
-            key_codes: initialize_keymap(),
-        };
-
-        Box::new(c)
-    }
-
+impl backend::Backend for Backend {
     fn screen_size(&self) -> (usize, usize) {
         let mut x: i32 = 0;
         let mut y: i32 = 0;

@@ -3,14 +3,10 @@ use std::collections::HashMap;
 use theme::{BaseColor, Color};
 
 #[cfg(feature = "ncurses")]
-mod n;
-#[cfg(feature = "ncurses")]
-pub use self::n::*;
+pub mod n;
 
 #[cfg(feature = "pancurses")]
-mod pan;
-#[cfg(feature = "pancurses")]
-pub use self::pan::*;
+pub mod pan;
 
 fn split_i32(code: i32) -> Vec<u8> {
     (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()

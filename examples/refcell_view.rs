@@ -7,7 +7,7 @@ use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 // This example shows a way to access multiple views at the same time.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // Create a dialog with 2 edit fields, and a text view.
     // The text view indicates when the 2 fields content match.

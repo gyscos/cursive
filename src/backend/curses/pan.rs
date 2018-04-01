@@ -10,7 +10,7 @@ use std::io::{stdout, Write};
 use theme::{Color, ColorPair, Effect};
 use vec::Vec2;
 
-pub struct Concrete {
+pub struct Backend {
     // Used
     current_style: Cell<ColorPair>,
     pairs: RefCell<HashMap<ColorPair, i32>>,
@@ -24,7 +24,41 @@ pub struct Concrete {
     window: pancurses::Window,
 }
 
-impl Concrete {
+impl Backend {
+    pub fn init() -> Box<Self> {
+        ::std::env::set_var("ESCDELAY", "25");
+
+        let window = pancurses::initscr();
+        window.keypad(true);
+        pancurses::noecho();
+        pancurses::cbreak();
+        pancurses::start_color();
+        pancurses::use_default_colors();
+        pancurses::curs_set(0);
+        pancurses::mouseinterval(0);
+        pancurses::mousemask(
+            pancurses::ALL_MOUSE_EVENTS | pancurses::REPORT_MOUSE_POSITION,
+            ::std::ptr::null_mut(),
+        );
+
+        // This asks the terminal to provide us with mouse drag events
+        // (Mouse move when a button is pressed).
+        // Replacing 1002 with 1003 would give us ANY mouse move.
+        print!("\x1B[?1002h");
+        stdout().flush().expect("could not flush stdout");
+
+        let c = Backend {
+            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
+            pairs: RefCell::new(HashMap::new()),
+            window: window,
+            last_mouse_button: None,
+            event_queue: Vec::new(),
+            key_codes: initialize_keymap(),
+        };
+
+        Box::new(c)
+    }
+
     /// Save a new color pair.
     fn insert_color(
         &self, pairs: &mut HashMap<ColorPair, i32>, pair: ColorPair
@@ -132,41 +166,7 @@ impl Concrete {
     }
 }
 
-impl backend::Backend for Concrete {
-    fn init() -> Box<Self> {
-        ::std::env::set_var("ESCDELAY", "25");
-
-        let window = pancurses::initscr();
-        window.keypad(true);
-        pancurses::noecho();
-        pancurses::cbreak();
-        pancurses::start_color();
-        pancurses::use_default_colors();
-        pancurses::curs_set(0);
-        pancurses::mouseinterval(0);
-        pancurses::mousemask(
-            pancurses::ALL_MOUSE_EVENTS | pancurses::REPORT_MOUSE_POSITION,
-            ::std::ptr::null_mut(),
-        );
-
-        // This asks the terminal to provide us with mouse drag events
-        // (Mouse move when a button is pressed).
-        // Replacing 1002 with 1003 would give us ANY mouse move.
-        print!("\x1B[?1002h");
-        stdout().flush().expect("could not flush stdout");
-
-        let c = Concrete {
-            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
-            pairs: RefCell::new(HashMap::new()),
-            window: window,
-            last_mouse_button: None,
-            event_queue: Vec::new(),
-            key_codes: initialize_keymap(),
-        };
-
-        Box::new(c)
-    }
-
+impl backend::Backend for Backend {
     fn screen_size(&self) -> (usize, usize) {
         let (y, x) = self.window.get_max_yx();
         (x as usize, y as usize)

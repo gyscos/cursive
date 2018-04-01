@@ -20,7 +20,7 @@ use std::thread;
 use theme;
 use vec::Vec2;
 
-pub struct Concrete {
+pub struct Backend {
     terminal: AlternateScreen<MouseTerminal<RawTerminal<Stdout>>>,
     current_style: Cell<theme::ColorPair>,
     input: chan::Receiver<TEvent>,
@@ -56,7 +56,39 @@ impl Effectable for theme::Effect {
     }
 }
 
-impl Concrete {
+impl Backend {
+    pub fn init() -> Box<Self> {
+        print!("{}", termion::cursor::Hide);
+
+        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
+
+        // TODO: lock stdout
+        let terminal = AlternateScreen::from(MouseTerminal::from(
+            ::std::io::stdout().into_raw_mode().unwrap(),
+        ));
+
+        let (sender, receiver) = chan::async();
+
+        thread::spawn(move || {
+            for key in ::std::io::stdin().events() {
+                if let Ok(key) = key {
+                    sender.send(key)
+                }
+            }
+        });
+
+        let c = Backend {
+            terminal: terminal,
+            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
+            input: receiver,
+            resize: resize,
+            timeout: None,
+            last_button: None,
+        };
+
+        Box::new(c)
+    }
+
     fn apply_colors(&self, colors: theme::ColorPair) {
         with_color(&colors.front, |c| print!("{}", tcolor::Fg(c)));
         with_color(&colors.back, |c| print!("{}", tcolor::Bg(c)));
@@ -136,39 +168,7 @@ impl Concrete {
     }
 }
 
-impl backend::Backend for Concrete {
-    fn init() -> Box<Self> {
-        print!("{}", termion::cursor::Hide);
-
-        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
-
-        // TODO: lock stdout
-        let terminal = AlternateScreen::from(MouseTerminal::from(
-            ::std::io::stdout().into_raw_mode().unwrap(),
-        ));
-
-        let (sender, receiver) = chan::async();
-
-        thread::spawn(move || {
-            for key in ::std::io::stdin().events() {
-                if let Ok(key) = key {
-                    sender.send(key)
-                }
-            }
-        });
-
-        let c = Concrete {
-            terminal: terminal,
-            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
-            input: receiver,
-            resize: resize,
-            timeout: None,
-            last_button: None,
-        };
-
-        Box::new(c)
-    }
-
+impl backend::Backend for Backend {
     fn finish(&mut self) {
         print!("{}{}", termion::cursor::Show, termion::cursor::Goto(1, 1));
         print!(
