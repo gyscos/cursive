@@ -1,6 +1,6 @@
 //! Makes drawing on ncurses windows easier.
 
-use backend::{self, Backend};
+use backend::Backend;
 use enumset::EnumSet;
 use std::cell::Cell;
 use std::cmp::min;
@@ -24,7 +24,7 @@ pub struct Printer<'a> {
     /// `true` if nothing has been drawn yet.
     new: Rc<Cell<bool>>,
     /// Backend used to actually draw things
-    backend: &'a backend::Concrete,
+    backend: &'a Box<Backend>,
 }
 
 impl<'a> Printer<'a> {
@@ -33,7 +33,7 @@ impl<'a> Printer<'a> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'a backend::Concrete
+        size: T, theme: &'a Theme, backend: &'a Box<Backend>
     ) -> Self {
         Printer {
             offset: Vec2::zero(),
@@ -121,7 +121,7 @@ impl<'a> Printer<'a> {
     /// # use cursive::Printer;
     /// # use cursive::theme;
     /// # use cursive::backend::{self, Backend};
-    /// # let b = backend::Concrete::init();
+    /// # let b: Box<Backend> = backend::Concrete::init();
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((6,4), &t, &b);
     /// printer.with_color(theme::ColorStyle::highlight(), |printer| {
@@ -132,8 +132,9 @@ impl<'a> Printer<'a> {
     where
         F: FnOnce(&Printer),
     {
-        self.backend
-            .with_color(c.resolve(&self.theme.palette), || f(self));
+        let old = self.backend.set_color(c.resolve(&self.theme.palette));
+        f(self);
+        self.backend.set_color(old);
     }
 
     /// Call the given closure with a styled printer,
@@ -165,7 +166,9 @@ impl<'a> Printer<'a> {
     where
         F: FnOnce(&Printer),
     {
-        self.backend.with_effect(effect, || f(self));
+        self.backend.set_effect(effect);
+        f(self);
+        self.backend.unset_effect(effect);
     }
 
     /// Call the given closure with a modified printer
@@ -196,7 +199,7 @@ impl<'a> Printer<'a> {
     /// # use cursive::Printer;
     /// # use cursive::theme;
     /// # use cursive::backend::{self, Backend};
-    /// # let b = backend::Concrete::init();
+    /// # let b: Box<Backend> = backend::Concrete::init();
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((6,4), &t, &b);
     /// printer.print_box((0,0), (6,4), false);

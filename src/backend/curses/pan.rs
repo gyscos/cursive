@@ -133,7 +133,7 @@ impl Concrete {
 }
 
 impl backend::Backend for Concrete {
-    fn init() -> Self {
+    fn init() -> Box<Self> {
         ::std::env::set_var("ESCDELAY", "25");
 
         let window = pancurses::initscr();
@@ -155,14 +155,16 @@ impl backend::Backend for Concrete {
         print!("\x1B[?1002h");
         stdout().flush().expect("could not flush stdout");
 
-        Concrete {
+        let c = Concrete {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
             pairs: RefCell::new(HashMap::new()),
             window: window,
             last_mouse_button: None,
             event_queue: Vec::new(),
             key_codes: initialize_keymap(),
-        }
+        };
+
+        Box::new(c)
     }
 
     fn screen_size(&self) -> (usize, usize) {
@@ -180,21 +182,17 @@ impl backend::Backend for Concrete {
         pancurses::endwin();
     }
 
-    fn with_color<F: FnOnce()>(&self, colors: ColorPair, f: F) {
+    fn set_color(&self, colors: ColorPair) -> ColorPair {
         let current = self.current_style.get();
 
         if current != colors {
             self.set_colors(colors);
         }
 
-        f();
-
-        if current != colors {
-            self.set_colors(current);
-        }
+        current
     }
 
-    fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
+    fn set_effect(&self, effect: Effect) {
         let style = match effect {
             Effect::Simple => pancurses::Attribute::Normal,
             Effect::Reverse => pancurses::Attribute::Reverse,
@@ -203,7 +201,16 @@ impl backend::Backend for Concrete {
             Effect::Underline => pancurses::Attribute::Underline,
         };
         self.window.attron(style);
-        f();
+    }
+
+    fn unset_effect(&self, effect: Effect) {
+        let style = match effect {
+            Effect::Simple => pancurses::Attribute::Normal,
+            Effect::Reverse => pancurses::Attribute::Reverse,
+            Effect::Bold => pancurses::Attribute::Bold,
+            Effect::Italic => pancurses::Attribute::Italic,
+            Effect::Underline => pancurses::Attribute::Underline,
+        };
         self.window.attroff(style);
     }
 
