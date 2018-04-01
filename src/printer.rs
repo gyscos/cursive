@@ -168,7 +168,7 @@ impl<'a> Printer<'a> {
     {
         self.backend.set_effect(effect);
         f(self);
-        self.backend.reset_effect(effect);
+        self.backend.unset_effect(effect);
     }
 
     /// Call the given closure with a modified printer
