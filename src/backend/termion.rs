@@ -194,7 +194,7 @@ impl backend::Backend for Concrete {
         effect.on();
     }
 
-    fn reset_effect(&self, effect: theme::Effect) {
+    fn unset_effect(&self, effect: theme::Effect) {
         effect.off();
     }
 

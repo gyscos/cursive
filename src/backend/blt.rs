@@ -202,7 +202,7 @@ impl backend::Backend for Concrete {
         }
     }
 
-    fn reset_effect(&self, effect: Effect) {
+    fn unset_effect(&self, effect: Effect) {
         match effect {
             // TODO: does BLT support bold/italic/underline?
             Effect::Bold

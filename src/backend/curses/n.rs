@@ -236,7 +236,7 @@ impl backend::Backend for Concrete {
         ncurses::attron(style);
     }
 
-    fn reset_effect(&self, effect: Effect) {
+    fn unset_effect(&self, effect: Effect) {
         let style = match effect {
             Effect::Reverse => ncurses::A_REVERSE(),
             Effect::Simple => ncurses::A_NORMAL(),

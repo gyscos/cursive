@@ -35,8 +35,10 @@ pub trait Backend {
 
     fn set_refresh_rate(&mut self, fps: u32);
 
+    // This sets the Colours and returns the previous colours
+    // to allow you to set them back when you're done.
     fn set_color(&self, colors: theme::ColorPair) -> theme::ColorPair;
 
     fn set_effect(&self, effect: theme::Effect);
-    fn reset_effect(&self, effect: theme::Effect);
+    fn unset_effect(&self, effect: theme::Effect);
 }

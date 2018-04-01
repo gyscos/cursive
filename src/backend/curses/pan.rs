@@ -203,7 +203,7 @@ impl backend::Backend for Concrete {
         self.window.attron(style);
     }
 
-    fn reset_effect(&self, effect: Effect) {
+    fn unset_effect(&self, effect: Effect) {
         let style = match effect {
             Effect::Simple => pancurses::Attribute::Normal,
             Effect::Reverse => pancurses::Attribute::Reverse,
