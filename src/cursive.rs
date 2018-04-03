@@ -551,12 +551,7 @@ impl Cursive {
 
     /// Returns the size of the screen, in characters.
     pub fn screen_size(&self) -> Vec2 {
-        let (x, y) = self.backend.screen_size();
-
-        Vec2 {
-            x: x as usize,
-            y: y as usize,
-        }
+        self.backend.screen_size()
     }
 
     fn layout(&mut self) {

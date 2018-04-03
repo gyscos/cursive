@@ -78,7 +78,7 @@ impl<'a> Printer<'a> {
         let text = &text[..prefix_len];
 
         let p = p + self.offset;
-        self.backend.print_at((p.x, p.y), text);
+        self.backend.print_at(p, text);
     }
 
     /// Prints a vertical line using the given character.
@@ -93,7 +93,7 @@ impl<'a> Printer<'a> {
 
         let p = p + self.offset;
         for y in 0..len {
-            self.backend.print_at((p.x, (p.y + y)), c);
+            self.backend.print_at(p + (0,y), c);
         }
     }
 
@@ -109,7 +109,7 @@ impl<'a> Printer<'a> {
         let text: String = ::std::iter::repeat(c).take(len).collect();
 
         let p = p + self.offset;
-        self.backend.print_at((p.x, p.y), &text);
+        self.backend.print_at(p, &text);
     }
 
     /// Call the given closure with a colored printer,

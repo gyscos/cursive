@@ -1,3 +1,8 @@
+//! Backend using the pure-rust termion library.
+//!
+//! Requires the `termion-backend` feature.
+#![cfg(feature = "termion")]
+
 extern crate termion;
 
 extern crate chan_signal;
@@ -203,9 +208,9 @@ impl backend::Backend for Backend {
         true
     }
 
-    fn screen_size(&self) -> (usize, usize) {
+    fn screen_size(&self) -> Vec2 {
         let (x, y) = termion::terminal_size().unwrap_or((1, 1));
-        (x as usize, y as usize)
+        (x, y).into()
     }
 
     fn clear(&self, color: theme::Color) {
@@ -220,10 +225,10 @@ impl backend::Backend for Backend {
         self.terminal.flush().unwrap();
     }
 
-    fn print_at(&self, (x, y): (usize, usize), text: &str) {
+    fn print_at(&self, pos: Vec2, text: &str) {
         print!(
             "{}{}",
-            termion::cursor::Goto(1 + x as u16, 1 + y as u16),
+            termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
             text
         );
     }

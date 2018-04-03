@@ -1,3 +1,8 @@
+//! Common module for the ncurses and pancurses backends.
+//!
+//! Requires either of `ncurses-backend` or `pancurses-backend`.
+#![cfg(any(feature = "ncurses", feature = "pancurses"))]
+
 use event::{Event, Key};
 use std::collections::HashMap;
 use theme::{BaseColor, Color};

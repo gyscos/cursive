@@ -2,6 +2,7 @@
 use backend;
 use theme;
 use event;
+use vec::Vec2;
 
 pub struct Backend;
 
@@ -23,15 +24,15 @@ impl backend::Backend for Backend {
         false
     }
 
-    fn screen_size(&self) -> (usize, usize) {
-        (1, 1)
+    fn screen_size(&self) -> Vec2 {
+        (1, 1).into()
     }
 
     fn poll_event(&mut self) -> event::Event {
         event::Event::Exit
     }
 
-    fn print_at(&self, _: (usize, usize), _: &str) {}
+    fn print_at(&self, _: Vec2, _: &str) {}
 
     fn clear(&self, _: theme::Color) {}
 

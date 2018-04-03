@@ -4,5 +4,6 @@ rust:
     - stable
     - nightly
 script:
+    - cargo check --all-features
     - cargo build --verbose --features "pancurses-backend termion-backend"
     - cargo test --verbose --features "pancurses-backend termion-backend"

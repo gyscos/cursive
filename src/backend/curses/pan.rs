@@ -61,7 +61,9 @@ impl Backend {
 
     /// Save a new color pair.
     fn insert_color(
-        &self, pairs: &mut HashMap<ColorPair, i32>, pair: ColorPair
+        &self,
+        pairs: &mut HashMap<ColorPair, i32>,
+        pair: ColorPair,
     ) -> i32 {
         let n = 1 + pairs.len() as i32;
 
@@ -167,9 +169,10 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
-    fn screen_size(&self) -> (usize, usize) {
+    fn screen_size(&self) -> Vec2 {
+        // Coordinates are reversed here
         let (y, x) = self.window.get_max_yx();
-        (x as usize, y as usize)
+        (x, y).into()
     }
 
     fn has_colors(&self) -> bool {
@@ -227,8 +230,8 @@ impl backend::Backend for Backend {
         self.window.refresh();
     }
 
-    fn print_at(&self, (x, y): (usize, usize), text: &str) {
-        self.window.mvaddstr(y as i32, x as i32, text);
+    fn print_at(&self, pos: Vec2, text: &str) {
+        self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
     fn poll_event(&mut self) -> Event {

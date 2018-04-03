@@ -1,3 +1,8 @@
+//! Backend using BearLibTerminal
+//!
+//! Requires the `blt-backend` feature.
+#![cfg(feature = "bear-lib-terminal")]
+
 extern crate bear_lib_terminal;
 
 use self::bear_lib_terminal::Color as BltColor;
@@ -220,9 +225,9 @@ impl backend::Backend for Backend {
         true
     }
 
-    fn screen_size(&self) -> (usize, usize) {
+    fn screen_size(&self) -> Vec2 {
         let Size { width, height } = terminal::state::size();
-        (width as usize, height as usize)
+        (width, height).into()
     }
 
     fn clear(&self, color: Color) {
@@ -237,8 +242,8 @@ impl backend::Backend for Backend {
         terminal::refresh();
     }
 
-    fn print_at(&self, (x, y): (usize, usize), text: &str) {
-        terminal::print_xy(x as i32, y as i32, text);
+    fn print_at(&self, pos: Vec2, text: &str) {
+        terminal::print_xy(pos.x as i32, pos.y as i32, text);
     }
 
     fn set_refresh_rate(&mut self, _: u32) {

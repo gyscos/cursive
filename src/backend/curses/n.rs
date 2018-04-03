@@ -73,7 +73,9 @@ impl Backend {
 
     /// Save a new color pair.
     fn insert_color(
-        &self, pairs: &mut HashMap<ColorPair, i16>, pair: ColorPair
+        &self,
+        pairs: &mut HashMap<ColorPair, i16>,
+        pair: ColorPair,
     ) -> i16 {
         let n = 1 + pairs.len() as i16;
         let target = if ncurses::COLOR_PAIRS() > i32::from(n) {
@@ -199,11 +201,11 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
-    fn screen_size(&self) -> (usize, usize) {
+    fn screen_size(&self) -> Vec2 {
         let mut x: i32 = 0;
         let mut y: i32 = 0;
         ncurses::getmaxyx(ncurses::stdscr(), &mut y, &mut x);
-        (x as usize, y as usize)
+        (x, y).into()
     }
 
     fn has_colors(&self) -> bool {
@@ -261,8 +263,8 @@ impl backend::Backend for Backend {
         ncurses::refresh();
     }
 
-    fn print_at(&self, (x, y): (usize, usize), text: &str) {
-        ncurses::mvaddstr(y as i32, x as i32, text);
+    fn print_at(&self, pos: Vec2, text: &str) {
+        ncurses::mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
     fn poll_event(&mut self) -> Event {
