@@ -420,11 +420,10 @@ impl StackView {
                 StackPositionIterator::new(self.layers.iter(), printer.size)
                     .enumerate()
             {
-                v.view.draw(&printer.sub_printer(
-                    offset,
-                    v.size,
-                    i + 1 == last,
-                ));
+                v.view.draw(&printer
+                    .offset(offset)
+                    .cropped(v.size)
+                    .focused(i + 1 == last));
             }
         });
     }

@@ -9,6 +9,7 @@ use theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
 use unicode_segmentation::UnicodeSegmentation;
 use utils::lines::simple::prefix;
 use vec::Vec2;
+use with::With;
 
 /// Convenient interface to draw on a subset of the screen.
 pub struct Printer<'a> {
@@ -34,6 +35,20 @@ pub struct Printer<'a> {
 
     /// Backend used to actually draw things
     backend: &'a backend::Concrete,
+}
+
+impl<'a> Clone for Printer<'a> {
+    fn clone(&self) -> Self {
+        Printer {
+            offset: self.offset,
+            content_offset: self.content_offset,
+            size: self.size,
+            focused: self.focused,
+            theme: self.theme,
+            backend: self.backend,
+            new: Rc::clone(&self.new),
+        }
+    }
 }
 
 impl<'a> Printer<'a> {
@@ -308,37 +323,73 @@ impl<'a> Printer<'a> {
     }
 
     /// Prints a horizontal delimiter with side border `├` and `┤`.
-    pub fn print_hdelim<T: Into<Vec2>>(&self, start: T, len: usize) {
+    pub fn print_hdelim<T>(&self, start: T, len: usize)
+    where
+        T: Into<Vec2>,
+    {
         let start = start.into();
         self.print(start, "├");
         self.print_hline(start + (1, 0), len.saturating_sub(2), "─");
         self.print(start + (len.saturating_sub(1), 0), "┤");
     }
 
-    /// Returns a printer on a subset of this one's area.
-    pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(
-        &'a self, offset: S, size: T, focused: bool
-    ) -> Printer<'a> {
-        let size = size.into();
-        let offset = offset.into().or_min(self.size);
-        let available = if !offset.fits_in(self.size) {
-            Vec2::zero()
-        } else {
-            Vec2::min(self.size - offset, size)
-        };
-        Printer {
-            offset: self.offset + offset,
-            // We can't be larger than what remains
-            size: available,
-            focused: self.focused && focused,
-            theme: self.theme,
-            backend: self.backend,
-            new: Rc::clone(&self.new),
-        }
+    /// Returns a sub-printer with the given offset.
+    pub fn offset<S>(&self, offset: S) -> Printer
+    where
+        S: Into<Vec2>,
+    {
+        let offset = offset.into();
+        self.clone().with(|s| {
+            let consumed = Vec2::min(s.content_offset, offset);
+
+            s.content_offset = s.content_offset - consumed;
+            s.offset = s.offset + offset - consumed;
+            s.size = s.size.saturating_sub(offset);
+        })
     }
 
-    /// Returns a sub-printer with the given offset.
-    pub fn offset<S: Into<Vec2>>(&self, offset: S, focused: bool) -> Printer {
-        self.sub_printer(offset, self.size, focused)
+    /// Returns a new sub-printer inheriting the given focus.
+    ///
+    /// If `self` is focused and `focused == true`, the child will be focused.
+    ///
+    /// Otherwise, he will be unfocused.
+    pub fn focused(&self, focused: bool) -> Self {
+        self.clone().with(|s| {
+            s.focused &= focused;
+        })
+    }
+
+    /// Returns a new sub-printer with a cropped area.
+    ///
+    /// The new printer size will be the minimum of `size` and its current size.
+    ///
+    /// Any size reduction happens at the bottom-right.
+    pub fn cropped<S>(&self, size: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        self.clone().with(|s| {
+            s.size = Vec2::min(s.size, size);
+        })
+    }
+
+    /// Returns a new sub-printer with a shrinked area.
+    ///
+    /// The printer size will be reduced by the given border from the bottom-right.
+    pub fn shrinked<S>(&self, borders: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        self.cropped(self.size.saturating_sub(borders))
+    }
+
+    /// Returns a new sub-printer with a content offset.
+    pub fn content_offset<S>(&self, offset: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        self.clone().with(|s| {
+            s.content_offset = s.content_offset + offset;
+        })
     }
 }

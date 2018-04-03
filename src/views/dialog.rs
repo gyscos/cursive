@@ -371,11 +371,10 @@ impl Dialog {
             // Add some special effect to the focused button
             let position = Vec2::new(offset, y);
             button.offset.set(position);
-            button.button.draw(&printer.sub_printer(
-                position,
-                size,
-                self.focus == DialogFocus::Button(i),
-            ));
+            button.button.draw(&printer
+                .offset(position)
+                .cropped(size)
+                .focused(self.focus == DialogFocus::Button(i)));
             // Keep 1 blank between two buttons
             offset += size.x + 1;
             // Also keep 1 blank above the buttons
@@ -395,11 +394,10 @@ impl Dialog {
             None => return,
         };
 
-        self.content.draw(&printer.sub_printer(
-            self.borders.top_left() + self.padding.top_left(),
-            inner_size,
-            self.focus == DialogFocus::Content,
-        ));
+        self.content.draw(&printer
+            .offset(self.borders.top_left() + self.padding.top_left())
+            .cropped(inner_size)
+            .focused(self.focus == DialogFocus::Content));
     }
 
     fn draw_title(&self, printer: &Printer) {

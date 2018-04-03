@@ -703,8 +703,7 @@ impl<T: 'static> View for SelectView<T> {
         } else {
             let h = self.items.len();
             let offset = self.align.v.get_offset(h, printer.size.y);
-            let printer =
-                &printer.sub_printer(Vec2::new(0, offset), printer.size, true);
+            let printer = &printer.offset((0, offset));
 
             self.scrollbase.draw(printer, |printer, i| {
                 printer.with_selection(i == self.focus(), |printer| {

@@ -327,11 +327,10 @@ impl View for LinearLayout {
             // eprintln!("Printer size: {:?}", printer.size);
             // eprintln!("Child size: {:?}", item.child.size);
             // eprintln!("Offset: {:?}", item.offset);
-            let printer = &printer.sub_printer(
-                self.orientation.make_vec(item.offset, 0),
-                item.child.size,
-                i == self.focus,
-            );
+            let printer = &printer
+                .offset(self.orientation.make_vec(item.offset, 0))
+                .cropped(item.child.size)
+                .focused(i == self.focus);
             item.child.view.draw(printer);
         }
     }

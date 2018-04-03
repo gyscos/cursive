@@ -215,7 +215,7 @@ impl View for ProgressBar {
             printer.with_effect(Effect::Reverse, |printer| {
                 printer.print((offset, 0), &label);
             });
-            let printer = &printer.sub_printer((0, 0), (length, 1), true);
+            let printer = &printer.cropped((length, 1));
             printer.print_hline((0, 0), length, " ");
             printer.print((offset, 0), &label);
         });

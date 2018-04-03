@@ -269,7 +269,7 @@ impl ScrollBase {
             // Y is the actual coordinate of the line.
             // The item ID is then Y + self.start_line
             line_drawer(
-                &printer.sub_printer(Vec2::new(0, y), Vec2::new(w, 1), true),
+                &printer.offset((0, y)).cropped((w, 1)),
                 y + self.start_line,
             );
         }

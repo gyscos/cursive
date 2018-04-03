@@ -211,7 +211,7 @@ impl View for MenuPopup {
         let h = self.menu.len();
         // If we're too high, add a vertical offset
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.offset((0, offset), true);
+        let printer = &printer.offset((0, offset));
 
         // Start with a box
         printer.print_box(Vec2::new(0, 0), printer.size, false);
@@ -219,8 +219,7 @@ impl View for MenuPopup {
         // We're giving it a reduced size because of borders.
         // But we're keeping the full width,
         // to integrate horizontal delimiters in the frame.
-        let size = printer.size - (0, 2);
-        let printer = printer.sub_printer((0, 1), size, true);
+        let printer = printer.offset((0, 1)).shrinked((0, 1));
 
         self.scrollbase.draw(&printer, |printer, i| {
             printer.with_selection(i == self.focus, |printer| {

@@ -279,7 +279,9 @@ impl View for ListView {
             .draw(printer, |printer, i| match self.children[i] {
                 ListChild::Row(ref label, ref view) => {
                     printer.print((0, 0), label);
-                    view.draw(&printer.offset((offset, 0), i == self.focus));
+                    view.draw(&printer
+                        .offset((offset, 0))
+                        .focused(i == self.focus));
                 }
                 ListChild::Delimiter => (),
             });
