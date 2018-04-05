@@ -14,15 +14,24 @@ use vec::Vec2;
 pub struct Printer<'a> {
     /// Offset into the window this printer should start drawing at.
     pub offset: Vec2,
+
+    /// Offset into the view for this printer.
+    pub content_offset: Vec2,
+
     /// Size of the area we are allowed to draw on.
+    ///
+    /// Anything outside of this should be discarded.
     pub size: Vec2,
+
     /// Whether the view to draw is currently focused or not.
     pub focused: bool,
+
     /// Currently used theme
     pub theme: &'a Theme,
 
     /// `true` if nothing has been drawn yet.
     new: Rc<Cell<bool>>,
+
     /// Backend used to actually draw things
     backend: &'a backend::Concrete,
 }
@@ -37,6 +46,7 @@ impl<'a> Printer<'a> {
     ) -> Self {
         Printer {
             offset: Vec2::zero(),
+            content_offset: Vec2::zero(),
             size: size.into(),
             focused: true,
             theme: theme,
