@@ -73,6 +73,7 @@ extern crate log;
 extern crate maplit;
 
 extern crate num;
+extern crate libc;
 extern crate owning_ref;
 extern crate toml;
 extern crate unicode_segmentation;

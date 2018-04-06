@@ -23,6 +23,7 @@ toml = "0.4"
 unicode-segmentation = "1.0"
 unicode-width = "0.1"
 xi-unicode = "0.1.0"
+libc = "0.2"
 
 [dependencies.maplit]
 optional = true

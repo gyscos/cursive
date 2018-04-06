@@ -4,8 +4,10 @@ use self::ncurses::mmask_t;
 use self::super::{find_closest, split_i32};
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
+use libc;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
+use std::ffi::CString;
 use std::io::{stdout, Write};
 use theme::{Color, ColorPair, Effect};
 use utf8;
@@ -32,7 +34,10 @@ impl Backend {
         // Default delay is way too long. 25 is imperceptible yet works fine.
         ::std::env::set_var("ESCDELAY", "25");
 
-        ncurses::initscr();
+        let tty_path = CString::new("/dev/tty").unwrap();
+        let mode = CString::new("r+").unwrap();
+        let tty = unsafe { libc::fopen(tty_path.as_ptr(), mode.as_ptr()) };
+        ncurses::newterm(None, tty, tty);
         ncurses::keypad(ncurses::stdscr(), true);
 
         // This disables mouse click detection,
@@ -73,9 +78,7 @@ impl Backend {
 
     /// Save a new color pair.
     fn insert_color(
-        &self,
-        pairs: &mut HashMap<ColorPair, i16>,
-        pair: ColorPair,
+        &self, pairs: &mut HashMap<ColorPair, i16>, pair: ColorPair
     ) -> i16 {
         let n = 1 + pairs.len() as i16;
         let target = if ncurses::COLOR_PAIRS() > i32::from(n) {
