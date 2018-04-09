@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use std::fs::File;
 use std::io;
-use std::io::{stdout, Write};
+use std::io::{Write};
 use theme::{Color, ColorPair, Effect};
 use utf8;
 use vec::Vec2;
@@ -25,10 +25,15 @@ pub struct Backend {
     event_queue: Vec<Event>,
 }
 
+/// Writes some bytes directly to `/dev/tty`
+///
+/// Since this is not going to be used often, we can afford to re-open the
+/// file every time.
 fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
     let mut tty_output =
         File::create("/dev/tty").expect("cursive can only run with a tty");
     tty_output.write_all(bytes)?;
+    // tty_output will be flushed automatically at the end of the function.
     Ok(())
 }
 
@@ -70,7 +75,6 @@ impl Backend {
         // (Mouse move when a button is pressed).
         // Replacing 1002 with 1003 would give us ANY mouse move.
         write_to_tty(b"\x1B[?1002h").unwrap();
-        stdout().flush().expect("could not flush stdout");
 
         let c = Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
@@ -226,7 +230,6 @@ impl backend::Backend for Backend {
 
     fn finish(&mut self) {
         write_to_tty(b"\x1B[?1002l").unwrap();
-        stdout().flush().expect("could not flush stdout");
         ncurses::endwin();
     }
 
