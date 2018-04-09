@@ -8,6 +8,8 @@ use libc;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::ffi::CString;
+use std::fs::File;
+use std::io;
 use std::io::{stdout, Write};
 use theme::{Color, ColorPair, Effect};
 use utf8;
@@ -21,6 +23,13 @@ pub struct Backend {
 
     last_mouse_button: Option<MouseButton>,
     event_queue: Vec<Event>,
+}
+
+fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
+    let mut tty_output =
+        File::create("/dev/tty").expect("cursive can only run with a tty");
+    tty_output.write_all(bytes)?;
+    Ok(())
 }
 
 impl Backend {
@@ -60,7 +69,7 @@ impl Backend {
         // This asks the terminal to provide us with mouse drag events
         // (Mouse move when a button is pressed).
         // Replacing 1002 with 1003 would give us ANY mouse move.
-        print!("\x1B[?1002h");
+        write_to_tty(b"\x1B[?1002h").unwrap();
         stdout().flush().expect("could not flush stdout");
 
         let c = Backend {
@@ -216,7 +225,7 @@ impl backend::Backend for Backend {
     }
 
     fn finish(&mut self) {
-        print!("\x1B[?1002l");
+        write_to_tty(b"\x1B[?1002l").unwrap();
         stdout().flush().expect("could not flush stdout");
         ncurses::endwin();
     }
