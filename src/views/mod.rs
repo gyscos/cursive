@@ -77,7 +77,7 @@ pub use self::menu_popup::MenuPopup;
 pub use self::menubar::Menubar;
 pub use self::on_event_view::OnEventView;
 pub use self::panel::Panel;
-pub use self::progress_bar::{Counter, ProgressBar};
+pub use self::progress_bar::ProgressBar;
 pub use self::radio::{RadioButton, RadioGroup};
 pub use self::select_view::SelectView;
 pub use self::shadow_view::ShadowView;

@@ -1,39 +1,12 @@
 use Printer;
 use align::HAlign;
 use std::cmp;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread;
 use theme::{ColorStyle, Effect};
+use utils::Counter;
 use view::View;
 
 // pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
-
-/// Atomic counter used by `ProgressBar`.
-#[derive(Clone)]
-pub struct Counter(pub Arc<AtomicUsize>);
-
-impl Counter {
-    /// Creates a new `Counter` starting with the given value.
-    pub fn new(value: usize) -> Self {
-        Counter(Arc::new(AtomicUsize::new(value)))
-    }
-
-    /// Retrieves the current progress value.
-    pub fn get(&self) -> usize {
-        self.0.load(Ordering::Relaxed)
-    }
-
-    /// Sets the current progress value.
-    pub fn set(&self, value: usize) {
-        self.0.store(value, Ordering::Relaxed);
-    }
-
-    /// Increase the current progress by `ticks`.
-    pub fn tick(&self, ticks: usize) {
-        self.0.fetch_add(ticks, Ordering::Relaxed);
-    }
-}
 
 /// Animated bar showing a progress value.
 ///

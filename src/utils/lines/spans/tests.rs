@@ -8,7 +8,9 @@ fn input() -> StyledString {
     text.append(StyledString::styled("didn't", Effect::Bold));
     text.append(StyledString::plain(" say "));
     text.append(StyledString::styled("half", Effect::Italic));
-    text.append(StyledString::plain(" the things people say I did."));
+    text.append(StyledString::plain(
+        " the things people say I did.",
+    ));
     text.append(StyledString::plain("\n"));
     text.append(StyledString::plain("\n"));
     text.append(StyledString::plain("    - A. Einstein"));
