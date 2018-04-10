@@ -48,7 +48,7 @@ impl<T> Canvas<T> {
     /// ```
     pub fn new(state: T) -> Self {
         Canvas {
-            state: state,
+            state,
             draw: Box::new(|_, _| ()),
             on_event: Box::new(|_, _| EventResult::Ignored),
             required_size: Box::new(|_, _| Vec2::new(1, 1)),

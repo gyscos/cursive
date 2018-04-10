@@ -341,7 +341,7 @@ impl<T: 'static> SelectView<T> {
         // TODO: Check if `i >= self.len()` ?
         // assert!(i < self.len(), "SelectView: trying to select out-of-bound");
         // Or just cap the ID?
-        let i = if self.len() == 0 {
+        let i = if self.is_empty() {
             0
         } else {
             min(i, self.len() - 1)

@@ -159,7 +159,7 @@ impl Backend {
             let make_event = |event| Event::Mouse {
                 offset: Vec2::zero(),
                 position: Vec2::new(mevent.x as usize, mevent.y as usize),
-                event: event,
+                event,
             };
 
             if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as mmask_t {
@@ -239,7 +239,8 @@ impl backend::Backend for Backend {
         if current != colors {
             self.set_colors(colors);
         }
-        return current;
+
+        current
     }
 
     fn set_effect(&self, effect: Effect) {

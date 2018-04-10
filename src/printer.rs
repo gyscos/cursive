@@ -24,7 +24,7 @@ pub struct Printer<'a> {
     /// `true` if nothing has been drawn yet.
     new: Rc<Cell<bool>>,
     /// Backend used to actually draw things
-    backend: &'a Box<Backend>,
+    backend: &'a Backend,
 }
 
 impl<'a> Printer<'a> {
@@ -33,15 +33,15 @@ impl<'a> Printer<'a> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'a Box<Backend>
+        size: T, theme: &'a Theme, backend: &'a Backend
     ) -> Self {
         Printer {
             offset: Vec2::zero(),
             size: size.into(),
             focused: true,
-            theme: theme,
+            theme,
             new: Rc::new(Cell::new(true)),
-            backend: backend,
+            backend,
         }
     }
 

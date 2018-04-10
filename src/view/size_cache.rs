@@ -1,5 +1,5 @@
-use XY;
 use vec::Vec2;
+use XY;
 
 /// Cache around a one-dimensional layout result.
 ///
@@ -19,8 +19,8 @@ impl SizeCache {
     /// Creates a new sized cache
     pub fn new(value: usize, constrained: bool) -> Self {
         SizeCache {
-            value: value,
-            constrained: constrained,
+            value,
+            constrained,
         }
     }
 

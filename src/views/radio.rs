@@ -107,10 +107,10 @@ impl<T> RadioButton<T> {
         state: Rc<RefCell<SharedState<T>>>, id: usize, label: String
     ) -> Self {
         RadioButton {
-            state: state,
-            id: id,
+            state,
+            id,
             enabled: true,
-            label: label,
+            label,
         }
     }
 

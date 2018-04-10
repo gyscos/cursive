@@ -569,7 +569,7 @@ impl Cursive {
         }
 
         let printer =
-            Printer::new(self.screen_size(), &self.theme, &self.backend);
+            Printer::new(self.screen_size(), &self.theme, &*self.backend);
 
         let selected = self.menubar.receive_events();
 

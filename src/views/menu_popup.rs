@@ -26,7 +26,7 @@ impl MenuPopup {
     /// Creates a new `MenuPopup` using the given menu tree.
     pub fn new(menu: Rc<MenuTree>) -> Self {
         MenuPopup {
-            menu: menu,
+            menu,
             focus: 0,
             scrollbase: ScrollBase::new().scrollbar_offset(1).right_padding(0),
             align: Align::top_left(),

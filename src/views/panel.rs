@@ -12,7 +12,7 @@ pub struct Panel<V: View> {
 impl<V: View> Panel<V> {
     /// Creates a new panel around the given view.
     pub fn new(view: V) -> Self {
-        Panel { view: view }
+        Panel { view }
     }
 
     inner_getters!(self.view: V);

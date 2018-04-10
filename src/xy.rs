@@ -13,7 +13,7 @@ pub struct XY<T> {
 impl<T> XY<T> {
     /// Creates a new `XY` from the given values.
     pub fn new(x: T, y: T) -> Self {
-        XY { x: x, y: y }
+        XY { x, y }
     }
 
     /// Creates a new `XY` by applying `f` to `x` and `y`.
