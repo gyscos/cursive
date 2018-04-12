@@ -1,7 +1,7 @@
 extern crate pancurses;
 
 use self::pancurses::mmask_t;
-use self::super::{find_closest, split_i32};
+use self::super::split_i32;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
@@ -13,7 +13,7 @@ use vec::Vec2;
 pub struct Backend {
     // Used
     current_style: Cell<ColorPair>,
-    pairs: RefCell<HashMap<ColorPair, i32>>,
+    pairs: RefCell<HashMap<(i16, i16), i32>>,
 
     key_codes: HashMap<i32, Event>,
 
@@ -22,6 +22,10 @@ pub struct Backend {
 
     // pancurses needs a handle to the current window.
     window: pancurses::Window,
+}
+
+fn find_closest_pair(pair: &ColorPair) -> (i16, i16) {
+    super::find_closest_pair(pair, pancurses::COLORS() as i16)
 }
 
 impl Backend {
@@ -62,8 +66,8 @@ impl Backend {
     /// Save a new color pair.
     fn insert_color(
         &self,
-        pairs: &mut HashMap<ColorPair, i32>,
-        pair: ColorPair,
+        pairs: &mut HashMap<(i16,i16), i32>,
+        (front, back): (i16, i16),
     ) -> i32 {
         let n = 1 + pairs.len() as i32;
 
@@ -78,18 +82,15 @@ impl Backend {
             pairs.retain(|_, &mut v| v != target);
             target
         };
-        pairs.insert(pair, target);
-        pancurses::init_pair(
-            target as i16,
-            find_closest(&pair.front),
-            find_closest(&pair.back),
-        );
+        pairs.insert((front, back), target);
+        pancurses::init_pair(target as i16, front, back);
         target
     }
 
     /// Checks the pair in the cache, or re-define a color if needed.
     fn get_or_create(&self, pair: ColorPair) -> i32 {
         let mut pairs = self.pairs.borrow_mut();
+        let pair = find_closest_pair(&pair);
 
         // Find if we have this color in stock
         if pairs.contains_key(&pair) {

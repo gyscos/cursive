@@ -1,7 +1,7 @@
 extern crate ncurses;
 
 use self::ncurses::mmask_t;
-use self::super::{find_closest, split_i32};
+use self::super::split_i32;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use libc;
@@ -17,12 +17,18 @@ use vec::Vec2;
 
 pub struct Backend {
     current_style: Cell<ColorPair>,
-    pairs: RefCell<HashMap<ColorPair, i16>>,
+
+    // Maps (front, back) ncurses colors to ncurses pairs
+    pairs: RefCell<HashMap<(i16, i16), i16>>,
 
     key_codes: HashMap<i32, Event>,
 
     last_mouse_button: Option<MouseButton>,
     event_queue: Vec<Event>,
+}
+
+fn find_closest_pair(pair: &ColorPair) -> (i16, i16) {
+    super::find_closest_pair(pair, ncurses::COLORS() as i16)
 }
 
 /// Writes some bytes directly to `/dev/tty`
@@ -89,11 +95,13 @@ impl Backend {
         Box::new(c)
     }
 
+
     /// Save a new color pair.
     fn insert_color(
-        &self, pairs: &mut HashMap<ColorPair, i16>, pair: ColorPair
+        &self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16)
     ) -> i16 {
         let n = 1 + pairs.len() as i16;
+
         let target = if ncurses::COLOR_PAIRS() > i32::from(n) {
             // We still have plenty of space for everyone.
             n
@@ -104,12 +112,8 @@ impl Backend {
             pairs.retain(|_, &mut v| v != target);
             target
         };
-        pairs.insert(pair, target);
-        ncurses::init_pair(
-            target,
-            find_closest(&pair.front),
-            find_closest(&pair.back),
-        );
+        pairs.insert((front, back), target);
+        ncurses::init_pair(target, front, back);
         target
     }
 
@@ -118,11 +122,12 @@ impl Backend {
         let mut pairs = self.pairs.borrow_mut();
 
         // Find if we have this color in stock
-        if pairs.contains_key(&pair) {
+        let (front, back) = find_closest_pair(&pair);
+        if pairs.contains_key(&(front, back)) {
             // We got it!
-            pairs[&pair]
+            pairs[&(front, back)]
         } else {
-            self.insert_color(&mut *pairs, pair)
+            self.insert_color(&mut *pairs, (front, back))
         }
     }
 
