@@ -1,37 +1,42 @@
-//! Makes drawing on ncurses windows easier.
+//! Provide higher-level abstraction to draw things on backends.
 
 use backend::Backend;
 use enumset::EnumSet;
-use std::cell::Cell;
 use std::cmp::min;
-use std::rc::Rc;
 use theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
 use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 use utils::lines::simple::prefix;
 use vec::Vec2;
 use with::With;
 
 /// Convenient interface to draw on a subset of the screen.
+///
+/// The area it can print on is defined by `offset` and `size`.
+///
+/// The part of the content it will print there is defined by `content_offset`
+/// and `size`.
 pub struct Printer<'a> {
     /// Offset into the window this printer should start drawing at.
+    ///
+    /// Printing at `x` will really print at `x + offset`.
     pub offset: Vec2,
-
-    /// Offset into the view for this printer.
-    pub content_offset: Vec2,
 
     /// Size of the area we are allowed to draw on.
     ///
     /// Anything outside of this should be discarded.
     pub size: Vec2,
 
+    /// Offset into the view for this printer.
+    ///
+    /// Printing at `x`, will really print at `x - content_offset`.
+    pub content_offset: Vec2,
+
     /// Whether the view to draw is currently focused or not.
     pub focused: bool,
 
     /// Currently used theme
     pub theme: &'a Theme,
-
-    /// `true` if nothing has been drawn yet.
-    new: Rc<Cell<bool>>,
 
     /// Backend used to actually draw things
     backend: &'a Backend,
@@ -46,7 +51,6 @@ impl<'a> Clone for Printer<'a> {
             focused: self.focused,
             theme: self.theme,
             backend: self.backend,
-            new: Rc::clone(&self.new),
         }
     }
 }
@@ -65,7 +69,6 @@ impl<'a> Printer<'a> {
             size: size.into(),
             focused: true,
             theme,
-            new: Rc::new(Cell::new(true)),
             backend,
         }
     }
@@ -80,61 +83,52 @@ impl<'a> Printer<'a> {
             .clear(self.theme.palette[PaletteColor::Background]);
     }
 
-    /// Returns `true` if nothing has been printed yet.
-    pub fn is_new(&self) -> bool {
-        self.new.get()
-    }
-
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position relative to the window.
     pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) {
-        self.new.set(false);
-
-        let p = pos.into();
-        if p.y >= self.size.y || p.x >= self.size.x {
+        let pos = pos.into();
+        if !pos.fits_in(self.size) {
             return;
         }
         // Do we have enough room for the entire line?
-        let room = self.size.x - p.x;
+        let room = self.size.x - pos.x;
+
+        // Drop the end of the text if it's too long
         // We want the number of CHARACTERS, not bytes.
         // (Actually we want the "width" of the string, see unicode-width)
         let prefix_len = prefix(text.graphemes(true), room, "").length;
         let text = &text[..prefix_len];
 
-        let p = p + self.offset;
-        self.backend.print_at(p, text);
+        let pos = pos + self.offset;
+        self.backend.print_at(pos, text);
     }
 
     /// Prints a vertical line using the given character.
     pub fn print_vline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
-        self.new.set(false);
-
-        let p = start.into();
-        if p.y > self.size.y || p.x > self.size.x {
+        let start = start.into();
+        if !start.fits_in(self.size) {
             return;
         }
-        let len = min(len, self.size.y - p.y);
+        let len = min(len, self.size.y - start.y);
 
-        let p = p + self.offset;
+        let start = start + self.offset;
         for y in 0..len {
-            self.backend.print_at(p + (0,y), c);
+            self.backend.print_at(start + (0,y), c);
         }
     }
 
     /// Prints a horizontal line using the given character.
     pub fn print_hline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
-        self.new.set(false);
-
-        let p = start.into();
-        if p.y > self.size.y || p.x > self.size.x {
+        let start = start.into();
+        if !start.fits_in(self.size) {
             return;
         }
-        let len = min(len, self.size.x - p.x);
+        let len = min(len, (self.size.x - start.x) / c.width());
         let text: String = ::std::iter::repeat(c).take(len).collect();
 
-        let p = p + self.offset;
-        self.backend.print_at(p, &text);
+        let start = start + self.offset;
+        self.backend.print_at(start, &text);
     }
 
     /// Call the given closure with a colored printer,
@@ -232,8 +226,6 @@ impl<'a> Printer<'a> {
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
         &self, start: T, size: S, invert: bool
     ) {
-        self.new.set(false);
-
         let start = start.into();
         let size = size.into();
 
