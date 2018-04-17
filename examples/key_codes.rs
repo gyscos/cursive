@@ -8,7 +8,7 @@ use cursive::{Cursive, Printer};
 // This is a handy way to check the input received by cursive.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
     siv.add_layer(
         KeyCodeView::new(10)
             .full_width()
