@@ -1,8 +1,8 @@
 extern crate cursive;
 
-use cursive::{Cursive, Printer};
 use cursive::event::{Event, EventResult};
 use cursive::traits::*;
+use cursive::{Cursive, Printer};
 
 // This example define a custom view that prints any event it receives.
 // This is a handy way to check the input received by cursive.

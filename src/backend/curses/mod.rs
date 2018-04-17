@@ -1,16 +1,17 @@
+//! Common module for the ncurses and pancurses backends.
+//!
+//! Requires either of `ncurses-backend` or `pancurses-backend`.
+#![cfg(any(feature = "ncurses", feature = "pancurses"))]
+
 use event::{Event, Key};
 use std::collections::HashMap;
 use theme::{BaseColor, Color, ColorPair};
 
 #[cfg(feature = "ncurses")]
-mod n;
-#[cfg(feature = "ncurses")]
-pub use self::n::*;
+pub mod n;
 
 #[cfg(feature = "pancurses")]
-mod pan;
-#[cfg(feature = "pancurses")]
-pub use self::pan::*;
+pub mod pan;
 
 fn split_i32(code: i32) -> Vec<u8> {
     (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()

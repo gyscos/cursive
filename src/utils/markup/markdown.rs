@@ -18,7 +18,7 @@ where
 
     let spans = parse_spans(&input);
 
-    StyledString::new(input, spans)
+    StyledString::with_spans(input, spans)
 }
 
 /// Iterator that parse a markdown text and outputs styled spans.

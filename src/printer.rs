@@ -1,6 +1,6 @@
 //! Makes drawing on ncurses windows easier.
 
-use backend::{self, Backend};
+use backend::Backend;
 use enumset::EnumSet;
 use std::cell::Cell;
 use std::cmp::min;
@@ -34,7 +34,7 @@ pub struct Printer<'a> {
     new: Rc<Cell<bool>>,
 
     /// Backend used to actually draw things
-    backend: &'a backend::Concrete,
+    backend: &'a Backend,
 }
 
 impl<'a> Clone for Printer<'a> {
@@ -57,16 +57,16 @@ impl<'a> Printer<'a> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'a backend::Concrete
+        size: T, theme: &'a Theme, backend: &'a Backend
     ) -> Self {
         Printer {
             offset: Vec2::zero(),
             content_offset: Vec2::zero(),
             size: size.into(),
             focused: true,
-            theme: theme,
+            theme,
             new: Rc::new(Cell::new(true)),
-            backend: backend,
+            backend,
         }
     }
 
@@ -103,7 +103,7 @@ impl<'a> Printer<'a> {
         let text = &text[..prefix_len];
 
         let p = p + self.offset;
-        self.backend.print_at((p.x, p.y), text);
+        self.backend.print_at(p, text);
     }
 
     /// Prints a vertical line using the given character.
@@ -118,7 +118,7 @@ impl<'a> Printer<'a> {
 
         let p = p + self.offset;
         for y in 0..len {
-            self.backend.print_at((p.x, (p.y + y)), c);
+            self.backend.print_at(p + (0,y), c);
         }
     }
 
@@ -134,7 +134,7 @@ impl<'a> Printer<'a> {
         let text: String = ::std::iter::repeat(c).take(len).collect();
 
         let p = p + self.offset;
-        self.backend.print_at((p.x, p.y), &text);
+        self.backend.print_at(p, &text);
     }
 
     /// Call the given closure with a colored printer,
@@ -142,13 +142,13 @@ impl<'a> Printer<'a> {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::backend::{self, Backend};
-    /// # let b = backend::Concrete::init();
+    /// # use cursive::backend;
+    /// # let b = backend::dummy::Backend::init();
     /// # let t = theme::load_default();
-    /// # let printer = Printer::new((6,4), &t, &b);
+    /// # let printer = Printer::new((6,4), &t, &*b);
     /// printer.with_color(theme::ColorStyle::highlight(), |printer| {
     ///     printer.print((0,0), "This text is highlighted!");
     /// });
@@ -157,8 +157,9 @@ impl<'a> Printer<'a> {
     where
         F: FnOnce(&Printer),
     {
-        self.backend
-            .with_color(c.resolve(&self.theme.palette), || f(self));
+        let old = self.backend.set_color(c.resolve(&self.theme.palette));
+        f(self);
+        self.backend.set_color(old);
     }
 
     /// Call the given closure with a styled printer,
@@ -190,7 +191,9 @@ impl<'a> Printer<'a> {
     where
         F: FnOnce(&Printer),
     {
-        self.backend.with_effect(effect, || f(self));
+        self.backend.set_effect(effect);
+        f(self);
+        self.backend.unset_effect(effect);
     }
 
     /// Call the given closure with a modified printer
@@ -217,13 +220,13 @@ impl<'a> Printer<'a> {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::backend::{self, Backend};
-    /// # let b = backend::Concrete::init();
+    /// # use cursive::backend;
+    /// # let b = backend::dummy::Backend::init();
     /// # let t = theme::load_default();
-    /// # let printer = Printer::new((6,4), &t, &b);
+    /// # let printer = Printer::new((6,4), &t, &*b);
     /// printer.print_box((0,0), (6,4), false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(

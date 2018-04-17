@@ -32,14 +32,14 @@
 //!
 //! ## Examples
 //!
-//! ```no_run
+//! ```rust
 //! extern crate cursive;
 //!
 //! use cursive::Cursive;
 //! use cursive::views::TextView;
 //!
 //! fn main() {
-//!     let mut siv = Cursive::new();
+//!     let mut siv = Cursive::dummy();
 //!
 //!     siv.add_layer(TextView::new("Hello World!\nPress q to quit."));
 //!
@@ -73,6 +73,7 @@ extern crate log;
 extern crate maplit;
 
 extern crate num;
+extern crate libc;
 extern crate owning_ref;
 extern crate toml;
 extern crate unicode_segmentation;

@@ -152,7 +152,7 @@ impl<T: ViewWrapper> View for T {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```rust
 /// # #[macro_use] extern crate cursive;
 /// # use cursive::view::{View,ViewWrapper};
 /// struct FooView<T: View> {
@@ -197,7 +197,7 @@ macro_rules! wrap_impl {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```rust
 /// # #[macro_use] extern crate cursive;
 /// # use cursive::view::{View,ViewWrapper};
 /// struct FooView<T: View> {

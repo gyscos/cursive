@@ -14,7 +14,7 @@ use std::time::Duration;
 
 fn main() {
     // As usual, create the Cursive root
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // We want to refresh the page even when no input is given.
     siv.set_fps(10);

@@ -113,7 +113,7 @@ impl LinearLayout {
     pub fn new(orientation: direction::Orientation) -> Self {
         LinearLayout {
             children: Vec::new(),
-            orientation: orientation,
+            orientation,
             focus: 0,
             cache: None,
         }

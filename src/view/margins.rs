@@ -18,10 +18,10 @@ impl Margins {
     /// Creates a new Margins.
     pub fn new(left: usize, right: usize, top: usize, bottom: usize) -> Self {
         Margins {
-            left: left,
-            right: right,
-            top: top,
-            bottom: bottom,
+            left,
+            right,
+            top,
+            bottom,
         }
     }
 
@@ -53,7 +53,7 @@ impl Margins {
 
 impl From<(usize, usize, usize, usize)> for Margins {
     fn from(
-        (left, right, top, bottom): (usize, usize, usize, usize)
+        (left, right, top, bottom): (usize, usize, usize, usize),
     ) -> Margins {
         Margins::new(left, right, top, bottom)
     }
@@ -72,14 +72,14 @@ impl From<(i32, i32, i32, i32)> for Margins {
 
 impl From<((i32, i32), (i32, i32))> for Margins {
     fn from(
-        ((left, right), (top, bottom)): ((i32, i32), (i32, i32))
+        ((left, right), (top, bottom)): ((i32, i32), (i32, i32)),
     ) -> Margins {
         (left, right, top, bottom).into()
     }
 }
 impl From<((usize, usize), (usize, usize))> for Margins {
     fn from(
-        ((left, right), (top, bottom)): ((usize, usize), (usize, usize))
+        ((left, right), (top, bottom)): ((usize, usize), (usize, usize)),
     ) -> Margins {
         (left, right, top, bottom).into()
     }

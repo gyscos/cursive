@@ -1,17 +1,21 @@
 extern crate ncurses;
 
-use self::ncurses::mmask_t;
 use self::super::split_i32;
+use self::ncurses::mmask_t;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
+use libc;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
-use std::io::{stdout, Write};
+use std::ffi::CString;
+use std::fs::File;
+use std::io;
+use std::io::Write;
 use theme::{Color, ColorPair, Effect};
 use utf8;
 use vec::Vec2;
 
-pub struct Concrete {
+pub struct Backend {
     current_style: Cell<ColorPair>,
 
     // Maps (front, back) ncurses colors to ncurses pairs
@@ -27,10 +31,73 @@ fn find_closest_pair(pair: &ColorPair) -> (i16, i16) {
     super::find_closest_pair(pair, ncurses::COLORS() as i16)
 }
 
-impl Concrete {
+/// Writes some bytes directly to `/dev/tty`
+///
+/// Since this is not going to be used often, we can afford to re-open the
+/// file every time.
+fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
+    let mut tty_output =
+        File::create("/dev/tty").expect("cursive can only run with a tty");
+    tty_output.write_all(bytes)?;
+    // tty_output will be flushed automatically at the end of the function.
+    Ok(())
+}
+
+impl Backend {
+    pub fn init() -> Box<backend::Backend> {
+        // Change the locale.
+        // For some reasons it's mandatory to get some UTF-8 support.
+        ncurses::setlocale(ncurses::LcCategory::all, "");
+
+        // The delay is the time ncurses wait after pressing ESC
+        // to see if it's an escape sequence.
+        // Default delay is way too long. 25 is imperceptible yet works fine.
+        ::std::env::set_var("ESCDELAY", "25");
+
+        let tty_path = CString::new("/dev/tty").unwrap();
+        let mode = CString::new("r+").unwrap();
+        let tty = unsafe { libc::fopen(tty_path.as_ptr(), mode.as_ptr()) };
+        ncurses::newterm(None, tty, tty);
+        ncurses::keypad(ncurses::stdscr(), true);
+
+        // This disables mouse click detection,
+        // and provides 0-delay access to mouse presses.
+        ncurses::mouseinterval(0);
+        // Listen to all mouse events.
+        ncurses::mousemask(
+            (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION)
+                as mmask_t,
+            None,
+        );
+        ncurses::noecho();
+        ncurses::cbreak();
+        ncurses::start_color();
+        // Pick up background and text color from the terminal theme.
+        ncurses::use_default_colors();
+        // No cursor
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+
+        // This asks the terminal to provide us with mouse drag events
+        // (Mouse move when a button is pressed).
+        // Replacing 1002 with 1003 would give us ANY mouse move.
+        write_to_tty(b"\x1B[?1002h").unwrap();
+
+        let c = Backend {
+            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
+            pairs: RefCell::new(HashMap::new()),
+
+            last_mouse_button: None,
+            event_queue: Vec::new(),
+
+            key_codes: initialize_keymap(),
+        };
+
+        Box::new(c)
+    }
+
     /// Save a new color pair.
     fn insert_color(
-        &self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16)
+        &self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16),
     ) -> i16 {
         let n = 1 + pairs.len() as i16;
 
@@ -96,7 +163,7 @@ impl Concrete {
             let make_event = |event| Event::Mouse {
                 offset: Vec2::zero(),
                 position: Vec2::new(mevent.x as usize, mevent.y as usize),
-                event: event,
+                event,
             };
 
             if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as mmask_t {
@@ -153,59 +220,12 @@ impl Concrete {
     }
 }
 
-impl backend::Backend for Concrete {
-    fn init() -> Self {
-        // Change the locale.
-        // For some reasons it's mandatory to get some UTF-8 support.
-        ncurses::setlocale(ncurses::LcCategory::all, "");
-
-        // The delay is the time ncurses wait after pressing ESC
-        // to see if it's an escape sequence.
-        // Default delay is way too long. 25 is imperceptible yet works fine.
-        ::std::env::set_var("ESCDELAY", "25");
-
-        ncurses::initscr();
-        ncurses::keypad(ncurses::stdscr(), true);
-
-        // This disables mouse click detection,
-        // and provides 0-delay access to mouse presses.
-        ncurses::mouseinterval(0);
-        // Listen to all mouse events.
-        ncurses::mousemask(
-            (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION)
-                as mmask_t,
-            None,
-        );
-        ncurses::noecho();
-        ncurses::cbreak();
-        ncurses::start_color();
-        // Pick up background and text color from the terminal theme.
-        ncurses::use_default_colors();
-        // No cursor
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-
-        // This asks the terminal to provide us with mouse drag events
-        // (Mouse move when a button is pressed).
-        // Replacing 1002 with 1003 would give us ANY mouse move.
-        print!("\x1B[?1002h");
-        stdout().flush().expect("could not flush stdout");
-
-        Concrete {
-            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
-            pairs: RefCell::new(HashMap::new()),
-
-            last_mouse_button: None,
-            event_queue: Vec::new(),
-
-            key_codes: initialize_keymap(),
-        }
-    }
-
-    fn screen_size(&self) -> (usize, usize) {
+impl backend::Backend for Backend {
+    fn screen_size(&self) -> Vec2 {
         let mut x: i32 = 0;
         let mut y: i32 = 0;
         ncurses::getmaxyx(ncurses::stdscr(), &mut y, &mut x);
-        (x as usize, y as usize)
+        (x, y).into()
     }
 
     fn has_colors(&self) -> bool {
@@ -213,26 +233,21 @@ impl backend::Backend for Concrete {
     }
 
     fn finish(&mut self) {
-        print!("\x1B[?1002l");
-        stdout().flush().expect("could not flush stdout");
+        write_to_tty(b"\x1B[?1002l").unwrap();
         ncurses::endwin();
     }
 
-    fn with_color<F: FnOnce()>(&self, colors: ColorPair, f: F) {
+    fn set_color(&self, colors: ColorPair) -> ColorPair {
         // eprintln!("Color used: {:?}", colors);
         let current = self.current_style.get();
         if current != colors {
             self.set_colors(colors);
         }
 
-        f();
-
-        if current != colors {
-            self.set_colors(current);
-        }
+        current
     }
 
-    fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
+    fn set_effect(&self, effect: Effect) {
         let style = match effect {
             Effect::Reverse => ncurses::A_REVERSE(),
             Effect::Simple => ncurses::A_NORMAL(),
@@ -241,7 +256,16 @@ impl backend::Backend for Concrete {
             Effect::Underline => ncurses::A_UNDERLINE(),
         };
         ncurses::attron(style);
-        f();
+    }
+
+    fn unset_effect(&self, effect: Effect) {
+        let style = match effect {
+            Effect::Reverse => ncurses::A_REVERSE(),
+            Effect::Simple => ncurses::A_NORMAL(),
+            Effect::Bold => ncurses::A_BOLD(),
+            Effect::Italic => ncurses::A_ITALIC(),
+            Effect::Underline => ncurses::A_UNDERLINE(),
+        };
         ncurses::attroff(style);
     }
 
@@ -259,8 +283,8 @@ impl backend::Backend for Concrete {
         ncurses::refresh();
     }
 
-    fn print_at(&self, (x, y): (usize, usize), text: &str) {
-        ncurses::mvaddstr(y as i32, x as i32, text);
+    fn print_at(&self, pos: Vec2, text: &str) {
+        ncurses::mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
     fn poll_event(&mut self) -> Event {

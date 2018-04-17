@@ -8,7 +8,7 @@ use cursive::views::{Dialog, OnEventView, TextView};
 // This example modifies a view after creation.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     let content = "Press Q to quit the application.\n\nPress P to open the \
                    popup.";

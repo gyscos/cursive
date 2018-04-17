@@ -17,7 +17,7 @@ use cursive::views::Canvas;
 // 256 colors.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     siv.add_layer(
         Canvas::new(())

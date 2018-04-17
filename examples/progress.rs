@@ -4,7 +4,7 @@ extern crate rand;
 use cursive::Cursive;
 use cursive::traits::*;
 use cursive::views::{Button, Dialog, LinearLayout, ProgressBar, TextView};
-use cursive::views::Counter;
+use cursive::utils::Counter;
 use rand::Rng;
 use std::cmp::min;
 use std::thread;
@@ -17,7 +17,7 @@ use std::time::Duration;
 // "ticked" to indicate progress.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // We'll start slowly with a simple start button...
     siv.add_layer(

@@ -1,7 +1,7 @@
 extern crate pancurses;
 
-use self::pancurses::mmask_t;
 use self::super::split_i32;
+use self::pancurses::mmask_t;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
@@ -10,7 +10,7 @@ use std::io::{stdout, Write};
 use theme::{Color, ColorPair, Effect};
 use vec::Vec2;
 
-pub struct Concrete {
+pub struct Backend {
     // Used
     current_style: Cell<ColorPair>,
     pairs: RefCell<HashMap<(i16, i16), i32>>,
@@ -28,10 +28,46 @@ fn find_closest_pair(pair: &ColorPair) -> (i16, i16) {
     super::find_closest_pair(pair, pancurses::COLORS() as i16)
 }
 
-impl Concrete {
+impl Backend {
+    pub fn init() -> Box<Self> {
+        ::std::env::set_var("ESCDELAY", "25");
+
+        let window = pancurses::initscr();
+        window.keypad(true);
+        pancurses::noecho();
+        pancurses::cbreak();
+        pancurses::start_color();
+        pancurses::use_default_colors();
+        pancurses::curs_set(0);
+        pancurses::mouseinterval(0);
+        pancurses::mousemask(
+            pancurses::ALL_MOUSE_EVENTS | pancurses::REPORT_MOUSE_POSITION,
+            ::std::ptr::null_mut(),
+        );
+
+        // This asks the terminal to provide us with mouse drag events
+        // (Mouse move when a button is pressed).
+        // Replacing 1002 with 1003 would give us ANY mouse move.
+        print!("\x1B[?1002h");
+        stdout()
+            .flush()
+            .expect("could not flush stdout");
+
+        let c = Backend {
+            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
+            pairs: RefCell::new(HashMap::new()),
+            window: window,
+            last_mouse_button: None,
+            event_queue: Vec::new(),
+            key_codes: initialize_keymap(),
+        };
+
+        Box::new(c)
+    }
+
     /// Save a new color pair.
     fn insert_color(
-        &self, pairs: &mut HashMap<(i16, i16), i32>, (front, back): (i16, i16)
+        &self, pairs: &mut HashMap<(i16, i16), i32>, (front, back): (i16, i16),
     ) -> i32 {
         let n = 1 + pairs.len() as i32;
 
@@ -133,42 +169,11 @@ impl Concrete {
     }
 }
 
-impl backend::Backend for Concrete {
-    fn init() -> Self {
-        ::std::env::set_var("ESCDELAY", "25");
-
-        let window = pancurses::initscr();
-        window.keypad(true);
-        pancurses::noecho();
-        pancurses::cbreak();
-        pancurses::start_color();
-        pancurses::use_default_colors();
-        pancurses::curs_set(0);
-        pancurses::mouseinterval(0);
-        pancurses::mousemask(
-            pancurses::ALL_MOUSE_EVENTS | pancurses::REPORT_MOUSE_POSITION,
-            ::std::ptr::null_mut(),
-        );
-
-        // This asks the terminal to provide us with mouse drag events
-        // (Mouse move when a button is pressed).
-        // Replacing 1002 with 1003 would give us ANY mouse move.
-        print!("\x1B[?1002h");
-        stdout().flush().expect("could not flush stdout");
-
-        Concrete {
-            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
-            pairs: RefCell::new(HashMap::new()),
-            window: window,
-            last_mouse_button: None,
-            event_queue: Vec::new(),
-            key_codes: initialize_keymap(),
-        }
-    }
-
-    fn screen_size(&self) -> (usize, usize) {
+impl backend::Backend for Backend {
+    fn screen_size(&self) -> Vec2 {
+        // Coordinates are reversed here
         let (y, x) = self.window.get_max_yx();
-        (x as usize, y as usize)
+        (x, y).into()
     }
 
     fn has_colors(&self) -> bool {
@@ -177,25 +182,23 @@ impl backend::Backend for Concrete {
 
     fn finish(&mut self) {
         print!("\x1B[?1002l");
-        stdout().flush().expect("could not flush stdout");
+        stdout()
+            .flush()
+            .expect("could not flush stdout");
         pancurses::endwin();
     }
 
-    fn with_color<F: FnOnce()>(&self, colors: ColorPair, f: F) {
+    fn set_color(&self, colors: ColorPair) -> ColorPair {
         let current = self.current_style.get();
 
         if current != colors {
             self.set_colors(colors);
         }
 
-        f();
-
-        if current != colors {
-            self.set_colors(current);
-        }
+        current
     }
 
-    fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
+    fn set_effect(&self, effect: Effect) {
         let style = match effect {
             Effect::Simple => pancurses::Attribute::Normal,
             Effect::Reverse => pancurses::Attribute::Reverse,
@@ -204,7 +207,16 @@ impl backend::Backend for Concrete {
             Effect::Underline => pancurses::Attribute::Underline,
         };
         self.window.attron(style);
-        f();
+    }
+
+    fn unset_effect(&self, effect: Effect) {
+        let style = match effect {
+            Effect::Simple => pancurses::Attribute::Normal,
+            Effect::Reverse => pancurses::Attribute::Reverse,
+            Effect::Bold => pancurses::Attribute::Bold,
+            Effect::Italic => pancurses::Attribute::Italic,
+            Effect::Underline => pancurses::Attribute::Underline,
+        };
         self.window.attroff(style);
     }
 
@@ -221,8 +233,9 @@ impl backend::Backend for Concrete {
         self.window.refresh();
     }
 
-    fn print_at(&self, (x, y): (usize, usize), text: &str) {
-        self.window.mvaddstr(y as i32, x as i32, text);
+    fn print_at(&self, pos: Vec2, text: &str) {
+        self.window
+            .mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
     fn poll_event(&mut self) -> Event {

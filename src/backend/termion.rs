@@ -1,3 +1,8 @@
+//! Backend using the pure-rust termion library.
+//!
+//! Requires the `termion-backend` feature.
+#![cfg(feature = "termion")]
+
 extern crate termion;
 
 extern crate chan_signal;
@@ -20,7 +25,7 @@ use std::thread;
 use theme;
 use vec::Vec2;
 
-pub struct Concrete {
+pub struct Backend {
     terminal: AlternateScreen<MouseTerminal<RawTerminal<Stdout>>>,
     current_style: Cell<theme::ColorPair>,
     input: chan::Receiver<TEvent>,
@@ -56,7 +61,39 @@ impl Effectable for theme::Effect {
     }
 }
 
-impl Concrete {
+impl Backend {
+    pub fn init() -> Box<Self> {
+        print!("{}", termion::cursor::Hide);
+
+        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
+
+        // TODO: lock stdout
+        let terminal = AlternateScreen::from(MouseTerminal::from(
+            ::std::io::stdout().into_raw_mode().unwrap(),
+        ));
+
+        let (sender, receiver) = chan::async();
+
+        thread::spawn(move || {
+            for key in ::std::io::stdin().events() {
+                if let Ok(key) = key {
+                    sender.send(key)
+                }
+            }
+        });
+
+        let c = Backend {
+            terminal: terminal,
+            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
+            input: receiver,
+            resize: resize,
+            timeout: None,
+            last_button: None,
+        };
+
+        Box::new(c)
+    }
+
     fn apply_colors(&self, colors: theme::ColorPair) {
         with_color(&colors.front, |c| print!("{}", tcolor::Fg(c)));
         with_color(&colors.back, |c| print!("{}", tcolor::Bg(c)));
@@ -136,37 +173,7 @@ impl Concrete {
     }
 }
 
-impl backend::Backend for Concrete {
-    fn init() -> Self {
-        print!("{}", termion::cursor::Hide);
-
-        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
-
-        // TODO: lock stdout
-        let terminal = AlternateScreen::from(MouseTerminal::from(
-            ::std::io::stdout().into_raw_mode().unwrap(),
-        ));
-
-        let (sender, receiver) = chan::async();
-
-        thread::spawn(move || {
-            for key in ::std::io::stdin().events() {
-                if let Ok(key) = key {
-                    sender.send(key)
-                }
-            }
-        });
-
-        Concrete {
-            terminal: terminal,
-            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
-            input: receiver,
-            resize: resize,
-            timeout: None,
-            last_button: None,
-        }
-    }
-
+impl backend::Backend for Backend {
     fn finish(&mut self) {
         print!(
             "{}{}",
@@ -181,7 +188,7 @@ impl backend::Backend for Concrete {
         );
     }
 
-    fn with_color<F: FnOnce()>(&self, color: theme::ColorPair, f: F) {
+    fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
         let current_style = self.current_style.get();
 
         if current_style != color {
@@ -189,17 +196,14 @@ impl backend::Backend for Concrete {
             self.current_style.set(color);
         }
 
-        f();
-
-        if current_style != color {
-            self.current_style.set(current_style);
-            self.apply_colors(current_style);
-        }
+        return current_style;
     }
 
-    fn with_effect<F: FnOnce()>(&self, effect: theme::Effect, f: F) {
+    fn set_effect(&self, effect: theme::Effect) {
         effect.on();
-        f();
+    }
+
+    fn unset_effect(&self, effect: theme::Effect) {
         effect.off();
     }
 
@@ -208,9 +212,9 @@ impl backend::Backend for Concrete {
         true
     }
 
-    fn screen_size(&self) -> (usize, usize) {
+    fn screen_size(&self) -> Vec2 {
         let (x, y) = termion::terminal_size().unwrap_or((1, 1));
-        (x as usize, y as usize)
+        (x, y).into()
     }
 
     fn clear(&self, color: theme::Color) {
@@ -225,10 +229,10 @@ impl backend::Backend for Concrete {
         self.terminal.flush().unwrap();
     }
 
-    fn print_at(&self, (x, y): (usize, usize), text: &str) {
+    fn print_at(&self, pos: Vec2, text: &str) {
         print!(
             "{}{}",
-            termion::cursor::Goto(1 + x as u16, 1 + y as u16),
+            termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
             text
         );
     }

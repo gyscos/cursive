@@ -33,7 +33,7 @@ fn main() {
             Some(EventResult::Consumed(None))
         });
 
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // Let's add a BoxView to keep the list at a reasonable size
     // (it can scroll anyway).

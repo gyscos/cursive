@@ -72,7 +72,7 @@ impl<T: View> OnEventView<T> {
     /// Wraps the given view in a new OnEventView.
     pub fn new(view: T) -> Self {
         OnEventView {
-            view: view,
+            view,
             callbacks: HashMap::new(),
         }
     }

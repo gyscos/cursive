@@ -8,7 +8,7 @@ use cursive::views::{Dialog, DummyView, LinearLayout, TextView};
 // This example uses a LinearLayout to stick multiple views next to each other.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // Some description text
     let text = "This is a very simple example of linear layout. Two views \

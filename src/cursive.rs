@@ -1,5 +1,4 @@
 use backend;
-use backend::Backend;
 use direction;
 use event::{Callback, Event, EventResult};
 use printer::Printer;
@@ -33,6 +32,34 @@ impl<F: FnOnce(&mut Cursive) -> () + Send> CbFunc for F {
     }
 }
 
+#[cfg(feature = "termion")]
+impl Default for Cursive {
+    fn default() -> Self {
+        Self::termion()
+    }
+}
+
+#[cfg(all(not(feature = "termion"), feature = "pancurses"))]
+impl Default for Cursive {
+    fn default() -> Self {
+        Self::pancurses()
+    }
+}
+
+#[cfg(all(not(feature = "termion"), not(feature = "pancurses"), feature = "bear-lib-terminal"))]
+impl Default for Cursive {
+    fn default() -> Self {
+        Self::blt()
+    }
+}
+
+#[cfg(all(not(feature = "termion"), not(feature = "pancurses"), not(feature = "bear-lib-terminal"), feature = "ncurses"))]
+impl Default for Cursive {
+    fn default() -> Self {
+        Self::ncurses()
+    }
+}
+
 /// Central part of the cursive library.
 ///
 /// It initializes ncurses on creation and cleans up on drop.
@@ -54,19 +81,15 @@ pub struct Cursive {
 
     running: bool,
 
-    backend: backend::Concrete,
+    backend: Box<backend::Backend>,
 
     cb_source: mpsc::Receiver<Box<CbFunc>>,
     cb_sink: mpsc::Sender<Box<CbFunc>>,
 }
 
-new_default!(Cursive);
-
 impl Cursive {
     /// Creates a new Cursive root, and initialize the back-end.
-    pub fn new() -> Self {
-        let backend = backend::Concrete::init();
-
+    pub fn new(backend: Box<backend::Backend>) -> Self {
         let theme = theme::load_default();
         // theme.activate(&mut backend);
         // let theme = theme::load_theme("assets/style.toml").unwrap();
@@ -87,6 +110,37 @@ impl Cursive {
         }
     }
 
+    /// Creates a new Cursive root using a ncurses backend.
+    #[cfg(feature = "ncurses")]
+    pub fn ncurses() -> Self {
+        Self::new(backend::curses::n::Backend::init())
+    }
+
+    /// Creates a new Cursive root using a pancurses backend.
+    #[cfg(feature = "pancurses")]
+    pub fn pancurses() -> Self {
+        Self::new(backend::curses::pan::Backend::init())
+    }
+
+    /// Creates a new Cursive root using a termion backend.
+    #[cfg(feature = "termion")]
+    pub fn termion() -> Self {
+        Self::new(backend::termion::Backend::init())
+    }
+
+    /// Creates a new Cursive root using a bear-lib-terminal backend.
+    #[cfg(feature = "bear-lib-terminal")]
+    pub fn blt() -> Self {
+        Self::new(backend::blt::Backend::init())
+    }
+
+    /// Creates a new Cursive root using a dummy backend.
+    ///
+    /// Nothing will be output. This is mostly here for tests.
+    pub fn dummy() -> Self {
+        Self::new(backend::dummy::Backend::init())
+    }
+
     /// Returns a sink for asynchronous callbacks.
     ///
     /// Returns the sender part of a channel, that allows to send
@@ -100,11 +154,11 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {
-    /// let mut siv = Cursive::new();
+    /// let mut siv = Cursive::dummy();
     /// siv.set_fps(10);
     ///
     /// // quit() will be called during the next event cycle
@@ -137,7 +191,7 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// # extern crate cursive;
     /// #
     /// # use cursive::{Cursive, event};
@@ -146,7 +200,7 @@ impl Cursive {
     /// # use cursive::menu::*;
     /// #
     /// # fn main() {
-    /// let mut siv = Cursive::new();
+    /// let mut siv = Cursive::dummy();
     ///
     /// siv.menubar()
     ///    .add_subtree("File",
@@ -290,13 +344,13 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// # extern crate cursive;
     /// # use cursive::{Cursive, views, view};
     /// # use cursive::traits::*;
     /// # fn main() {
     /// fn main() {
-    ///     let mut siv = Cursive::new();
+    ///     let mut siv = Cursive::dummy();
     ///
     ///     siv.add_layer(views::TextView::new("Text #1").with_id("text"));
     ///
@@ -328,12 +382,12 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// # extern crate cursive;
     /// # use cursive::{Cursive, views};
     /// # use cursive::traits::*;
     /// # fn main() {
-    /// let mut siv = Cursive::new();
+    /// let mut siv = Cursive::dummy();
     ///
     /// siv.add_layer(views::TextView::new("Text #1")
     ///                               .with_id("text"));
@@ -361,10 +415,10 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// # use cursive::Cursive;
     /// # use cursive::views::{TextView, ViewRef};
-    /// # let mut siv = Cursive::new();
+    /// # let mut siv = Cursive::dummy();
     /// use cursive::traits::Identifiable;
     ///
     /// siv.add_layer(TextView::new("foo").with_id("id"));
@@ -401,11 +455,11 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {
-    /// let mut siv = Cursive::new();
+    /// let mut siv = Cursive::dummy();
     ///
     /// siv.add_global_callback('q', |s| s.quit());
     /// # }
@@ -424,11 +478,11 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {
-    /// let mut siv = Cursive::new();
+    /// let mut siv = Cursive::dummy();
     ///
     /// siv.add_global_callback('q', |s| s.quit());
     /// siv.clear_global_callbacks('q');
@@ -446,11 +500,11 @@ impl Cursive {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// # extern crate cursive;
     /// # use cursive::*;
     /// # fn main() {
-    /// let mut siv = Cursive::new();
+    /// let mut siv = Cursive::dummy();
     ///
     /// siv.add_layer(views::TextView::new("Hello world!"));
     /// # }
@@ -499,12 +553,7 @@ impl Cursive {
 
     /// Returns the size of the screen, in characters.
     pub fn screen_size(&self) -> Vec2 {
-        let (x, y) = self.backend.screen_size();
-
-        Vec2 {
-            x: x as usize,
-            y: y as usize,
-        }
+        self.backend.screen_size()
     }
 
     fn layout(&mut self) {
@@ -526,7 +575,7 @@ impl Cursive {
         }
 
         let printer =
-            Printer::new(self.screen_size(), &self.theme, &self.backend);
+            Printer::new(self.screen_size(), &self.theme, &*self.backend);
 
         let selected = self.menubar.receive_events();
 

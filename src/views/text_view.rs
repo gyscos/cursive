@@ -155,10 +155,10 @@ impl TextContentInner {
 ///
 /// # Examples
 ///
-/// ```rust,no_run
+/// ```rust
 /// # use cursive::Cursive;
 /// # use cursive::views::TextView;
-/// let mut siv = Cursive::new();
+/// let mut siv = Cursive::dummy();
 ///
 /// siv.add_layer(TextView::new("Hello world!"));
 /// ```

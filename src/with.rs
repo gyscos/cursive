@@ -14,6 +14,17 @@ pub trait With: Sized {
         f(&mut self)?;
         Ok(self)
     }
+
+    /// Calls the given closure if `condition == true`.
+    fn with_if<F>(mut self, condition: bool, f: F) -> Self
+    where
+        F: FnOnce(&mut Self),
+    {
+        if condition {
+            f(&mut self);
+        }
+        self
+    }
 }
 
 impl<T: Sized> With for T {}

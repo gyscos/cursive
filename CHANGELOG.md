@@ -1,6 +1,29 @@
 # Changelog
 
-## Next version: 0.8.2
+## Next version: 0.9.0
+
+### New features
+
+- Make backend a dynamic choice
+    - User must select a backend in `Cursive::new`
+    - 3rd party libraries do not need to play with backend features anymore
+- Add `StackView::find_layer_from_id`
+- Add `SelectView::insert_item`
+- Add `TextArea::{enable, disable}`
+- Reworked `AnyView`
+- `SelectView`: Fix mouse events
+- Return callbacks from manual control methods
+    - `SelectView::{set_selection, select_up, select_down, remove_item}`
+    - `EditView::{set_content, insert, remove}`
+- Add `rect::Rect`
+
+### Changes
+
+- Renamed `Vec4` to `Margins`
+- `Callbacks` cannot be created from functions that return a value
+    - The returned value used to be completely ignored
+- `AnyView` does not extend `View` anymore (instead, `View` extends `AnyView`)
+    - If you were using `AnyView` before, you probably need to replace it with `View`
 
 
 ## 0.8.1

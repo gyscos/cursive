@@ -4,7 +4,7 @@ use cursive::Cursive;
 use cursive::views::TextView;
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // We can quit by pressing `q`
     siv.add_global_callback('q', Cursive::quit);

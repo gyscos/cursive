@@ -1,3 +1,8 @@
+//! Backend using BearLibTerminal
+//!
+//! Requires the `blt-backend` feature.
+#![cfg(feature = "bear-lib-terminal")]
+
 extern crate bear_lib_terminal;
 
 use self::bear_lib_terminal::Color as BltColor;
@@ -15,12 +20,34 @@ enum ColorRole {
     Background,
 }
 
-pub struct Concrete {
+pub struct Backend {
     mouse_position: Vec2,
     buttons_pressed: HashSet<MouseButton>,
 }
 
-impl Concrete {
+impl Backend {
+    pub fn init() -> Box<Self> {
+        terminal::open("Cursive", 80, 24);
+        terminal::set(terminal::config::Window::empty().resizeable(true));
+        terminal::set(vec![
+            terminal::config::InputFilter::Group {
+                group: terminal::config::InputFilterGroup::Keyboard,
+                both: false,
+            },
+            terminal::config::InputFilter::Group {
+                group: terminal::config::InputFilterGroup::Mouse,
+                both: true,
+            },
+        ]);
+
+        let c = Backend {
+            mouse_position: Vec2::zero(),
+            buttons_pressed: HashSet::new(),
+        };
+
+        Box::new(c)
+    }
+
     fn blt_keycode_to_ev(
         &mut self, kc: KeyCode, shift: bool, ctrl: bool
     ) -> Event {
@@ -144,52 +171,52 @@ impl Concrete {
     }
 }
 
-impl backend::Backend for Concrete {
-    fn init() -> Self {
-        terminal::open("Cursive", 80, 24);
-        terminal::set(terminal::config::Window::empty().resizeable(true));
-        terminal::set(vec![
-            terminal::config::InputFilter::Group {
-                group: terminal::config::InputFilterGroup::Keyboard,
-                both: false,
-            },
-            terminal::config::InputFilter::Group {
-                group: terminal::config::InputFilterGroup::Mouse,
-                both: true,
-            },
-        ]);
-
-        Concrete {
-            mouse_position: Vec2::zero(),
-            buttons_pressed: HashSet::new(),
-        }
-    }
-
+impl backend::Backend for Backend {
     fn finish(&mut self) {
         terminal::close();
     }
 
-    fn with_color<F: FnOnce()>(&self, color: ColorPair, f: F) {
+    fn set_color(&self, color: ColorPair) -> ColorPair {
+        let current = ColorPair {
+            front: blt_colour_to_colour(state::foreground()),
+            back:  blt_colour_to_colour(state::background())
+        };
+        
         let fg = colour_to_blt_colour(color.front, ColorRole::Foreground);
         let bg = colour_to_blt_colour(color.back, ColorRole::Background);
-        terminal::with_colors(fg, bg, f);
+        
+        terminal::set_colors(fg, bg);
+
+        current
     }
 
-    fn with_effect<F: FnOnce()>(&self, effect: Effect, f: F) {
+    fn set_effect(&self, effect: Effect) {
         match effect {
             // TODO: does BLT support bold/italic/underline?
             Effect::Bold
             | Effect::Italic
             | Effect::Underline
-            | Effect::Simple => f(),
+            | Effect::Simple => {},
             // TODO: how to do this correctly?`
             //       BLT itself doesn't do this kind of thing,
             //       we'd need the colours in our position,
             //       but `f()` can do whatever
-            Effect::Reverse => terminal::with_colors(
-                BltColor::from_rgb(0, 0, 0),
-                BltColor::from_rgb(255, 255, 255),
-                f,
+            Effect::Reverse => terminal::set_colors(
+                state::background(), state::foreground()
+            ),
+        }
+    }
+
+    fn unset_effect(&self, effect: Effect) {
+        match effect {
+            // TODO: does BLT support bold/italic/underline?
+            Effect::Bold
+            | Effect::Italic
+            | Effect::Underline
+            | Effect::Simple => {},
+            // The process of reversing is the same as unreversing
+            Effect::Reverse => terminal::set_colors(
+                state::background(), state::foreground()
             ),
         }
     }
@@ -198,9 +225,9 @@ impl backend::Backend for Concrete {
         true
     }
 
-    fn screen_size(&self) -> (usize, usize) {
+    fn screen_size(&self) -> Vec2 {
         let Size { width, height } = terminal::state::size();
-        (width as usize, height as usize)
+        (width, height).into()
     }
 
     fn clear(&self, color: Color) {
@@ -215,8 +242,8 @@ impl backend::Backend for Concrete {
         terminal::refresh();
     }
 
-    fn print_at(&self, (x, y): (usize, usize), text: &str) {
-        terminal::print_xy(x as i32, y as i32, text);
+    fn print_at(&self, pos: Vec2, text: &str) {
+        terminal::print_xy(pos.x as i32, pos.y as i32, text);
     }
 
     fn set_refresh_rate(&mut self, _: u32) {
@@ -282,6 +309,10 @@ impl backend::Backend for Concrete {
             Event::Refresh
         }
     }
+}
+
+fn blt_colour_to_colour(c: BltColor) -> Color {
+    Color::Rgb(c.red, c.green, c.blue)
 }
 
 fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {

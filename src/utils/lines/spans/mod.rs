@@ -4,13 +4,13 @@
 //!
 //! Computed rows will include a list of span segments.
 //! Each segment include the source span ID, and start/end byte offsets.
-mod lines_iterator;
-mod chunk_iterator;
-mod segment_merge_iterator;
-mod row;
-mod prefix;
 mod chunk;
+mod chunk_iterator;
+mod lines_iterator;
+mod prefix;
+mod row;
 mod segment;
+mod segment_merge_iterator;
 
 #[cfg(test)]
 mod tests;

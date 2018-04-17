@@ -228,15 +228,15 @@ impl ScrollBase {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```rust
     /// # use cursive::view::ScrollBase;
     /// # use cursive::Printer;
     /// # use cursive::theme;
-    /// # use cursive::backend::{self, Backend};
+    /// # use cursive::backend;
     /// # let scrollbase = ScrollBase::new();
-    /// # let b = backend::Concrete::init();
+    /// # let b = backend::dummy::Backend::init();
     /// # let t = theme::load_default();
-    /// # let printer = Printer::new((5,1), &t, &b);
+    /// # let printer = Printer::new((5,1), &t, &*b);
     /// # let printer = &printer;
     /// let lines = ["Line 1", "Line number 2"];
     /// scrollbase.draw(printer, |printer, i| {

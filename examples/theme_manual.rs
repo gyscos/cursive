@@ -5,7 +5,7 @@ use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle};
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     let layout = LinearLayout::vertical()
         .child(TextView::new(

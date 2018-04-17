@@ -10,7 +10,7 @@ use cursive::views::{Checkbox, Dialog, EditView, LinearLayout, ListView,
 // ListView can be used to build forms, with a list of inputs.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     siv.add_layer(
         Dialog::new()

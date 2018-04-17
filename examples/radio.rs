@@ -6,7 +6,7 @@ use cursive::views::{Dialog, DummyView, LinearLayout, RadioGroup};
 // This example uses radio buttons.
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // We need to pre-create the groups for our RadioButtons.
     let mut color_group: RadioGroup<String> = RadioGroup::new();

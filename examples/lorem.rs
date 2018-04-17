@@ -9,7 +9,7 @@ fn main() {
     // Read some long text from a file.
     let content = include_str!("../assets/lorem.txt");
 
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     // We can quit by pressing q
     siv.add_global_callback('q', |s| s.quit());

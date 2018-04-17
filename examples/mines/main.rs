@@ -12,7 +12,7 @@ use cursive::vec::Vec2;
 use cursive::views::{Button, Dialog, LinearLayout, Panel, SelectView};
 
 fn main() {
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::default();
 
     siv.add_layer(
         Dialog::new()

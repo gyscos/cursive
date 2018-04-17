@@ -44,7 +44,7 @@ impl<T: View> BoxView<T> {
         BoxView {
             size: (width, height).into(),
             squishable: false,
-            view: view,
+            view,
         }
     }
 

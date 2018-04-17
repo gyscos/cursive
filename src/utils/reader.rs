@@ -1,5 +1,5 @@
 use std::io::{self, Read};
-use views::Counter;
+use utils::Counter;
 
 /// Wrapper around a `Read` that reports the progress made.
 ///
@@ -32,7 +32,7 @@ impl<R: Read> ProgressReader<R> {
 
 impl<R: Read> Read for ProgressReader<R> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let result = try!(self.reader.read(buf));
+        let result = self.reader.read(buf)?;
         self.counter.tick(result);
         Ok(result)
     }
