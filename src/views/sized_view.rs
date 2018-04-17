@@ -3,14 +3,15 @@ use view::View;
 use view::ViewWrapper;
 
 /// Wrapper around a view that remembers its size.
-pub struct SizedView<T: View> {
+pub struct SizedView<T> {
     /// Wrapped view.
     pub view: T,
     /// Cached size from the last layout() call.
     pub size: Vec2,
 }
 
-impl<T: View> SizedView<T> {
+impl<T> SizedView<T> {
+
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
         SizedView {

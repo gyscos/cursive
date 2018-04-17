@@ -3,9 +3,8 @@ use Printer;
 use With;
 use align::*;
 use direction::Direction;
-use event::*;
+use event::{AnyCb, Event, EventResult, Key};
 use rect::Rect;
-use std::any::Any;
 use std::cell::Cell;
 use std::cmp::max;
 use theme::ColorStyle;
@@ -249,11 +248,7 @@ impl Dialog {
     pub fn buttons_mut<'a>(
         &'a mut self
     ) -> Box<'a + Iterator<Item = &'a mut Button>> {
-        Box::new(
-            self.buttons
-                .iter_mut()
-                .map(|b| &mut b.button.view),
-        )
+        Box::new(self.buttons.iter_mut().map(|b| &mut b.button.view))
     }
 
     /// Returns currently focused element
@@ -566,9 +561,7 @@ impl View for Dialog {
         }
     }
 
-    fn call_on_any<'a>(
-        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
-    ) {
+    fn call_on_any<'a>(&mut self, selector: &Selector, callback: AnyCb<'a>) {
         self.content.call_on_any(selector, callback);
     }
 

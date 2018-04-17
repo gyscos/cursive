@@ -1,8 +1,7 @@
 use Printer;
 use With;
 use direction::Direction;
-use event::{Event, EventResult};
-use std::any::Any;
+use event::{AnyCb, Event, EventResult};
 use std::cell;
 use std::ops::Deref;
 use theme::ColorStyle;
@@ -65,13 +64,9 @@ impl<T: View> ChildWrapper<T> {
     fn unwrap(self) -> T {
         match self {
             // ShadowView::into_inner and Layer::into_inner can never fail.
-            ChildWrapper::Shadow(shadow) => shadow
-                .into_inner()
-                .ok()
-                .unwrap()
-                .into_inner()
-                .ok()
-                .unwrap(),
+            ChildWrapper::Shadow(shadow) => {
+                shadow.into_inner().ok().unwrap().into_inner().ok().unwrap()
+            }
             ChildWrapper::Plain(layer) => layer.into_inner().ok().unwrap(),
         }
     }
@@ -134,9 +129,7 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn call_on_any<'a>(
-        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
-    ) {
+    fn call_on_any<'a>(&mut self, selector: &Selector, callback: AnyCb<'a>) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => {
                 v.call_on_any(selector, callback)
@@ -216,9 +209,7 @@ impl StackView {
     /// Returns a reference to the layer at the given position.
     pub fn get(&self, pos: LayerPosition) -> Option<&View> {
         let i = self.get_index(pos);
-        self.layers
-            .get(i)
-            .map(|child| child.view.get_inner())
+        self.layers.get(i).map(|child| child.view.get_inner())
     }
 
     /// Returns a mutable reference to the layer at the given position.
@@ -331,10 +322,7 @@ impl StackView {
 
     /// Returns the size for each layer in this view.
     pub fn layer_sizes(&self) -> Vec<Vec2> {
-        self.layers
-            .iter()
-            .map(|layer| layer.size)
-            .collect()
+        self.layers.iter().map(|layer| layer.size).collect()
     }
 
     fn get_index(&self, pos: LayerPosition) -> usize {
@@ -535,8 +523,7 @@ impl View for StackView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector,
-        mut callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector, mut callback: AnyCb<'a>
     ) {
         for layer in &mut self.layers {
             layer

@@ -17,12 +17,16 @@ use Cursive;
 use std::ops::Deref;
 use std::rc::Rc;
 use vec::Vec2;
+use std::any::Any;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
 #[derive(Clone)]
 pub struct Callback(Rc<Box<Fn(&mut Cursive)>>);
 // TODO: remove the Box when Box<T: Sized> -> Rc<T> is possible
+
+/// A boxed callback that can be run on `&mut Any`.
+pub type AnyCb<'a> = Box<FnMut(&mut Any) + 'a>;
 
 impl Callback {
     /// Wraps the given function into a `Callback` object.
@@ -337,6 +341,17 @@ impl Event {
     /// Returns the position of the mouse, if `self` is a mouse event.
     pub fn mouse_position(&self) -> Option<Vec2> {
         if let Event::Mouse { position, .. } = *self {
+            Some(position)
+        } else {
+            None
+        }
+    }
+
+    /// Returns a mutable reference to the position of the mouse/
+    ///
+    /// Returns `None` if `self` is not a mouse event.
+    pub fn mouse_position_mut(&mut self) -> Option<&mut Vec2> {
+        if let Event::Mouse { ref mut position, .. } = *self {
             Some(position)
         } else {
             None
