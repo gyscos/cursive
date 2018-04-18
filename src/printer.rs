@@ -6,7 +6,7 @@ use std::cmp::min;
 use theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::lines::simple::prefix;
+use utils::lines::simple::{prefix, suffix};
 use vec::Vec2;
 use with::With;
 
@@ -88,9 +88,42 @@ impl<'a> Printer<'a> {
     /// Prints some text at the given position relative to the window.
     pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) {
         let pos = pos.into();
-        if !pos.fits_in(self.size) {
+
+        if !pos.fits_in(self.size + self.content_offset) {
             return;
         }
+
+        // This is the part of the text that's hidden
+        // (smaller than the content offset)
+        let hidden_part = self.content_offset.saturating_sub(pos);
+        if hidden_part.y > 0 {
+            // Since we are printing a single line, there's nothing we can do.
+            return;
+        }
+
+        let text_width = text.width();
+
+        // We have to drop hidden_part.x width from the start of the string.
+        // prefix() may be too short if there's a double-width character.
+        // So instead, keep the suffix and drop the prefix.
+
+        // TODO: use a different prefix method that is *at least* the width
+        // (and not *at most*)
+        let tail = suffix(text.graphemes(true), text_width - hidden_part.x, "");
+        let skipped_len = text.len() - tail.length;
+        let skipped_width = text_width - tail.width;
+
+        // This should be equal most of the time, except when there's a double
+        // character preventing us from splitting perfectly.
+        assert!(skipped_width >= hidden_part.x);
+
+        // Drop part of the text, and move the cursor correspondingly.
+        let text = &text[skipped_len..];
+        let pos = pos + (skipped_width, 0);
+
+        // What we did before should guarantee that this won't overflow.
+        let pos = pos - self.content_offset;
+
         // Do we have enough room for the entire line?
         let room = self.size.x - pos.x;
 
@@ -107,9 +140,25 @@ impl<'a> Printer<'a> {
     /// Prints a vertical line using the given character.
     pub fn print_vline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
         let start = start.into();
-        if !start.fits_in(self.size) {
+
+        if !start.fits_in(self.size + self.content_offset) {
             return;
         }
+
+        let hidden_part = self.content_offset.saturating_sub(start);
+        if hidden_part.x > 0 || hidden_part.y >= len {
+            // We're printing a single column, so we can't do much here.
+            return;
+        }
+
+        // Skip `hidden_part`
+        let start = start + hidden_part;
+        let len = len - hidden_part.y;
+
+        // What we did before ensures this won't overflow.
+        let start = start - self.content_offset;
+
+        // Don't go overboard
         let len = min(len, self.size.y - start.y);
 
         let start = start + self.offset;
@@ -121,10 +170,28 @@ impl<'a> Printer<'a> {
     /// Prints a horizontal line using the given character.
     pub fn print_hline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
         let start = start.into();
-        if !start.fits_in(self.size) {
+
+        if !start.fits_in(self.size + self.content_offset) {
             return;
         }
+
+        let hidden_part = self.content_offset.saturating_sub(start);
+        if hidden_part.y > 0 || hidden_part.x >= len {
+            // We're printing a single line, so we can't do much here.
+            return;
+        }
+
+        // Skip `hidden_part`
+        let start = start + hidden_part;
+        let len = len - hidden_part.x;
+
+        // Don't go overboard
+        let start = start - self.content_offset;
+
+        // Don't write too much if we're close to the end
         let len = min(len, (self.size.x - start.x) / c.width());
+
+        // Could we avoid allocating?
         let text: String = ::std::iter::repeat(c).take(len).collect();
 
         let start = start + self.offset;
