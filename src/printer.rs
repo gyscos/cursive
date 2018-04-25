@@ -14,12 +14,12 @@ use with::With;
 ///
 /// The area it can print on is defined by `offset` and `size`.
 ///
-/// The part of the content it will print there is defined by `content_offset`
+/// The part of the content it will print is defined by `content_offset`
 /// and `size`.
 pub struct Printer<'a> {
     /// Offset into the window this printer should start drawing at.
     ///
-    /// Printing at `x` will really print at `x + offset`.
+    /// A print request at `x` will really print at `x + offset`.
     pub offset: Vec2,
 
     /// Size of the area we are allowed to draw on.
@@ -29,7 +29,7 @@ pub struct Printer<'a> {
 
     /// Offset into the view for this printer.
     ///
-    /// Printing at `x`, will really print at `x - content_offset`.
+    /// A print request `x`, will really print at `x - content_offset`.
     pub content_offset: Vec2,
 
     /// Whether the view to draw is currently focused or not.
@@ -86,16 +86,19 @@ impl<'a> Printer<'a> {
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position relative to the window.
-    pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) {
-        let pos = pos.into();
+    pub fn print<S: Into<Vec2>>(&self, start: S, text: &str) {
+        let start = start.into();
 
-        if !pos.fits_in(self.size + self.content_offset) {
+        // We accept requests between `content_offset` and
+        // `content_offset + size`
+        if !start.fits_in(self.size + self.content_offset) {
             return;
         }
 
-        // This is the part of the text that's hidden
-        // (smaller than the content offset)
-        let hidden_part = self.content_offset.saturating_sub(pos);
+        // If start < content_offset, part of the text will not be visible.
+        // This is the part of the text that's hidden:
+        // (It should always be smaller than the content offset)
+        let hidden_part = self.content_offset.saturating_sub(start);
         if hidden_part.y > 0 {
             // Since we are printing a single line, there's nothing we can do.
             return;
@@ -112,6 +115,7 @@ impl<'a> Printer<'a> {
         let tail = suffix(text.graphemes(true), text_width - hidden_part.x, "");
         let skipped_len = text.len() - tail.length;
         let skipped_width = text_width - tail.width;
+        assert_eq!(text[..skipped_len].width(), skipped_width);
 
         // This should be equal most of the time, except when there's a double
         // character preventing us from splitting perfectly.
@@ -119,80 +123,90 @@ impl<'a> Printer<'a> {
 
         // Drop part of the text, and move the cursor correspondingly.
         let text = &text[skipped_len..];
-        let pos = pos + (skipped_width, 0);
+        let start = start + (skipped_width, 0);
+        assert!(start.fits(self.content_offset));
 
         // What we did before should guarantee that this won't overflow.
-        let pos = pos - self.content_offset;
+        let start = start - self.content_offset;
 
         // Do we have enough room for the entire line?
-        let room = self.size.x - pos.x;
+        let room = self.size.x - start.x;
 
         // Drop the end of the text if it's too long
         // We want the number of CHARACTERS, not bytes.
         // (Actually we want the "width" of the string, see unicode-width)
         let prefix_len = prefix(text.graphemes(true), room, "").length;
         let text = &text[..prefix_len];
+        assert!(text.width() <= room);
 
-        let pos = pos + self.offset;
-        self.backend.print_at(pos, text);
+        let start = start + self.offset;
+        self.backend.print_at(start, text);
     }
 
     /// Prints a vertical line using the given character.
-    pub fn print_vline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
+    pub fn print_vline<T: Into<Vec2>>(&self, start: T, height: usize, c: &str) {
         let start = start.into();
 
+        // Here again, we can abort if we're trying to print too far right or
+        // too low.
         if !start.fits_in(self.size + self.content_offset) {
             return;
         }
 
+        // hidden_part describes how far to the top left of the viewport we are.
         let hidden_part = self.content_offset.saturating_sub(start);
-        if hidden_part.x > 0 || hidden_part.y >= len {
+        if hidden_part.x > 0 || hidden_part.y >= height {
             // We're printing a single column, so we can't do much here.
             return;
         }
 
         // Skip `hidden_part`
         let start = start + hidden_part;
-        let len = len - hidden_part.y;
+        assert!(start.fits(self.content_offset));
+
+        let height = height - hidden_part.y;
 
         // What we did before ensures this won't overflow.
         let start = start - self.content_offset;
 
         // Don't go overboard
-        let len = min(len, self.size.y - start.y);
+        let height = min(height, self.size.y - start.y);
 
         let start = start + self.offset;
-        for y in 0..len {
+        for y in 0..height {
             self.backend.print_at(start + (0,y), c);
         }
     }
 
     /// Prints a horizontal line using the given character.
-    pub fn print_hline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
+    pub fn print_hline<T: Into<Vec2>>(&self, start: T, width: usize, c: &str) {
         let start = start.into();
 
+        // Nothing to be done if the start if too far to the bottom/right
         if !start.fits_in(self.size + self.content_offset) {
             return;
         }
 
         let hidden_part = self.content_offset.saturating_sub(start);
-        if hidden_part.y > 0 || hidden_part.x >= len {
+        if hidden_part.y > 0 || hidden_part.x >= width {
             // We're printing a single line, so we can't do much here.
             return;
         }
 
         // Skip `hidden_part`
         let start = start + hidden_part;
-        let len = len - hidden_part.x;
+        assert!(start.fits(self.content_offset));
 
-        // Don't go overboard
+        let width = width - hidden_part.x;
+
+        // Don't go too far
         let start = start - self.content_offset;
 
         // Don't write too much if we're close to the end
-        let len = min(len, (self.size.x - start.x) / c.width());
+        let width = min(width, (self.size.x - start.x) / c.width());
 
         // Could we avoid allocating?
-        let text: String = ::std::iter::repeat(c).take(len).collect();
+        let text: String = ::std::iter::repeat(c).take(width).collect();
 
         let start = start + self.offset;
         self.backend.print_at(start, &text);
@@ -396,16 +410,23 @@ impl<'a> Printer<'a> {
     }
 
     /// Returns a sub-printer with the given offset.
+    ///
+    /// It will print in an area slightly to the bottom/right.
     pub fn offset<S>(&self, offset: S) -> Printer
     where
         S: Into<Vec2>,
     {
         let offset = offset.into();
         self.clone().with(|s| {
+            // If we are drawing a part of the content,
+            // let's reduce this first.
             let consumed = Vec2::min(s.content_offset, offset);
 
+            let offset = offset - consumed;
             s.content_offset = s.content_offset - consumed;
-            s.offset = s.offset + offset - consumed;
+
+            s.offset = s.offset + offset;
+
             s.size = s.size.saturating_sub(offset);
         })
     }
