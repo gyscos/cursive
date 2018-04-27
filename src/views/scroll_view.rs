@@ -1,11 +1,11 @@
-use Printer;
 use direction::Direction;
 use event::{AnyCb, Event, EventResult, Key};
 use rect::Rect;
-use std::cmp::min;
 use vec::Vec2;
 use view::{Selector, View};
 use xy::XY;
+use With;
+use Printer;
 
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {
@@ -47,6 +47,38 @@ impl<V> ScrollView<V> {
         let max_offset = self.inner_size.saturating_sub(self.last_size);
         self.offset = offset.into().or_min(max_offset);
     }
+
+    /// Controls whether this view can scroll vertically.
+    ///
+    /// Defaults to `true`.
+    pub fn set_scroll_y(&mut self, enabled: bool) {
+        self.enabled.y = enabled;
+    }
+
+    /// Controls whether this view can scroll horizontally.
+    ///
+    /// Defaults to `false`.
+    pub fn set_scroll_x(&mut self, enabled: bool) {
+        self.enabled.x = enabled;
+    }
+
+    /// Controls whether this view can scroll vertically.
+    ///
+    /// Defaults to `true`.
+    ///
+    /// Chainable variant.
+    pub fn scroll_y(self, enabled: bool) -> Self {
+        self.with(|s| s.set_scroll_y(enabled))
+    }
+
+    /// Controls whether this view can scroll horizontally.
+    ///
+    /// Defaults to `false`.
+    ///
+    /// Chainable variant.
+    pub fn scroll_x(self, enabled: bool) -> Self {
+        self.with(|s| s.set_scroll_x(enabled))
+    }
 }
 
 impl<V> View for ScrollView<V>
@@ -55,7 +87,7 @@ where
 {
     fn draw(&self, printer: &Printer) {
         // Draw content
-        let printer = printer.content_offset(self.offset);
+        let printer = printer.content_offset(self.offset).inner_size(self.inner_size);
         self.inner.draw(&printer);
 
         // Draw scrollbar?
@@ -72,12 +104,32 @@ where
                 // If it's an arrow, try to scroll in the given direction.
                 // If it's a mouse scroll, try to scroll as well.
                 match event {
-                    Event::Key(Key::Up) if self.offset.y > 0 => {
+                    Event::Key(Key::Up)
+                        if self.enabled.y && self.offset.y > 0 =>
+                    {
                         self.offset.y -= 1;
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Left) if self.offset.x > 0 => {
+                    Event::Key(Key::Down)
+                        if self.enabled.y
+                            && (self.offset.y + self.last_size.y
+                                < self.inner_size.y) =>
+                    {
+                        self.offset.y += 1;
+                        EventResult::Consumed(None)
+                    }
+                    Event::Key(Key::Left)
+                        if self.enabled.x && self.offset.x > 0 =>
+                    {
                         self.offset.x -= 1;
+                        EventResult::Consumed(None)
+                    }
+                    Event::Key(Key::Right)
+                        if self.enabled.x
+                            && (self.offset.x + self.last_size.x
+                                < self.inner_size.x) =>
+                    {
+                        self.offset.x += 1;
                         EventResult::Consumed(None)
                     }
                     _ => EventResult::Ignored,
@@ -107,7 +159,8 @@ where
 
         // For each enabled direction, return the min of size and constraint.
         // For the rest, directly return the size.
-        self.enabled.select_or(Vec2::min(size, constraint), size)
+        self.enabled
+            .select_or(Vec2::min(size, constraint), size)
     }
 
     fn call_on_any<'a>(&mut self, selector: &Selector, cb: AnyCb<'a>) {

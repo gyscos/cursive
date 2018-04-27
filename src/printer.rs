@@ -25,6 +25,12 @@ pub struct Printer<'a> {
     /// Size of the area we are allowed to draw on.
     ///
     /// Anything outside of this should be discarded.
+    pub output_size: Vec2,
+
+    /// Size allocated to the view.
+    ///
+    /// This should be the same value as the one given in the last call to
+    /// `View::layout`.
     pub size: Vec2,
 
     /// Offset into the view for this printer.
@@ -47,6 +53,7 @@ impl<'a> Clone for Printer<'a> {
         Printer {
             offset: self.offset,
             content_offset: self.content_offset,
+            output_size: self.output_size,
             size: self.size,
             focused: self.focused,
             theme: self.theme,
@@ -61,12 +68,14 @@ impl<'a> Printer<'a> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'a Backend
+        size: T, theme: &'a Theme, backend: &'a Backend,
     ) -> Self {
+        let size = size.into();
         Printer {
             offset: Vec2::zero(),
             content_offset: Vec2::zero(),
-            size: size.into(),
+            output_size: size,
+            size,
             focused: true,
             theme,
             backend,
@@ -91,7 +100,7 @@ impl<'a> Printer<'a> {
 
         // We accept requests between `content_offset` and
         // `content_offset + size`
-        if !start.fits_in(self.size + self.content_offset) {
+        if !(start < self.output_size + self.content_offset) {
             return;
         }
 
@@ -106,13 +115,22 @@ impl<'a> Printer<'a> {
 
         let text_width = text.width();
 
+        // If we're waaaay too far left, just give up.
+        if hidden_part.x > text_width {
+            return;
+        }
+
         // We have to drop hidden_part.x width from the start of the string.
         // prefix() may be too short if there's a double-width character.
         // So instead, keep the suffix and drop the prefix.
 
         // TODO: use a different prefix method that is *at least* the width
         // (and not *at most*)
-        let tail = suffix(text.graphemes(true), text_width - hidden_part.x, "");
+        let tail = suffix(
+            text.graphemes(true),
+            text_width - hidden_part.x,
+            "",
+        );
         let skipped_len = text.len() - tail.length;
         let skipped_width = text_width - tail.width;
         assert_eq!(text[..skipped_len].width(), skipped_width);
@@ -130,7 +148,7 @@ impl<'a> Printer<'a> {
         let start = start - self.content_offset;
 
         // Do we have enough room for the entire line?
-        let room = self.size.x - start.x;
+        let room = self.output_size.x - start.x;
 
         // Drop the end of the text if it's too long
         // We want the number of CHARACTERS, not bytes.
@@ -144,12 +162,14 @@ impl<'a> Printer<'a> {
     }
 
     /// Prints a vertical line using the given character.
-    pub fn print_vline<T: Into<Vec2>>(&self, start: T, height: usize, c: &str) {
+    pub fn print_vline<T: Into<Vec2>>(
+        &self, start: T, height: usize, c: &str,
+    ) {
         let start = start.into();
 
         // Here again, we can abort if we're trying to print too far right or
         // too low.
-        if !start.fits_in(self.size + self.content_offset) {
+        if !start.fits_in(self.output_size + self.content_offset) {
             return;
         }
 
@@ -170,11 +190,11 @@ impl<'a> Printer<'a> {
         let start = start - self.content_offset;
 
         // Don't go overboard
-        let height = min(height, self.size.y - start.y);
+        let height = min(height, self.output_size.y - start.y);
 
         let start = start + self.offset;
         for y in 0..height {
-            self.backend.print_at(start + (0,y), c);
+            self.backend.print_at(start + (0, y), c);
         }
     }
 
@@ -183,7 +203,7 @@ impl<'a> Printer<'a> {
         let start = start.into();
 
         // Nothing to be done if the start if too far to the bottom/right
-        if !start.fits_in(self.size + self.content_offset) {
+        if !start.fits_in(self.output_size + self.content_offset) {
             return;
         }
 
@@ -203,7 +223,10 @@ impl<'a> Printer<'a> {
         let start = start - self.content_offset;
 
         // Don't write too much if we're close to the end
-        let width = min(width, (self.size.x - start.x) / c.width());
+        let width = min(
+            width,
+            (self.output_size.x - start.x) / c.width(),
+        );
 
         // Could we avoid allocating?
         let text: String = ::std::iter::repeat(c).take(width).collect();
@@ -232,7 +255,8 @@ impl<'a> Printer<'a> {
     where
         F: FnOnce(&Printer),
     {
-        let old = self.backend.set_color(c.resolve(&self.theme.palette));
+        let old = self.backend
+            .set_color(c.resolve(&self.theme.palette));
         f(self);
         self.backend.set_color(old);
     }
@@ -248,8 +272,6 @@ impl<'a> Printer<'a> {
 
         let color = style.color;
         let effects = style.effects;
-
-        // eprintln!("{:?}", effects);
 
         if let Some(color) = color {
             self.with_color(color, |printer| {
@@ -305,7 +327,7 @@ impl<'a> Printer<'a> {
     /// printer.print_box((0,0), (6,4), false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
-        &self, start: T, size: S, invert: bool
+        &self, start: T, size: S, invert: bool,
     ) {
         let start = start.into();
         let size = size.into();
@@ -427,6 +449,7 @@ impl<'a> Printer<'a> {
 
             s.offset = s.offset + offset;
 
+            s.output_size = s.output_size.saturating_sub(offset);
             s.size = s.size.saturating_sub(offset);
         })
     }
@@ -452,6 +475,8 @@ impl<'a> Printer<'a> {
         S: Into<Vec2>,
     {
         self.clone().with(|s| {
+            let size = size.into();
+            s.output_size = Vec2::min(s.output_size, size);
             s.size = Vec2::min(s.size, size);
         })
     }
@@ -473,6 +498,21 @@ impl<'a> Printer<'a> {
     {
         self.clone().with(|s| {
             s.content_offset = s.content_offset + offset;
+        })
+    }
+
+    /// Returns a sub-printer with a different inner size.
+    ///
+    /// This will not change the actual output size, but will appear bigger to
+    /// users of this printer.
+    ///
+    /// Useful to give to children who think they're big, but really aren't.
+    pub fn inner_size<S>(&self, size: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        self.clone().with(|s| {
+            s.size = size.into();
         })
     }
 }
