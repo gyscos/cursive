@@ -1,4 +1,3 @@
-use {Cursive, Printer, With};
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key, MouseEvent};
 use std::cell::RefCell;
@@ -9,6 +8,7 @@ use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 use utils::lines::simple::{simple_prefix, simple_suffix};
 use vec::Vec2;
 use view::View;
+use {Cursive, Printer, With};
 
 /// Closure type for callbacks when the content is modified.
 ///
@@ -367,7 +367,8 @@ impl EditView {
         self.offset = 0;
         self.set_cursor(len);
 
-        self.make_edit_cb().unwrap_or_else(Callback::dummy)
+        self.make_edit_cb()
+            .unwrap_or_else(Callback::dummy)
     }
 
     /// Get the current text.
@@ -419,7 +420,8 @@ impl EditView {
 
         self.keep_cursor_in_view();
 
-        self.make_edit_cb().unwrap_or_else(Callback::dummy)
+        self.make_edit_cb()
+            .unwrap_or_else(Callback::dummy)
     }
 
     /// Remove the character at the current cursor position.
@@ -434,7 +436,8 @@ impl EditView {
 
         self.keep_cursor_in_view();
 
-        self.make_edit_cb().unwrap_or_else(Callback::dummy)
+        self.make_edit_cb()
+            .unwrap_or_else(Callback::dummy)
     }
 
     fn make_edit_cb(&self) -> Option<Callback> {
@@ -615,15 +618,20 @@ impl View for EditView {
                 return EventResult::Consumed(Some(self.insert(ch)));
             }
             // TODO: handle ctrl-key?
-            Event::Key(Key::Home) => self.cursor = 0,
-            Event::Key(Key::End) => self.cursor = self.content.len(),
+            Event::Key(Key::Home) => self.set_cursor(0),
+            Event::Key(Key::End) => {
+                // When possible, NLL to the rescue!
+                let len = self.content.len();
+                self.set_cursor(len);
+            }
             Event::Key(Key::Left) if self.cursor > 0 => {
                 let len = self.content[..self.cursor]
                     .graphemes(true)
                     .last()
                     .unwrap()
                     .len();
-                self.cursor -= len;
+                let cursor = self.cursor - len;
+                self.set_cursor(cursor);
             }
             Event::Key(Key::Right) if self.cursor < self.content.len() => {
                 let len = self.content[self.cursor..]
@@ -631,7 +639,8 @@ impl View for EditView {
                     .next()
                     .unwrap()
                     .len();
-                self.cursor += len;
+                let cursor = self.cursor + len;
+                self.set_cursor(cursor);
             }
             Event::Key(Key::Backspace) if self.cursor > 0 => {
                 let len = self.content[..self.cursor]
