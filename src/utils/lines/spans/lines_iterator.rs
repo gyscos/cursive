@@ -111,16 +111,14 @@ where
                                 offset = end;
                                 Chunk {
                                     width,
-                                    segments: vec![
-                                        Segment {
-                                            width,
-                                            span_id: seg.span_id,
-                                            start,
-                                            end,
-                                        },
-                                    ],
+                                    segments: vec![Segment {
+                                        width,
+                                        span_id: seg.span_id,
+                                        start,
+                                        end,
+                                    }],
                                     hard_stop: false,
-                                    ends_with_space: false,
+                                    ends_with_space: false, // should we?
                                 }
                             })
                         });
@@ -152,7 +150,22 @@ where
             }
         }
 
-        let width = chunks.iter().map(|c| c.width).sum();
+        // We can know text was wrapped if the stop was optional,
+        // and there's more coming.
+        let text_wrap = !chunks
+            .last()
+            .map(|c| c.hard_stop)
+            .unwrap_or(true)
+            && self.iter.peek().is_some();
+
+        // If we had to break a line in two, then at least pretent we're
+        // taking the full width.
+        let width = if text_wrap {
+            self.width
+        } else {
+            chunks.iter().map(|c| c.width).sum()
+        };
+
         assert!(width <= self.width);
 
         // Concatenate all segments
