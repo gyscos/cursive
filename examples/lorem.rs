@@ -1,9 +1,8 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::align::HAlign;
-use cursive::view::Boxable;
 use cursive::views::{Dialog, Panel, TextView};
+use cursive::Cursive;
 
 fn main() {
     // Read some long text from a file.
@@ -18,11 +17,10 @@ fn main() {
     // and will adapt to the terminal size.
     siv.add_fullscreen_layer(
         Dialog::around(Panel::new(TextView::new(content)))
+            .title("Unicode and wide-character support")
             // This is the alignment for the button
             .h_align(HAlign::Center)
-            .button("Quit", |s| s.quit())
-            .title("Unicode and wide-character support")
-            .full_screen(),
+            .button("Quit", |s| s.quit()),
     );
     // Show a popup on top of the view.
     siv.add_layer(Dialog::info(
