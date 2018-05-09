@@ -89,22 +89,72 @@ impl<V> ScrollView<V> {
     }
 }
 
-impl <V> ScrollView<V> where V: View {
+impl<V> ScrollView<V>
+where
+    V: View,
+{
+    /// Compute the size we would need.
+    ///
+    /// Given the constraints, and the axis that need scrollbars.
+    ///
+    /// Returns `(inner_size, size, scrollable)`.
+    fn sizes_when_scrolling(
+        &mut self, constraint: Vec2, scrollable: XY<bool>,
+    ) -> (Vec2, Vec2, XY<bool>) {
+        // This is the size taken by the scrollbars.
+        let scrollbar_size = scrollable
+            .select_or(self.scrollbar_padding + (1, 1), Vec2::zero());
 
-    fn compute_size(&mut self, constraint: Vec2, scrollable: XY<bool>) -> (Vec2, XY<bool>) {
-            let scrollbar_size = scrollable
-                .select_or(self.scrollbar_padding + (1, 1), Vec2::zero());
+        let available = constraint.saturating_sub(scrollbar_size);
 
-            let inner_size = self.inner
-                .required_size(constraint.saturating_sub(scrollbar_size));
+        let inner_size = self.inner.required_size(available);
 
-            let size = self.enabled
-                .select_or(Vec2::min(inner_size, constraint), inner_size)
-                + scrollbar_size;
+        // Where we're "enabled", accept the constraints.
+        // Where we're not, just forward inner_size.
+        let size = self.enabled.select_or(
+            Vec2::min(inner_size + scrollbar_size, constraint),
+            inner_size + scrollbar_size,
+        );
 
-            let new_scrollable = inner_size.zip_map(size, |i, s| i > s);
+        let new_scrollable = inner_size.zip_map(size, |i, s| i > s);
 
-            (size, new_scrollable)
+        (inner_size, size, new_scrollable)
+    }
+
+    /// Computes the size we would need given the constraints.
+    ///
+    /// First be optimistic and try without scrollbars.
+    /// Then try with scrollbars if needed.
+    /// Then try again in case we now need to scroll both ways (!!!)
+    ///
+    /// Returns `(inner_size, size)`
+    fn sizes(&mut self, constraint: Vec2) -> (Vec2, Vec2) {
+        let (inner_size, size, scrollable) =
+            self.sizes_when_scrolling(constraint, XY::new(false, false));
+
+        // Did it work?
+        if scrollable.any() && self.show_scrollbars {
+            // Attempt 2: he wants to scroll? Sure! Try again with some space for the scrollbar.
+            let (inner_size, size, new_scrollable) =
+                self.sizes_when_scrolling(constraint, scrollable);
+            if scrollable != new_scrollable {
+                // Again? We're now scrolling in a new direction?
+                // There is no end to this!
+                let (inner_size, size, _) =
+                    self.sizes_when_scrolling(constraint, new_scrollable);
+
+                // That's enough. If the inner view changed again, ignore it!
+                // That'll teach it.
+                (inner_size, size)
+            } else {
+                // Yup, scrolling did it. We're goot to go now.
+                (inner_size, size)
+            }
+        } else {
+            // We're not showing any scrollbar, either because we don't scroll
+            // or because scrollbars are hidden.
+            (inner_size, size)
+        }
     }
 }
 
@@ -169,10 +219,14 @@ where
     }
 
     fn layout(&mut self, size: Vec2) {
+        // Size is final now
         self.last_size = size;
 
+        let (inner_size, _) = self.sizes(size);
+
         // Ask one more time
-        self.inner_size = self.inner.required_size(size).or_max(size);
+        self.inner_size = inner_size;
+
         self.inner.layout(self.inner_size);
 
         // TODO: Refresh offset if needed!
@@ -184,29 +238,9 @@ where
 
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
         // Attempt 1: try without scrollbars
-        let (size, scrollable) = self.compute_size(constraint, XY::new(false, false));
+        let (_, size) = self.sizes(constraint);
 
-        // Did it work?
-        if scrollable.any() && self.show_scrollbars {
-            // Attempt 2: he wants to scroll? Sure! Try again with some space for the scrollbar.
-            let (size, new_scrollable) = self.compute_size(constraint, scrollable);
-            if scrollable != new_scrollable {
-                // Again? We're now scrolling in a new direction?
-                // There is no end to this!
-                let (size, _) = self.compute_size(constraint, new_scrollable);
-
-                // That's enough. If the inner view changed again, ignore it!
-                // That'll teach it.
-                size
-            } else {
-                // Yup, scrolling did it. We're goot to go now.
-                size
-            }
-        } else {
-            // We're not showing any scrollbar, either because we don't scroll
-            // or because scrollbars are hidden.
-            size
-        }
+        size
     }
 
     fn call_on_any<'a>(&mut self, selector: &Selector, cb: AnyCb<'a>) {
