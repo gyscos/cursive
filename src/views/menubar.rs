@@ -1,5 +1,3 @@
-use Cursive;
-use Printer;
 use direction;
 use event::*;
 use menu::{MenuItem, MenuTree};
@@ -10,6 +8,8 @@ use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, View};
 use views::{MenuPopup, OnEventView};
+use Cursive;
+use Printer;
 
 /// Current state of the menubar
 #[derive(PartialEq, Debug)]
@@ -107,7 +107,7 @@ impl Menubar {
 
     /// Insert a new item at the given position.
     pub fn insert_subtree<S>(
-        &mut self, i: usize, title: S, menu: MenuTree
+        &mut self, i: usize, title: S, menu: MenuTree,
     ) -> &mut Self
     where
         S: Into<String>,
@@ -238,9 +238,7 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
             s.pop_layer();
             s.select_menubar();
             // Act as if we sent "Right" then "Down"
-            s.menubar()
-                .on_event(Event::Key(Key::Right))
-                .process(s);
+            s.menubar().on_event(Event::Key(Key::Right)).process(s);
             if let EventResult::Consumed(Some(cb)) =
                 s.menubar().on_event(Event::Key(Key::Down))
             {
@@ -251,9 +249,7 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
                 s.pop_layer();
                 s.select_menubar();
                 // Act as if we sent "Left" then "Down"
-                s.menubar()
-                    .on_event(Event::Key(Key::Left))
-                    .process(s);
+                s.menubar().on_event(Event::Key(Key::Left)).process(s);
                 if let EventResult::Consumed(Some(cb)) =
                     s.menubar().on_event(Event::Key(Key::Down))
                 {

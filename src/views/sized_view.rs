@@ -11,7 +11,6 @@ pub struct SizedView<T> {
 }
 
 impl<T> SizedView<T> {
-
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
         SizedView {

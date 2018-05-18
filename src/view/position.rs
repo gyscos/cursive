@@ -1,6 +1,6 @@
-use XY;
 use std::cmp::min;
 use vec::Vec2;
+use XY;
 
 /// Location of the view on screen
 pub type Position = XY<Offset>;
@@ -14,19 +14,13 @@ impl Position {
     /// Returns a position absolute on both axis.
     pub fn absolute<T: Into<Vec2>>(offset: T) -> Self {
         let offset = offset.into();
-        Position::new(
-            Offset::Absolute(offset.x),
-            Offset::Absolute(offset.y),
-        )
+        Position::new(Offset::Absolute(offset.x), Offset::Absolute(offset.y))
     }
 
     /// Returns a position relative to the parent on both axis.
     pub fn parent<T: Into<XY<isize>>>(offset: T) -> Self {
         let offset = offset.into();
-        Position::new(
-            Offset::Parent(offset.x),
-            Offset::Parent(offset.y),
-        )
+        Position::new(Offset::Parent(offset.x), Offset::Parent(offset.y))
     }
 
     /// Computes the offset required to draw a view.
@@ -36,7 +30,7 @@ impl Position {
     /// child with its top-left corner at the returned coordinates will
     /// position him appropriately.
     pub fn compute_offset<S, A, P>(
-        &self, size: S, available: A, parent: P
+        &self, size: S, available: A, parent: P,
     ) -> Vec2
     where
         S: Into<Vec2>,
@@ -48,10 +42,8 @@ impl Position {
         let parent = parent.into();
 
         Vec2::new(
-            self.x
-                .compute_offset(size.x, available.x, parent.x),
-            self.y
-                .compute_offset(size.y, available.y, parent.y),
+            self.x.compute_offset(size.x, available.x, parent.x),
+            self.y.compute_offset(size.y, available.y, parent.y),
         )
     }
 }
@@ -73,7 +65,7 @@ pub enum Offset {
 impl Offset {
     /// Computes a single-dimension offset requred to draw a view.
     pub fn compute_offset(
-        &self, size: usize, available: usize, parent: usize
+        &self, size: usize, available: usize, parent: usize,
     ) -> usize {
         if size > available {
             0
@@ -81,10 +73,9 @@ impl Offset {
             match *self {
                 Offset::Center => (available - size) / 2,
                 Offset::Absolute(offset) => min(offset, available - size),
-                Offset::Parent(offset) => min(
-                    (parent as isize + offset) as usize,
-                    available - size,
-                ),
+                Offset::Parent(offset) => {
+                    min((parent as isize + offset) as usize, available - size)
+                }
             }
         }
     }
@@ -99,29 +90,11 @@ mod tests {
     #[test]
     fn test_center() {
         let c = Position::center();
-        assert_eq!(
-            Vec2::new(2, 1),
-            c.compute_offset((1, 1), (5, 3), (0, 0))
-        );
-        assert_eq!(
-            Vec2::new(2, 0),
-            c.compute_offset((1, 3), (5, 3), (0, 0))
-        );
-        assert_eq!(
-            Vec2::new(1, 1),
-            c.compute_offset((3, 1), (5, 3), (0, 0))
-        );
-        assert_eq!(
-            Vec2::new(0, 1),
-            c.compute_offset((5, 1), (5, 3), (0, 0))
-        );
-        assert_eq!(
-            Vec2::new(0, 0),
-            c.compute_offset((5, 3), (5, 3), (0, 0))
-        );
-        assert_eq!(
-            Vec2::new(0, 0),
-            c.compute_offset((5, 3), (3, 1), (0, 0))
-        );
+        assert_eq!(Vec2::new(2, 1), c.compute_offset((1, 1), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(2, 0), c.compute_offset((1, 3), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(1, 1), c.compute_offset((3, 1), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(0, 1), c.compute_offset((5, 1), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(0, 0), c.compute_offset((5, 3), (5, 3), (0, 0)));
+        assert_eq!(Vec2::new(0, 0), c.compute_offset((5, 3), (3, 1), (0, 0)));
     }
 }

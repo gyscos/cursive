@@ -1,6 +1,3 @@
-use Cursive;
-use Printer;
-use With;
 use align::*;
 use direction::Direction;
 use event::{AnyCb, Event, EventResult, Key};
@@ -12,6 +9,9 @@ use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Margins, Selector, View};
 use views::{Button, DummyView, SizedView, TextView, ViewBox};
+use Cursive;
+use Printer;
+use With;
 
 /// Identifies currently focused element in [`Dialog`].
 ///
@@ -246,7 +246,7 @@ impl Dialog {
 
     /// Returns an iterator on this buttons for this dialog.
     pub fn buttons_mut<'a>(
-        &'a mut self
+        &'a mut self,
     ) -> Box<'a + Iterator<Item = &'a mut Button>> {
         Box::new(self.buttons.iter_mut().map(|b| &mut b.button.view))
     }
@@ -281,7 +281,7 @@ impl Dialog {
 
     // An event is received while a button is in focus
     fn on_event_button(
-        &mut self, event: Event, button_id: usize
+        &mut self, event: Event, button_id: usize,
     ) -> EventResult {
         let result = {
             let button = &mut self.buttons[button_id];

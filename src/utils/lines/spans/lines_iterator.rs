@@ -76,11 +76,8 @@ where
             self.width
         };
 
-        let mut chunks = prefix(
-            &mut self.iter,
-            allowed_width,
-            &mut self.chunk_offset,
-        );
+        let mut chunks =
+            prefix(&mut self.iter, allowed_width, &mut self.chunk_offset);
 
         // println!("Chunks..: {:?}", chunks);
 
@@ -111,14 +108,12 @@ where
                                 offset = end;
                                 Chunk {
                                     width,
-                                    segments: vec![
-                                        Segment {
-                                            width,
-                                            span_id: seg.span_id,
-                                            start,
-                                            end,
-                                        },
-                                    ],
+                                    segments: vec![Segment {
+                                        width,
+                                        span_id: seg.span_id,
+                                        start,
+                                        end,
+                                    }],
                                     hard_stop: false,
                                     ends_with_space: false,
                                 }
@@ -165,9 +160,6 @@ where
 
         // TODO: merge consecutive segments of the same span
 
-        Some(Row {
-            segments,
-            width,
-        })
+        Some(Row { segments, width })
     }
 }

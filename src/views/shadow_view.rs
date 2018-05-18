@@ -1,8 +1,8 @@
-use Printer;
 use event::{Event, EventResult};
 use theme::ColorStyle;
 use vec::Vec2;
 use view::{View, ViewWrapper};
+use Printer;
 
 /// Wrapper view that adds a shadow.
 ///
@@ -28,10 +28,7 @@ impl<T: View> ShadowView<T> {
     }
 
     fn top_left_padding(&self) -> Vec2 {
-        Vec2::new(
-            self.left_padding as usize,
-            self.top_padding as usize,
-        )
+        Vec2::new(self.left_padding as usize, self.top_padding as usize)
     }
 
     /// If set, adds an empty column to the left of the view.
@@ -59,8 +56,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
         // Make sure req >= offset
         let offset = self.padding();
-        self.view
-            .required_size(req.saturating_sub(offset)) + offset
+        self.view.required_size(req.saturating_sub(offset)) + offset
     }
 
     fn wrap_layout(&mut self, size: Vec2) {
@@ -82,10 +78,8 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         }
 
         // Skip the first row/column
-        let offset = Vec2::new(
-            self.left_padding as usize,
-            self.top_padding as usize,
-        );
+        let offset =
+            Vec2::new(self.left_padding as usize, self.top_padding as usize);
         let printer = &printer.offset(offset);
         if printer.theme.shadow {
             let h = printer.size.y;
@@ -102,7 +96,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         }
 
         // Draw the view background
-        let printer = printer.shrinked((1,1));
+        let printer = printer.shrinked((1, 1));
         self.view.draw(&printer);
     }
 }

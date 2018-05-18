@@ -1,8 +1,8 @@
-use Printer;
 use div::div_up;
 use std::cmp::{max, min};
 use theme::ColorStyle;
 use vec::Vec2;
+use Printer;
 
 /// Provide scrolling functionalities to a view.
 ///
@@ -91,10 +91,8 @@ impl ScrollBase {
         // eprintln!("Setting heights: {} in {}", content_height, view_height);
 
         if self.scrollable() {
-            self.start_line = min(
-                self.start_line,
-                self.content_height - self.view_height,
-            );
+            self.start_line =
+                min(self.start_line, self.content_height - self.view_height);
         } else {
             self.start_line = 0;
         }
@@ -251,16 +249,11 @@ impl ScrollBase {
             return;
         }
         // Print the content in a sub_printer
-        let max_y = min(
-            self.view_height,
-            self.content_height - self.start_line,
-        );
+        let max_y =
+            min(self.view_height, self.content_height - self.start_line);
         let w = if self.scrollable() {
             // We have to remove the bar width and the padding.
-            printer
-                .size
-                .x
-                .saturating_sub(1 + self.right_padding)
+            printer.size.x.saturating_sub(1 + self.right_padding)
         } else {
             printer.size.x
         };
@@ -312,10 +305,7 @@ impl ScrollBase {
 
     /// Returns the height of the scrollbar thumb.
     pub fn scrollbar_thumb_height(&self) -> usize {
-        max(
-            1,
-            self.view_height * self.view_height / self.content_height,
-        )
+        max(1, self.view_height * self.view_height / self.content_height)
     }
 
     /// Returns the y position of the scrollbar thumb.

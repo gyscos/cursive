@@ -1,19 +1,19 @@
-use Printer;
-use With;
-use XY;
 use align::*;
 use direction::Direction;
 use event::*;
 use owning_ref::{ArcRef, OwningHandle};
 use std::ops::Deref;
-use std::sync::{Mutex, MutexGuard};
 use std::sync::Arc;
+use std::sync::{Mutex, MutexGuard};
 use theme::Effect;
 use unicode_width::UnicodeWidthStr;
 use utils::lines::spans::{LinesIterator, Row};
 use utils::markup::StyledString;
 use vec::Vec2;
 use view::{ScrollBase, ScrollStrategy, SizeCache, View};
+use Printer;
+use With;
+use XY;
 
 /// Provides access to the content of a [`TextView`].
 ///
@@ -305,11 +305,7 @@ impl TextView {
     where
         S: Into<StyledString>,
     {
-        self.content
-            .lock()
-            .unwrap()
-            .content
-            .append(content.into());
+        self.content.lock().unwrap().content.append(content.into());
         self.invalidate();
     }
 
@@ -513,8 +509,7 @@ impl View for TextView {
             } if position
                 .checked_sub(offset)
                 .map(|position| {
-                    self.scrollbase
-                        .start_drag(position, self.last_size.x)
+                    self.scrollbase.start_drag(position, self.last_size.x)
                 })
                 .unwrap_or(false) =>
             {

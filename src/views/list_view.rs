@@ -1,13 +1,15 @@
-use Cursive;
-use Printer;
-use With;
 use direction;
-use event::{AnyCb, Callback, Event, EventResult, Key, MouseButton, MouseEvent};
+use event::{
+    AnyCb, Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+};
 use rect::Rect;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{ScrollBase, Selector, View};
+use Cursive;
+use Printer;
+use With;
 
 /// Represents a child from a [`ListView`].
 ///
@@ -148,7 +150,7 @@ impl ListView {
     }
 
     fn iter_mut<'a>(
-        &'a mut self, from_focus: bool, source: direction::Relative
+        &'a mut self, from_focus: bool, source: direction::Relative,
     ) -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
@@ -172,7 +174,7 @@ impl ListView {
     }
 
     fn move_focus(
-        &mut self, n: usize, source: direction::Direction
+        &mut self, n: usize, source: direction::Direction,
     ) -> EventResult {
         let i = if let Some(i) = source
             .relative(direction::Orientation::Vertical)
@@ -246,7 +248,7 @@ impl ListView {
 }
 
 fn try_focus(
-    (i, child): (usize, &mut ListChild), source: direction::Direction
+    (i, child): (usize, &mut ListChild), source: direction::Direction,
 ) -> Option<usize> {
     match *child {
         ListChild::Delimiter => None,
@@ -401,12 +403,10 @@ impl View for ListView {
             Event::Key(Key::PageDown) => {
                 self.move_focus(10, direction::Direction::up())
             }
-            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => {
-                self.move_focus(
-                    usize::max_value(),
-                    direction::Direction::back(),
-                )
-            }
+            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => self.move_focus(
+                usize::max_value(),
+                direction::Direction::back(),
+            ),
             Event::Key(Key::End) | Event::Ctrl(Key::End) => self.move_focus(
                 usize::max_value(),
                 direction::Direction::front(),
@@ -456,7 +456,7 @@ impl View for ListView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: AnyCb<'a>
+        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
     ) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, Box::new(|any| callback(any)));

@@ -146,10 +146,7 @@ impl XY<bool> {
 
     /// For each axis, keeps elements from `other` if `self` is `true`.
     pub fn select<T>(&self, other: XY<T>) -> XY<Option<T>> {
-        self.zip_map(
-            other,
-            |keep, o| if keep { Some(o) } else { None },
-        )
+        self.zip_map(other, |keep, o| if keep { Some(o) } else { None })
     }
 
     /// For each axis, selects `if_true` if `self` is true, else `if_false`.

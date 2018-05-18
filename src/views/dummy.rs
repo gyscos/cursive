@@ -1,5 +1,5 @@
-use Printer;
 use view::View;
+use Printer;
 
 /// Dummy view.
 ///

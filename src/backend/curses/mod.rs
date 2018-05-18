@@ -63,7 +63,7 @@ where
 
 fn find_closest_pair(pair: &ColorPair, max_colors: i16) -> (i16, i16) {
     (
-        find_closest(&pair.front,max_colors),
+        find_closest(&pair.front, max_colors),
         find_closest(&pair.back, max_colors),
     )
 }

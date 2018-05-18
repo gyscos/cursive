@@ -18,10 +18,7 @@ pub struct SizeCache {
 impl SizeCache {
     /// Creates a new sized cache
     pub fn new(value: usize, constrained: bool) -> Self {
-        SizeCache {
-            value,
-            constrained,
-        }
+        SizeCache { value, constrained }
     }
 
     /// Returns `true` if `self` is still valid for the given `request`.

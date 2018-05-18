@@ -49,9 +49,7 @@ impl Backend {
         // (Mouse move when a button is pressed).
         // Replacing 1002 with 1003 would give us ANY mouse move.
         print!("\x1B[?1002h");
-        stdout()
-            .flush()
-            .expect("could not flush stdout");
+        stdout().flush().expect("could not flush stdout");
 
         let c = Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
@@ -182,9 +180,7 @@ impl backend::Backend for Backend {
 
     fn finish(&mut self) {
         print!("\x1B[?1002l");
-        stdout()
-            .flush()
-            .expect("could not flush stdout");
+        stdout().flush().expect("could not flush stdout");
         pancurses::endwin();
     }
 
@@ -234,8 +230,7 @@ impl backend::Backend for Backend {
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        self.window
-            .mvaddstr(pos.y as i32, pos.x as i32, text);
+        self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
     fn poll_event(&mut self) -> Event {

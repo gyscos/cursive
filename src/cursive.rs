@@ -46,14 +46,27 @@ impl Default for Cursive {
     }
 }
 
-#[cfg(all(not(feature = "termion"), not(feature = "pancurses"), feature = "bear-lib-terminal"))]
+#[cfg(
+    all(
+        not(feature = "termion"),
+        not(feature = "pancurses"),
+        feature = "bear-lib-terminal"
+    )
+)]
 impl Default for Cursive {
     fn default() -> Self {
         Self::blt()
     }
 }
 
-#[cfg(all(not(feature = "termion"), not(feature = "pancurses"), not(feature = "bear-lib-terminal"), feature = "ncurses"))]
+#[cfg(
+    all(
+        not(feature = "termion"),
+        not(feature = "pancurses"),
+        not(feature = "bear-lib-terminal"),
+        feature = "ncurses"
+    )
+)]
 impl Default for Cursive {
     fn default() -> Self {
         Self::ncurses()
@@ -173,8 +186,7 @@ impl Cursive {
 
     /// Selects the menubar.
     pub fn select_menubar(&mut self) {
-        self.menubar
-            .take_focus(direction::Direction::none());
+        self.menubar.take_focus(direction::Direction::none());
     }
 
     /// Sets the menubar autohide feature.
@@ -262,7 +274,7 @@ impl Cursive {
     ///
     /// `filename` must point to a valid toml file.
     pub fn load_theme_file<P: AsRef<Path>>(
-        &mut self, filename: P
+        &mut self, filename: P,
     ) -> Result<(), theme::Error> {
         self.set_theme(try!(theme::load_theme_file(filename)));
         Ok(())
@@ -367,7 +379,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn call_on<V, F, R>(
-        &mut self, sel: &view::Selector, callback: F
+        &mut self, sel: &view::Selector, callback: F,
     ) -> Option<R>
     where
         V: View + Any,
@@ -533,10 +545,9 @@ impl Cursive {
 
     /// Convenient stub forwarding layer repositioning.
     pub fn reposition_layer(
-        &mut self, layer: LayerPosition, position: Position
+        &mut self, layer: LayerPosition, position: Position,
     ) {
-        self.screen_mut()
-            .reposition_layer(layer, position);
+        self.screen_mut().reposition_layer(layer, position);
     }
 
     // Handles a key event when it was ignored by the current view
@@ -558,11 +569,7 @@ impl Cursive {
 
     fn layout(&mut self) {
         let size = self.screen_size();
-        let offset = if self.menubar.autohide {
-            0
-        } else {
-            1
-        };
+        let offset = if self.menubar.autohide { 0 } else { 1 };
         let size = size.saturating_sub((0, offset));
         self.screen_mut().layout(size);
     }
@@ -580,11 +587,7 @@ impl Cursive {
         let selected = self.menubar.receive_events();
 
         // Print the stackview background before the menubar
-        let offset = if self.menubar.autohide {
-            0
-        } else {
-            1
-        };
+        let offset = if self.menubar.autohide { 0 } else { 1 };
         let id = self.active_screen;
         let sv_printer = printer.offset((0, offset)).focused(!selected);
 
@@ -664,9 +667,7 @@ impl Cursive {
         }
 
         if let Event::Mouse {
-            event,
-            position,
-            ..
+            event, position, ..
         } = event
         {
             if event.grabs_focus() && !self.menubar.autohide
@@ -685,14 +686,8 @@ impl Cursive {
         if self.menubar.receive_events() {
             self.menubar.on_event(event).process(self);
         } else {
-            let offset = if self.menubar.autohide {
-                0
-            } else {
-                1
-            };
-            match self.screen_mut()
-                .on_event(event.relativized((0, offset)))
-            {
+            let offset = if self.menubar.autohide { 0 } else { 1 };
+            match self.screen_mut().on_event(event.relativized((0, offset))) {
                 // If the event was ignored,
                 // it is our turn to play with it.
                 EventResult::Ignored => self.on_event(event),

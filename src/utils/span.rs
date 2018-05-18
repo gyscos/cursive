@@ -195,15 +195,13 @@ impl<T> SpannedString<T> {
     {
         let source = source.into();
 
-        let spans = vec![
-            IndexedSpan {
-                content: IndexedCow::Borrowed {
-                    start: 0,
-                    end: source.len(),
-                },
-                attr,
+        let spans = vec![IndexedSpan {
+            content: IndexedCow::Borrowed {
+                start: 0,
+                end: source.len(),
             },
-        ];
+            attr,
+        }];
 
         Self::with_spans(source, spans)
     }

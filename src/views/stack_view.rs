@@ -1,5 +1,3 @@
-use Printer;
-use With;
 use direction::Direction;
 use event::{AnyCb, Event, EventResult};
 use std::cell;
@@ -8,6 +6,8 @@ use theme::ColorStyle;
 use vec::Vec2;
 use view::{IntoBoxedView, Offset, Position, Selector, View, ViewWrapper};
 use views::{Layer, ShadowView, ViewBox};
+use Printer;
+use With;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -36,7 +36,7 @@ pub enum LayerPosition {
 
 impl Placement {
     pub fn compute_offset<S, A, P>(
-        &self, size: S, available: A, parent: P
+        &self, size: S, available: A, parent: P,
     ) -> Vec2
     where
         S: Into<Vec2>,
@@ -361,7 +361,7 @@ impl StackView {
     /// Has no effect on fullscreen layers
     /// Has no effect if layer is not found
     pub fn reposition_layer(
-        &mut self, layer: LayerPosition, position: Position
+        &mut self, layer: LayerPosition, position: Position,
     ) {
         let i = self.get_index(layer);
         let child = match self.layers.get_mut(i) {
@@ -523,7 +523,7 @@ impl View for StackView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: AnyCb<'a>
+        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
     ) {
         for layer in &mut self.layers {
             layer

@@ -156,13 +156,13 @@
 //! 	highlight          = "#F00"
 //! 	highlight_inactive = "#5555FF"
 //! ```
-mod style;
-mod effect;
+mod border_style;
 mod color;
 mod color_pair;
 mod color_style;
-mod border_style;
+mod effect;
 mod palette;
+mod style;
 
 pub use self::border_style::BorderStyle;
 pub use self::color::{BaseColor, Color};

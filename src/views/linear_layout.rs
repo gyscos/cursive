@@ -1,6 +1,3 @@
-use Printer;
-use With;
-use XY;
 use direction;
 use event::{AnyCb, Event, EventResult, Key};
 use rect::Rect;
@@ -8,6 +5,9 @@ use std::cmp::min;
 use std::ops::Deref;
 use vec::Vec2;
 use view::{Selector, SizeCache, View};
+use Printer;
+use With;
+use XY;
 
 /// Arranges its children linearly according to its orientation.
 pub struct LinearLayout {
@@ -57,7 +57,7 @@ struct ChildItem<T> {
 
 impl<T> ChildIterator<T> {
     fn new(
-        inner: T, orientation: direction::Orientation, available: usize
+        inner: T, orientation: direction::Orientation, available: usize,
     ) -> Self {
         ChildIterator {
             inner,
@@ -203,7 +203,7 @@ impl LinearLayout {
 
     /// Returns a cyclic mutable iterator starting with the child in focus
     fn iter_mut<'a>(
-        &'a mut self, from_focus: bool, source: direction::Relative
+        &'a mut self, from_focus: bool, source: direction::Relative,
     ) -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
         match source {
             direction::Relative::Front => {
@@ -292,7 +292,7 @@ impl LinearLayout {
 }
 
 fn try_focus(
-    (i, child): (usize, &mut Child), source: direction::Direction
+    (i, child): (usize, &mut Child), source: direction::Direction,
 ) -> Option<usize> {
     if child.view.take_focus(source) {
         Some(i)
@@ -553,7 +553,7 @@ impl View for LinearLayout {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: AnyCb<'a>
+        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
     ) {
         for child in &mut self.children {
             child

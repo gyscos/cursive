@@ -13,11 +13,11 @@
 //!   [global callback](../struct.Cursive.html#method.add_global_callback)
 //!   table is checked.
 
-use Cursive;
+use std::any::Any;
 use std::ops::Deref;
 use std::rc::Rc;
 use vec::Vec2;
-use std::any::Any;
+use Cursive;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
@@ -351,7 +351,10 @@ impl Event {
     ///
     /// Returns `None` if `self` is not a mouse event.
     pub fn mouse_position_mut(&mut self) -> Option<&mut Vec2> {
-        if let Event::Mouse { ref mut position, .. } = *self {
+        if let Event::Mouse {
+            ref mut position, ..
+        } = *self
+        {
             Some(position)
         } else {
             None
@@ -366,10 +369,7 @@ impl Event {
     where
         V: Into<Vec2>,
     {
-        if let Event::Mouse {
-            ref mut offset, ..
-        } = *self
-        {
+        if let Event::Mouse { ref mut offset, .. } = *self {
             *offset = *offset + top_left;
         }
     }

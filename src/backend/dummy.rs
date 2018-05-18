@@ -1,7 +1,7 @@
 //! Dummy backend
 use backend;
-use theme;
 use event;
+use theme;
 use vec::Vec2;
 
 pub struct Backend;

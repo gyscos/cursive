@@ -1,10 +1,10 @@
-use Printer;
 use direction::Direction;
 use event::{AnyCb, Event, EventResult};
 use rect::Rect;
 use std::any::Any;
 use vec::Vec2;
 use view::{AnyView, Selector};
+use Printer;
 
 /// Main trait defining a view behaviour.
 ///

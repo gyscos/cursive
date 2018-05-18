@@ -18,10 +18,7 @@ impl<R: Read> ProgressReader<R> {
     /// You should make sure the progress bar knows how
     /// many bytes should be received.
     pub fn new(counter: Counter, reader: R) -> Self {
-        ProgressReader {
-            reader,
-            counter,
-        }
+        ProgressReader { reader, counter }
     }
 
     /// Unwraps this `ProgressReader`, returning the reader and counter.

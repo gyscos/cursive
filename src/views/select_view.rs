@@ -1,6 +1,3 @@
-use Cursive;
-use Printer;
-use With;
 use align::{Align, HAlign, VAlign};
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
@@ -15,6 +12,9 @@ use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, ScrollBase, View};
 use views::MenuPopup;
+use Cursive;
+use Printer;
+use With;
 
 /// View to select an item among a list.
 ///
@@ -258,8 +258,7 @@ impl<T: 'static> SelectView<T> {
             self.focus.set(focus - 1);
         }
 
-        self.make_select_cb()
-            .unwrap_or_else(Callback::dummy)
+        self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Inserts an item at position `index`, shifting all elements after it to
@@ -351,8 +350,7 @@ impl<T: 'static> SelectView<T> {
         self.focus.set(i);
         self.scrollbase.scroll_to(i);
 
-        self.make_select_cb()
-            .unwrap_or_else(Callback::dummy)
+        self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Sets the selection to the given position.
@@ -386,8 +384,7 @@ impl<T: 'static> SelectView<T> {
         let focus = self.focus();
         self.scrollbase.scroll_to(focus);
 
-        self.make_select_cb()
-            .unwrap_or_else(Callback::dummy)
+        self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Moves the selection down by the given number of rows.
@@ -400,8 +397,7 @@ impl<T: 'static> SelectView<T> {
         let focus = self.focus();
         self.scrollbase.scroll_to(focus);
 
-        self.make_select_cb()
-            .unwrap_or_else(Callback::dummy)
+        self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
     // Low-level focus change. Does not fix scrollbase.
@@ -412,10 +408,7 @@ impl<T: 'static> SelectView<T> {
 
     // Low-level focus change. Does not fix scrollbase.
     fn focus_down(&mut self, n: usize) {
-        let focus = min(
-            self.focus() + n,
-            self.items.len().saturating_sub(1),
-        );
+        let focus = min(self.focus() + n, self.items.len().saturating_sub(1));
         self.focus.set(focus);
     }
 
@@ -436,8 +429,9 @@ impl<T: 'static> SelectView<T> {
             Event::Key(Key::PageUp) => self.focus_up(10),
             Event::Key(Key::PageDown) => self.focus_down(10),
             Event::Key(Key::Home) => self.focus.set(0),
-            Event::Key(Key::End) => self.focus
-                .set(self.items.len().saturating_sub(1)),
+            Event::Key(Key::End) => {
+                self.focus.set(self.items.len().saturating_sub(1))
+            }
             Event::Mouse {
                 event: MouseEvent::WheelDown,
                 ..
@@ -461,8 +455,7 @@ impl<T: 'static> SelectView<T> {
             } if position
                 .checked_sub(offset)
                 .map(|position| {
-                    self.scrollbase
-                        .start_drag(position, self.last_size.x)
+                    self.scrollbase.start_drag(position, self.last_size.x)
                 })
                 .unwrap_or(false) =>
             {
@@ -648,7 +641,10 @@ impl SelectView<String> {
     }
 
     /// Convenient method to use the label as value.
-    pub fn insert_item_str<S>(&mut self, index: usize, label: S) where S: Into<String> {
+    pub fn insert_item_str<S>(&mut self, index: usize, label: S)
+    where
+        S: Into<String>,
+    {
         let label = label.into();
         self.insert_item(index, label.clone(), label);
     }
@@ -776,8 +772,7 @@ impl<T: 'static> View for SelectView<T> {
         self.last_size = size;
 
         if !self.popup {
-            self.scrollbase
-                .set_heights(size.y, self.items.len());
+            self.scrollbase.set_heights(size.y, self.items.len());
         }
     }
 

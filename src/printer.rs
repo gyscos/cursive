@@ -126,11 +126,8 @@ impl<'a> Printer<'a> {
 
         // TODO: use a different prefix method that is *at least* the width
         // (and not *at most*)
-        let tail = suffix(
-            text.graphemes(true),
-            text_width - hidden_part.x,
-            "",
-        );
+        let tail =
+            suffix(text.graphemes(true), text_width - hidden_part.x, "");
         let skipped_len = text.len() - tail.length;
         let skipped_width = text_width - tail.width;
         assert_eq!(text[..skipped_len].width(), skipped_width);
@@ -223,10 +220,7 @@ impl<'a> Printer<'a> {
         let start = start - self.content_offset;
 
         // Don't write too much if we're close to the end
-        let width = min(
-            width,
-            (self.output_size.x - start.x) / c.width(),
-        );
+        let width = min(width, (self.output_size.x - start.x) / c.width());
 
         // Could we avoid allocating?
         let text: String = ::std::iter::repeat(c).take(width).collect();
@@ -255,8 +249,7 @@ impl<'a> Printer<'a> {
     where
         F: FnOnce(&Printer),
     {
-        let old = self.backend
-            .set_color(c.resolve(&self.theme.palette));
+        let old = self.backend.set_color(c.resolve(&self.theme.palette));
         f(self);
         self.backend.set_color(old);
     }
@@ -347,16 +340,8 @@ impl<'a> Printer<'a> {
         self.with_low_border(invert, |s| {
             s.print(start + size.keep_x(), "┐");
             s.print(start + size, "┘");
-            s.print_hline(
-                start + (1, 0) + size.keep_y(),
-                size.x - 1,
-                "─",
-            );
-            s.print_vline(
-                start + (0, 1) + size.keep_x(),
-                size.y - 1,
-                "│",
-            );
+            s.print_hline(start + (1, 0) + size.keep_y(), size.x - 1, "─");
+            s.print_vline(start + (0, 1) + size.keep_x(), size.y - 1, "│");
         });
     }
 
