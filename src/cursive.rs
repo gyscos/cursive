@@ -97,7 +97,7 @@ impl Cursive {
         let (tx, rx) = mpsc::channel();
 
         Cursive {
-            theme: theme,
+            theme,
             screens: vec![views::StackView::new()],
             last_sizes: Vec::new(),
             global_callbacks: HashMap::new(),
@@ -106,7 +106,7 @@ impl Cursive {
             running: true,
             cb_source: rx,
             cb_sink: tx,
-            backend: backend,
+            backend,
         }
     }
 

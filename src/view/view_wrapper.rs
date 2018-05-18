@@ -98,7 +98,7 @@ pub trait ViewWrapper: 'static {
     /// Wraps the `important_area` method.
     fn wrap_important_area(&self, size: Vec2) -> Rect {
         self.with_view(|v| v.important_area(size))
-            .unwrap_or(Rect::from((0, 0)))
+            .unwrap_or_else(|| Rect::from((0, 0)))
     }
 }
 

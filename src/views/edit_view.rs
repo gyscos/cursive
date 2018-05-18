@@ -667,13 +667,13 @@ impl View for EditView {
                 offset,
             } if position.fits_in_rect(offset, (self.last_length, 1)) =>
             {
-                position.checked_sub(offset).map(|position| {
+                if let Some(position) = position.checked_sub(offset) {
                     self.cursor = self.offset
                         + simple_prefix(
                             &self.content[self.offset..],
                             position.x,
                         ).length;
-                });
+                }
             }
             _ => return EventResult::Ignored,
         }

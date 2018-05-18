@@ -784,7 +784,7 @@ impl<T: 'static> View for SelectView<T> {
     fn important_area(&self, size: Vec2) -> Rect {
         self.selected_id()
             .map(|i| Rect::from_size((0, i), (size.x, 1)))
-            .unwrap_or(Rect::from((0, 0)))
+            .unwrap_or_else(|| Rect::from((0, 0)))
     }
 }
 
@@ -796,7 +796,7 @@ struct Item<T> {
 impl<T> Item<T> {
     fn new(label: String, value: T) -> Self {
         Item {
-            label: label,
+            label,
             value: Rc::new(value),
         }
     }

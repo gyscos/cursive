@@ -58,10 +58,7 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
     where
         F: FnOnce(&mut Self::V) -> R,
     {
-        self.view
-            .try_borrow_mut()
-            .ok()
-            .map(|mut v| f(&mut *v))
+        self.view.try_borrow_mut().ok().map(|mut v| f(&mut *v))
     }
 
     fn into_inner(mut self) -> Result<Self::V, Self>
@@ -80,15 +77,14 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
 
     // Some for<'b> weirdness here to please the borrow checker gods...
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: BoxedCallback<'a>
+        &mut self, selector: &Selector, mut callback: BoxedCallback<'a>,
     ) {
         match selector {
             &Selector::Id(id) if id == self.id => callback(self),
             s => {
-                self.view
-                    .try_borrow_mut()
-                    .ok()
-                    .map(|mut v| v.deref_mut().call_on_any(s, callback));
+                if let Ok(mut v) = self.view.try_borrow_mut() {
+                    v.deref_mut().call_on_any(s, callback);
+                }
             }
         }
     }

@@ -21,7 +21,7 @@ impl<T: View> TrackedView<T> {
     /// Creates a new `TrackedView` around `view`.
     pub fn new(view: T) -> Self {
         TrackedView {
-            view: view,
+            view,
             offset: Cell::new(Vec2::zero()),
         }
     }

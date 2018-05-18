@@ -1,6 +1,3 @@
-use Cursive;
-use Printer;
-use With;
 use align::Align;
 use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use menu::{MenuItem, MenuTree};
@@ -11,6 +8,9 @@ use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, ScrollBase, View};
 use views::OnEventView;
+use Cursive;
+use Printer;
+use With;
 
 /// Popup that shows a list of items.
 pub struct MenuPopup {
@@ -29,9 +29,7 @@ impl MenuPopup {
         MenuPopup {
             menu,
             focus: 0,
-            scrollbase: ScrollBase::new()
-                .scrollbar_offset(1)
-                .right_padding(0),
+            scrollbase: ScrollBase::new().scrollbar_offset(1).right_padding(0),
             align: Align::top_left(),
             on_dismiss: None,
             on_action: None,
@@ -318,8 +316,7 @@ impl View for MenuPopup {
                 && position
                     .checked_sub(offset + (0, 1))
                     .map(|position| {
-                        self.scrollbase
-                            .start_drag(position, self.last_size.x)
+                        self.scrollbase.start_drag(position, self.last_size.x)
                     })
                     .unwrap_or(false) =>
             {
@@ -344,19 +341,16 @@ impl View for MenuPopup {
                 // eprintln!("Position: {:?} / {:?}", position, offset);
                 // eprintln!("Last size: {:?}", self.last_size);
                 let inner_size = self.last_size.saturating_sub((2, 2));
-                position.checked_sub(offset + (1, 1)).map(
+                if let Some(position) = position.checked_sub(offset + (1, 1)) {
                     // `position` is not relative to the content
                     // (It's inside the border)
-                    |position| {
-                        if position < inner_size {
-                            let focus =
-                                position.y + self.scrollbase.start_line;
-                            if !self.menu.children[focus].is_delimiter() {
-                                self.focus = focus;
-                            }
+                    if position < inner_size {
+                        let focus = position.y + self.scrollbase.start_line;
+                        if !self.menu.children[focus].is_delimiter() {
+                            self.focus = focus;
                         }
-                    },
-                );
+                    }
+                }
             }
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
@@ -398,10 +392,8 @@ impl View for MenuPopup {
 
     fn layout(&mut self, size: Vec2) {
         self.last_size = size;
-        self.scrollbase.set_heights(
-            size.y.saturating_sub(2),
-            self.menu.children.len(),
-        );
+        self.scrollbase
+            .set_heights(size.y.saturating_sub(2), self.menu.children.len());
     }
 
     fn important_area(&self, size: Vec2) -> Rect {

@@ -17,7 +17,7 @@ impl<T: View> ShadowView<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
         ShadowView {
-            view: view,
+            view,
             top_padding: true,
             left_padding: true,
         }

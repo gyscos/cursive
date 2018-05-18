@@ -100,7 +100,7 @@ impl<'a> Printer<'a> {
 
         // We accept requests between `content_offset` and
         // `content_offset + size`
-        if !(start < self.output_size + self.content_offset) {
+        if start >= self.output_size + self.content_offset {
             return;
         }
 

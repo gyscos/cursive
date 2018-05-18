@@ -82,7 +82,7 @@ where
     debug_assert!(current_width <= available_width + delimiter_width);
 
     Span {
-        length: length,
+        length,
         width: current_width,
     }
 }

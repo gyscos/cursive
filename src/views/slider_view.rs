@@ -24,9 +24,9 @@ impl SliderView {
     /// with one tick per block.
     pub fn new(orientation: Orientation, max_value: usize) -> Self {
         SliderView {
-            orientation: orientation,
+            orientation,
             value: 0,
-            max_value: max_value,
+            max_value,
             on_change: None,
             on_enter: None,
             dragging: false,
@@ -186,10 +186,10 @@ impl View for SliderView {
                 offset,
             } if position.fits_in_rect(offset, self.req_size()) =>
             {
-                position.checked_sub(offset).map(|position| {
+                if let Some(position) = position.checked_sub(offset) {
                     self.dragging = true;
                     self.value = self.orientation.get(&position);
-                });
+                }
                 self.get_change_result()
             }
             Event::Mouse {

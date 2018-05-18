@@ -15,7 +15,7 @@ impl<T> SizedView<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
         SizedView {
-            view: view,
+            view,
             size: Vec2::zero(),
         }
     }

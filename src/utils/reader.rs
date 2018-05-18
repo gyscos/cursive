@@ -19,8 +19,8 @@ impl<R: Read> ProgressReader<R> {
     /// many bytes should be received.
     pub fn new(counter: Counter, reader: R) -> Self {
         ProgressReader {
-            reader: reader,
-            counter: counter,
+            reader,
+            counter,
         }
     }
 
