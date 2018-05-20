@@ -10,6 +10,8 @@
 use event;
 use theme;
 
+use chan::Sender;
+
 use vec::Vec2;
 
 pub mod dummy;
@@ -27,6 +29,8 @@ pub trait Backend {
     /// This should clear any state in the terminal.
     fn finish(&mut self);
 
+    fn start_input_thread(&mut self, event_sink: Sender<event::Event>);
+
     /// Refresh the screen.
     fn refresh(&mut self);
 
@@ -36,19 +40,14 @@ pub trait Backend {
     /// Returns the screen size.
     fn screen_size(&self) -> Vec2;
 
-    /// Main input method
-    fn poll_event(&mut self) -> event::Event;
+    // /// Gets a receiver for input events.
+    // fn event_receiver(&mut self) -> Receiver<event::Event>;
 
     /// Main method used for printing
     fn print_at(&self, pos: Vec2, text: &str);
 
     /// Clears the screen with the given color.
     fn clear(&self, color: theme::Color);
-
-    /// Sets the refresh rate for the backend.
-    ///
-    /// If no event is detected in the interval, send an `Event::Refresh`.
-    fn set_refresh_rate(&mut self, fps: u32);
 
     /// Starts using a new color.
     ///

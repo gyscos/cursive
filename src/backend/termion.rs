@@ -28,52 +28,20 @@ use vec::Vec2;
 pub struct Backend {
     terminal: AlternateScreen<MouseTerminal<RawTerminal<Stdout>>>,
     current_style: Cell<theme::ColorPair>,
+}
+
+struct InputParser {
     input: chan::Receiver<TEvent>,
     resize: chan::Receiver<chan_signal::Signal>,
-    timeout: Option<u32>,
+    event_sink: chan::Sender<Event>,
     last_button: Option<MouseButton>,
 }
 
-trait Effectable {
-    fn on(&self);
-    fn off(&self);
-}
-
-impl Effectable for theme::Effect {
-    fn on(&self) {
-        match *self {
-            theme::Effect::Simple => (),
-            theme::Effect::Reverse => print!("{}", tstyle::Invert),
-            theme::Effect::Bold => print!("{}", tstyle::Bold),
-            theme::Effect::Italic => print!("{}", tstyle::Italic),
-            theme::Effect::Underline => print!("{}", tstyle::Underline),
-        }
-    }
-
-    fn off(&self) {
-        match *self {
-            theme::Effect::Simple => (),
-            theme::Effect::Reverse => print!("{}", tstyle::NoInvert),
-            theme::Effect::Bold => print!("{}", tstyle::NoBold),
-            theme::Effect::Italic => print!("{}", tstyle::NoItalic),
-            theme::Effect::Underline => print!("{}", tstyle::NoUnderline),
-        }
-    }
-}
-
-impl Backend {
-    pub fn init() -> Box<Self> {
-        print!("{}", termion::cursor::Hide);
-
-        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
-
-        // TODO: lock stdout
-        let terminal = AlternateScreen::from(MouseTerminal::from(
-            ::std::io::stdout().into_raw_mode().unwrap(),
-        ));
-
+impl InputParser {
+    fn new(event_sink: chan::Sender<Event>) -> Self {
         let (sender, receiver) = chan::async();
 
+        // Fill the input channel
         thread::spawn(move || {
             for key in ::std::io::stdin().events() {
                 if let Ok(key) = key {
@@ -82,22 +50,34 @@ impl Backend {
             }
         });
 
-        let c = Backend {
-            terminal: terminal,
-            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
-            input: receiver,
-            resize: resize,
-            timeout: None,
+        InputParser {
+            resize: chan_signal::notify(&[chan_signal::Signal::WINCH]),
+            event_sink,
             last_button: None,
-        };
-
-        Box::new(c)
+            input: receiver,
+        }
     }
 
-    fn apply_colors(&self, colors: theme::ColorPair) {
-        with_color(&colors.front, |c| print!("{}", tcolor::Fg(c)));
-        with_color(&colors.back, |c| print!("{}", tcolor::Bg(c)));
+    fn next_event(&mut self) -> Event {
+        let result;
+        {
+            let input = &self.input;
+            let resize = &self.resize;
+
+            chan_select!{
+                resize.recv() => return Event::WindowResize,
+                input.recv() -> input => result = Some(input.unwrap()),
+            }
+        }
+
+        self.map_key(result.unwrap())
     }
+
+    fn parse_next(&mut self) {
+        let event = self.next_event();
+        self.event_sink.send(event);
+    }
+
     fn map_key(&mut self, event: TEvent) -> Event {
         match event {
             TEvent::Unsupported(bytes) => Event::Unknown(bytes),
@@ -173,6 +153,58 @@ impl Backend {
     }
 }
 
+trait Effectable {
+    fn on(&self);
+    fn off(&self);
+}
+
+impl Effectable for theme::Effect {
+    fn on(&self) {
+        match *self {
+            theme::Effect::Simple => (),
+            theme::Effect::Reverse => print!("{}", tstyle::Invert),
+            theme::Effect::Bold => print!("{}", tstyle::Bold),
+            theme::Effect::Italic => print!("{}", tstyle::Italic),
+            theme::Effect::Underline => print!("{}", tstyle::Underline),
+        }
+    }
+
+    fn off(&self) {
+        match *self {
+            theme::Effect::Simple => (),
+            theme::Effect::Reverse => print!("{}", tstyle::NoInvert),
+            theme::Effect::Bold => print!("{}", tstyle::NoBold),
+            theme::Effect::Italic => print!("{}", tstyle::NoItalic),
+            theme::Effect::Underline => print!("{}", tstyle::NoUnderline),
+        }
+    }
+}
+
+impl Backend {
+    pub fn init() -> Box<Self> {
+        print!("{}", termion::cursor::Hide);
+
+
+        // TODO: lock stdout
+        let terminal = AlternateScreen::from(MouseTerminal::from(
+            ::std::io::stdout().into_raw_mode().unwrap(),
+        ));
+
+
+        let c = Backend {
+            terminal: terminal,
+            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
+        };
+
+        Box::new(c)
+    }
+
+    fn apply_colors(&self, colors: theme::ColorPair) {
+        with_color(&colors.front, |c| print!("{}", tcolor::Fg(c)));
+        with_color(&colors.back, |c| print!("{}", tcolor::Bg(c)));
+    }
+}
+
 impl backend::Backend for Backend {
     fn finish(&mut self) {
         print!("{}{}", termion::cursor::Show, termion::cursor::Goto(1, 1));
@@ -233,32 +265,13 @@ impl backend::Backend for Backend {
         );
     }
 
-    fn set_refresh_rate(&mut self, fps: u32) {
-        self.timeout = Some(1000 / fps as u32);
-    }
-
-    fn poll_event(&mut self) -> Event {
-        let result;
-        {
-            let input = &self.input;
-            let resize = &self.resize;
-
-            if let Some(timeout) = self.timeout {
-                let timeout = chan::after_ms(timeout);
-                chan_select!{
-                    timeout.recv() => return Event::Refresh,
-                    resize.recv() => return Event::WindowResize,
-                    input.recv() -> input => result = Some(input.unwrap()),
-                }
-            } else {
-                chan_select!{
-                    resize.recv() => return Event::WindowResize,
-                    input.recv() -> input => result = Some(input.unwrap()),
-                }
+    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>) {
+        let mut parser = InputParser::new(event_sink);
+        thread::spawn(move || {
+            loop {
+                parser.parse_next();
             }
-        }
-
-        self.map_key(result.unwrap())
+        });
     }
 }
 

@@ -67,6 +67,8 @@ extern crate enum_map;
 extern crate enumset;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate chan;
 
 #[cfg(any(feature = "ncurses", feature = "pancurses"))]
 #[macro_use]
@@ -79,10 +81,6 @@ extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
 extern crate xi_unicode;
-
-#[cfg(feature = "termion")]
-#[macro_use]
-extern crate chan;
 
 macro_rules! new_default(
     ($c:ty) => {

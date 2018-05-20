@@ -1,15 +1,56 @@
 use backend;
+use chan;
 use direction;
 use event::{Callback, Event, EventResult};
 use printer::Printer;
 use std::any::Any;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::mpsc;
 use theme;
 use vec::Vec2;
 use view::{self, Finder, IntoBoxedView, Position, View};
 use views::{self, LayerPosition};
+
+/// Central part of the cursive library.
+///
+/// It initializes ncurses on creation and cleans up on drop.
+/// To use it, you should populate it with views, layouts and callbacks,
+/// then start the event loop with run().
+///
+/// It uses a list of screen, with one screen active at a time.
+pub struct Cursive {
+    theme: theme::Theme,
+    screens: Vec<views::StackView>,
+    global_callbacks: HashMap<Event, Vec<Callback>>,
+    menubar: views::Menubar,
+
+    // Last layer sizes of the stack view.
+    // If it changed, clear the screen.
+    last_sizes: Vec<Vec2>,
+
+    fps: u32,
+
+    active_screen: ScreenId,
+
+    running: bool,
+
+    backend: Box<backend::Backend>,
+
+    cb_source: chan::Receiver<Box<CbFunc>>,
+    cb_sink: chan::Sender<Box<CbFunc>>,
+
+    event_source: chan::Receiver<Event>,
+}
+
+/// Describes one of the possible interruptions we should handle.
+enum Interruption {
+    /// An input event was received
+    Event(Event),
+    /// A callback was received
+    Callback(Box<CbFunc>),
+    /// A timeout ran out
+    Timeout,
+}
 
 /// Identifies a screen in the cursive root.
 pub type ScreenId = usize;
@@ -46,57 +87,45 @@ impl Default for Cursive {
     }
 }
 
-#[cfg(all(not(feature = "termion"), not(feature = "pancurses"), feature = "bear-lib-terminal"))]
+#[cfg(
+    all(
+        not(feature = "termion"),
+        not(feature = "pancurses"),
+        feature = "bear-lib-terminal"
+    )
+)]
 impl Default for Cursive {
     fn default() -> Self {
         Self::blt()
     }
 }
 
-#[cfg(all(not(feature = "termion"), not(feature = "pancurses"), not(feature = "bear-lib-terminal"), feature = "ncurses"))]
+#[cfg(
+    all(
+        not(feature = "termion"),
+        not(feature = "pancurses"),
+        not(feature = "bear-lib-terminal"),
+        feature = "ncurses"
+    )
+)]
 impl Default for Cursive {
     fn default() -> Self {
         Self::ncurses()
     }
 }
 
-/// Central part of the cursive library.
-///
-/// It initializes ncurses on creation and cleans up on drop.
-/// To use it, you should populate it with views, layouts and callbacks,
-/// then start the event loop with run().
-///
-/// It uses a list of screen, with one screen active at a time.
-pub struct Cursive {
-    theme: theme::Theme,
-    screens: Vec<views::StackView>,
-    global_callbacks: HashMap<Event, Vec<Callback>>,
-    menubar: views::Menubar,
-
-    // Last layer sizes of the stack view.
-    // If it changed, clear the screen.
-    last_sizes: Vec<Vec2>,
-
-    active_screen: ScreenId,
-
-    running: bool,
-
-    backend: Box<backend::Backend>,
-
-    cb_source: mpsc::Receiver<Box<CbFunc>>,
-    cb_sink: mpsc::Sender<Box<CbFunc>>,
-}
-
 impl Cursive {
     /// Creates a new Cursive root, and initialize the back-end.
-    pub fn new(backend: Box<backend::Backend>) -> Self {
+    pub fn new(mut backend: Box<backend::Backend>) -> Self {
         let theme = theme::load_default();
-        // theme.activate(&mut backend);
-        // let theme = theme::load_theme("assets/style.toml").unwrap();
 
-        let (tx, rx) = mpsc::channel();
+        let (cb_sink, cb_source) = chan::async();
+        let (event_sink, event_source) = chan::async();
+
+        backend.start_input_thread(event_sink);
 
         Cursive {
+            fps: 0,
             theme: theme,
             screens: vec![views::StackView::new()],
             last_sizes: Vec::new(),
@@ -104,8 +133,9 @@ impl Cursive {
             menubar: views::Menubar::new(),
             active_screen: 0,
             running: true,
-            cb_source: rx,
-            cb_sink: tx,
+            cb_source,
+            cb_sink,
+            event_source,
             backend: backend,
         }
     }
@@ -167,7 +197,7 @@ impl Cursive {
     /// ```
     ///
     /// [`set_fps`]: #method.set_fps
-    pub fn cb_sink(&self) -> &mpsc::Sender<Box<CbFunc>> {
+    pub fn cb_sink(&self) -> &chan::Sender<Box<CbFunc>> {
         &self.cb_sink
     }
 
@@ -261,7 +291,7 @@ impl Cursive {
     ///
     /// `filename` must point to a valid toml file.
     pub fn load_theme_file<P: AsRef<Path>>(
-        &mut self, filename: P
+        &mut self, filename: P,
     ) -> Result<(), theme::Error> {
         self.set_theme(try!(theme::load_theme_file(filename)));
         Ok(())
@@ -286,7 +316,8 @@ impl Cursive {
     ///
     /// [`cb_sink`]: #method.cb_sink
     pub fn set_fps(&mut self, fps: u32) {
-        self.backend.set_refresh_rate(fps)
+        // self.backend.set_refresh_rate(fps)
+        self.fps = fps;
     }
 
     /// Returns a reference to the currently active screen.
@@ -366,7 +397,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn call_on<V, F, R>(
-        &mut self, sel: &view::Selector, callback: F
+        &mut self, sel: &view::Selector, callback: F,
     ) -> Option<R>
     where
         V: View + Any,
@@ -532,9 +563,40 @@ impl Cursive {
 
     /// Convenient stub forwarding layer repositioning.
     pub fn reposition_layer(
-        &mut self, layer: LayerPosition, position: Position
+        &mut self, layer: LayerPosition, position: Position,
     ) {
         self.screen_mut().reposition_layer(layer, position);
+    }
+
+    // Wait until something happens.
+    fn poll(&mut self) -> Interruption {
+        let input_channel = &self.event_source;
+        let cb_channel = &self.cb_source;
+
+        if self.fps > 0 {
+            let timeout =  1000 / self.fps;
+            let timeout = chan::after_ms(timeout);
+            chan_select! {
+                input_channel.recv() -> input => {
+                    return Interruption::Event(input.unwrap())
+                },
+                cb_channel.recv() -> cb => {
+                    return Interruption::Callback(cb.unwrap())
+                },
+                timeout.recv() => {
+                    return Interruption::Timeout;
+                },
+            }
+        } else {
+            chan_select! {
+                input_channel.recv() -> input => {
+                    return Interruption::Event(input.unwrap())
+                },
+                cb_channel.recv() -> cb => {
+                    return Interruption::Callback(cb.unwrap())
+                },
+            }
+        }
     }
 
     // Handles a key event when it was ignored by the current view
@@ -632,10 +694,6 @@ impl Cursive {
     ///
     /// [`run(&mut self)`]: #method.run
     pub fn step(&mut self) {
-        while let Ok(cb) = self.cb_source.try_recv() {
-            cb.call_box(self);
-        }
-
         // Do we need to redraw everytime?
         // Probably, actually.
         // TODO: Do we need to re-layout everytime?
@@ -647,43 +705,52 @@ impl Cursive {
         self.backend.refresh();
 
         // Wait for next event.
-        // (If set_fps was called, this returns -1 now and then)
-        let event = self.backend.poll_event();
-        if event == Event::Exit {
-            self.quit();
-        }
+        match self.poll() {
+            Interruption::Event(event) => {
+                if event == Event::Exit {
+                    self.quit();
+                }
 
-        if event == Event::WindowResize {
-            self.clear();
-        }
+                if event == Event::WindowResize {
+                    self.clear();
+                }
 
-        if let Event::Mouse {
-            event, position, ..
-        } = event
-        {
-            if event.grabs_focus() && !self.menubar.autohide
-                && !self.menubar.has_submenu()
-                && position.y == 0
-            {
-                self.select_menubar();
-            }
-        }
+                if let Event::Mouse {
+                    event, position, ..
+                } = event
+                {
+                    if event.grabs_focus() && !self.menubar.autohide
+                        && !self.menubar.has_submenu()
+                        && position.y == 0
+                    {
+                        self.select_menubar();
+                    }
+                }
 
-        // Event dispatch order:
-        // * Focused element:
-        //     * Menubar (if active)
-        //     * Current screen (top layer)
-        // * Global callbacks
-        if self.menubar.receive_events() {
-            self.menubar.on_event(event).process(self);
-        } else {
-            let offset = if self.menubar.autohide { 0 } else { 1 };
-            match self.screen_mut().on_event(event.relativized((0, offset))) {
-                // If the event was ignored,
-                // it is our turn to play with it.
-                EventResult::Ignored => self.on_event(event),
-                EventResult::Consumed(None) => (),
-                EventResult::Consumed(Some(cb)) => cb(self),
+                // Event dispatch order:
+                // * Focused element:
+                //     * Menubar (if active)
+                //     * Current screen (top layer)
+                // * Global callbacks
+                if self.menubar.receive_events() {
+                    self.menubar.on_event(event).process(self);
+                } else {
+                    let offset = if self.menubar.autohide { 0 } else { 1 };
+                    match self.screen_mut()
+                        .on_event(event.relativized((0, offset)))
+                    {
+                        // If the event was ignored,
+                        // it is our turn to play with it.
+                        EventResult::Ignored => self.on_event(event),
+                        EventResult::Consumed(None) => (),
+                        EventResult::Consumed(Some(cb)) => cb(self),
+                    }
+                }
+            },
+            Interruption::Callback(cb) => {
+                cb.call_box(self);
+            },
+            Interruption::Timeout => {
             }
         }
     }

@@ -4,27 +4,140 @@ use self::ncurses::mmask_t;
 use self::super::split_i32;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
-use libc;
+use theme::{Color, ColorPair, Effect};
+use utf8;
+use vec::Vec2;
+
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::fs::File;
 use std::io;
 use std::io::{Write};
-use theme::{Color, ColorPair, Effect};
-use utf8;
-use vec::Vec2;
+use std::thread;
+
+use libc;
+use chan;
 
 pub struct Backend {
     current_style: Cell<ColorPair>,
 
     // Maps (front, back) ncurses colors to ncurses pairs
     pairs: RefCell<HashMap<(i16, i16), i16>>,
+}
 
+struct InputParser {
     key_codes: HashMap<i32, Event>,
-
     last_mouse_button: Option<MouseButton>,
-    event_queue: Vec<Event>,
+    event_sink: chan::Sender<Event>,
+}
+
+impl InputParser {
+    fn new(event_sink: chan::Sender<Event>) -> Self {
+        InputParser {
+            key_codes: initialize_keymap(),
+            last_mouse_button: None,
+            event_sink,
+        }
+    }
+
+    fn parse_next(&mut self) {
+        let ch: i32 = ncurses::getch();
+
+        // Is it a UTF-8 starting point?
+        let event = if 32 <= ch && ch <= 255 && ch != 127 {
+            utf8::read_char(ch as u8, || Some(ncurses::getch() as u8))
+                .map(Event::Char)
+                .unwrap_or_else(|e| {
+                    warn!("Error reading input: {}", e);
+                    Event::Unknown(vec![ch as u8])
+                })
+        } else {
+            self.parse_ncurses_char(ch)
+        };
+        self.event_sink.send(event);
+    }
+
+    fn parse_ncurses_char(&mut self, ch: i32) -> Event {
+        // eprintln!("Found {:?}", ncurses::keyname(ch));
+        if ch == ncurses::KEY_MOUSE {
+            self.parse_mouse_event()
+        } else {
+            self.key_codes
+                .get(&ch)
+                .cloned()
+                .unwrap_or_else(|| Event::Unknown(split_i32(ch)))
+        }
+    }
+
+    fn parse_mouse_event(&mut self) -> Event {
+        let mut mevent = ncurses::MEVENT {
+            id: 0,
+            x: 0,
+            y: 0,
+            z: 0,
+            bstate: 0,
+        };
+        if ncurses::getmouse(&mut mevent as *mut ncurses::MEVENT)
+            == ncurses::OK
+        {
+            // eprintln!("{:032b}", mevent.bstate);
+            // Currently unused
+            let _shift =
+                (mevent.bstate & ncurses::BUTTON_SHIFT as mmask_t) != 0;
+            let _alt = (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
+            let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
+
+            mevent.bstate &= !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT
+                | ncurses::BUTTON_CTRL)
+                as mmask_t;
+
+            let make_event = |event| Event::Mouse {
+                offset: Vec2::zero(),
+                position: Vec2::new(mevent.x as usize, mevent.y as usize),
+                event,
+            };
+
+            if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as mmask_t {
+                // The event is either a mouse drag event,
+                // or a weird double-release event. :S
+                self.last_mouse_button
+                    .map(MouseEvent::Hold)
+                    .map(&make_event)
+                    .unwrap_or_else(|| Event::Unknown(vec![]))
+            } else {
+                // Identify the button
+                let mut bare_event = mevent.bstate & ((1 << 25) - 1);
+
+                let mut event = None;
+                while bare_event != 0 {
+                    let single_event = 1 << bare_event.trailing_zeros();
+                    bare_event ^= single_event;
+
+                    // Process single_event
+                    on_mouse_event(single_event as i32, |e| {
+                        if event.is_none() {
+                            event = Some(e);
+                        } else {
+                            self.event_sink.send(make_event(e));
+                        }
+                    });
+                }
+                if let Some(event) = event {
+                    if let Some(btn) = event.button() {
+                        self.last_mouse_button = Some(btn);
+                    }
+                    make_event(event)
+                } else {
+                    debug!("No event parsed?...");
+                    Event::Unknown(vec![])
+                }
+            }
+        } else {
+            debug!("Ncurses event not recognized.");
+            Event::Unknown(vec![])
+        }
+    }
 }
 
 fn find_closest_pair(pair: &ColorPair) -> (i16, i16) {
@@ -85,11 +198,6 @@ impl Backend {
         let c = Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
             pairs: RefCell::new(HashMap::new()),
-
-            last_mouse_button: None,
-            event_queue: Vec::new(),
-
-            key_codes: initialize_keymap(),
         };
 
         Box::new(c)
@@ -139,86 +247,7 @@ impl Backend {
         ncurses::attron(style);
     }
 
-    fn parse_mouse_event(&mut self) -> Event {
-        let mut mevent = ncurses::MEVENT {
-            id: 0,
-            x: 0,
-            y: 0,
-            z: 0,
-            bstate: 0,
-        };
-        if ncurses::getmouse(&mut mevent as *mut ncurses::MEVENT)
-            == ncurses::OK
-        {
-            // eprintln!("{:032b}", mevent.bstate);
-            // Currently unused
-            let _shift =
-                (mevent.bstate & ncurses::BUTTON_SHIFT as mmask_t) != 0;
-            let _alt = (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
-            let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
 
-            mevent.bstate &= !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT
-                | ncurses::BUTTON_CTRL)
-                as mmask_t;
-
-            let make_event = |event| Event::Mouse {
-                offset: Vec2::zero(),
-                position: Vec2::new(mevent.x as usize, mevent.y as usize),
-                event,
-            };
-
-            if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as mmask_t {
-                // The event is either a mouse drag event,
-                // or a weird double-release event. :S
-                self.last_mouse_button
-                    .map(MouseEvent::Hold)
-                    .map(&make_event)
-                    .unwrap_or_else(|| Event::Unknown(vec![]))
-            } else {
-                // Identify the button
-                let mut bare_event = mevent.bstate & ((1 << 25) - 1);
-
-                let mut event = None;
-                while bare_event != 0 {
-                    let single_event = 1 << bare_event.trailing_zeros();
-                    bare_event ^= single_event;
-
-                    // Process single_event
-                    on_mouse_event(single_event as i32, |e| {
-                        if event.is_none() {
-                            event = Some(e);
-                        } else {
-                            self.event_queue.push(make_event(e));
-                        }
-                    });
-                }
-                if let Some(event) = event {
-                    if let Some(btn) = event.button() {
-                        self.last_mouse_button = Some(btn);
-                    }
-                    make_event(event)
-                } else {
-                    debug!("No event parsed?...");
-                    Event::Unknown(vec![])
-                }
-            }
-        } else {
-            debug!("Ncurses event not recognized.");
-            Event::Unknown(vec![])
-        }
-    }
-
-    fn parse_ncurses_char(&mut self, ch: i32) -> Event {
-        // eprintln!("Found {:?}", ncurses::keyname(ch));
-        if ch == ncurses::KEY_MOUSE {
-            self.parse_mouse_event()
-        } else {
-            self.key_codes
-                .get(&ch)
-                .cloned()
-                .unwrap_or_else(|| Event::Unknown(split_i32(ch)))
-        }
-    }
 }
 
 impl backend::Backend for Backend {
@@ -231,6 +260,18 @@ impl backend::Backend for Backend {
 
     fn has_colors(&self) -> bool {
         ncurses::has_colors()
+    }
+
+    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>) {
+        let mut parser = InputParser::new(event_sink);
+
+        // Start an input thread
+        thread::spawn(move || {
+            // TODO: use an atomic boolean to stop the thread on finish
+            loop {
+                parser.parse_next();
+            }
+        });
     }
 
     fn finish(&mut self) {
@@ -286,32 +327,6 @@ impl backend::Backend for Backend {
 
     fn print_at(&self, pos: Vec2, text: &str) {
         ncurses::mvaddstr(pos.y as i32, pos.x as i32, text);
-    }
-
-    fn poll_event(&mut self) -> Event {
-        self.event_queue.pop().unwrap_or_else(|| {
-            let ch: i32 = ncurses::getch();
-
-            // Is it a UTF-8 starting point?
-            if 32 <= ch && ch <= 255 && ch != 127 {
-                utf8::read_char(ch as u8, || Some(ncurses::getch() as u8))
-                    .map(Event::Char)
-                    .unwrap_or_else(|e| {
-                        warn!("Error reading input: {}", e);
-                        Event::Unknown(vec![ch as u8])
-                    })
-            } else {
-                self.parse_ncurses_char(ch)
-            }
-        })
-    }
-
-    fn set_refresh_rate(&mut self, fps: u32) {
-        if fps == 0 {
-            ncurses::timeout(-1);
-        } else {
-            ncurses::timeout(1000 / fps as i32);
-        }
     }
 }
 

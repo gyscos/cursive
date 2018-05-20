@@ -68,9 +68,7 @@ fn main() {
         }
 
         // When we're done, shut down the application
-        cb_sink
-            .send(Box::new(|s: &mut Cursive| s.quit()))
-            .unwrap();
+        cb_sink.send(Box::new(|s: &mut Cursive| s.quit()));
     });
 
     // Add a single view: progress status

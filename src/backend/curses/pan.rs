@@ -9,19 +9,264 @@ use std::collections::HashMap;
 use std::io::{stdout, Write};
 use theme::{Color, ColorPair, Effect};
 use vec::Vec2;
+use std::sync::Arc;
+use chan;
+use std::thread;
 
 pub struct Backend {
     // Used
     current_style: Cell<ColorPair>,
     pairs: RefCell<HashMap<(i16, i16), i32>>,
 
-    key_codes: HashMap<i32, Event>,
-
-    last_mouse_button: Option<MouseButton>,
-    event_queue: Vec<Event>,
-
     // pancurses needs a handle to the current window.
-    window: pancurses::Window,
+    window: Arc<pancurses::Window>,
+}
+
+struct InputParser {
+    key_codes: HashMap<i32, Event>,
+    last_mouse_button: Option<MouseButton>,
+    event_sink: chan::Sender<Event>,
+    window: Arc<pancurses::Window>,
+}
+
+// Ncurses (and pancurses) are not thread-safe
+// (writing from two threads might cause garbage).
+// BUT it's probably fine to read while we write.
+// So `InputParser` will only read, and `Backend` will mostly write.
+unsafe impl Send for InputParser {}
+
+impl InputParser {
+    fn new(event_sink: chan::Sender<Event>, window: Arc<pancurses::Window>) -> Self {
+        InputParser {
+            key_codes: initialize_keymap(),
+            last_mouse_button: None,
+            event_sink,
+            window,
+        }
+    }
+
+    fn parse_next(&mut self) {
+        let event = if let Some(ev) = self.window.getch() {
+            match ev {
+                pancurses::Input::Character('\n') => {
+                    Event::Key(Key::Enter)
+                }
+                // TODO: wait for a very short delay. If more keys are
+                // pipelined, it may be an escape sequence.
+                pancurses::Input::Character('\u{7f}')
+                    | pancurses::Input::Character('\u{8}') => {
+                        Event::Key(Key::Backspace)
+                    }
+                pancurses::Input::Character('\u{9}') => {
+                    Event::Key(Key::Tab)
+                }
+                pancurses::Input::Character('\u{1b}') => {
+                    Event::Key(Key::Esc)
+                }
+                pancurses::Input::Character(c) if (c as u32) <= 26 => {
+                    Event::CtrlChar((b'a' - 1 + c as u8) as char)
+                }
+                pancurses::Input::Character(c) => Event::Char(c),
+                // TODO: Some key combos are not recognized by pancurses,
+                // but are sent as Unknown. We could still parse them here.
+                pancurses::Input::Unknown(code) => self.key_codes
+                    // pancurses does some weird keycode mapping
+                    .get(&(code + 256 + 48))
+                    .cloned()
+                    .unwrap_or_else(|| {
+                        warn!("Unknown: {}", code);
+                        Event::Unknown(split_i32(code))
+                    }),
+                // TODO: I honestly have no fucking idea what KeyCodeYes is
+                pancurses::Input::KeyCodeYes => Event::Refresh,
+                pancurses::Input::KeyBreak => Event::Key(Key::PauseBreak),
+                pancurses::Input::KeyDown => Event::Key(Key::Down),
+                pancurses::Input::KeyUp => Event::Key(Key::Up),
+                pancurses::Input::KeyLeft => Event::Key(Key::Left),
+                pancurses::Input::KeyRight => Event::Key(Key::Right),
+                pancurses::Input::KeyHome => Event::Key(Key::Home),
+                pancurses::Input::KeyBackspace => {
+                    Event::Key(Key::Backspace)
+                }
+                pancurses::Input::KeyF0 => Event::Key(Key::F0),
+                pancurses::Input::KeyF1 => Event::Key(Key::F1),
+                pancurses::Input::KeyF2 => Event::Key(Key::F2),
+                pancurses::Input::KeyF3 => Event::Key(Key::F3),
+                pancurses::Input::KeyF4 => Event::Key(Key::F4),
+                pancurses::Input::KeyF5 => Event::Key(Key::F5),
+                pancurses::Input::KeyF6 => Event::Key(Key::F6),
+                pancurses::Input::KeyF7 => Event::Key(Key::F7),
+                pancurses::Input::KeyF8 => Event::Key(Key::F8),
+                pancurses::Input::KeyF9 => Event::Key(Key::F9),
+                pancurses::Input::KeyF10 => Event::Key(Key::F10),
+                pancurses::Input::KeyF11 => Event::Key(Key::F11),
+                pancurses::Input::KeyF12 => Event::Key(Key::F12),
+                pancurses::Input::KeyF13 => Event::Shift(Key::F1),
+                pancurses::Input::KeyF14 => Event::Shift(Key::F2),
+                pancurses::Input::KeyF15 => Event::Shift(Key::F3),
+                pancurses::Input::KeyDL => Event::Refresh,
+                pancurses::Input::KeyIL => Event::Refresh,
+                pancurses::Input::KeyDC => Event::Key(Key::Del),
+                pancurses::Input::KeyIC => Event::Key(Key::Ins),
+                pancurses::Input::KeyEIC => Event::Refresh,
+                pancurses::Input::KeyClear => Event::Refresh,
+                pancurses::Input::KeyEOS => Event::Refresh,
+                pancurses::Input::KeyEOL => Event::Refresh,
+                pancurses::Input::KeySF => Event::Shift(Key::Down),
+                pancurses::Input::KeySR => Event::Shift(Key::Up),
+                pancurses::Input::KeyNPage => Event::Key(Key::PageDown),
+                pancurses::Input::KeyPPage => Event::Key(Key::PageUp),
+                pancurses::Input::KeySTab => Event::Shift(Key::Tab),
+                pancurses::Input::KeyCTab => Event::Ctrl(Key::Tab),
+                pancurses::Input::KeyCATab => Event::CtrlAlt(Key::Tab),
+                pancurses::Input::KeyEnter => Event::Key(Key::Enter),
+                pancurses::Input::KeySReset => Event::Refresh,
+                pancurses::Input::KeyReset => Event::Refresh,
+                pancurses::Input::KeyPrint => Event::Refresh,
+                pancurses::Input::KeyLL => Event::Refresh,
+                pancurses::Input::KeyAbort => Event::Refresh,
+                pancurses::Input::KeySHelp => Event::Refresh,
+                pancurses::Input::KeyLHelp => Event::Refresh,
+                pancurses::Input::KeyBTab => Event::Shift(Key::Tab),
+                pancurses::Input::KeyBeg => Event::Refresh,
+                pancurses::Input::KeyCancel => Event::Refresh,
+                pancurses::Input::KeyClose => Event::Refresh,
+                pancurses::Input::KeyCommand => Event::Refresh,
+                pancurses::Input::KeyCopy => Event::Refresh,
+                pancurses::Input::KeyCreate => Event::Refresh,
+                pancurses::Input::KeyEnd => Event::Key(Key::End),
+                pancurses::Input::KeyExit => Event::Refresh,
+                pancurses::Input::KeyFind => Event::Refresh,
+                pancurses::Input::KeyHelp => Event::Refresh,
+                pancurses::Input::KeyMark => Event::Refresh,
+                pancurses::Input::KeyMessage => Event::Refresh,
+                pancurses::Input::KeyMove => Event::Refresh,
+                pancurses::Input::KeyNext => Event::Refresh,
+                pancurses::Input::KeyOpen => Event::Refresh,
+                pancurses::Input::KeyOptions => Event::Refresh,
+                pancurses::Input::KeyPrevious => Event::Refresh,
+                pancurses::Input::KeyRedo => Event::Refresh,
+                pancurses::Input::KeyReference => Event::Refresh,
+                pancurses::Input::KeyRefresh => Event::Refresh,
+                pancurses::Input::KeyReplace => Event::Refresh,
+                pancurses::Input::KeyRestart => Event::Refresh,
+                pancurses::Input::KeyResume => Event::Refresh,
+                pancurses::Input::KeySave => Event::Refresh,
+                pancurses::Input::KeySBeg => Event::Refresh,
+                pancurses::Input::KeySCancel => Event::Refresh,
+                pancurses::Input::KeySCommand => Event::Refresh,
+                pancurses::Input::KeySCopy => Event::Refresh,
+                pancurses::Input::KeySCreate => Event::Refresh,
+                pancurses::Input::KeySDC => Event::Shift(Key::Del),
+                pancurses::Input::KeySDL => Event::Refresh,
+                pancurses::Input::KeySelect => Event::Refresh,
+                pancurses::Input::KeySEnd => Event::Shift(Key::End),
+                pancurses::Input::KeySEOL => Event::Refresh,
+                pancurses::Input::KeySExit => Event::Refresh,
+                pancurses::Input::KeySFind => Event::Refresh,
+                pancurses::Input::KeySHome => Event::Shift(Key::Home),
+                pancurses::Input::KeySIC => Event::Shift(Key::Ins),
+                pancurses::Input::KeySLeft => Event::Shift(Key::Left),
+                pancurses::Input::KeySMessage => Event::Refresh,
+                pancurses::Input::KeySMove => Event::Refresh,
+                pancurses::Input::KeySNext => Event::Shift(Key::PageDown),
+                pancurses::Input::KeySOptions => Event::Refresh,
+                pancurses::Input::KeySPrevious => {
+                    Event::Shift(Key::PageUp)
+                }
+                pancurses::Input::KeySPrint => Event::Refresh,
+                pancurses::Input::KeySRedo => Event::Refresh,
+                pancurses::Input::KeySReplace => Event::Refresh,
+                pancurses::Input::KeySRight => Event::Shift(Key::Right),
+                pancurses::Input::KeySResume => Event::Refresh,
+                pancurses::Input::KeySSave => Event::Refresh,
+                pancurses::Input::KeySSuspend => Event::Refresh,
+                pancurses::Input::KeySUndo => Event::Refresh,
+                pancurses::Input::KeySuspend => Event::Refresh,
+                pancurses::Input::KeyUndo => Event::Refresh,
+                pancurses::Input::KeyResize => {
+                    // Let pancurses adjust their structures when the
+                    // window is resized.
+                    // Do it for Windows only, as 'resize_term' is not
+                    // implemented for Unix
+                    if cfg!(target_os = "windows") {
+                        pancurses::resize_term(0, 0);
+                    }
+                    Event::WindowResize
+                }
+                pancurses::Input::KeyEvent => Event::Refresh,
+                // TODO: mouse support
+                pancurses::Input::KeyMouse => self.parse_mouse_event(),
+                pancurses::Input::KeyA1 => Event::Refresh,
+                pancurses::Input::KeyA3 => Event::Refresh,
+                pancurses::Input::KeyB2 => Event::Key(Key::NumpadCenter),
+                pancurses::Input::KeyC1 => Event::Refresh,
+                pancurses::Input::KeyC3 => Event::Refresh,
+            }
+        } else {
+            Event::Refresh
+        };
+        self.event_sink.send(event);
+    }
+
+    fn parse_mouse_event(&mut self) -> Event {
+        let mut mevent = match pancurses::getmouse() {
+            Err(code) => return Event::Unknown(split_i32(code)),
+            Ok(event) => event,
+        };
+
+        let _shift = (mevent.bstate & pancurses::BUTTON_SHIFT as mmask_t) != 0;
+        let _alt = (mevent.bstate & pancurses::BUTTON_ALT as mmask_t) != 0;
+        let _ctrl = (mevent.bstate & pancurses::BUTTON_CTRL as mmask_t) != 0;
+
+        mevent.bstate &= !(pancurses::BUTTON_SHIFT | pancurses::BUTTON_ALT
+            | pancurses::BUTTON_CTRL) as mmask_t;
+
+        let make_event = |event| Event::Mouse {
+            offset: Vec2::zero(),
+            position: Vec2::new(mevent.x as usize, mevent.y as usize),
+            event: event,
+        };
+
+        if mevent.bstate == pancurses::REPORT_MOUSE_POSITION as mmask_t {
+            // The event is either a mouse drag event,
+            // or a weird double-release event. :S
+            self.last_mouse_button
+                .map(MouseEvent::Hold)
+                .map(&make_event)
+                .unwrap_or_else(|| {
+                    debug!("We got a mouse drag, but no last mouse pressed?");
+                    Event::Unknown(vec![])
+                })
+        } else {
+            // Identify the button
+            let mut bare_event = mevent.bstate & ((1 << 25) - 1);
+
+            let mut event = None;
+            while bare_event != 0 {
+                let single_event = 1 << bare_event.trailing_zeros();
+                bare_event ^= single_event;
+
+                // Process single_event
+                on_mouse_event(single_event, |e| {
+                    if event.is_none() {
+                        event = Some(e);
+                    } else {
+                        self.event_sink.send(make_event(e));
+                    }
+                });
+            }
+            if let Some(event) = event {
+                if let Some(btn) = event.button() {
+                    self.last_mouse_button = Some(btn);
+                }
+                make_event(event)
+            } else {
+                debug!("No event parsed?...");
+                Event::Unknown(vec![])
+            }
+        }
+    }
 }
 
 fn find_closest_pair(pair: &ColorPair) -> (i16, i16) {
@@ -54,10 +299,7 @@ impl Backend {
         let c = Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
             pairs: RefCell::new(HashMap::new()),
-            window: window,
-            last_mouse_button: None,
-            event_queue: Vec::new(),
-            key_codes: initialize_keymap(),
+            window: Arc::new(window),
         };
 
         Box::new(c)
@@ -109,64 +351,6 @@ impl Backend {
         self.window.attron(style);
     }
 
-    fn parse_mouse_event(&mut self) -> Event {
-        let mut mevent = match pancurses::getmouse() {
-            Err(code) => return Event::Unknown(split_i32(code)),
-            Ok(event) => event,
-        };
-
-        let _shift = (mevent.bstate & pancurses::BUTTON_SHIFT as mmask_t) != 0;
-        let _alt = (mevent.bstate & pancurses::BUTTON_ALT as mmask_t) != 0;
-        let _ctrl = (mevent.bstate & pancurses::BUTTON_CTRL as mmask_t) != 0;
-
-        mevent.bstate &= !(pancurses::BUTTON_SHIFT | pancurses::BUTTON_ALT
-            | pancurses::BUTTON_CTRL) as mmask_t;
-
-        let make_event = |event| Event::Mouse {
-            offset: Vec2::zero(),
-            position: Vec2::new(mevent.x as usize, mevent.y as usize),
-            event: event,
-        };
-
-        if mevent.bstate == pancurses::REPORT_MOUSE_POSITION as mmask_t {
-            // The event is either a mouse drag event,
-            // or a weird double-release event. :S
-            self.last_mouse_button
-                .map(MouseEvent::Hold)
-                .map(&make_event)
-                .unwrap_or_else(|| {
-                    debug!("We got a mouse drag, but no last mouse pressed?");
-                    Event::Unknown(vec![])
-                })
-        } else {
-            // Identify the button
-            let mut bare_event = mevent.bstate & ((1 << 25) - 1);
-
-            let mut event = None;
-            while bare_event != 0 {
-                let single_event = 1 << bare_event.trailing_zeros();
-                bare_event ^= single_event;
-
-                // Process single_event
-                on_mouse_event(single_event, |e| {
-                    if event.is_none() {
-                        event = Some(e);
-                    } else {
-                        self.event_queue.push(make_event(e));
-                    }
-                });
-            }
-            if let Some(event) = event {
-                if let Some(btn) = event.button() {
-                    self.last_mouse_button = Some(btn);
-                }
-                make_event(event)
-            } else {
-                debug!("No event parsed?...");
-                Event::Unknown(vec![])
-            }
-        }
-    }
 }
 
 impl backend::Backend for Backend {
@@ -235,177 +419,15 @@ impl backend::Backend for Backend {
         self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
-    fn poll_event(&mut self) -> Event {
-        self.event_queue.pop().unwrap_or_else(|| {
-            if let Some(ev) = self.window.getch() {
-                match ev {
-                    pancurses::Input::Character('\n') => {
-                        Event::Key(Key::Enter)
-                    }
-                    // TODO: wait for a very short delay. If more keys are
-                    // pipelined, it may be an escape sequence.
-                    pancurses::Input::Character('\u{7f}')
-                    | pancurses::Input::Character('\u{8}') => {
-                        Event::Key(Key::Backspace)
-                    }
-                    pancurses::Input::Character('\u{9}') => {
-                        Event::Key(Key::Tab)
-                    }
-                    pancurses::Input::Character('\u{1b}') => {
-                        Event::Key(Key::Esc)
-                    }
-                    pancurses::Input::Character(c) if (c as u32) <= 26 => {
-                        Event::CtrlChar((b'a' - 1 + c as u8) as char)
-                    }
-                    pancurses::Input::Character(c) => Event::Char(c),
-                    // TODO: Some key combos are not recognized by pancurses,
-                    // but are sent as Unknown. We could still parse them here.
-                    pancurses::Input::Unknown(code) => self.key_codes
-                        // pancurses does some weird keycode mapping
-                        .get(&(code + 256 + 48))
-                        .cloned()
-                        .unwrap_or_else(|| {
-                            warn!("Unknown: {}", code);
-                            Event::Unknown(split_i32(code))
-                        }),
-                    // TODO: I honestly have no fucking idea what KeyCodeYes is
-                    pancurses::Input::KeyCodeYes => Event::Refresh,
-                    pancurses::Input::KeyBreak => Event::Key(Key::PauseBreak),
-                    pancurses::Input::KeyDown => Event::Key(Key::Down),
-                    pancurses::Input::KeyUp => Event::Key(Key::Up),
-                    pancurses::Input::KeyLeft => Event::Key(Key::Left),
-                    pancurses::Input::KeyRight => Event::Key(Key::Right),
-                    pancurses::Input::KeyHome => Event::Key(Key::Home),
-                    pancurses::Input::KeyBackspace => {
-                        Event::Key(Key::Backspace)
-                    }
-                    pancurses::Input::KeyF0 => Event::Key(Key::F0),
-                    pancurses::Input::KeyF1 => Event::Key(Key::F1),
-                    pancurses::Input::KeyF2 => Event::Key(Key::F2),
-                    pancurses::Input::KeyF3 => Event::Key(Key::F3),
-                    pancurses::Input::KeyF4 => Event::Key(Key::F4),
-                    pancurses::Input::KeyF5 => Event::Key(Key::F5),
-                    pancurses::Input::KeyF6 => Event::Key(Key::F6),
-                    pancurses::Input::KeyF7 => Event::Key(Key::F7),
-                    pancurses::Input::KeyF8 => Event::Key(Key::F8),
-                    pancurses::Input::KeyF9 => Event::Key(Key::F9),
-                    pancurses::Input::KeyF10 => Event::Key(Key::F10),
-                    pancurses::Input::KeyF11 => Event::Key(Key::F11),
-                    pancurses::Input::KeyF12 => Event::Key(Key::F12),
-                    pancurses::Input::KeyF13 => Event::Shift(Key::F1),
-                    pancurses::Input::KeyF14 => Event::Shift(Key::F2),
-                    pancurses::Input::KeyF15 => Event::Shift(Key::F3),
-                    pancurses::Input::KeyDL => Event::Refresh,
-                    pancurses::Input::KeyIL => Event::Refresh,
-                    pancurses::Input::KeyDC => Event::Key(Key::Del),
-                    pancurses::Input::KeyIC => Event::Key(Key::Ins),
-                    pancurses::Input::KeyEIC => Event::Refresh,
-                    pancurses::Input::KeyClear => Event::Refresh,
-                    pancurses::Input::KeyEOS => Event::Refresh,
-                    pancurses::Input::KeyEOL => Event::Refresh,
-                    pancurses::Input::KeySF => Event::Shift(Key::Down),
-                    pancurses::Input::KeySR => Event::Shift(Key::Up),
-                    pancurses::Input::KeyNPage => Event::Key(Key::PageDown),
-                    pancurses::Input::KeyPPage => Event::Key(Key::PageUp),
-                    pancurses::Input::KeySTab => Event::Shift(Key::Tab),
-                    pancurses::Input::KeyCTab => Event::Ctrl(Key::Tab),
-                    pancurses::Input::KeyCATab => Event::CtrlAlt(Key::Tab),
-                    pancurses::Input::KeyEnter => Event::Key(Key::Enter),
-                    pancurses::Input::KeySReset => Event::Refresh,
-                    pancurses::Input::KeyReset => Event::Refresh,
-                    pancurses::Input::KeyPrint => Event::Refresh,
-                    pancurses::Input::KeyLL => Event::Refresh,
-                    pancurses::Input::KeyAbort => Event::Refresh,
-                    pancurses::Input::KeySHelp => Event::Refresh,
-                    pancurses::Input::KeyLHelp => Event::Refresh,
-                    pancurses::Input::KeyBTab => Event::Shift(Key::Tab),
-                    pancurses::Input::KeyBeg => Event::Refresh,
-                    pancurses::Input::KeyCancel => Event::Refresh,
-                    pancurses::Input::KeyClose => Event::Refresh,
-                    pancurses::Input::KeyCommand => Event::Refresh,
-                    pancurses::Input::KeyCopy => Event::Refresh,
-                    pancurses::Input::KeyCreate => Event::Refresh,
-                    pancurses::Input::KeyEnd => Event::Key(Key::End),
-                    pancurses::Input::KeyExit => Event::Refresh,
-                    pancurses::Input::KeyFind => Event::Refresh,
-                    pancurses::Input::KeyHelp => Event::Refresh,
-                    pancurses::Input::KeyMark => Event::Refresh,
-                    pancurses::Input::KeyMessage => Event::Refresh,
-                    pancurses::Input::KeyMove => Event::Refresh,
-                    pancurses::Input::KeyNext => Event::Refresh,
-                    pancurses::Input::KeyOpen => Event::Refresh,
-                    pancurses::Input::KeyOptions => Event::Refresh,
-                    pancurses::Input::KeyPrevious => Event::Refresh,
-                    pancurses::Input::KeyRedo => Event::Refresh,
-                    pancurses::Input::KeyReference => Event::Refresh,
-                    pancurses::Input::KeyRefresh => Event::Refresh,
-                    pancurses::Input::KeyReplace => Event::Refresh,
-                    pancurses::Input::KeyRestart => Event::Refresh,
-                    pancurses::Input::KeyResume => Event::Refresh,
-                    pancurses::Input::KeySave => Event::Refresh,
-                    pancurses::Input::KeySBeg => Event::Refresh,
-                    pancurses::Input::KeySCancel => Event::Refresh,
-                    pancurses::Input::KeySCommand => Event::Refresh,
-                    pancurses::Input::KeySCopy => Event::Refresh,
-                    pancurses::Input::KeySCreate => Event::Refresh,
-                    pancurses::Input::KeySDC => Event::Shift(Key::Del),
-                    pancurses::Input::KeySDL => Event::Refresh,
-                    pancurses::Input::KeySelect => Event::Refresh,
-                    pancurses::Input::KeySEnd => Event::Shift(Key::End),
-                    pancurses::Input::KeySEOL => Event::Refresh,
-                    pancurses::Input::KeySExit => Event::Refresh,
-                    pancurses::Input::KeySFind => Event::Refresh,
-                    pancurses::Input::KeySHome => Event::Shift(Key::Home),
-                    pancurses::Input::KeySIC => Event::Shift(Key::Ins),
-                    pancurses::Input::KeySLeft => Event::Shift(Key::Left),
-                    pancurses::Input::KeySMessage => Event::Refresh,
-                    pancurses::Input::KeySMove => Event::Refresh,
-                    pancurses::Input::KeySNext => Event::Shift(Key::PageDown),
-                    pancurses::Input::KeySOptions => Event::Refresh,
-                    pancurses::Input::KeySPrevious => {
-                        Event::Shift(Key::PageUp)
-                    }
-                    pancurses::Input::KeySPrint => Event::Refresh,
-                    pancurses::Input::KeySRedo => Event::Refresh,
-                    pancurses::Input::KeySReplace => Event::Refresh,
-                    pancurses::Input::KeySRight => Event::Shift(Key::Right),
-                    pancurses::Input::KeySResume => Event::Refresh,
-                    pancurses::Input::KeySSave => Event::Refresh,
-                    pancurses::Input::KeySSuspend => Event::Refresh,
-                    pancurses::Input::KeySUndo => Event::Refresh,
-                    pancurses::Input::KeySuspend => Event::Refresh,
-                    pancurses::Input::KeyUndo => Event::Refresh,
-                    pancurses::Input::KeyResize => {
-                        // Let pancurses adjust their structures when the
-                        // window is resized.
-                        // Do it for Windows only, as 'resize_term' is not
-                        // implemented for Unix
-                        if cfg!(target_os = "windows") {
-                            pancurses::resize_term(0, 0);
-                        }
-                        Event::WindowResize
-                    }
-                    pancurses::Input::KeyEvent => Event::Refresh,
-                    // TODO: mouse support
-                    pancurses::Input::KeyMouse => self.parse_mouse_event(),
-                    pancurses::Input::KeyA1 => Event::Refresh,
-                    pancurses::Input::KeyA3 => Event::Refresh,
-                    pancurses::Input::KeyB2 => Event::Key(Key::NumpadCenter),
-                    pancurses::Input::KeyC1 => Event::Refresh,
-                    pancurses::Input::KeyC3 => Event::Refresh,
-                }
-            } else {
-                Event::Refresh
-            }
-        })
-    }
+    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>) {
+        let mut input_parser = InputParser::new(event_sink, Arc::clone(&self.window));
 
-    fn set_refresh_rate(&mut self, fps: u32) {
-        if fps == 0 {
-            self.window.timeout(-1);
-        } else {
-            self.window.timeout(1000 / fps as i32);
-        }
+        thread::spawn(move || {
+            loop {
+                input_parser.parse_next();
+            }
+        });
+
     }
 }
 

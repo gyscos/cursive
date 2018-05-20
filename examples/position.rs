@@ -23,7 +23,6 @@ fn move_top(c: &mut Cursive, x_in: isize, y_in: isize) {
 
 fn main() {
     let mut siv = Cursive::default();
-    siv.set_fps(60);
 
     // We can quit by pressing `q`
     siv.add_global_callback('q', Cursive::quit);
