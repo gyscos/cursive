@@ -4,7 +4,7 @@ use theme;
 use event;
 use vec::Vec2;
 
-use std::thread;
+use std::time::Duration;
 
 use chan;
 
@@ -32,8 +32,11 @@ impl backend::Backend for Backend {
         (1, 1).into()
     }
 
-    fn start_input_thread(&mut self, event_sink: chan::Sender<event::Event>) {
-        thread::spawn(move || event_sink.send(event::Event::Exit));
+    fn start_input_thread(&mut self, _event_sink: chan::Sender<event::Event>) {
+    }
+
+    fn prepare_input(&mut self, event_sink: &chan::Sender<event::Event>, _timeout: Duration) {
+        event_sink.send(event::Event::Exit)
     }
 
     fn print_at(&self, _: Vec2, _: &str) {}

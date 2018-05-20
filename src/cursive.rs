@@ -5,6 +5,7 @@ use event::{Callback, Event, EventResult};
 use printer::Printer;
 use std::any::Any;
 use std::collections::HashMap;
+use std::time::Duration;
 use std::path::Path;
 use theme;
 use vec::Vec2;
@@ -40,6 +41,7 @@ pub struct Cursive {
     cb_sink: chan::Sender<Box<CbFunc>>,
 
     event_source: chan::Receiver<Event>,
+    event_sink: chan::Sender<Event>,
 }
 
 /// Describes one of the possible interruptions we should handle.
@@ -122,7 +124,7 @@ impl Cursive {
         let (cb_sink, cb_source) = chan::async();
         let (event_sink, event_source) = chan::async();
 
-        backend.start_input_thread(event_sink);
+        backend.start_input_thread(event_sink.clone());
 
         Cursive {
             fps: 0,
@@ -136,6 +138,7 @@ impl Cursive {
             cb_source,
             cb_sink,
             event_source,
+            event_sink,
             backend: backend,
         }
     }
@@ -572,6 +575,8 @@ impl Cursive {
     fn poll(&mut self) -> Interruption {
         let input_channel = &self.event_source;
         let cb_channel = &self.cb_source;
+
+        self.backend.prepare_input(&self.event_sink, Duration::from_millis(30));
 
         if self.fps > 0 {
             let timeout =  1000 / self.fps;

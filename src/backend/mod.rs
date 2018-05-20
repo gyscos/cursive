@@ -14,6 +14,8 @@ use chan::Sender;
 
 use vec::Vec2;
 
+use std::time::Duration;
+
 pub mod dummy;
 
 pub mod termion;
@@ -29,7 +31,19 @@ pub trait Backend {
     /// This should clear any state in the terminal.
     fn finish(&mut self);
 
+    /// Starts a thread to collect input and send it to the given channel.
     fn start_input_thread(&mut self, event_sink: Sender<event::Event>);
+
+    /// Prepares the backend to collect input.
+    ///
+    /// This is only required for non-thread-safe backends like BearLibTerminal
+    /// where we cannot collect input in a separate thread.
+    fn prepare_input(&mut self, event_sink: &Sender<event::Event>, timeout: Duration) {
+        // Dummy implementation for most backends.
+        // Little trick to avoid unused variables.
+        let _ = event_sink;
+        let _ = timeout;
+    }
 
     /// Refresh the screen.
     fn refresh(&mut self);
@@ -39,9 +53,6 @@ pub trait Backend {
 
     /// Returns the screen size.
     fn screen_size(&self) -> Vec2;
-
-    // /// Gets a receiver for input events.
-    // fn event_receiver(&mut self) -> Receiver<event::Event>;
 
     /// Main method used for printing
     fn print_at(&self, pos: Vec2, text: &str);

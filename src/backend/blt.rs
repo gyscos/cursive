@@ -15,7 +15,7 @@ use std::collections::HashSet;
 use theme::{BaseColor, Color, ColorPair, Effect};
 use vec::Vec2;
 use chan;
-use std::thread;
+use std::time::{Duration, Instant};
 
 enum ColorRole {
     Foreground,
@@ -23,28 +23,38 @@ enum ColorRole {
 }
 
 pub struct Backend {
-}
-
-struct InputParser {
-    event_sink: chan::Sender<Event>,
     buttons_pressed: HashSet<MouseButton>,
     mouse_position: Vec2,
 }
 
-impl InputParser {
-    fn new(event_sink: chan::Sender<Event>) -> Self {
-        InputParser {
-            event_sink,
+impl Backend {
+    pub fn init() -> Box<backend::Backend> {
+        terminal::open("Cursive", 80, 24);
+        terminal::set(terminal::config::Window::empty().resizeable(true));
+        terminal::set(vec![
+            terminal::config::InputFilter::Group {
+                group: terminal::config::InputFilterGroup::Keyboard,
+                both: false,
+            },
+            terminal::config::InputFilter::Group {
+                group: terminal::config::InputFilterGroup::Mouse,
+                both: true,
+            },
+        ]);
+
+        let c = Backend {
             buttons_pressed: HashSet::new(),
             mouse_position: Vec2::zero(),
-        }
+        };
+
+        Box::new(c)
     }
 
-    fn parse_next(&mut self) {
+    fn parse_next(&mut self) -> Option<Event> {
 
         // TODO: we could add backend-specific controls here.
         // Ex: ctrl+mouse wheel cause window cellsize to change
-        let event = if let Some(ev) = terminal::wait_event() {
+        terminal::read_event().map(|ev| {
             match ev {
                 BltEvent::Close => Event::Exit,
                 BltEvent::Resize { .. } => Event::WindowResize,
@@ -94,10 +104,7 @@ impl InputParser {
                     Event::Refresh
                 }
             }
-        } else {
-            Event::Refresh
-        };
-        self.event_sink.send(event);
+        })
     }
 
     fn blt_keycode_to_ev(
@@ -223,28 +230,6 @@ impl InputParser {
     }
 }
 
-impl Backend {
-    pub fn init() -> Box<backend::Backend> {
-        terminal::open("Cursive", 80, 24);
-        terminal::set(terminal::config::Window::empty().resizeable(true));
-        terminal::set(vec![
-            terminal::config::InputFilter::Group {
-                group: terminal::config::InputFilterGroup::Keyboard,
-                both: false,
-            },
-            terminal::config::InputFilter::Group {
-                group: terminal::config::InputFilterGroup::Mouse,
-                both: true,
-            },
-        ]);
-
-        let c = Backend {};
-
-        Box::new(c)
-    }
-
-}
-
 impl backend::Backend for Backend {
     fn finish(&mut self) {
         terminal::close();
@@ -320,14 +305,19 @@ impl backend::Backend for Backend {
         terminal::print_xy(pos.x as i32, pos.y as i32, text);
     }
 
-    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>) {
-        let mut parser = InputParser::new(event_sink);
+    fn start_input_thread(&mut self, _event_sink: chan::Sender<Event>) {
+    }
 
-        thread::spawn(move || {
-            loop {
-                parser.parse_next();
+    fn prepare_input(&mut self, event_sink: &chan::Sender<Event>, timeout: Duration) {
+        // Wait for up to `timeout_ms`.
+        let start = Instant::now();
+        while start.elapsed() < timeout {
+            if let Some(event) = self.parse_next() {
+                event_sink.send(event);
+                return;
             }
-        });
+        }
+        event_sink.send(Event::Refresh);
     }
 }
 
