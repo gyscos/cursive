@@ -305,9 +305,6 @@ impl backend::Backend for Backend {
         terminal::print_xy(pos.x as i32, pos.y as i32, text);
     }
 
-    fn start_input_thread(&mut self, _event_sink: chan::Sender<Event>) {
-    }
-
     fn prepare_input(&mut self, event_sink: &chan::Sender<Event>, timeout: Duration) {
         // Wait for up to `timeout_ms`.
         let start = Instant::now();

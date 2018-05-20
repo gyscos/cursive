@@ -15,6 +15,8 @@ use chan::Sender;
 use vec::Vec2;
 
 use std::time::Duration;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 pub mod dummy;
 
@@ -32,7 +34,11 @@ pub trait Backend {
     fn finish(&mut self);
 
     /// Starts a thread to collect input and send it to the given channel.
-    fn start_input_thread(&mut self, event_sink: Sender<event::Event>);
+    fn start_input_thread(&mut self, event_sink: Sender<event::Event>, running: Arc<AtomicBool>) {
+        // Dummy implementation for some backends.
+        let _ = event_sink;
+        let _ = running;
+    }
 
     /// Prepares the backend to collect input.
     ///

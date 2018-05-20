@@ -24,6 +24,8 @@ use std::io::{Stdout, Write};
 use std::thread;
 use theme;
 use vec::Vec2;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub struct Backend {
     terminal: AlternateScreen<MouseTerminal<RawTerminal<Stdout>>>,
@@ -265,10 +267,10 @@ impl backend::Backend for Backend {
         );
     }
 
-    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>) {
+    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>, running: Arc<AtomicBool>) {
         let mut parser = InputParser::new(event_sink);
         thread::spawn(move || {
-            loop {
+            while running.load(Ordering::Relaxed) {
                 parser.parse_next();
             }
         });
