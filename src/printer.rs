@@ -11,7 +11,7 @@ use utils::lines::simple::prefix;
 use vec::Vec2;
 
 /// Convenient interface to draw on a subset of the screen.
-pub struct Printer<'a> {
+pub struct Printer<'a, 'b> {
     /// Offset into the window this printer should start drawing at.
     pub offset: Vec2,
     /// Size of the area we are allowed to draw on.
@@ -24,16 +24,16 @@ pub struct Printer<'a> {
     /// `true` if nothing has been drawn yet.
     new: Rc<Cell<bool>>,
     /// Backend used to actually draw things
-    backend: &'a backend::Concrete,
+    backend: &'b backend::Concrete,
 }
 
-impl<'a> Printer<'a> {
+impl<'a, 'b> Printer<'a, 'b> {
     /// Creates a new printer on the given window.
     ///
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'a backend::Concrete
+        size: T, theme: &'a Theme, backend: &'b backend::Concrete
     ) -> Self {
         Printer {
             offset: Vec2::zero(),
@@ -169,6 +169,23 @@ impl<'a> Printer<'a> {
     }
 
     /// Call the given closure with a modified printer
+    /// that will apply the given theme on prints.
+    pub fn with_theme<F>(&self, theme: &Theme, f: F)
+    where
+        F: FnOnce(&Printer),
+    {
+        let new_printer = Printer {
+                offset: self.offset,
+                size: self.size,
+                focused: self.focused,
+                theme : theme,
+                new: self.new.clone(),
+                backend : self.backend
+        };
+        f(&new_printer);
+    }
+
+    /// Call the given closure with a modified printer
     /// that will apply each given effect on prints.
     pub fn with_effects<F>(&self, effects: EnumSet<Effect>, f: F)
     where
@@ -299,8 +316,8 @@ impl<'a> Printer<'a> {
 
     /// Returns a printer on a subset of this one's area.
     pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(
-        &'a self, offset: S, size: T, focused: bool
-    ) -> Printer<'a> {
+        &self, offset: S, size: T, focused: bool
+    ) -> Printer<'a, 'b> {
         let size = size.into();
         let offset = offset.into().or_min(self.size);
         let available = if !offset.fits_in(self.size) {
