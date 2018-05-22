@@ -112,12 +112,15 @@ impl InputParser {
                 let mut bare_event = mevent.bstate & ((1 << 25) - 1);
 
                 let mut event = None;
+                // ncurses encodes multiple events in the same value.
                 while bare_event != 0 {
                     let single_event = 1 << bare_event.trailing_zeros();
                     bare_event ^= single_event;
 
                     // Process single_event
                     on_mouse_event(single_event as i32, |e| {
+                        // Keep one event for later,
+                        // send the rest through the channel.
                         if event.is_none() {
                             event = Some(e);
                         } else {
@@ -271,6 +274,7 @@ impl backend::Backend for Backend {
         thread::spawn(move || {
             // TODO: use an atomic boolean to stop the thread on finish
             while running.load(Ordering::Relaxed) {
+                // This sends events to the event sender.
                 parser.parse_next();
             }
         });
