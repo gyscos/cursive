@@ -182,13 +182,16 @@ where
             EventResult::Ignored => {
                 // If it's an arrow, try to scroll in the given direction.
                 // If it's a mouse scroll, try to scroll as well.
+                // Also allow Ctrl+arrow to move the view without moving selection.
                 match event {
+                    Event::Ctrl(Key::Up) |
                     Event::Key(Key::Up)
                         if self.enabled.y && self.offset.y > 0 =>
                     {
                         self.offset.y -= 1;
                         EventResult::Consumed(None)
                     }
+                    Event::Ctrl(Key::Down) |
                     Event::Key(Key::Down)
                         if self.enabled.y
                             && (self.offset.y + self.last_size.y
@@ -197,12 +200,14 @@ where
                         self.offset.y += 1;
                         EventResult::Consumed(None)
                     }
+                    Event::Ctrl(Key::Left) |
                     Event::Key(Key::Left)
                         if self.enabled.x && self.offset.x > 0 =>
                     {
                         self.offset.x -= 1;
                         EventResult::Consumed(None)
                     }
+                    Event::Ctrl(Key::Right) |
                     Event::Key(Key::Right)
                         if self.enabled.x
                             && (self.offset.x + self.last_size.x
@@ -214,7 +219,24 @@ where
                     _ => EventResult::Ignored,
                 }
             }
-            other => other,
+            other => {
+                // Fix offset?
+                let important = self.inner.important_area(self.inner_size);
+
+                // The furthest top-left we can go
+                let top_left = (important.bottom_right() + (1,1)).saturating_sub(self.last_size);
+                // The furthest bottom-right we can go
+                let bottom_right = important.top_left();
+
+                // "top_left < bottom_right" is NOT guaranteed
+                // if the child is larger than the view.
+                let offset_min = Vec2::min(top_left, bottom_right);
+                let offset_max = Vec2::max(top_left, bottom_right);
+
+                self.offset = self.offset.or_max(offset_min).or_min(offset_max);
+
+                other
+            },
         }
     }
 

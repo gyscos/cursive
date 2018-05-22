@@ -96,11 +96,12 @@ impl<'a> Printer<'a> {
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position relative to the window.
     pub fn print<S: Into<Vec2>>(&self, start: S, text: &str) {
+        // Where we are asked to start printing. Oh boy.
         let start = start.into();
 
         // We accept requests between `content_offset` and
-        // `content_offset + size`
-        if start >= self.output_size + self.content_offset {
+        // `content_offset + output_size`.
+        if !(start < (self.output_size + self.content_offset)) {
             return;
         }
 

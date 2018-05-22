@@ -4,6 +4,7 @@ use event::*;
 use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
+use rect::Rect;
 use view::View;
 use {Cursive, Printer, With};
 
@@ -139,8 +140,7 @@ impl View for Button {
             ColorStyle::highlight()
         };
 
-        let offset =
-            HAlign::Center.get_offset(self.label.len(), printer.size.x);
+        let offset = HAlign::Center.get_offset(self.label.width(), printer.size.x);
 
         printer.with_color(style, |printer| {
             printer.print((offset, 0), &self.label);
@@ -174,5 +174,12 @@ impl View for Button {
 
     fn take_focus(&mut self, _: Direction) -> bool {
         self.enabled
+    }
+
+    fn important_area(&self, view_size: Vec2) -> Rect {
+        let width = self.label.width();
+        let offset = HAlign::Center.get_offset(width, view_size.x);
+
+        Rect::from_size((offset, 0), (width, 1))
     }
 }
