@@ -1,5 +1,5 @@
 use direction::Direction;
-use event::{AnyCb, Event, EventResult, Key};
+use event::{AnyCb, Event, EventResult, Key, MouseEvent};
 use rect::Rect;
 use vec::Vec2;
 use view::{Selector, View};
@@ -175,6 +175,7 @@ where
     fn on_event(&mut self, event: Event) -> EventResult {
         // Relativize event accorging to the offset
         let mut relative_event = event.clone();
+        // eprintln!("Mouse = {:?}", relative_event);
         if let Some(pos) = relative_event.mouse_position_mut() {
             *pos = *pos + self.offset;
         }
@@ -184,6 +185,14 @@ where
                 // If it's a mouse scroll, try to scroll as well.
                 // Also allow Ctrl+arrow to move the view without moving selection.
                 match event {
+                    Event::Mouse { event: MouseEvent::WheelUp, .. } if self.enabled.y && self.offset.y > 0 => {
+                        self.offset.y = self.offset.y.saturating_sub(3);
+                        EventResult::Consumed(None)
+                    }
+                    Event::Mouse { event: MouseEvent::WheelDown, .. } if self.enabled.y && (self.offset.y + self.last_size.y < self.inner_size.y) => {
+                        self.offset.y += 3;
+                        EventResult::Consumed(None)
+                    }
                     Event::Ctrl(Key::Up) |
                     Event::Key(Key::Up)
                         if self.enabled.y && self.offset.y > 0 =>
