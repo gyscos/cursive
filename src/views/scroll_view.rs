@@ -7,6 +7,8 @@ use xy::XY;
 use Printer;
 use With;
 
+use std::cmp::min;
+
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {
     inner_size: Vec2,
@@ -190,7 +192,7 @@ where
                         EventResult::Consumed(None)
                     }
                     Event::Mouse { event: MouseEvent::WheelDown, .. } if self.enabled.y && (self.offset.y + self.last_size.y < self.inner_size.y) => {
-                        self.offset.y += 3;
+                        self.offset.y = min(self.inner_size.y.saturating_sub(self.last_size.y), self.offset.y + 3);
                         EventResult::Consumed(None)
                     }
                     Event::Ctrl(Key::Up) |

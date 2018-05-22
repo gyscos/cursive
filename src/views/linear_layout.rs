@@ -279,11 +279,11 @@ impl LinearLayout {
                 // this will give us the allowed window for a click.
                 let child_size = item.child.size.get(self.orientation);
 
-                if (item.offset + child_size > position)
-                    && item.child.view.take_focus(direction::Direction::none())
-                {
-                    // eprintln!("It's a match!");
-                    self.focus = i;
+                if item.offset + child_size > position {
+                    if item.child.view.take_focus(direction::Direction::none())
+                    {
+                        self.focus = i;
+                    }
                     return;
                 }
             }
