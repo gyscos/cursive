@@ -57,8 +57,10 @@ impl Placement {
 enum ChildWrapper<T: View> {
     // Some views include a shadow around.
     Shadow(ShadowView<Layer<T>>),
+    // Some include a background.
+    Backfilled(Layer<T>),
     // Some views don't (fullscreen views mostly)
-    Plain(Layer<T>),
+    Plain(T),
 }
 
 impl<T: View> ChildWrapper<T> {
@@ -68,7 +70,11 @@ impl<T: View> ChildWrapper<T> {
             ChildWrapper::Shadow(shadow) => {
                 shadow.into_inner().ok().unwrap().into_inner().ok().unwrap()
             }
-            ChildWrapper::Plain(layer) => layer.into_inner().ok().unwrap(),
+            // Layer::into_inner can never fail.
+            ChildWrapper::Backfilled(background) => {
+                background.into_inner().ok().unwrap()
+            }
+            ChildWrapper::Plain(layer) => layer,
         }
     }
 }
@@ -78,7 +84,8 @@ impl<T: View> ChildWrapper<T> {
     pub fn get_inner(&self) -> &View {
         match *self {
             ChildWrapper::Shadow(ref shadow) => shadow.get_inner().get_inner(),
-            ChildWrapper::Plain(ref layer) => layer.get_inner(),
+            ChildWrapper::Backfilled(ref background) => background.get_inner(),
+            ChildWrapper::Plain(ref layer) => layer,
         }
     }
 
@@ -88,7 +95,10 @@ impl<T: View> ChildWrapper<T> {
             ChildWrapper::Shadow(ref mut shadow) => {
                 shadow.get_inner_mut().get_inner_mut()
             }
-            ChildWrapper::Plain(ref mut layer) => layer.get_inner_mut(),
+            ChildWrapper::Backfilled(ref mut background) => {
+                background.get_inner_mut()
+            }
+            ChildWrapper::Plain(ref mut layer) => layer,
         }
     }
 }
@@ -98,6 +108,7 @@ impl<T: View> View for ChildWrapper<T> {
     fn draw(&self, printer: &Printer) {
         match *self {
             ChildWrapper::Shadow(ref v) => v.draw(printer),
+            ChildWrapper::Backfilled(ref v) => v.draw(printer),
             ChildWrapper::Plain(ref v) => v.draw(printer),
         }
     }
@@ -105,6 +116,7 @@ impl<T: View> View for ChildWrapper<T> {
     fn on_event(&mut self, event: Event) -> EventResult {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.on_event(event),
+            ChildWrapper::Backfilled(ref mut v) => v.on_event(event),
             ChildWrapper::Plain(ref mut v) => v.on_event(event),
         }
     }
@@ -112,6 +124,7 @@ impl<T: View> View for ChildWrapper<T> {
     fn layout(&mut self, size: Vec2) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.layout(size),
+            ChildWrapper::Backfilled(ref mut v) => v.layout(size),
             ChildWrapper::Plain(ref mut v) => v.layout(size),
         }
     }
@@ -119,6 +132,7 @@ impl<T: View> View for ChildWrapper<T> {
     fn required_size(&mut self, size: Vec2) -> Vec2 {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.required_size(size),
+            ChildWrapper::Backfilled(ref mut v) => v.required_size(size),
             ChildWrapper::Plain(ref mut v) => v.required_size(size),
         }
     }
@@ -126,6 +140,7 @@ impl<T: View> View for ChildWrapper<T> {
     fn take_focus(&mut self, source: Direction) -> bool {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.take_focus(source),
+            ChildWrapper::Backfilled(ref mut v) => v.take_focus(source),
             ChildWrapper::Plain(ref mut v) => v.take_focus(source),
         }
     }
@@ -137,6 +152,9 @@ impl<T: View> View for ChildWrapper<T> {
             ChildWrapper::Shadow(ref mut v) => {
                 v.call_on_any(selector, callback)
             }
+            ChildWrapper::Backfilled(ref mut v) => {
+                v.call_on_any(selector, callback)
+            }
             ChildWrapper::Plain(ref mut v) => {
                 v.call_on_any(selector, callback)
             }
@@ -146,6 +164,7 @@ impl<T: View> View for ChildWrapper<T> {
     fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.focus_view(selector),
+            ChildWrapper::Backfilled(ref mut v) => v.focus_view(selector),
             ChildWrapper::Plain(ref mut v) => v.focus_view(selector),
         }
     }
@@ -184,7 +203,7 @@ impl StackView {
     {
         let boxed = ViewBox::boxed(view);
         self.layers.push(Child {
-            view: ChildWrapper::Plain(Layer::new(boxed)),
+            view: ChildWrapper::Backfilled(Layer::new(boxed)),
             size: Vec2::zero(),
             placement: Placement::Fullscreen,
             virgin: true,
@@ -270,6 +289,16 @@ impl StackView {
         self.with(|s| s.add_fullscreen_layer(view))
     }
 
+    /// Adds a new transparent layer on top of the stack.
+    ///
+    /// Chainable variant.
+    pub fn transparent_layer<T>(self, view: T) -> Self
+    where
+        T: IntoBoxedView,
+    {
+        self.with(|s| s.add_transparent_layer(view))
+    }
+
     /// Adds a view on top of the stack.
     pub fn add_layer_at<T>(&mut self, position: Position, view: T)
     where
@@ -283,6 +312,28 @@ impl StackView {
                     .top_padding(position.y == Offset::Center)
                     .left_padding(position.x == Offset::Center),
             ),
+            size: Vec2::new(0, 0),
+            placement: Placement::Floating(position),
+            virgin: true,
+        });
+    }
+
+    /// Adds a transparent view on top of the stack in the center of the screen.
+    pub fn add_transparent_layer<T>(&mut self, view: T)
+    where
+        T: IntoBoxedView,
+    {
+        self.add_transparent_layer_at(Position::center(), view);
+    }
+
+    /// Adds a transparent view on top of the stack.
+    pub fn add_transparent_layer_at<T>(&mut self, position: Position, view: T)
+    where
+        T: IntoBoxedView,
+    {
+        let boxed = ViewBox::boxed(view);
+        self.layers.push(Child {
+            view: ChildWrapper::Plain(boxed),
             size: Vec2::new(0, 0),
             placement: Placement::Floating(position),
             virgin: true,
@@ -616,5 +667,29 @@ mod tests {
         assert_eq!(text.get_content().source(), "1");
 
         assert!(stack.pop_layer().is_none());
+    }
+
+    #[test]
+    fn get() {
+        let mut stack = StackView::new()
+            .layer(TextView::new("1"))
+            .layer(TextView::new("2"));
+
+        assert!(stack.get(LayerPosition::FromFront(0)).unwrap()
+            .as_any().downcast_ref::<ViewBox>().unwrap()
+            .with_view(|v| v.as_any().is::<TextView>()).unwrap()
+        );
+        assert!(stack.get(LayerPosition::FromBack(0)).unwrap()
+            .as_any().downcast_ref::<ViewBox>().unwrap()
+            .with_view(|v| v.as_any().is::<TextView>()).unwrap()
+        );
+        assert!(stack.get_mut(LayerPosition::FromFront(0)).unwrap()
+            .as_any_mut().downcast_mut::<ViewBox>().unwrap()
+            .with_view_mut(|v| v.as_any_mut().is::<TextView>()).unwrap()
+        );
+        assert!(stack.get_mut(LayerPosition::FromBack(0)).unwrap()
+            .as_any_mut().downcast_mut::<ViewBox>().unwrap()
+            .with_view_mut(|v| v.as_any_mut().is::<TextView>()).unwrap()
+        );
     }
 }
