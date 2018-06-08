@@ -1,6 +1,14 @@
 use super::Color;
 use enum_map::EnumMap;
 use toml;
+use std::collections::HashMap;
+use std::ops::{Index, IndexMut};
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PaletteValue {
+    Leaf(Color),
+    Node(HashMap<String, PaletteValue>),
+}
 
 /// Color configuration for the application.
 ///
@@ -21,7 +29,54 @@ use toml;
 /// assert_eq!(palette[Background], Dark(Blue));
 /// palette[Shadow] = Light(Red);
 /// ```
-pub type Palette = EnumMap<PaletteColor, Color>;
+// pub type Palette = EnumMap<PaletteColor, Color>;
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Palette {
+    default : EnumMap<PaletteColor, Color>,
+    custom : Option<PaletteValue>
+}
+
+impl Index<PaletteColor> for Palette {
+    type Output = Color;
+
+    fn index(&self, palette_color : PaletteColor) -> &Color {
+        &self.default[palette_color]
+    }
+}
+
+impl IndexMut<PaletteColor> for Palette {
+    fn index_mut(&mut self, palette_color : PaletteColor) -> &mut Color {
+        &mut self.default[palette_color]
+    }
+}
+
+impl Index<(&'static str, PaletteColor)> for Palette {
+    type Output = Color;
+
+    fn index(&self, (path, palette_color) : (&'static str, PaletteColor)) -> &Color {
+        if self.custom.is_none() {
+            &self.default[palette_color]
+        } else {
+
+            let mut current_node : Option<&PaletteValue> = self.custom.as_ref();
+            for node_name in path.split('/') {
+                match current_node {
+                    Some(PaletteValue::Node(hm)) => current_node = hm.get(node_name),
+                    // this default cover both None, and Some(PaletteValue::Leaf(_)) in case where
+                    // a internal node is expected.
+                    _ => return &self.default[palette_color]
+                }
+            }
+
+            match current_node {
+                Some(PaletteValue::Leaf(color)) => color,
+                // this default cover both None, and Some(PaletteValue::Leaf(_)) in case where
+                // a internal node is expected.
+                _ => &self.default[palette_color]
+            }
+        }
+    }
+}
 
 /// Returns the default palette for a cursive application.
 ///
@@ -40,17 +95,20 @@ pub fn default_palette() -> Palette {
     use theme::BaseColor::*;
     use theme::Color::*;
 
-    enum_map!{
-        Background => Dark(Blue),
-        Shadow => Dark(Black),
-        View => Dark(White),
-        Primary => Dark(Black),
-        Secondary => Dark(Blue),
-        Tertiary => Dark(White),
-        TitlePrimary => Dark(Red),
-        TitleSecondary => Dark(Yellow),
-        Highlight => Dark(Red),
-        HighlightInactive => Dark(Blue),
+    Palette {
+        default : enum_map!{
+            Background => Dark(Blue),
+            Shadow => Dark(Black),
+            View => Dark(White),
+            Primary => Dark(Black),
+            Secondary => Dark(Blue),
+            Tertiary => Dark(White),
+            TitlePrimary => Dark(Red),
+            TitleSecondary => Dark(Yellow),
+            Highlight => Dark(Red),
+            HighlightInactive => Dark(Blue),
+        },
+        custom : None
     }
 }
 
