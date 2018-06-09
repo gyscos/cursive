@@ -15,8 +15,6 @@ use std::fs::File;
 use std::io;
 use std::io::{Write};
 use std::thread;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 use libc;
 use chan;
@@ -267,15 +265,19 @@ impl backend::Backend for Backend {
         ncurses::has_colors()
     }
 
-    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>, running: Arc<AtomicBool>) {
+    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>, stops: chan::Receiver<bool>) {
         let mut parser = InputParser::new(event_sink);
 
         // Start an input thread
         thread::spawn(move || {
-            // TODO: use an atomic boolean to stop the thread on finish
-            while running.load(Ordering::Relaxed) {
+            loop {
                 // This sends events to the event sender.
                 parser.parse_next();
+
+                if stops.recv() != Some(false) {
+                    // If the channel was closed or if `true` was sent, abort.
+                    break;
+                }
             }
         });
     }

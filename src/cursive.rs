@@ -7,8 +7,6 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::time::Duration;
 use std::path::Path;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 use theme;
 use vec::Vec2;
 use view::{self, Finder, IntoBoxedView, Position, View};
@@ -45,7 +43,8 @@ pub struct Cursive {
     event_source: chan::Receiver<Event>,
     event_sink: chan::Sender<Event>,
 
-    input_running: Arc<AtomicBool>,
+    // Sends true or false after each event.
+    stop_sink: chan::Sender<bool>,
 }
 
 /// Describes one of the possible interruptions we should handle.
@@ -128,9 +127,9 @@ impl Cursive {
         let (cb_sink, cb_source) = chan::async();
         let (event_sink, event_source) = chan::async();
 
-        let input_running = Arc::new(AtomicBool::new(true));
+        let (stop_sink, stop_source) = chan::async();
 
-        backend.start_input_thread(event_sink.clone(), input_running.clone());
+        backend.start_input_thread(event_sink.clone(), stop_source);
 
         Cursive {
             fps: 0,
@@ -145,8 +144,8 @@ impl Cursive {
             cb_sink,
             event_source,
             event_sink,
-            input_running,
-            backend: backend,
+            backend,
+            stop_sink,
         }
     }
 
@@ -758,6 +757,10 @@ impl Cursive {
                         EventResult::Consumed(Some(cb)) => cb(self),
                     }
                 }
+
+                // Ok, we processed the event.
+                // Now tell the backend whether he sould keep receiving.
+                self.stop_sink.send(!self.running);
             },
             Interruption::Callback(cb) => {
                 cb.call_box(self);
@@ -775,7 +778,6 @@ impl Cursive {
 
 impl Drop for Cursive {
     fn drop(&mut self) {
-        self.input_running.store(false, Ordering::Relaxed);
         self.backend.finish();
     }
 }

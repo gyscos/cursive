@@ -12,7 +12,6 @@ use vec::Vec2;
 use std::sync::Arc;
 use chan;
 use std::thread;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 pub struct Backend {
     // Used
@@ -420,12 +419,17 @@ impl backend::Backend for Backend {
         self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
-    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>, running: Arc<AtomicBool>) {
+    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>, stops: chan::Receiver<bool>) {
         let mut input_parser = InputParser::new(event_sink, Arc::clone(&self.window));
 
         thread::spawn(move || {
-            while running.load(Ordering::Relaxed) {
+            loop {
                 input_parser.parse_next();
+
+                if stops.recv() != Some(false) {
+                    // If the channel was closed or if `true` was sent, abort.
+                    break;
+                }
             }
         });
 
