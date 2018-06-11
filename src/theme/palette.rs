@@ -32,10 +32,16 @@ pub struct Palette {
 
 /// A node in the palette tree.
 ///
+/// This describes a value attached to a custom keyword in the palette.
+///
 /// This can either be a color, or a nested namespace with its own mapping.
 #[derive(PartialEq, Eq, Clone, Debug)]
-enum PaletteNode {
+pub enum PaletteNode {
+    /// A single color.
     Color(Color),
+    /// A group of values bundled in the same namespace.
+    ///
+    /// Namespaces can be merged in the palette with `Palette::merge`.
     Namespace(HashMap<String, PaletteNode>),
 }
 
@@ -117,7 +123,7 @@ impl Palette {
     }
 
     /// Adds a color namespace to this palette.
-    fn add_namespace(
+    pub fn add_namespace(
         &mut self, key: &str, namespace: HashMap<String, PaletteNode>,
     ) {
         self.custom
