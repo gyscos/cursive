@@ -2,6 +2,9 @@ use super::Color;
 use enum_map::EnumMap;
 use toml;
 
+use std::collections::HashMap;
+use std::ops::{Index, IndexMut};
+
 /// Color configuration for the application.
 ///
 /// Assign each color role an actual color.
@@ -11,17 +14,112 @@ use toml;
 /// # Example
 ///
 /// ```rust
-/// # use cursive::theme;
+/// # use cursive::theme::Palette;
 /// use cursive::theme::PaletteColor::*;
 /// use cursive::theme::Color::*;
 /// use cursive::theme::BaseColor::*;
 ///
-/// let mut palette = theme::default_palette();
+/// let mut palette = Palette::default();
 ///
 /// assert_eq!(palette[Background], Dark(Blue));
 /// palette[Shadow] = Light(Red);
 /// ```
-pub type Palette = EnumMap<PaletteColor, Color>;
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct Palette {
+    basic: EnumMap<PaletteColor, Color>,
+    custom: HashMap<String, PaletteNode>,
+}
+
+/// A node in the palette tree.
+///
+/// This can either be a color, or a nested namespace with its own mapping.
+#[derive(PartialEq, Eq, Clone, Debug)]
+enum PaletteNode {
+    Color(Color),
+    Namespace(HashMap<String, PaletteNode>),
+}
+
+// Basic usage: only use basic colors
+impl Index<PaletteColor> for Palette {
+    type Output = Color;
+
+    fn index(&self, palette_color: PaletteColor) -> &Color {
+        &self.basic[palette_color]
+    }
+}
+
+// We can alter existing color if needed (but why?...)
+impl IndexMut<PaletteColor> for Palette {
+    fn index_mut(&mut self, palette_color: PaletteColor) -> &mut Color {
+        &mut self.basic[palette_color]
+    }
+}
+
+impl Palette {
+    /// Returns a custom color from this palette.
+    ///
+    /// Returns `None` if the given key was not found.
+    pub fn custom<'a>(&'a self, key: &str) -> Option<&'a Color> {
+        self.custom.get(key).and_then(|node| {
+            if let &PaletteNode::Color(ref color) = node {
+                Some(color)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Returns a new palette where the given namespace has been merged.
+    ///
+    /// All values in the namespace will override previous values.
+    pub fn merge(&self, namespace: &str) -> Palette {
+        let mut result = self.clone();
+
+        if let Some(&PaletteNode::Namespace(ref palette)) =
+            self.custom.get(namespace)
+        {
+            // Merge `result` and `palette`
+            for (key, value) in palette.iter() {
+                match *value {
+                    PaletteNode::Color(color) => result.set_color(key, color),
+                    PaletteNode::Namespace(ref map) =>
+                        result.add_namespace(key, map.clone()),
+                }
+            }
+        }
+
+        result
+    }
+
+    /// Sets the color for the given key.
+    ///
+    /// This will update either the basic palette or the custom values.
+    pub fn set_color(&mut self, key: &str, color: Color) {
+        use theme::PaletteColor::*;
+
+        match key {
+            "background" => self.basic[Background] = color,
+            "shadow" => self.basic[Shadow] = color,
+            "view" => self.basic[View] = color,
+            "primary" => self.basic[Primary] = color,
+            "secondary" => self.basic[Secondary] = color,
+            "tertiary" => self.basic[Tertiary] = color,
+            "title_primary" => self.basic[TitlePrimary] = color,
+            "title_secondary" => self.basic[TitleSecondary] = color,
+            "highlight" => self.basic[Highlight] = color,
+            "highlight_inactive" => self.basic[HighlightInactive] = color,
+            other => {
+                self.custom
+                    .insert(other.to_string(), PaletteNode::Color(color));
+            }
+        }
+    }
+
+    /// Adds a color namespace to this palette.
+    fn add_namespace(&mut self, key: &str, namespace: HashMap<String, PaletteNode>) {
+        self.custom.insert(key.to_string(), PaletteNode::Namespace(namespace));
+    }
+}
 
 /// Returns the default palette for a cursive application.
 ///
@@ -35,57 +133,77 @@ pub type Palette = EnumMap<PaletteColor, Color>;
 /// * `TitleSecondary` => `Dark(Yellow)`
 /// * `Highlight` => `Dark(Red)`
 /// * `HighlightInactive` => `Dark(Blue)`
-pub fn default_palette() -> Palette {
-    use self::PaletteColor::*;
-    use theme::BaseColor::*;
-    use theme::Color::*;
+impl Default for Palette {
+    fn default() -> Palette {
+        use self::PaletteColor::*;
+        use theme::BaseColor::*;
+        use theme::Color::*;
 
-    enum_map!{
-        Background => Dark(Blue),
-        Shadow => Dark(Black),
-        View => Dark(White),
-        Primary => Dark(Black),
-        Secondary => Dark(Blue),
-        Tertiary => Dark(White),
-        TitlePrimary => Dark(Red),
-        TitleSecondary => Dark(Yellow),
-        Highlight => Dark(Red),
-        HighlightInactive => Dark(Blue),
+        Palette {
+            basic: enum_map!{
+                Background => Dark(Blue),
+                Shadow => Dark(Black),
+                View => Dark(White),
+                Primary => Dark(Black),
+                Secondary => Dark(Blue),
+                Tertiary => Dark(White),
+                TitlePrimary => Dark(Red),
+                TitleSecondary => Dark(Yellow),
+                Highlight => Dark(Red),
+                HighlightInactive => Dark(Blue),
+            },
+            custom: HashMap::new(),
+        }
     }
 }
 
+// Iterate over a toml
+fn iterate_toml<'a>(table: &'a toml::value::Table) -> impl Iterator<Item=(&'a str, PaletteNode)> + 'a {
+    table.iter().flat_map(|(key, value)| {
+        let node = match value {
+            toml::Value::Table(table) => {
+                // This should define a new namespace
+                // Treat basic colors as simple string.
+                // We'll convert them back in the merge method.
+                let map = iterate_toml(table).map(|(key, value)| (key.to_string(), value)).collect();
+                // Should we only return something if it's non-empty?
+                Some(PaletteNode::Namespace(map))
+            }
+            toml::Value::Array(colors) => {
+                // This should be a list of colors - just pick the first valid one.
+                colors
+                    .iter()
+                    .flat_map(toml::Value::as_str)
+                    .flat_map(Color::parse)
+                    .map(PaletteNode::Color)
+                    .next()
+            }
+            toml::Value::String(color) => {
+                // This describe a new color - easy!
+                Color::parse(color).map(PaletteNode::Color)
+            }
+            other => {
+                // Other - error?
+                debug!("Found unexpected value in theme: {} = {:?}", key, other);
+                None
+            }
+        };
+
+        node.map(|node| (key.as_str(), node))
+    })
+}
+
 /// Fills `palette` with the colors from the given `table`.
-pub(crate) fn load_table(palette: &mut Palette, table: &toml::value::Table) {
+pub(crate) fn load_toml(palette: &mut Palette, table: &toml::value::Table) {
     // TODO: use serde for that?
     // Problem: toml-rs doesn't do well with Enums...
-    load_color(
-        &mut palette[PaletteColor::Background],
-        table.get("background"),
-    );
-    load_color(&mut palette[PaletteColor::Shadow], table.get("shadow"));
-    load_color(&mut palette[PaletteColor::View], table.get("view"));
-    load_color(&mut palette[PaletteColor::Primary], table.get("primary"));
-    load_color(
-        &mut palette[PaletteColor::Secondary],
-        table.get("secondary"),
-    );
-    load_color(&mut palette[PaletteColor::Tertiary], table.get("tertiary"));
-    load_color(
-        &mut palette[PaletteColor::TitlePrimary],
-        table.get("title_primary"),
-    );
-    load_color(
-        &mut palette[PaletteColor::TitleSecondary],
-        table.get("title_secondary"),
-    );
-    load_color(
-        &mut palette[PaletteColor::Highlight],
-        table.get("highlight"),
-    );
-    load_color(
-        &mut palette[PaletteColor::HighlightInactive],
-        table.get("highlight_inactive"),
-    );
+
+    for (key, value) in iterate_toml(table) {
+        match value {
+            PaletteNode::Color(color) => palette.set_color(key, color),
+            PaletteNode::Namespace(map) => palette.add_namespace(key, map),
+        }
+    }
 }
 
 /// Color entry in a palette.
@@ -119,27 +237,5 @@ impl PaletteColor {
     /// Given a palette, resolve `self` to a concrete color.
     pub fn resolve(self, palette: &Palette) -> Color {
         palette[self]
-    }
-}
-
-/// Parses `value` and fills `target` if it's a valid color.
-fn load_color(target: &mut Color, value: Option<&toml::Value>) -> bool {
-    if let Some(value) = value {
-        match *value {
-            toml::Value::String(ref value) => {
-                if let Some(color) = Color::parse(value) {
-                    *target = color;
-                    true
-                } else {
-                    false
-                }
-            }
-            toml::Value::Array(ref array) => {
-                array.iter().any(|item| load_color(target, Some(item)))
-            }
-            _ => false,
-        }
-    } else {
-        false
     }
 }

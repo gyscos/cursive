@@ -92,7 +92,7 @@ impl Cursive {
     pub fn new(backend: Box<backend::Backend>) -> Self {
         let theme = theme::load_default();
         // theme.activate(&mut backend);
-        // let theme = theme::load_theme("assets/style.toml").unwrap();
+        // let theme = theme::load_toml("assets/style.toml").unwrap();
 
         let (tx, rx) = mpsc::channel();
 
@@ -270,8 +270,8 @@ impl Cursive {
     /// Loads a theme from the given string content.
     ///
     /// Content must be valid toml.
-    pub fn load_theme(&mut self, content: &str) -> Result<(), theme::Error> {
-        self.set_theme(try!(theme::load_theme(content)));
+    pub fn load_toml(&mut self, content: &str) -> Result<(), theme::Error> {
+        self.set_theme(try!(theme::load_toml(content)));
         Ok(())
     }
 
