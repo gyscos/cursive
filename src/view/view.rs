@@ -1,15 +1,14 @@
-use Printer;
 use direction::Direction;
 use event::{Event, EventResult};
 use std::any::Any;
 use vec::Vec2;
 use view::{AnyView, Selector};
+use Printer;
 
 /// Main trait defining a view behaviour.
 ///
 /// This is what you should implement to define a custom View.
 pub trait View: Any + AnyView {
-
     /// Draws the view with the given printer (includes bounds) and focus.
     ///
     /// This is the only *required* method to implement.
@@ -62,7 +61,6 @@ pub trait View: Any + AnyView {
     fn on_event(&mut self, Event) -> EventResult {
         EventResult::Ignored
     }
-
 
     /// Runs a closure on the view identified by the given selector.
     ///

@@ -76,11 +76,8 @@ where
             self.width
         };
 
-        let mut chunks = prefix(
-            &mut self.iter,
-            allowed_width,
-            &mut self.chunk_offset,
-        );
+        let mut chunks =
+            prefix(&mut self.iter, allowed_width, &mut self.chunk_offset);
 
         // println!("Chunks..: {:?}", chunks);
 
@@ -152,10 +149,7 @@ where
 
         // We can know text was wrapped if the stop was optional,
         // and there's more coming.
-        let text_wrap = !chunks
-            .last()
-            .map(|c| c.hard_stop)
-            .unwrap_or(true)
+        let text_wrap = !chunks.last().map(|c| c.hard_stop).unwrap_or(true)
             && self.iter.peek().is_some();
 
         // If we had to break a line in two, then at least pretent we're
@@ -178,9 +172,6 @@ where
 
         // TODO: merge consecutive segments of the same span
 
-        Some(Row {
-            segments,
-            width,
-        })
+        Some(Row { segments, width })
     }
 }

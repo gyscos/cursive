@@ -61,12 +61,7 @@ impl From<(usize, usize, usize, usize)> for Margins {
 
 impl From<(i32, i32, i32, i32)> for Margins {
     fn from((left, right, top, bottom): (i32, i32, i32, i32)) -> Margins {
-        (
-            left as usize,
-            right as usize,
-            top as usize,
-            bottom as usize,
-        ).into()
+        (left as usize, right as usize, top as usize, bottom as usize).into()
     }
 }
 

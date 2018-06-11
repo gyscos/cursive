@@ -33,7 +33,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'b Backend
+        size: T, theme: &'a Theme, backend: &'b Backend,
     ) -> Self {
         Printer {
             offset: Vec2::zero(),
@@ -93,7 +93,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         let p = p + self.offset;
         for y in 0..len {
-            self.backend.print_at(p + (0,y), c);
+            self.backend.print_at(p + (0, y), c);
         }
     }
 
@@ -178,12 +178,12 @@ impl<'a, 'b> Printer<'a, 'b> {
         F: FnOnce(&Printer),
     {
         let new_printer = Printer {
-                offset: self.offset,
-                size: self.size,
-                focused: self.focused,
-                theme : theme,
-                new: self.new.clone(),
-                backend : self.backend
+            offset: self.offset,
+            size: self.size,
+            focused: self.focused,
+            theme: theme,
+            new: self.new.clone(),
+            backend: self.backend,
         };
         f(&new_printer);
     }
@@ -222,7 +222,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// printer.print_box((0,0), (6,4), false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
-        &self, start: T, size: S, invert: bool
+        &self, start: T, size: S, invert: bool,
     ) {
         self.new.set(false);
 
@@ -319,7 +319,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Returns a printer on a subset of this one's area.
     pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(
-        &self, offset: S, size: T, focused: bool
+        &self, offset: S, size: T, focused: bool,
     ) -> Printer<'a, 'b> {
         let size = size.into();
         let offset = offset.into().or_min(self.size);

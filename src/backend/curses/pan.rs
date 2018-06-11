@@ -1,7 +1,7 @@
 extern crate pancurses;
 
-use self::pancurses::mmask_t;
 use self::super::split_i32;
+use self::pancurses::mmask_t;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
@@ -65,9 +65,7 @@ impl Backend {
 
     /// Save a new color pair.
     fn insert_color(
-        &self,
-        pairs: &mut HashMap<(i16,i16), i32>,
-        (front, back): (i16, i16),
+        &self, pairs: &mut HashMap<(i16, i16), i32>, (front, back): (i16, i16),
     ) -> i32 {
         let n = 1 + pairs.len() as i32;
 
@@ -119,7 +117,8 @@ impl Backend {
         let _alt = (mevent.bstate & pancurses::BUTTON_ALT as mmask_t) != 0;
         let _ctrl = (mevent.bstate & pancurses::BUTTON_CTRL as mmask_t) != 0;
 
-        mevent.bstate &= !(pancurses::BUTTON_SHIFT | pancurses::BUTTON_ALT
+        mevent.bstate &= !(pancurses::BUTTON_SHIFT
+            | pancurses::BUTTON_ALT
             | pancurses::BUTTON_CTRL) as mmask_t;
 
         let make_event = |event| Event::Mouse {

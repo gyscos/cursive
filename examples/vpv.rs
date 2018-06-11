@@ -3,10 +3,10 @@ extern crate pretty_bytes;
 
 use std::io;
 
-use cursive::Cursive;
 use cursive::traits::{Boxable, With};
 use cursive::utils;
 use cursive::views::{Canvas, Dialog, LinearLayout, ProgressBar};
+use cursive::Cursive;
 use pretty_bytes::converter::convert;
 use std::thread;
 use std::time;
@@ -31,10 +31,7 @@ fn main() {
             let meta = std::fs::metadata(&source).unwrap();
             // If possible, read the file size to have a progress bar.
             let len = meta.len();
-            (
-                Some(source),
-                if len > 0 { Some(len) } else { None },
-            )
+            (Some(source), if len > 0 { Some(len) } else { None })
         }
         None => (None, None),
     };
@@ -68,9 +65,7 @@ fn main() {
         }
 
         // When we're done, shut down the application
-        cb_sink
-            .send(Box::new(|s: &mut Cursive| s.quit()))
-            .unwrap();
+        cb_sink.send(Box::new(|s: &mut Cursive| s.quit())).unwrap();
     });
 
     // Add a single view: progress status

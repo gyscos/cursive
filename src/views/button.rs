@@ -1,4 +1,3 @@
-use {Cursive, Printer, With};
 use align::HAlign;
 use direction::Direction;
 use event::*;
@@ -6,6 +5,7 @@ use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::View;
+use {Cursive, Printer, With};
 
 /// Simple text label with a callback when <Enter> is pressed.
 ///

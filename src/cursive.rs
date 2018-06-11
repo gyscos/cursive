@@ -46,14 +46,27 @@ impl Default for Cursive {
     }
 }
 
-#[cfg(all(not(feature = "termion"), not(feature = "pancurses"), feature = "bear-lib-terminal"))]
+#[cfg(
+    all(
+        not(feature = "termion"),
+        not(feature = "pancurses"),
+        feature = "bear-lib-terminal"
+    )
+)]
 impl Default for Cursive {
     fn default() -> Self {
         Self::blt()
     }
 }
 
-#[cfg(all(not(feature = "termion"), not(feature = "pancurses"), not(feature = "bear-lib-terminal"), feature = "ncurses"))]
+#[cfg(
+    all(
+        not(feature = "termion"),
+        not(feature = "pancurses"),
+        not(feature = "bear-lib-terminal"),
+        feature = "ncurses"
+    )
+)]
 impl Default for Cursive {
     fn default() -> Self {
         Self::ncurses()
@@ -261,7 +274,7 @@ impl Cursive {
     ///
     /// `filename` must point to a valid toml file.
     pub fn load_theme_file<P: AsRef<Path>>(
-        &mut self, filename: P
+        &mut self, filename: P,
     ) -> Result<(), theme::Error> {
         self.set_theme(try!(theme::load_theme_file(filename)));
         Ok(())
@@ -366,7 +379,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn call_on<V, F, R>(
-        &mut self, sel: &view::Selector, callback: F
+        &mut self, sel: &view::Selector, callback: F,
     ) -> Option<R>
     where
         V: View + Any,
@@ -532,7 +545,7 @@ impl Cursive {
 
     /// Convenient stub forwarding layer repositioning.
     pub fn reposition_layer(
-        &mut self, layer: LayerPosition, position: Position
+        &mut self, layer: LayerPosition, position: Position,
     ) {
         self.screen_mut().reposition_layer(layer, position);
     }
@@ -661,7 +674,8 @@ impl Cursive {
             event, position, ..
         } = event
         {
-            if event.grabs_focus() && !self.menubar.autohide
+            if event.grabs_focus()
+                && !self.menubar.autohide
                 && !self.menubar.has_submenu()
                 && position.y == 0
             {

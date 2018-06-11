@@ -72,8 +72,8 @@ extern crate log;
 #[macro_use]
 extern crate maplit;
 
-extern crate num;
 extern crate libc;
+extern crate num;
 extern crate owning_ref;
 extern crate toml;
 extern crate unicode_segmentation;
@@ -100,20 +100,20 @@ pub mod event;
 #[macro_use]
 pub mod view;
 
-pub mod views;
-pub mod vec;
+pub mod align;
+pub mod direction;
+pub mod menu;
 pub mod rect;
 pub mod theme;
-pub mod align;
-pub mod menu;
-pub mod direction;
 pub mod utils;
+pub mod vec;
+pub mod views;
 
 // This probably doesn't need to be public?
 mod cursive;
 mod printer;
-mod xy;
 mod with;
+mod xy;
 
 mod div;
 mod utf8;

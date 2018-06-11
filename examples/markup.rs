@@ -1,12 +1,12 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::theme::BaseColor;
 use cursive::theme::Color;
 use cursive::theme::Effect;
 use cursive::theme::Style;
 use cursive::utils::markup::StyledString;
 use cursive::views::{Dialog, TextView};
+use cursive::Cursive;
 
 fn main() {
     let mut siv = Cursive::default();

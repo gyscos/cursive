@@ -1,6 +1,6 @@
-use XY;
 use vec::Vec2;
 use view::{SizeConstraint, View, ViewWrapper};
+use XY;
 
 /// Wrapper around another view, with a controlled size.
 ///
@@ -39,7 +39,7 @@ impl<T: View> BoxView<T> {
     ///
     /// `None` values will use the wrapped view's preferences.
     pub fn new(
-        width: SizeConstraint, height: SizeConstraint, view: T
+        width: SizeConstraint, height: SizeConstraint, view: T,
     ) -> Self {
         BoxView {
             size: (width, height).into(),
@@ -50,7 +50,7 @@ impl<T: View> BoxView<T> {
 
     /// Sets the size constraints for this view.
     pub fn set_constraints(
-        &mut self, width: SizeConstraint, height: SizeConstraint
+        &mut self, width: SizeConstraint, height: SizeConstraint,
     ) {
         self.set_width(width);
         self.set_height(height);
@@ -195,7 +195,8 @@ impl<T: View> ViewWrapper for BoxView<T> {
         let req = self.size.zip_map(req, SizeConstraint::available);
         let child_size = self.view.required_size(req);
 
-        let result = self.size
+        let result = self
+            .size
             .zip_map(child_size.zip(req), SizeConstraint::result);
 
         debug!("{:?}", result);

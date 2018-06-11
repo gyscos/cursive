@@ -1,8 +1,8 @@
-use Printer;
 use event::{Event, EventResult};
 use theme::ColorStyle;
 use vec::Vec2;
 use view::{View, ViewWrapper};
+use Printer;
 
 /// Wrapper view that adds a shadow.
 ///

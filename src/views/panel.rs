@@ -1,7 +1,7 @@
-use Printer;
 use event::{Event, EventResult};
 use vec::Vec2;
 use view::{View, ViewWrapper};
+use Printer;
 
 /// Draws a border around a wrapped view.
 #[derive(Debug)]

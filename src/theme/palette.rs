@@ -82,8 +82,9 @@ impl Palette {
             for (key, value) in palette.iter() {
                 match *value {
                     PaletteNode::Color(color) => result.set_color(key, color),
-                    PaletteNode::Namespace(ref map) =>
-                        result.add_namespace(key, map.clone()),
+                    PaletteNode::Namespace(ref map) => {
+                        result.add_namespace(key, map.clone())
+                    }
                 }
             }
         }
@@ -116,8 +117,11 @@ impl Palette {
     }
 
     /// Adds a color namespace to this palette.
-    fn add_namespace(&mut self, key: &str, namespace: HashMap<String, PaletteNode>) {
-        self.custom.insert(key.to_string(), PaletteNode::Namespace(namespace));
+    fn add_namespace(
+        &mut self, key: &str, namespace: HashMap<String, PaletteNode>,
+    ) {
+        self.custom
+            .insert(key.to_string(), PaletteNode::Namespace(namespace));
     }
 }
 
@@ -158,14 +162,18 @@ impl Default for Palette {
 }
 
 // Iterate over a toml
-fn iterate_toml<'a>(table: &'a toml::value::Table) -> impl Iterator<Item=(&'a str, PaletteNode)> + 'a {
+fn iterate_toml<'a>(
+    table: &'a toml::value::Table,
+) -> impl Iterator<Item = (&'a str, PaletteNode)> + 'a {
     table.iter().flat_map(|(key, value)| {
         let node = match value {
             toml::Value::Table(table) => {
                 // This should define a new namespace
                 // Treat basic colors as simple string.
                 // We'll convert them back in the merge method.
-                let map = iterate_toml(table).map(|(key, value)| (key.to_string(), value)).collect();
+                let map = iterate_toml(table)
+                    .map(|(key, value)| (key.to_string(), value))
+                    .collect();
                 // Should we only return something if it's non-empty?
                 Some(PaletteNode::Namespace(map))
             }
@@ -184,7 +192,10 @@ fn iterate_toml<'a>(table: &'a toml::value::Table) -> impl Iterator<Item=(&'a st
             }
             other => {
                 // Other - error?
-                debug!("Found unexpected value in theme: {} = {:?}", key, other);
+                debug!(
+                    "Found unexpected value in theme: {} = {:?}",
+                    key, other
+                );
                 None
             }
         };

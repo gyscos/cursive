@@ -1,6 +1,3 @@
-use Cursive;
-use Printer;
-use With;
 use align::{Align, HAlign, VAlign};
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
@@ -14,6 +11,9 @@ use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, ScrollBase, View};
 use views::MenuPopup;
+use Cursive;
+use Printer;
+use With;
 
 /// View to select an item among a list.
 ///
@@ -526,7 +526,8 @@ impl<T: 'static> SelectView<T> {
                 // the list when we reach the end.
                 // This is achieved by chaining twice the iterator
                 let iter = self.items.iter().chain(self.items.iter());
-                if let Some((i, _)) = iter.enumerate()
+                if let Some((i, _)) = iter
+                    .enumerate()
                     .skip(self.focus() + 1)
                     .find(|&(_, item)| item.label.starts_with(c))
                 {
@@ -640,7 +641,10 @@ impl SelectView<String> {
     }
 
     /// Convenient method to use the label as value.
-    pub fn insert_item_str<S>(&mut self, index: usize, label: S) where S: Into<String> {
+    pub fn insert_item_str<S>(&mut self, index: usize, label: S)
+    where
+        S: Into<String>,
+    {
         let label = label.into();
         self.insert_item(index, label.clone(), label);
     }
@@ -732,7 +736,8 @@ impl<T: 'static> View for SelectView<T> {
         // Items here are not compressible.
         // So no matter what the horizontal requirements are,
         // we'll still return our longest item.
-        let w = self.items
+        let w = self
+            .items
             .iter()
             .map(|item| item.label.width())
             .max()

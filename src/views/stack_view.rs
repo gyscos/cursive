@@ -1,5 +1,3 @@
-use Printer;
-use With;
 use direction::Direction;
 use event::{Event, EventResult};
 use std::any::Any;
@@ -9,6 +7,8 @@ use theme::ColorStyle;
 use vec::Vec2;
 use view::{IntoBoxedView, Offset, Position, Selector, View, ViewWrapper};
 use views::{Layer, ShadowView, ViewBox};
+use Printer;
+use With;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -37,7 +37,7 @@ pub enum LayerPosition {
 
 impl Placement {
     pub fn compute_offset<S, A, P>(
-        &self, size: S, available: A, parent: P
+        &self, size: S, available: A, parent: P,
     ) -> Vec2
     where
         S: Into<Vec2>,
@@ -146,7 +146,7 @@ impl<T: View> View for ChildWrapper<T> {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>
+        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>,
     ) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => {
@@ -415,7 +415,7 @@ impl StackView {
     /// Has no effect on fullscreen layers
     /// Has no effect if layer is not found
     pub fn reposition_layer(
-        &mut self, layer: LayerPosition, position: Position
+        &mut self, layer: LayerPosition, position: Position,
     ) {
         let i = self.get_index(layer);
         let child = match self.layers.get_mut(i) {
@@ -675,21 +675,45 @@ mod tests {
             .layer(TextView::new("1"))
             .layer(TextView::new("2"));
 
-        assert!(stack.get(LayerPosition::FromFront(0)).unwrap()
-            .as_any().downcast_ref::<ViewBox>().unwrap()
-            .with_view(|v| v.as_any().is::<TextView>()).unwrap()
+        assert!(
+            stack
+                .get(LayerPosition::FromFront(0))
+                .unwrap()
+                .as_any()
+                .downcast_ref::<ViewBox>()
+                .unwrap()
+                .with_view(|v| v.as_any().is::<TextView>())
+                .unwrap()
         );
-        assert!(stack.get(LayerPosition::FromBack(0)).unwrap()
-            .as_any().downcast_ref::<ViewBox>().unwrap()
-            .with_view(|v| v.as_any().is::<TextView>()).unwrap()
+        assert!(
+            stack
+                .get(LayerPosition::FromBack(0))
+                .unwrap()
+                .as_any()
+                .downcast_ref::<ViewBox>()
+                .unwrap()
+                .with_view(|v| v.as_any().is::<TextView>())
+                .unwrap()
         );
-        assert!(stack.get_mut(LayerPosition::FromFront(0)).unwrap()
-            .as_any_mut().downcast_mut::<ViewBox>().unwrap()
-            .with_view_mut(|v| v.as_any_mut().is::<TextView>()).unwrap()
+        assert!(
+            stack
+                .get_mut(LayerPosition::FromFront(0))
+                .unwrap()
+                .as_any_mut()
+                .downcast_mut::<ViewBox>()
+                .unwrap()
+                .with_view_mut(|v| v.as_any_mut().is::<TextView>())
+                .unwrap()
         );
-        assert!(stack.get_mut(LayerPosition::FromBack(0)).unwrap()
-            .as_any_mut().downcast_mut::<ViewBox>().unwrap()
-            .with_view_mut(|v| v.as_any_mut().is::<TextView>()).unwrap()
+        assert!(
+            stack
+                .get_mut(LayerPosition::FromBack(0))
+                .unwrap()
+                .as_any_mut()
+                .downcast_mut::<ViewBox>()
+                .unwrap()
+                .with_view_mut(|v| v.as_any_mut().is::<TextView>())
+                .unwrap()
         );
     }
 }

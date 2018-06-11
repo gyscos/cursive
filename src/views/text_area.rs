@@ -1,4 +1,3 @@
-use {Printer, With, XY};
 use direction::Direction;
 use event::{Event, EventResult, Key, MouseButton, MouseEvent};
 use std::cmp::min;
@@ -8,6 +7,7 @@ use unicode_width::UnicodeWidthStr;
 use utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row};
 use vec::Vec2;
 use view::{ScrollBase, SizeCache, View};
+use {Printer, With, XY};
 
 /// Multi-lines text editor.
 ///
@@ -437,7 +437,8 @@ impl View for TextArea {
         debug!("{:?}", self.rows);
         let scroll_width = if self.rows.len() > constraint.y { 1 } else { 0 };
         Vec2::new(
-            scroll_width + 1
+            scroll_width
+                + 1
                 + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
             self.rows.len(),
         )

@@ -80,7 +80,10 @@ impl Rect {
     }
 
     /// Adds the given offset to this rectangle.
-    pub fn offset<V>(&mut self, offset: V) where V: Into<Vec2> {
+    pub fn offset<V>(&mut self, offset: V)
+    where
+        V: Into<Vec2>,
+    {
         let offset = offset.into();
         self.top_left = self.top_left + offset;
         self.bottom_right = self.bottom_right + offset;

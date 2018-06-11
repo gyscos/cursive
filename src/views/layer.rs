@@ -1,5 +1,5 @@
-use Printer;
 use view::{View, ViewWrapper};
+use Printer;
 
 /// Wrapper view that fills the background.
 ///

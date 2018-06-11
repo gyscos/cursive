@@ -1,9 +1,9 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::event::{Event, Key};
 use cursive::traits::*;
 use cursive::views::{Dialog, EditView, OnEventView, TextArea};
+use cursive::Cursive;
 
 fn main() {
     let mut siv = Cursive::default();
@@ -35,10 +35,10 @@ fn main() {
                             .min_width(10),
                     )
                     .button("Ok", |s| {
-                        let text = s.call_on_id(
-                            "edit",
-                            |view: &mut EditView| view.get_content(),
-                        ).unwrap();
+                        let text =
+                            s.call_on_id("edit", |view: &mut EditView| {
+                                view.get_content()
+                            }).unwrap();
                         find(s, &text);
                     })
                     .dismiss_button("Cancel"),

@@ -1,9 +1,9 @@
-use Printer;
-use With;
 use direction::Direction;
 use event::{Event, EventResult};
 use vec::Vec2;
 use view::View;
+use Printer;
+use With;
 
 /// A blank view that forwards calls to closures.
 ///

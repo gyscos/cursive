@@ -1,9 +1,9 @@
 //! Points on the 2D character grid.
 
-use XY;
 use num::traits::Zero;
 use std::cmp::{max, min, Ordering};
 use std::ops::{Add, Div, Mul, Sub};
+use XY;
 
 /// Simple 2D size, in cells.
 ///

@@ -1,4 +1,3 @@
-use {Printer, With};
 use direction::Direction;
 use event::{Event, EventResult, Key, MouseButton, MouseEvent};
 use std::cell::RefCell;
@@ -6,6 +5,7 @@ use std::rc::Rc;
 use theme::ColorStyle;
 use vec::Vec2;
 use view::View;
+use {Printer, With};
 
 struct SharedState<T> {
     selection: usize,
@@ -52,7 +52,7 @@ impl<T> RadioGroup<T> {
     ///
     /// The button will display `label` next to it, and will embed `value`.
     pub fn button<S: Into<String>>(
-        &mut self, value: T, label: S
+        &mut self, value: T, label: S,
     ) -> RadioButton<T> {
         let count = self.state.borrow().values.len();
         self.state.borrow_mut().values.push(Rc::new(value));
@@ -75,7 +75,7 @@ impl<T> RadioGroup<T> {
 impl RadioGroup<String> {
     /// Adds a button, using the label itself as value.
     pub fn button_str<S: Into<String>>(
-        &mut self, text: S
+        &mut self, text: S,
     ) -> RadioButton<String> {
         let text = text.into();
         self.button(text.clone(), text)
@@ -104,7 +104,7 @@ impl<T> RadioButton<T> {
     impl_enabled!(self.enabled);
 
     fn new(
-        state: Rc<RefCell<SharedState<T>>>, id: usize, label: String
+        state: Rc<RefCell<SharedState<T>>>, id: usize, label: String,
     ) -> Self {
         RadioButton {
             state,

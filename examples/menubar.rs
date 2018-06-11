@@ -1,10 +1,10 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::event::Key;
 use cursive::menu::MenuTree;
 use cursive::traits::*;
 use cursive::views::Dialog;
+use cursive::Cursive;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 // This examples shows how to configure and use a menubar at the top of the

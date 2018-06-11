@@ -1,5 +1,3 @@
-use Cursive;
-use Printer;
 use direction;
 use event::*;
 use menu::{MenuItem, MenuTree};
@@ -9,6 +7,8 @@ use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, View};
 use views::{MenuPopup, OnEventView};
+use Cursive;
+use Printer;
 
 /// Current state of the menubar
 #[derive(PartialEq, Debug)]
@@ -106,7 +106,7 @@ impl Menubar {
 
     /// Insert a new item at the given position.
     pub fn insert_subtree<S>(
-        &mut self, i: usize, title: S, menu: MenuTree
+        &mut self, i: usize, title: S, menu: MenuTree,
     ) -> &mut Self
     where
         S: Into<String>,
@@ -341,7 +341,8 @@ impl View for Menubar {
                     .checked_sub(offset)
                     .and_then(|pos| self.child_at(pos.x))
                 {
-                    if self.focus == child && btn == MouseButton::Left
+                    if self.focus == child
+                        && btn == MouseButton::Left
                         && self.root.children[child].is_leaf()
                     {
                         return self.select_child(false);
@@ -371,7 +372,8 @@ impl View for Menubar {
         // We add 2 to the length of every label for marin.
         // Also, we add 1 at the beginning.
         // (See the `draw()` method)
-        let width = self.root
+        let width = self
+            .root
             .children
             .iter()
             .map(|item| item.label().len() + 2)

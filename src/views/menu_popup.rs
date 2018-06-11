@@ -1,6 +1,3 @@
-use Cursive;
-use Printer;
-use With;
 use align::Align;
 use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use menu::{MenuItem, MenuTree};
@@ -10,6 +7,9 @@ use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, ScrollBase, View};
 use views::OnEventView;
+use Cursive;
+use Printer;
+use With;
 
 /// Popup that shows a list of items.
 pub struct MenuPopup {
@@ -137,13 +137,13 @@ impl MenuPopup {
 
     fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
         let tree = Rc::clone(tree);
-        let max_width = 4
-            + self.menu
-                .children
-                .iter()
-                .map(Self::item_width)
-                .max()
-                .unwrap_or(1);
+        let max_width = 4 + self
+            .menu
+            .children
+            .iter()
+            .map(Self::item_width)
+            .max()
+            .unwrap_or(1);
         let offset = Vec2::new(max_width, self.focus);
         let action_cb = self.on_action.clone();
 
@@ -250,13 +250,13 @@ impl View for MenuPopup {
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
         // We can't really shrink our items here, so it's not flexible.
-        let w = 4
-            + self.menu
-                .children
-                .iter()
-                .map(Self::item_width)
-                .max()
-                .unwrap_or(1);
+        let w = 4 + self
+            .menu
+            .children
+            .iter()
+            .map(Self::item_width)
+            .max()
+            .unwrap_or(1);
         let h = 2 + self.menu.children.len();
 
         let scrolling = req.y < h;

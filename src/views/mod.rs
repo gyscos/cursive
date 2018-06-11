@@ -35,7 +35,6 @@ macro_rules! impl_enabled {
     }
 }
 
-mod view_box;
 mod box_view;
 mod button;
 mod canvas;
@@ -44,23 +43,24 @@ mod dialog;
 mod dummy;
 mod edit_view;
 mod id_view;
-mod on_event_view;
 mod layer;
 mod linear_layout;
 mod list_view;
-mod menubar;
 mod menu_popup;
+mod menubar;
+mod on_event_view;
 mod panel;
 mod progress_bar;
 mod radio;
 mod select_view;
-mod slider_view;
 mod shadow_view;
 mod sized_view;
+mod slider_view;
 mod stack_view;
 mod text_area;
 mod text_view;
 mod tracked_view;
+mod view_box;
 
 pub use self::box_view::BoxView;
 pub use self::button::Button;

@@ -1,7 +1,7 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::views::{Dialog, TextView};
+use cursive::Cursive;
 
 fn main() {
     // Creates the cursive root - required for every application.

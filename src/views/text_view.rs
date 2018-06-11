@@ -1,19 +1,19 @@
-use Printer;
-use With;
-use XY;
 use align::*;
 use direction::Direction;
 use event::*;
 use owning_ref::{ArcRef, OwningHandle};
 use std::ops::Deref;
-use std::sync::{Mutex, MutexGuard};
 use std::sync::Arc;
+use std::sync::{Mutex, MutexGuard};
 use theme::Effect;
 use unicode_width::UnicodeWidthStr;
 use utils::lines::spans::{LinesIterator, Row};
 use utils::markup::StyledString;
 use vec::Vec2;
 use view::{ScrollBase, ScrollStrategy, SizeCache, View};
+use Printer;
+use With;
+use XY;
 
 /// Provides access to the content of a [`TextView`].
 ///
@@ -421,7 +421,8 @@ impl TextView {
         }
 
         // Desired width, including the scrollbar_width.
-        self.width = self.rows
+        self.width = self
+            .rows
             .iter()
             .map(|row| row.width)
             .max()

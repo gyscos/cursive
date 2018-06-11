@@ -1,7 +1,7 @@
 extern crate ncurses;
 
-use self::ncurses::mmask_t;
 use self::super::split_i32;
+use self::ncurses::mmask_t;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use libc;
@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use std::fs::File;
 use std::io;
-use std::io::{Write};
+use std::io::Write;
 use theme::{Color, ColorPair, Effect};
 use utf8;
 use vec::Vec2;
@@ -95,10 +95,9 @@ impl Backend {
         Box::new(c)
     }
 
-
     /// Save a new color pair.
     fn insert_color(
-        &self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16)
+        &self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16),
     ) -> i16 {
         let n = 1 + pairs.len() as i16;
 
@@ -157,7 +156,8 @@ impl Backend {
             let _alt = (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
             let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
 
-            mevent.bstate &= !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT
+            mevent.bstate &= !(ncurses::BUTTON_SHIFT
+                | ncurses::BUTTON_ALT
                 | ncurses::BUTTON_CTRL)
                 as mmask_t;
 

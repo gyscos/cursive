@@ -1,11 +1,11 @@
-use {Cursive, Printer};
-use With;
 use direction::{Direction, Orientation};
 use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use std::rc::Rc;
 use theme::ColorStyle;
 use vec::Vec2;
 use view::View;
+use With;
+use {Cursive, Printer};
 
 /// A horizontal or vertical slider.
 pub struct SliderView {

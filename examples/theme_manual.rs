@@ -1,8 +1,8 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle};
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
+use cursive::Cursive;
 
 fn main() {
     let mut siv = Cursive::default();
