@@ -5,3 +5,4 @@ tags
 .ctags
 *.bk
 TODO.txt
+*.rustfmt
