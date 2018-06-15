@@ -28,6 +28,11 @@ pub enum Orientation {
 }
 
 impl Orientation {
+    /// Returns a `XY(Horizontal, Vertical)`.
+    pub fn pair() -> XY<Orientation> {
+        XY::new(Orientation::Horizontal, Orientation::Vertical)
+    }
+
     /// Returns the component of `v` corresponding to this orientation.
     ///
     /// (`Horizontal` will return the x value,

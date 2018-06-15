@@ -16,6 +16,11 @@ impl<T> XY<T> {
         XY { x, y }
     }
 
+    /// Swaps the x and y values.
+    pub fn swap(self) -> Self {
+        XY::new(self.y, self.x)
+    }
+
     /// Returns `f(self.x, self.y)`
     pub fn fold<U, F>(self, f: F) -> U
     where
@@ -40,6 +45,16 @@ impl<T> XY<T> {
         F: Fn(T) -> T,
     {
         self.zip_map(condition, |v, c| if c { f(v) } else { v })
+    }
+
+    /// Applies `f` on axis where `condition` is true.
+    ///
+    /// Returns `None` otherwise.
+    pub fn run_if<F, U>(self, condition: XY<bool>, f: F) -> XY<Option<U>>
+    where
+        F: Fn(T) -> U,
+    {
+        self.zip_map(condition, |v, c| if c { Some(f(v)) } else { None })
     }
 
     /// Creates a new `XY` by applying `f` to `x`, and carrying `y` over.
@@ -92,6 +107,25 @@ impl<T> XY<T> {
     /// Returns a new `XY` of tuples made by zipping `self` and `other`.
     pub fn zip<U>(self, other: XY<U>) -> XY<(T, U)> {
         XY::new((self.x, other.x), (self.y, other.y))
+    }
+
+    /// Returns a new `XY` of tuples made by zipping `self`, `a` and `b`.
+    pub fn zip3<U, V>(self, a: XY<U>, b: XY<V>) -> XY<(T, U, V)> {
+        XY::new((self.x, a.x, b.x), (self.y, a.y, b.y))
+    }
+
+    /// Returns a new `XY` of tuples made by zipping `self`, `a`, `b` and `c`.
+    pub fn zip4<U, V, W>(
+        self, a: XY<U>, b: XY<V>, c: XY<W>,
+    ) -> XY<(T, U, V, W)> {
+        XY::new((self.x, a.x, b.x, c.x), (self.y, a.y, b.y, c.y))
+    }
+
+    /// Returns a new `XY` of tuples made by zipping `self`, `a`, `b`, `c` and `d`.
+    pub fn zip5<U, V, W, Z>(
+        self, a: XY<U>, b: XY<V>, c: XY<W>, d: XY<Z>,
+    ) -> XY<(T, U, V, W, Z)> {
+        XY::new((self.x, a.x, b.x, c.x, d.x), (self.y, a.y, b.y, c.y, d.y))
     }
 
     /// Returns a new `XY` by calling `f` on `self` and `other` for each axis.

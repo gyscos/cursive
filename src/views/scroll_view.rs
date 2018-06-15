@@ -1,6 +1,7 @@
-use direction::Direction;
+use direction::{Direction, Orientation};
 use event::{AnyCb, Event, EventResult, Key, MouseEvent};
 use rect::Rect;
+use theme::ColorStyle;
 use vec::Vec2;
 use view::{Selector, View};
 use xy::XY;
@@ -11,19 +12,30 @@ use std::cmp::min;
 
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {
-    inner_size: Vec2,
+    // The wrapped view.
     inner: V,
+
+    // This is the size the child thinks we're giving him.
+    inner_size: Vec2,
+
     // Offset into the inner view.
     //
     // Our `(0,0)` will be inner's `offset`
     offset: Vec2,
 
+    // What was our own size last time we checked.
+    //
+    // This includes scrollbars, if any.
     last_size: Vec2,
 
-    // Can we scroll horizontally?
+    // Are we scrollable in each direction?
     enabled: XY<bool>,
 
     // Should we show scrollbars?
+    //
+    // Even if this is true, no scrollbar will be printed if we don't need to scroll.
+    //
+    // Could be an enum {Never, Auto, Always}
     show_scrollbars: bool,
 
     // How much padding should be between content and scrollbar?
@@ -46,7 +58,7 @@ impl<V> ScrollView<V> {
 
     /// Returns the viewport in the inner content.
     pub fn content_viewport(&self) -> Rect {
-        Rect::from_size(self.offset, self.last_size)
+        Rect::from_size(self.offset, self.available_size())
     }
 
     /// Sets the scroll offset to the given value
@@ -54,7 +66,7 @@ impl<V> ScrollView<V> {
     where
         S: Into<Vec2>,
     {
-        let max_offset = self.inner_size.saturating_sub(self.last_size);
+        let max_offset = self.inner_size.saturating_sub(self.available_size());
         self.offset = offset.into().or_min(max_offset);
     }
 
@@ -89,6 +101,24 @@ impl<V> ScrollView<V> {
     pub fn scroll_x(self, enabled: bool) -> Self {
         self.with(|s| s.set_scroll_x(enabled))
     }
+
+    /// Returns for each axis if we are scrolling.
+    fn is_scrolling(&self) -> XY<bool> {
+        self.inner_size.zip_map(self.last_size, |i, s| i > s)
+    }
+
+    /// Returns the size taken by the scrollbars.
+    ///
+    /// Will be zero in axis where we're not scrolling.
+    fn scrollbar_size(&self) -> Vec2 {
+        self.is_scrolling()
+            .select_or(self.scrollbar_padding + (1, 1), Vec2::zero())
+    }
+
+    /// Returns the size available for the child view.
+    fn available_size(&self) -> Vec2 {
+        self.last_size - self.scrollbar_size()
+    }
 }
 
 impl<V> ScrollView<V>
@@ -109,6 +139,7 @@ where
 
         let available = constraint.saturating_sub(scrollbar_size);
 
+        // This the ideal size for the child. May not be what he gets.
         let inner_size = self.inner.required_size(available);
 
         // Where we're "enabled", accept the constraints.
@@ -117,6 +148,10 @@ where
             Vec2::min(inner_size + scrollbar_size, constraint),
             inner_size + scrollbar_size,
         );
+
+        // On non-scrolling axis, give inner_size the available space instead.
+        let inner_size =
+            self.enabled.select_or(inner_size, size - scrollbar_size);
 
         let new_scrollable = inner_size.zip_map(size, |i, s| i > s);
 
@@ -134,7 +169,7 @@ where
         let (inner_size, size, scrollable) =
             self.sizes_when_scrolling(constraint, XY::new(false, false));
 
-        // Did it work?
+        // If we need to add scrollbars, the available size will change.
         if scrollable.any() && self.show_scrollbars {
             // Attempt 2: he wants to scroll? Sure! Try again with some space for the scrollbar.
             let (inner_size, size, new_scrollable) =
@@ -158,6 +193,18 @@ where
             (inner_size, size)
         }
     }
+
+    fn scrollbar_thumb_lengths(&self) -> Vec2 {
+        let available = self.available_size();
+        (available * available / self.inner_size).or_max((1, 1))
+    }
+
+    fn scrollbar_thumb_offsets(&self, lengths: Vec2) -> Vec2 {
+        let available = self.available_size();
+        // The number of steps is 1 + the "extra space"
+        let steps = available - lengths + (1, 1);
+        steps * self.offset / (self.inner_size + (1, 1) - available)
+    }
 }
 
 impl<V> View for ScrollView<V>
@@ -165,13 +212,51 @@ where
     V: View,
 {
     fn draw(&self, printer: &Printer) {
+        // Draw scrollbar?
+        let scrolling = self.is_scrolling();
+
+        let lengths = self.scrollbar_thumb_lengths();
+        let offsets = self.scrollbar_thumb_offsets(lengths);
+
+        let line_c = XY::new("-", "|");
+
+        let color = if printer.focused {
+            ColorStyle::highlight()
+        } else {
+            ColorStyle::highlight_inactive()
+        };
+
+        let size = self.available_size();
+
+        // TODO: use a more generic zip_all or something?
+        XY::zip5(lengths, offsets, size, line_c, Orientation::pair()).run_if(
+            scrolling,
+            |(length, offset, size, c, orientation)| {
+                let start = (printer.size - (1, 1)).with_axis(orientation, 0);
+                let offset = orientation.make_vec(offset, 0);
+
+                printer.print_line(orientation, start, size, c);
+                printer.with_color(color, |printer| {
+                    printer.print_line(
+                        orientation,
+                        start + offset,
+                        length,
+                        "▒",
+                    );
+                });
+            },
+        );
+
+        if scrolling.both() {
+            printer.print((printer.size.x - 1, printer.size.y - 1), "╳");
+        }
+
         // Draw content
         let printer = printer
+            .cropped(size)
             .content_offset(self.offset)
             .inner_size(self.inner_size);
         self.inner.draw(&printer);
-
-        // Draw scrollbar?
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
@@ -199,11 +284,13 @@ where
                         event: MouseEvent::WheelDown,
                         ..
                     } if self.enabled.y
-                        && (self.offset.y + self.last_size.y
+                        && (self.offset.y + self.available_size().y
                             < self.inner_size.y) =>
                     {
                         self.offset.y = min(
-                            self.inner_size.y.saturating_sub(self.last_size.y),
+                            self.inner_size
+                                .y
+                                .saturating_sub(self.available_size().y),
                             self.offset.y + 3,
                         );
                         EventResult::Consumed(None)
@@ -216,7 +303,7 @@ where
                     }
                     Event::Ctrl(Key::Down) | Event::Key(Key::Down)
                         if self.enabled.y
-                            && (self.offset.y + self.last_size.y
+                            && (self.offset.y + self.available_size().y
                                 < self.inner_size.y) =>
                     {
                         self.offset.y += 1;
@@ -230,7 +317,7 @@ where
                     }
                     Event::Ctrl(Key::Right) | Event::Key(Key::Right)
                         if self.enabled.x
-                            && (self.offset.x + self.last_size.x
+                            && (self.offset.x + self.available_size().x
                                 < self.inner_size.x) =>
                     {
                         self.offset.x += 1;
@@ -245,7 +332,7 @@ where
 
                 // The furthest top-left we can go
                 let top_left = (important.bottom_right() + (1, 1))
-                    .saturating_sub(self.last_size);
+                    .saturating_sub(self.available_size());
                 // The furthest bottom-right we can go
                 let bottom_right = important.top_left();
 
@@ -296,8 +383,7 @@ where
     }
 
     fn take_focus(&mut self, source: Direction) -> bool {
-        let is_scrollable =
-            self.enabled.any() && (self.inner_size != self.last_size);
+        let is_scrollable = self.is_scrolling().any();
         self.inner.take_focus(source) || is_scrollable
     }
 }

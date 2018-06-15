@@ -1,6 +1,7 @@
 //! Provide higher-level abstraction to draw things on backends.
 
 use backend::Backend;
+use direction::Orientation;
 use enumset::EnumSet;
 use std::cmp::min;
 use theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
@@ -193,6 +194,16 @@ impl<'a> Printer<'a> {
         let start = start + self.offset;
         for y in 0..height {
             self.backend.print_at(start + (0, y), c);
+        }
+    }
+
+    /// Prints a line using the given character.
+    pub fn print_line<T: Into<Vec2>>(
+        &self, orientation: Orientation, start: T, length: usize, c: &str,
+    ) {
+        match orientation {
+            Orientation::Vertical => self.print_vline(start, length, c),
+            Orientation::Horizontal => self.print_hline(start, length, c),
         }
     }
 
