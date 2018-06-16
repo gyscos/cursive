@@ -1,5 +1,5 @@
 //! Rectangles on the 2D character grid.
-
+use std::ops::Add;
 use vec::Vec2;
 
 /// A non-empty rectangle on the 2D grid.
@@ -7,7 +7,9 @@ use vec::Vec2;
 ///
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Rect {
+    /// Top-left corner, inclusive
     top_left: Vec2,
+    /// Bottom-right corner, inclusive
     bottom_right: Vec2,
 }
 
@@ -18,6 +20,18 @@ where
     fn from(other: T) -> Self {
         // From a point, we can create a 1-by-1 rectangle.
         Self::from_size(other, (1, 1))
+    }
+}
+
+impl<T> Add<T> for Rect
+where
+    T: Into<Vec2>,
+{
+    type Output = Rect;
+
+    fn add(mut self, rhs: T) -> Self {
+        self.offset(rhs);
+        self
     }
 }
 
@@ -80,7 +94,10 @@ impl Rect {
     }
 
     /// Adds the given offset to this rectangle.
-    pub fn offset<V>(&mut self, offset: V) where V: Into<Vec2> {
+    pub fn offset<V>(&mut self, offset: V)
+    where
+        V: Into<Vec2>,
+    {
         let offset = offset.into();
         self.top_left = self.top_left + offset;
         self.bottom_right = self.bottom_right + offset;
@@ -122,21 +139,29 @@ impl Rect {
     }
 
     /// Returns the Y value of the top edge of the rectangle.
+    ///
+    /// This is inclusive.
     pub fn top(self) -> usize {
         self.top_left.y
     }
 
     /// Returns the X value of the left edge of the rectangle.
+    ///
+    /// This is inclusive.
     pub fn left(self) -> usize {
         self.top_left.x
     }
 
     /// Returns the X value of the right edge of the rectangle.
+    ///
+    /// This is inclusive.
     pub fn right(self) -> usize {
         self.bottom_right.x
     }
 
     /// Returns the Y value of the botton edge of the rectangle.
+    ///
+    /// This is inclusive.
     pub fn bottom(self) -> usize {
         self.bottom_right.y
     }
@@ -144,5 +169,10 @@ impl Rect {
     /// Returns the surface (number of cells) covered by the rectangle.
     pub fn surface(self) -> usize {
         self.width() * self.height()
+    }
+
+    /// Checks if a point is in `self`.
+    pub fn contains(self, point: Vec2) -> bool {
+        point.fits(self.top_left) && point.fits_in(self.bottom_right)
     }
 }

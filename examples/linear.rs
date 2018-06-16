@@ -1,9 +1,9 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::align::HAlign;
 use cursive::traits::*;
 use cursive::views::{Dialog, DummyView, LinearLayout, TextView};
+use cursive::Cursive;
 
 // This example uses a LinearLayout to stick multiple views next to each other.
 

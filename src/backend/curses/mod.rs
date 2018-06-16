@@ -63,7 +63,7 @@ where
 
 fn find_closest_pair(pair: &ColorPair, max_colors: i16) -> (i16, i16) {
     (
-        find_closest(&pair.front,max_colors),
+        find_closest(&pair.front, max_colors),
         find_closest(&pair.back, max_colors),
     )
 }
@@ -95,7 +95,7 @@ fn find_closest(color: &Color, max_colors: i16) -> i16 {
                 // (r - 8) / 10 = n
                 //
                 let n = (r - 8) / 10;
-                (232 + n) as i16
+                i16::from(232 + n)
             } else {
                 // Generic RGB
                 let r = 6 * u16::from(r) / 256;

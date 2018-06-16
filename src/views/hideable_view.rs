@@ -1,0 +1,94 @@
+use view::{Selector, View, ViewWrapper};
+use With;
+
+use std::any::Any;
+
+/// Wrapper around another view that can be hidden at will.
+///
+/// By default, it simply forwards all calls to the inner view.
+///
+/// When hidden (with `HideableView::hide()`), it will appear as a zero-sized
+/// invisible view, will not take focus and will not accept input.
+///
+/// It can be made visible again with `HideableView::unhide()`.
+pub struct HideableView<V> {
+    view: V,
+    visible: bool,
+}
+
+impl<V> HideableView<V> {
+    /// Creates a new HideableView around `view`.
+    ///
+    /// It will be visible by default.
+    pub fn new(view: V) -> Self {
+        HideableView {
+            view,
+            visible: true,
+        }
+    }
+
+    /// Sets the visibility for this view.
+    pub fn set_visible(&mut self, visible: bool) {
+        self.visible = visible;
+    }
+
+    /// Sets the visibility for this view to `false`.
+    pub fn hide(&mut self) {
+        self.set_visible(false);
+    }
+
+    /// Sets the visibility for this view to `true`.
+    pub fn unhide(&mut self) {
+        self.set_visible(true);
+    }
+
+    /// Sets the visibility for this view to `false`.
+    ///
+    /// Chainable variant.
+    pub fn hidden(self) -> Self {
+        self.with(Self::hide)
+    }
+
+    inner_getters!(self.view: V);
+}
+
+impl<V: View> ViewWrapper for HideableView<V> {
+    type V = V;
+
+    fn with_view<F, R>(&self, f: F) -> Option<R>
+    where
+        F: FnOnce(&Self::V) -> R,
+    {
+        if self.visible {
+            Some(f(&self.view))
+        } else {
+            None
+        }
+    }
+
+    fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
+    where
+        F: FnOnce(&mut Self::V) -> R,
+    {
+        if self.visible {
+            Some(f(&mut self.view))
+        } else {
+            None
+        }
+    }
+
+    fn wrap_call_on_any<'a>(
+        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>,
+    ) {
+        // We always run callbacks, even when invisible.
+        self.view.call_on_any(selector, callback)
+    }
+
+    fn into_inner(self) -> Result<Self::V, Self>
+    where
+        Self: Sized,
+        Self::V: Sized,
+    {
+        Ok(self.view)
+    }
+}

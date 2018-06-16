@@ -77,15 +77,14 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
 
     // Some for<'b> weirdness here to please the borrow checker gods...
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: BoxedCallback<'a>
+        &mut self, selector: &Selector, mut callback: BoxedCallback<'a>,
     ) {
         match selector {
             &Selector::Id(id) if id == self.id => callback(self),
             s => {
-                self.view
-                    .try_borrow_mut()
-                    .ok()
-                    .map(|mut v| v.deref_mut().call_on_any(s, callback));
+                if let Ok(mut v) = self.view.try_borrow_mut() {
+                    v.deref_mut().call_on_any(s, callback);
+                }
             }
         }
     }
@@ -93,7 +92,8 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
     fn wrap_focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
         match selector {
             &Selector::Id(id) if id == self.id => Ok(()),
-            s => self.view
+            s => self
+                .view
                 .try_borrow_mut()
                 .map_err(|_| ())
                 .and_then(|mut v| v.deref_mut().focus_view(s)),

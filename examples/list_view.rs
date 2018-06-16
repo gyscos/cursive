@@ -1,9 +1,10 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::traits::*;
-use cursive::views::{Checkbox, Dialog, EditView, LinearLayout, ListView,
-                     SelectView, TextView};
+use cursive::views::{
+    Checkbox, Dialog, EditView, LinearLayout, ListView, SelectView, TextView,
+};
+use cursive::Cursive;
 
 // This example uses a ListView.
 //

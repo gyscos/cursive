@@ -133,7 +133,7 @@ impl Cursive {
 
         Cursive {
             fps: 0,
-            theme: theme,
+            theme,
             screens: vec![views::StackView::new()],
             last_sizes: Vec::new(),
             global_callbacks: HashMap::new(),
@@ -309,8 +309,8 @@ impl Cursive {
     /// Loads a theme from the given string content.
     ///
     /// Content must be valid toml.
-    pub fn load_theme(&mut self, content: &str) -> Result<(), theme::Error> {
-        self.set_theme(try!(theme::load_theme(content)));
+    pub fn load_toml(&mut self, content: &str) -> Result<(), theme::Error> {
+        self.set_theme(try!(theme::load_toml(content)));
         Ok(())
     }
 
@@ -649,7 +649,7 @@ impl Cursive {
         // Print the stackview background before the menubar
         let offset = if self.menubar.autohide { 0 } else { 1 };
         let id = self.active_screen;
-        let sv_printer = printer.offset((0, offset), !selected);
+        let sv_printer = printer.offset((0, offset)).focused(!selected);
 
         self.screens[id].draw_bg(&sv_printer);
 
@@ -657,11 +657,7 @@ impl Cursive {
         // If the menubar is active, nothing else can be.
         // Draw the menubar?
         if self.menubar.visible() {
-            let printer = printer.sub_printer(
-                Vec2::zero(),
-                printer.size,
-                self.menubar.receive_events(),
-            );
+            let printer = printer.focused(self.menubar.receive_events());
             self.menubar.draw(&printer);
         }
 

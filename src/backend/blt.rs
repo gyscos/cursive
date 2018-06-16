@@ -5,10 +5,11 @@
 
 extern crate bear_lib_terminal;
 
-use self::bear_lib_terminal::Color as BltColor;
 use self::bear_lib_terminal::geometry::Size;
-use self::bear_lib_terminal::terminal::{self, state, Event as BltEvent,
-                                        KeyCode};
+use self::bear_lib_terminal::terminal::{
+    self, state, Event as BltEvent, KeyCode,
+};
+use self::bear_lib_terminal::Color as BltColor;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::collections::HashSet;
@@ -108,7 +109,7 @@ impl Backend {
     }
 
     fn blt_keycode_to_ev(
-        &mut self, kc: KeyCode, shift: bool, ctrl: bool
+        &mut self, kc: KeyCode, shift: bool, ctrl: bool,
     ) -> Event {
         match kc {
             KeyCode::F1
@@ -238,12 +239,12 @@ impl backend::Backend for Backend {
     fn set_color(&self, color: ColorPair) -> ColorPair {
         let current = ColorPair {
             front: blt_colour_to_colour(state::foreground()),
-            back:  blt_colour_to_colour(state::background())
+            back: blt_colour_to_colour(state::background()),
         };
-        
+
         let fg = colour_to_blt_colour(color.front, ColorRole::Foreground);
         let bg = colour_to_blt_colour(color.back, ColorRole::Background);
-        
+
         terminal::set_colors(fg, bg);
 
         current
@@ -255,14 +256,14 @@ impl backend::Backend for Backend {
             Effect::Bold
             | Effect::Italic
             | Effect::Underline
-            | Effect::Simple => {},
+            | Effect::Simple => {}
             // TODO: how to do this correctly?`
             //       BLT itself doesn't do this kind of thing,
             //       we'd need the colours in our position,
             //       but `f()` can do whatever
-            Effect::Reverse => terminal::set_colors(
-                state::background(), state::foreground()
-            ),
+            Effect::Reverse => {
+                terminal::set_colors(state::background(), state::foreground())
+            }
         }
     }
 
@@ -272,11 +273,11 @@ impl backend::Backend for Backend {
             Effect::Bold
             | Effect::Italic
             | Effect::Underline
-            | Effect::Simple => {},
+            | Effect::Simple => {}
             // The process of reversing is the same as unreversing
-            Effect::Reverse => terminal::set_colors(
-                state::background(), state::foreground()
-            ),
+            Effect::Reverse => {
+                terminal::set_colors(state::background(), state::foreground())
+            }
         }
     }
 

@@ -1,9 +1,9 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::view::Position;
 use cursive::views::LayerPosition;
 use cursive::views::TextView;
+use cursive::Cursive;
 
 /// Moves top layer by the specified amount
 fn move_top(c: &mut Cursive, x_in: isize, y_in: isize) {

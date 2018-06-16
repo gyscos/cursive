@@ -3,13 +3,13 @@ extern crate rand;
 
 mod game;
 
-use cursive::Cursive;
-use cursive::Printer;
 use cursive::direction::Direction;
 use cursive::event::{Event, EventResult, MouseButton, MouseEvent};
 use cursive::theme::{BaseColor, Color, ColorStyle};
 use cursive::vec::Vec2;
 use cursive::views::{Button, Dialog, LinearLayout, Panel, SelectView};
+use cursive::Cursive;
+use cursive::Printer;
 
 fn main() {
     let mut siv = Cursive::default();
@@ -189,7 +189,9 @@ impl cursive::view::View for BoardView {
                 Cell::Unknown => "[]",
                 Cell::Flag => "()",
                 Cell::Visible(n) => {
-                    ["  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"][n]
+                    [
+                        "  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"
+                    ][n]
                 }
             };
 

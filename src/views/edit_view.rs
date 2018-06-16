@@ -1,5 +1,6 @@
 use direction::Direction;
 use event::{Callback, Event, EventResult, Key, MouseEvent};
+use rect::Rect;
 use std::cell::RefCell;
 use std::rc::Rc;
 use theme::{ColorStyle, Effect};
@@ -367,8 +368,7 @@ impl EditView {
         self.offset = 0;
         self.set_cursor(len);
 
-        self.make_edit_cb()
-            .unwrap_or_else(Callback::dummy)
+        self.make_edit_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Get the current text.
@@ -420,8 +420,7 @@ impl EditView {
 
         self.keep_cursor_in_view();
 
-        self.make_edit_cb()
-            .unwrap_or_else(Callback::dummy)
+        self.make_edit_cb().unwrap_or_else(Callback::dummy)
     }
 
     /// Remove the character at the current cursor position.
@@ -436,8 +435,7 @@ impl EditView {
 
         self.keep_cursor_in_view();
 
-        self.make_edit_cb()
-            .unwrap_or_else(Callback::dummy)
+        self.make_edit_cb().unwrap_or_else(Callback::dummy)
     }
 
     fn make_edit_cb(&self) -> Option<Callback> {
@@ -672,13 +670,13 @@ impl View for EditView {
                 offset,
             } if position.fits_in_rect(offset, (self.last_length, 1)) =>
             {
-                position.checked_sub(offset).map(|position| {
+                if let Some(position) = position.checked_sub(offset) {
                     self.cursor = self.offset
                         + simple_prefix(
                             &self.content[self.offset..],
                             position.x,
                         ).length;
-                });
+                }
             }
             _ => return EventResult::Ignored,
         }
@@ -686,5 +684,23 @@ impl View for EditView {
         // self.keep_cursor_in_view();
 
         EventResult::Consumed(self.make_edit_cb())
+    }
+
+    fn important_area(&self, _: Vec2) -> Rect {
+        let char_width = if self.cursor >= self.content.len() {
+            // Show a space if we're at the end of the content
+            1
+        } else {
+            // Otherwise look at the selected character.
+            self.content[self.cursor..]
+                .graphemes(true)
+                .next()
+                .unwrap()
+                .width()
+        };
+
+        let x = self.content[..self.cursor].width();
+
+        Rect::from_size((x, 0), (char_width, 1))
     }
 }

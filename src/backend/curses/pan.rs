@@ -1,7 +1,7 @@
 extern crate pancurses;
 
-use self::pancurses::mmask_t;
 use self::super::split_i32;
+use self::pancurses::mmask_t;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
@@ -307,9 +307,7 @@ impl Backend {
 
     /// Save a new color pair.
     fn insert_color(
-        &self,
-        pairs: &mut HashMap<(i16,i16), i32>,
-        (front, back): (i16, i16),
+        &self, pairs: &mut HashMap<(i16, i16), i32>, (front, back): (i16, i16),
     ) -> i32 {
         let n = 1 + pairs.len() as i32;
 
@@ -351,6 +349,68 @@ impl Backend {
         self.window.attron(style);
     }
 
+<<<<<<< HEAD
+=======
+    fn parse_mouse_event(&mut self) -> Event {
+        let mut mevent = match pancurses::getmouse() {
+            Err(code) => return Event::Unknown(split_i32(code)),
+            Ok(event) => event,
+        };
+
+        let _shift = (mevent.bstate & pancurses::BUTTON_SHIFT as mmask_t) != 0;
+        let _alt = (mevent.bstate & pancurses::BUTTON_ALT as mmask_t) != 0;
+        let _ctrl = (mevent.bstate & pancurses::BUTTON_CTRL as mmask_t) != 0;
+
+        mevent.bstate &= !(pancurses::BUTTON_SHIFT
+            | pancurses::BUTTON_ALT
+            | pancurses::BUTTON_CTRL) as mmask_t;
+
+        let make_event = |event| Event::Mouse {
+            offset: Vec2::zero(),
+            position: Vec2::new(mevent.x as usize, mevent.y as usize),
+            event: event,
+        };
+
+        if mevent.bstate == pancurses::REPORT_MOUSE_POSITION as mmask_t {
+            // The event is either a mouse drag event,
+            // or a weird double-release event. :S
+            self.last_mouse_button
+                .map(MouseEvent::Hold)
+                .map(&make_event)
+                .unwrap_or_else(|| {
+                    debug!("We got a mouse drag, but no last mouse pressed?");
+                    Event::Unknown(vec![])
+                })
+        } else {
+            // Identify the button
+            let mut bare_event = mevent.bstate & ((1 << 25) - 1);
+
+            let mut event = None;
+            while bare_event != 0 {
+                let single_event = 1 << bare_event.trailing_zeros();
+                bare_event ^= single_event;
+
+                // Process single_event
+                on_mouse_event(single_event, |e| {
+                    if event.is_none() {
+                        event = Some(e);
+                    } else {
+                        self.event_queue.push(make_event(e));
+                    }
+                });
+            }
+            if let Some(event) = event {
+                if let Some(btn) = event.button() {
+                    self.last_mouse_button = Some(btn);
+                }
+                make_event(event)
+            } else {
+                debug!("No event parsed?...");
+                Event::Unknown(vec![])
+            }
+        }
+    }
+>>>>>>> master
 }
 
 impl backend::Backend for Backend {

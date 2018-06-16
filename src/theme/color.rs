@@ -114,6 +114,13 @@ impl Color {
         }
     }
 
+    /// Parse a string into a color.
+    ///
+    /// Examples:
+    /// * `"red"` becomes `Color::Dark(BaseColor::Red)`
+    /// * `"light green"` becomes `Color::Light(BaseColor::Green)`
+    /// * `"default"` becomes `Color::TerminalDefault`
+    /// * `"#123456"` becomes `Color::Rgb(0x12, 0x34, 0x56)`
     pub(crate) fn parse(value: &str) -> Option<Self> {
         Some(match value {
             "black" => Color::Dark(BaseColor::Black),
@@ -149,11 +156,15 @@ impl Color {
             let r = load_hex(&value[0..l]) * multiplier;
             let g = load_hex(&value[l..2 * l]) * multiplier;
             let b = load_hex(&value[2 * l..3 * l]) * multiplier;
+
             Some(Color::Rgb(r as u8, g as u8, b as u8))
         } else if value.len() == 3 {
             // RGB values between 0 and 5 maybe?
+            // Like 050 for green
             let rgb: Vec<_> =
                 value.chars().map(|c| c as i16 - '0' as i16).collect();
+
+            assert_eq!(rgb.len(), 3);
             if rgb.iter().all(|&i| i >= 0 && i < 6) {
                 Some(Color::RgbLowRes(
                     rgb[0] as u8,

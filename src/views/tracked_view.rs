@@ -1,8 +1,8 @@
-use Printer;
 use std::cell::Cell;
 use vec::Vec2;
 use view::{View, ViewWrapper};
 use views::IdView;
+use Printer;
 
 /// Wrapper around a view that remembers its position.
 pub struct TrackedView<T: View> {
@@ -21,7 +21,7 @@ impl<T: View> TrackedView<T> {
     /// Creates a new `TrackedView` around `view`.
     pub fn new(view: T) -> Self {
         TrackedView {
-            view: view,
+            view,
             offset: Cell::new(Vec2::zero()),
         }
     }

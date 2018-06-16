@@ -4,7 +4,7 @@
 //! backend library, which handles all actual input and output.
 //!
 //! This module defines the `Backend` trait, as well as a few implementations
-//! using some common libraries. Each of those included backends needs a 
+//! using some common libraries. Each of those included backends needs a
 //! corresonding feature to be enabled.
 
 use event;
@@ -18,9 +18,9 @@ use std::time::Duration;
 
 pub mod dummy;
 
-pub mod termion;
 pub mod blt;
 pub mod curses;
+pub mod termion;
 
 /// Trait defining the required methods to be a backend.
 pub trait Backend {
@@ -71,7 +71,6 @@ pub trait Backend {
 
     /// Enables the given effect.
     fn set_effect(&self, effect: theme::Effect);
-
 
     /// Disables the given effect.
     fn unset_effect(&self, effect: theme::Effect);

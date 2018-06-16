@@ -15,8 +15,8 @@
 //! * Relative direction: front or back.
 //!   Its actual direction depends on the orientation.
 
-use XY;
 use vec::Vec2;
+use XY;
 
 /// Describes a vertical or horizontal orientation for a view.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -28,6 +28,11 @@ pub enum Orientation {
 }
 
 impl Orientation {
+    /// Returns a `XY(Horizontal, Vertical)`.
+    pub fn pair() -> XY<Orientation> {
+        XY::new(Orientation::Horizontal, Orientation::Vertical)
+    }
+
     /// Returns the component of `v` corresponding to this orientation.
     ///
     /// (`Horizontal` will return the x value,

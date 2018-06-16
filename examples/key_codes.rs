@@ -1,15 +1,19 @@
 extern crate cursive;
 
-use cursive::{Cursive, Printer};
 use cursive::event::{Event, EventResult};
 use cursive::traits::*;
+use cursive::{Cursive, Printer};
 
 // This example define a custom view that prints any event it receives.
 // This is a handy way to check the input received by cursive.
 
 fn main() {
     let mut siv = Cursive::default();
-    siv.add_layer(KeyCodeView::new(10).full_width().fixed_height(10));
+    siv.add_layer(
+        KeyCodeView::new(10)
+            .full_width()
+            .fixed_height(10),
+    );
 
     siv.run();
 }

@@ -1,7 +1,7 @@
 extern crate ncurses;
 
-use self::ncurses::mmask_t;
 use self::super::split_i32;
+use self::ncurses::mmask_t;
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use theme::{Color, ColorPair, Effect};
@@ -206,10 +206,9 @@ impl Backend {
         Box::new(c)
     }
 
-
     /// Save a new color pair.
     fn insert_color(
-        &self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16)
+        &self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16),
     ) -> i16 {
         let n = 1 + pairs.len() as i16;
 
@@ -249,7 +248,6 @@ impl Backend {
         let style = ncurses::COLOR_PAIR(i);
         ncurses::attron(style);
     }
-
 
 }
 

@@ -1,9 +1,9 @@
 //! Points on the 2D character grid.
 
-use XY;
 use num::traits::Zero;
 use std::cmp::{max, min, Ordering};
 use std::ops::{Add, Div, Mul, Sub};
+use XY;
 
 /// Simple 2D size, in cells.
 ///
@@ -237,6 +237,27 @@ impl Mul<usize> for XY<usize> {
 
     fn mul(self, other: usize) -> Vec2 {
         self.map(|s| s * other)
+    }
+}
+
+impl<T> Mul<XY<T>> for XY<T>
+where
+    T: Mul<T>,
+{
+    type Output = XY<T::Output>;
+
+    fn mul(self, other: XY<T>) -> Self::Output {
+        self.zip_map(other, |s, o| s * o)
+    }
+}
+impl<T> Div<XY<T>> for XY<T>
+where
+    T: Div<T>,
+{
+    type Output = XY<T::Output>;
+
+    fn div(self, other: XY<T>) -> Self::Output {
+        self.zip_map(other, |s, o| s / o)
     }
 }
 

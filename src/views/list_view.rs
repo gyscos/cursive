@@ -1,13 +1,15 @@
-use Cursive;
-use Printer;
-use With;
 use direction;
-use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
-use std::any::Any;
+use event::{
+    AnyCb, Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+};
+use rect::Rect;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{ScrollBase, Selector, View};
+use Cursive;
+use Printer;
+use With;
 
 /// Represents a child from a [`ListView`].
 ///
@@ -148,7 +150,7 @@ impl ListView {
     }
 
     fn iter_mut<'a>(
-        &'a mut self, from_focus: bool, source: direction::Relative
+        &'a mut self, from_focus: bool, source: direction::Relative,
     ) -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
@@ -172,7 +174,7 @@ impl ListView {
     }
 
     fn move_focus(
-        &mut self, n: usize, source: direction::Direction
+        &mut self, n: usize, source: direction::Direction,
     ) -> EventResult {
         let i = if let Some(i) = source
             .relative(direction::Orientation::Vertical)
@@ -246,7 +248,7 @@ impl ListView {
 }
 
 fn try_focus(
-    (i, child): (usize, &mut ListChild), source: direction::Direction
+    (i, child): (usize, &mut ListChild), source: direction::Direction,
 ) -> Option<usize> {
     match *child {
         ListChild::Delimiter => None,
@@ -271,7 +273,9 @@ impl View for ListView {
             .draw(printer, |printer, i| match self.children[i] {
                 ListChild::Row(ref label, ref view) => {
                     printer.print((0, 0), label);
-                    view.draw(&printer.offset((offset, 0), i == self.focus));
+                    view.draw(&printer
+                        .offset((offset, 0))
+                        .focused(i == self.focus));
                 }
                 ListChild::Delimiter => (),
             });
@@ -279,14 +283,16 @@ impl View for ListView {
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
         // We'll show 2 columns: the labels, and the views.
-        let label_width = self.children
+        let label_width = self
+            .children
             .iter()
             .map(ListChild::label)
             .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0);
 
-        let view_size = self.children
+        let view_size = self
+            .children
             .iter_mut()
             .filter_map(ListChild::view)
             .map(|v| v.required_size(req).x)
@@ -306,7 +312,8 @@ impl View for ListView {
         self.scrollbase.set_heights(size.y, self.children.len());
 
         // We'll show 2 columns: the labels, and the views.
-        let label_width = self.children
+        let label_width = self
+            .children
             .iter()
             .map(ListChild::label)
             .map(UnicodeWidthStr::width)
@@ -316,7 +323,8 @@ impl View for ListView {
         let spacing = 1;
         let scrollbar_width = if self.children.len() > size.y { 2 } else { 0 };
 
-        let available = size.x
+        let available = size
+            .x
             .saturating_sub(label_width + spacing + scrollbar_width);
 
         debug!("Available: {}", available);
@@ -399,12 +407,10 @@ impl View for ListView {
             Event::Key(Key::PageDown) => {
                 self.move_focus(10, direction::Direction::up())
             }
-            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => {
-                self.move_focus(
-                    usize::max_value(),
-                    direction::Direction::back(),
-                )
-            }
+            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => self.move_focus(
+                usize::max_value(),
+                direction::Direction::back(),
+            ),
             Event::Key(Key::End) | Event::Ctrl(Key::End) => self.move_focus(
                 usize::max_value(),
                 direction::Direction::front(),
@@ -437,10 +443,9 @@ impl View for ListView {
 
     fn take_focus(&mut self, source: direction::Direction) -> bool {
         let rel = source.relative(direction::Orientation::Vertical);
-        let i = if let Some(i) = self.iter_mut(
-            rel.is_none(),
-            rel.unwrap_or(direction::Relative::Front),
-        ).filter_map(|p| try_focus(p, source))
+        let i = if let Some(i) = self
+            .iter_mut(rel.is_none(), rel.unwrap_or(direction::Relative::Front))
+            .filter_map(|p| try_focus(p, source))
             .next()
         {
             i
@@ -454,8 +459,7 @@ impl View for ListView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector,
-        mut callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
     ) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, Box::new(|any| callback(any)));
@@ -463,7 +467,8 @@ impl View for ListView {
     }
 
     fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
-        if let Some(i) = self.children
+        if let Some(i) = self
+            .children
             .iter_mut()
             .enumerate()
             .filter_map(|(i, v)| v.view().map(|v| (i, v)))
@@ -475,5 +480,23 @@ impl View for ListView {
         } else {
             Err(())
         }
+    }
+
+    fn important_area(&self, size: Vec2) -> Rect {
+        if self.children.is_empty() {
+            return Rect::from((0, 0));
+        }
+
+        let labels_width = self.labels_width();
+
+        let area = match self.children[self.focus] {
+            ListChild::Row(_, ref view) => {
+                let available = Vec2::new(size.x - labels_width - 1, 1);
+                view.important_area(available) + (labels_width, 0)
+            }
+            ListChild::Delimiter => Rect::from_size((0, 0), (size.x, 1)),
+        };
+
+        area + (0, self.focus)
     }
 }

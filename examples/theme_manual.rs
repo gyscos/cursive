@@ -1,14 +1,16 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle};
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
+use cursive::Cursive;
 
 fn main() {
     let mut siv = Cursive::default();
 
     let layout = LinearLayout::vertical()
-        .child(TextView::new("This is a dynamic theme example!"))
+        .child(TextView::new(
+            "This is a dynamic theme example!",
+        ))
         .child(EditView::new().content("Woo! colors!").style(
             ColorStyle::new(
                 Color::Rgb(200, 150, 150),

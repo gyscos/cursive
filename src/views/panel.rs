@@ -1,7 +1,8 @@
-use Printer;
 use event::{Event, EventResult};
+use rect::Rect;
 use vec::Vec2;
 use view::{View, ViewWrapper};
+use Printer;
 
 /// Draws a border around a wrapped view.
 #[derive(Debug)]
@@ -34,14 +35,16 @@ impl<V: View> ViewWrapper for Panel<V> {
 
     fn wrap_draw(&self, printer: &Printer) {
         printer.print_box((0, 0), printer.size, true);
-        self.view.draw(&printer.sub_printer(
-            (1, 1),
-            printer.size.saturating_sub((2, 2)),
-            true,
-        ));
+        let printer = printer.offset((1, 1)).shrinked((1, 1));
+        self.view.draw(&printer);
     }
 
     fn wrap_layout(&mut self, size: Vec2) {
         self.view.layout(size.saturating_sub((2, 2)));
+    }
+
+    fn wrap_important_area(&self, size: Vec2) -> Rect {
+        let inner_size = size.saturating_sub((2, 2));
+        self.view.important_area(inner_size) + (1, 1)
     }
 }

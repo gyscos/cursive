@@ -35,7 +35,6 @@ macro_rules! impl_enabled {
     }
 }
 
-mod view_box;
 mod box_view;
 mod button;
 mod canvas;
@@ -43,24 +42,27 @@ mod checkbox;
 mod dialog;
 mod dummy;
 mod edit_view;
+mod hideable_view;
 mod id_view;
-mod on_event_view;
 mod layer;
 mod linear_layout;
 mod list_view;
-mod menubar;
 mod menu_popup;
+mod menubar;
+mod on_event_view;
 mod panel;
 mod progress_bar;
 mod radio;
+mod scroll_view;
 mod select_view;
-mod slider_view;
 mod shadow_view;
 mod sized_view;
+mod slider_view;
 mod stack_view;
 mod text_area;
 mod text_view;
 mod tracked_view;
+mod view_box;
 
 pub use self::box_view::BoxView;
 pub use self::button::Button;
@@ -69,6 +71,7 @@ pub use self::checkbox::Checkbox;
 pub use self::dialog::{Dialog, DialogFocus};
 pub use self::dummy::DummyView;
 pub use self::edit_view::EditView;
+pub use self::hideable_view::HideableView;
 pub use self::id_view::{IdView, ViewRef};
 pub use self::layer::Layer;
 pub use self::linear_layout::LinearLayout;
@@ -79,6 +82,7 @@ pub use self::on_event_view::OnEventView;
 pub use self::panel::Panel;
 pub use self::progress_bar::ProgressBar;
 pub use self::radio::{RadioButton, RadioGroup};
+pub use self::scroll_view::ScrollView;
 pub use self::select_view::SelectView;
 pub use self::shadow_view::ShadowView;
 pub use self::sized_view::SizedView;

@@ -73,10 +73,12 @@ impl<'a> Iterator for Parser<'a> {
                         self.stack.push(Style::from(Effect::Italic))
                     }
                     Tag::Header(level) => {
-                        return Some(self.literal(format!(
-                            "{} ",
-                            header(level as usize)
-                        )))
+                        return Some(
+                            self.literal(format!(
+                                "{} ",
+                                header(level as usize)
+                            )),
+                        )
                     }
                     Tag::Rule => return Some(self.literal("---")),
                     Tag::BlockQuote => return Some(self.literal("> ")),
@@ -139,10 +141,8 @@ Attention
 ====
 I *really* love __Cursive__!";
         let spans = parse_spans(input);
-        let spans: Vec<_> = spans
-            .iter()
-            .map(|span| span.resolve(input))
-            .collect();
+        let spans: Vec<_> =
+            spans.iter().map(|span| span.resolve(input)).collect();
 
         // println!("{:?}", spans);
         assert_eq!(

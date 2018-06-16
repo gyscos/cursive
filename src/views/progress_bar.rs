@@ -1,10 +1,10 @@
-use Printer;
 use align::HAlign;
 use std::cmp;
 use std::thread;
 use theme::{ColorStyle, Effect};
 use utils::Counter;
 use view::View;
+use Printer;
 
 // pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
 
@@ -96,7 +96,7 @@ impl ProgressBar {
     ///
     /// Chainable variant.
     pub fn with_task<F: FnOnce(Counter) + Send + 'static>(
-        mut self, task: F
+        mut self, task: F,
     ) -> Self {
         self.start(task);
         self
@@ -116,7 +116,7 @@ impl ProgressBar {
     /// }
     /// ```
     pub fn with_label<F: Fn(usize, (usize, usize)) -> String + 'static>(
-        mut self, label_maker: F
+        mut self, label_maker: F,
     ) -> Self {
         self.label_maker = Box::new(label_maker);
         self
@@ -188,7 +188,7 @@ impl View for ProgressBar {
             printer.with_effect(Effect::Reverse, |printer| {
                 printer.print((offset, 0), &label);
             });
-            let printer = &printer.sub_printer((0, 0), (length, 1), true);
+            let printer = &printer.cropped((length, 1));
             printer.print_hline((0, 0), length, " ");
             printer.print((offset, 0), &label);
         });

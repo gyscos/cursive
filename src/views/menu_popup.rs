@@ -1,15 +1,16 @@
-use Cursive;
-use Printer;
-use With;
 use align::Align;
 use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use menu::{MenuItem, MenuTree};
+use rect::Rect;
 use std::cmp::min;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use view::{Position, ScrollBase, View};
 use views::OnEventView;
+use Cursive;
+use Printer;
+use With;
 
 /// Popup that shows a list of items.
 pub struct MenuPopup {
@@ -137,13 +138,13 @@ impl MenuPopup {
 
     fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
         let tree = Rc::clone(tree);
-        let max_width = 4
-            + self.menu
-                .children
-                .iter()
-                .map(Self::item_width)
-                .max()
-                .unwrap_or(1);
+        let max_width = 4 + self
+            .menu
+            .children
+            .iter()
+            .map(Self::item_width)
+            .max()
+            .unwrap_or(1);
         let offset = Vec2::new(max_width, self.focus);
         let action_cb = self.on_action.clone();
 
@@ -209,7 +210,7 @@ impl View for MenuPopup {
         let h = self.menu.len();
         // If we're too high, add a vertical offset
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.offset((0, offset), true);
+        let printer = &printer.offset((0, offset));
 
         // Start with a box
         printer.print_box(Vec2::new(0, 0), printer.size, false);
@@ -217,8 +218,7 @@ impl View for MenuPopup {
         // We're giving it a reduced size because of borders.
         // But we're keeping the full width,
         // to integrate horizontal delimiters in the frame.
-        let size = printer.size - (0, 2);
-        let printer = printer.sub_printer((0, 1), size, true);
+        let printer = printer.offset((0, 1)).shrinked((0, 1));
 
         self.scrollbase.draw(&printer, |printer, i| {
             printer.with_selection(i == self.focus, |printer| {
@@ -250,13 +250,13 @@ impl View for MenuPopup {
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
         // We can't really shrink our items here, so it's not flexible.
-        let w = 4
-            + self.menu
-                .children
-                .iter()
-                .map(Self::item_width)
-                .max()
-                .unwrap_or(1);
+        let w = 4 + self
+            .menu
+            .children
+            .iter()
+            .map(Self::item_width)
+            .max()
+            .unwrap_or(1);
         let h = 2 + self.menu.children.len();
 
         let scrolling = req.y < h;
@@ -343,19 +343,16 @@ impl View for MenuPopup {
                 // eprintln!("Position: {:?} / {:?}", position, offset);
                 // eprintln!("Last size: {:?}", self.last_size);
                 let inner_size = self.last_size.saturating_sub((2, 2));
-                position.checked_sub(offset + (1, 1)).map(
+                if let Some(position) = position.checked_sub(offset + (1, 1)) {
                     // `position` is not relative to the content
                     // (It's inside the border)
-                    |position| {
-                        if position < inner_size {
-                            let focus =
-                                position.y + self.scrollbase.start_line;
-                            if !self.menu.children[focus].is_delimiter() {
-                                self.focus = focus;
-                            }
+                    if position < inner_size {
+                        let focus = position.y + self.scrollbase.start_line;
+                        if !self.menu.children[focus].is_delimiter() {
+                            self.focus = focus;
                         }
-                    },
-                );
+                    }
+                }
             }
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
@@ -399,5 +396,13 @@ impl View for MenuPopup {
         self.last_size = size;
         self.scrollbase
             .set_heights(size.y.saturating_sub(2), self.menu.children.len());
+    }
+
+    fn important_area(&self, size: Vec2) -> Rect {
+        if self.menu.is_empty() {
+            return Rect::from((0, 0));
+        }
+
+        Rect::from_size((0, self.focus), (size.x, 1))
     }
 }

@@ -1,9 +1,10 @@
+use direction::Direction;
+use event::{AnyCb, Event, EventResult};
+use rect::Rect;
+use vec::Vec2;
+use view::{Selector, View};
 use Printer;
 use With;
-use direction::Direction;
-use event::{Event, EventResult};
-use vec::Vec2;
-use view::View;
 
 /// A blank view that forwards calls to closures.
 ///
@@ -17,6 +18,9 @@ pub struct Canvas<T> {
     layout: Box<FnMut(&mut T, Vec2)>,
     take_focus: Box<FnMut(&mut T, Direction) -> bool>,
     needs_relayout: Box<Fn(&T) -> bool>,
+    focus_view: Box<FnMut(&mut T, &Selector) -> Result<(), ()>>,
+    call_on_any: Box<for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>,
+    important_area: Box<Fn(&T, Vec2) -> Rect>,
 }
 
 impl<T: 'static + View> Canvas<T> {
@@ -31,6 +35,9 @@ impl<T: 'static + View> Canvas<T> {
             .with_layout(T::layout)
             .with_take_focus(T::take_focus)
             .with_needs_relayout(T::needs_relayout)
+            .with_focus_view(T::focus_view)
+            .with_call_on_any(T::call_on_any)
+            .with_important_area(T::important_area)
     }
 }
 
@@ -55,6 +62,11 @@ impl<T> Canvas<T> {
             layout: Box::new(|_, _| ()),
             take_focus: Box::new(|_, _| false),
             needs_relayout: Box::new(|_| true),
+            focus_view: Box::new(|_, _| Err(())),
+            call_on_any: Box::new(|_, _, _| ()),
+            important_area: Box::new(|_, size| {
+                Rect::from_corners((0, 0), size)
+            }),
         }
     }
 
@@ -170,6 +182,60 @@ impl<T> Canvas<T> {
     {
         self.with(|s| s.set_needs_relayout(f))
     }
+
+    /// Sets the closure for `call_on_any()`.
+    pub fn set_call_on_any<F>(&mut self, f: F)
+    where
+        F: 'static + for<'a> FnMut(&mut T, &Selector, AnyCb<'a>),
+    {
+        self.call_on_any = Box::new(f);
+    }
+
+    /// Sets the closure for `call_on_any()`.
+    ///
+    /// Chainable variant.
+    pub fn with_call_on_any<F>(self, f: F) -> Self
+    where
+        F: 'static + for<'a> FnMut(&mut T, &Selector, AnyCb<'a>),
+    {
+        self.with(|s| s.set_call_on_any(f))
+    }
+
+    /// Sets the closure for `important_area()`.
+    pub fn set_important_area<F>(&mut self, f: F)
+    where
+        F: 'static + Fn(&T, Vec2) -> Rect,
+    {
+        self.important_area = Box::new(f);
+    }
+
+    /// Sets the closure for `important_area()`.
+    ///
+    /// Chainable variant.
+    pub fn with_important_area<F>(self, f: F) -> Self
+    where
+        F: 'static + Fn(&T, Vec2) -> Rect,
+    {
+        self.with(|s| s.set_important_area(f))
+    }
+
+    /// Sets the closure for `focus_view()`.
+    pub fn set_focus_view<F>(&mut self, f: F)
+    where
+        F: 'static + FnMut(&mut T, &Selector) -> Result<(), ()>,
+    {
+        self.focus_view = Box::new(f);
+    }
+
+    /// Sets the closure for `focus_view()`.
+    ///
+    /// Chainable variant.
+    pub fn with_focus_view<F>(self, f: F) -> Self
+    where
+        F: 'static + FnMut(&mut T, &Selector) -> Result<(), ()>,
+    {
+        self.with(|s| s.set_focus_view(f))
+    }
 }
 
 impl<T: 'static> View for Canvas<T> {
@@ -191,5 +257,21 @@ impl<T: 'static> View for Canvas<T> {
 
     fn take_focus(&mut self, source: Direction) -> bool {
         (self.take_focus)(&mut self.state, source)
+    }
+
+    fn needs_relayout(&self) -> bool {
+        (self.needs_relayout)(&self.state)
+    }
+
+    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+        (self.focus_view)(&mut self.state, selector)
+    }
+
+    fn important_area(&self, view_size: Vec2) -> Rect {
+        (self.important_area)(&self.state, view_size)
+    }
+
+    fn call_on_any<'a>(&mut self, selector: &Selector, cb: AnyCb<'a>) {
+        (self.call_on_any)(&mut self.state, selector, cb);
     }
 }

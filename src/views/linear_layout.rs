@@ -1,13 +1,13 @@
-use Printer;
-use With;
-use XY;
 use direction;
-use event::{Event, EventResult, Key};
-use std::any::Any;
+use event::{AnyCb, Event, EventResult, Key};
+use rect::Rect;
 use std::cmp::min;
 use std::ops::Deref;
 use vec::Vec2;
 use view::{Selector, SizeCache, View};
+use Printer;
+use With;
+use XY;
 
 /// Arranges its children linearly according to its orientation.
 pub struct LinearLayout {
@@ -57,7 +57,7 @@ struct ChildItem<T> {
 
 impl<T> ChildIterator<T> {
     fn new(
-        inner: T, orientation: direction::Orientation, available: usize
+        inner: T, orientation: direction::Orientation, available: usize,
     ) -> Self {
         ChildIterator {
             inner,
@@ -195,7 +195,8 @@ impl LinearLayout {
     }
 
     fn children_are_sleeping(&self) -> bool {
-        !self.children
+        !self
+            .children
             .iter()
             .map(Child::as_view)
             .any(View::needs_relayout)
@@ -203,7 +204,7 @@ impl LinearLayout {
 
     /// Returns a cyclic mutable iterator starting with the child in focus
     fn iter_mut<'a>(
-        &'a mut self, from_focus: bool, source: direction::Relative
+        &'a mut self, from_focus: bool, source: direction::Relative,
     ) -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
         match source {
             direction::Relative::Front => {
@@ -279,11 +280,11 @@ impl LinearLayout {
                 // this will give us the allowed window for a click.
                 let child_size = item.child.size.get(self.orientation);
 
-                if (item.offset + child_size > position)
-                    && item.child.view.take_focus(direction::Direction::none())
-                {
-                    // eprintln!("It's a match!");
-                    self.focus = i;
+                if item.offset + child_size > position {
+                    if item.child.view.take_focus(direction::Direction::none())
+                    {
+                        self.focus = i;
+                    }
                     return;
                 }
             }
@@ -292,7 +293,7 @@ impl LinearLayout {
 }
 
 fn try_focus(
-    (i, child): (usize, &mut Child), source: direction::Direction
+    (i, child): (usize, &mut Child), source: direction::Direction,
 ) -> Option<usize> {
     if child.view.take_focus(source) {
         Some(i)
@@ -314,11 +315,10 @@ impl View for LinearLayout {
             // eprintln!("Printer size: {:?}", printer.size);
             // eprintln!("Child size: {:?}", item.child.size);
             // eprintln!("Offset: {:?}", item.offset);
-            let printer = &printer.sub_printer(
-                self.orientation.make_vec(item.offset, 0),
-                item.child.size,
-                i == self.focus,
-            );
+            let printer = &printer
+                .offset(self.orientation.make_vec(item.offset, 0))
+                .cropped(item.child.size)
+                .focused(i == self.focus);
             item.child.view.draw(printer);
         }
     }
@@ -358,7 +358,8 @@ impl View for LinearLayout {
         }
 
         // First, make a naive scenario: everything will work fine.
-        let ideal_sizes: Vec<Vec2> = self.children
+        let ideal_sizes: Vec<Vec2> = self
+            .children
             .iter_mut()
             .map(|c| c.required_size(req))
             .collect();
@@ -382,7 +383,8 @@ impl View for LinearLayout {
 
         // See how they like it that way.
         // This is, hopefully, the absolute minimum these views will accept.
-        let min_sizes: Vec<Vec2> = self.children
+        let min_sizes: Vec<Vec2> = self
+            .children
             .iter_mut()
             .map(|c| c.required_size(budget_req))
             .collect();
@@ -462,7 +464,8 @@ impl View for LinearLayout {
 
         // Let's ask everyone one last time. Everyone should be happy.
         // (But they may ask more on the other axis.)
-        let final_sizes: Vec<Vec2> = self.children
+        let final_sizes: Vec<Vec2> = self
+            .children
             .iter_mut()
             .enumerate()
             .map(|(i, c)| c.required_size(final_lengths[i]))
@@ -482,10 +485,9 @@ impl View for LinearLayout {
         // In what order will we iterate on the children?
         let rel = source.relative(self.orientation);
         // We activate from_focus only if coming from the "sides".
-        let i = if let Some(i) = self.iter_mut(
-            rel.is_none(),
-            rel.unwrap_or(direction::Relative::Front),
-        ).filter_map(|p| try_focus(p, source))
+        let i = if let Some(i) = self
+            .iter_mut(rel.is_none(), rel.unwrap_or(direction::Relative::Front))
+            .filter_map(|p| try_focus(p, source))
             .next()
         {
             // ... we can't update `self.focus` here,
@@ -554,8 +556,7 @@ impl View for LinearLayout {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector,
-        mut callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
     ) {
         for child in &mut self.children {
             child
@@ -573,5 +574,31 @@ impl View for LinearLayout {
         }
 
         Err(())
+    }
+
+    fn important_area(&self, _: Vec2) -> Rect {
+        if self.children.is_empty() {
+            // Return dummy area if we are empty.
+            return Rect::from((0, 0));
+        }
+
+        // Pick the focused item, with its offset
+        let item = {
+            let mut iterator = ChildIterator::new(
+                self.children.iter(),
+                self.orientation,
+                usize::max_value(),
+            );
+            iterator.nth(self.focus).unwrap()
+        };
+
+        // Make a vector offset from the scalar value
+        let offset = self.orientation.make_vec(item.offset, 0);
+
+        // And ask the child its own area.
+        let rect = item.child.view.important_area(item.child.size);
+
+        // Add `offset` to the rect.
+        rect + offset
     }
 }

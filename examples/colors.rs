@@ -1,9 +1,9 @@
 extern crate cursive;
 
-use cursive::{Cursive, Printer};
 use cursive::theme::{Color, ColorStyle};
 use cursive::view::Boxable;
 use cursive::views::Canvas;
+use cursive::{Cursive, Printer};
 
 // This example will draw a colored square with a gradient.
 //
@@ -19,7 +19,11 @@ use cursive::views::Canvas;
 fn main() {
     let mut siv = Cursive::default();
 
-    siv.add_layer(Canvas::new(()).with_draw(draw).fixed_size((20, 10)));
+    siv.add_layer(
+        Canvas::new(())
+            .with_draw(draw)
+            .fixed_size((20, 10)),
+    );
 
     siv.add_global_callback('q', |s| s.quit());
 

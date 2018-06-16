@@ -41,17 +41,17 @@ mod view_wrapper;
 // Essentials components
 mod any;
 mod finder;
-mod position;
 mod margins;
+mod position;
 mod size_cache;
 mod size_constraint;
-mod view_path;
 mod view;
+mod view_path;
 
 // Helper bases
-mod scroll;
-mod identifiable;
 mod boxable;
+mod identifiable;
+mod scroll;
 
 mod into_boxed_view;
 

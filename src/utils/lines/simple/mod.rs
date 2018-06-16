@@ -61,18 +61,19 @@ where
     // `current_width` is the width of everything
     // before the next token, including any space.
     let mut current_width = 0;
-    let sum: usize = iter.take_while(|token| {
-        let width = token.width();
-        if current_width + width > available_width {
-            false
-        } else {
-            // Include the delimiter after this token.
-            current_width += width;
-            current_width += delimiter_width;
-            true
-        }
-    }).map(|token| token.len() + delimiter_len)
-        .sum();
+    let sum: usize =
+        iter.take_while(|token| {
+            let width = token.width();
+            if current_width + width > available_width {
+                false
+            } else {
+                // Include the delimiter after this token.
+                current_width += width;
+                current_width += delimiter_width;
+                true
+            }
+        }).map(|token| token.len() + delimiter_len)
+            .sum();
 
     // We counted delimiter once too many times,
     // but only if the iterator was non empty.
@@ -82,7 +83,7 @@ where
     debug_assert!(current_width <= available_width + delimiter_width);
 
     Span {
-        length: length,
+        length,
         width: current_width,
     }
 }
