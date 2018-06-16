@@ -1,5 +1,5 @@
 use direction::{Direction, Orientation};
-use event::{AnyCb, Event, EventResult, Key, MouseEvent};
+use event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
 use rect::Rect;
 use theme::ColorStyle;
 use vec::Vec2;
@@ -40,6 +40,9 @@ pub struct ScrollView<V> {
 
     // How much padding should be between content and scrollbar?
     scrollbar_padding: Vec2,
+
+    /// Initial position of the cursor when dragging.
+    thumb_grab: Option<(Orientation, usize)>,
 }
 
 impl<V> ScrollView<V> {
@@ -53,6 +56,7 @@ impl<V> ScrollView<V> {
             enabled: XY::new(false, true),
             show_scrollbars: true,
             scrollbar_padding: Vec2::new(1, 0),
+            thumb_grab: None,
         }
     }
 
@@ -107,6 +111,11 @@ impl<V> ScrollView<V> {
         self.inner_size.zip_map(self.last_size, |i, s| i > s)
     }
 
+    /// Stops grabbing the scrollbar.
+    fn release_grab(&mut self) {
+        self.thumb_grab = None;
+    }
+
     /// Returns the size taken by the scrollbars.
     ///
     /// Will be zero in axis where we're not scrolling.
@@ -156,6 +165,61 @@ where
         let new_scrollable = inner_size.zip_map(size, |i, s| i > s);
 
         (inner_size, size, new_scrollable)
+    }
+
+    /// Starts scrolling from the cursor position.
+    ///
+    /// Returns `true` if the event was consumed.
+    fn start_drag(&mut self, position: Vec2) -> bool {
+        let scrollbar_pos = self.last_size - (1, 1);
+
+        let grabbed = scrollbar_pos.zip_map(position, |s, p| s == p);
+
+        let lengths = self.scrollbar_thumb_lengths();
+        let offsets = self.scrollbar_thumb_offsets(lengths);
+
+        // See if we grabbed one of the scrollbars
+        for (orientation, pos, length, offset) in
+            XY::zip4(Orientation::pair(), position, lengths, offsets).zip(grabbed.swap())
+                .into_iter()
+                .filter(|&(_, grab)| grab)
+                .map(|(x, _)| x)
+        {
+
+            if pos >= offset && pos < offset + length {
+                // We grabbed the thumb! Now scroll from that position.
+                self.thumb_grab = Some((orientation, pos - offset));
+            } else {
+                // We hit the scrollbar, outside of the thumb. Let's move the middle there.
+                self.thumb_grab = Some((orientation, (length-1)/2));
+                self.drag(position);
+            }
+
+            return true;
+        }
+
+        false
+    }
+
+    fn drag(&mut self, position: Vec2) {
+        if let Some((orientation, grab)) = self.thumb_grab {
+            self.scroll_to_thumb(
+                orientation,
+                position.get(orientation).saturating_sub(grab),
+            );
+        }
+    }
+
+    fn scroll_to_thumb(&mut self, orientation: Orientation, thumb_pos: usize) {
+        let lengths = self.scrollbar_thumb_lengths();
+        let available = self.available_size();
+
+        // The new offset is thumb_pos * (content + 1 - available) / (available + 1 - thumb size)
+        let new_offset = (self.inner_size + (1, 1) - available) * thumb_pos
+            / (available + (1, 1) - lengths);
+        let max_offset = self.inner_size - self.available_size();
+        self.offset
+            .set_axis_from(orientation, &new_offset.or_min(max_offset));
     }
 
     /// Computes the size we would need given the constraints.
@@ -236,12 +300,18 @@ where
                 let offset = orientation.make_vec(offset, 0);
 
                 printer.print_line(orientation, start, size, c);
+
+                let thumb_c = if self.thumb_grab.map(|(o, _)| o == orientation).unwrap_or(false) {
+                    " "
+                } else {
+                    "▒"
+                };
                 printer.with_color(color, |printer| {
                     printer.print_line(
                         orientation,
                         start + offset,
                         length,
-                        "▒",
+thumb_c,
                     );
                 });
             },
@@ -293,6 +363,33 @@ where
                                 .saturating_sub(self.available_size().y),
                             self.offset.y + 3,
                         );
+                        EventResult::Consumed(None)
+                    }
+                    Event::Mouse {
+                        event: MouseEvent::Press(MouseButton::Left),
+                        position,
+                        offset,
+                    } if position
+                        .checked_sub(offset)
+                        .map(|position| self.start_drag(position))
+                        .unwrap_or(false) =>
+                    {
+                        EventResult::Consumed(None)
+                    }
+                    Event::Mouse {
+                        event: MouseEvent::Hold(MouseButton::Left),
+                        position,
+                        offset,
+                    } => {
+                        let position = position.saturating_sub(offset);
+                        self.drag(position);
+                        EventResult::Consumed(None)
+                    }
+                    Event::Mouse {
+                        event: MouseEvent::Release(MouseButton::Left),
+                        ..
+                    } => {
+                        self.release_grab();
                         EventResult::Consumed(None)
                     }
                     Event::Ctrl(Key::Up) | Event::Key(Key::Up)

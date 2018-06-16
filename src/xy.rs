@@ -88,6 +88,11 @@ impl<T> XY<T> {
         iter::once(&self.x).chain(iter::once(&self.y))
     }
 
+    /// Creates an iterator that returns `x`, then `y`.
+    pub fn into_iter(self) -> iter::Chain<iter::Once<T>, iter::Once<T>> {
+        iter::once(self.x).chain(iter::once(self.y))
+    }
+
     /// Returns a reference to the value on the given axis.
     pub fn get(&self, o: Orientation) -> &T {
         match o {
