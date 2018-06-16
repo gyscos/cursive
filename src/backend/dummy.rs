@@ -4,6 +4,10 @@ use event;
 use theme;
 use vec::Vec2;
 
+use std::time::Duration;
+
+use chan;
+
 pub struct Backend;
 
 impl Backend {
@@ -28,15 +32,13 @@ impl backend::Backend for Backend {
         (1, 1).into()
     }
 
-    fn poll_event(&mut self) -> event::Event {
-        event::Event::Exit
+    fn prepare_input(&mut self, event_sink: &chan::Sender<event::Event>, _timeout: Duration) {
+        event_sink.send(event::Event::Exit)
     }
 
     fn print_at(&self, _: Vec2, _: &str) {}
 
     fn clear(&self, _: theme::Color) {}
-
-    fn set_refresh_rate(&mut self, _: u32) {}
 
     // This sets the Colours and returns the previous colours
     // to allow you to set them back when you're done.

@@ -15,6 +15,8 @@ use event::{Event, Key, MouseButton, MouseEvent};
 use std::collections::HashSet;
 use theme::{BaseColor, Color, ColorPair, Effect};
 use vec::Vec2;
+use chan;
+use std::time::{Duration, Instant};
 
 enum ColorRole {
     Foreground,
@@ -22,12 +24,12 @@ enum ColorRole {
 }
 
 pub struct Backend {
-    mouse_position: Vec2,
     buttons_pressed: HashSet<MouseButton>,
+    mouse_position: Vec2,
 }
 
 impl Backend {
-    pub fn init() -> Box<Self> {
+    pub fn init() -> Box<backend::Backend> {
         terminal::open("Cursive", 80, 24);
         terminal::set(terminal::config::Window::empty().resizeable(true));
         terminal::set(vec![
@@ -42,11 +44,68 @@ impl Backend {
         ]);
 
         let c = Backend {
-            mouse_position: Vec2::zero(),
             buttons_pressed: HashSet::new(),
+            mouse_position: Vec2::zero(),
         };
 
         Box::new(c)
+    }
+
+    fn parse_next(&mut self) -> Option<Event> {
+
+        // TODO: we could add backend-specific controls here.
+        // Ex: ctrl+mouse wheel cause window cellsize to change
+        terminal::read_event().map(|ev| {
+            match ev {
+                BltEvent::Close => Event::Exit,
+                BltEvent::Resize { .. } => Event::WindowResize,
+                // TODO: mouse support
+                BltEvent::MouseMove { x, y } => {
+                    self.mouse_position = Vec2::new(x as usize, y as usize);
+                    // TODO: find out if a button is pressed?
+                    match self.buttons_pressed.iter().next() {
+                        None => Event::Refresh,
+                        Some(btn) => Event::Mouse {
+                            event: MouseEvent::Hold(*btn),
+                            position: self.mouse_position,
+                            offset: Vec2::zero(),
+                        },
+                    }
+                }
+                BltEvent::MouseScroll { delta } => Event::Mouse {
+                    event: if delta < 0 {
+                        MouseEvent::WheelUp
+                    } else {
+                        MouseEvent::WheelDown
+                    },
+                    position: self.mouse_position,
+                    offset: Vec2::zero(),
+                },
+                BltEvent::KeyPressed { key, ctrl, shift } => {
+                    self.blt_keycode_to_ev(key, shift, ctrl)
+                }
+                // TODO: there's no Key::Shift/Ctrl for w/e reason
+                BltEvent::ShiftPressed => Event::Refresh,
+                BltEvent::ControlPressed => Event::Refresh,
+                // TODO: what should we do here?
+                BltEvent::KeyReleased { key, .. } => {
+                    // It's probably a mouse key.
+                    blt_keycode_to_mouse_button(key)
+                        .map(|btn| {
+                            self.buttons_pressed.remove(&btn);
+                            Event::Mouse {
+                                event: MouseEvent::Release(btn),
+                                position: self.mouse_position,
+                                offset: Vec2::zero(),
+                            }
+                        })
+                    .unwrap_or(Event::Unknown(vec![]))
+                }
+                BltEvent::ShiftReleased | BltEvent::ControlReleased => {
+                    Event::Refresh
+                }
+            }
+        })
     }
 
     fn blt_keycode_to_ev(
@@ -247,66 +306,16 @@ impl backend::Backend for Backend {
         terminal::print_xy(pos.x as i32, pos.y as i32, text);
     }
 
-    fn set_refresh_rate(&mut self, _: u32) {
-        // TODO: unsupported
-    }
-
-    fn poll_event(&mut self) -> Event {
-        // TODO: we could add backend-specific controls here.
-        // Ex: ctrl+mouse wheel cause window cellsize to change
-        if let Some(ev) = terminal::wait_event() {
-            match ev {
-                BltEvent::Close => Event::Exit,
-                BltEvent::Resize { .. } => Event::WindowResize,
-                // TODO: mouse support
-                BltEvent::MouseMove { x, y } => {
-                    self.mouse_position = Vec2::new(x as usize, y as usize);
-                    // TODO: find out if a button is pressed?
-                    match self.buttons_pressed.iter().next() {
-                        None => Event::Refresh,
-                        Some(btn) => Event::Mouse {
-                            event: MouseEvent::Hold(*btn),
-                            position: self.mouse_position,
-                            offset: Vec2::zero(),
-                        },
-                    }
-                }
-                BltEvent::MouseScroll { delta } => Event::Mouse {
-                    event: if delta < 0 {
-                        MouseEvent::WheelUp
-                    } else {
-                        MouseEvent::WheelDown
-                    },
-                    position: self.mouse_position,
-                    offset: Vec2::zero(),
-                },
-                BltEvent::KeyPressed { key, ctrl, shift } => {
-                    self.blt_keycode_to_ev(key, shift, ctrl)
-                }
-                // TODO: there's no Key::Shift/Ctrl for w/e reason
-                BltEvent::ShiftPressed => Event::Refresh,
-                BltEvent::ControlPressed => Event::Refresh,
-                // TODO: what should we do here?
-                BltEvent::KeyReleased { key, .. } => {
-                    // It's probably a mouse key.
-                    blt_keycode_to_mouse_button(key)
-                        .map(|btn| {
-                            self.buttons_pressed.remove(&btn);
-                            Event::Mouse {
-                                event: MouseEvent::Release(btn),
-                                position: self.mouse_position,
-                                offset: Vec2::zero(),
-                            }
-                        })
-                        .unwrap_or(Event::Unknown(vec![]))
-                }
-                BltEvent::ShiftReleased | BltEvent::ControlReleased => {
-                    Event::Refresh
-                }
+    fn prepare_input(&mut self, event_sink: &chan::Sender<Event>, timeout: Duration) {
+        // Wait for up to `timeout_ms`.
+        let start = Instant::now();
+        while start.elapsed() < timeout {
+            if let Some(event) = self.parse_next() {
+                event_sink.send(event);
+                return;
             }
-        } else {
-            Event::Refresh
         }
+        event_sink.send(Event::Refresh);
     }
 }
 

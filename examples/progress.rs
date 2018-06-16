@@ -27,7 +27,7 @@ fn main() {
             .content(Button::new("Start", phase_1)),
     );
 
-    // Auto-refresh is currently required for animated views
+    // Auto-refresh is required for animated views
     siv.set_fps(30);
 
     siv.run();
@@ -52,7 +52,7 @@ fn phase_1(s: &mut Cursive) {
                 fake_load(n_max, &counter);
 
                 // When we're done, send a callback through the channel
-                cb.send(Box::new(coffee_break)).unwrap();
+                cb.send(Box::new(coffee_break));
             })
             .full_width(),
     ));
@@ -114,7 +114,7 @@ fn phase_2(s: &mut Cursive) {
             }
         }
 
-        cb.send(Box::new(final_step)).unwrap();
+        cb.send(Box::new(final_step));
     });
 }
 

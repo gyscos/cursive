@@ -10,7 +10,11 @@
 use event;
 use theme;
 
+use chan::{Receiver, Sender};
+
 use vec::Vec2;
+
+use std::time::Duration;
 
 pub mod dummy;
 
@@ -27,6 +31,24 @@ pub trait Backend {
     /// This should clear any state in the terminal.
     fn finish(&mut self);
 
+    /// Starts a thread to collect input and send it to the given channel.
+    fn start_input_thread(&mut self, event_sink: Sender<event::Event>, running: Receiver<bool>) {
+        // Dummy implementation for some backends.
+        let _ = event_sink;
+        let _ = running;
+    }
+
+    /// Prepares the backend to collect input.
+    ///
+    /// This is only required for non-thread-safe backends like BearLibTerminal
+    /// where we cannot collect input in a separate thread.
+    fn prepare_input(&mut self, event_sink: &Sender<event::Event>, timeout: Duration) {
+        // Dummy implementation for most backends.
+        // Little trick to avoid unused variables.
+        let _ = event_sink;
+        let _ = timeout;
+    }
+
     /// Refresh the screen.
     fn refresh(&mut self);
 
@@ -36,19 +58,11 @@ pub trait Backend {
     /// Returns the screen size.
     fn screen_size(&self) -> Vec2;
 
-    /// Main input method
-    fn poll_event(&mut self) -> event::Event;
-
     /// Main method used for printing
     fn print_at(&self, pos: Vec2, text: &str);
 
     /// Clears the screen with the given color.
     fn clear(&self, color: theme::Color);
-
-    /// Sets the refresh rate for the backend.
-    ///
-    /// If no event is detected in the interval, send an `Event::Refresh`.
-    fn set_refresh_rate(&mut self, fps: u32);
 
     /// Starts using a new color.
     ///
