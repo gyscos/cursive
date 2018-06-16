@@ -33,9 +33,11 @@ pub struct ScrollView<V> {
 
     // Should we show scrollbars?
     //
-    // Even if this is true, no scrollbar will be printed if we don't need to scroll.
+    // Even if this is true, no scrollbar will be printed if we don't need to
+    // scroll.
     //
-    // Could be an enum {Never, Auto, Always}
+    // TODO: have an option to always show the scrollbar.
+    // TODO: have an option to show scrollbar on top/left.
     show_scrollbars: bool,
 
     // How much padding should be between content and scrollbar?
@@ -126,7 +128,7 @@ impl<V> ScrollView<V> {
 
     /// Returns the size available for the child view.
     fn available_size(&self) -> Vec2 {
-        self.last_size - self.scrollbar_size()
+        self.last_size.saturating_sub(self.scrollbar_size())
     }
 }
 
@@ -159,8 +161,9 @@ where
         );
 
         // On non-scrolling axis, give inner_size the available space instead.
-        let inner_size =
-            self.enabled.select_or(inner_size, size - scrollbar_size);
+        let inner_size = self
+            .enabled
+            .select_or(inner_size, size.saturating_sub(scrollbar_size));
 
         let new_scrollable = inner_size.zip_map(size, |i, s| i > s);
 
@@ -171,7 +174,7 @@ where
     ///
     /// Returns `true` if the event was consumed.
     fn start_drag(&mut self, position: Vec2) -> bool {
-        let scrollbar_pos = self.last_size - (1, 1);
+        let scrollbar_pos = self.last_size.saturating_sub((1, 1));
 
         let grabbed = scrollbar_pos.zip_map(position, |s, p| s == p);
 
@@ -180,18 +183,19 @@ where
 
         // See if we grabbed one of the scrollbars
         for (orientation, pos, length, offset) in
-            XY::zip4(Orientation::pair(), position, lengths, offsets).zip(grabbed.swap())
+            XY::zip4(Orientation::pair(), position, lengths, offsets)
+                .zip(grabbed.swap())
                 .into_iter()
                 .filter(|&(_, grab)| grab)
                 .map(|(x, _)| x)
         {
-
             if pos >= offset && pos < offset + length {
                 // We grabbed the thumb! Now scroll from that position.
                 self.thumb_grab = Some((orientation, pos - offset));
             } else {
-                // We hit the scrollbar, outside of the thumb. Let's move the middle there.
-                self.thumb_grab = Some((orientation, (length-1)/2));
+                // We hit the scrollbar, outside of the thumb.
+                // Let's move the middle there.
+                self.thumb_grab = Some((orientation, (length - 1) / 2));
                 self.drag(position);
             }
 
@@ -214,10 +218,12 @@ where
         let lengths = self.scrollbar_thumb_lengths();
         let available = self.available_size();
 
-        // The new offset is thumb_pos * (content + 1 - available) / (available + 1 - thumb size)
-        let new_offset = (self.inner_size + (1, 1) - available) * thumb_pos
-            / (available + (1, 1) - lengths);
-        let max_offset = self.inner_size - self.available_size();
+        // The new offset is:
+        // thumb_pos * (content + 1 - available) / (available + 1 - thumb size)
+        let new_offset = (self.inner_size + (1, 1)).saturating_sub(available)
+            * thumb_pos
+            / (available + (1, 1)).saturating_sub(lengths);
+        let max_offset = self.inner_size.saturating_sub(self.available_size());
         self.offset
             .set_axis_from(orientation, &new_offset.or_min(max_offset));
     }
@@ -235,7 +241,8 @@ where
 
         // If we need to add scrollbars, the available size will change.
         if scrollable.any() && self.show_scrollbars {
-            // Attempt 2: he wants to scroll? Sure! Try again with some space for the scrollbar.
+            // Attempt 2: he wants to scroll? Sure!
+            // Try again with some space for the scrollbar.
             let (inner_size, size, new_scrollable) =
                 self.sizes_when_scrolling(constraint, scrollable);
             if scrollable != new_scrollable {
@@ -266,7 +273,7 @@ where
     fn scrollbar_thumb_offsets(&self, lengths: Vec2) -> Vec2 {
         let available = self.available_size();
         // The number of steps is 1 + the "extra space"
-        let steps = available - lengths + (1, 1);
+        let steps = (available + (1, 1)).saturating_sub(lengths);
         steps * self.offset / (self.inner_size + (1, 1) - available)
     }
 }
@@ -296,12 +303,19 @@ where
         XY::zip5(lengths, offsets, size, line_c, Orientation::pair()).run_if(
             scrolling,
             |(length, offset, size, c, orientation)| {
-                let start = (printer.size - (1, 1)).with_axis(orientation, 0);
+                let start = printer
+                    .size
+                    .saturating_sub((1, 1))
+                    .with_axis(orientation, 0);
                 let offset = orientation.make_vec(offset, 0);
 
                 printer.print_line(orientation, start, size, c);
 
-                let thumb_c = if self.thumb_grab.map(|(o, _)| o == orientation).unwrap_or(false) {
+                let thumb_c = if self
+                    .thumb_grab
+                    .map(|(o, _)| o == orientation)
+                    .unwrap_or(false)
+                {
                     " "
                 } else {
                     "▒"
@@ -311,14 +325,14 @@ where
                         orientation,
                         start + offset,
                         length,
-thumb_c,
+                        thumb_c,
                     );
                 });
             },
         );
 
         if scrolling.both() {
-            printer.print((printer.size.x - 1, printer.size.y - 1), "╳");
+            printer.print(printer.size.saturating_sub((1, 1)), "╳");
         }
 
         // Draw content
@@ -340,7 +354,8 @@ thumb_c,
             EventResult::Ignored => {
                 // If it's an arrow, try to scroll in the given direction.
                 // If it's a mouse scroll, try to scroll as well.
-                // Also allow Ctrl+arrow to move the view without moving selection.
+                // Also allow Ctrl+arrow to move the view,
+                // but not the selection.
                 match event {
                     Event::Mouse {
                         event: MouseEvent::WheelUp,
@@ -457,7 +472,10 @@ thumb_c,
 
         self.inner.layout(self.inner_size);
 
-        // TODO: Refresh offset if needed!
+        // The offset cannot be more than content - available
+        self.offset = self
+            .offset
+            .or_min(inner_size.saturating_sub(self.available_size()));
     }
 
     fn needs_relayout(&self) -> bool {
