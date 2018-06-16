@@ -1,6 +1,5 @@
 use direction::Direction;
-use event::{Event, EventResult};
-use std::any::Any;
+use event::{AnyCb, Event, EventResult};
 use std::cell;
 use std::ops::Deref;
 use theme::ColorStyle;
@@ -145,9 +144,7 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn call_on_any<'a>(
-        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>,
-    ) {
+    fn call_on_any<'a>(&mut self, selector: &Selector, callback: AnyCb<'a>) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => {
                 v.call_on_any(selector, callback)
@@ -462,11 +459,10 @@ impl StackView {
                 StackPositionIterator::new(self.layers.iter(), printer.size)
                     .enumerate()
             {
-                v.view.draw(&printer.sub_printer(
-                    offset,
-                    v.size,
-                    i + 1 == last,
-                ));
+                v.view.draw(&printer
+                    .offset(offset)
+                    .cropped(v.size)
+                    .focused(i + 1 == last));
             }
         });
     }
@@ -578,8 +574,7 @@ impl View for StackView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector,
-        mut callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
     ) {
         for layer in &mut self.layers {
             layer

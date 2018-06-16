@@ -19,7 +19,9 @@ fn main() {
     );
 
     // We'll add a find feature!
-    siv.add_layer(Dialog::info("Hint: press Ctrl-F to find in text!"));
+    siv.add_layer(Dialog::info(
+        "Hint: press Ctrl-F to find in text!",
+    ));
 
     siv.add_global_callback(Event::CtrlChar('f'), |s| {
         // When Ctrl-F is pressed, show the Find popup.

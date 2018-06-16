@@ -38,6 +38,10 @@ fn on_edit(siv: &mut Cursive, _content: &str, _cursor: usize) {
     let matches = edit_1.get_content() == edit_2.get_content();
 
     siv.call_on_id("match", |v: &mut TextView| {
-        v.set_content(if matches { "match" } else { "no match" })
+        v.set_content(if matches {
+            "match"
+        } else {
+            "no match"
+        })
     });
 }

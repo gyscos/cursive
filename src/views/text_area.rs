@@ -1,5 +1,6 @@
 use direction::Direction;
 use event::{Event, EventResult, Key, MouseButton, MouseEvent};
+use rect::Rect;
 use std::cmp::min;
 use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
@@ -160,6 +161,10 @@ impl TextArea {
     /// Finds the row containing the cursor
     fn selected_row(&self) -> usize {
         self.row_at(self.cursor)
+    }
+
+    fn selected_col(&self) -> usize {
+        self.col_at(self.cursor)
     }
 
     fn page_up(&mut self) {
@@ -569,13 +574,10 @@ impl View for TextArea {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, self.last_size) =>
+            } if !self.rows.is_empty()
+                && position.fits_in_rect(offset, self.last_size) =>
             {
-                position.checked_sub(offset).map(|position| {
-                    if self.rows.is_empty() {
-                        return;
-                    }
-
+                if let Some(position) = position.checked_sub(offset) {
                     let y = position.y + self.scrollbase.start_line;
                     let y = min(y, self.rows.len() - 1);
                     let x = position.x;
@@ -583,7 +585,7 @@ impl View for TextArea {
                     let content = &self.content[row.start..row.end];
 
                     self.cursor = row.start + simple_prefix(content, x).length;
-                });
+                }
             }
             _ => return EventResult::Ignored,
         }
@@ -604,5 +606,25 @@ impl View for TextArea {
     fn layout(&mut self, size: Vec2) {
         self.last_size = size;
         self.compute_rows(size);
+    }
+
+    fn important_area(&self, _: Vec2) -> Rect {
+        // The important area is a single character
+        let char_width = if self.cursor >= self.content.len() {
+            // If we're are the end of the content, it'll be a space
+            1
+        } else {
+            // Otherwise it's the selected grapheme
+            self.content[self.cursor..]
+                .graphemes(true)
+                .next()
+                .unwrap()
+                .width()
+        };
+
+        Rect::from_size(
+            (self.selected_col(), self.selected_row()),
+            (char_width, 1),
+        )
     }
 }

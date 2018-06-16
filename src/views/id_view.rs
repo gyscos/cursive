@@ -82,10 +82,9 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
         match selector {
             &Selector::Id(id) if id == self.id => callback(self),
             s => {
-                self.view
-                    .try_borrow_mut()
-                    .ok()
-                    .map(|mut v| v.deref_mut().call_on_any(s, callback));
+                if let Ok(mut v) = self.view.try_borrow_mut() {
+                    v.deref_mut().call_on_any(s, callback);
+                }
             }
         }
     }

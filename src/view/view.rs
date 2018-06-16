@@ -1,5 +1,6 @@
 use direction::Direction;
-use event::{Event, EventResult};
+use event::{AnyCb, Event, EventResult};
+use rect::Rect;
 use std::any::Any;
 use vec::Vec2;
 use view::{AnyView, Selector};
@@ -72,7 +73,7 @@ pub trait View: Any + AnyView {
     /// If the selector doesn't find a match, the closure will not be run.
     ///
     /// Default implementation is a no-op.
-    fn call_on_any<'a>(&mut self, _: &Selector, _: Box<FnMut(&mut Any) + 'a>) {
+    fn call_on_any<'a>(&mut self, _: &Selector, _: AnyCb<'a>) {
         // TODO: FnMut -> FnOnce once it works
     }
 
@@ -94,5 +95,17 @@ pub trait View: Any + AnyView {
     fn take_focus(&mut self, source: Direction) -> bool {
         let _ = source;
         false
+    }
+
+    /// What part of the view is important and should be visible?
+    ///
+    /// When only part of this view can be visible, this helps
+    /// determine which part.
+    ///
+    /// It is given the view size (same size given to `layout`).
+    ///
+    /// Default implementation return the entire view.
+    fn important_area(&self, view_size: Vec2) -> Rect {
+        Rect::from_corners((0, 0), view_size)
     }
 }

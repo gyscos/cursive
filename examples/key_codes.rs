@@ -9,7 +9,11 @@ use cursive::{Cursive, Printer};
 
 fn main() {
     let mut siv = Cursive::default();
-    siv.add_layer(KeyCodeView::new(10).full_width().fixed_height(10));
+    siv.add_layer(
+        KeyCodeView::new(10)
+            .full_width()
+            .fixed_height(10),
+    );
 
     siv.run();
 }

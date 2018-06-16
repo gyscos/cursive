@@ -12,7 +12,7 @@ pub struct Align {
 impl Align {
     /// Creates a new Align object from the given alignments.
     pub fn new(h: HAlign, v: VAlign) -> Self {
-        Align { h: h, v: v }
+        Align { h, v }
     }
 
     /// Creates a top-left alignment.

@@ -452,7 +452,7 @@ impl View for TextView {
         let h = self.rows.len();
         // If the content is smaller than the view, align it somewhere.
         let offset = self.align.v.get_offset(h, printer.size.y);
-        let printer = &printer.offset((0, offset), true);
+        let printer = &printer.offset((0, offset));
 
         let content = self.content.lock().unwrap();
 

@@ -19,7 +19,11 @@ use cursive::{Cursive, Printer};
 fn main() {
     let mut siv = Cursive::default();
 
-    siv.add_layer(Canvas::new(()).with_draw(draw).fixed_size((20, 10)));
+    siv.add_layer(
+        Canvas::new(())
+            .with_draw(draw)
+            .fixed_size((20, 10)),
+    );
 
     siv.add_global_callback('q', |s| s.quit());
 

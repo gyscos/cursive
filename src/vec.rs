@@ -240,6 +240,27 @@ impl Mul<usize> for XY<usize> {
     }
 }
 
+impl<T> Mul<XY<T>> for XY<T>
+where
+    T: Mul<T>,
+{
+    type Output = XY<T::Output>;
+
+    fn mul(self, other: XY<T>) -> Self::Output {
+        self.zip_map(other, |s, o| s * o)
+    }
+}
+impl<T> Div<XY<T>> for XY<T>
+where
+    T: Div<T>,
+{
+    type Output = XY<T::Output>;
+
+    fn div(self, other: XY<T>) -> Self::Output {
+        self.zip_map(other, |s, o| s / o)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Vec2;

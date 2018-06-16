@@ -12,7 +12,10 @@ fn main() {
     let mut siv = Cursive::default();
 
     let mut styled = StyledString::plain("Isn't ");
-    styled.append(StyledString::styled("that ", Color::Dark(BaseColor::Red)));
+    styled.append(StyledString::styled(
+        "that ",
+        Color::Dark(BaseColor::Red),
+    ));
     styled.append(StyledString::styled(
         "cool?",
         Style::from(Color::Light(BaseColor::Blue)).combine(Effect::Bold),

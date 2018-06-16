@@ -1,6 +1,8 @@
 use direction;
-use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
-use std::any::Any;
+use event::{
+    AnyCb, Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+};
+use rect::Rect;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
@@ -271,7 +273,9 @@ impl View for ListView {
             .draw(printer, |printer, i| match self.children[i] {
                 ListChild::Row(ref label, ref view) => {
                     printer.print((0, 0), label);
-                    view.draw(&printer.offset((offset, 0), i == self.focus));
+                    view.draw(&printer
+                        .offset((offset, 0))
+                        .focused(i == self.focus));
                 }
                 ListChild::Delimiter => (),
             });
@@ -403,10 +407,14 @@ impl View for ListView {
             Event::Key(Key::PageDown) => {
                 self.move_focus(10, direction::Direction::up())
             }
-            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => self
-                .move_focus(usize::max_value(), direction::Direction::back()),
-            Event::Key(Key::End) | Event::Ctrl(Key::End) => self
-                .move_focus(usize::max_value(), direction::Direction::front()),
+            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => self.move_focus(
+                usize::max_value(),
+                direction::Direction::back(),
+            ),
+            Event::Key(Key::End) | Event::Ctrl(Key::End) => self.move_focus(
+                usize::max_value(),
+                direction::Direction::front(),
+            ),
             Event::Key(Key::Tab) => {
                 self.move_focus(1, direction::Direction::front())
             }
@@ -451,8 +459,7 @@ impl View for ListView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector,
-        mut callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
     ) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, Box::new(|any| callback(any)));
@@ -473,5 +480,23 @@ impl View for ListView {
         } else {
             Err(())
         }
+    }
+
+    fn important_area(&self, size: Vec2) -> Rect {
+        if self.children.is_empty() {
+            return Rect::from((0, 0));
+        }
+
+        let labels_width = self.labels_width();
+
+        let area = match self.children[self.focus] {
+            ListChild::Row(_, ref view) => {
+                let available = Vec2::new(size.x - labels_width - 1, 1);
+                view.important_area(available) + (labels_width, 0)
+            }
+            ListChild::Delimiter => Rect::from_size((0, 0), (size.x, 1)),
+        };
+
+        area + (0, self.focus)
     }
 }

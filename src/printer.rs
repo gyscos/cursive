@@ -1,30 +1,66 @@
-//! Makes drawing on ncurses windows easier.
+//! Provide higher-level abstraction to draw things on backends.
 
 use backend::Backend;
+use direction::Orientation;
 use enumset::EnumSet;
-use std::cell::Cell;
 use std::cmp::min;
-use std::rc::Rc;
 use theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
 use unicode_segmentation::UnicodeSegmentation;
-use utils::lines::simple::prefix;
+use unicode_width::UnicodeWidthStr;
+use utils::lines::simple::{prefix, suffix};
 use vec::Vec2;
+use with::With;
 
 /// Convenient interface to draw on a subset of the screen.
+///
+/// The area it can print on is defined by `offset` and `size`.
+///
+/// The part of the content it will print is defined by `content_offset`
+/// and `size`.
 pub struct Printer<'a, 'b> {
     /// Offset into the window this printer should start drawing at.
+    ///
+    /// A print request at `x` will really print at `x + offset`.
     pub offset: Vec2,
+
     /// Size of the area we are allowed to draw on.
+    ///
+    /// Anything outside of this should be discarded.
+    pub output_size: Vec2,
+
+    /// Size allocated to the view.
+    ///
+    /// This should be the same value as the one given in the last call to
+    /// `View::layout`.
     pub size: Vec2,
+
+    /// Offset into the view for this printer.
+    ///
+    /// A print request `x`, will really print at `x - content_offset`.
+    pub content_offset: Vec2,
+
     /// Whether the view to draw is currently focused or not.
     pub focused: bool,
+
     /// Currently used theme
     pub theme: &'a Theme,
 
-    /// `true` if nothing has been drawn yet.
-    new: Rc<Cell<bool>>,
     /// Backend used to actually draw things
     backend: &'b Backend,
+}
+
+impl<'a, 'b> Clone for Printer<'a, 'b> {
+    fn clone(&self) -> Self {
+        Printer {
+            offset: self.offset,
+            content_offset: self.content_offset,
+            output_size: self.output_size,
+            size: self.size,
+            focused: self.focused,
+            theme: self.theme,
+            backend: self.backend,
+        }
+    }
 }
 
 impl<'a, 'b> Printer<'a, 'b> {
@@ -35,12 +71,14 @@ impl<'a, 'b> Printer<'a, 'b> {
     pub fn new<T: Into<Vec2>>(
         size: T, theme: &'a Theme, backend: &'b Backend,
     ) -> Self {
+        let size = size.into();
         Printer {
             offset: Vec2::zero(),
-            size: size.into(),
+            content_offset: Vec2::zero(),
+            output_size: size,
+            size,
             focused: true,
             theme,
-            new: Rc::new(Cell::new(true)),
             backend,
         }
     }
@@ -55,61 +93,152 @@ impl<'a, 'b> Printer<'a, 'b> {
             .clear(self.theme.palette[PaletteColor::Background]);
     }
 
-    /// Returns `true` if nothing has been printed yet.
-    pub fn is_new(&self) -> bool {
-        self.new.get()
-    }
-
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position relative to the window.
-    pub fn print<S: Into<Vec2>>(&self, pos: S, text: &str) {
-        self.new.set(false);
+    pub fn print<S: Into<Vec2>>(&self, start: S, text: &str) {
+        // Where we are asked to start printing. Oh boy.
+        let start = start.into();
 
-        let p = pos.into();
-        if p.y >= self.size.y || p.x >= self.size.x {
+        // We accept requests between `content_offset` and
+        // `content_offset + output_size`.
+        if !(start < (self.output_size + self.content_offset)) {
             return;
         }
+
+        // If start < content_offset, part of the text will not be visible.
+        // This is the part of the text that's hidden:
+        // (It should always be smaller than the content offset)
+        let hidden_part = self.content_offset.saturating_sub(start);
+        if hidden_part.y > 0 {
+            // Since we are printing a single line, there's nothing we can do.
+            return;
+        }
+
+        let text_width = text.width();
+
+        // If we're waaaay too far left, just give up.
+        if hidden_part.x > text_width {
+            return;
+        }
+
+        // We have to drop hidden_part.x width from the start of the string.
+        // prefix() may be too short if there's a double-width character.
+        // So instead, keep the suffix and drop the prefix.
+
+        // TODO: use a different prefix method that is *at least* the width
+        // (and not *at most*)
+        let tail =
+            suffix(text.graphemes(true), text_width - hidden_part.x, "");
+        let skipped_len = text.len() - tail.length;
+        let skipped_width = text_width - tail.width;
+        assert_eq!(text[..skipped_len].width(), skipped_width);
+
+        // This should be equal most of the time, except when there's a double
+        // character preventing us from splitting perfectly.
+        assert!(skipped_width >= hidden_part.x);
+
+        // Drop part of the text, and move the cursor correspondingly.
+        let text = &text[skipped_len..];
+        let start = start + (skipped_width, 0);
+        assert!(start.fits(self.content_offset));
+
+        // What we did before should guarantee that this won't overflow.
+        let start = start - self.content_offset;
+
         // Do we have enough room for the entire line?
-        let room = self.size.x - p.x;
+        let room = self.output_size.x - start.x;
+
+        // Drop the end of the text if it's too long
         // We want the number of CHARACTERS, not bytes.
         // (Actually we want the "width" of the string, see unicode-width)
         let prefix_len = prefix(text.graphemes(true), room, "").length;
         let text = &text[..prefix_len];
+        assert!(text.width() <= room);
 
-        let p = p + self.offset;
-        self.backend.print_at(p, text);
+        let start = start + self.offset;
+        self.backend.print_at(start, text);
     }
 
     /// Prints a vertical line using the given character.
-    pub fn print_vline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
-        self.new.set(false);
+    pub fn print_vline<T: Into<Vec2>>(
+        &self, start: T, height: usize, c: &str,
+    ) {
+        let start = start.into();
 
-        let p = start.into();
-        if p.y > self.size.y || p.x > self.size.x {
+        // Here again, we can abort if we're trying to print too far right or
+        // too low.
+        if !start.fits_in(self.output_size + self.content_offset) {
             return;
         }
-        let len = min(len, self.size.y - p.y);
 
-        let p = p + self.offset;
-        for y in 0..len {
-            self.backend.print_at(p + (0, y), c);
+        // hidden_part describes how far to the top left of the viewport we are.
+        let hidden_part = self.content_offset.saturating_sub(start);
+        if hidden_part.x > 0 || hidden_part.y >= height {
+            // We're printing a single column, so we can't do much here.
+            return;
+        }
+
+        // Skip `hidden_part`
+        let start = start + hidden_part;
+        assert!(start.fits(self.content_offset));
+
+        let height = height - hidden_part.y;
+
+        // What we did before ensures this won't overflow.
+        let start = start - self.content_offset;
+
+        // Don't go overboard
+        let height = min(height, self.output_size.y - start.y);
+
+        let start = start + self.offset;
+        for y in 0..height {
+            self.backend.print_at(start + (0, y), c);
+        }
+    }
+
+    /// Prints a line using the given character.
+    pub fn print_line<T: Into<Vec2>>(
+        &self, orientation: Orientation, start: T, length: usize, c: &str,
+    ) {
+        match orientation {
+            Orientation::Vertical => self.print_vline(start, length, c),
+            Orientation::Horizontal => self.print_hline(start, length, c),
         }
     }
 
     /// Prints a horizontal line using the given character.
-    pub fn print_hline<T: Into<Vec2>>(&self, start: T, len: usize, c: &str) {
-        self.new.set(false);
+    pub fn print_hline<T: Into<Vec2>>(&self, start: T, width: usize, c: &str) {
+        let start = start.into();
 
-        let p = start.into();
-        if p.y > self.size.y || p.x > self.size.x {
+        // Nothing to be done if the start if too far to the bottom/right
+        if !start.fits_in(self.output_size + self.content_offset) {
             return;
         }
-        let len = min(len, self.size.x - p.x);
-        let text: String = ::std::iter::repeat(c).take(len).collect();
 
-        let p = p + self.offset;
-        self.backend.print_at(p, &text);
+        let hidden_part = self.content_offset.saturating_sub(start);
+        if hidden_part.y > 0 || hidden_part.x >= width {
+            // We're printing a single line, so we can't do much here.
+            return;
+        }
+
+        // Skip `hidden_part`
+        let start = start + hidden_part;
+        assert!(start.fits(self.content_offset));
+
+        let width = width - hidden_part.x;
+
+        // Don't go too far
+        let start = start - self.content_offset;
+
+        // Don't write too much if we're close to the end
+        let width = min(width, (self.output_size.x - start.x) / c.width());
+
+        // Could we avoid allocating?
+        let text: String = ::std::iter::repeat(c).take(width).collect();
+
+        let start = start + self.offset;
+        self.backend.print_at(start, &text);
     }
 
     /// Call the given closure with a colored printer,
@@ -149,8 +278,6 @@ impl<'a, 'b> Printer<'a, 'b> {
         let color = style.color;
         let effects = style.effects;
 
-        // eprintln!("{:?}", effects);
-
         if let Some(color) = color {
             self.with_color(color, |printer| {
                 printer.with_effects(effects, f);
@@ -182,8 +309,9 @@ impl<'a, 'b> Printer<'a, 'b> {
             size: self.size,
             focused: self.focused,
             theme: theme,
-            new: self.new.clone(),
             backend: self.backend,
+            output_size: self.output_size,
+            content_offset: self.content_offset,
         };
         f(&new_printer);
     }
@@ -224,8 +352,6 @@ impl<'a, 'b> Printer<'a, 'b> {
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
         &self, start: T, size: S, invert: bool,
     ) {
-        self.new.set(false);
-
         let start = start.into();
         let size = size.into();
 
@@ -310,37 +436,98 @@ impl<'a, 'b> Printer<'a, 'b> {
     }
 
     /// Prints a horizontal delimiter with side border `├` and `┤`.
-    pub fn print_hdelim<T: Into<Vec2>>(&self, start: T, len: usize) {
+    pub fn print_hdelim<T>(&self, start: T, len: usize)
+    where
+        T: Into<Vec2>,
+    {
         let start = start.into();
         self.print(start, "├");
         self.print_hline(start + (1, 0), len.saturating_sub(2), "─");
         self.print(start + (len.saturating_sub(1), 0), "┤");
     }
 
-    /// Returns a printer on a subset of this one's area.
-    pub fn sub_printer<S: Into<Vec2>, T: Into<Vec2>>(
-        &self, offset: S, size: T, focused: bool,
-    ) -> Printer<'a, 'b> {
-        let size = size.into();
-        let offset = offset.into().or_min(self.size);
-        let available = if !offset.fits_in(self.size) {
-            Vec2::zero()
-        } else {
-            Vec2::min(self.size - offset, size)
-        };
-        Printer {
-            offset: self.offset + offset,
-            // We can't be larger than what remains
-            size: available,
-            focused: self.focused && focused,
-            theme: self.theme,
-            backend: self.backend,
-            new: Rc::clone(&self.new),
-        }
+    /// Returns a sub-printer with the given offset.
+    ///
+    /// It will print in an area slightly to the bottom/right.
+    pub fn offset<S>(&self, offset: S) -> Printer
+    where
+        S: Into<Vec2>,
+    {
+        let offset = offset.into();
+        self.clone().with(|s| {
+            // If we are drawing a part of the content,
+            // let's reduce this first.
+            let consumed = Vec2::min(s.content_offset, offset);
+
+            let offset = offset - consumed;
+            s.content_offset = s.content_offset - consumed;
+
+            s.offset = s.offset + offset;
+
+            s.output_size = s.output_size.saturating_sub(offset);
+            s.size = s.size.saturating_sub(offset);
+        })
     }
 
-    /// Returns a sub-printer with the given offset.
-    pub fn offset<S: Into<Vec2>>(&self, offset: S, focused: bool) -> Printer {
-        self.sub_printer(offset, self.size, focused)
+    /// Returns a new sub-printer inheriting the given focus.
+    ///
+    /// If `self` is focused and `focused == true`, the child will be focused.
+    ///
+    /// Otherwise, he will be unfocused.
+    pub fn focused(&self, focused: bool) -> Self {
+        self.clone().with(|s| {
+            s.focused &= focused;
+        })
+    }
+
+    /// Returns a new sub-printer with a cropped area.
+    ///
+    /// The new printer size will be the minimum of `size` and its current size.
+    ///
+    /// Any size reduction happens at the bottom-right.
+    pub fn cropped<S>(&self, size: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        self.clone().with(|s| {
+            let size = size.into();
+            s.output_size = Vec2::min(s.output_size, size);
+            s.size = Vec2::min(s.size, size);
+        })
+    }
+
+    /// Returns a new sub-printer with a shrinked area.
+    ///
+    /// The printer size will be reduced by the given border from the bottom-right.
+    pub fn shrinked<S>(&self, borders: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        self.cropped(self.size.saturating_sub(borders))
+    }
+
+    /// Returns a new sub-printer with a content offset.
+    pub fn content_offset<S>(&self, offset: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        self.clone().with(|s| {
+            s.content_offset = s.content_offset + offset;
+        })
+    }
+
+    /// Returns a sub-printer with a different inner size.
+    ///
+    /// This will not change the actual output size, but will appear bigger to
+    /// users of this printer.
+    ///
+    /// Useful to give to children who think they're big, but really aren't.
+    pub fn inner_size<S>(&self, size: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        self.clone().with(|s| {
+            s.size = size.into();
+        })
     }
 }

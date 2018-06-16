@@ -1,6 +1,7 @@
 use align::HAlign;
 use direction::Direction;
 use event::*;
+use rect::Rect;
 use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
@@ -21,6 +22,7 @@ pub struct Button {
     label: String,
     callback: Callback,
     enabled: bool,
+    last_size: Vec2,
 }
 
 impl Button {
@@ -43,6 +45,7 @@ impl Button {
             label: label.into(),
             callback: Callback::from_fn(cb),
             enabled: true,
+            last_size: Vec2::zero(),
         }
     }
 
@@ -140,11 +143,15 @@ impl View for Button {
         };
 
         let offset =
-            HAlign::Center.get_offset(self.label.len(), printer.size.x);
+            HAlign::Center.get_offset(self.label.width(), printer.size.x);
 
         printer.with_color(style, |printer| {
             printer.print((offset, 0), &self.label);
         });
+    }
+
+    fn layout(&mut self, size: Vec2) {
+        self.last_size = size;
     }
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {
@@ -155,6 +162,8 @@ impl View for Button {
     fn on_event(&mut self, event: Event) -> EventResult {
         // eprintln!("{:?}", event);
         // eprintln!("{:?}", self.req_size());
+        let width = self.label.width();
+        let self_offset = HAlign::Center.get_offset(width, self.last_size.x);
         match event {
             // 10 is the ascii code for '\n', that is the return key
             Event::Key(Key::Enter) => {
@@ -164,7 +173,8 @@ impl View for Button {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, self.req_size()) =>
+            } if position
+                .fits_in_rect(offset + (self_offset, 0), self.req_size()) =>
             {
                 EventResult::Consumed(Some(self.callback.clone()))
             }
@@ -174,5 +184,12 @@ impl View for Button {
 
     fn take_focus(&mut self, _: Direction) -> bool {
         self.enabled
+    }
+
+    fn important_area(&self, view_size: Vec2) -> Rect {
+        let width = self.label.width();
+        let offset = HAlign::Center.get_offset(width, view_size.x);
+
+        Rect::from_size((offset, 0), (width, 1))
     }
 }

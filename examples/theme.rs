@@ -6,7 +6,8 @@ use cursive::Cursive;
 fn main() {
     let mut siv = Cursive::default();
     // You can load a theme from a file at runtime for fast development.
-    siv.load_theme_file("assets/style.toml").unwrap();
+    siv.load_theme_file("assets/style.toml")
+        .unwrap();
 
     // Or you can directly load it from a string for easy deployment.
     // siv.load_theme(include_str!("../assets/style.toml")).unwrap();

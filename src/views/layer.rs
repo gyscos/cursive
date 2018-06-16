@@ -14,7 +14,7 @@ pub struct Layer<T: View> {
 impl<T: View> Layer<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
-        Layer { view: view }
+        Layer { view }
     }
 
     inner_getters!(self.view: T);
