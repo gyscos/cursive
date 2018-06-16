@@ -3,15 +3,15 @@ extern crate pancurses;
 use self::super::split_i32;
 use self::pancurses::mmask_t;
 use backend;
+use chan;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::io::{stdout, Write};
+use std::sync::Arc;
+use std::thread;
 use theme::{Color, ColorPair, Effect};
 use vec::Vec2;
-use std::sync::Arc;
-use chan;
-use std::thread;
 
 pub struct Backend {
     // Used
@@ -36,7 +36,9 @@ struct InputParser {
 unsafe impl Send for InputParser {}
 
 impl InputParser {
-    fn new(event_sink: chan::Sender<Event>, window: Arc<pancurses::Window>) -> Self {
+    fn new(
+        event_sink: chan::Sender<Event>, window: Arc<pancurses::Window>,
+    ) -> Self {
         InputParser {
             key_codes: initialize_keymap(),
             last_mouse_button: None,
@@ -48,21 +50,15 @@ impl InputParser {
     fn parse_next(&mut self) {
         let event = if let Some(ev) = self.window.getch() {
             match ev {
-                pancurses::Input::Character('\n') => {
-                    Event::Key(Key::Enter)
-                }
+                pancurses::Input::Character('\n') => Event::Key(Key::Enter),
                 // TODO: wait for a very short delay. If more keys are
                 // pipelined, it may be an escape sequence.
                 pancurses::Input::Character('\u{7f}')
-                    | pancurses::Input::Character('\u{8}') => {
-                        Event::Key(Key::Backspace)
-                    }
-                pancurses::Input::Character('\u{9}') => {
-                    Event::Key(Key::Tab)
+                | pancurses::Input::Character('\u{8}') => {
+                    Event::Key(Key::Backspace)
                 }
-                pancurses::Input::Character('\u{1b}') => {
-                    Event::Key(Key::Esc)
-                }
+                pancurses::Input::Character('\u{9}') => Event::Key(Key::Tab),
+                pancurses::Input::Character('\u{1b}') => Event::Key(Key::Esc),
                 pancurses::Input::Character(c) if (c as u32) <= 26 => {
                     Event::CtrlChar((b'a' - 1 + c as u8) as char)
                 }
@@ -85,9 +81,7 @@ impl InputParser {
                 pancurses::Input::KeyLeft => Event::Key(Key::Left),
                 pancurses::Input::KeyRight => Event::Key(Key::Right),
                 pancurses::Input::KeyHome => Event::Key(Key::Home),
-                pancurses::Input::KeyBackspace => {
-                    Event::Key(Key::Backspace)
-                }
+                pancurses::Input::KeyBackspace => Event::Key(Key::Backspace),
                 pancurses::Input::KeyF0 => Event::Key(Key::F0),
                 pancurses::Input::KeyF1 => Event::Key(Key::F1),
                 pancurses::Input::KeyF2 => Event::Key(Key::F2),
@@ -171,9 +165,7 @@ impl InputParser {
                 pancurses::Input::KeySMove => Event::Refresh,
                 pancurses::Input::KeySNext => Event::Shift(Key::PageDown),
                 pancurses::Input::KeySOptions => Event::Refresh,
-                pancurses::Input::KeySPrevious => {
-                    Event::Shift(Key::PageUp)
-                }
+                pancurses::Input::KeySPrevious => Event::Shift(Key::PageUp),
                 pancurses::Input::KeySPrint => Event::Refresh,
                 pancurses::Input::KeySRedo => Event::Refresh,
                 pancurses::Input::KeySReplace => Event::Refresh,
@@ -219,7 +211,8 @@ impl InputParser {
         let _alt = (mevent.bstate & pancurses::BUTTON_ALT as mmask_t) != 0;
         let _ctrl = (mevent.bstate & pancurses::BUTTON_CTRL as mmask_t) != 0;
 
-        mevent.bstate &= !(pancurses::BUTTON_SHIFT | pancurses::BUTTON_ALT
+        mevent.bstate &= !(pancurses::BUTTON_SHIFT
+            | pancurses::BUTTON_ALT
             | pancurses::BUTTON_CTRL) as mmask_t;
 
         let make_event = |event| Event::Mouse {
@@ -348,7 +341,6 @@ impl Backend {
         let style = pancurses::COLOR_PAIR(i as pancurses::chtype);
         self.window.attron(style);
     }
-
 }
 
 impl backend::Backend for Backend {
@@ -417,8 +409,12 @@ impl backend::Backend for Backend {
         self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
-    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>, stops: chan::Receiver<bool>) {
-        let mut input_parser = InputParser::new(event_sink, Arc::clone(&self.window));
+    fn start_input_thread(
+        &mut self, event_sink: chan::Sender<Event>,
+        stops: chan::Receiver<bool>,
+    ) {
+        let mut input_parser =
+            InputParser::new(event_sink, Arc::clone(&self.window));
 
         thread::spawn(move || {
             loop {
@@ -430,7 +426,6 @@ impl backend::Backend for Backend {
                 }
             }
         });
-
     }
 }
 

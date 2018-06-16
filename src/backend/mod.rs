@@ -32,7 +32,9 @@ pub trait Backend {
     fn finish(&mut self);
 
     /// Starts a thread to collect input and send it to the given channel.
-    fn start_input_thread(&mut self, event_sink: Sender<event::Event>, running: Receiver<bool>) {
+    fn start_input_thread(
+        &mut self, event_sink: Sender<event::Event>, running: Receiver<bool>,
+    ) {
         // Dummy implementation for some backends.
         let _ = event_sink;
         let _ = running;
@@ -42,7 +44,9 @@ pub trait Backend {
     ///
     /// This is only required for non-thread-safe backends like BearLibTerminal
     /// where we cannot collect input in a separate thread.
-    fn prepare_input(&mut self, event_sink: &Sender<event::Event>, timeout: Duration) {
+    fn prepare_input(
+        &mut self, event_sink: &Sender<event::Event>, timeout: Duration,
+    ) {
         // Dummy implementation for most backends.
         // Little trick to avoid unused variables.
         let _ = event_sink;

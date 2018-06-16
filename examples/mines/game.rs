@@ -64,8 +64,7 @@ impl Board {
     }
 
     fn get_mut(&mut self, pos: Vec2) -> Option<&mut Cell> {
-        self.cell_id(pos)
-            .map(move |i| &mut self.cells[i])
+        self.cell_id(pos).map(move |i| &mut self.cells[i])
     }
 
     pub fn cell_id(&self, pos: Vec2) -> Option<usize> {

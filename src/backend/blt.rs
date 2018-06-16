@@ -11,12 +11,12 @@ use self::bear_lib_terminal::terminal::{
 };
 use self::bear_lib_terminal::Color as BltColor;
 use backend;
+use chan;
 use event::{Event, Key, MouseButton, MouseEvent};
 use std::collections::HashSet;
+use std::time::{Duration, Instant};
 use theme::{BaseColor, Color, ColorPair, Effect};
 use vec::Vec2;
-use chan;
-use std::time::{Duration, Instant};
 
 enum ColorRole {
     Foreground,
@@ -52,7 +52,6 @@ impl Backend {
     }
 
     fn parse_next(&mut self) -> Option<Event> {
-
         // TODO: we could add backend-specific controls here.
         // Ex: ctrl+mouse wheel cause window cellsize to change
         terminal::read_event().map(|ev| {
@@ -99,7 +98,7 @@ impl Backend {
                                 offset: Vec2::zero(),
                             }
                         })
-                    .unwrap_or(Event::Unknown(vec![]))
+                        .unwrap_or(Event::Unknown(vec![]))
                 }
                 BltEvent::ShiftReleased | BltEvent::ControlReleased => {
                     Event::Refresh
@@ -306,7 +305,9 @@ impl backend::Backend for Backend {
         terminal::print_xy(pos.x as i32, pos.y as i32, text);
     }
 
-    fn prepare_input(&mut self, event_sink: &chan::Sender<Event>, timeout: Duration) {
+    fn prepare_input(
+        &mut self, event_sink: &chan::Sender<Event>, timeout: Duration,
+    ) {
         // Wait for up to `timeout_ms`.
         let start = Instant::now();
         while start.elapsed() < timeout {

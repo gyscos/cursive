@@ -273,9 +273,9 @@ impl View for ListView {
             .draw(printer, |printer, i| match self.children[i] {
                 ListChild::Row(ref label, ref view) => {
                     printer.print((0, 0), label);
-                    view.draw(&printer
-                        .offset((offset, 0))
-                        .focused(i == self.focus));
+                    view.draw(
+                        &printer.offset((offset, 0)).focused(i == self.focus),
+                    );
                 }
                 ListChild::Delimiter => (),
             });
@@ -407,14 +407,10 @@ impl View for ListView {
             Event::Key(Key::PageDown) => {
                 self.move_focus(10, direction::Direction::up())
             }
-            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => self.move_focus(
-                usize::max_value(),
-                direction::Direction::back(),
-            ),
-            Event::Key(Key::End) | Event::Ctrl(Key::End) => self.move_focus(
-                usize::max_value(),
-                direction::Direction::front(),
-            ),
+            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => self
+                .move_focus(usize::max_value(), direction::Direction::back()),
+            Event::Key(Key::End) | Event::Ctrl(Key::End) => self
+                .move_focus(usize::max_value(), direction::Direction::front()),
             Event::Key(Key::Tab) => {
                 self.move_focus(1, direction::Direction::front())
             }

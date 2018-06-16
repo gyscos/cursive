@@ -107,26 +107,26 @@ impl<V> ScrollView<V> {
     pub fn scroll_x(self, enabled: bool) -> Self {
         self.with(|s| s.set_scroll_x(enabled))
     }
-    
+
     /// Programmatically scroll to the top of the view.
     pub fn scroll_to_top(&mut self) {
         let curr_x = self.offset.x;
-        self.set_offset((curr_x,0));   
+        self.set_offset((curr_x, 0));
     }
-    
+
     /// Programmatically scroll to the bottom of the view.
     pub fn scroll_to_bottom(&mut self) {
         let max_y = self.inner_size.saturating_sub(self.available_size()).y;
-        let curr_x = self.offset.x; 
+        let curr_x = self.offset.x;
         self.set_offset((curr_x, max_y));
     }
-    
+
     /// Programmatically scroll to the leftmost side of the view.
     pub fn scroll_to_left(&mut self) {
         let curr_y = self.offset.y;
         self.set_offset((0, curr_y));
     }
-    
+
     /// Programmatically scroll to the rightmost side of the view.
     pub fn scroll_to_right(&mut self) {
         let max_x = self.inner_size.saturating_sub(self.available_size()).x;

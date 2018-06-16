@@ -13,11 +13,11 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use std::fs::File;
 use std::io;
-use std::io::{Write};
+use std::io::Write;
 use std::thread;
 
-use libc;
 use chan;
+use libc;
 
 pub struct Backend {
     current_style: Cell<ColorPair>,
@@ -88,7 +88,8 @@ impl InputParser {
             let _alt = (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
             let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
 
-            mevent.bstate &= !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT
+            mevent.bstate &= !(ncurses::BUTTON_SHIFT
+                | ncurses::BUTTON_ALT
                 | ncurses::BUTTON_CTRL)
                 as mmask_t;
 
@@ -248,7 +249,6 @@ impl Backend {
         let style = ncurses::COLOR_PAIR(i);
         ncurses::attron(style);
     }
-
 }
 
 impl backend::Backend for Backend {
@@ -263,7 +263,10 @@ impl backend::Backend for Backend {
         ncurses::has_colors()
     }
 
-    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>, stops: chan::Receiver<bool>) {
+    fn start_input_thread(
+        &mut self, event_sink: chan::Sender<Event>,
+        stops: chan::Receiver<bool>,
+    ) {
         let mut parser = InputParser::new(event_sink);
 
         // Start an input thread

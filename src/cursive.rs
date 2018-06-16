@@ -5,8 +5,8 @@ use event::{Callback, Event, EventResult};
 use printer::Printer;
 use std::any::Any;
 use std::collections::HashMap;
-use std::time::Duration;
 use std::path::Path;
+use std::time::Duration;
 use theme;
 use vec::Vec2;
 use view::{self, Finder, IntoBoxedView, Position, View};
@@ -582,10 +582,11 @@ impl Cursive {
         let input_channel = &self.event_source;
         let cb_channel = &self.cb_source;
 
-        self.backend.prepare_input(&self.event_sink, Duration::from_millis(30));
+        self.backend
+            .prepare_input(&self.event_sink, Duration::from_millis(30));
 
         if self.fps > 0 {
-            let timeout =  1000 / self.fps;
+            let timeout = 1000 / self.fps;
             let timeout = chan::after_ms(timeout);
             chan_select! {
                 input_channel.recv() -> input => {
@@ -726,7 +727,8 @@ impl Cursive {
                     event, position, ..
                 } = event
                 {
-                    if event.grabs_focus() && !self.menubar.autohide
+                    if event.grabs_focus()
+                        && !self.menubar.autohide
                         && !self.menubar.has_submenu()
                         && position.y == 0
                     {
@@ -743,7 +745,8 @@ impl Cursive {
                     self.menubar.on_event(event).process(self);
                 } else {
                     let offset = if self.menubar.autohide { 0 } else { 1 };
-                    match self.screen_mut()
+                    match self
+                        .screen_mut()
                         .on_event(event.relativized((0, offset)))
                     {
                         // If the event was ignored,
@@ -757,12 +760,11 @@ impl Cursive {
                 // Ok, we processed the event.
                 // Now tell the backend whether he sould keep receiving.
                 self.stop_sink.send(!self.running);
-            },
+            }
             Interruption::Callback(cb) => {
                 cb.call_box(self);
-            },
-            Interruption::Timeout => {
             }
+            Interruption::Timeout => {}
         }
     }
 

@@ -184,12 +184,10 @@ impl Backend {
     pub fn init() -> Box<Self> {
         print!("{}", termion::cursor::Hide);
 
-
         // TODO: lock stdout
         let terminal = AlternateScreen::from(MouseTerminal::from(
             ::std::io::stdout().into_raw_mode().unwrap(),
         ));
-
 
         let c = Backend {
             terminal: terminal,
@@ -265,7 +263,10 @@ impl backend::Backend for Backend {
         );
     }
 
-    fn start_input_thread(&mut self, event_sink: chan::Sender<Event>, stops: chan::Receiver<bool>) {
+    fn start_input_thread(
+        &mut self, event_sink: chan::Sender<Event>,
+        stops: chan::Receiver<bool>,
+    ) {
         let mut parser = InputParser::new(event_sink);
         thread::spawn(move || {
             loop {
