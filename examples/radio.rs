@@ -1,7 +1,7 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::views::{Dialog, DummyView, LinearLayout, RadioGroup};
+use cursive::Cursive;
 
 // This example uses radio buttons.
 

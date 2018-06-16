@@ -138,7 +138,8 @@ impl MenuPopup {
 
     fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
         let tree = Rc::clone(tree);
-        let max_width = 4 + self.menu
+        let max_width = 4 + self
+            .menu
             .children
             .iter()
             .map(Self::item_width)
@@ -249,7 +250,8 @@ impl View for MenuPopup {
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
         // We can't really shrink our items here, so it's not flexible.
-        let w = 4 + self.menu
+        let w = 4 + self
+            .menu
             .children
             .iter()
             .map(Self::item_width)

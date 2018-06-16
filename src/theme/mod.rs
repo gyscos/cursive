@@ -169,7 +169,7 @@ pub use self::color::{BaseColor, Color};
 pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::Effect;
-pub use self::palette::{default_palette, Palette, PaletteColor};
+pub use self::palette::{Palette, PaletteColor};
 pub use self::style::Style;
 use std::fs::File;
 use std::io;
@@ -193,13 +193,13 @@ impl Default for Theme {
         Theme {
             shadow: true,
             borders: BorderStyle::Simple,
-            palette: default_palette(),
+            palette: Palette::default(),
         }
     }
 }
 
 impl Theme {
-    fn load(&mut self, table: &toml::value::Table) {
+    fn load_toml(&mut self, table: &toml::value::Table) {
         if let Some(&toml::Value::Boolean(shadow)) = table.get("shadow") {
             self.shadow = shadow;
         }
@@ -209,7 +209,7 @@ impl Theme {
         }
 
         if let Some(&toml::Value::Table(ref table)) = table.get("colors") {
-            palette::load_table(&mut self.palette, table);
+            palette::load_toml(&mut self.palette, table);
         }
     }
 }
@@ -244,15 +244,15 @@ pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
         content
     };
 
-    load_theme(&content)
+    load_toml(&content)
 }
 
 /// Loads a theme string and sets it as active.
-pub fn load_theme(content: &str) -> Result<Theme, Error> {
+pub fn load_toml(content: &str) -> Result<Theme, Error> {
     let table = toml::de::from_str(content)?;
 
     let mut theme = Theme::default();
-    theme.load(&table);
+    theme.load_toml(&table);
 
     Ok(theme)
 }

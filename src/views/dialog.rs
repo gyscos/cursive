@@ -340,7 +340,8 @@ impl Dialog {
         // Current horizontal position of the next button we'll draw.
 
         // Sum of the sizes + len-1 for margins
-        let width = self.buttons
+        let width = self
+            .buttons
             .iter()
             .map(|button| button.button.size.x)
             .sum::<usize>()
@@ -350,7 +351,8 @@ impl Dialog {
             return None;
         }
         let mut offset = overhead.left
-            + self.align
+            + self
+                .align
                 .h
                 .get_offset(width, printer.size.x - overhead.horizontal());
 
@@ -381,7 +383,8 @@ impl Dialog {
 
     fn draw_content(&self, printer: &Printer, buttons_height: usize) {
         // What do we have left?
-        let taken = Vec2::new(0, buttons_height) + self.borders.combined()
+        let taken = Vec2::new(0, buttons_height)
+            + self.borders.combined()
             + self.padding.combined();
 
         let inner_size = match printer.size.checked_sub(taken) {
@@ -403,7 +406,8 @@ impl Dialog {
             }
             let spacing = 3; //minimum distance to borders
             let x = spacing
-                + self.title_position
+                + self
+                    .title_position
                     .get_offset(len, printer.size.x - 2 * spacing);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");

@@ -1,11 +1,22 @@
 use super::segment::Segment;
 
 /// Non-splittable piece of text.
+///
+/// It is made of a list of segments of text.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Chunk {
+    /// Total width of this chunk.
     pub width: usize,
+
+    /// This is the segments this chunk contains.
     pub segments: Vec<Segment>,
+
+    /// Hard stops are non-optional line breaks (newlines).
     pub hard_stop: bool,
+
+    /// If a chunk of text ends in a space, it can be compressed a bit.
+    ///
+    /// (We can omit the space if it would result in a perfect fit.)
     pub ends_with_space: bool,
 }
 

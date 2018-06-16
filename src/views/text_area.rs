@@ -442,7 +442,8 @@ impl View for TextArea {
         debug!("{:?}", self.rows);
         let scroll_width = if self.rows.len() > constraint.y { 1 } else { 0 };
         Vec2::new(
-            scroll_width + 1
+            scroll_width
+                + 1
                 + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
             self.rows.len(),
         )

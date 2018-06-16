@@ -1,10 +1,10 @@
 extern crate cursive;
 extern crate rand;
 
-use cursive::Cursive;
 use cursive::traits::*;
-use cursive::views::{Button, Dialog, LinearLayout, ProgressBar, TextView};
 use cursive::utils::Counter;
+use cursive::views::{Button, Dialog, LinearLayout, ProgressBar, TextView};
+use cursive::Cursive;
 use rand::Rng;
 use std::cmp::min;
 use std::thread;

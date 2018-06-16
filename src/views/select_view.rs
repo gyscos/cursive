@@ -527,7 +527,8 @@ impl<T: 'static> SelectView<T> {
                 // the list when we reach the end.
                 // This is achieved by chaining twice the iterator
                 let iter = self.items.iter().chain(self.items.iter());
-                if let Some((i, _)) = iter.enumerate()
+                if let Some((i, _)) = iter
+                    .enumerate()
                     .skip(self.focus() + 1)
                     .find(|&(_, item)| item.label.starts_with(c))
                 {
@@ -735,7 +736,8 @@ impl<T: 'static> View for SelectView<T> {
         // Items here are not compressible.
         // So no matter what the horizontal requirements are,
         // we'll still return our longest item.
-        let w = self.items
+        let w = self
+            .items
             .iter()
             .map(|item| item.label.width())
             .max()

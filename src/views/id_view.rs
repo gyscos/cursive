@@ -92,7 +92,8 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
     fn wrap_focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
         match selector {
             &Selector::Id(id) if id == self.id => Ok(()),
-            s => self.view
+            s => self
+                .view
                 .try_borrow_mut()
                 .map_err(|_| ())
                 .and_then(|mut v| v.deref_mut().focus_view(s)),

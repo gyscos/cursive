@@ -1,8 +1,8 @@
 extern crate cursive;
 
-use cursive::{Cursive, Printer};
 use cursive::traits::*;
 use cursive::vec::Vec2;
+use cursive::{Cursive, Printer};
 use std::collections::VecDeque;
 use std::sync::mpsc;
 use std::thread;

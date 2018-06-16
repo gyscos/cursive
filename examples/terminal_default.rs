@@ -1,8 +1,8 @@
 extern crate cursive;
 
-use cursive::Cursive;
 use cursive::theme::{Color, PaletteColor, Theme};
 use cursive::views::TextView;
+use cursive::Cursive;
 
 // This example sets the background color to the terminal default.
 //

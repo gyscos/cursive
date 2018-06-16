@@ -195,7 +195,8 @@ impl<T: View> ViewWrapper for BoxView<T> {
         let req = self.size.zip_map(req, SizeConstraint::available);
         let child_size = self.view.required_size(req);
 
-        let result = self.size
+        let result = self
+            .size
             .zip_map(child_size.zip(req), SizeConstraint::result);
 
         debug!("{:?}", result);

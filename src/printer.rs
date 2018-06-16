@@ -17,7 +17,7 @@ use with::With;
 ///
 /// The part of the content it will print is defined by `content_offset`
 /// and `size`.
-pub struct Printer<'a> {
+pub struct Printer<'a, 'b> {
     /// Offset into the window this printer should start drawing at.
     ///
     /// A print request at `x` will really print at `x + offset`.
@@ -46,10 +46,10 @@ pub struct Printer<'a> {
     pub theme: &'a Theme,
 
     /// Backend used to actually draw things
-    backend: &'a Backend,
+    backend: &'b Backend,
 }
 
-impl<'a> Clone for Printer<'a> {
+impl<'a, 'b> Clone for Printer<'a, 'b> {
     fn clone(&self) -> Self {
         Printer {
             offset: self.offset,
@@ -63,13 +63,13 @@ impl<'a> Clone for Printer<'a> {
     }
 }
 
-impl<'a> Printer<'a> {
+impl<'a, 'b> Printer<'a, 'b> {
     /// Creates a new printer on the given window.
     ///
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'a Backend,
+        size: T, theme: &'a Theme, backend: &'b Backend,
     ) -> Self {
         let size = size.into();
         Printer {
@@ -296,6 +296,24 @@ impl<'a> Printer<'a> {
         self.backend.set_effect(effect);
         f(self);
         self.backend.unset_effect(effect);
+    }
+
+    /// Call the given closure with a modified printer
+    /// that will apply the given theme on prints.
+    pub fn with_theme<F>(&self, theme: &Theme, f: F)
+    where
+        F: FnOnce(&Printer),
+    {
+        let new_printer = Printer {
+            offset: self.offset,
+            size: self.size,
+            focused: self.focused,
+            theme: theme,
+            backend: self.backend,
+            output_size: self.output_size,
+            content_offset: self.content_offset,
+        };
+        f(&new_printer);
     }
 
     /// Call the given closure with a modified printer

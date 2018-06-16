@@ -3,13 +3,13 @@ extern crate rand;
 
 mod game;
 
-use cursive::Cursive;
-use cursive::Printer;
 use cursive::direction::Direction;
 use cursive::event::{Event, EventResult, MouseButton, MouseEvent};
 use cursive::theme::{BaseColor, Color, ColorStyle};
 use cursive::vec::Vec2;
 use cursive::views::{Button, Dialog, LinearLayout, Panel, SelectView};
+use cursive::Cursive;
+use cursive::Printer;
 
 fn main() {
     let mut siv = Cursive::default();

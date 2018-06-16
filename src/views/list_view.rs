@@ -283,14 +283,16 @@ impl View for ListView {
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
         // We'll show 2 columns: the labels, and the views.
-        let label_width = self.children
+        let label_width = self
+            .children
             .iter()
             .map(ListChild::label)
             .map(UnicodeWidthStr::width)
             .max()
             .unwrap_or(0);
 
-        let view_size = self.children
+        let view_size = self
+            .children
             .iter_mut()
             .filter_map(ListChild::view)
             .map(|v| v.required_size(req).x)
@@ -310,7 +312,8 @@ impl View for ListView {
         self.scrollbase.set_heights(size.y, self.children.len());
 
         // We'll show 2 columns: the labels, and the views.
-        let label_width = self.children
+        let label_width = self
+            .children
             .iter()
             .map(ListChild::label)
             .map(UnicodeWidthStr::width)
@@ -320,7 +323,8 @@ impl View for ListView {
         let spacing = 1;
         let scrollbar_width = if self.children.len() > size.y { 2 } else { 0 };
 
-        let available = size.x
+        let available = size
+            .x
             .saturating_sub(label_width + spacing + scrollbar_width);
 
         debug!("Available: {}", available);
@@ -439,10 +443,9 @@ impl View for ListView {
 
     fn take_focus(&mut self, source: direction::Direction) -> bool {
         let rel = source.relative(direction::Orientation::Vertical);
-        let i = if let Some(i) = self.iter_mut(
-            rel.is_none(),
-            rel.unwrap_or(direction::Relative::Front),
-        ).filter_map(|p| try_focus(p, source))
+        let i = if let Some(i) = self
+            .iter_mut(rel.is_none(), rel.unwrap_or(direction::Relative::Front))
+            .filter_map(|p| try_focus(p, source))
             .next()
         {
             i
@@ -464,7 +467,8 @@ impl View for ListView {
     }
 
     fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
-        if let Some(i) = self.children
+        if let Some(i) = self
+            .children
             .iter_mut()
             .enumerate()
             .filter_map(|(i, v)| v.view().map(|v| (i, v)))

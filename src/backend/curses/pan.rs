@@ -117,7 +117,8 @@ impl Backend {
         let _alt = (mevent.bstate & pancurses::BUTTON_ALT as mmask_t) != 0;
         let _ctrl = (mevent.bstate & pancurses::BUTTON_CTRL as mmask_t) != 0;
 
-        mevent.bstate &= !(pancurses::BUTTON_SHIFT | pancurses::BUTTON_ALT
+        mevent.bstate &= !(pancurses::BUTTON_SHIFT
+            | pancurses::BUTTON_ALT
             | pancurses::BUTTON_CTRL) as mmask_t;
 
         let make_event = |event| Event::Mouse {

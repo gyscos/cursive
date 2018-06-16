@@ -342,7 +342,8 @@ impl View for Menubar {
                     .checked_sub(offset)
                     .and_then(|pos| self.child_at(pos.x))
                 {
-                    if self.focus == child && btn == MouseButton::Left
+                    if self.focus == child
+                        && btn == MouseButton::Left
                         && self.root.children[child].is_leaf()
                     {
                         return self.select_child(false);
@@ -372,7 +373,8 @@ impl View for Menubar {
         // We add 2 to the length of every label for marin.
         // Also, we add 1 at the beginning.
         // (See the `draw()` method)
-        let width = self.root
+        let width = self
+            .root
             .children
             .iter()
             .map(|item| item.label().len() + 2)

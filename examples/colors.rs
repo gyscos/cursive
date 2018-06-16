@@ -1,9 +1,9 @@
 extern crate cursive;
 
-use cursive::{Cursive, Printer};
 use cursive::theme::{Color, ColorStyle};
 use cursive::view::Boxable;
 use cursive::views::Canvas;
+use cursive::{Cursive, Printer};
 
 // This example will draw a colored square with a gradient.
 //

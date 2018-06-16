@@ -421,7 +421,8 @@ impl TextView {
         }
 
         // Desired width, including the scrollbar_width.
-        self.width = self.rows
+        self.width = self
+            .rows
             .iter()
             .map(|row| row.width)
             .max()

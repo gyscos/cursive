@@ -616,15 +616,20 @@ impl View for EditView {
                 return EventResult::Consumed(Some(self.insert(ch)));
             }
             // TODO: handle ctrl-key?
-            Event::Key(Key::Home) => self.cursor = 0,
-            Event::Key(Key::End) => self.cursor = self.content.len(),
+            Event::Key(Key::Home) => self.set_cursor(0),
+            Event::Key(Key::End) => {
+                // When possible, NLL to the rescue!
+                let len = self.content.len();
+                self.set_cursor(len);
+            }
             Event::Key(Key::Left) if self.cursor > 0 => {
                 let len = self.content[..self.cursor]
                     .graphemes(true)
                     .last()
                     .unwrap()
                     .len();
-                self.cursor -= len;
+                let cursor = self.cursor - len;
+                self.set_cursor(cursor);
             }
             Event::Key(Key::Right) if self.cursor < self.content.len() => {
                 let len = self.content[self.cursor..]
@@ -632,7 +637,8 @@ impl View for EditView {
                     .next()
                     .unwrap()
                     .len();
-                self.cursor += len;
+                let cursor = self.cursor + len;
+                self.set_cursor(cursor);
             }
             Event::Key(Key::Backspace) if self.cursor > 0 => {
                 let len = self.content[..self.cursor]

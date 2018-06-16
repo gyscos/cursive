@@ -46,7 +46,8 @@ impl<T: View> Finder for T {
                         *result_ref =
                             v.downcast_mut::<V>().map(|v| callback(v));
                     } else if v.is::<IdView<V>>() {
-                        *result_ref = v.downcast_mut::<IdView<V>>()
+                        *result_ref = v
+                            .downcast_mut::<IdView<V>>()
                             .and_then(|v| v.with_view_mut(callback));
                     }
                 }

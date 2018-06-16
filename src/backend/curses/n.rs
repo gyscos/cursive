@@ -156,7 +156,8 @@ impl Backend {
             let _alt = (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
             let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
 
-            mevent.bstate &= !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT
+            mevent.bstate &= !(ncurses::BUTTON_SHIFT
+                | ncurses::BUTTON_ALT
                 | ncurses::BUTTON_CTRL)
                 as mmask_t;
 
