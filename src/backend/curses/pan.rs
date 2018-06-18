@@ -364,6 +364,19 @@ fn on_resize() {
     pancurses::resize_term(size.y as i32, size.x as i32);
 }
 
+#[cfg(unix)]
+fn resize_channel() -> chan::Receiver<chan_signal::Signal> {
+    chan_signal::notify(&[chan_signal::Signal::WINCH])
+}
+
+#[cfg(not(unix))]
+fn resize_channel() -> chan::Receiver<()> {
+    let (sender, receiver) = chan::async();
+    // Forget the sender, so the channel doesn't close, but never completes.
+    ::std::mem::forget(sender);
+    receiver
+}
+
 impl backend::Backend for Backend {
     fn screen_size(&self) -> Vec2 {
         // Coordinates are reversed here
@@ -438,7 +451,7 @@ impl backend::Backend for Backend {
         &mut self, event_sink: chan::Sender<Event>,
         stops: chan::Receiver<bool>,
     ) {
-        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
+        let resize = resize_channel();
         let (sender, receiver) = chan::async();
         let needs_resize = Arc::clone(&self.needs_resize);
 

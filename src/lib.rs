@@ -74,7 +74,11 @@ extern crate chan;
 #[macro_use]
 extern crate maplit;
 
+// We use chan_signal to detect SIGWINCH.
+// It's not how windows work, so no need to use that.
+#[cfg(unix)]
 extern crate chan_signal;
+
 extern crate libc;
 extern crate num;
 extern crate owning_ref;
