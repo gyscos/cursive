@@ -1,17 +1,22 @@
 extern crate pancurses;
 
-use self::super::split_i32;
-use self::pancurses::mmask_t;
-use backend;
-use chan;
-use event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::io::{stdout, Write};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
+
+use chan;
+use chan_signal;
+
+use backend;
+use event::{Event, Key, MouseButton, MouseEvent};
 use theme::{Color, ColorPair, Effect};
 use vec::Vec2;
+
+use self::super::split_i32;
+use self::pancurses::mmask_t;
 
 pub struct Backend {
     // Used
@@ -20,6 +25,10 @@ pub struct Backend {
 
     // pancurses needs a handle to the current window.
     window: Arc<pancurses::Window>,
+
+    // This is set by the SIGWINCH-triggered thread.
+    // When TRUE, we should tell ncurses about the new terminal size.
+    needs_resize: Arc<AtomicBool>,
 }
 
 struct InputParser {
@@ -267,7 +276,7 @@ fn find_closest_pair(pair: &ColorPair) -> (i16, i16) {
 }
 
 impl Backend {
-    pub fn init() -> Box<Self> {
+    pub fn init() -> Box<backend::Backend> {
         ::std::env::set_var("ESCDELAY", "25");
 
         let window = pancurses::initscr();
@@ -293,6 +302,7 @@ impl Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
             pairs: RefCell::new(HashMap::new()),
             window: Arc::new(window),
+            needs_resize: Arc::new(AtomicBool::new(false)),
         };
 
         Box::new(c)
@@ -341,6 +351,17 @@ impl Backend {
         let style = pancurses::COLOR_PAIR(i as pancurses::chtype);
         self.window.attron(style);
     }
+}
+
+/// Called when a resize event is detected.
+///
+/// We need to have ncurses update its representation of the screen.
+fn on_resize() {
+    // Get size using ioctl
+    let size = super::sizes::terminal_size();
+
+    // Send the size to ncurses
+    pancurses::resize_term(size.y as i32, size.x as i32);
 }
 
 impl backend::Backend for Backend {
@@ -393,6 +414,10 @@ impl backend::Backend for Backend {
     }
 
     fn clear(&self, color: Color) {
+        if self.needs_resize.swap(false, Ordering::Relaxed) {
+            on_resize();
+        }
+
         let id = self.get_or_create(ColorPair {
             front: color,
             back: color,
@@ -413,8 +438,34 @@ impl backend::Backend for Backend {
         &mut self, event_sink: chan::Sender<Event>,
         stops: chan::Receiver<bool>,
     ) {
+        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
+        let (sender, receiver) = chan::async();
+        let needs_resize = Arc::clone(&self.needs_resize);
+
+        // This thread will merge resize and input into event_sink
+        thread::spawn(move || {
+            loop {
+                chan_select! {
+                    resize.recv() => {
+                        // Tell ncurses about the new terminal size.
+                        // Well, do the actual resizing later on, in the main thread.
+                        // Ncurses isn't really thread-safe so calling resize_term() can crash
+                        // other calls like clear() or refresh().
+                        needs_resize.store(true, Ordering::Relaxed);
+                        event_sink.send(Event::WindowResize);
+                    },
+                    receiver.recv() -> event => {
+                        match event {
+                            Some(event) => event_sink.send(event),
+                            None => return,
+                        }
+                    }
+                }
+            }
+        });
+
         let mut input_parser =
-            InputParser::new(event_sink, Arc::clone(&self.window));
+            InputParser::new(sender, Arc::clone(&self.window));
 
         thread::spawn(move || {
             loop {

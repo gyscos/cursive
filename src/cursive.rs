@@ -1,12 +1,14 @@
-use backend;
-use chan;
-use direction;
-use event::{Callback, Event, EventResult};
-use printer::Printer;
 use std::any::Any;
 use std::collections::HashMap;
 use std::path::Path;
 use std::time::Duration;
+
+use chan;
+
+use backend;
+use direction;
+use event::{Callback, Event, EventResult};
+use printer::Printer;
 use theme;
 use vec::Vec2;
 use view::{self, Finder, IntoBoxedView, Position, View};
@@ -121,7 +123,10 @@ impl Default for Cursive {
 
 impl Cursive {
     /// Creates a new Cursive root, and initialize the back-end.
-    pub fn new(mut backend: Box<backend::Backend>) -> Self {
+    pub fn new<F>(backend_init: F) -> Self
+    where
+        F: FnOnce() -> Box<backend::Backend>,
+    {
         let theme = theme::load_default();
 
         let (cb_sink, cb_source) = chan::async();
@@ -129,6 +134,7 @@ impl Cursive {
 
         let (stop_sink, stop_source) = chan::async();
 
+        let mut backend = backend_init();
         backend.start_input_thread(event_sink.clone(), stop_source);
 
         Cursive {
@@ -152,32 +158,32 @@ impl Cursive {
     /// Creates a new Cursive root using a ncurses backend.
     #[cfg(feature = "ncurses")]
     pub fn ncurses() -> Self {
-        Self::new(backend::curses::n::Backend::init())
+        Self::new(backend::curses::n::Backend::init)
     }
 
     /// Creates a new Cursive root using a pancurses backend.
     #[cfg(feature = "pancurses")]
     pub fn pancurses() -> Self {
-        Self::new(backend::curses::pan::Backend::init())
+        Self::new(backend::curses::pan::Backend::init)
     }
 
     /// Creates a new Cursive root using a termion backend.
     #[cfg(feature = "termion")]
     pub fn termion() -> Self {
-        Self::new(backend::termion::Backend::init())
+        Self::new(backend::termion::Backend::init)
     }
 
     /// Creates a new Cursive root using a bear-lib-terminal backend.
     #[cfg(feature = "bear-lib-terminal")]
     pub fn blt() -> Self {
-        Self::new(backend::blt::Backend::init())
+        Self::new(backend::blt::Backend::init)
     }
 
     /// Creates a new Cursive root using a dummy backend.
     ///
     /// Nothing will be output. This is mostly here for tests.
     pub fn dummy() -> Self {
-        Self::new(backend::dummy::Backend::init())
+        Self::new(backend::dummy::Backend::init)
     }
 
     /// Returns a sink for asynchronous callbacks.
@@ -715,6 +721,7 @@ impl Cursive {
         // Wait for next event.
         match self.poll() {
             Interruption::Event(event) => {
+                // eprintln!("{:?}, {:?}", event, self.screen_size());
                 if event == Event::Exit {
                     self.quit();
                 }

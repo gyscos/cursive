@@ -74,6 +74,7 @@ extern crate chan;
 #[macro_use]
 extern crate maplit;
 
+extern crate chan_signal;
 extern crate libc;
 extern crate num;
 extern crate owning_ref;

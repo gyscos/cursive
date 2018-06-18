@@ -41,6 +41,8 @@ impl InputParser {
     fn new(event_sink: chan::Sender<Event>) -> Self {
         let (sender, receiver) = chan::async();
 
+        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
+
         // Fill the input channel
         thread::spawn(move || {
             for key in ::std::io::stdin().events() {
@@ -51,7 +53,7 @@ impl InputParser {
         });
 
         InputParser {
-            resize: chan_signal::notify(&[chan_signal::Signal::WINCH]),
+            resize,
             event_sink,
             last_button: None,
             input: receiver,
@@ -181,7 +183,7 @@ impl Effectable for theme::Effect {
 }
 
 impl Backend {
-    pub fn init() -> Box<Self> {
+    pub fn init() -> Box<backend::Backend> {
         print!("{}", termion::cursor::Hide);
 
         // TODO: lock stdout

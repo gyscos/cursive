@@ -7,6 +7,8 @@ use event::{Event, Key};
 use std::collections::HashMap;
 use theme::{BaseColor, Color, ColorPair};
 
+mod sizes;
+
 #[cfg(feature = "ncurses")]
 pub mod n;
 
