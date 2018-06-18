@@ -357,8 +357,8 @@ impl Backend {
 ///
 /// We need to have ncurses update its representation of the screen.
 fn on_resize() {
-    // Get size using ioctl
-    let size = super::sizes::terminal_size();
+    // Get size
+    let size = super::terminal_size();
 
     // Send the size to ncurses
     pancurses::resize_term(size.y as i32, size.x as i32);

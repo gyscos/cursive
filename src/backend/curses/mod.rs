@@ -1,19 +1,31 @@
 //! Common module for the ncurses and pancurses backends.
 //!
 //! Requires either of `ncurses-backend` or `pancurses-backend`.
-#![cfg(any(feature = "ncurses", feature = "pancurses"))]
+#![cfg(any(feature = "ncurses-backend", feature = "pancurses-backend"))]
+
+extern crate term_size;
+
+use std::collections::HashMap;
 
 use event::{Event, Key};
-use std::collections::HashMap;
 use theme::{BaseColor, Color, ColorPair};
 
-mod sizes;
+use vec::Vec2;
 
-#[cfg(feature = "ncurses")]
+#[cfg(feature = "ncurses-backend")]
 pub mod n;
 
-#[cfg(feature = "pancurses")]
+#[cfg(feature = "pancurses-backend")]
 pub mod pan;
+
+/// Get the size of the terminal.
+///
+/// Usually ncurses can do that by himself, but because we're playing with
+/// threads, ncurses' signal handler is confused and he can't keep track of
+/// the terminal size. Poor ncurses.
+fn terminal_size() -> Vec2 {
+    term_size::dimensions().unwrap_or((0,0)).into()
+}
 
 fn split_i32(code: i32) -> Vec<u8> {
     (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()
