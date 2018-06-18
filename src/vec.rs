@@ -1,8 +1,11 @@
 //! Points on the 2D character grid.
 
-use num::traits::Zero;
 use std::cmp::{max, min, Ordering};
 use std::ops::{Add, Div, Mul, Sub};
+
+use num::traits::Zero;
+
+use div;
 use XY;
 
 /// Simple 2D size, in cells.
@@ -30,6 +33,11 @@ impl<T: PartialOrd> PartialOrd for XY<T> {
 }
 
 impl XY<usize> {
+    /// Returns a `Vec2` with `usize::max_value()` in each axis.
+    pub fn max_value() -> Self {
+        Self::new(usize::max_value(), usize::max_value())
+    }
+
     /// Saturating subtraction. Computes `self - other`, saturating at 0.
     ///
     /// Never panics.
@@ -51,6 +59,14 @@ impl XY<usize> {
                 s.saturating_sub((-o) as usize)
             }
         })
+    }
+
+    /// Term-by-term integer division that rounds up.
+    pub fn div_up<O>(&self, other: O) -> Self
+    where
+        O: Into<Self>,
+    {
+        self.zip_map(other.into(), div::div_up)
     }
 
     /// Checked subtraction. Computes `self - other` if possible.

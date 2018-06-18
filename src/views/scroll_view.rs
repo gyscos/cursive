@@ -149,6 +149,7 @@ impl<V> ScrollView<V> {
     /// Will be zero in axis where we're not scrolling.
     fn scrollbar_size(&self) -> Vec2 {
         self.is_scrolling()
+            .swap()
             .select_or(self.scrollbar_padding + (1, 1), Vec2::zero())
     }
 
@@ -172,6 +173,7 @@ where
     ) -> (Vec2, Vec2, XY<bool>) {
         // This is the size taken by the scrollbars.
         let scrollbar_size = scrollable
+            .swap()
             .select_or(self.scrollbar_padding + (1, 1), Vec2::zero());
 
         let available = constraint.saturating_sub(scrollbar_size);
@@ -244,11 +246,15 @@ where
         let lengths = self.scrollbar_thumb_lengths();
         let available = self.available_size();
 
+        // We want self.scrollbar_thumb_offsets() to be thumb_pos
+        // steps * self.o / (self.inner + 1 - available) = thumb_pos
+        // self.o = thumb_pos * (self.inner + 1 - available) / (available + 1 - lengths)
+
         // The new offset is:
         // thumb_pos * (content + 1 - available) / (available + 1 - thumb size)
-        let new_offset = (self.inner_size + (1, 1)).saturating_sub(available)
-            * thumb_pos
-            / (available + (1, 1)).saturating_sub(lengths);
+        let new_offset = ((self.inner_size + (1, 1)).saturating_sub(available)
+            * thumb_pos)
+            .div_up((available + (1, 1)).saturating_sub(lengths));
         let max_offset = self.inner_size.saturating_sub(self.available_size());
         self.offset
             .set_axis_from(orientation, &new_offset.or_min(max_offset));
@@ -433,10 +439,37 @@ where
                         self.release_grab();
                         EventResult::Consumed(None)
                     }
+                    Event::Key(Key::Home) if self.enabled.any() => {
+                        self.offset =
+                            self.enabled.select_or(Vec2::zero(), self.offset);
+                        EventResult::Consumed(None)
+                    }
+                    Event::Key(Key::End) if self.enabled.any() => {
+                        let max_offset = self
+                            .inner_size
+                            .saturating_sub(self.available_size());
+                        self.offset =
+                            self.enabled.select_or(max_offset, self.offset);
+                        EventResult::Consumed(None)
+                    }
                     Event::Ctrl(Key::Up) | Event::Key(Key::Up)
                         if self.enabled.y && self.offset.y > 0 =>
                     {
                         self.offset.y -= 1;
+                        EventResult::Consumed(None)
+                    }
+                    Event::Key(Key::PageUp)
+                        if self.enabled.y && self.offset.y > 0 =>
+                    {
+                        self.offset.y = self.offset.y.saturating_sub(5);
+                        EventResult::Consumed(None)
+                    }
+                    Event::Key(Key::PageDown)
+                        if self.enabled.y
+                            && (self.offset.y + self.available_size().y
+                                < self.inner_size.y) =>
+                    {
+                        self.offset.y += 5;
                         EventResult::Consumed(None)
                     }
                     Event::Ctrl(Key::Down) | Event::Key(Key::Down)
