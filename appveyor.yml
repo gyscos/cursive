@@ -1,4 +1,16 @@
+cache:
+  - c:\cargo\registry
+  - c:\cargo\git
+
+init:
+  - mkdir c:\cargo
+  - mkdir c:\rustup
+  - SET PATH=c:\cargo\bin;%PATH%
+
 environment:
+  CARGO_HOME: "c:\\cargo"
+  RUSTUP_HOME: "c:\\rustup"
+
   matrix:
     - TARGET: i686-pc-windows-gnu
       CHANNEL: stable
