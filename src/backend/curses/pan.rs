@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::thread;
 
 use chan;
+#[cfg(unix)]
 use chan_signal;
 
 use backend;
