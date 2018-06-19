@@ -1,9 +1,11 @@
 # Cursive
 
 [![crates.io](https://meritbadge.herokuapp.com/cursive)](https://crates.io/crates/cursive)
-[![Build Status](https://travis-ci.org/gyscos/Cursive.svg?branch=master)](https://travis-ci.org/gyscos/Cursive)
+[![Build Status (travis)](https://travis-ci.org/gyscos/Cursive.svg?branch=master)](https://travis-ci.org/gyscos/Cursive)
+[![Build status (appveyor)](https://ci.appveyor.com/api/projects/status/uk5pww718jsp5x2l/branch/master?svg=true)](https://ci.appveyor.com/project/gyscos/cursive/branch/master)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Gitter chat](https://badges.gitter.im/gyscos/cursive.png)](https://gitter.im/cursive-rs/cursive)
+
 
 Cursive is a TUI (Text User Interface) library for rust. It uses ncurses by default, but [other backends are available](https://github.com/gyscos/Cursive/wiki/Backends).
 
