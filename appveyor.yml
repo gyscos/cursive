@@ -35,4 +35,4 @@ build: false
 # Equivalent to Travis' `script` phase
 # TODO modify this phase as you see fit
 test_script:
-  - cargo test --verbose --all<Paste>
+  - cargo test --verbose --all --no-default-features --features pancurses-backend
