@@ -151,13 +151,38 @@ impl Dialog {
     /// Adds a button to the dialog with the given label and callback.
     ///
     /// Consumes and returns self for easy chaining.
-    pub fn button<F, S: Into<String>>(mut self, label: S, cb: F) -> Self
+    pub fn button<F, S: Into<String>>(self, label: S, cb: F) -> Self
+    where
+        F: 'static + Fn(&mut Cursive),
+    {
+        self.with(|s| s.add_button(label, cb))
+    }
+
+    /// Adds a button to the dialog with the given label and callback.
+    pub fn add_button<F, S: Into<String>>(&mut self, label: S, cb: F)
     where
         F: 'static + Fn(&mut Cursive),
     {
         self.buttons.push(ChildButton::new(label, cb));
+    }
 
-        self
+    /// Returns the number of buttons on this dialog.
+    pub fn buttons_len(&self) -> usize {
+        self.buttons.len()
+    }
+
+    /// Removes any button from `self`.
+    pub fn clear_buttons(&mut self) {
+        self.buttons.clear();
+    }
+
+    /// Removes a button from this dialog.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.buttons_len()`.
+    pub fn remove_button(&mut self, i: usize) {
+        self.buttons.remove(i);
     }
 
     /// Sets the horizontal alignment for the buttons, if any.
@@ -247,8 +272,8 @@ impl Dialog {
     /// Returns an iterator on this buttons for this dialog.
     pub fn buttons_mut<'a>(
         &'a mut self,
-    ) -> Box<'a + Iterator<Item = &'a mut Button>> {
-        Box::new(self.buttons.iter_mut().map(|b| &mut b.button.view))
+    ) -> impl Iterator<Item = &'a mut Button> {
+        self.buttons.iter_mut().map(|b| &mut b.button.view)
     }
 
     /// Returns currently focused element
