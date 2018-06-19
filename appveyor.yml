@@ -1,3 +1,5 @@
+os: Visual Studio 2015
+
 cache:
   - c:\cargo\registry
   - c:\cargo\git
@@ -12,11 +14,7 @@ environment:
   RUSTUP_HOME: "c:\\rustup"
 
   matrix:
-    - TARGET: i686-pc-windows-gnu
-      CHANNEL: stable
     - TARGET: i686-pc-windows-msvc
-      CHANNEL: stable
-    - TARGET: x86_64-pc-windows-gnu
       CHANNEL: stable
     - TARGET: x86_64-pc-windows-msvc
       CHANNEL: stable
