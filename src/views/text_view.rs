@@ -381,8 +381,6 @@ impl TextView {
             return;
         }
 
-        eprintln!("RECOMPUTE");
-
         // Completely bust the cache
         // Just in case we fail, we don't want to leave a bad cache.
         content.size_cache = None;

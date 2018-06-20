@@ -4,7 +4,7 @@ use direction::{Direction, Orientation};
 use event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
 use rect::Rect;
 use theme::ColorStyle;
-use view::{Selector, SizeCache, View};
+use view::{ScrollStrategy, Selector, SizeCache, View};
 use {Printer, Vec2, With, XY};
 
 /// Wraps a view in a scrollable area.
@@ -45,9 +45,15 @@ pub struct ScrollView<V> {
 
     /// We keep the cache here so it can be busted when we change the content.
     size_cache: Option<XY<SizeCache>>,
+
+    /// Defines how to update the offset when the view size changes.
+    scroll_strategy: ScrollStrategy,
 }
 
-impl<V> ScrollView<V> {
+impl<V> ScrollView<V>
+where
+    V: View,
+{
     /// Creates a new ScrollView around `view`.
     pub fn new(inner: V) -> Self {
         ScrollView {
@@ -60,12 +66,32 @@ impl<V> ScrollView<V> {
             scrollbar_padding: Vec2::new(1, 0),
             thumb_grab: None,
             size_cache: None,
+            scroll_strategy: ScrollStrategy::KeepRow,
         }
     }
 
     /// Returns the viewport in the inner content.
     pub fn content_viewport(&self) -> Rect {
         Rect::from_size(self.offset, self.available_size())
+    }
+
+    /// Defines the way scrolling is adjusted on content or size change.
+    ///
+    /// The scroll strategy defines how the scrolling position is adjusted
+    /// when the size of the view or the content change.
+    ///
+    /// It is reset to `ScrollStrategy::KeepRow` whenever the user scrolls
+    /// manually.
+    pub fn set_scroll_strategy(&mut self, strategy: ScrollStrategy) {
+        self.scroll_strategy = strategy;
+        self.adjust_scroll();
+    }
+
+    /// Defines the way scrolling is adjusted on content or size change.
+    ///
+    /// Chainable variant.
+    pub fn scroll_strategy(self, strategy: ScrollStrategy) -> Self {
+        self.with(|s| s.set_scroll_strategy(strategy))
     }
 
     /// Sets the scroll offset to the given value
@@ -165,12 +191,7 @@ impl<V> ScrollView<V> {
     fn available_size(&self) -> Vec2 {
         self.last_size.saturating_sub(self.scrollbar_size())
     }
-}
 
-impl<V> ScrollView<V>
-where
-    V: View,
-{
     /// Compute the size we would need.
     ///
     /// Given the constraints, and the axis that need scrollbars.
@@ -330,6 +351,15 @@ where
         self.inner_size = inner_size;
         self.size_cache = Some(SizeCache::build(inner_size, constraint));
     }
+
+    /// Apply the scrolling strategy to the current scroll position.
+    fn adjust_scroll(&mut self) {
+        match self.scroll_strategy {
+            ScrollStrategy::StickToTop => self.scroll_to_top(),
+            ScrollStrategy::StickToBottom => self.scroll_to_bottom(),
+            ScrollStrategy::KeepRow => (),
+        }
+    }
 }
 
 impl<V> View for ScrollView<V>
@@ -417,7 +447,6 @@ where
                     } if self.enabled.y && self.offset.y > 0 =>
                     {
                         self.offset.y = self.offset.y.saturating_sub(3);
-                        EventResult::Consumed(None)
                     }
                     Event::Mouse {
                         event: MouseEvent::WheelDown,
@@ -432,7 +461,6 @@ where
                                 .saturating_sub(self.available_size().y),
                             self.offset.y + 3,
                         );
-                        EventResult::Consumed(None)
                     }
                     Event::Mouse {
                         event: MouseEvent::Press(MouseButton::Left),
@@ -443,7 +471,7 @@ where
                         .map(|position| self.start_drag(position))
                         .unwrap_or(false) =>
                     {
-                        EventResult::Consumed(None)
+                        // Just consume the event.
                     }
                     Event::Mouse {
                         event: MouseEvent::Hold(MouseButton::Left),
@@ -452,19 +480,16 @@ where
                     } => {
                         let position = position.saturating_sub(offset);
                         self.drag(position);
-                        EventResult::Consumed(None)
                     }
                     Event::Mouse {
                         event: MouseEvent::Release(MouseButton::Left),
                         ..
                     } => {
                         self.release_grab();
-                        EventResult::Consumed(None)
                     }
                     Event::Key(Key::Home) if self.enabled.any() => {
                         self.offset =
                             self.enabled.select_or(Vec2::zero(), self.offset);
-                        EventResult::Consumed(None)
                     }
                     Event::Key(Key::End) if self.enabled.any() => {
                         let max_offset = self
@@ -472,19 +497,16 @@ where
                             .saturating_sub(self.available_size());
                         self.offset =
                             self.enabled.select_or(max_offset, self.offset);
-                        EventResult::Consumed(None)
                     }
                     Event::Ctrl(Key::Up) | Event::Key(Key::Up)
                         if self.enabled.y && self.offset.y > 0 =>
                     {
                         self.offset.y -= 1;
-                        EventResult::Consumed(None)
                     }
                     Event::Key(Key::PageUp)
                         if self.enabled.y && self.offset.y > 0 =>
                     {
                         self.offset.y = self.offset.y.saturating_sub(5);
-                        EventResult::Consumed(None)
                     }
                     Event::Key(Key::PageDown)
                         if self.enabled.y
@@ -492,7 +514,6 @@ where
                                 < self.inner_size.y) =>
                     {
                         self.offset.y += 5;
-                        EventResult::Consumed(None)
                     }
                     Event::Ctrl(Key::Down) | Event::Key(Key::Down)
                         if self.enabled.y
@@ -500,13 +521,11 @@ where
                                 < self.inner_size.y) =>
                     {
                         self.offset.y += 1;
-                        EventResult::Consumed(None)
                     }
                     Event::Ctrl(Key::Left) | Event::Key(Key::Left)
                         if self.enabled.x && self.offset.x > 0 =>
                     {
                         self.offset.x -= 1;
-                        EventResult::Consumed(None)
                     }
                     Event::Ctrl(Key::Right) | Event::Key(Key::Right)
                         if self.enabled.x
@@ -514,10 +533,14 @@ where
                                 < self.inner_size.x) =>
                     {
                         self.offset.x += 1;
-                        EventResult::Consumed(None)
                     }
-                    _ => EventResult::Ignored,
-                }
+                    _ => return EventResult::Ignored,
+                };
+
+                // We just scrolled manually, so reset the scroll strategy.
+                self.scroll_strategy = ScrollStrategy::KeepRow;
+                // TODO: return callback on_scroll?
+                EventResult::Consumed(None)
             }
             other => {
                 // Fix offset?
@@ -550,10 +573,13 @@ where
 
         self.inner.layout(self.inner_size);
 
-        // The offset cannot be more than (content - available)
+        // Keep the offset in the valid range.
         self.offset = self
             .offset
             .or_min(self.inner_size.saturating_sub(self.available_size()));
+
+        // Possibly update the offset if we're following a specific strategy.
+        self.adjust_scroll();
     }
 
     fn needs_relayout(&self) -> bool {
