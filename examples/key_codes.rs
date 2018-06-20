@@ -29,6 +29,8 @@ impl KeyCodeView {
     }
 }
 
+// Let's implement the `View` trait.
+// `View` contains many methods, but only a few are required.
 impl View for KeyCodeView {
     fn draw(&self, printer: &Printer) {
         // We simply draw every event from the history.

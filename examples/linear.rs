@@ -10,7 +10,7 @@ use cursive::Cursive;
 fn main() {
     let mut siv = Cursive::default();
 
-    // Some description text
+    // Some description text. We want it to be long, but not _too_ long.
     let text = "This is a very simple example of linear layout. Two views \
                 are present, a short title above, and this text. The text \
                 has a fixed width, and the title is centered horizontally.";
@@ -19,17 +19,16 @@ fn main() {
     siv.add_layer(
         Dialog::around(
             LinearLayout::vertical()
-            .child(TextView::new("Title").h_align(HAlign::Center))
-            // Dummy views can be used for spacing
-            .child(DummyView.fixed_height(1))
-            // Disabling scrolling means the view cannot shrink.
-            // Try resizing the window, and see what happens!
-            .child(TextView::new(text).scrollable(false))
-            .child(TextView::new(text))
-            .child(TextView::new(text))
-            .child(TextView::new(text))
-            // Give everything a fixed width so it doesn't get too wide
-            .fixed_width(30),
+                .child(TextView::new("Title").h_align(HAlign::Center))
+                // Use a DummyView as spacer
+                .child(DummyView.fixed_height(1))
+                // Disabling scrollable means the view cannot shrink.
+                .child(TextView::new(text).scrollable(false))
+                // The other views will share the remaining space.
+                .child(TextView::new(text))
+                .child(TextView::new(text))
+                .child(TextView::new(text))
+                .fixed_width(30),
         ).button("Quit", |s| s.quit())
             .h_align(HAlign::Center),
     );
