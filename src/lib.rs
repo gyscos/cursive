@@ -126,5 +126,6 @@ pub mod backend;
 
 pub use cursive::{CbFunc, Cursive, ScreenId};
 pub use printer::Printer;
+pub use vec::Vec2;
 pub use with::With;
 pub use xy::XY;

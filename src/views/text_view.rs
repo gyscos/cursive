@@ -1,19 +1,18 @@
-use align::*;
-use direction::Direction;
-use event::*;
-use owning_ref::{ArcRef, OwningHandle};
 use std::ops::Deref;
 use std::sync::Arc;
 use std::sync::{Mutex, MutexGuard};
-use theme::Effect;
+
+use owning_ref::{ArcRef, OwningHandle};
 use unicode_width::UnicodeWidthStr;
+
+use align::*;
+use direction::Direction;
+use event::*;
+use theme::Effect;
 use utils::lines::spans::{LinesIterator, Row};
 use utils::markup::StyledString;
-use vec::Vec2;
 use view::{ScrollBase, ScrollStrategy, SizeCache, View};
-use Printer;
-use With;
-use XY;
+use {Printer, Vec2, With, XY};
 
 /// Provides access to the content of a [`TextView`].
 ///
@@ -381,6 +380,8 @@ impl TextView {
         if content.is_cache_valid(size) {
             return;
         }
+
+        eprintln!("RECOMPUTE");
 
         // Completely bust the cache
         // Just in case we fail, we don't want to leave a bad cache.

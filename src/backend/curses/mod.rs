@@ -24,7 +24,7 @@ pub mod pan;
 /// threads, ncurses' signal handler is confused and he can't keep track of
 /// the terminal size. Poor ncurses.
 fn terminal_size() -> Vec2 {
-    term_size::dimensions().unwrap_or((0,0)).into()
+    term_size::dimensions().unwrap_or((0, 0)).into()
 }
 
 fn split_i32(code: i32) -> Vec<u8> {

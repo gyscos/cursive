@@ -52,9 +52,6 @@ impl SizeCache {
     /// * `size` must fit inside `req`.
     /// * for each dimension, `constrained = (size == req)`
     pub fn build(size: Vec2, req: Vec2) -> XY<Self> {
-        XY::new(
-            SizeCache::new(size.x, size.x >= req.x),
-            SizeCache::new(size.y, size.y >= req.y),
-        )
+        size.zip_map(req, |size, req| SizeCache::new(size, size >= req))
     }
 }

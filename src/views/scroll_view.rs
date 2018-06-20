@@ -1,57 +1,57 @@
+use std::cmp::min;
+
 use direction::{Direction, Orientation};
 use event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
 use rect::Rect;
 use theme::ColorStyle;
-use vec::Vec2;
-use view::{Selector, View};
-use xy::XY;
-use Printer;
-use With;
-
-use std::cmp::min;
+use view::{Selector, SizeCache, View};
+use {Printer, Vec2, With, XY};
 
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {
-    // The wrapped view.
+    /// The wrapped view.
     inner: V,
 
-    // This is the size the child thinks we're giving him.
+    /// This is the size the child thinks we're giving him.
     inner_size: Vec2,
 
-    // Offset into the inner view.
-    //
-    // Our `(0,0)` will be inner's `offset`
+    /// Offset into the inner view.
+    ///
+    /// Our `(0,0)` will be inner's `offset`
     offset: Vec2,
 
-    // What was our own size last time we checked.
-    //
-    // This includes scrollbars, if any.
+    /// What was our own size last time we checked.
+    ///
+    /// This includes scrollbars, if any.
     last_size: Vec2,
 
-    // Are we scrollable in each direction?
+    /// Are we scrollable in each direction?
     enabled: XY<bool>,
 
-    // Should we show scrollbars?
-    //
-    // Even if this is true, no scrollbar will be printed if we don't need to
-    // scroll.
-    //
-    // TODO: have an option to always show the scrollbar.
-    // TODO: have an option to show scrollbar on top/left.
+    /// Should we show scrollbars?
+    ///
+    /// Even if this is true, no scrollbar will be printed if we don't need to
+    /// scroll.
+    ///
+    /// TODO: have an option to always show the scrollbar.
+    /// TODO: have an option to show scrollbar on top/left.
     show_scrollbars: bool,
 
-    // How much padding should be between content and scrollbar?
+    /// How much padding should be between content and scrollbar?
     scrollbar_padding: Vec2,
 
     /// Initial position of the cursor when dragging.
     thumb_grab: Option<(Orientation, usize)>,
+
+    /// We keep the cache here so it can be busted when we change the content.
+    size_cache: Option<XY<SizeCache>>,
 }
 
 impl<V> ScrollView<V> {
     /// Creates a new ScrollView around `view`.
-    pub fn new(view: V) -> Self {
+    pub fn new(inner: V) -> Self {
         ScrollView {
-            inner: view,
+            inner,
             inner_size: Vec2::zero(),
             offset: Vec2::zero(),
             last_size: Vec2::zero(),
@@ -59,6 +59,7 @@ impl<V> ScrollView<V> {
             show_scrollbars: true,
             scrollbar_padding: Vec2::new(1, 0),
             thumb_grab: None,
+            size_cache: None,
         }
     }
 
@@ -81,6 +82,7 @@ impl<V> ScrollView<V> {
     /// Defaults to `true`.
     pub fn set_scroll_y(&mut self, enabled: bool) {
         self.enabled.y = enabled;
+        self.invalidate_cache();
     }
 
     /// Controls whether this view can scroll horizontally.
@@ -88,6 +90,7 @@ impl<V> ScrollView<V> {
     /// Defaults to `false`.
     pub fn set_scroll_x(&mut self, enabled: bool) {
         self.enabled.x = enabled;
+        self.invalidate_cache();
     }
 
     /// Controls whether this view can scroll vertically.
@@ -132,6 +135,11 @@ impl<V> ScrollView<V> {
         let max_x = self.inner_size.saturating_sub(self.available_size()).x;
         let curr_y = self.offset.y;
         self.set_offset((max_x, curr_y));
+    }
+
+    /// Clears the cache.
+    fn invalidate_cache(&mut self) {
+        self.size_cache = None;
     }
 
     /// Returns for each axis if we are scrolling.
@@ -268,6 +276,7 @@ where
     ///
     /// Returns `(inner_size, size)`
     fn sizes(&mut self, constraint: Vec2) -> (Vec2, Vec2) {
+        // Attempt 1: try without scrollbars
         let (inner_size, size, scrollable) =
             self.sizes_when_scrolling(constraint, XY::new(false, false));
 
@@ -307,6 +316,19 @@ where
         // The number of steps is 1 + the "extra space"
         let steps = (available + (1, 1)).saturating_sub(lengths);
         steps * self.offset / (self.inner_size + (1, 1) - available)
+    }
+
+    fn compute_inner_size(&mut self, constraint: Vec2) {
+        if self
+            .size_cache
+            .map(|cache| cache.zip_map(constraint, SizeCache::accept).both())
+            .unwrap_or(false)
+        {
+            return;
+        }
+        let (inner_size, _) = self.sizes(constraint);
+        self.inner_size = inner_size;
+        self.size_cache = Some(SizeCache::build(inner_size, constraint));
     }
 }
 
@@ -524,25 +546,21 @@ where
         // Size is final now
         self.last_size = size;
 
-        let (inner_size, _) = self.sizes(size);
-
-        // Ask one more time
-        self.inner_size = inner_size;
+        self.compute_inner_size(size);
 
         self.inner.layout(self.inner_size);
 
-        // The offset cannot be more than content - available
+        // The offset cannot be more than (content - available)
         self.offset = self
             .offset
-            .or_min(inner_size.saturating_sub(self.available_size()));
+            .or_min(self.inner_size.saturating_sub(self.available_size()));
     }
 
     fn needs_relayout(&self) -> bool {
-        self.inner.needs_relayout()
+        self.inner.needs_relayout() || self.size_cache.is_none()
     }
 
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
-        // Attempt 1: try without scrollbars
         let (_, size) = self.sizes(constraint);
 
         size
