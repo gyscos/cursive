@@ -6,12 +6,10 @@ use owning_ref::{ArcRef, OwningHandle};
 use unicode_width::UnicodeWidthStr;
 
 use align::*;
-use direction::Direction;
-use event::*;
 use theme::Effect;
 use utils::lines::spans::{LinesIterator, Row};
 use utils::markup::StyledString;
-use view::{ScrollBase, ScrollStrategy, SizeCache, View};
+use view::{SizeCache, View};
 use {Printer, Vec2, With, XY};
 
 /// Provides access to the content of a [`TextView`].
@@ -169,12 +167,10 @@ pub struct TextView {
     align: Align,
     effect: Effect,
 
-    // If `false`, disable scrolling.
-    scrollable: bool,
+    // True if we can wrap long lines.
+    wrap: bool,
 
     // ScrollBase make many scrolling-related things easier
-    scrollbase: ScrollBase,
-    scroll_strategy: ScrollStrategy,
     last_size: Vec2,
     width: Option<usize>,
 }
@@ -209,9 +205,7 @@ impl TextView {
             content: content.content,
             effect: Effect::Simple,
             rows: Vec::new(),
-            scrollable: true,
-            scrollbase: ScrollBase::new(),
-            scroll_strategy: ScrollStrategy::KeepRow,
+            wrap: true,
             align: Align::top_left(),
             last_size: Vec2::zero(),
             width: None,
@@ -221,24 +215,6 @@ impl TextView {
     /// Creates a new empty `TextView`.
     pub fn empty() -> Self {
         TextView::new("")
-    }
-
-    /// Enable or disable the view's scrolling capabilities.
-    ///
-    /// When disabled, the view will never attempt to scroll
-    /// (and will always ask for the full height).
-    pub fn set_scrollable(&mut self, scrollable: bool) {
-        self.scrollable = scrollable;
-    }
-
-    /// Enable or disable the view's scrolling capabilities.
-    ///
-    /// When disabled, the view will never attempt to scroll
-    /// (and will always ask for the full height).
-    ///
-    /// Chainable variant.
-    pub fn scrollable(self, scrollable: bool) -> Self {
-        self.with(|s| s.set_scrollable(scrollable))
     }
 
     /// Sets the effect for the entire content.
@@ -251,6 +227,20 @@ impl TextView {
     /// Chainable variant.
     pub fn effect(self, effect: Effect) -> Self {
         self.with(|s| s.set_effect(effect))
+    }
+
+    /// Disables content wrap for this view.
+    ///
+    /// This may be useful if you want horizontal scrolling.
+    pub fn no_wrap(self) -> Self {
+        self.with(|s| s.set_content_wrap(false))
+    }
+
+    /// Controls content wrap for this view.
+    ///
+    /// If `true` (the default), text will wrap long lines when needed.
+    pub fn set_content_wrap(&mut self, wrap: bool) {
+        self.wrap = wrap;
     }
 
     /// Sets the horizontal alignment for this view.
@@ -323,59 +313,11 @@ impl TextView {
         }
     }
 
-    /// Defines the way scrolling is adjusted on content or size change.
-    ///
-    /// The scroll strategy defines how the scrolling position is adjusted
-    /// when the size of the view or the content change.
-    ///
-    /// It is reset to `ScrollStrategy::KeepRow` whenever the user scrolls
-    /// manually.
-    pub fn set_scroll_strategy(&mut self, strategy: ScrollStrategy) {
-        self.scroll_strategy = strategy;
-        self.adjust_scroll();
-    }
-
-    /// Defines the way scrolling is adjusted on content or size change.
-    ///
-    /// Chainable variant.
-    pub fn scroll_strategy(self, strategy: ScrollStrategy) -> Self {
-        self.with(|s| s.set_scroll_strategy(strategy))
-    }
-
-    /// Scroll up by `n` lines.
-    pub fn scroll_up(&mut self, n: usize) {
-        self.scrollbase.scroll_up(n);
-    }
-
-    /// Scroll down by `n` lines.
-    pub fn scroll_down(&mut self, n: usize) {
-        self.scrollbase.scroll_down(n);
-    }
-
-    /// Scroll to the bottom of the content.
-    pub fn scroll_bottom(&mut self) {
-        self.scrollbase.scroll_bottom();
-    }
-
-    /// Scroll to the top of the view.
-    pub fn scroll_top(&mut self) {
-        self.scrollbase.scroll_top();
-    }
-
-    /// Apply the scrolling strategy to the current scroll position.
-    ///
-    /// Called when computing rows and when applying a new strategy.
-    fn adjust_scroll(&mut self) {
-        match self.scroll_strategy {
-            ScrollStrategy::StickToTop => self.scrollbase.scroll_top(),
-            ScrollStrategy::StickToBottom => self.scrollbase.scroll_bottom(),
-            ScrollStrategy::KeepRow => (),
-        };
-    }
-
     // This must be non-destructive, as it may be called
     // multiple times during layout.
     fn compute_rows(&mut self, size: Vec2) {
+        let size = if self.wrap { size } else { Vec2::max_value() };
+
         let mut content = self.content.lock().unwrap();
         if content.is_cache_valid(size) {
             return;
@@ -390,50 +332,13 @@ impl TextView {
             return;
         }
 
-        // First attempt: naively hope that we won't need a scrollbar_width
-        // (This means we try to use the entire available width for text).
         self.rows = LinesIterator::new(&content.content, size.x).collect();
 
-        // Width taken by the scrollbar. Without a scrollbar, it's 0.
-        let mut scrollbar_width = 0;
-
-        if self.scrollable && self.rows.len() > size.y {
-            // We take 1 column for the bar itself + 1 spacing column
-            scrollbar_width = 2;
-
-            // If we're too high, include a scrollbar_width
-            let available = match size.x.checked_sub(scrollbar_width) {
-                Some(s) => s,
-                None => return,
-            };
-
-            self.rows =
-                LinesIterator::new(&content.content, available).collect();
-
-            if self.rows.is_empty() && !content.content.is_empty() {
-                // We have some content, we we didn't find any row for it?
-                // This probably means we couldn't even make a single row
-                // (for instance we only have 1 column and we have a wide
-                // character).
-                return;
-            }
-        }
-
-        // Desired width, including the scrollbar_width.
-        self.width = self
-            .rows
-            .iter()
-            .map(|row| row.width)
-            .max()
-            .map(|w| w + scrollbar_width);
+        // Desired width
+        self.width = self.rows.iter().map(|row| row.width).max();
 
         // The entire "virtual" size (includes all rows)
-        let mut my_size = Vec2::new(self.width.unwrap_or(0), self.rows.len());
-
-        // If we're scrolling, cap the the available size.
-        if self.scrollable && my_size.y > size.y {
-            my_size.y = size.y;
-        }
+        let my_size = Vec2::new(self.width.unwrap_or(0), self.rows.len());
 
         // Build a fresh cache.
         content.size_cache = Some(SizeCache::build(my_size, size));
@@ -456,89 +361,18 @@ impl View for TextView {
         let content = self.content.lock().unwrap();
 
         printer.with_effect(self.effect, |printer| {
-            self.scrollbase.draw(printer, |printer, i| {
-                let row = &self.rows[i];
+            for (y, row) in self.rows.iter().enumerate() {
                 let l = row.width;
                 let mut x = self.align.h.get_offset(l, printer.size.x);
 
                 for span in row.resolve(&content.content) {
                     printer.with_style(*span.attr, |printer| {
-                        printer.print((x, 0), span.content);
+                        printer.print((x, y), span.content);
                         x += span.content.width();
                     });
                 }
-                // let text = &content.content[row.start..row.end];
-                // printer.print((x, 0), text);
-            });
+            }
         });
-    }
-
-    fn on_event(&mut self, event: Event) -> EventResult {
-        if !self.scrollable || !self.scrollbase.scrollable() {
-            return EventResult::Ignored;
-        }
-
-        // We have a scrollbar, otherwise the event would just be ignored.
-        match event {
-            Event::Key(Key::Home) => self.scrollbase.scroll_top(),
-            Event::Key(Key::End) => self.scrollbase.scroll_bottom(),
-            Event::Key(Key::Up) if self.scrollbase.can_scroll_up() => {
-                self.scrollbase.scroll_up(1)
-            }
-            Event::Key(Key::Down) if self.scrollbase.can_scroll_down() => {
-                self.scrollbase.scroll_down(1)
-            }
-            Event::Mouse {
-                event: MouseEvent::WheelDown,
-                ..
-            } if self.scrollbase.can_scroll_down() =>
-            {
-                self.scrollbase.scroll_down(5);
-            }
-            Event::Mouse {
-                event: MouseEvent::WheelUp,
-                ..
-            } if self.scrollbase.can_scroll_up() =>
-            {
-                self.scrollbase.scroll_up(5);
-            }
-            Event::Mouse {
-                event: MouseEvent::Press(MouseButton::Left),
-                position,
-                offset,
-            } if position
-                .checked_sub(offset)
-                .map(|position| {
-                    self.scrollbase.start_drag(position, self.last_size.x)
-                })
-                .unwrap_or(false) =>
-            {
-                // Only consume the event if the mouse hits the scrollbar.
-                // Start scroll drag at the given position.
-            }
-            Event::Mouse {
-                event: MouseEvent::Hold(MouseButton::Left),
-                position,
-                offset,
-            } => {
-                // If the mouse is dragged, we always consume the event.
-                let position = position.saturating_sub(offset);
-                self.scrollbase.drag(position);
-            }
-            Event::Mouse {
-                event: MouseEvent::Release(MouseButton::Left),
-                ..
-            } => {
-                self.scrollbase.release_grab();
-            }
-            Event::Key(Key::PageDown) => self.scrollbase.scroll_down(10),
-            Event::Key(Key::PageUp) => self.scrollbase.scroll_up(10),
-            _ => return EventResult::Ignored,
-        }
-
-        // We just scrolled manually, so reset the scroll strategy.
-        self.scroll_strategy = ScrollStrategy::KeepRow;
-        EventResult::Consumed(None)
     }
 
     fn needs_relayout(&self) -> bool {
@@ -549,33 +383,12 @@ impl View for TextView {
     fn required_size(&mut self, size: Vec2) -> Vec2 {
         self.compute_rows(size);
 
-        // This is what we'd like
-        let mut ideal = Vec2::new(self.width.unwrap_or(0), self.rows.len());
-
-        if self.scrollable && ideal.y > size.y {
-            ideal.y = size.y;
-        }
-
-        ideal
-    }
-
-    fn take_focus(&mut self, _: Direction) -> bool {
-        self.scrollbase.scrollable()
+        Vec2::new(self.width.unwrap_or(0), self.rows.len())
     }
 
     fn layout(&mut self, size: Vec2) {
         // Compute the text rows.
         self.last_size = size;
         self.compute_rows(size);
-        // Adjust scrolling, in case we're sticking to the bottom or something
-        let available_height = if self.scrollable {
-            size.y
-        } else {
-            self.rows.len()
-        };
-
-        self.scrollbase
-            .set_heights(available_height, self.rows.len());
-        self.adjust_scroll();
     }
 }
