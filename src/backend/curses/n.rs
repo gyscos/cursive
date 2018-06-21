@@ -153,7 +153,7 @@ impl InputParser {
     }
 }
 
-fn find_closest_pair(pair: &ColorPair) -> (i16, i16) {
+fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
     super::find_closest_pair(pair, ncurses::COLORS() as i16)
 }
 
@@ -243,7 +243,7 @@ impl Backend {
         let mut pairs = self.pairs.borrow_mut();
 
         // Find if we have this color in stock
-        let (front, back) = find_closest_pair(&pair);
+        let (front, back) = find_closest_pair(pair);
         if pairs.contains_key(&(front, back)) {
             // We got it!
             pairs[&(front, back)]

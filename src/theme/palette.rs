@@ -67,7 +67,7 @@ impl Palette {
     /// Returns `None` if the given key was not found.
     pub fn custom<'a>(&'a self, key: &str) -> Option<&'a Color> {
         self.custom.get(key).and_then(|node| {
-            if let &PaletteNode::Color(ref color) = node {
+            if let PaletteNode::Color(ref color) = *node {
                 Some(color)
             } else {
                 None

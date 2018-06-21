@@ -75,15 +75,15 @@ where
     }
 }
 
-fn find_closest_pair(pair: &ColorPair, max_colors: i16) -> (i16, i16) {
+fn find_closest_pair(pair: ColorPair, max_colors: i16) -> (i16, i16) {
     (
-        find_closest(&pair.front, max_colors),
-        find_closest(&pair.back, max_colors),
+        find_closest(pair.front, max_colors),
+        find_closest(pair.back, max_colors),
     )
 }
 
-fn find_closest(color: &Color, max_colors: i16) -> i16 {
-    match *color {
+fn find_closest(color: Color, max_colors: i16) -> i16 {
+    match color {
         Color::TerminalDefault => -1,
         Color::Dark(BaseColor::Black) => 0,
         Color::Dark(BaseColor::Red) => 1,

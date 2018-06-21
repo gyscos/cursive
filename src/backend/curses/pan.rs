@@ -272,7 +272,7 @@ impl InputParser {
     }
 }
 
-fn find_closest_pair(pair: &ColorPair) -> (i16, i16) {
+fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
     super::find_closest_pair(pair, pancurses::COLORS() as i16)
 }
 
@@ -334,7 +334,7 @@ impl Backend {
     /// Checks the pair in the cache, or re-define a color if needed.
     fn get_or_create(&self, pair: ColorPair) -> i32 {
         let mut pairs = self.pairs.borrow_mut();
-        let pair = find_closest_pair(&pair);
+        let pair = find_closest_pair(pair);
 
         // Find if we have this color in stock
         if pairs.contains_key(&pair) {

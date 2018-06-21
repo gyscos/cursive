@@ -308,7 +308,7 @@ impl<'a, 'b> Printer<'a, 'b> {
             offset: self.offset,
             size: self.size,
             focused: self.focused,
-            theme: theme,
+            theme,
             backend: self.backend,
             output_size: self.output_size,
             content_offset: self.content_offset,

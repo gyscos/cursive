@@ -10,6 +10,15 @@ pub struct XY<T> {
     pub y: T,
 }
 
+impl<T> IntoIterator for XY<T> {
+    type Item = T;
+    type IntoIter = iter::Chain<iter::Once<T>, iter::Once<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        iter::once(self.x).chain(iter::once(self.y))
+    }
+}
+
 impl<T> XY<T> {
     /// Creates a new `XY` from the given values.
     pub fn new(x: T, y: T) -> Self {
@@ -86,11 +95,6 @@ impl<T> XY<T> {
     /// Creates an iterator that returns references to `x`, then `y`.
     pub fn iter(&self) -> iter::Chain<iter::Once<&T>, iter::Once<&T>> {
         iter::once(&self.x).chain(iter::once(&self.y))
-    }
-
-    /// Creates an iterator that returns `x`, then `y`.
-    pub fn into_iter(self) -> iter::Chain<iter::Once<T>, iter::Once<T>> {
-        iter::once(self.x).chain(iter::once(self.y))
     }
 
     /// Returns a reference to the value on the given axis.
@@ -177,34 +181,34 @@ impl<T> XY<Option<T>> {
 
 impl XY<bool> {
     /// Returns `true` if any of `x` or `y` is `true`.
-    pub fn any(&self) -> bool {
+    pub fn any(self) -> bool {
         use std::ops::BitOr;
         self.fold(BitOr::bitor)
     }
 
     /// Returns `true` if both `x` and `y` are `true`.
-    pub fn both(&self) -> bool {
+    pub fn both(self) -> bool {
         use std::ops::BitAnd;
         self.fold(BitAnd::bitand)
     }
 
     /// For each axis, keeps elements from `other` if `self` is `true`.
-    pub fn select<T>(&self, other: XY<T>) -> XY<Option<T>> {
+    pub fn select<T>(self, other: XY<T>) -> XY<Option<T>> {
         self.zip_map(other, |keep, o| if keep { Some(o) } else { None })
     }
 
     /// For each axis, selects `if_true` if `self` is true, else `if_false`.
-    pub fn select_or<T>(&self, if_true: XY<T>, if_false: XY<T>) -> XY<T> {
+    pub fn select_or<T>(self, if_true: XY<T>, if_false: XY<T>) -> XY<T> {
         self.select(if_true).unwrap_or(if_false)
     }
 
     /// Returns a term-by-term AND operation.
-    pub fn and(&self, other: Self) -> Self {
+    pub fn and(self, other: Self) -> Self {
         self.zip_map(other, |s, o| s && o)
     }
 
     /// Returns a term-by-term OR operation.
-    pub fn or(&self, other: Self) -> Self {
+    pub fn or(self, other: Self) -> Self {
         self.zip_map(other, |s, o| s || o)
     }
 }

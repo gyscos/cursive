@@ -260,8 +260,8 @@ impl MouseEvent {
     /// Returns the button used by this event, if any.
     ///
     /// Returns `None` if `self` is `WheelUp` or `WheelDown`.
-    pub fn button(&self) -> Option<MouseButton> {
-        match *self {
+    pub fn button(self) -> Option<MouseButton> {
+        match self {
             MouseEvent::Press(btn)
             | MouseEvent::Release(btn)
             | MouseEvent::Hold(btn) => Some(btn),

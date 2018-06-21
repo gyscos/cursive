@@ -14,7 +14,7 @@ impl ColorPair {
     /// Return an inverted color pair.
     ///
     /// With swapped front abd back color.
-    pub fn invert(&self) -> Self {
+    pub fn invert(self) -> Self {
         ColorPair {
             front: self.back,
             back: self.front,

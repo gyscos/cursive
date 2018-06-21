@@ -270,9 +270,7 @@ impl Dialog {
     }
 
     /// Returns an iterator on this buttons for this dialog.
-    pub fn buttons_mut<'a>(
-        &'a mut self,
-    ) -> impl Iterator<Item = &'a mut Button> {
+    pub fn buttons_mut(&mut self) -> impl Iterator<Item = &mut Button> {
         self.buttons.iter_mut().map(|b| &mut b.button.view)
     }
 

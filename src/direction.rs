@@ -37,13 +37,13 @@ impl Orientation {
     ///
     /// (`Horizontal` will return the x value,
     /// and `Vertical` will return the y value.)
-    pub fn get<T: Clone>(&self, v: &XY<T>) -> T {
-        v.get(*self).clone()
+    pub fn get<T: Clone>(self, v: &XY<T>) -> T {
+        v.get(self).clone()
     }
 
     /// Returns the other orientation.
-    pub fn swap(&self) -> Self {
-        match *self {
+    pub fn swap(self) -> Self {
+        match self {
             Orientation::Horizontal => Orientation::Vertical,
             Orientation::Vertical => Orientation::Horizontal,
         }
@@ -51,8 +51,8 @@ impl Orientation {
 
     /// Returns a mutable reference to the component of the given vector
     /// corresponding to this orientation.
-    pub fn get_ref<'a, 'b, T>(&'a self, v: &'b mut XY<T>) -> &'b mut T {
-        match *self {
+    pub fn get_ref<T>(self, v: &mut XY<T>) -> &mut T {
+        match self {
             Orientation::Horizontal => &mut v.x,
             Orientation::Vertical => &mut v.y,
         }
@@ -63,8 +63,8 @@ impl Orientation {
     ///
     /// For an horizontal view, returns (Sum(x), Max(y)).
     /// For a vertical view, returns (Max(x),Sum(y)).
-    pub fn stack<'a, T: Iterator<Item = &'a Vec2>>(&self, iter: T) -> Vec2 {
-        match *self {
+    pub fn stack<'a, T: Iterator<Item = &'a Vec2>>(self, iter: T) -> Vec2 {
+        match self {
             Orientation::Horizontal => {
                 iter.fold(Vec2::zero(), |a, b| a.stack_horizontal(b))
             }
@@ -75,7 +75,7 @@ impl Orientation {
     }
 
     /// Creates a new `Vec2` with `value` in `self`'s axis.
-    pub fn make_vec(&self, main_axis: usize, second_axis: usize) -> Vec2 {
+    pub fn make_vec(self, main_axis: usize, second_axis: usize) -> Vec2 {
         let mut result = Vec2::zero();
         *self.get_ref(&mut result) = main_axis;
         *self.swap().get_ref(&mut result) = second_axis;

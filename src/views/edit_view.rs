@@ -585,10 +585,12 @@ impl View for EditView {
                     let selected = self.content[self.cursor..]
                         .graphemes(true)
                         .next()
-                        .expect(&format!(
-                            "Found no char at cursor {} in {}",
-                            self.cursor, &self.content
-                        ));
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Found no char at cursor {} in {}",
+                                self.cursor, &self.content
+                            )
+                        });
                     if self.secret {
                         make_small_stars(selected.width())
                     } else {

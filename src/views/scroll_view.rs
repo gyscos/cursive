@@ -245,11 +245,12 @@ where
         let offsets = self.scrollbar_thumb_offsets(lengths);
 
         // Iterate on axises, and keep the one we grabbed.
-        for (orientation, pos, length, offset) in
+        if let Some((orientation, pos, length, offset)) =
             XY::zip4(Orientation::pair(), position, lengths, offsets)
                 .keep(grabbed.and(self.enabled))
                 .into_iter()
                 .filter_map(|x| x)
+                .next()
         {
             if pos >= offset && pos < offset + length {
                 // We grabbed the thumb! Now scroll from that position.
