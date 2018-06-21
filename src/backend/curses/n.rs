@@ -89,18 +89,19 @@ impl InputParser {
         if ncurses::getmouse(&mut mevent as *mut ncurses::MEVENT)
             == ncurses::OK
         {
-            // eprintln!("{:032b}", mevent.bstate);
             // Currently unused
+            let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
             let _shift =
                 (mevent.bstate & ncurses::BUTTON_SHIFT as mmask_t) != 0;
             let _alt = (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
-            let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
 
+            // Keep the base state, without the modifiers
             mevent.bstate &= !(ncurses::BUTTON_SHIFT
                 | ncurses::BUTTON_ALT
                 | ncurses::BUTTON_CTRL)
                 as mmask_t;
 
+            // This makes a full `Event` from a `MouseEvent`.
             let make_event = |event| Event::Mouse {
                 offset: Vec2::zero(),
                 position: Vec2::new(mevent.x as usize, mevent.y as usize),

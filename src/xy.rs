@@ -140,6 +140,11 @@ impl<T> XY<T> {
     {
         XY::new(f(self.x, other.x), f(self.y, other.y))
     }
+
+    /// For each axis, keep the element from `self` if `keep` is `true`.
+    pub fn keep(self, keep: XY<bool>) -> XY<Option<T>> {
+        keep.select(self)
+    }
 }
 
 impl<T: Clone> XY<T> {
@@ -191,6 +196,16 @@ impl XY<bool> {
     /// For each axis, selects `if_true` if `self` is true, else `if_false`.
     pub fn select_or<T>(&self, if_true: XY<T>, if_false: XY<T>) -> XY<T> {
         self.select(if_true).unwrap_or(if_false)
+    }
+
+    /// Returns a term-by-term AND operation.
+    pub fn and(&self, other: Self) -> Self {
+        self.zip_map(other, |s, o| s && o)
+    }
+
+    /// Returns a term-by-term OR operation.
+    pub fn or(&self, other: Self) -> Self {
+        self.zip_map(other, |s, o| s || o)
     }
 }
 

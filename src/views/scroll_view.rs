@@ -189,7 +189,11 @@ where
 
     /// Returns the size available for the child view.
     fn available_size(&self) -> Vec2 {
-        self.last_size.saturating_sub(self.scrollbar_size())
+        if self.show_scrollbars {
+            self.last_size.saturating_sub(self.scrollbar_size())
+        } else {
+            self.last_size
+        }
     }
 
     /// Compute the size we would need.
@@ -231,20 +235,21 @@ where
     ///
     /// Returns `true` if the event was consumed.
     fn start_drag(&mut self, position: Vec2) -> bool {
+        // For each scrollbar, how far it is.
         let scrollbar_pos = self.last_size.saturating_sub((1, 1));
 
-        let grabbed = scrollbar_pos.zip_map(position, |s, p| s == p);
+        // This is true for Y if we grabbed the vertical scrollbar
+        let grabbed = scrollbar_pos.zip_map(position, |s, p| s == p).swap();
 
         let lengths = self.scrollbar_thumb_lengths();
         let offsets = self.scrollbar_thumb_offsets(lengths);
 
-        // See if we grabbed one of the scrollbars
+        // Iterate on axises, and keep the one we grabbed.
         for (orientation, pos, length, offset) in
             XY::zip4(Orientation::pair(), position, lengths, offsets)
-                .zip(grabbed.swap())
+                .keep(grabbed.and(self.enabled))
                 .into_iter()
-                .filter(|&(_, grab)| grab)
-                .map(|(x, _)| x)
+                .filter_map(|x| x)
         {
             if pos >= offset && pos < offset + length {
                 // We grabbed the thumb! Now scroll from that position.
@@ -262,7 +267,9 @@ where
         false
     }
 
+    /// Called when a mouse drag is detected.
     fn drag(&mut self, position: Vec2) {
+        // Only do something if we grabbed something before.
         if let Some((orientation, grab)) = self.thumb_grab {
             self.scroll_to_thumb(
                 orientation,
@@ -466,10 +473,11 @@ where
                         event: MouseEvent::Press(MouseButton::Left),
                         position,
                         offset,
-                    } if position
-                        .checked_sub(offset)
-                        .map(|position| self.start_drag(position))
-                        .unwrap_or(false) =>
+                    } if self.show_scrollbars
+                        && position
+                            .checked_sub(offset)
+                            .map(|position| self.start_drag(position))
+                            .unwrap_or(false) =>
                     {
                         // Just consume the event.
                     }
@@ -477,7 +485,8 @@ where
                         event: MouseEvent::Hold(MouseButton::Left),
                         position,
                         offset,
-                    } => {
+                    } if self.show_scrollbars =>
+                    {
                         let position = position.saturating_sub(offset);
                         self.drag(position);
                     }
