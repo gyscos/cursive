@@ -237,12 +237,18 @@ where
     fn start_drag(&mut self, position: Vec2) -> bool {
         // For each scrollbar, how far it is.
         let scrollbar_pos = self.last_size.saturating_sub((1, 1));
-
-        // This is true for Y if we grabbed the vertical scrollbar
-        let grabbed = scrollbar_pos.zip_map(position, |s, p| s == p).swap();
-
         let lengths = self.scrollbar_thumb_lengths();
         let offsets = self.scrollbar_thumb_offsets(lengths);
+        let available = self.available_size();
+
+        // This is true for Y if we grabbed the vertical scrollbar
+        // More specifically, we need both (for instance for the vertical bar):
+        // * To be in the right column: X == scrollbar_pos
+        // * To be in the right range: Y < available
+        let grabbed = position
+            .zip_map(scrollbar_pos, |p, s| p == s)
+            .swap()
+            .and(position.zip_map(available, |p, a| p < a));
 
         // Iterate on axises, and keep the one we grabbed.
         if let Some((orientation, pos, length, offset)) =
