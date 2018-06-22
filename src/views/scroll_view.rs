@@ -311,6 +311,20 @@ where
     ///
     /// Returns `(inner_size, size)`
     fn sizes(&mut self, constraint: Vec2) -> (Vec2, Vec2) {
+        // First: try the cache
+        if self
+            .size_cache
+            .map(|cache| cache.zip_map(constraint, SizeCache::accept).both())
+            .unwrap_or(false)
+        {
+            // The new constraint shouldn't change much,
+            // so we can re-use previous values
+            return (
+                self.inner_size,
+                self.size_cache.unwrap().map(|c| c.value),
+            );
+        }
+
         // Attempt 1: try without scrollbars
         let (inner_size, size, scrollable) =
             self.sizes_when_scrolling(constraint, XY::new(false, false));
@@ -351,19 +365,6 @@ where
         // The number of steps is 1 + the "extra space"
         let steps = (available + (1, 1)).saturating_sub(lengths);
         steps * self.offset / (self.inner_size + (1, 1) - available)
-    }
-
-    fn compute_inner_size(&mut self, constraint: Vec2) {
-        if self
-            .size_cache
-            .map(|cache| cache.zip_map(constraint, SizeCache::accept).both())
-            .unwrap_or(false)
-        {
-            return;
-        }
-        let (inner_size, _) = self.sizes(constraint);
-        self.inner_size = inner_size;
-        self.size_cache = Some(SizeCache::build(inner_size, constraint));
     }
 
     /// Apply the scrolling strategy to the current scroll position.
@@ -582,10 +583,14 @@ where
     }
 
     fn layout(&mut self, size: Vec2) {
-        // Size is final now
+        // Size is final now, negociations are over.
         self.last_size = size;
 
-        self.compute_inner_size(size);
+        // This is what we'd like
+        let (inner_size, self_size) = self.sizes(size);
+
+        self.inner_size = inner_size;
+        self.size_cache = Some(SizeCache::build(self_size, size));
 
         self.inner.layout(self.inner_size);
 
