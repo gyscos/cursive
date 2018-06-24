@@ -716,23 +716,11 @@ impl Cursive {
         // Probably, actually.
         // TODO: Do we need to re-layout everytime?
         self.layout();
-        eprintln!(
-            "After layout: {:?}",
-            ::std::time::Instant::now() - step_start
-        );
 
         // TODO: Do we need to redraw every view every time?
         // (Is this getting repetitive? :p)
         self.draw();
-        eprintln!(
-            "After draw: {:?}",
-            ::std::time::Instant::now() - step_start
-        );
         self.backend.refresh();
-        eprintln!(
-            "After refresh: {:?}",
-            ::std::time::Instant::now() - step_start
-        );
 
         // Wait for next event.
         if self.received_event {
@@ -793,10 +781,6 @@ impl Cursive {
             }
             Interruption::Timeout => {}
         }
-        eprintln!(
-            "After event: {:?}",
-            ::std::time::Instant::now() - step_start
-        );
     }
 
     /// Stops the event loop.
