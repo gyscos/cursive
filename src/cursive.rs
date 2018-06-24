@@ -47,6 +47,7 @@ pub struct Cursive {
 
     // Sends true or false after each event.
     stop_sink: chan::Sender<bool>,
+    received_event: bool,
 }
 
 /// Describes one of the possible interruptions we should handle.
@@ -152,6 +153,7 @@ impl Cursive {
             event_sink,
             backend,
             stop_sink,
+            received_event: false,
         }
     }
 
@@ -708,17 +710,36 @@ impl Cursive {
     ///
     /// [`run(&mut self)`]: #method.run
     pub fn step(&mut self) {
+        let step_start = ::std::time::Instant::now();
+
         // Do we need to redraw everytime?
         // Probably, actually.
         // TODO: Do we need to re-layout everytime?
         self.layout();
+        eprintln!(
+            "After layout: {:?}",
+            ::std::time::Instant::now() - step_start
+        );
 
         // TODO: Do we need to redraw every view every time?
         // (Is this getting repetitive? :p)
         self.draw();
+        eprintln!(
+            "After draw: {:?}",
+            ::std::time::Instant::now() - step_start
+        );
         self.backend.refresh();
+        eprintln!(
+            "After refresh: {:?}",
+            ::std::time::Instant::now() - step_start
+        );
 
         // Wait for next event.
+        if self.received_event {
+            // Now tell the backend whether he sould keep receiving.
+            self.stop_sink.send(!self.running);
+            self.received_event = false;
+        }
         match self.poll() {
             Interruption::Event(event) => {
                 // eprintln!("{:?}, {:?}", event, self.screen_size());
@@ -765,14 +786,17 @@ impl Cursive {
                 }
 
                 // Ok, we processed the event.
-                // Now tell the backend whether he sould keep receiving.
-                self.stop_sink.send(!self.running);
+                self.received_event = true;
             }
             Interruption::Callback(cb) => {
                 cb.call_box(self);
             }
             Interruption::Timeout => {}
         }
+        eprintln!(
+            "After event: {:?}",
+            ::std::time::Instant::now() - step_start
+        );
     }
 
     /// Stops the event loop.
