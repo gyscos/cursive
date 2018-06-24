@@ -2,7 +2,7 @@ extern crate cursive;
 
 use cursive::align::HAlign;
 use cursive::traits::*;
-use cursive::views::{Dialog, DummyView, LinearLayout, TextView};
+use cursive::views::{Dialog, DummyView, LinearLayout, ScrollView, TextView};
 use cursive::Cursive;
 
 // This example uses a LinearLayout to stick multiple views next to each other.
@@ -23,11 +23,11 @@ fn main() {
                 // Use a DummyView as spacer
                 .child(DummyView.fixed_height(1))
                 // Disabling scrollable means the view cannot shrink.
-                .child(TextView::new(text).scrollable(false))
+                .child(TextView::new(text))
                 // The other views will share the remaining space.
-                .child(TextView::new(text))
-                .child(TextView::new(text))
-                .child(TextView::new(text))
+                .child(ScrollView::new(TextView::new(text)))
+                .child(ScrollView::new(TextView::new(text)))
+                .child(ScrollView::new(TextView::new(text)))
                 .fixed_width(30),
         ).button("Quit", |s| s.quit())
             .h_align(HAlign::Center),
