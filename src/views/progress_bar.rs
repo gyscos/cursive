@@ -45,7 +45,11 @@ fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
     }
 
     let (percentage, extra) = ratio(value - min, max - min, 100);
-    let percentage = if extra > 4 { percentage + 1 } else { percentage };
+    let percentage = if extra > 4 {
+        percentage + 1
+    } else {
+        percentage
+    };
     format!("{} %", percentage)
 }
 

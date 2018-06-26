@@ -677,40 +677,28 @@ mod tests {
                 .get(LayerPosition::FromFront(0))
                 .unwrap()
                 .as_any()
-                .downcast_ref::<ViewBox>()
-                .unwrap()
-                .with_view(|v| v.as_any().is::<TextView>())
-                .unwrap()
+                .is::<TextView>()
         );
         assert!(
             stack
                 .get(LayerPosition::FromBack(0))
                 .unwrap()
                 .as_any()
-                .downcast_ref::<ViewBox>()
-                .unwrap()
-                .with_view(|v| v.as_any().is::<TextView>())
-                .unwrap()
+                .is::<TextView>()
         );
         assert!(
             stack
                 .get_mut(LayerPosition::FromFront(0))
                 .unwrap()
                 .as_any_mut()
-                .downcast_mut::<ViewBox>()
-                .unwrap()
-                .with_view_mut(|v| v.as_any_mut().is::<TextView>())
-                .unwrap()
+                .is::<TextView>()
         );
         assert!(
             stack
                 .get_mut(LayerPosition::FromBack(0))
                 .unwrap()
                 .as_any_mut()
-                .downcast_mut::<ViewBox>()
-                .unwrap()
-                .with_view_mut(|v| v.as_any_mut().is::<TextView>())
-                .unwrap()
+                .is::<TextView>()
         );
     }
 }
