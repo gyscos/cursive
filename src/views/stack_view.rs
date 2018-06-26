@@ -80,7 +80,7 @@ impl<T: View> ChildWrapper<T> {
 
 impl<T: View> ChildWrapper<T> {
     /// Returns a reference to the inner view
-    pub fn get_inner(&self) -> &View {
+    pub fn get_inner(&self) -> &T {
         match *self {
             ChildWrapper::Shadow(ref shadow) => shadow.get_inner().get_inner(),
             ChildWrapper::Backfilled(ref background) => background.get_inner(),
@@ -89,7 +89,7 @@ impl<T: View> ChildWrapper<T> {
     }
 
     /// Returns a mutable reference to the inner view
-    pub fn get_inner_mut(&mut self) -> &mut View {
+    pub fn get_inner_mut(&mut self) -> &mut T {
         match *self {
             ChildWrapper::Shadow(ref mut shadow) => {
                 shadow.get_inner_mut().get_inner_mut()
@@ -228,7 +228,7 @@ impl StackView {
     /// Returns a reference to the layer at the given position.
     pub fn get(&self, pos: LayerPosition) -> Option<&View> {
         let i = self.get_index(pos);
-        self.layers.get(i).map(|child| child.view.get_inner())
+        self.layers.get(i).map(|child| &**child.view.get_inner())
     }
 
     /// Returns a mutable reference to the layer at the given position.
@@ -236,7 +236,7 @@ impl StackView {
         let i = self.get_index(pos);
         self.layers
             .get_mut(i)
-            .map(|child| child.view.get_inner_mut())
+            .map(|child| &mut **child.view.get_inner_mut())
     }
 
     /// Looks for the layer containing a view with the given ID.
