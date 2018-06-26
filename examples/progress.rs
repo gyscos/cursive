@@ -37,7 +37,7 @@ fn phase_1(s: &mut Cursive) {
     // Phase 1 is easy: a simple pre-loading.
 
     // Number of ticks
-    let n_max = 500;
+    let n_max = 1000;
 
     // This is the callback channel
     let cb = s.cb_sink().clone();

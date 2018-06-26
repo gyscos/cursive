@@ -41,13 +41,29 @@ pub struct ProgressBar {
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
     if value < min {
-        // ?? Negative progress?
-        let percent = 101 * (min - value) / (1 + max - min);
-        format!("-{} %", percent)
-    } else {
-        let percent = 101 * (value - min) / (1 + max - min);
-        format!("{} %", percent)
+        return format!("0 %");
     }
+
+    let (percentage, extra) = ratio(value - min, max - min, 100);
+    let percentage = if extra > 4 { percentage + 1 } else { percentage };
+    format!("{} %", percentage)
+}
+
+/// Returns length * value/max
+///
+/// Constraint: `value` from 0 to `max` should, as much as possible, produce equal-sized segments
+/// from 0 to length.
+///
+/// Returns a tuple with:
+/// * The integer part of the division
+/// * A value between 0 and 8 (exclusive) corresponding to the remainder.
+fn ratio(value: usize, max: usize, length: usize) -> (usize, usize) {
+    let integer = length * value / max;
+    let fraction = length * value - max * integer;
+
+    let fraction = fraction * 8 / max;
+
+    (integer, fraction)
 }
 
 new_default!(ProgressBar);
@@ -165,6 +181,20 @@ impl ProgressBar {
     }
 }
 
+fn sub_block(extra: usize) -> &'static str {
+    match extra {
+        0 => " ",
+        1 => "▏",
+        2 => "▎",
+        3 => "▍",
+        4 => "▌",
+        5 => "▋",
+        6 => "▊",
+        7 => "▉",
+        _ => "█",
+    }
+}
+
 impl View for ProgressBar {
     fn draw(&self, printer: &Printer) {
         // Now, the bar itself...
@@ -175,21 +205,25 @@ impl View for ProgressBar {
         // If we're under the minimum, don't draw anything.
         // If we're over the maximum, we'll try to draw more, but the printer
         // will crop us anyway, so it's not a big deal.
-        let length = if value < self.min {
-            0
+        let (length, extra) = if value < self.min {
+            (0, 0)
         } else {
-            ((1 + available) * (value - self.min)) / (1 + self.max - self.min)
+            ratio(value - self.min, self.max - self.min, available)
         };
 
         let label = (self.label_maker)(value, (self.min, self.max));
         let offset = HAlign::Center.get_offset(label.len(), printer.size.x);
 
         printer.with_color(ColorStyle::highlight(), |printer| {
+            // Draw the right half of the label in reverse
             printer.with_effect(Effect::Reverse, |printer| {
+                printer.print((length, 0), sub_block(extra));
                 printer.print((offset, 0), &label);
             });
             let printer = &printer.cropped((length, 1));
             printer.print_hline((0, 0), length, " ");
+
+            // Draw the left part in highlight (it may be cropped)
             printer.print((offset, 0), &label);
         });
     }
