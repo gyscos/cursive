@@ -710,8 +710,6 @@ impl Cursive {
     ///
     /// [`run(&mut self)`]: #method.run
     pub fn step(&mut self) {
-        let step_start = ::std::time::Instant::now();
-
         // Do we need to redraw everytime?
         // Probably, actually.
         // TODO: Do we need to re-layout everytime?
