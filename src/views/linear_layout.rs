@@ -175,6 +175,18 @@ impl LinearLayout {
         self.children.get_mut(i).map(|child| &mut *child.view)
     }
 
+    /// Removes a child.
+    ///
+    /// If `i` is within bounds, the removed child will be returned.
+    pub fn remove_child(&mut self, i: usize) -> Option<Box<View>> {
+        if i < self.children.len() {
+            self.invalidate();
+            Some(self.children.remove(i).view)
+        } else {
+            None
+        }
+    }
+
     // If the cache can be used, return the cached size.
     // Otherwise, return None.
     fn get_cache(&self, req: Vec2) -> Option<Vec2> {
