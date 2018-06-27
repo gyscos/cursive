@@ -1,7 +1,8 @@
 extern crate cursive;
 
 use cursive::align::HAlign;
-use cursive::views::{Dialog, Panel, ScrollView, TextView};
+use cursive::view::Scrollable;
+use cursive::views::{Dialog, Panel, TextView};
 use cursive::Cursive;
 
 fn main() {
@@ -16,7 +17,7 @@ fn main() {
     // The text is too long to fit on a line, so the view will wrap lines,
     // and will adapt to the terminal size.
     siv.add_fullscreen_layer(
-        Dialog::around(Panel::new(ScrollView::new(TextView::new(content))))
+        Dialog::around(Panel::new(TextView::new(content).scrollable()))
             .title("Unicode and wide-character support")
             // This is the alignment for the button
             .h_align(HAlign::Center)

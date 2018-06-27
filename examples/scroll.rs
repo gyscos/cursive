@@ -1,7 +1,8 @@
 extern crate cursive;
 
 use cursive::traits::Boxable;
-use cursive::views::{Button, Canvas, Dialog, LinearLayout, ScrollView};
+use cursive::view::Scrollable;
+use cursive::views::{Button, Canvas, Dialog, LinearLayout};
 use cursive::Printer;
 
 fn main() {
@@ -9,18 +10,12 @@ fn main() {
 
     siv.add_layer(
         Dialog::around(
-            ScrollView::new(
-                LinearLayout::vertical()
-                    .child(Button::new("Foo", |s| {
-                        s.add_layer(Dialog::info("Ah"))
-                    }))
-                    .child(
-                        Canvas::new(()).with_draw(draw).fixed_size((120, 40)),
-                    )
-                    .child(Button::new("Bar", |s| {
-                        s.add_layer(Dialog::info("Uh"))
-                    })),
-            ).scroll_x(true),
+            LinearLayout::vertical()
+                .child(Button::new("Foo", |s| s.add_layer(Dialog::info("Ah"))))
+                .child(Canvas::new(()).with_draw(draw).fixed_size((120, 40)))
+                .child(Button::new("Bar", |s| s.add_layer(Dialog::info("Uh"))))
+                .scrollable()
+                .scroll_x(true),
         ).fixed_size((60, 30)),
     );
 

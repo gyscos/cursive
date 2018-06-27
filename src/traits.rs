@@ -9,6 +9,7 @@
 //! ```
 
 #[doc(no_inline)]
-pub use view::{Boxable, Finder, Identifiable, View};
+pub use view::{Boxable, Finder, Identifiable, Scrollable, View};
+
 #[doc(no_inline)]
 pub use With;

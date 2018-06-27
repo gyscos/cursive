@@ -52,6 +52,7 @@ mod view_path;
 mod boxable;
 mod identifiable;
 mod scroll;
+mod scrollable;
 
 mod into_boxed_view;
 
@@ -63,6 +64,7 @@ pub use self::into_boxed_view::IntoBoxedView;
 pub use self::margins::Margins;
 pub use self::position::{Offset, Position};
 pub use self::scroll::{ScrollBase, ScrollStrategy};
+pub use self::scrollable::Scrollable;
 pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
 pub use self::view::View;
