@@ -181,6 +181,10 @@ impl LinearLayout {
     pub fn remove_child(&mut self, i: usize) -> Option<Box<View>> {
         if i < self.children.len() {
             self.invalidate();
+
+            if self.focus > i {
+                self.focus -= 1;
+            }
             Some(self.children.remove(i).view)
         } else {
             None
