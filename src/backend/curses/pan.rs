@@ -317,6 +317,7 @@ impl Backend {
             pairs: RefCell::new(HashMap::new()),
             window: Arc::new(window),
             needs_resize: Arc::new(AtomicBool::new(false)),
+            #[cfg(unix)]
             signals,
         };
 
@@ -458,22 +459,29 @@ impl backend::Backend for Backend {
 
         let resize_running = Arc::clone(&running);
         let resize_sender = event_sink.clone();
-        let signals = self.signals.take().unwrap();
 
-        thread::spawn(move || {
-            // This thread will listen to SIGWINCH events and report them.
-            while resize_running.load(Ordering::Relaxed) {
-                // We know it will only contain SIGWINCH signals, so no need to check.
-                for _ in signals.pending() {
-                    // Tell ncurses about the new terminal size.
-                    // Well, do the actual resizing later on, in the main thread.
-                    // Ncurses isn't really thread-safe so calling resize_term() can crash
-                    // other calls like clear() or refresh().
-                    needs_resize.store(true, Ordering::Relaxed);
-                    resize_sender.send(Some(Event::WindowResize));
+        #[cfg(unix)]
+        {
+            let signals = self.signals.take().unwrap();
+            thread::spawn(move || {
+                // This thread will listen to SIGWINCH events and report them.
+                while resize_running.load(Ordering::Relaxed) {
+                    // We know it will only contain SIGWINCH signals, so no need to check.
+                    for _ in signals.pending() {
+                        // Tell ncurses about the new terminal size.
+                        // Well, do the actual resizing later on, in the main thread.
+                        // Ncurses isn't really thread-safe so calling resize_term() can crash
+                        // other calls like clear() or refresh().
+                        needs_resize.store(true, Ordering::Relaxed);
+                        resize_sender.send(Some(Event::WindowResize));
+                    }
                 }
-            }
-        });
+            });
+        }
+
+        // On windows we just forget the sender, so the receiver blocks forever.
+        #[cfg(not(unix))]
+        ::std::mem::forget(resize_sender);
 
         let mut input_parser =
             InputParser::new(event_sink, Arc::clone(&self.window));
