@@ -5,18 +5,21 @@
 
 extern crate bear_lib_terminal;
 
+use std::collections::HashSet;
+use std::time::{Duration, Instant};
+
 use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{
     self, state, Event as BltEvent, KeyCode,
 };
 use self::bear_lib_terminal::Color as BltColor;
+use crossbeam_channel::{Receiver, Sender};
+
 use backend;
-use chan;
 use event::{Event, Key, MouseButton, MouseEvent};
-use std::collections::HashSet;
-use std::time::{Duration, Instant};
 use theme::{BaseColor, Color, ColorPair, Effect};
 use vec::Vec2;
+
 
 enum ColorRole {
     Foreground,
@@ -306,17 +309,25 @@ impl backend::Backend for Backend {
     }
 
     fn prepare_input(
-        &mut self, event_sink: &chan::Sender<Event>, timeout: Duration,
+        &mut self, event_sink: &Sender<Option<Event>>, input_request: backend::InputRequest,
     ) {
-        // Wait for up to `timeout_ms`.
-        let start = Instant::now();
-        while start.elapsed() < timeout {
-            if let Some(event) = self.parse_next() {
-                event_sink.send(event);
-                return;
+        match input_request {
+            backend::InputRequest::Peek => event_sink.send(self.parse_next()),
+            backend::InputRequest::Block => {
+                let timeout = ::std::time::Duration::from_millis(30);
+                // Wait for up to `timeout_ms`.
+                let start = Instant::now();
+                while start.elapsed() < timeout {
+                    if let Some(event) = self.parse_next() {
+                        event_sink.send(Some(event));
+                        return;
+                    }
+                }
+                event_sink.send(Some(Event::Refresh));
             }
         }
-        event_sink.send(Event::Refresh);
+
+
     }
 }
 

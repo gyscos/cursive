@@ -5,8 +5,7 @@
 
 extern crate termion;
 
-extern crate chan_signal;
-
+use crossbeam_channel::{self, Sender, Receiver};
 use self::termion::color as tcolor;
 use self::termion::event::Event as TEvent;
 use self::termion::event::Key as TKey;
@@ -16,14 +15,19 @@ use self::termion::input::{MouseTerminal, TermRead};
 use self::termion::raw::{IntoRawMode, RawTerminal};
 use self::termion::screen::AlternateScreen;
 use self::termion::style as tstyle;
+use signal_hook::iterator::Signals;
+use libc;
+
 use backend;
-use chan;
 use event::{Event, Key, MouseButton, MouseEvent};
+use theme;
+use vec::Vec2;
+
 use std::cell::Cell;
 use std::io::{Stdout, Write};
 use std::thread;
-use theme;
-use vec::Vec2;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool,Ordering};
 
 pub struct Backend {
     terminal: AlternateScreen<MouseTerminal<RawTerminal<Stdout>>>,
@@ -31,53 +35,73 @@ pub struct Backend {
 }
 
 struct InputParser {
-    input: chan::Receiver<TEvent>,
-    resize: chan::Receiver<chan_signal::Signal>,
-    event_sink: chan::Sender<Event>,
+    // Inner state required to parse input
     last_button: Option<MouseButton>,
+
+    event_due: bool,
+    requests: Sender<()>,
+    input: Receiver<TEvent>,
 }
 
 impl InputParser {
-    fn new(event_sink: chan::Sender<Event>) -> Self {
-        let (sender, receiver) = chan::async();
+    // Creates a non-blocking abstraction over the usual blocking input
+    fn new() -> Self {
+        let (input_sender, input_receiver) = crossbeam_channel::bounded(0);
+        let (request_sender, request_receiver) = crossbeam_channel::bounded(0);
 
-        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
-
-        // Fill the input channel
+        // This thread will stop after an event when `InputParser` is dropped.
         thread::spawn(move || {
-            for key in ::std::io::stdin().events() {
-                if let Ok(key) = key {
-                    sender.send(key)
-                }
+            let stdin = ::std::io::stdin();
+            let stdin = stdin.lock();
+            let mut events = stdin.events();
+
+            for _ in request_receiver {
+                let event: Result<TEvent, ::std::io::Error> = events.next().unwrap();
+                input_sender.send(event.unwrap());
             }
         });
 
         InputParser {
-            resize,
-            event_sink,
             last_button: None,
-            input: receiver,
+            input: input_receiver,
+            requests: request_sender,
+            event_due: false,
         }
+    }
+
+    /// We pledge to want input.
+    ///
+    /// If we were already expecting input, this is a NO-OP.
+    fn request(&mut self) {
+        if !self.event_due {
+            self.requests.send(());
+            self.event_due = true;
+        }
+    }
+
+    fn peek(&mut self) -> Option<Event> {
+        self.request();
+
+        let timeout = ::std::time::Duration::from_millis(10);
+
+        let input = select! {
+            recv(self.input, input) => {
+                input
+            }
+            recv(crossbeam_channel::after(timeout)) => return None,
+        };
+
+        // We got what we came for.
+        self.event_due = false;
+        Some(self.map_key(input.unwrap()))
     }
 
     fn next_event(&mut self) -> Event {
-        let result;
-        {
-            let input = &self.input;
-            let resize = &self.resize;
+        self.request();
 
-            chan_select!{
-                resize.recv() => return Event::WindowResize,
-                input.recv() -> input => result = Some(input.unwrap()),
-            }
-        }
-
-        self.map_key(result.unwrap())
-    }
-
-    fn parse_next(&mut self) {
-        let event = self.next_event();
-        self.event_sink.send(event);
+        let input = self.input.recv().unwrap();
+        self.event_due = false;
+        self.map_key(input)
     }
 
     fn map_key(&mut self, event: TEvent) -> Event {
@@ -266,20 +290,40 @@ impl backend::Backend for Backend {
     }
 
     fn start_input_thread(
-        &mut self, event_sink: chan::Sender<Event>,
-        stops: chan::Receiver<bool>,
+        &mut self, event_sink: Sender<Option<Event>>,
+        input_request: Receiver<backend::InputRequest>,
     ) {
-        let mut parser = InputParser::new(event_sink);
-        thread::spawn(move || {
-            loop {
-                // This sends events to the event sender.
-                parser.parse_next();
+        let running = Arc::new(AtomicBool::new(true));
+        let resize_sender = event_sink.clone();
+        let signals = Signals::new(&[libc::SIGWINCH]).unwrap();
 
-                if stops.recv() != Some(false) {
-                    // If the channel was closed or if `true` was sent, abort.
-                    break;
+        let resize_running = Arc::clone(&running);
+        thread::spawn(move || {
+            while resize_running.load(Ordering::Relaxed) {
+                // We know it will only contain SIGWINCH signals, so no need to check.
+                for _ in signals.pending() {
+                    // Tell ncurses about the new terminal size.
+                    // Well, do the actual resizing later on, in the main thread.
+                    // Ncurses isn't really thread-safe so calling resize_term() can crash
+                    // other calls like clear() or refresh().
+                    resize_sender.send(Some(Event::WindowResize));
                 }
             }
+        });
+
+        let mut parser = InputParser::new();
+        thread::spawn(move || {
+            for req in input_request {
+                match req {
+                    backend::InputRequest::Peek => {
+                        event_sink.send(parser.peek());
+                    }
+                    backend::InputRequest::Block => {
+                        event_sink.send(Some(parser.next_event()));
+                    }
+                }
+            }
+            running.store(false, Ordering::Relaxed);
         });
     }
 }

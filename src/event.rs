@@ -113,7 +113,7 @@ impl EventResult {
         }
     }
 
-    /// Returns `self` if it is not `Event::Ignored`, otherwise returns `f()`.
+    /// Returns `self` if it is not `EventResult::Ignored`, otherwise returns `f()`.
     pub fn or_else<F>(self, f: F) -> Self
     where
         F: FnOnce() -> EventResult,

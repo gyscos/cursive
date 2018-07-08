@@ -10,9 +10,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 
-use chan;
-use chan_signal;
+use crossbeam_channel::{Receiver, Sender};
 use libc;
+use signal_hook::iterator::Signals;
 
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
@@ -32,16 +32,19 @@ pub struct Backend {
     // This is set by the SIGWINCH-triggered thread.
     // When TRUE, we should tell ncurses about the new terminal size.
     needs_resize: Arc<AtomicBool>,
+
+    // The signal hook to receive SIGWINCH (window resize)
+    signals: Option<Signals>,
 }
 
 struct InputParser {
     key_codes: HashMap<i32, Event>,
     last_mouse_button: Option<MouseButton>,
-    event_sink: chan::Sender<Event>,
+    event_sink: Sender<Option<Event>>,
 }
 
 impl InputParser {
-    fn new(event_sink: chan::Sender<Event>) -> Self {
+    fn new(event_sink: Sender<Option<Event>>) -> Self {
         InputParser {
             key_codes: initialize_keymap(),
             last_mouse_button: None,
@@ -51,6 +54,17 @@ impl InputParser {
 
     fn parse_next(&mut self) {
         let ch: i32 = ncurses::getch();
+
+        if ch == 410 {
+            // Ignore resize events.
+            self.parse_next();
+            return;
+        }
+
+        if ch == -1 {
+            self.event_sink.send(None);
+            return;
+        }
 
         // Is it a UTF-8 starting point?
         let event = if 32 <= ch && ch <= 255 && ch != 127 {
@@ -63,7 +77,7 @@ impl InputParser {
         } else {
             self.parse_ncurses_char(ch)
         };
-        self.event_sink.send(event);
+        self.event_sink.send(Some(event));
     }
 
     fn parse_ncurses_char(&mut self, ch: i32) -> Event {
@@ -132,7 +146,7 @@ impl InputParser {
                         if event.is_none() {
                             event = Some(e);
                         } else {
-                            self.event_sink.send(make_event(e));
+                            self.event_sink.send(Some(make_event(e)));
                         }
                     });
                 }
@@ -171,6 +185,9 @@ fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
 
 impl Backend {
     pub fn init() -> Box<backend::Backend> {
+
+        let signals = Some(Signals::new(&[libc::SIGWINCH]).unwrap());
+
         // Change the locale.
         // For some reasons it's mandatory to get some UTF-8 support.
         ncurses::setlocale(ncurses::LcCategory::all, "");
@@ -212,6 +229,7 @@ impl Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
             pairs: RefCell::new(HashMap::new()),
             needs_resize: Arc::new(AtomicBool::new(false)),
+            signals,
         };
 
         Box::new(c)
@@ -285,48 +303,47 @@ impl backend::Backend for Backend {
     }
 
     fn start_input_thread(
-        &mut self, event_sink: chan::Sender<Event>,
-        stops: chan::Receiver<bool>,
+        &mut self, event_sink: Sender<Option<Event>>,
+        input_request: Receiver<backend::InputRequest>,
     ) {
-        let resize = chan_signal::notify(&[chan_signal::Signal::WINCH]);
-        let (sender, receiver) = chan::async();
-
+        let running = Arc::new(AtomicBool::new(true));
         let needs_resize = Arc::clone(&self.needs_resize);
 
-        // This thread will merge resize and input into event_sink
+        let resize_running = Arc::clone(&running);
+        let resize_sender = event_sink.clone();
+        let signals = self.signals.take().unwrap();
+
         thread::spawn(move || {
-            loop {
-                chan_select! {
-                    resize.recv() => {
-                        // Tell ncurses about the new terminal size.
-                        // Well, do the actual resizing later on, in the main thread.
-                        // Ncurses isn't really thread-safe so calling resize_term() can crash
-                        // other calls like clear() or refresh().
-                        needs_resize.store(true, Ordering::Relaxed);
-                        event_sink.send(Event::WindowResize);
-                    },
-                    receiver.recv() -> event => {
-                        match event {
-                            Some(event) => event_sink.send(event),
-                            None => return,
-                        }
-                    }
+            // This thread will listen to SIGWINCH events and report them.
+            while resize_running.load(Ordering::Relaxed) {
+                // We know it will only contain SIGWINCH signals, so no need to check.
+                for _ in signals.pending() {
+                    // Tell ncurses about the new terminal size.
+                    // Well, do the actual resizing later on, in the main thread.
+                    // Ncurses isn't really thread-safe so calling resize_term() can crash
+                    // other calls like clear() or refresh().
+                    needs_resize.store(true, Ordering::Relaxed);
+                    resize_sender.send(Some(Event::WindowResize));
                 }
             }
         });
 
-        let mut parser = InputParser::new(sender);
-        // This thread will just fill the input channel
-        thread::spawn(move || {
-            loop {
-                // This sends events to the event sender.
-                parser.parse_next();
+        let mut parser = InputParser::new(event_sink);
 
-                if stops.recv() != Some(false) {
-                    // If the channel was closed or if `true` was sent, abort.
-                    break;
+        // This thread will take input from ncurses for each request.
+        thread::spawn(move || {
+            for req in input_request {
+                match req {
+                    backend::InputRequest::Peek => {
+                        ncurses::timeout(0);
+                    }
+                    backend::InputRequest::Block => {
+                        ncurses::timeout(-1);
+                    }
                 }
+                parser.parse_next();
             }
+            running.store(false, Ordering::Relaxed);
         });
     }
 

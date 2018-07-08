@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::time::Duration;
 
-use chan;
+use crossbeam_channel::{self, Receiver, Sender};
 
 use backend;
 use direction;
@@ -39,15 +39,15 @@ pub struct Cursive {
 
     backend: Box<backend::Backend>,
 
-    cb_source: chan::Receiver<Box<CbFunc>>,
-    cb_sink: chan::Sender<Box<CbFunc>>,
+    cb_source: Receiver<Box<CbFunc>>,
+    cb_sink: Sender<Box<CbFunc>>,
 
-    event_source: chan::Receiver<Event>,
-    event_sink: chan::Sender<Event>,
+    event_source: Receiver<Option<Event>>,
+    event_sink: Sender<Option<Event>>,
 
     // Sends true or false after each event.
-    stop_sink: chan::Sender<bool>,
-    received_event: bool,
+    input_trigger: Sender<backend::InputRequest>,
+    expecting_event: bool,
 }
 
 /// Describes one of the possible interruptions we should handle.
@@ -130,13 +130,13 @@ impl Cursive {
     {
         let theme = theme::load_default();
 
-        let (cb_sink, cb_source) = chan::async();
-        let (event_sink, event_source) = chan::async();
+        let (cb_sink, cb_source) = crossbeam_channel::unbounded();
+        let (event_sink, event_source) = crossbeam_channel::unbounded();
 
-        let (stop_sink, stop_source) = chan::async();
+        let (input_sink, input_source) = crossbeam_channel::unbounded();
 
         let mut backend = backend_init();
-        backend.start_input_thread(event_sink.clone(), stop_source);
+        backend.start_input_thread(event_sink.clone(), input_source);
 
         Cursive {
             fps: 0,
@@ -152,8 +152,8 @@ impl Cursive {
             event_source,
             event_sink,
             backend,
-            stop_sink,
-            received_event: false,
+            input_trigger: input_sink,
+            expecting_event: false,
         }
     }
 
@@ -214,7 +214,7 @@ impl Cursive {
     /// ```
     ///
     /// [`set_fps`]: #method.set_fps
-    pub fn cb_sink(&self) -> &chan::Sender<Box<CbFunc>> {
+    pub fn cb_sink(&self) -> &Sender<Box<CbFunc>> {
         &self.cb_sink
     }
 
@@ -585,36 +585,51 @@ impl Cursive {
         self.screen_mut().reposition_layer(layer, position);
     }
 
-    // Wait until something happens.
-    fn poll(&mut self) -> Interruption {
-        let input_channel = &self.event_source;
-        let cb_channel = &self.cb_source;
+    fn peek(&mut self) -> Option<Interruption> {
+        // First, try a callback
+        select! {
+            // Skip to input if nothing is ready
+            default => (),
+            recv(self.cb_source, cb) => return Some(Interruption::Callback(cb.unwrap())),
+        }
 
-        self.backend
-            .prepare_input(&self.event_sink, Duration::from_millis(30));
+        // No callback? Check input then
+        if self.expecting_event {
+            // We're already blocking.
+            return None;
+        }
 
-        if self.fps > 0 {
-            let timeout = 1000 / self.fps;
-            let timeout = chan::after_ms(timeout);
-            chan_select! {
-                input_channel.recv() -> input => {
-                    return Interruption::Event(input.unwrap())
-                },
-                cb_channel.recv() -> cb => {
-                    return Interruption::Callback(cb.unwrap())
-                },
-                timeout.recv() => {
-                    return Interruption::Timeout;
-                },
-            }
+        self.input_trigger.send(backend::InputRequest::Peek);
+        self.backend.prepare_input(&self.event_sink, backend::InputRequest::Peek);
+        self.event_source.recv().unwrap().map(Interruption::Event)
+    }
+
+    /// Wait until something happens.
+    ///
+    /// If `peek` is `true`, return `None` immediately if nothing is ready.
+    fn poll(&mut self) -> Option<Interruption> {
+        if !self.expecting_event {
+            self.input_trigger.send(backend::InputRequest::Block);
+            self.backend.prepare_input(&self.event_sink, backend::InputRequest::Block);
+            self.expecting_event = true;
+        }
+
+        let timeout = if self.fps > 0 {
+            Duration::from_millis(1000 / self.fps as u64)
         } else {
-            chan_select! {
-                input_channel.recv() -> input => {
-                    return Interruption::Event(input.unwrap())
-                },
-                cb_channel.recv() -> cb => {
-                    return Interruption::Callback(cb.unwrap())
-                },
+            // Defaults to 1 refresh per hour.
+            Duration::from_secs(3600)
+        };
+
+        select! {
+            recv(self.event_source, event) => {
+                event.unwrap().map(Interruption::Event)
+            },
+            recv(self.cb_source, cb) => {
+                cb.map(Interruption::Callback)
+            },
+            recv(crossbeam_channel::after(timeout)) => {
+                Some(Interruption::Timeout)
             }
         }
     }
@@ -720,13 +735,21 @@ impl Cursive {
         self.draw();
         self.backend.refresh();
 
-        // Wait for next event.
-        if self.received_event {
-            // Now tell the backend whether he sould keep receiving.
-            self.stop_sink.send(!self.running);
-            self.received_event = false;
+        // First, read all events available while peeking.
+        while let Some(interruption) = self.peek() {
+            self.handle_interruption(interruption);
+            if !self.running {
+                return;
+            }
         }
-        match self.poll() {
+
+        if let Some(interruption) = self.poll() {
+            self.handle_interruption(interruption);
+        }
+    }
+
+    fn handle_interruption(&mut self, interruption: Interruption) {
+        match interruption {
             Interruption::Event(event) => {
                 // eprintln!("{:?}, {:?}", event, self.screen_size());
                 if event == Event::Exit {
@@ -735,6 +758,7 @@ impl Cursive {
 
                 if event == Event::WindowResize {
                     self.clear();
+                    return;
                 }
 
                 if let Event::Mouse {
@@ -772,7 +796,7 @@ impl Cursive {
                 }
 
                 // Ok, we processed the event.
-                self.received_event = true;
+                self.expecting_event = false;
             }
             Interruption::Callback(cb) => {
                 cb.call_box(self);

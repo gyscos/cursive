@@ -7,16 +7,19 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 
-use chan;
+use crossbeam_channel::{Sender, Receiver};
+
 #[cfg(unix)]
-use chan_signal;
+use signal_hook::iterator::Signals;
+#[cfg(unix)]
+use libc;
 
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use theme::{Color, ColorPair, Effect};
 use vec::Vec2;
 
-use self::super::split_i32;
+use super::split_i32;
 use self::pancurses::mmask_t;
 
 pub struct Backend {
@@ -30,12 +33,16 @@ pub struct Backend {
     // This is set by the SIGWINCH-triggered thread.
     // When TRUE, we should tell ncurses about the new terminal size.
     needs_resize: Arc<AtomicBool>,
+
+    // The signal hook to receive SIGWINCH (window resize)
+    #[cfg(unix)]
+    signals: Option<Signals>,
 }
 
 struct InputParser {
     key_codes: HashMap<i32, Event>,
     last_mouse_button: Option<MouseButton>,
-    event_sink: chan::Sender<Event>,
+    event_sink: Sender<Option<Event>>,
     window: Arc<pancurses::Window>,
 }
 
@@ -47,7 +54,7 @@ unsafe impl Send for InputParser {}
 
 impl InputParser {
     fn new(
-        event_sink: chan::Sender<Event>, window: Arc<pancurses::Window>,
+        event_sink: Sender<Option<Event>>, window: Arc<pancurses::Window>,
     ) -> Self {
         InputParser {
             key_codes: initialize_keymap(),
@@ -59,7 +66,8 @@ impl InputParser {
 
     fn parse_next(&mut self) {
         let event = if let Some(ev) = self.window.getch() {
-            match ev {
+
+            Some(match ev {
                 pancurses::Input::Character('\n') => Event::Key(Key::Enter),
                 // TODO: wait for a very short delay. If more keys are
                 // pipelined, it may be an escape sequence.
@@ -204,9 +212,9 @@ impl InputParser {
                 pancurses::Input::KeyB2 => Event::Key(Key::NumpadCenter),
                 pancurses::Input::KeyC1 => Event::Refresh,
                 pancurses::Input::KeyC3 => Event::Refresh,
-            }
+            })
         } else {
-            Event::Refresh
+            None
         };
         self.event_sink.send(event);
     }
@@ -255,7 +263,7 @@ impl InputParser {
                     if event.is_none() {
                         event = Some(e);
                     } else {
-                        self.event_sink.send(make_event(e));
+                        self.event_sink.send(Some(make_event(e)));
                     }
                 });
             }
@@ -276,8 +284,13 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
     super::find_closest_pair(pair, pancurses::COLORS() as i16)
 }
 
+
+
 impl Backend {
     pub fn init() -> Box<backend::Backend> {
+        #[cfg(unix)]
+        let signals = Some(Signals::new(&[libc::SIGWINCH]).unwrap());
+
         ::std::env::set_var("ESCDELAY", "25");
 
         let window = pancurses::initscr();
@@ -304,6 +317,7 @@ impl Backend {
             pairs: RefCell::new(HashMap::new()),
             window: Arc::new(window),
             needs_resize: Arc::new(AtomicBool::new(false)),
+            signals,
         };
 
         Box::new(c)
@@ -363,19 +377,6 @@ fn on_resize() {
 
     // Send the size to ncurses
     pancurses::resize_term(size.y as i32, size.x as i32);
-}
-
-#[cfg(unix)]
-fn resize_channel() -> chan::Receiver<chan_signal::Signal> {
-    chan_signal::notify(&[chan_signal::Signal::WINCH])
-}
-
-#[cfg(not(unix))]
-fn resize_channel() -> chan::Receiver<()> {
-    let (sender, receiver) = chan::async();
-    // Forget the sender, so the channel doesn't close, but never completes.
-    ::std::mem::forget(sender);
-    receiver
 }
 
 impl backend::Backend for Backend {
@@ -449,47 +450,47 @@ impl backend::Backend for Backend {
     }
 
     fn start_input_thread(
-        &mut self, event_sink: chan::Sender<Event>,
-        stops: chan::Receiver<bool>,
+        &mut self, event_sink: Sender<Option<Event>>,
+        input_request: Receiver<backend::InputRequest>,
     ) {
-        let resize = resize_channel();
-        let (sender, receiver) = chan::async();
+        let running = Arc::new(AtomicBool::new(true));
         let needs_resize = Arc::clone(&self.needs_resize);
 
-        // This thread will merge resize and input into event_sink
+        let resize_running = Arc::clone(&running);
+        let resize_sender = event_sink.clone();
+        let signals = self.signals.take().unwrap();
+
         thread::spawn(move || {
-            loop {
-                chan_select! {
-                    resize.recv() => {
-                        // Tell ncurses about the new terminal size.
-                        // Well, do the actual resizing later on, in the main thread.
-                        // Ncurses isn't really thread-safe so calling resize_term() can crash
-                        // other calls like clear() or refresh().
-                        needs_resize.store(true, Ordering::Relaxed);
-                        event_sink.send(Event::WindowResize);
-                    },
-                    receiver.recv() -> event => {
-                        match event {
-                            Some(event) => event_sink.send(event),
-                            None => return,
-                        }
-                    }
+            // This thread will listen to SIGWINCH events and report them.
+            while resize_running.load(Ordering::Relaxed) {
+                // We know it will only contain SIGWINCH signals, so no need to check.
+                for _ in signals.pending() {
+                    // Tell ncurses about the new terminal size.
+                    // Well, do the actual resizing later on, in the main thread.
+                    // Ncurses isn't really thread-safe so calling resize_term() can crash
+                    // other calls like clear() or refresh().
+                    needs_resize.store(true, Ordering::Relaxed);
+                    resize_sender.send(Some(Event::WindowResize));
                 }
             }
         });
 
         let mut input_parser =
-            InputParser::new(sender, Arc::clone(&self.window));
+            InputParser::new(event_sink, Arc::clone(&self.window));
 
         thread::spawn(move || {
-            loop {
-                input_parser.parse_next();
-
-                if stops.recv() != Some(false) {
-                    // If the channel was closed or if `true` was sent, abort.
-                    break;
+            for req in input_request {
+                match req {
+                    backend::InputRequest::Peek => {
+                        input_parser.window.timeout(0);
+                    }
+                    backend::InputRequest::Block => {
+                        input_parser.window.timeout(-1);
+                    }
                 }
+                input_parser.parse_next();
             }
+            running.store(false, Ordering::Relaxed);
         });
     }
 }

@@ -4,9 +4,7 @@ use event;
 use theme;
 use vec::Vec2;
 
-use std::time::Duration;
-
-use chan;
+use crossbeam_channel::{Sender};
 
 pub struct Backend;
 
@@ -33,9 +31,10 @@ impl backend::Backend for Backend {
     }
 
     fn prepare_input(
-        &mut self, event_sink: &chan::Sender<event::Event>, _timeout: Duration,
+        &mut self, event_sink: &Sender<Option<event::Event>>,
+        _input_request: backend::InputRequest,
     ) {
-        event_sink.send(event::Event::Exit)
+        event_sink.send(Some(event::Event::Exit))
     }
 
     fn print_at(&self, _: Vec2, _: &str) {}

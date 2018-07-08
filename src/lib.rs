@@ -68,7 +68,7 @@ extern crate enumset;
 #[macro_use]
 extern crate log;
 #[macro_use]
-extern crate chan;
+extern crate crossbeam_channel;
 
 #[cfg(any(feature = "ncurses", feature = "pancurses"))]
 #[macro_use]
@@ -77,7 +77,7 @@ extern crate maplit;
 // We use chan_signal to detect SIGWINCH.
 // It's not how windows work, so no need to use that.
 #[cfg(unix)]
-extern crate chan_signal;
+extern crate signal_hook;
 
 extern crate libc;
 extern crate num;

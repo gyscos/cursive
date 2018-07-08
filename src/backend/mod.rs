@@ -10,17 +10,23 @@
 use event;
 use theme;
 
-use chan::{Receiver, Sender};
+use crossbeam_channel::{Receiver, Sender};
 
 use vec::Vec2;
-
-use std::time::Duration;
 
 pub mod dummy;
 
 pub mod blt;
 pub mod curses;
 pub mod termion;
+
+/// A request for input, sent to the backend.
+pub enum InputRequest {
+    /// The backend should respond immediately with an answer, possibly empty.
+    Peek,
+    /// The backend should block until input is available.
+    Block,
+}
 
 /// Trait defining the required methods to be a backend.
 pub trait Backend {
@@ -32,12 +38,15 @@ pub trait Backend {
     fn finish(&mut self);
 
     /// Starts a thread to collect input and send it to the given channel.
+    ///
+    /// `event_trigger` will receive a value before any event is needed.
     fn start_input_thread(
-        &mut self, event_sink: Sender<event::Event>, running: Receiver<bool>,
+        &mut self, event_sink: Sender<Option<event::Event>>,
+        input_request: Receiver<InputRequest>,
     ) {
         // Dummy implementation for some backends.
         let _ = event_sink;
-        let _ = running;
+        let _ = input_request;
     }
 
     /// Prepares the backend to collect input.
@@ -45,12 +54,13 @@ pub trait Backend {
     /// This is only required for non-thread-safe backends like BearLibTerminal
     /// where we cannot collect input in a separate thread.
     fn prepare_input(
-        &mut self, event_sink: &Sender<event::Event>, timeout: Duration,
+        &mut self, event_sink: &Sender<Option<event::Event>>,
+        input_request: InputRequest,
     ) {
         // Dummy implementation for most backends.
         // Little trick to avoid unused variables.
         let _ = event_sink;
-        let _ = timeout;
+        let _ = input_request;
     }
 
     /// Refresh the screen.
