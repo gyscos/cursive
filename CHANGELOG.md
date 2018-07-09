@@ -4,9 +4,15 @@
 
 ### New features
 
+- Add generic `ScrollView` wrapper. Removes internal scrolling behaviour from
+  `TextView`.
+- Callbacks sent through `Cursive::cb_sink()` are now processed instantly,
+  without the need for `set_fps`.
 - Make backend a dynamic choice
     - User must select a backend in `Cursive::new`
     - 3rd party libraries do not need to play with backend features anymore
+- Move from `chan` and `chan-signals` to `crossbeam-channel` and `signal-hook`
+- Batch-process events for higher performance
 - Add `StackView::find_layer_from_id`
 - Add `SelectView::insert_item`
 - Add `TextArea::{enable, disable}`
@@ -24,6 +30,8 @@
     - The returned value used to be completely ignored
 - `AnyView` does not extend `View` anymore (instead, `View` extends `AnyView`)
     - If you were using `AnyView` before, you probably need to replace it with `View`
+- Scrolling is now added to a view with `.scrollable()`
+- `cb_sink` is now a `crossbeam_channel::Sender` instead of `chan::Sender`
 
 
 ## 0.8.1
