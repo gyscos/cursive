@@ -5,7 +5,6 @@
 
 extern crate termion;
 
-use crossbeam_channel::{self, Sender, Receiver};
 use self::termion::color as tcolor;
 use self::termion::event::Event as TEvent;
 use self::termion::event::Key as TKey;
@@ -15,8 +14,9 @@ use self::termion::input::{MouseTerminal, TermRead};
 use self::termion::raw::{IntoRawMode, RawTerminal};
 use self::termion::screen::AlternateScreen;
 use self::termion::style as tstyle;
-use signal_hook::iterator::Signals;
+use crossbeam_channel::{self, Receiver, Sender};
 use libc;
+use signal_hook::iterator::Signals;
 
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
@@ -25,9 +25,9 @@ use vec::Vec2;
 
 use std::cell::Cell;
 use std::io::{Stdout, Write};
-use std::thread;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool,Ordering};
+use std::thread;
 
 pub struct Backend {
     terminal: AlternateScreen<MouseTerminal<RawTerminal<Stdout>>>,
@@ -56,7 +56,8 @@ impl InputParser {
             let mut events = stdin.events();
 
             for _ in request_receiver {
-                let event: Result<TEvent, ::std::io::Error> = events.next().unwrap();
+                let event: Result<TEvent, ::std::io::Error> =
+                    events.next().unwrap();
                 input_sender.send(event.unwrap());
             }
         });
@@ -294,22 +295,17 @@ impl backend::Backend for Backend {
         input_request: Receiver<backend::InputRequest>,
     ) {
         let running = Arc::new(AtomicBool::new(true));
-        let resize_sender = event_sink.clone();
-        let signals = Signals::new(&[libc::SIGWINCH]).unwrap();
 
-        let resize_running = Arc::clone(&running);
-        thread::spawn(move || {
-            while resize_running.load(Ordering::Relaxed) {
-                // We know it will only contain SIGWINCH signals, so no need to check.
-                for _ in signals.pending() {
-                    // Tell ncurses about the new terminal size.
-                    // Well, do the actual resizing later on, in the main thread.
-                    // Ncurses isn't really thread-safe so calling resize_term() can crash
-                    // other calls like clear() or refresh().
-                    resize_sender.send(Some(Event::WindowResize));
-                }
-            }
-        });
+        #[cfg(unix)]
+        {
+            backend::start_resize_thread(
+                Signals::new(&[libc::SIGWINCH]).unwrap(),
+                event_sink.clone(),
+                input_request.clone(),
+                Arc::clone(&running),
+                None,
+            );
+        }
 
         let mut parser = InputParser::new();
         thread::spawn(move || {

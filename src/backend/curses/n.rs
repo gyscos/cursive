@@ -305,12 +305,12 @@ impl backend::Backend for Backend {
     ) {
         let running = Arc::new(AtomicBool::new(true));
 
-        super::start_resize_thread(
+        backend::start_resize_thread(
             self.signals.take().unwrap(),
             event_sink.clone(),
             input_request.clone(),
             Arc::clone(&running),
-            Arc::clone(&self.needs_resize),
+            Some(Arc::clone(&self.needs_resize)),
         );
 
         let mut parser = InputParser::new();

@@ -285,6 +285,8 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
 
 impl Backend {
     pub fn init() -> Box<backend::Backend> {
+        // We need to create this now, before ncurses initialization
+        // Otherwise ncurses starts its own signal handling and it's a mess.
         #[cfg(unix)]
         let signals = Some(Signals::new(&[libc::SIGWINCH]).unwrap());
 
@@ -455,12 +457,12 @@ impl backend::Backend for Backend {
 
         #[cfg(unix)]
         {
-            super::start_resize_thread(
+            backend::start_resize_thread(
                 self.signals.take().unwrap(),
                 event_sink.clone(),
                 input_request.clone(),
                 Arc::clone(&running),
-                Arc::clone(&self.needs_resize),
+                Some(Arc::clone(&self.needs_resize)),
             );
         }
 
