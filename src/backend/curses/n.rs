@@ -6,7 +6,7 @@ use std::ffi::CString;
 use std::fs::File;
 use std::io;
 use std::io::Write;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread;
 
@@ -40,30 +40,27 @@ pub struct Backend {
 struct InputParser {
     key_codes: HashMap<i32, Event>,
     last_mouse_button: Option<MouseButton>,
-    event_sink: Sender<Option<Event>>,
+    input_buffer: Option<Event>,
 }
 
 impl InputParser {
-    fn new(event_sink: Sender<Option<Event>>) -> Self {
+    fn new() -> Self {
         InputParser {
             key_codes: initialize_keymap(),
             last_mouse_button: None,
-            event_sink,
+            input_buffer: None,
         }
     }
 
-    fn parse_next(&mut self) {
-        let ch: i32 = ncurses::getch();
-
-        if ch == 410 {
-            // Ignore resize events.
-            self.parse_next();
-            return;
+    fn parse_next(&mut self) -> Option<Event> {
+        if let Some(event) = self.input_buffer.take() {
+            return Some(event);
         }
 
+        let ch: i32 = ncurses::getch();
+
         if ch == -1 {
-            self.event_sink.send(None);
-            return;
+            return None;
         }
 
         // Is it a UTF-8 starting point?
@@ -77,7 +74,8 @@ impl InputParser {
         } else {
             self.parse_ncurses_char(ch)
         };
-        self.event_sink.send(Some(event));
+
+        Some(event)
     }
 
     fn parse_ncurses_char(&mut self, ch: i32) -> Event {
@@ -146,7 +144,7 @@ impl InputParser {
                         if event.is_none() {
                             event = Some(e);
                         } else {
-                            self.event_sink.send(Some(make_event(e)));
+                            self.input_buffer = Some(make_event(e));
                         }
                     });
                 }
@@ -185,7 +183,6 @@ fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
 
 impl Backend {
     pub fn init() -> Box<backend::Backend> {
-
         let signals = Some(Signals::new(&[libc::SIGWINCH]).unwrap());
 
         // Change the locale.
@@ -312,37 +309,61 @@ impl backend::Backend for Backend {
         let resize_running = Arc::clone(&running);
         let resize_sender = event_sink.clone();
         let signals = self.signals.take().unwrap();
+        let resize_requests = input_request.clone();
 
         thread::spawn(move || {
             // This thread will listen to SIGWINCH events and report them.
             while resize_running.load(Ordering::Relaxed) {
                 // We know it will only contain SIGWINCH signals, so no need to check.
-                for _ in signals.pending() {
+                if signals.wait().count() > 0 {
                     // Tell ncurses about the new terminal size.
                     // Well, do the actual resizing later on, in the main thread.
                     // Ncurses isn't really thread-safe so calling resize_term() can crash
                     // other calls like clear() or refresh().
                     needs_resize.store(true, Ordering::Relaxed);
+
                     resize_sender.send(Some(Event::WindowResize));
+                    // We've sent the message.
+                    // This means Cursive was listening, and will now soon be sending a new request.
+                    // This means the input thread accepted a request, but hasn't sent a message yet.
+                    // So we KNOW the input thread is not waiting for a new request.
+
+                    // We sent an event for free, so pay for it now by consuming a request
+                    while let Some(backend::InputRequest::Peek) =
+                        resize_requests.recv()
+                    {
+                        // At this point Cursive will now listen for input.
+                        // There is a chance the input thread will send his event before us.
+                        // But without some extra atomic flag, it'd be hard to know.
+                        // So instead, keep sending `None`
+
+                        // Repeat until we receive a blocking call
+                        resize_sender.send(None);
+                    }
                 }
             }
         });
 
-        let mut parser = InputParser::new(event_sink);
+        let mut parser = InputParser::new();
 
         // This thread will take input from ncurses for each request.
         thread::spawn(move || {
             for req in input_request {
                 match req {
                     backend::InputRequest::Peek => {
+                        // When peeking, we want an answer instantly from ncurses
                         ncurses::timeout(0);
                     }
                     backend::InputRequest::Block => {
                         ncurses::timeout(-1);
                     }
                 }
-                parser.parse_next();
+
+                // Do the actual polling & parsing.
+                event_sink.send(parser.parse_next());
             }
+            // The request channel is closed, which means Cursive has been
+            // dropped, so stop the resize-detection thread as well.
             running.store(false, Ordering::Relaxed);
         });
     }

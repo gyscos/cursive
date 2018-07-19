@@ -131,9 +131,9 @@ impl Cursive {
         let theme = theme::load_default();
 
         let (cb_sink, cb_source) = crossbeam_channel::unbounded();
-        let (event_sink, event_source) = crossbeam_channel::unbounded();
+        let (event_sink, event_source) = crossbeam_channel::bounded(0);
 
-        let (input_sink, input_source) = crossbeam_channel::unbounded();
+        let (input_sink, input_source) = crossbeam_channel::bounded(0);
 
         let mut backend = backend_init();
         backend.start_input_thread(event_sink.clone(), input_source);
@@ -600,7 +600,8 @@ impl Cursive {
         }
 
         self.input_trigger.send(backend::InputRequest::Peek);
-        self.backend.prepare_input(&self.event_sink, backend::InputRequest::Peek);
+        self.backend
+            .prepare_input(&self.event_sink, backend::InputRequest::Peek);
         self.event_source.recv().unwrap().map(Interruption::Event)
     }
 
@@ -610,7 +611,8 @@ impl Cursive {
     fn poll(&mut self) -> Option<Interruption> {
         if !self.expecting_event {
             self.input_trigger.send(backend::InputRequest::Block);
-            self.backend.prepare_input(&self.event_sink, backend::InputRequest::Block);
+            self.backend
+                .prepare_input(&self.event_sink, backend::InputRequest::Block);
             self.expecting_event = true;
         }
 
@@ -623,6 +625,9 @@ impl Cursive {
 
         select! {
             recv(self.event_source, event) => {
+                // Ok, we processed the event.
+                self.expecting_event = false;
+
                 event.unwrap().map(Interruption::Event)
             },
             recv(self.cb_source, cb) => {
@@ -735,16 +740,20 @@ impl Cursive {
         self.draw();
         self.backend.refresh();
 
-        // First, read all events available while peeking.
-        while let Some(interruption) = self.peek() {
+        if let Some(interruption) = self.poll() {
             self.handle_interruption(interruption);
             if !self.running {
                 return;
             }
         }
 
-        if let Some(interruption) = self.poll() {
+        // Don't block, but try to read any other pending event.
+        // This lets us batch-process chunks of events, like big copy-paste or mouse drags.
+        while let Some(interruption) = self.peek() {
             self.handle_interruption(interruption);
+            if !self.running {
+                return;
+            }
         }
     }
 
@@ -758,7 +767,6 @@ impl Cursive {
 
                 if event == Event::WindowResize {
                     self.clear();
-                    return;
                 }
 
                 if let Event::Mouse {
@@ -794,9 +802,6 @@ impl Cursive {
                         EventResult::Consumed(Some(cb)) => cb(self),
                     }
                 }
-
-                // Ok, we processed the event.
-                self.expecting_event = false;
             }
             Interruption::Callback(cb) => {
                 cb.call_box(self);
