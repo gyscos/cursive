@@ -6,7 +6,7 @@ use std::ffi::CString;
 use std::fs::File;
 use std::io;
 use std::io::Write;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 
@@ -304,45 +304,14 @@ impl backend::Backend for Backend {
         input_request: Receiver<backend::InputRequest>,
     ) {
         let running = Arc::new(AtomicBool::new(true));
-        let needs_resize = Arc::clone(&self.needs_resize);
 
-        let resize_running = Arc::clone(&running);
-        let resize_sender = event_sink.clone();
-        let signals = self.signals.take().unwrap();
-        let resize_requests = input_request.clone();
-
-        thread::spawn(move || {
-            // This thread will listen to SIGWINCH events and report them.
-            while resize_running.load(Ordering::Relaxed) {
-                // We know it will only contain SIGWINCH signals, so no need to check.
-                if signals.wait().count() > 0 {
-                    // Tell ncurses about the new terminal size.
-                    // Well, do the actual resizing later on, in the main thread.
-                    // Ncurses isn't really thread-safe so calling resize_term() can crash
-                    // other calls like clear() or refresh().
-                    needs_resize.store(true, Ordering::Relaxed);
-
-                    resize_sender.send(Some(Event::WindowResize));
-                    // We've sent the message.
-                    // This means Cursive was listening, and will now soon be sending a new request.
-                    // This means the input thread accepted a request, but hasn't sent a message yet.
-                    // So we KNOW the input thread is not waiting for a new request.
-
-                    // We sent an event for free, so pay for it now by consuming a request
-                    while let Some(backend::InputRequest::Peek) =
-                        resize_requests.recv()
-                    {
-                        // At this point Cursive will now listen for input.
-                        // There is a chance the input thread will send his event before us.
-                        // But without some extra atomic flag, it'd be hard to know.
-                        // So instead, keep sending `None`
-
-                        // Repeat until we receive a blocking call
-                        resize_sender.send(None);
-                    }
-                }
-            }
-        });
+        super::start_resize_thread(
+            self.signals.take().unwrap(),
+            event_sink.clone(),
+            input_request.clone(),
+            Arc::clone(&running),
+            Arc::clone(&self.needs_resize),
+        );
 
         let mut parser = InputParser::new();
 

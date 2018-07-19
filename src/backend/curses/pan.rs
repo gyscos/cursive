@@ -7,20 +7,20 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 
-use crossbeam_channel::{Sender, Receiver};
+use crossbeam_channel::{Receiver, Sender};
 
 #[cfg(unix)]
-use signal_hook::iterator::Signals;
-#[cfg(unix)]
 use libc;
+#[cfg(unix)]
+use signal_hook::iterator::Signals;
 
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use theme::{Color, ColorPair, Effect};
 use vec::Vec2;
 
-use super::split_i32;
 use self::pancurses::mmask_t;
+use super::split_i32;
 
 pub struct Backend {
     // Used
@@ -66,7 +66,6 @@ impl InputParser {
 
     fn parse_next(&mut self) {
         let event = if let Some(ev) = self.window.getch() {
-
             Some(match ev {
                 pancurses::Input::Character('\n') => Event::Key(Key::Enter),
                 // TODO: wait for a very short delay. If more keys are
@@ -284,8 +283,6 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
     super::find_closest_pair(pair, pancurses::COLORS() as i16)
 }
 
-
-
 impl Backend {
     pub fn init() -> Box<backend::Backend> {
         #[cfg(unix)]
@@ -455,33 +452,17 @@ impl backend::Backend for Backend {
         input_request: Receiver<backend::InputRequest>,
     ) {
         let running = Arc::new(AtomicBool::new(true));
-        let needs_resize = Arc::clone(&self.needs_resize);
-
-        let resize_running = Arc::clone(&running);
-        let resize_sender = event_sink.clone();
 
         #[cfg(unix)]
         {
-            let signals = self.signals.take().unwrap();
-            thread::spawn(move || {
-                // This thread will listen to SIGWINCH events and report them.
-                while resize_running.load(Ordering::Relaxed) {
-                    // We know it will only contain SIGWINCH signals, so no need to check.
-                    for _ in signals.pending() {
-                        // Tell ncurses about the new terminal size.
-                        // Well, do the actual resizing later on, in the main thread.
-                        // Ncurses isn't really thread-safe so calling resize_term() can crash
-                        // other calls like clear() or refresh().
-                        needs_resize.store(true, Ordering::Relaxed);
-                        resize_sender.send(Some(Event::WindowResize));
-                    }
-                }
-            });
+            super::start_resize_thread(
+                self.signals.take().unwrap(),
+                event_sink.clone(),
+                input_request.clone(),
+                Arc::clone(&running),
+                Arc::clone(&self.needs_resize),
+            );
         }
-
-        // On windows we just forget the sender, so the receiver blocks forever.
-        #[cfg(not(unix))]
-        ::std::mem::forget(resize_sender);
 
         let mut input_parser =
             InputParser::new(event_sink, Arc::clone(&self.window));

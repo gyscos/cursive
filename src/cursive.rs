@@ -81,14 +81,19 @@ impl<F: FnOnce(&mut Cursive) -> () + Send> CbFunc for F {
     }
 }
 
-#[cfg(feature = "termion")]
+#[cfg(feature = "termion-backend")]
 impl Default for Cursive {
     fn default() -> Self {
         Self::termion()
     }
 }
 
-#[cfg(all(not(feature = "termion"), feature = "pancurses"))]
+#[cfg(
+    all(
+        not(feature = "termion-backend"),
+        feature = "pancurses-backend"
+    )
+)]
 impl Default for Cursive {
     fn default() -> Self {
         Self::pancurses()
@@ -97,9 +102,9 @@ impl Default for Cursive {
 
 #[cfg(
     all(
-        not(feature = "termion"),
-        not(feature = "pancurses"),
-        feature = "bear-lib-terminal"
+        not(feature = "termion-backend"),
+        not(feature = "pancurses-backend"),
+        feature = "blt-backend"
     )
 )]
 impl Default for Cursive {
@@ -110,10 +115,10 @@ impl Default for Cursive {
 
 #[cfg(
     all(
-        not(feature = "termion"),
-        not(feature = "pancurses"),
-        not(feature = "bear-lib-terminal"),
-        feature = "ncurses"
+        not(feature = "termion-backend"),
+        not(feature = "pancurses-backend"),
+        not(feature = "blt-backend"),
+        feature = "ncurses-backend"
     )
 )]
 impl Default for Cursive {
@@ -158,25 +163,25 @@ impl Cursive {
     }
 
     /// Creates a new Cursive root using a ncurses backend.
-    #[cfg(feature = "ncurses")]
+    #[cfg(feature = "ncurses-backend")]
     pub fn ncurses() -> Self {
         Self::new(backend::curses::n::Backend::init)
     }
 
     /// Creates a new Cursive root using a pancurses backend.
-    #[cfg(feature = "pancurses")]
+    #[cfg(feature = "pancurses-backend")]
     pub fn pancurses() -> Self {
         Self::new(backend::curses::pan::Backend::init)
     }
 
     /// Creates a new Cursive root using a termion backend.
-    #[cfg(feature = "termion")]
+    #[cfg(feature = "termion-backend")]
     pub fn termion() -> Self {
         Self::new(backend::termion::Backend::init)
     }
 
     /// Creates a new Cursive root using a bear-lib-terminal backend.
-    #[cfg(feature = "bear-lib-terminal")]
+    #[cfg(feature = "blt-backend")]
     pub fn blt() -> Self {
         Self::new(backend::blt::Backend::init)
     }
