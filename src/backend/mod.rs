@@ -12,6 +12,8 @@ use std::sync::Arc;
 use std::thread;
 
 use crossbeam_channel::{Receiver, Sender};
+
+#[cfg(unix)]
 use signal_hook::iterator::Signals;
 
 use event::Event;
