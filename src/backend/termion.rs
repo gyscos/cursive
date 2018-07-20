@@ -298,7 +298,7 @@ impl backend::Backend for Backend {
 
         #[cfg(unix)]
         {
-            backend::start_resize_thread(
+            backend::resize::start_resize_thread(
                 Signals::new(&[libc::SIGWINCH]).unwrap(),
                 event_sink.clone(),
                 input_request.clone(),

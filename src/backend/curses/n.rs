@@ -305,7 +305,7 @@ impl backend::Backend for Backend {
     ) {
         let running = Arc::new(AtomicBool::new(true));
 
-        backend::start_resize_thread(
+        backend::resize::start_resize_thread(
             self.signals.take().unwrap(),
             event_sink.clone(),
             input_request.clone(),
