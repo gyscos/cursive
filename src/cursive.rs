@@ -43,7 +43,6 @@ pub struct Cursive {
     cb_sink: Sender<Box<CbFunc>>,
 
     event_source: Receiver<Option<Event>>,
-    event_sink: Sender<Option<Event>>,
 
     // Sends true or false after each event.
     input_trigger: Sender<backend::InputRequest>,
@@ -141,7 +140,7 @@ impl Cursive {
         let (input_sink, input_source) = crossbeam_channel::bounded(0);
 
         let mut backend = backend_init();
-        backend.start_input_thread(event_sink.clone(), input_source);
+        backend.start_input_thread(event_sink, input_source);
 
         Cursive {
             fps: 0,
@@ -155,7 +154,6 @@ impl Cursive {
             cb_source,
             cb_sink,
             event_source,
-            event_sink,
             backend,
             input_trigger: input_sink,
             expecting_event: false,
