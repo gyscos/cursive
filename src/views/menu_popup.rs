@@ -297,7 +297,8 @@ impl View for MenuPopup {
             Event::Mouse {
                 event: MouseEvent::WheelUp,
                 ..
-            } if self.scrollbase.can_scroll_up() =>
+            }
+                if self.scrollbase.can_scroll_up() =>
             {
                 fix_scroll = false;
                 self.scrollbase.scroll_up(1);
@@ -305,7 +306,8 @@ impl View for MenuPopup {
             Event::Mouse {
                 event: MouseEvent::WheelDown,
                 ..
-            } if self.scrollbase.can_scroll_down() =>
+            }
+                if self.scrollbase.can_scroll_down() =>
             {
                 fix_scroll = false;
                 self.scrollbase.scroll_down(1);
@@ -314,13 +316,15 @@ impl View for MenuPopup {
                 event: MouseEvent::Press(MouseButton::Left),
                 position,
                 offset,
-            } if self.scrollbase.scrollable()
-                && position
-                    .checked_sub(offset + (0, 1))
-                    .map(|position| {
-                        self.scrollbase.start_drag(position, self.last_size.x)
-                    })
-                    .unwrap_or(false) =>
+            }
+                if self.scrollbase.scrollable()
+                    && position
+                        .checked_sub(offset + (0, 1))
+                        .map(|position| {
+                            self.scrollbase
+                                .start_drag(position, self.last_size.x)
+                        })
+                        .unwrap_or(false) =>
             {
                 fix_scroll = false;
             }
@@ -338,7 +342,8 @@ impl View for MenuPopup {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, self.last_size) =>
+            }
+                if position.fits_in_rect(offset, self.last_size) =>
             {
                 // eprintln!("Position: {:?} / {:?}", position, offset);
                 // eprintln!("Last size: {:?}", self.last_size);

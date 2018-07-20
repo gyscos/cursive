@@ -184,7 +184,8 @@ impl<T: 'static> View for RadioButton<T> {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, self.req_size()) =>
+            }
+                if position.fits_in_rect(offset, self.req_size()) =>
             {
                 self.select();
                 EventResult::Consumed(None)

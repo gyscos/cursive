@@ -20,7 +20,6 @@ use event::{Event, Key, MouseButton, MouseEvent};
 use theme::{BaseColor, Color, ColorPair, Effect};
 use vec::Vec2;
 
-
 enum ColorRole {
     Foreground,
     Background,
@@ -309,7 +308,8 @@ impl backend::Backend for Backend {
     }
 
     fn prepare_input(
-        &mut self, event_sink: &Sender<Option<Event>>, input_request: backend::InputRequest,
+        &mut self, event_sink: &Sender<Option<Event>>,
+        input_request: backend::InputRequest,
     ) {
         match input_request {
             backend::InputRequest::Peek => event_sink.send(self.parse_next()),
@@ -326,8 +326,6 @@ impl backend::Backend for Backend {
                 event_sink.send(Some(Event::Refresh));
             }
         }
-
-
     }
 }
 

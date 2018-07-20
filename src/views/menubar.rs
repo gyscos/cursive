@@ -318,7 +318,8 @@ impl View for Menubar {
                 event: MouseEvent::Press(btn),
                 position,
                 offset,
-            } if position.fits(offset) && position.y == offset.y =>
+            }
+                if position.fits(offset) && position.y == offset.y =>
             {
                 if let Some(child) = position
                     .checked_sub(offset)
@@ -336,7 +337,8 @@ impl View for Menubar {
                 event: MouseEvent::Release(btn),
                 position,
                 offset,
-            } if position.fits(offset) && position.y == offset.y =>
+            }
+                if position.fits(offset) && position.y == offset.y =>
             {
                 if let Some(child) = position
                     .checked_sub(offset)

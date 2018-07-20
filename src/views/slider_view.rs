@@ -169,7 +169,8 @@ impl View for SliderView {
                 event: MouseEvent::Hold(MouseButton::Left),
                 position,
                 offset,
-            } if self.dragging =>
+            }
+                if self.dragging =>
             {
                 let position = position.saturating_sub(offset);
                 let position = self.orientation.get(&position);
@@ -184,7 +185,8 @@ impl View for SliderView {
                 event: MouseEvent::Press(MouseButton::Left),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, self.req_size()) =>
+            }
+                if position.fits_in_rect(offset, self.req_size()) =>
             {
                 if let Some(position) = position.checked_sub(offset) {
                     self.dragging = true;

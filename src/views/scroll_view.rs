@@ -459,16 +459,18 @@ where
                     Event::Mouse {
                         event: MouseEvent::WheelUp,
                         ..
-                    } if self.enabled.y && self.offset.y > 0 =>
+                    }
+                        if self.enabled.y && self.offset.y > 0 =>
                     {
                         self.offset.y = self.offset.y.saturating_sub(3);
                     }
                     Event::Mouse {
                         event: MouseEvent::WheelDown,
                         ..
-                    } if self.enabled.y
-                        && (self.offset.y + self.available_size().y
-                            < self.inner_size.y) =>
+                    }
+                        if self.enabled.y
+                            && (self.offset.y + self.available_size().y
+                                < self.inner_size.y) =>
                     {
                         self.offset.y = min(
                             self.inner_size
@@ -481,11 +483,12 @@ where
                         event: MouseEvent::Press(MouseButton::Left),
                         position,
                         offset,
-                    } if self.show_scrollbars
-                        && position
-                            .checked_sub(offset)
-                            .map(|position| self.start_drag(position))
-                            .unwrap_or(false) =>
+                    }
+                        if self.show_scrollbars
+                            && position
+                                .checked_sub(offset)
+                                .map(|position| self.start_drag(position))
+                                .unwrap_or(false) =>
                     {
                         // Just consume the event.
                     }
@@ -493,7 +496,8 @@ where
                         event: MouseEvent::Hold(MouseButton::Left),
                         position,
                         offset,
-                    } if self.show_scrollbars =>
+                    }
+                        if self.show_scrollbars =>
                     {
                         let position = position.saturating_sub(offset);
                         self.drag(position);

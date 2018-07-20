@@ -345,12 +345,13 @@ impl View for ListView {
                 event: MouseEvent::Press(MouseButton::Left),
                 position,
                 offset,
-            } if position
-                .checked_sub(offset)
-                .map(|position| {
-                    self.scrollbase.start_drag(position, self.last_size.x)
-                })
-                .unwrap_or(false) =>
+            }
+                if position
+                    .checked_sub(offset)
+                    .map(|position| {
+                        self.scrollbase.start_drag(position, self.last_size.x)
+                    })
+                    .unwrap_or(false) =>
             {
                 return EventResult::Consumed(None);
             }
@@ -358,7 +359,8 @@ impl View for ListView {
                 event: MouseEvent::Hold(MouseButton::Left),
                 position,
                 offset,
-            } if self.scrollbase.is_dragging() =>
+            }
+                if self.scrollbase.is_dragging() =>
             {
                 let position = position.saturating_sub(offset);
                 self.scrollbase.drag(position);
@@ -367,7 +369,8 @@ impl View for ListView {
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
                 ..
-            } if self.scrollbase.is_dragging() =>
+            }
+                if self.scrollbase.is_dragging() =>
             {
                 self.scrollbase.release_grab();
                 return EventResult::Consumed(None);
@@ -420,7 +423,8 @@ impl View for ListView {
             Event::Mouse {
                 event: MouseEvent::WheelDown,
                 ..
-            } if self.scrollbase.can_scroll_down() =>
+            }
+                if self.scrollbase.can_scroll_down() =>
             {
                 self.scrollbase.scroll_down(5);
                 EventResult::Consumed(None)
@@ -428,7 +432,8 @@ impl View for ListView {
             Event::Mouse {
                 event: MouseEvent::WheelUp,
                 ..
-            } if self.scrollbase.can_scroll_up() =>
+            }
+                if self.scrollbase.can_scroll_up() =>
             {
                 self.scrollbase.scroll_up(5);
                 EventResult::Consumed(None)

@@ -4,7 +4,7 @@ use event;
 use theme;
 use vec::Vec2;
 
-use crossbeam_channel::{Sender};
+use crossbeam_channel::Sender;
 
 pub struct Backend;
 

@@ -435,7 +435,8 @@ impl<T: 'static> SelectView<T> {
             Event::Mouse {
                 event: MouseEvent::WheelDown,
                 ..
-            } if self.scrollbase.can_scroll_down() =>
+            }
+                if self.scrollbase.can_scroll_down() =>
             {
                 fix_scroll = false;
                 self.scrollbase.scroll_down(5);
@@ -443,7 +444,8 @@ impl<T: 'static> SelectView<T> {
             Event::Mouse {
                 event: MouseEvent::WheelUp,
                 ..
-            } if self.scrollbase.can_scroll_up() =>
+            }
+                if self.scrollbase.can_scroll_up() =>
             {
                 fix_scroll = false;
                 self.scrollbase.scroll_up(5);
@@ -452,12 +454,13 @@ impl<T: 'static> SelectView<T> {
                 event: MouseEvent::Press(MouseButton::Left),
                 position,
                 offset,
-            } if position
-                .checked_sub(offset)
-                .map(|position| {
-                    self.scrollbase.start_drag(position, self.last_size.x)
-                })
-                .unwrap_or(false) =>
+            }
+                if position
+                    .checked_sub(offset)
+                    .map(|position| {
+                        self.scrollbase.start_drag(position, self.last_size.x)
+                    })
+                    .unwrap_or(false) =>
             {
                 fix_scroll = false;
             }
@@ -620,7 +623,8 @@ impl<T: 'static> SelectView<T> {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, self.last_size) =>
+            }
+                if position.fits_in_rect(offset, self.last_size) =>
             {
                 self.open_popup()
             }

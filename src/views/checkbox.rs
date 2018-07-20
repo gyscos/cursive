@@ -132,7 +132,8 @@ impl View for Checkbox {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, (3, 1)) =>
+            }
+                if position.fits_in_rect(offset, (3, 1)) =>
             {
                 self.toggle()
             }

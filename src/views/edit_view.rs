@@ -670,7 +670,8 @@ impl View for EditView {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, (self.last_length, 1)) =>
+            }
+                if position.fits_in_rect(offset, (self.last_length, 1)) =>
             {
                 if let Some(position) = position.checked_sub(offset) {
                     self.cursor = self.offset
