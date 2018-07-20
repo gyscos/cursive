@@ -28,6 +28,9 @@ enum ColorRole {
 pub struct Backend {
     buttons_pressed: HashSet<MouseButton>,
     mouse_position: Vec2,
+
+    inner_sender: Sender<Option<Event>>,
+    inner_receiver: Receiver<Option<Event>>,
 }
 
 impl Backend {
@@ -45,9 +48,13 @@ impl Backend {
             },
         ]);
 
+        let (inner_sender, inner_receiver) = crossbeam_channel::bounded(1);
+
         let c = Backend {
             buttons_pressed: HashSet::new(),
             mouse_position: Vec2::zero(),
+            inner_sender,
+            inner_receiver,
         };
 
         Box::new(c)
@@ -307,10 +314,23 @@ impl backend::Backend for Backend {
         terminal::print_xy(pos.x as i32, pos.y as i32, text);
     }
 
-    fn prepare_input(
-        &mut self, event_sink: &Sender<Option<Event>>,
-        input_request: backend::InputRequest,
+    fn start_input_thread(
+        &mut self, event_sink: Sender<Option<Event>>,
+        input_request: Receiver<backend::InputRequest>,
     ) {
+        let receiver = self.inner_receiver.clone();
+
+        thread::spawn(move || {
+            for _ in input_requests {
+                match receiver.recv() {
+                    None => return,
+                    Some(event) => event_sink.send(event),
+                }
+            }
+        });
+    }
+
+    fn prepare_input(&mut self, input_request: backend::InputRequest) {
         match input_request {
             backend::InputRequest::Peek => event_sink.send(self.parse_next()),
             backend::InputRequest::Block => {
@@ -323,7 +343,7 @@ impl backend::Backend for Backend {
                         return;
                     }
                 }
-                event_sink.send(Some(Event::Refresh));
+                self.inner_sender.send(Some(Event::Refresh));
             }
         }
     }

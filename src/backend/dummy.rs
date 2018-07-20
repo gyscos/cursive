@@ -1,19 +1,28 @@
 //! Dummy backend
+use std::thread;
+
+use crossbeam_channel::{self, Receiver, Sender};
+
 use backend;
-use event;
+use event::Event;
 use theme;
 use vec::Vec2;
 
-use crossbeam_channel::Sender;
-
-pub struct Backend;
+pub struct Backend {
+    inner_sender: Sender<Option<Event>>,
+    inner_receiver: Receiver<Option<Event>>,
+}
 
 impl Backend {
     pub fn init() -> Box<backend::Backend>
     where
         Self: Sized,
     {
-        Box::new(Backend)
+        let (inner_sender, inner_receiver) = crossbeam_channel::bounded(1);
+        Box::new(Backend {
+            inner_sender,
+            inner_receiver,
+        })
     }
 }
 
@@ -30,11 +39,24 @@ impl backend::Backend for Backend {
         (1, 1).into()
     }
 
-    fn prepare_input(
-        &mut self, event_sink: &Sender<Option<event::Event>>,
-        _input_request: backend::InputRequest,
+    fn prepare_input(&mut self, _input_request: backend::InputRequest) {
+        self.inner_sender.send(Some(Event::Exit));
+    }
+
+    fn start_input_thread(
+        &mut self, event_sink: Sender<Option<Event>>,
+        input_requests: Receiver<backend::InputRequest>,
     ) {
-        event_sink.send(Some(event::Event::Exit))
+        let receiver = self.inner_receiver.clone();
+
+        thread::spawn(move || {
+            for _ in input_requests {
+                match receiver.recv() {
+                    None => return,
+                    Some(event) => event_sink.send(event),
+                }
+            }
+        });
     }
 
     fn print_at(&self, _: Vec2, _: &str) {}

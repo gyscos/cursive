@@ -57,13 +57,9 @@ pub trait Backend {
     ///
     /// This is only required for non-thread-safe backends like BearLibTerminal
     /// where we cannot collect input in a separate thread.
-    fn prepare_input(
-        &mut self, event_sink: &Sender<Option<Event>>,
-        input_request: InputRequest,
-    ) {
+    fn prepare_input(&mut self, input_request: InputRequest) {
         // Dummy implementation for most backends.
         // Little trick to avoid unused variables.
-        let _ = event_sink;
         let _ = input_request;
     }
 

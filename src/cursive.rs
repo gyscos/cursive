@@ -605,8 +605,7 @@ impl Cursive {
         }
 
         self.input_trigger.send(backend::InputRequest::Peek);
-        self.backend
-            .prepare_input(&self.event_sink, backend::InputRequest::Peek);
+        self.backend.prepare_input(backend::InputRequest::Peek);
         self.event_source.recv().unwrap().map(Interruption::Event)
     }
 
@@ -616,8 +615,7 @@ impl Cursive {
     fn poll(&mut self) -> Option<Interruption> {
         if !self.expecting_event {
             self.input_trigger.send(backend::InputRequest::Block);
-            self.backend
-                .prepare_input(&self.event_sink, backend::InputRequest::Block);
+            self.backend.prepare_input(backend::InputRequest::Block);
             self.expecting_event = true;
         }
 
@@ -765,7 +763,6 @@ impl Cursive {
     fn handle_interruption(&mut self, interruption: Interruption) {
         match interruption {
             Interruption::Event(event) => {
-                // eprintln!("{:?}, {:?}", event, self.screen_size());
                 if event == Event::Exit {
                     self.quit();
                 }
