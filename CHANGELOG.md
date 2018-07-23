@@ -32,6 +32,8 @@
     - If you were using `AnyView` before, you probably need to replace it with `View`
 - Scrolling is now added to a view with `.scrollable()`
 - `cb_sink` is now a `crossbeam_channel::Sender` instead of `chan::Sender`
+- `SelectView::selection` now returns an `Option<Rc<T>>` instead of just `Rc<T>`.
+   It will return `None` if the `SelectView` is empty.
 
 
 ## 0.8.1
