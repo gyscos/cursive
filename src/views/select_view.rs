@@ -200,7 +200,7 @@ impl<T: 'static> SelectView<T> {
 
     /// Returns the value of the currently selected item.
     ///
-    /// Panics if the list is empty.
+    /// Returns `None` if the list is empty.
     pub fn selection(&self) -> Option<Rc<T>> {
         let focus = self.focus();
         if self.len() <= focus {
