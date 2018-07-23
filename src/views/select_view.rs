@@ -201,8 +201,13 @@ impl<T: 'static> SelectView<T> {
     /// Returns the value of the currently selected item.
     ///
     /// Panics if the list is empty.
-    pub fn selection(&self) -> Rc<T> {
-        Rc::clone(&self.items[self.focus()].value)
+    pub fn selection(&self) -> Option<Rc<T>> {
+        let focus = self.focus();
+        if self.len() <= focus {
+            None
+        } else {
+            Some(Rc::clone(&self.items[focus].value))
+        }
     }
 
     /// Removes all items from this view.
@@ -414,9 +419,11 @@ impl<T: 'static> SelectView<T> {
 
     fn submit(&mut self) -> EventResult {
         let cb = self.on_submit.clone().unwrap();
-        let v = self.selection();
         // We return a Callback Rc<|s| cb(s, &*v)>
-        EventResult::Consumed(Some(Callback::from_fn(move |s| cb(s, &v))))
+        EventResult::Consumed(
+            self.selection()
+                .map(|v| Callback::from_fn(move |s| cb(s, &v))),
+        )
     }
 
     fn on_event_regular(&mut self, event: Event) -> EventResult {
@@ -554,9 +561,9 @@ impl<T: 'static> SelectView<T> {
 
     /// Returns a callback from selection change.
     fn make_select_cb(&self) -> Option<Callback> {
-        self.on_select.clone().map(|cb| {
-            let v = self.selection();
-            Callback::from_fn(move |s| cb(s, &v))
+        self.on_select.clone().and_then(|cb| {
+            self.selection()
+                .map(|v| Callback::from_fn(move |s| cb(s, &v)))
         })
     }
 
