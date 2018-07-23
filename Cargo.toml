@@ -32,7 +32,7 @@ crossbeam-channel = "0.2.1"
 
 [dependencies.num]
 default-features = false
-version = "0.1"
+version = "0.2"
 
 [dependencies.maplit]
 optional = true
