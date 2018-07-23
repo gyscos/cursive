@@ -42,7 +42,7 @@ pub struct Backend {
 struct InputParser {
     key_codes: HashMap<i32, Event>,
     last_mouse_button: Option<MouseButton>,
-    event_sink: Sender<Option<Event>>,
+    input_buffer: Option<Event>,
     window: Arc<pancurses::Window>,
 }
 
@@ -53,18 +53,20 @@ struct InputParser {
 unsafe impl Send for InputParser {}
 
 impl InputParser {
-    fn new(
-        event_sink: Sender<Option<Event>>, window: Arc<pancurses::Window>,
-    ) -> Self {
+    fn new(window: Arc<pancurses::Window>) -> Self {
         InputParser {
             key_codes: initialize_keymap(),
             last_mouse_button: None,
-            event_sink,
+            input_buffer: None,
             window,
         }
     }
 
-    fn parse_next(&mut self) {
+    fn parse_next(&mut self) -> Option<Event> {
+        if let Some(event) = self.input_buffer.take() {
+            return Some(event);
+        }
+
         let event = if let Some(ev) = self.window.getch() {
             Some(match ev {
                 pancurses::Input::Character('\n') => Event::Key(Key::Enter),
@@ -215,7 +217,7 @@ impl InputParser {
         } else {
             None
         };
-        self.event_sink.send(event);
+        event
     }
 
     fn parse_mouse_event(&mut self) -> Event {
@@ -262,7 +264,7 @@ impl InputParser {
                     if event.is_none() {
                         event = Some(e);
                     } else {
-                        self.event_sink.send(Some(make_event(e)));
+                        self.input_buffer = Some(make_event(e));
                     }
                 });
             }
@@ -466,8 +468,7 @@ impl backend::Backend for Backend {
             );
         }
 
-        let mut input_parser =
-            InputParser::new(event_sink, Arc::clone(&self.window));
+        let mut input_parser = InputParser::new(Arc::clone(&self.window));
 
         thread::spawn(move || {
             for req in input_request {
@@ -479,7 +480,7 @@ impl backend::Backend for Backend {
                         input_parser.window.timeout(-1);
                     }
                 }
-                input_parser.parse_next();
+                event_sink.send(input_parser.parse_next());
             }
             running.store(false, Ordering::Relaxed);
         });
