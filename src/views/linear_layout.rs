@@ -145,6 +145,16 @@ impl LinearLayout {
         self.invalidate();
     }
 
+    /// Returns the number of children.
+    pub fn len(&self) -> usize {
+        self.children.len()
+    }
+
+    /// Returns `true` if this view has no children.
+    pub fn is_empty(&self) -> bool {
+        self.children.is_empty()
+    }
+
     /// Returns index of focused inner view
     pub fn get_focus_index(&self) -> usize {
         self.focus
@@ -519,6 +529,10 @@ impl View for LinearLayout {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        if self.is_empty() {
+            return EventResult::Ignored;
+        }
+
         self.check_focus_grab(&event);
 
         let result = {
@@ -593,7 +607,7 @@ impl View for LinearLayout {
     }
 
     fn important_area(&self, _: Vec2) -> Rect {
-        if self.children.is_empty() {
+        if self.is_empty() {
             // Return dummy area if we are empty.
             return Rect::from((0, 0));
         }
