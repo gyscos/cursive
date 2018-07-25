@@ -10,7 +10,7 @@ use std::rc::Rc;
 use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
-use view::{Position, ScrollBase, View};
+use view::{Position, View};
 use views::MenuPopup;
 use Cursive;
 use Printer;
@@ -51,7 +51,6 @@ pub struct SelectView<T = String> {
     enabled: bool,
     // the focus needs to be manipulable from callbacks
     focus: Rc<Cell<usize>>,
-    scrollbase: ScrollBase,
     // This is a custom callback to include a &T.
     // It will be called whenever "Enter" is pressed.
     on_submit: Option<Rc<Fn(&mut Cursive, &T)>>,
@@ -79,7 +78,6 @@ impl<T: 'static> SelectView<T> {
             items: Vec::new(),
             enabled: true,
             focus: Rc::new(Cell::new(0)),
-            scrollbase: ScrollBase::new(),
             on_select: None,
             on_submit: None,
             align: Align::top_left(),
@@ -353,7 +351,6 @@ impl<T: 'static> SelectView<T> {
             min(i, self.len() - 1)
         };
         self.focus.set(i);
-        self.scrollbase.scroll_to(i);
 
         self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
@@ -386,9 +383,6 @@ impl<T: 'static> SelectView<T> {
     /// ```
     pub fn select_up(&mut self, n: usize) -> Callback {
         self.focus_up(n);
-        let focus = self.focus();
-        self.scrollbase.scroll_to(focus);
-
         self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
@@ -399,19 +393,14 @@ impl<T: 'static> SelectView<T> {
     /// You should run this callback with a `&mut Cursive`.
     pub fn select_down(&mut self, n: usize) -> Callback {
         self.focus_down(n);
-        let focus = self.focus();
-        self.scrollbase.scroll_to(focus);
-
         self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
 
-    // Low-level focus change. Does not fix scrollbase.
     fn focus_up(&mut self, n: usize) {
         let focus = self.focus().saturating_sub(n);
         self.focus.set(focus);
     }
 
-    // Low-level focus change. Does not fix scrollbase.
     fn focus_down(&mut self, n: usize) {
         let focus = min(self.focus() + n, self.items.len().saturating_sub(1));
         self.focus.set(focus);
@@ -427,7 +416,6 @@ impl<T: 'static> SelectView<T> {
     }
 
     fn on_event_regular(&mut self, event: Event) -> EventResult {
-        let mut fix_scroll = true;
         match event {
             Event::Key(Key::Up) if self.focus() > 0 => self.focus_up(1),
             Event::Key(Key::Down) if self.focus() + 1 < self.items.len() => {
@@ -440,92 +428,34 @@ impl<T: 'static> SelectView<T> {
                 self.focus.set(self.items.len().saturating_sub(1))
             }
             Event::Mouse {
-                event: MouseEvent::WheelDown,
-                ..
-            }
-                if self.scrollbase.can_scroll_down() =>
-            {
-                fix_scroll = false;
-                self.scrollbase.scroll_down(5);
-            }
-            Event::Mouse {
-                event: MouseEvent::WheelUp,
-                ..
-            }
-                if self.scrollbase.can_scroll_up() =>
-            {
-                fix_scroll = false;
-                self.scrollbase.scroll_up(5);
-            }
-            Event::Mouse {
-                event: MouseEvent::Press(MouseButton::Left),
+                event: MouseEvent::Press(_),
                 position,
                 offset,
             }
                 if position
                     .checked_sub(offset)
                     .map(|position| {
-                        self.scrollbase.start_drag(position, self.last_size.x)
+                        position < self.last_size && position.y < self.len()
                     })
                     .unwrap_or(false) =>
             {
-                fix_scroll = false;
+                self.focus.set(position.y - offset.y)
             }
-            Event::Mouse {
-                event: MouseEvent::Hold(MouseButton::Left),
-                position,
-                offset,
-            } => {
-                // If the mouse is dragged, we always consume the event.
-                fix_scroll = false;
-                let position = position.saturating_sub(offset);
-                self.scrollbase.drag(position);
-            }
-            Event::Mouse {
-                event: MouseEvent::Press(_),
-                position,
-                offset,
-            } => if let Some(position) = position.checked_sub(offset) {
-                let scrollbar_size = if self.scrollbase.scrollable() {
-                    (2, 0)
-                } else {
-                    (0, 0)
-                };
-                let clickable_size =
-                    self.last_size.saturating_sub(scrollbar_size);
-                if position < clickable_size {
-                    fix_scroll = false;
-                    let focus = position.y + self.scrollbase.start_line;
-                    if focus < self.len() {
-                        // Only select actual items
-                        self.focus.set(focus);
-                    }
-                }
-            },
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } => {
-                fix_scroll = false;
-                self.scrollbase.release_grab();
-                if self.on_submit.is_some() {
-                    if let Some(position) = position.checked_sub(offset) {
-                        let scrollbar_size = if self.scrollbase.scrollable() {
-                            (2, 0)
-                        } else {
-                            (0, 0)
-                        };
-                        let clickable_size =
-                            self.last_size.saturating_sub(scrollbar_size);
-                        if position < clickable_size
-                            && (position.y + self.scrollbase.start_line)
-                                == self.focus()
-                        {
-                            return self.submit();
-                        }
-                    }
-                }
+            }
+                if self.on_submit.is_some()
+                    && position
+                        .checked_sub(offset)
+                        .map(|position| {
+                            position < self.last_size
+                                && position.y == self.focus()
+                        })
+                        .unwrap_or(false) =>
+            {
+                return self.submit();
             }
             Event::Key(Key::Enter) if self.on_submit.is_some() => {
                 return self.submit();
@@ -550,10 +480,6 @@ impl<T: 'static> SelectView<T> {
                 }
             }
             _ => return EventResult::Ignored,
-        }
-        if fix_scroll {
-            let focus = self.focus();
-            self.scrollbase.scroll_to(focus);
         }
 
         EventResult::Consumed(self.make_select_cb())
@@ -697,6 +623,8 @@ impl<T: 'static> View for SelectView<T> {
         self.last_offset.set(printer.offset);
 
         if self.popup {
+            // Popup-select only draw the active element.
+            // We'll draw the full list in a popup if needed.
             let style = if !self.enabled {
                 ColorStyle::secondary()
             } else if !printer.focused {
@@ -724,26 +652,30 @@ impl<T: 'static> View for SelectView<T> {
                 printer.print((offset, 0), label);
             });
         } else {
+            // Non-popup mode: we always print the entire list.
             let h = self.items.len();
             let offset = self.align.v.get_offset(h, printer.size.y);
             let printer = &printer.offset((0, offset));
 
-            self.scrollbase.draw(printer, |printer, i| {
-                printer.with_selection(i == self.focus(), |printer| {
-                    if i != self.focus() && !self.enabled {
-                        printer
-                            .with_color(ColorStyle::secondary(), |printer| {
-                                self.draw_item(printer, i)
-                            });
-                    } else {
-                        self.draw_item(printer, i);
-                    }
-                });
-            });
+            for i in 0..self.len() {
+                printer.offset((0, i)).with_selection(
+                    i == self.focus(),
+                    |printer| {
+                        if i != self.focus() && !self.enabled {
+                            printer.with_color(
+                                ColorStyle::secondary(),
+                                |printer| self.draw_item(printer, i),
+                            );
+                        } else {
+                            self.draw_item(printer, i);
+                        }
+                    },
+                );
+            }
         }
     }
 
-    fn required_size(&mut self, req: Vec2) -> Vec2 {
+    fn required_size(&mut self, _: Vec2) -> Vec2 {
         // Items here are not compressible.
         // So no matter what the horizontal requirements are,
         // we'll still return our longest item.
@@ -758,14 +690,7 @@ impl<T: 'static> View for SelectView<T> {
         } else {
             let h = self.items.len();
 
-            let scrolling = req.y < h;
-
-            // Add 2 spaces for the scrollbar if we need
-            let w = if scrolling { w + 2 } else { w };
-
-            // Don't request more than we're offered - we can scroll,
-            // after all
-            Vec2::new(w, min(h, req.y))
+            Vec2::new(w, h)
         }
     }
 
@@ -783,10 +708,6 @@ impl<T: 'static> View for SelectView<T> {
 
     fn layout(&mut self, size: Vec2) {
         self.last_size = size;
-
-        if !self.popup {
-            self.scrollbase.set_heights(size.y, self.items.len());
-        }
     }
 
     fn important_area(&self, size: Vec2) -> Rect {

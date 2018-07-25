@@ -38,7 +38,7 @@ fn main() {
     // Let's add a BoxView to keep the list at a reasonable size
     // (it can scroll anyway).
     siv.add_layer(
-        Dialog::around(select.fixed_size((20, 10)))
+        Dialog::around(select.scrollable().fixed_size((20, 10)))
             .title("Where are you from?"),
     );
 
