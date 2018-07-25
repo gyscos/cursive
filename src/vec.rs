@@ -180,6 +180,15 @@ impl<T: Zero + Clone> XY<T> {
     }
 }
 
+impl<'a, T> From<&'a XY<T>> for XY<T>
+where
+    T: Clone,
+{
+    fn from(t: &'a XY<T>) -> Self {
+        t.clone()
+    }
+}
+
 // Anything that can become XY<usize> can also become XY<isize>
 impl<T> From<T> for XY<isize>
 where

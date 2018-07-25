@@ -449,11 +449,35 @@ where
     fn on_event(&mut self, event: Event) -> EventResult {
         // Relativize event accorging to the offset
         let mut relative_event = event.clone();
-        // eprintln!("Mouse = {:?}", relative_event);
-        if let Some(pos) = relative_event.mouse_position_mut() {
-            *pos = *pos + self.offset;
-        }
-        match self.inner.on_event(relative_event) {
+
+        // Should the event be treated inside, by the inner view?
+        let inside = if let Event::Mouse {
+            ref mut position,
+            ref offset,
+            ..
+        } = relative_event
+        {
+            // For mouse events, check if it falls inside the available area
+            let inside = position
+                .checked_sub(offset)
+                .map(|p| p.fits_in(self.available_size()))
+                .unwrap_or(false);
+            *position = *position + self.offset;
+            inside
+        } else {
+            // For key events, assume it's inside by default.
+            true
+        };
+
+        let result = if inside {
+            // If the event is inside, give it to the child.
+            self.inner.on_event(relative_event)
+        } else {
+            // Otherwise, pretend it wasn't there.
+            EventResult::Ignored
+        };
+
+        match result {
             EventResult::Ignored => {
                 // If it's an arrow, try to scroll in the given direction.
                 // If it's a mouse scroll, try to scroll as well.
