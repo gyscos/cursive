@@ -89,7 +89,7 @@ fn main() {
 It's rather easy to identify the two steps involved.
 
 If you run this, you'll get an empty blue terminal, with no way of properly
-leaving the application (you'll have to press `<Ctrl-C>` to kill it).
+leaving the application (you'll have to press <kbd>Ctrl</kbd>+<kbd>C</kbd> to kill it).
 
 [`Cursive`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html
 
