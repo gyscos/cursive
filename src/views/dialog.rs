@@ -286,16 +286,38 @@ impl Dialog {
         match self.content.on_event(
             event.relativized((self.padding + self.borders).top_left()),
         ) {
-            EventResult::Ignored if !self.buttons.is_empty() => {
-                match event {
-                    Event::Key(Key::Down)
-                    | Event::Key(Key::Tab)
-                    | Event::Shift(Key::Tab) => {
-                        // Default to leftmost button when going down.
-                        self.focus = DialogFocus::Button(0);
-                        EventResult::Consumed(None)
+            EventResult::Ignored => {
+                if !self.buttons.is_empty() {
+                    match event {
+                        Event::Key(Key::Down)
+                        | Event::Key(Key::Tab)
+                        | Event::Shift(Key::Tab) => {
+                            // Default to leftmost button when going down.
+                            self.focus = DialogFocus::Button(0);
+                            EventResult::Consumed(None)
+                        }
+                        _ => EventResult::Ignored,
                     }
-                    _ => EventResult::Ignored,
+                } else {
+                    match event {
+                        Event::Shift(Key::Tab) => {
+                            if self.content.take_focus(Direction::back()) {
+                                self.focus = DialogFocus::Content;
+                                EventResult::Consumed(None)
+                            } else {
+                                EventResult::Ignored
+                            }
+                        }
+                        Event::Key(Key::Tab) => {
+                            if self.content.take_focus(Direction::front()) {
+                                self.focus = DialogFocus::Content;
+                                EventResult::Consumed(None)
+                            } else {
+                                EventResult::Ignored
+                            }
+                        }
+                        _ => EventResult::Ignored,
+                    }
                 }
             }
             res => res,
