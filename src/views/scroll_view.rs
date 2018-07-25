@@ -39,7 +39,7 @@ pub struct ScrollView<V> {
 
     /// How much padding should be between content and scrollbar?
     ///
-    /// scrollbar_padding.x is the vertical padding before the horizontal scrollbar.
+    /// scrollbar_padding.x is the horizontal padding before the vertical scrollbar.
     scrollbar_padding: Vec2,
 
     /// Initial position of the cursor when dragging.
@@ -183,6 +183,8 @@ where
     /// Returns the size taken by the scrollbars.
     ///
     /// Will be zero in axis where we're not scrolling.
+    ///
+    /// The scrollbar_size().x will be the horizontal space taken by the vertical scrollbar.
     fn scrollbar_size(&self) -> Vec2 {
         self.is_scrolling()
             .swap()
@@ -204,7 +206,7 @@ where
     ///
     /// Returns `(inner_size, size, scrollable)`.
     fn sizes_when_scrolling(
-        &mut self, constraint: Vec2, scrollable: XY<bool>,
+        &mut self, constraint: Vec2, scrollable: XY<bool>, strict: bool,
     ) -> (Vec2, Vec2, XY<bool>) {
         // This is the size taken by the scrollbars.
         let scrollbar_size = scrollable
@@ -222,6 +224,13 @@ where
             Vec2::min(inner_size + scrollbar_size, constraint),
             inner_size + scrollbar_size,
         );
+
+        // In strict mode, there's no way our size is over constraints.
+        let size = if strict {
+            size.or_min(constraint)
+        } else {
+            size
+        };
 
         // On non-scrolling axis, give inner_size the available space instead.
         let inner_size = self
@@ -311,8 +320,8 @@ where
     /// Then try with scrollbars if needed.
     /// Then try again in case we now need to scroll both ways (!!!)
     ///
-    /// Returns `(inner_size, size)`
-    fn sizes(&mut self, constraint: Vec2) -> (Vec2, Vec2) {
+    /// Returns `(inner_size, desired_size)`
+    fn sizes(&mut self, constraint: Vec2, strict: bool) -> (Vec2, Vec2) {
         // First: try the cache
         if self
             .size_cache
@@ -328,20 +337,26 @@ where
         }
 
         // Attempt 1: try without scrollbars
-        let (inner_size, size, scrollable) =
-            self.sizes_when_scrolling(constraint, XY::new(false, false));
+        let (inner_size, size, scrollable) = self.sizes_when_scrolling(
+            constraint,
+            XY::new(false, false),
+            strict,
+        );
 
         // If we need to add scrollbars, the available size will change.
         if scrollable.any() && self.show_scrollbars {
             // Attempt 2: he wants to scroll? Sure!
             // Try again with some space for the scrollbar.
             let (inner_size, size, new_scrollable) =
-                self.sizes_when_scrolling(constraint, scrollable);
+                self.sizes_when_scrolling(constraint, scrollable, strict);
             if scrollable != new_scrollable {
                 // Again? We're now scrolling in a new direction?
                 // There is no end to this!
-                let (inner_size, size, _) =
-                    self.sizes_when_scrolling(constraint, new_scrollable);
+                let (inner_size, size, _) = self.sizes_when_scrolling(
+                    constraint,
+                    new_scrollable,
+                    strict,
+                );
 
                 // That's enough. If the inner view changed again, ignore it!
                 // That'll teach it.
@@ -402,7 +417,7 @@ where
 
         let size = self.available_size();
 
-        // TODO: use a more generic zip_all or something?
+        // Draw the scrollbars
         XY::zip5(lengths, offsets, size, line_c, Orientation::pair()).run_if(
             scrolling,
             |(length, offset, size, c, orientation)| {
@@ -434,6 +449,7 @@ where
             },
         );
 
+        // Draw the X between the two scrollbars.
         if scrolling.both() {
             printer.print(printer.size.saturating_sub((1, 1)), "╳");
         }
@@ -619,9 +635,9 @@ where
         self.last_size = size;
 
         // This is what we'd like
-        let (inner_size, self_size) = self.sizes(size);
+        let (inner_size, self_size) = self.sizes(size, true);
 
-        self.inner_size = inner_size;
+        self.inner_size = self.enabled.select_or(inner_size, size);
         self.size_cache = Some(SizeCache::build(self_size, size));
 
         self.inner.layout(self.inner_size);
@@ -640,7 +656,7 @@ where
     }
 
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
-        let (_, size) = self.sizes(constraint);
+        let (_, size) = self.sizes(constraint, false);
 
         size
     }
