@@ -89,7 +89,7 @@ fn main() {
 It's rather easy to identify the two steps involved.
 
 If you run this, you'll get an empty blue terminal, with no way of properly
-leaving the application (you'll have to press <Ctrl-C> to kill it).
+leaving the application (you'll have to press `<Ctrl-C>` to kill it).
 
 [`Cursive`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html
 
@@ -98,7 +98,7 @@ leaving the application (you'll have to press <Ctrl-C> to kill it).
 Let's first add a way to stop the application. We want to quit when the user
 presses the letter `q`.
 
-Cursive sends an event for every user input ; most of these are just ignored
+Cursive sends an event for every user input; most of these are just ignored
 and have no effect. The `Cursive` root has a [`add_global_callback`] method to
 call a function anytime a certain event is fired.
 This method takes 2 arguments: a trigger, and a callback.
