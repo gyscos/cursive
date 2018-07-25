@@ -74,7 +74,8 @@ fn main() {
                                 EditView::new(),
                             );
                         }
-                    }),
+                    })
+                    .scrollable(),
             ),
     );
 

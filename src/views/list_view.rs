@@ -1,12 +1,10 @@
 use direction;
-use event::{
-    AnyCb, Callback, Event, EventResult, Key, MouseButton, MouseEvent,
-};
+use event::{AnyCb, Callback, Event, EventResult, Key};
 use rect::Rect;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
-use view::{ScrollBase, Selector, View};
+use view::{Selector, View};
 use Cursive;
 use Printer;
 use With;
@@ -37,10 +35,9 @@ impl ListChild {
     }
 }
 
-/// Displays a scrollable list of elements.
+/// Displays a list of elements.
 pub struct ListView {
     children: Vec<ListChild>,
-    scrollbase: ScrollBase,
     focus: usize,
     // This callback is called when the selection is changed.
     on_select: Option<Rc<Fn(&mut Cursive, &String)>>,
@@ -54,7 +51,6 @@ impl ListView {
     pub fn new() -> Self {
         ListView {
             children: Vec::new(),
-            scrollbase: ScrollBase::new(),
             focus: 0,
             on_select: None,
             last_size: Vec2::zero(),
@@ -192,7 +188,6 @@ impl ListView {
             return EventResult::Ignored;
         };
         self.focus = i;
-        self.scrollbase.scroll_to(self.focus);
 
         EventResult::Consumed(self.on_select.clone().map(|cb| {
             let i = self.focus();
@@ -226,14 +221,10 @@ impl ListView {
                 Some(pos) => pos,
             };
 
-            if position.y > self.scrollbase.view_height {
-                return;
-            }
-
             // eprintln!("Rel pos: {:?}", position);
 
             // Now that we have a relative position, checks for buttons?
-            let focus = position.y + self.scrollbase.start_line;
+            let focus = position.y;
             if focus >= self.children.len() {
                 return;
             }
@@ -269,16 +260,17 @@ impl View for ListView {
         let offset = self.labels_width() + 1;
 
         debug!("Offset: {}", offset);
-        self.scrollbase
-            .draw(printer, |printer, i| match self.children[i] {
+        for (i, child) in self.children.iter().enumerate() {
+            match child {
                 ListChild::Row(ref label, ref view) => {
-                    printer.print((0, 0), label);
+                    printer.print((0, i), label);
                     view.draw(
-                        &printer.offset((offset, 0)).focused(i == self.focus),
+                        &printer.offset((offset, i)).focused(i == self.focus),
                     );
                 }
                 ListChild::Delimiter => (),
-            });
+            }
+        }
     }
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
@@ -299,17 +291,11 @@ impl View for ListView {
             .max()
             .unwrap_or(0);
 
-        if self.children.len() > req.y {
-            // Include a scroll bar
-            Vec2::new(label_width + 1 + view_size + 2, req.y)
-        } else {
-            Vec2::new(label_width + 1 + view_size, self.children.len())
-        }
+        Vec2::new(label_width + 1 + view_size, self.children.len())
     }
 
     fn layout(&mut self, size: Vec2) {
         self.last_size = size;
-        self.scrollbase.set_heights(size.y, self.children.len());
 
         // We'll show 2 columns: the labels, and the views.
         let label_width = self
@@ -321,11 +307,8 @@ impl View for ListView {
             .unwrap_or(0);
 
         let spacing = 1;
-        let scrollbar_width = if self.children.len() > size.y { 2 } else { 0 };
 
-        let available = size
-            .x
-            .saturating_sub(label_width + spacing + scrollbar_width);
+        let available = size.x.saturating_sub(label_width + spacing);
 
         debug!("Available: {}", available);
 
@@ -339,46 +322,6 @@ impl View for ListView {
             return EventResult::Ignored;
         }
 
-        // First: some events can directly affect the ListView
-        match event {
-            Event::Mouse {
-                event: MouseEvent::Press(MouseButton::Left),
-                position,
-                offset,
-            }
-                if position
-                    .checked_sub(offset)
-                    .map(|position| {
-                        self.scrollbase.start_drag(position, self.last_size.x)
-                    })
-                    .unwrap_or(false) =>
-            {
-                return EventResult::Consumed(None);
-            }
-            Event::Mouse {
-                event: MouseEvent::Hold(MouseButton::Left),
-                position,
-                offset,
-            }
-                if self.scrollbase.is_dragging() =>
-            {
-                let position = position.saturating_sub(offset);
-                self.scrollbase.drag(position);
-                return EventResult::Consumed(None);
-            }
-            Event::Mouse {
-                event: MouseEvent::Release(MouseButton::Left),
-                ..
-            }
-                if self.scrollbase.is_dragging() =>
-            {
-                self.scrollbase.release_grab();
-                return EventResult::Consumed(None);
-            }
-            _ => (),
-        }
-
-        // Then: some events can move the focus around.
         self.check_focus_grab(&event);
 
         // Send the event to the focused child.
@@ -386,13 +329,10 @@ impl View for ListView {
         if let ListChild::Row(_, ref mut view) = self.children[self.focus] {
             // If self.focus < self.scrollbase.start_line, it means the focus is not
             // in view. Something's fishy, so don't send the event.
-            if let Some(y) = self.focus.checked_sub(self.scrollbase.start_line)
-            {
-                let offset = (labels_width + 1, y);
-                let result = view.on_event(event.relativized(offset));
-                if result.is_consumed() {
-                    return result;
-                }
+            let offset = (labels_width + 1, self.focus);
+            let result = view.on_event(event.relativized(offset));
+            if result.is_consumed() {
+                return result;
             }
         }
 
@@ -420,24 +360,6 @@ impl View for ListView {
             Event::Shift(Key::Tab) => {
                 self.move_focus(1, direction::Direction::back())
             }
-            Event::Mouse {
-                event: MouseEvent::WheelDown,
-                ..
-            }
-                if self.scrollbase.can_scroll_down() =>
-            {
-                self.scrollbase.scroll_down(5);
-                EventResult::Consumed(None)
-            }
-            Event::Mouse {
-                event: MouseEvent::WheelUp,
-                ..
-            }
-                if self.scrollbase.can_scroll_up() =>
-            {
-                self.scrollbase.scroll_up(5);
-                EventResult::Consumed(None)
-            }
             _ => EventResult::Ignored,
         }
     }
@@ -455,7 +377,6 @@ impl View for ListView {
             return false;
         };
         self.focus = i;
-        self.scrollbase.scroll_to(self.focus);
         true
     }
 

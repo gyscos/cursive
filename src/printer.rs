@@ -168,7 +168,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         // Here again, we can abort if we're trying to print too far right or
         // too low.
-        if !start.fits_in(self.output_size + self.content_offset) {
+        if !(start < (self.output_size + self.content_offset)) {
             return;
         }
 
@@ -212,7 +212,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let start = start.into();
 
         // Nothing to be done if the start if too far to the bottom/right
-        if !start.fits_in(self.output_size + self.content_offset) {
+        if !(start < (self.output_size + self.content_offset)) {
             return;
         }
 
