@@ -14,6 +14,7 @@
 //!   table is checked.
 
 use std::any::Any;
+use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 use vec::Vec2;
@@ -37,6 +38,22 @@ impl Callback {
         Callback(Rc::new(Box::new(move |siv| {
             f(siv);
         })))
+    }
+
+    /// Wrap a `FnMut` into a `Callback` object.
+    ///
+    /// If this methods tries to call itself, nested calls will be no-ops.
+    pub fn from_fn_mut<F>(f: F) -> Self
+    where
+        F: 'static + FnMut(&mut Cursive),
+    {
+        let cb = RefCell::new(f);
+
+        Self::from_fn(move |s| {
+            if let Ok(mut cb) = cb.try_borrow_mut() {
+                (&mut *cb)(s);
+            }
+        })
     }
 
     /// Returns a dummy callback that doesn't run anything.

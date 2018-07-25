@@ -514,12 +514,12 @@ impl Cursive {
     /// ```
     pub fn add_global_callback<F, E: Into<Event>>(&mut self, event: E, cb: F)
     where
-        F: Fn(&mut Cursive) + 'static,
+        F: FnMut(&mut Cursive) + 'static,
     {
         self.global_callbacks
             .entry(event.into())
             .or_insert_with(Vec::new)
-            .push(Callback::from_fn(cb));
+            .push(Callback::from_fn_mut(cb));
     }
 
     /// Removes any callback tied to the given event.
