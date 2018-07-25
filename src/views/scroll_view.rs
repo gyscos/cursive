@@ -38,6 +38,8 @@ pub struct ScrollView<V> {
     show_scrollbars: bool,
 
     /// How much padding should be between content and scrollbar?
+    ///
+    /// scrollbar_padding.x is the vertical padding before the horizontal scrollbar.
     scrollbar_padding: Vec2,
 
     /// Initial position of the cursor when dragging.
@@ -364,7 +366,9 @@ where
         let available = self.available_size();
         // The number of steps is 1 + the "extra space"
         let steps = (available + (1, 1)).saturating_sub(lengths);
-        steps * self.offset / (self.inner_size + (1, 1) - available)
+        let max_offset = self.inner_size.saturating_sub(available) + (1, 1);
+
+        steps * self.offset / max_offset
     }
 
     /// Apply the scrolling strategy to the current scroll position.
