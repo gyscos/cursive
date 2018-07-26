@@ -637,7 +637,8 @@ where
         // This is what we'd like
         let (inner_size, self_size) = self.sizes(size, true);
 
-        self.inner_size = self.enabled.select_or(inner_size, size);
+        self.inner_size = inner_size;
+
         self.size_cache = Some(SizeCache::build(self_size, size));
 
         self.inner.layout(self.inner_size);
