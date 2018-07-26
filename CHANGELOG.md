@@ -1,6 +1,10 @@
 # Changelog
 
-## Next version: 0.9.0
+## Next version: 0.9.1
+
+No change yet
+
+## 0.9.0
 
 ### New features
 
