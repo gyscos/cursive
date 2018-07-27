@@ -90,12 +90,6 @@ Here are a few crates implementing new views for you to use:
         * [menuconfig](http://en.wikipedia.org/wiki/Menuconfig#/media/File:Linux_x86_3.10.0-rc2_Kernel_Configuration.png)
         * [nmtui](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/sec-Configure_a_Network_Team_Using_the_Text_User_Interface_nmtui.html)
 
-## _Non_-goals
-
-* **Extreme performance.** This is a simple layout library, guys, not [compiz](https://www.google.com/search?q=compiz&tbm=isch) piped into [libcaca](https://www.google.com/search?q=libcaca&tbm=isch). Unless you are running it on your microwave's microcontroller, it's not going to be slow. *That being said*, it should be expected to run at decent speed on raspberry pi-level hardware.
-* **Multi-threaded UI.** Callback methods are blocking - careful what you're doing in there! Feel free to use threads on your side, though.
-* **Complete ncurses equivalent.** You _can_ access the underlying ncurses window when creating your own custom views, so you can do what you want with that, but the main library will probably only use a subset of the ncurses features. Also, using ncurses at all is not guaranteed, [as other backends are considered](https://github.com/gyscos/Cursive/issues/34).
-
 ## Compatibility
 
 First off, terminals are messy. A small set of features is standard, but beyond that, almost every terminal has its own implementation.
