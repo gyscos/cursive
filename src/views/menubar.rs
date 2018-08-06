@@ -195,6 +195,8 @@ impl Menubar {
     fn select_child(&mut self, open_only: bool) -> EventResult {
         match self.root.children[self.focus] {
             MenuItem::Leaf(_, ref cb) if !open_only => {
+                // Go inactive after an action.
+                self.state = State::Inactive;
                 EventResult::Consumed(Some(cb.clone()))
             }
             MenuItem::Subtree(_, ref tree) => {
