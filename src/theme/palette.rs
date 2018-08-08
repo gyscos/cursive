@@ -225,7 +225,7 @@ pub(crate) fn load_toml(palette: &mut Palette, table: &toml::value::Table) {
 
 /// Color entry in a palette.
 ///
-/// Each `ColorRole` is used for a specific role in a default application.
+/// Each `PaletteColor` is used for a specific role in a default application.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Enum)]
 pub enum PaletteColor {
     /// Color used for the application background.

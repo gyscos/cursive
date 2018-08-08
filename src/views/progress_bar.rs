@@ -4,7 +4,7 @@ use std::thread;
 use theme::{ColorStyle, ColorType, Effect};
 use utils::Counter;
 use view::View;
-use Printer;
+use {Printer, With};
 
 // pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
 
@@ -190,6 +190,8 @@ impl ProgressBar {
     }
 
     /// Sets the color style.
+    ///
+    /// The default color is `PaletteColor::Highlight`.
     pub fn set_color<C>(&mut self, color: C)
     where
         C: Into<ColorType>,
@@ -200,13 +202,11 @@ impl ProgressBar {
     /// Sets the color style.
     ///
     /// Chainable variant of `set_color`.
-    pub fn with_color<C>(mut self, color: C) -> Self
+    pub fn with_color<C>(self, color: C) -> Self
     where
         C: Into<ColorType>,
     {
-        self.color = color.into();
-
-        self
+        self.with(|s| s.set_color(color))
     }
 }
 
