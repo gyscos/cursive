@@ -1,7 +1,7 @@
 use align::HAlign;
 use std::cmp;
 use std::thread;
-use theme::{ColorStyle, Effect};
+use theme::{ColorStyle, ColorType, Effect};
 use utils::Counter;
 use view::View;
 use Printer;
@@ -16,6 +16,9 @@ use Printer;
 ///
 /// It also prints a customizable text in the center of the bar, which
 /// defaults to the progression percentage.
+///
+/// The bar defaults to the current theme's highlight color,
+/// but that can be customized.
 ///
 /// # Example
 ///
@@ -35,6 +38,7 @@ pub struct ProgressBar {
     min: usize,
     max: usize,
     value: Counter,
+    color: ColorType,
     // TODO: use a Promise instead?
     label_maker: Box<Fn(usize, (usize, usize)) -> String>,
 }
@@ -85,6 +89,7 @@ impl ProgressBar {
             min: 0,
             max: 100,
             value: Counter::new(0),
+            color: ColorStyle::highlight().back,
             label_maker: Box::new(make_percentage),
         }
     }
@@ -183,6 +188,26 @@ impl ProgressBar {
     pub fn set_value(&mut self, value: usize) {
         self.value.set(value);
     }
+
+    /// Sets the color style.
+    pub fn set_color<C>(&mut self, color: C)
+    where
+        C: Into<ColorType>,
+    {
+        self.color = color.into();
+    }
+
+    /// Sets the color style.
+    ///
+    /// Chainable variant of `set_color`.
+    pub fn with_color<C>(mut self, color: C) -> Self
+    where
+        C: Into<ColorType>,
+    {
+        self.color = color.into();
+
+        self
+    }
 }
 
 fn sub_block(extra: usize) -> &'static str {
@@ -218,7 +243,10 @@ impl View for ProgressBar {
         let label = (self.label_maker)(value, (self.min, self.max));
         let offset = HAlign::Center.get_offset(label.len(), printer.size.x);
 
-        printer.with_color(ColorStyle::highlight(), |printer| {
+        let color_style =
+            ColorStyle::new(ColorStyle::highlight().front, self.color);
+
+        printer.with_color(color_style, |printer| {
             // Draw the right half of the label in reverse
             printer.with_effect(Effect::Reverse, |printer| {
                 printer.print((length, 0), sub_block(extra));
@@ -227,7 +255,7 @@ impl View for ProgressBar {
             let printer = &printer.cropped((length, 1));
             printer.print_hline((0, 0), length, " ");
 
-            // Draw the left part in highlight (it may be cropped)
+            // Draw the left part in color_style (it may be cropped)
             printer.print((offset, 0), &label);
         });
     }
