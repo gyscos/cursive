@@ -218,7 +218,7 @@ impl cursive::view::View for BoardView {
             Event::Mouse {
                 offset,
                 position,
-                event: MouseEvent::Press(btn),
+                event: MouseEvent::Press(_btn),
             } => {
                 // Get cell for position
                 if let Some(pos) = self.get_cell(position, offset) {
@@ -263,7 +263,7 @@ impl cursive::view::View for BoardView {
 }
 
 fn new_game(siv: &mut Cursive, options: game::Options) {
-    let board = game::Board::new(options);
+    let _board = game::Board::new(options);
 
     siv.add_layer(
         Dialog::new()
