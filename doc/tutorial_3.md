@@ -58,7 +58,9 @@ fn add_name(s: &mut Cursive) {
                 }).unwrap();
             ok(s, &name);
         })
-        .button("Cancel", |s| s.pop_layer()));
+        .button("Cancel", |s| {
+            s.pop_layer();
+        }));
 }
 
 fn delete_name(s: &mut Cursive) {
@@ -206,7 +208,9 @@ fn add_name(s: &mut Cursive) {
         .button("Ok", |s| {
             // What do we do now?...
         })
-        .button("Cancel", |s| s.pop_layer()));
+        .button("Cancel", |s| {
+            s.pop_layer();
+        }));
 }
 ```
 
@@ -243,7 +247,9 @@ fn add_name(s: &mut Cursive) {
                 view.get_content()
             }).unwrap();
         })
-        .button("Cancel", |s| s.pop_layer()));
+        .button("Cancel", |s|
+            s.pop_layer();
+        }));
 }
 ```
 
@@ -284,7 +290,9 @@ fn add_name(s: &mut Cursive) {
             }).unwrap();
             ok(s, &name);
         })
-        .button("Cancel", |s| s.pop_layer()));
+        .button("Cancel", |s| {
+            s.pop_layer();
+        }));
 }
 ```
 
