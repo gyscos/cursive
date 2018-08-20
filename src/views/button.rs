@@ -23,6 +23,8 @@ pub struct Button {
     callback: Callback,
     enabled: bool,
     last_size: Vec2,
+
+    invalidated: bool,
 }
 
 impl Button {
@@ -46,6 +48,7 @@ impl Button {
             callback: Callback::from_fn(cb),
             enabled: true,
             last_size: Vec2::zero(),
+            invalidated: true,
         }
     }
 
@@ -121,10 +124,15 @@ impl Button {
         S: Into<String>,
     {
         self.label = label.into();
+        self.invalidate();
     }
 
     fn req_size(&self) -> Vec2 {
         Vec2::new(self.label.width(), 1)
+    }
+
+    fn invalidate(&mut self) {
+        self.invalidated = true;
     }
 }
 
@@ -152,6 +160,7 @@ impl View for Button {
 
     fn layout(&mut self, size: Vec2) {
         self.last_size = size;
+        self.invalidated = false;
     }
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {
@@ -194,5 +203,9 @@ impl View for Button {
         let offset = HAlign::Center.get_offset(width, view_size.x);
 
         Rect::from_size((offset, 0), (width, 1))
+    }
+
+    fn needs_relayout(&self) -> bool {
+        self.invalidated
     }
 }

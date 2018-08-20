@@ -336,12 +336,6 @@ impl TextView {
 
         // Desired width
         self.width = self.rows.iter().map(|row| row.width).max();
-
-        // The entire "virtual" size (includes all rows)
-        let my_size = Vec2::new(self.width.unwrap_or(0), self.rows.len());
-
-        // Build a fresh cache.
-        content.size_cache = Some(SizeCache::build(my_size, size));
     }
 
     // Invalidates the cache, so next call will recompute everything.
@@ -390,5 +384,12 @@ impl View for TextView {
         // Compute the text rows.
         self.last_size = size;
         self.compute_rows(size);
+
+        // The entire "virtual" size (includes all rows)
+        let my_size = Vec2::new(self.width.unwrap_or(0), self.rows.len());
+
+        // Build a fresh cache.
+        let mut content = self.content.lock().unwrap();
+        content.size_cache = Some(SizeCache::build(my_size, size));
     }
 }

@@ -1,3 +1,4 @@
+use With;
 use vec::Vec2;
 use view::{SizeConstraint, View, ViewWrapper};
 use XY;
@@ -27,8 +28,11 @@ pub struct BoxView<T: View> {
     ///
     /// This means if the required size is less than the computed size,
     /// consider returning a smaller size.
-    /// For instance, try to return the child's desires size.
-    squishable: bool,
+    /// For instance, try to return the child's desired size.
+    squishable: bool, // TODO: remove?
+
+    /// Set to `true` whenever we change some settings. Means we should re-layout just in case.
+    invalidated: bool,
 
     /// The actual view we're wrapping.
     view: T,
@@ -44,6 +48,7 @@ impl<T: View> BoxView<T> {
         BoxView {
             size: (width, height).into(),
             squishable: false,
+            invalidated: true,
             view,
         }
     }
@@ -61,6 +66,7 @@ impl<T: View> BoxView<T> {
     /// Leaves the height unchanged.
     pub fn set_width(&mut self, width: SizeConstraint) {
         self.size.x = width;
+        self.invalidate();
     }
 
     /// Sets the height constraint for this view.
@@ -68,6 +74,7 @@ impl<T: View> BoxView<T> {
     /// Leaves the width unchanged.
     pub fn set_height(&mut self, height: SizeConstraint) {
         self.size.y = height;
+        self.invalidate();
     }
 
     /// Sets `self` to be squishable.
@@ -78,9 +85,14 @@ impl<T: View> BoxView<T> {
     ///
     /// More specifically, if the available space is less than the size we
     /// would normally ask for, return the child size.
-    pub fn squishable(mut self) -> Self {
-        self.squishable = true;
-        self
+    pub fn squishable(self) -> Self {
+        self.with(|s| s.set_squishable(true))
+    }
+
+    /// Controls the "squishability" of `self`.
+    pub fn set_squishable(&mut self, squishable: bool) {
+        self.squishable = squishable;
+        self.invalidate();
     }
 
     /// Wraps `view` in a new `BoxView` with the given size.
@@ -185,6 +197,12 @@ impl<T: View> BoxView<T> {
         )
     }
 
+    /// Should be called anytime something changes.
+    fn invalidate(&mut self) {
+        self.invalidated = true;
+    }
+
+
     inner_getters!(self.view: T);
 }
 
@@ -192,33 +210,41 @@ impl<T: View> ViewWrapper for BoxView<T> {
     wrap_impl!(self.view: T);
 
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
+        // This is what the child will see as request.
         let req = self.size.zip_map(req, SizeConstraint::available);
+
+        // This is the size the child would like to have.
         let child_size = self.view.required_size(req);
 
+        // Some of this request will be granted, but maybe not all.
         let result = self
             .size
             .zip_map(child_size.zip(req), SizeConstraint::result);
 
         debug!("{:?}", result);
 
-        if self.squishable {
+        if !self.squishable {
+            result
+        } else {
+            // When we're squishable, special behaviour:
+            //
+
             // We respect the request if we're less or equal.
             let respect_req = result.zip_map(req, |res, req| res <= req);
-            result.zip_map(
-                respect_req.zip(child_size),
-                |res, (respect, child)| {
-                    if respect {
-                        // If we respect the request, keep the result
-                        res
-                    } else {
-                        // Otherwise, take the child as squish attempt.
-                        child
-                    }
-                },
-            )
-        } else {
-            result
+
+            // If we respect the request, keep the result
+            // Otherwise, take the child as squish attempt.
+            respect_req.select_or(result, child_size)
         }
+    }
+
+    fn wrap_layout(&mut self, size: Vec2) {
+        self.invalidated = false;
+        self.view.layout(size);
+    }
+
+    fn wrap_needs_relayout(&self) -> bool {
+        self.invalidated || self.view.needs_relayout()
     }
 }
 

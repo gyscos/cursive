@@ -75,6 +75,9 @@ pub struct Dialog {
 
     // How to align the buttons under the view.
     align: Align,
+
+    // `true` when we needs to relayout
+    invalidated: bool,
 }
 
 new_default!(Dialog);
@@ -98,6 +101,7 @@ impl Dialog {
             padding: Margins::new(1, 1, 0, 0),
             borders: Margins::new(1, 1, 1, 1),
             align: Align::top_right(),
+            invalidated: true,
         }
     }
 
@@ -126,6 +130,7 @@ impl Dialog {
 
     /// Gets mutable access to the content.
     pub fn get_content_mut(&mut self) -> &mut View {
+        self.invalidate();
         &mut *self.content.view
     }
 
@@ -134,6 +139,7 @@ impl Dialog {
     /// Previous content will be dropped.
     pub fn set_content<V: View + 'static>(&mut self, view: V) {
         self.content = SizedView::new(ViewBox::boxed(view));
+        self.invalidate();
     }
 
     /// Convenient method to create a dialog with a simple text content.
@@ -164,6 +170,7 @@ impl Dialog {
         F: 'static + Fn(&mut Cursive),
     {
         self.buttons.push(ChildButton::new(label, cb));
+        self.invalidate();
     }
 
     /// Returns the number of buttons on this dialog.
@@ -174,6 +181,7 @@ impl Dialog {
     /// Removes any button from `self`.
     pub fn clear_buttons(&mut self) {
         self.buttons.clear();
+        self.invalidate();
     }
 
     /// Removes a button from this dialog.
@@ -183,6 +191,7 @@ impl Dialog {
     /// Panics if `i >= self.buttons_len()`.
     pub fn remove_button(&mut self, i: usize) {
         self.buttons.remove(i);
+        self.invalidate();
     }
 
     /// Sets the horizontal alignment for the buttons, if any.
@@ -224,6 +233,7 @@ impl Dialog {
     /// Sets the title of the dialog.
     pub fn set_title<S: Into<String>>(&mut self, label: S) {
         self.title = label.into();
+        self.invalidate();
     }
 
     /// Sets the horizontal position of the title in the dialog.
@@ -271,6 +281,7 @@ impl Dialog {
 
     /// Returns an iterator on this buttons for this dialog.
     pub fn buttons_mut(&mut self) -> impl Iterator<Item = &mut Button> {
+        self.invalidate();
         self.buttons.iter_mut().map(|b| &mut b.button.view)
     }
 
@@ -504,6 +515,10 @@ impl Dialog {
             }
         }
     }
+
+    fn invalidate(&mut self) {
+        self.invalidated = true;
+    }
 }
 
 impl View for Dialog {
@@ -583,8 +598,11 @@ impl View for Dialog {
         if buttons_height > size.y {
             buttons_height = size.y;
         }
+
         self.content
             .layout(size.saturating_sub((0, buttons_height)));
+
+        self.invalidated = false;
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
@@ -626,5 +644,9 @@ impl View for Dialog {
         self.content.important_area(self.content.size)
             + self.borders.top_left()
             + self.padding.top_left()
+    }
+
+    fn needs_relayout(&self) -> bool {
+        self.invalidated || self.content.needs_relayout()
     }
 }

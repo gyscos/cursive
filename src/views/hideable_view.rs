@@ -1,4 +1,5 @@
 use view::{Selector, View, ViewWrapper};
+use vec::Vec2;
 use With;
 
 use std::any::Any;
@@ -14,6 +15,7 @@ use std::any::Any;
 pub struct HideableView<V> {
     view: V,
     visible: bool,
+    invalidated: bool,
 }
 
 impl<V> HideableView<V> {
@@ -24,12 +26,14 @@ impl<V> HideableView<V> {
         HideableView {
             view,
             visible: true,
+            invalidated: true,
         }
     }
 
     /// Sets the visibility for this view.
     pub fn set_visible(&mut self, visible: bool) {
         self.visible = visible;
+        self.invalidate();
     }
 
     /// Sets the visibility for this view to `false`.
@@ -47,6 +51,10 @@ impl<V> HideableView<V> {
     /// Chainable variant.
     pub fn hidden(self) -> Self {
         self.with(Self::hide)
+    }
+
+    fn invalidate(&mut self) {
+        self.invalidated = true;
     }
 
     inner_getters!(self.view: V);
@@ -90,5 +98,14 @@ impl<V: View> ViewWrapper for HideableView<V> {
         Self::V: Sized,
     {
         Ok(self.view)
+    }
+
+    fn wrap_layout(&mut self, size: Vec2)  {
+        self.invalidated = false;
+        self.with_view_mut(|v| v.layout(size));
+    }
+
+    fn wrap_needs_relayout(&self) -> bool {
+        self.invalidated || (self.visible && self.view.needs_relayout())
     }
 }

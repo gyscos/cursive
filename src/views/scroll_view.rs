@@ -323,11 +323,13 @@ where
     /// Returns `(inner_size, desired_size)`
     fn sizes(&mut self, constraint: Vec2, strict: bool) -> (Vec2, Vec2) {
         // First: try the cache
-        if self
+        if !self.inner.needs_relayout() && self
             .size_cache
             .map(|cache| cache.zip_map(constraint, SizeCache::accept).both())
             .unwrap_or(false)
         {
+            // eprintln!("Cache: {:?}; constraint: {:?}", self.size_cache, constraint);
+
             // The new constraint shouldn't change much,
             // so we can re-use previous values
             return (
