@@ -306,9 +306,15 @@ where
 
         // The new offset is:
         // thumb_pos * (content + 1 - available) / (available + 1 - thumb size)
-        let new_offset = ((self.inner_size + (1, 1)).saturating_sub(available)
-            * thumb_pos)
-            .div_up((available + (1, 1)).saturating_sub(lengths));
+        let extra =
+            (available + (1, 1)).saturating_sub(lengths).or_max((1, 1));
+
+        // We're dividing by this value, so make sure it's positive!
+        assert!(extra > Vec2::zero());
+
+        let new_offset =
+            ((self.inner_size + (1, 1)).saturating_sub(available) * thumb_pos)
+                .div_up(extra);
         let max_offset = self.inner_size.saturating_sub(self.available_size());
         self.offset
             .set_axis_from(orientation, &new_offset.or_min(max_offset));
@@ -376,7 +382,9 @@ where
 
     fn scrollbar_thumb_lengths(&self) -> Vec2 {
         let available = self.available_size();
-        (available * available / self.inner_size.or_max((1,1))).or_max((1, 1))
+        // The length should be (visible / total) * visible
+
+        (available * available / self.inner_size.or_max((1, 1))).or_max((1, 1))
     }
 
     fn scrollbar_thumb_offsets(&self, lengths: Vec2) -> Vec2 {
@@ -530,11 +538,10 @@ where
                         position,
                         offset,
                     }
-                        if self.show_scrollbars
-                            && position
-                                .checked_sub(offset)
-                                .map(|position| self.start_drag(position))
-                                .unwrap_or(false) =>
+                        if self.show_scrollbars && position
+                            .checked_sub(offset)
+                            .map(|position| self.start_drag(position))
+                            .unwrap_or(false) =>
                     {
                         // Just consume the event.
                     }
