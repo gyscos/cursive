@@ -376,7 +376,7 @@ where
 
     fn scrollbar_thumb_lengths(&self) -> Vec2 {
         let available = self.available_size();
-        (available * available / self.inner_size).or_max((1, 1))
+        (available * available / self.inner_size.or_max((1,1))).or_max((1, 1))
     }
 
     fn scrollbar_thumb_offsets(&self, lengths: Vec2) -> Vec2 {
