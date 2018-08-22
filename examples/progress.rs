@@ -125,8 +125,7 @@ fn final_step(s: &mut Cursive) {
                     "Time travel was a success!\n\
                      We went forward a few seconds!!",
                 ).center(),
-            )
-            .button("That's it?", |s| s.quit()),
+            ).button("That's it?", |s| s.quit()),
     );
 }
 

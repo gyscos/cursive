@@ -107,8 +107,7 @@ impl Backend {
                                 position: self.mouse_position,
                                 offset: Vec2::zero(),
                             }
-                        })
-                        .unwrap_or(Event::Unknown(vec![]))
+                        }).unwrap_or(Event::Unknown(vec![]))
                 }
                 BltEvent::ShiftReleased | BltEvent::ControlReleased => {
                     Event::Refresh
@@ -167,8 +166,7 @@ impl Backend {
                         position: self.mouse_position,
                         offset: Vec2::zero(),
                     }
-                })
-                .unwrap_or(Event::Unknown(vec![])),
+                }).unwrap_or(Event::Unknown(vec![])),
             KeyCode::A
             | KeyCode::B
             | KeyCode::C

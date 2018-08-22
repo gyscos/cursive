@@ -27,8 +27,7 @@ fn main() {
         .on_pre_event_inner('k', |s| {
             s.select_up(1);
             Some(EventResult::Consumed(None))
-        })
-        .on_pre_event_inner('j', |s| {
+        }).on_pre_event_inner('j', |s| {
             s.select_down(1);
             Some(EventResult::Consumed(None))
         });

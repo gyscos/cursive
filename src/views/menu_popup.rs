@@ -317,14 +317,11 @@ impl View for MenuPopup {
                 position,
                 offset,
             }
-                if self.scrollbase.scrollable()
-                    && position
-                        .checked_sub(offset + (0, 1))
-                        .map(|position| {
-                            self.scrollbase
-                                .start_drag(position, self.last_size.x)
-                        })
-                        .unwrap_or(false) =>
+                if self.scrollbase.scrollable() && position
+                    .checked_sub(offset + (0, 1))
+                    .map(|position| {
+                        self.scrollbase.start_drag(position, self.last_size.x)
+                    }).unwrap_or(false) =>
             {
                 fix_scroll = false;
             }

@@ -16,7 +16,7 @@ fn main() {
             "This application uses a \
              custom theme!",
         )).title("Themed dialog")
-            .button("Quit", |s| s.quit()),
+        .button("Quit", |s| s.quit()),
     );
 
     siv.run();

@@ -406,11 +406,10 @@ impl Dialog {
         if printer.size.x < overhead.horizontal() {
             return None;
         }
-        let mut offset = overhead.left
-            + self
-                .align
-                .h
-                .get_offset(width, printer.size.x - overhead.horizontal());
+        let mut offset = overhead.left + self
+            .align
+            .h
+            .get_offset(width, printer.size.x - overhead.horizontal());
 
         let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
 
@@ -465,10 +464,9 @@ impl Dialog {
                 return;
             }
             let spacing = 3; //minimum distance to borders
-            let x = spacing
-                + self
-                    .title_position
-                    .get_offset(len, printer.size.x - 2 * spacing);
+            let x = spacing + self
+                .title_position
+                .get_offset(len, printer.size.x - 2 * spacing);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
@@ -507,8 +505,7 @@ impl Dialog {
             } else if position.fits_in_rect(
                 (self.padding + self.borders).top_left(),
                 self.content.size,
-            )
-                && self.content.take_focus(Direction::none())
+            ) && self.content.take_focus(Direction::none())
             {
                 // Or did we click the content?
                 self.focus = DialogFocus::Content;

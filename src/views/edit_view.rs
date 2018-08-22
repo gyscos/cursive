@@ -551,8 +551,7 @@ impl View for EditView {
                             } else {
                                 Some(g)
                             }
-                        })
-                        .map(|g| g.len())
+                        }).map(|g| g.len())
                         .sum();
 
                     let content = &content[..display_bytes];
@@ -674,11 +673,10 @@ impl View for EditView {
                 if position.fits_in_rect(offset, (self.last_length, 1)) =>
             {
                 if let Some(position) = position.checked_sub(offset) {
-                    self.cursor = self.offset
-                        + simple_prefix(
-                            &self.content[self.offset..],
-                            position.x,
-                        ).length;
+                    self.cursor = self.offset + simple_prefix(
+                        &self.content[self.offset..],
+                        position.x,
+                    ).length;
                 }
             }
             _ => return EventResult::Ignored,

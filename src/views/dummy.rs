@@ -9,5 +9,7 @@ pub struct DummyView;
 impl View for DummyView {
     fn draw(&self, _: &Printer) {}
 
-    fn needs_relayout(&self) -> bool { false }
+    fn needs_relayout(&self) -> bool {
+        false
+    }
 }

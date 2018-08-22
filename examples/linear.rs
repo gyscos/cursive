@@ -30,7 +30,7 @@ fn main() {
                 .child(TextView::new(text).scrollable())
                 .fixed_width(30),
         ).button("Quit", |s| s.quit())
-            .h_align(HAlign::Center),
+        .h_align(HAlign::Center),
     );
 
     siv.run();

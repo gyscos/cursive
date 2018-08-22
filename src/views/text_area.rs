@@ -559,8 +559,7 @@ impl View for TextArea {
                     .checked_sub(offset)
                     .map(|position| {
                         self.scrollbase.start_drag(position, self.last_size.x)
-                    })
-                    .unwrap_or(false) =>
+                    }).unwrap_or(false) =>
             {
                 fix_scroll = false;
             }

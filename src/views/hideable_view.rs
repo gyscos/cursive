@@ -1,5 +1,5 @@
-use view::{Selector, View, ViewWrapper};
 use vec::Vec2;
+use view::{Selector, View, ViewWrapper};
 use With;
 
 use std::any::Any;
@@ -100,7 +100,7 @@ impl<V: View> ViewWrapper for HideableView<V> {
         Ok(self.view)
     }
 
-    fn wrap_layout(&mut self, size: Vec2)  {
+    fn wrap_layout(&mut self, size: Vec2) {
         self.invalidated = false;
         self.with_view_mut(|v| v.layout(size));
     }

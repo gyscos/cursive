@@ -246,18 +246,17 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
             {
                 cb(s);
             }
-        })
-            .on_event(Key::Left, |s| {
-                s.pop_layer();
-                s.select_menubar();
-                // Act as if we sent "Left" then "Down"
-                s.menubar().on_event(Event::Key(Key::Left)).process(s);
-                if let EventResult::Consumed(Some(cb)) =
-                    s.menubar().on_event(Event::Key(Key::Down))
-                {
-                    cb(s);
-                }
-            }),
+        }).on_event(Key::Left, |s| {
+            s.pop_layer();
+            s.select_menubar();
+            // Act as if we sent "Left" then "Down"
+            s.menubar().on_event(Event::Key(Key::Left)).process(s);
+            if let EventResult::Consumed(Some(cb)) =
+                s.menubar().on_event(Event::Key(Key::Down))
+            {
+                cb(s);
+            }
+        }),
     );
 }
 

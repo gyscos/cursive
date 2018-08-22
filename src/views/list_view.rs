@@ -150,11 +150,7 @@ impl ListView {
     ) -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
-                let start = if from_focus {
-                    self.focus
-                } else {
-                    0
-                };
+                let start = if from_focus { self.focus } else { 0 };
 
                 Box::new(self.children.iter_mut().enumerate().skip(start))
             }

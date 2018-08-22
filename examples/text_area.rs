@@ -33,15 +33,13 @@ fn main() {
                             .on_submit(find)
                             .with_id("edit")
                             .min_width(10),
-                    )
-                    .button("Ok", |s| {
-                        let text =
-                            s.call_on_id("edit", |view: &mut EditView| {
+                    ).button("Ok", |s| {
+                        let text = s
+                            .call_on_id("edit", |view: &mut EditView| {
                                 view.get_content()
                             }).unwrap();
                         find(s, &text);
-                    })
-                    .dismiss_button("Cancel"),
+                    }).dismiss_button("Cancel"),
             ).on_event(Event::Key(Key::Esc), |s| {
                 s.pop_layer();
             }),

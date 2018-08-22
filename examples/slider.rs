@@ -32,7 +32,7 @@ fn main() {
                     );
                 }),
         ).title("[ 7 ]")
-            .with_id("dialog"),
+        .with_id("dialog"),
     );
 
     siv.run();

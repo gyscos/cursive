@@ -39,8 +39,7 @@ fn show_popup(siv: &mut Cursive) {
                     let content = reverse(view.get_content().source());
                     view.set_content(content);
                 });
-            })
-            .dismiss_button("Ok"),
+            }).dismiss_button("Ok"),
     );
 }
 

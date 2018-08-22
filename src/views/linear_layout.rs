@@ -234,11 +234,7 @@ impl LinearLayout {
     ) -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
         match source {
             direction::Relative::Front => {
-                let start = if from_focus {
-                    self.focus
-                } else {
-                    0
-                };
+                let start = if from_focus { self.focus } else { 0 };
 
                 Box::new(self.children.iter_mut().enumerate().skip(start))
             }
@@ -556,25 +552,29 @@ impl View for LinearLayout {
                     self.move_focus(direction::Direction::front())
                 }
                 Event::Key(Key::Left)
-                    if self.orientation == direction::Orientation::Horizontal
+                    if self.orientation
+                        == direction::Orientation::Horizontal
                         && self.focus > 0 =>
                 {
                     self.move_focus(direction::Direction::right())
                 }
                 Event::Key(Key::Up)
-                    if self.orientation == direction::Orientation::Vertical
+                    if self.orientation
+                        == direction::Orientation::Vertical
                         && self.focus > 0 =>
                 {
                     self.move_focus(direction::Direction::down())
                 }
                 Event::Key(Key::Right)
-                    if self.orientation == direction::Orientation::Horizontal
+                    if self.orientation
+                        == direction::Orientation::Horizontal
                         && self.focus + 1 < self.children.len() =>
                 {
                     self.move_focus(direction::Direction::left())
                 }
                 Event::Key(Key::Down)
-                    if self.orientation == direction::Orientation::Vertical
+                    if self.orientation
+                        == direction::Orientation::Vertical
                         && self.focus + 1 < self.children.len() =>
                 {
                     self.move_focus(direction::Direction::up())

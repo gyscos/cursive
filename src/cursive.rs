@@ -87,39 +87,33 @@ impl Default for Cursive {
     }
 }
 
-#[cfg(
-    all(
-        not(feature = "termion-backend"),
-        feature = "pancurses-backend"
-    )
-)]
+#[cfg(all(
+    not(feature = "termion-backend"),
+    feature = "pancurses-backend"
+))]
 impl Default for Cursive {
     fn default() -> Self {
         Self::pancurses()
     }
 }
 
-#[cfg(
-    all(
-        not(feature = "termion-backend"),
-        not(feature = "pancurses-backend"),
-        feature = "blt-backend"
-    )
-)]
+#[cfg(all(
+    not(feature = "termion-backend"),
+    not(feature = "pancurses-backend"),
+    feature = "blt-backend"
+))]
 impl Default for Cursive {
     fn default() -> Self {
         Self::blt()
     }
 }
 
-#[cfg(
-    all(
-        not(feature = "termion-backend"),
-        not(feature = "pancurses-backend"),
-        not(feature = "blt-backend"),
-        feature = "ncurses-backend"
-    )
-)]
+#[cfg(all(
+    not(feature = "termion-backend"),
+    not(feature = "pancurses-backend"),
+    not(feature = "blt-backend"),
+    feature = "ncurses-backend"
+))]
 impl Default for Cursive {
     fn default() -> Self {
         Self::ncurses()

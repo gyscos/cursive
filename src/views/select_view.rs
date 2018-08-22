@@ -436,8 +436,7 @@ impl<T: 'static> SelectView<T> {
                     .checked_sub(offset)
                     .map(|position| {
                         position < self.last_size && position.y < self.len()
-                    })
-                    .unwrap_or(false) =>
+                    }).unwrap_or(false) =>
             {
                 self.focus.set(position.y - offset.y)
             }
@@ -446,14 +445,11 @@ impl<T: 'static> SelectView<T> {
                 position,
                 offset,
             }
-                if self.on_submit.is_some()
-                    && position
-                        .checked_sub(offset)
-                        .map(|position| {
-                            position < self.last_size
-                                && position.y == self.focus()
-                        })
-                        .unwrap_or(false) =>
+                if self.on_submit.is_some() && position
+                    .checked_sub(offset)
+                    .map(|position| {
+                        position < self.last_size && position.y == self.focus()
+                    }).unwrap_or(false) =>
             {
                 return self.submit();
             }

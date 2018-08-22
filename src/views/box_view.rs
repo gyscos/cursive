@@ -1,6 +1,6 @@
-use With;
 use vec::Vec2;
 use view::{SizeConstraint, View, ViewWrapper};
+use With;
 use XY;
 
 /// Wrapper around another view, with a controlled size.
@@ -201,7 +201,6 @@ impl<T: View> BoxView<T> {
     fn invalidate(&mut self) {
         self.invalidated = true;
     }
-
 
     inner_getters!(self.view: T);
 }

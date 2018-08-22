@@ -23,8 +23,7 @@ fn main() {
                     .child(Button::new_raw("  New game   ", show_options))
                     .child(Button::new_raw(" Best scores ", |s| {
                         s.add_layer(Dialog::info("Not yet!").title("Scores"))
-                    }))
-                    .child(Button::new_raw("    Exit     ", |s| s.quit())),
+                    })).child(Button::new_raw("    Exit     ", |s| s.quit())),
             ),
     );
 
@@ -43,27 +42,23 @@ fn show_options(siv: &mut Cursive) {
                             size: Vec2::new(8, 8),
                             mines: 10,
                         },
-                    )
-                    .item(
+                    ).item(
                         "Medium:    16x16, 40 mines",
                         game::Options {
                             size: Vec2::new(16, 16),
                             mines: 40,
                         },
-                    )
-                    .item(
+                    ).item(
                         "Difficult: 24x24, 99 mines",
                         game::Options {
                             size: Vec2::new(24, 24),
                             mines: 99,
                         },
-                    )
-                    .on_submit(|s, option| {
+                    ).on_submit(|s, option| {
                         s.pop_layer();
                         new_game(s, *option);
                     }),
-            )
-            .dismiss_button("Back"),
+            ).dismiss_button("Back"),
     );
 }
 
@@ -276,8 +271,7 @@ fn new_game(siv: &mut Cursive, options: game::Options) {
             .content(
                 LinearLayout::horizontal()
                     .child(Panel::new(BoardView::new(options))),
-            )
-            .button("Quit game", |s| {
+            ).button("Quit game", |s| {
                 s.pop_layer();
             }),
     );
