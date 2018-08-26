@@ -192,7 +192,7 @@ impl LinearLayout {
         if i < self.children.len() {
             self.invalidate();
 
-            if self.focus > i {
+            if self.focus > i || (self.focus != 0 && self.focus == self.children.len() - 1) {
                 self.focus -= 1;
             }
             Some(self.children.remove(i).view)
