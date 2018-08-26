@@ -182,6 +182,8 @@ impl LinearLayout {
 
     /// Returns a mutable reference to a child.
     pub fn get_child_mut(&mut self, i: usize) -> Option<&mut View> {
+        // Anything could happen to the child view, so bust the cache.
+        self.invalidate();
         self.children.get_mut(i).map(|child| &mut *child.view)
     }
 
@@ -190,13 +192,20 @@ impl LinearLayout {
     /// If `i` is within bounds, the removed child will be returned.
     pub fn remove_child(&mut self, i: usize) -> Option<Box<View>> {
         if i < self.children.len() {
+            // Any alteration means we should invalidate the cache.
             self.invalidate();
 
-            if self.focus > i || (self.focus != 0 && self.focus == self.children.len() - 1) {
+            // Keep the same view focused.
+            if self.focus > i
+                || (self.focus != 0 && self.focus == self.children.len() - 1)
+            {
                 self.focus -= 1;
             }
+
+            // Return the wrapped view
             Some(self.children.remove(i).view)
         } else {
+            // This includes empty list
             None
         }
     }
