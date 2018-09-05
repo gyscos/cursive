@@ -140,6 +140,25 @@ impl EventResult {
             other => other,
         }
     }
+
+    /// Returns an event result that combines `self` and `other`.
+    pub fn and(self, other: Self) -> Self {
+        match (self, other) {
+            (EventResult::Ignored, result)
+            | (result, EventResult::Ignored) => result,
+            (EventResult::Consumed(None), EventResult::Consumed(cb))
+            | (EventResult::Consumed(cb), EventResult::Consumed(None)) => {
+                EventResult::Consumed(cb)
+            }
+            (
+                EventResult::Consumed(Some(cb1)),
+                EventResult::Consumed(Some(cb2)),
+            ) => EventResult::with_cb(move |siv| {
+                (cb1)(siv);
+                (cb2)(siv);
+            }),
+        }
+    }
 }
 
 /// A non-character key on the keyboard
