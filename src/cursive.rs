@@ -633,7 +633,7 @@ impl Cursive {
     }
 
     // Handles a key event when it was ignored by the current view
-    fn on_event(&mut self, event: Event) {
+    fn on_ignored_event(&mut self, event: Event) {
         let cb_list = match self.global_callbacks.get(&event) {
             None => return,
             Some(cb_list) => cb_list.clone(),
@@ -641,6 +641,52 @@ impl Cursive {
         // Not from a view, so no viewpath here
         for cb in cb_list {
             cb(self);
+        }
+    }
+
+    /// Processes an event.
+    ///
+    /// * If the menubar is active, it will be handled the event.
+    /// * The view tree will be handled the event.
+    /// * If ignored, global_callbacks will be checked for this event.
+    pub fn on_event(&mut self, event: Event) {
+        if event == Event::Exit {
+            self.quit();
+        }
+
+        if event == Event::WindowResize {
+            self.clear();
+        }
+
+        if let Event::Mouse {
+            event, position, ..
+        } = event
+        {
+            if event.grabs_focus()
+                && !self.menubar.autohide
+                && !self.menubar.has_submenu()
+                && position.y == 0
+            {
+                self.select_menubar();
+            }
+        }
+
+        // Event dispatch order:
+        // * Focused element:
+        //     * Menubar (if active)
+        //     * Current screen (top layer)
+        // * Global callbacks
+        if self.menubar.receive_events() {
+            self.menubar.on_event(event).process(self);
+        } else {
+            let offset = if self.menubar.autohide { 0 } else { 1 };
+            match self.screen_mut().on_event(event.relativized((0, offset))) {
+                // If the event was ignored,
+                // it is our turn to play with it.
+                EventResult::Ignored => self.on_ignored_event(event),
+                EventResult::Consumed(None) => (),
+                EventResult::Consumed(Some(cb)) => cb(self),
+            }
         }
     }
 
@@ -753,47 +799,7 @@ impl Cursive {
     fn handle_interruption(&mut self, interruption: Interruption) {
         match interruption {
             Interruption::Event(event) => {
-                if event == Event::Exit {
-                    self.quit();
-                }
-
-                if event == Event::WindowResize {
-                    self.clear();
-                }
-
-                if let Event::Mouse {
-                    event, position, ..
-                } = event
-                {
-                    if event.grabs_focus()
-                        && !self.menubar.autohide
-                        && !self.menubar.has_submenu()
-                        && position.y == 0
-                    {
-                        self.select_menubar();
-                    }
-                }
-
-                // Event dispatch order:
-                // * Focused element:
-                //     * Menubar (if active)
-                //     * Current screen (top layer)
-                // * Global callbacks
-                if self.menubar.receive_events() {
-                    self.menubar.on_event(event).process(self);
-                } else {
-                    let offset = if self.menubar.autohide { 0 } else { 1 };
-                    match self
-                        .screen_mut()
-                        .on_event(event.relativized((0, offset)))
-                    {
-                        // If the event was ignored,
-                        // it is our turn to play with it.
-                        EventResult::Ignored => self.on_event(event),
-                        EventResult::Consumed(None) => (),
-                        EventResult::Consumed(Some(cb)) => cb(self),
-                    }
-                }
+                self.on_event(event);
             }
             Interruption::Callback(cb) => {
                 cb.call_box(self);
