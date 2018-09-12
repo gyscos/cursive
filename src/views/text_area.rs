@@ -18,7 +18,10 @@ use {Printer, With, XY};
 pub struct TextArea {
     // TODO: use a smarter data structure (rope?)
     content: String,
+
     /// Byte offsets within `content` representing text rows
+    ///
+    /// Invariant: never empty.
     rows: Vec<Row>,
 
     /// When `false`, we don't take any input.
@@ -36,6 +39,8 @@ pub struct TextArea {
 }
 
 fn make_rows(text: &str, width: usize) -> Vec<Row> {
+    // We can't make rows with width=0, so force at least width=1.
+    let width = usize::max(width, 1);
     LinesIterator::new(text, width).show_spaces().collect()
 }
 
@@ -142,6 +147,10 @@ impl TextArea {
     /// Finds the row containing the grapheme at the given offset
     fn row_at(&self, offset: usize) -> usize {
         debug!("Offset: {}", offset);
+
+        assert!(!self.rows.is_empty());
+        assert!(offset >= self.rows[0].start);
+
         self.rows
             .iter()
             .enumerate()
@@ -160,6 +169,7 @@ impl TextArea {
 
     /// Finds the row containing the cursor
     fn selected_row(&self) -> usize {
+        assert!(!self.rows.is_empty(), "Rows should never be empty.");
         self.row_at(self.cursor)
     }
 

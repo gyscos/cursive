@@ -78,7 +78,7 @@ impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
             // Save the current offset.
             let offset = self.offset;
 
-            // eprintln!("Available: {}", self.available);
+            // debug!("Available: {}", self.available);
 
             let length =
                 min(self.available, *child.size.get(self.orientation));
@@ -336,16 +336,16 @@ fn try_focus(
 impl View for LinearLayout {
     fn draw(&self, printer: &Printer) {
         // Use pre-computed sizes
-        // eprintln!("Pre loop!");
+        // debug!("Pre loop!");
         for (i, item) in ChildIterator::new(
             self.children.iter(),
             self.orientation,
             *printer.size.get(self.orientation),
         ).enumerate()
         {
-            // eprintln!("Printer size: {:?}", printer.size);
-            // eprintln!("Child size: {:?}", item.child.size);
-            // eprintln!("Offset: {:?}", item.offset);
+            // debug!("Printer size: {:?}", printer.size);
+            // debug!("Child size: {:?}", item.child.size);
+            // debug!("Offset: {:?}", item.offset);
             let printer = &printer
                 .offset(self.orientation.make_vec(item.offset, 0))
                 .cropped(item.child.size)
@@ -364,7 +364,7 @@ impl View for LinearLayout {
 
     fn layout(&mut self, size: Vec2) {
         // If we can get away without breaking a sweat, you can bet we will.
-        // eprintln!("Laying out with {:?}", size);
+        // debug!("Laying out with {:?}", size);
         if self.get_cache(size).is_none() {
             self.required_size(size);
         }
@@ -387,6 +387,7 @@ impl View for LinearLayout {
         if let Some(size) = self.get_cache(req) {
             return size;
         }
+        debug!("Req: {:?}", req);
 
         // First, make a naive scenario: everything will work fine.
         let ideal_sizes: Vec<Vec2> = self
@@ -425,7 +426,7 @@ impl View for LinearLayout {
 
         // This is the lowest we'll ever go. It better fit at least.
         let orientation = self.orientation;
-        if !desperate.fits_in(req) {
+        if desperate.get(orientation) > req.get(orientation) {
             // Just give up...
             // TODO: hard-cut
             cap(
@@ -447,7 +448,8 @@ impl View for LinearLayout {
 
         // This here is how much we're generously offered
         // (We just checked that req >= desperate, so the subtraction is safe
-        let mut available = self.orientation.get(&(req - desperate));
+        let mut available =
+            self.orientation.get(&(req.saturating_sub(desperate)));
         debug!("Available: {:?}", available);
 
         // Here, we have to make a compromise between the ideal

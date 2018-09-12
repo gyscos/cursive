@@ -56,9 +56,11 @@ impl Placement {
 enum ChildWrapper<T: View> {
     // Some views include a shadow around.
     Shadow(ShadowView<Layer<T>>),
-    // Some include a background.
+
+    // Some include only include a background.
     Backfilled(Layer<T>),
-    // Some views don't (fullscreen views mostly)
+
+    // Some views don't even have a background (they'll be transparent).
     Plain(T),
 }
 
