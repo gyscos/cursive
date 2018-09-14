@@ -19,7 +19,7 @@ repository = "gyscos/Cursive"
 
 [dependencies]
 enum-map = "0.4"
-enumset = "0.3.3"
+enumset = "=0.3.10"
 log = "0.4.2"
 owning_ref = "0.4"
 toml = "0.4"
