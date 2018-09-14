@@ -2,7 +2,27 @@
 
 ## Next version: 0.9.1
 
-No change yet
+### New features
+
+- Add `Cursive::on_event` to send simulated events.
+- Add `EventResult::and` to combine callbacks.
+- Allow custom color in `ProgressBar`.
+
+### Bugfixes
+
+- LinearLayout:
+    - Better geometry computation with constrained size
+    - Fixed cache invalidation
+    - Fix possible panic when removing children
+- ScrollView:
+    - Fix possible panic with full-height scrollbar
+    - Fix possible panic with empty content
+    - Fix cache
+- Fix menubar focus after action
+
+## Doc
+
+- Fix Readme and examples with `Cursive::default()`
 
 ## 0.9.0
 
