@@ -103,12 +103,14 @@ pub mod event;
 #[macro_use]
 pub mod view;
 
+#[macro_use]
+pub mod utils;
+
 pub mod align;
 pub mod direction;
 pub mod menu;
 pub mod rect;
 pub mod theme;
-pub mod utils;
 pub mod vec;
 pub mod views;
 

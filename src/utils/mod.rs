@@ -1,6 +1,8 @@
 //! Toolbox to make text layout easier.
 
 mod counter;
+#[macro_use]
+mod immutify;
 pub mod lines;
 pub mod markup;
 mod reader;

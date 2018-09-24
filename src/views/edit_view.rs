@@ -236,16 +236,7 @@ impl EditView {
     where
         F: FnMut(&mut Cursive, &str, usize) + 'static,
     {
-        let callback = RefCell::new(callback);
-        // Here's the weird trick: if we're already borrowed,
-        // just ignored the callback.
-        self.set_on_edit(move |s, text, cursor| {
-            if let Ok(mut f) = callback.try_borrow_mut() {
-                // Beeeaaah that's ugly.
-                // Why do we need to manually dereference here?
-                (&mut *f)(s, text, cursor);
-            }
-        });
+        self.set_on_edit(immut3!(callback));
     }
 
     /// Sets a callback to be called whenever the content is modified.
