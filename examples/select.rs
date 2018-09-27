@@ -12,7 +12,11 @@ use cursive::Cursive;
 // one.
 
 fn main() {
-    let mut select = SelectView::new().h_align(HAlign::Center);
+    let mut select = SelectView::new()
+        // Center the text horizontally
+        .h_align(HAlign::Center)
+        // Use keyboard to jump to the pressed letters
+        .autojump();
 
     // Read the list of cities from separate file, and fill the view with it.
     // (We include the file at compile-time to avoid runtime read errors.)

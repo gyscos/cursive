@@ -404,6 +404,13 @@ where
             ScrollStrategy::KeepRow => (),
         }
     }
+
+    /// Returns the wrapped view.
+    pub fn into_inner(self) -> V {
+        self.inner
+    }
+
+    inner_getters!(self.inner: V);
 }
 
 impl<V> View for ScrollView<V>

@@ -47,18 +47,33 @@ use With;
 ///
 /// ```
 pub struct SelectView<T = String> {
+    // The core of the view: we store a list of items
+    // `Item` is more or less a `(String, Rc<T>)`.
     items: Vec<Item<T>>,
+
+    // When disabled, we cannot change selection.
     enabled: bool,
-    // the focus needs to be manipulable from callbacks
+
+    // Callbacks may need to manipulate focus, so give it some mutability.
     focus: Rc<Cell<usize>>,
+
     // This is a custom callback to include a &T.
-    // It will be called whenever "Enter" is pressed.
+    // It will be called whenever "Enter" is pressed or when an item is clicked.
     on_submit: Option<Rc<Fn(&mut Cursive, &T)>>,
+
     // This callback is called when the selection is changed.
+    // TODO: add the previous selection? Indices?
     on_select: Option<Rc<Fn(&mut Cursive, &T)>>,
+
+    // If `true`, when a character is pressed, jump to the next item starting
+    // with this character.
+    autojump: bool,
+
     align: Align,
+
     // `true` if we show a one-line view, with popup on selection.
     popup: bool,
+
     // We need the last offset to place the popup window
     // We "cache" it during the draw, so we need interior mutability.
     last_offset: Cell<Vec2>,
@@ -82,9 +97,28 @@ impl<T: 'static> SelectView<T> {
             on_submit: None,
             align: Align::top_left(),
             popup: false,
+            autojump: false,
             last_offset: Cell::new(Vec2::zero()),
             last_size: Vec2::zero(),
         }
+    }
+
+    /// Sets the "auto-jump" property for this view.
+    ///
+    /// If enabled, when a key is pressed, the selection will jump to the next
+    /// item beginning with the pressed letter.
+    pub fn set_autojump(&mut self, autojump: bool) {
+        self.autojump = autojump;
+    }
+
+    /// Sets the "auto-jump" property for this view.
+    ///
+    /// If enabled, when a key is pressed, the selection will jump to the next
+    /// item beginning with the pressed letter.
+    ///
+    /// Chainable variant.
+    pub fn autojump(self) -> Self {
+        self.with(|s| s.set_autojump(true))
     }
 
     /// Turns `self` into a popup select view.
@@ -148,6 +182,8 @@ impl<T: 'static> SelectView<T> {
 
     /// Sets a callback to be used when `<Enter>` is pressed.
     ///
+    /// Also happens if the user clicks an item.
+    ///
     /// The item currently selected will be given to the callback.
     ///
     /// Here, `V` can be `T` itself, or a type that can be borrowed from `T`.
@@ -162,6 +198,8 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Sets a callback to be used when `<Enter>` is pressed.
+    ///
+    /// Also happens if the user clicks an item.
     ///
     /// The item currently selected will be given to the callback.
     ///
@@ -247,6 +285,15 @@ impl<T: 'static> SelectView<T> {
                 None
             }
         }
+    }
+
+    /// Iterate on the items in this view.
+    ///
+    /// Returns an iterator with each item and their labels.
+    pub fn iter(&self) -> impl Iterator<Item = (&str, &T)> {
+        self.items
+            .iter()
+            .map(|item| (item.label.as_str(), &*item.value))
     }
 
     /// Removes an item from the list.
@@ -415,6 +462,33 @@ impl<T: 'static> SelectView<T> {
         )
     }
 
+    fn on_char_event(&mut self, c: char) -> EventResult {
+        let i = {
+            // * Starting from the current focus, find the first item that
+            //   match the char.
+            // * Cycle back to the beginning of the list when we reach the end.
+            // * This is achieved by chaining twice the iterator.
+            let iter = self.iter().chain(self.iter());
+
+            // We'll do a lowercase check.
+            let lower_c: Vec<char> = c.to_lowercase().collect();
+            let lower_c: &[char] = &lower_c;
+
+            if let Some((i, _)) = iter.enumerate().skip(self.focus() + 1).find(
+                |&(_, (label, _))| label.to_lowercase().starts_with(lower_c),
+            ) {
+                i % self.len()
+            } else {
+                return EventResult::Ignored;
+            }
+        };
+
+        self.focus.set(i);
+        // Apply modulo in case we have a hit from the chained iterator
+        let cb = self.set_selection(i);
+        EventResult::Consumed(Some(cb))
+    }
+
     fn on_event_regular(&mut self, event: Event) -> EventResult {
         match event {
             Event::Key(Key::Up) if self.focus() > 0 => self.focus_up(1),
@@ -456,25 +530,7 @@ impl<T: 'static> SelectView<T> {
             Event::Key(Key::Enter) if self.on_submit.is_some() => {
                 return self.submit();
             }
-            Event::Char(c) => {
-                // Starting from the current focus,
-                // find the first item that match the char.
-                // Cycle back to the beginning of
-                // the list when we reach the end.
-                // This is achieved by chaining twice the iterator
-                let iter = self.items.iter().chain(self.items.iter());
-                if let Some((i, _)) = iter
-                    .enumerate()
-                    .skip(self.focus() + 1)
-                    .find(|&(_, item)| item.label.starts_with(c))
-                {
-                    // Apply modulo in case we have a hit
-                    // from the chained iterator
-                    self.focus.set(i % self.items.len());
-                } else {
-                    return EventResult::Ignored;
-                }
-            }
+            Event::Char(c) if self.autojump => return self.on_char_event(c),
             _ => return EventResult::Ignored,
         }
 
@@ -713,6 +769,7 @@ impl<T: 'static> View for SelectView<T> {
     }
 }
 
+// We wrap each value in a `Rc` and add a label
 struct Item<T> {
     label: String,
     value: Rc<T>,
