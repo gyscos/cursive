@@ -120,7 +120,6 @@ impl<V: View> ViewWrapper for Panel<V> {
     }
 
     fn wrap_needs_relayout(&self) -> bool {
-        self.invalidated
-            || self.with_view(|v| v.needs_relayout()).unwrap_or(true)
+        self.invalidated || self.view.needs_relayout()
     }
 }
