@@ -470,6 +470,28 @@ impl Cursive {
     /// view.set_content("bar");
     /// ```
     ///
+    /// Note that you must specify the exact type for the view you're after; for example, using the
+    /// wrong item type in a `SelectView` will not find anything:
+    ///
+    /// ```rust
+    /// # use cursive::Cursive;
+    /// # use cursive::views::{SelectView};
+    /// # let mut siv = Cursive::dummy();
+    /// use cursive::traits::Identifiable;
+    ///
+    /// let select = SelectView::new().item("zero", 0u32).item("one", 1u32);
+    /// siv.add_layer(select.with_id("select"));
+    ///
+    /// // Specifying a wrong type will not return anything.
+    /// assert!(siv.find_id::<SelectView<String>>("select").is_none());
+    ///
+    /// // Omitting the type will use the default type, in this case `String`.
+    /// assert!(siv.find_id::<SelectView>("select").is_none());
+    ///
+    /// // But with the correct type, it works fine.
+    /// assert!(siv.find_id::<SelectView<u32>>("select").is_some());
+    /// ```
+    ///
     /// [`IdView`]: views/struct.IdView.html
     /// [`ViewRef`]: views/type.ViewRef.html
     pub fn find_id<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
