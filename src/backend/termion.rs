@@ -16,6 +16,8 @@ use self::termion::screen::AlternateScreen;
 use self::termion::style as tstyle;
 use crossbeam_channel::{self, Receiver, Sender};
 use libc;
+
+#[cfg(unix)]
 use signal_hook::iterator::Signals;
 
 use backend;
