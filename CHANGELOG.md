@@ -1,6 +1,20 @@
 # Changelog
 
-## Next version: 0.9.1
+
+## 0.9.2
+
+### New features
+
+- Add an optional title to `Panel`
+- Add `immut1!`, `immut2!` and `immut3!` macros to wrap a `FnMut` in `Fn`
+- SelectView: autojump is now opt-in (jump to an element after a letter is pressed)
+
+### Bugfixes
+
+- Fix possible crash with `ListView` and `SelectView` in very small spaces
+- Fix termion backend compilation on non-unix platforms
+
+## 0.9.1
 
 ### New features
 
