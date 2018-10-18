@@ -239,11 +239,13 @@ fn try_focus(
 ) -> Option<usize> {
     match *child {
         ListChild::Delimiter => None,
-        ListChild::Row(_, ref mut view) => if view.take_focus(source) {
-            Some(i)
-        } else {
-            None
-        },
+        ListChild::Row(_, ref mut view) => {
+            if view.take_focus(source) {
+                Some(i)
+            } else {
+                None
+            }
+        }
     }
 }
 
@@ -409,7 +411,8 @@ impl View for ListView {
 
         let area = match self.children[self.focus] {
             ListChild::Row(_, ref view) => {
-                let available = Vec2::new(size.x - labels_width - 1, 1);
+                let available =
+                    Vec2::new(size.x.saturating_sub(labels_width + 1), 1);
                 view.important_area(available) + (labels_width, 0)
             }
             ListChild::Delimiter => Rect::from_size((0, 0), (size.x, 1)),

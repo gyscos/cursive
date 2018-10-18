@@ -106,6 +106,6 @@ pub trait View: Any + AnyView {
     ///
     /// Default implementation return the entire view.
     fn important_area(&self, view_size: Vec2) -> Rect {
-        Rect::from_corners((0, 0), view_size)
+        Rect::from_size((0, 0), view_size)
     }
 }

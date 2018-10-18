@@ -3,8 +3,6 @@ use std::ops::Add;
 use vec::Vec2;
 
 /// A non-empty rectangle on the 2D grid.
-///
-///
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Rect {
     /// Top-left corner, inclusive
@@ -38,7 +36,7 @@ where
 impl Rect {
     /// Creates a new `Rect` with the given position and size.
     ///
-    /// `size` must be non-zero in each axis.
+    /// The minimum size will `(1, 1)`.
     pub fn from_size<U, V>(top_left: U, size: V) -> Self
     where
         U: Into<Vec2>,
@@ -46,7 +44,6 @@ impl Rect {
     {
         let size = size.into();
         let top_left = top_left.into();
-        assert!(size > Vec2::zero());
 
         let bottom_right = top_left + size.saturating_sub((1, 1));
 
@@ -119,21 +116,29 @@ impl Rect {
     }
 
     /// Returns the top-left corner.
+    ///
+    /// This is inclusive.
     pub fn top_left(self) -> Vec2 {
         self.top_left
     }
 
     /// Returns the bottom-right corner.
+    ///
+    /// This is inclusive.
     pub fn bottom_right(self) -> Vec2 {
         self.bottom_right
     }
 
     /// Returns the top-right corner.
+    ///
+    /// This is inclusive.
     pub fn top_right(self) -> Vec2 {
         Vec2::new(self.right(), self.top())
     }
 
     /// Returns the bottom-left corner.
+    ///
+    /// This is inclusive.
     pub fn bottom_left(self) -> Vec2 {
         Vec2::new(self.left(), self.bottom())
     }
