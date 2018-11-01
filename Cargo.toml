@@ -10,12 +10,16 @@ name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
 version = "0.9.3-alpha.0"
+build = "build.rs"
 
 [badges.travis-ci]
 repository = "gyscos/Cursive"
 
 [badges.appveyor]
 repository = "gyscos/Cursive"
+
+[build-dependencies]
+ncurses = {optional = true, version = "5.96"}
 
 [dependencies]
 enum-map = "0.4"
@@ -45,7 +49,7 @@ version = "1.3"
 [dependencies.ncurses]
 features = ["wide"]
 optional = true
-version = "5.91"
+version = "5.96"
 
 [dependencies.pancurses]
 features = ["wide"]

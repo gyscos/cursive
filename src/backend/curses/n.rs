@@ -420,6 +420,7 @@ fn get_mouse_button(bare_event: i32) -> MouseButton {
         | ncurses::BUTTON4_CLICKED
         | ncurses::BUTTON4_DOUBLE_CLICKED
         | ncurses::BUTTON4_TRIPLE_CLICKED => MouseButton::Button4,
+        #[cfg(not(feature = "ncurses.mouse_v1"))]
         ncurses::BUTTON5_RELEASED
         | ncurses::BUTTON5_PRESSED
         | ncurses::BUTTON5_CLICKED
@@ -442,41 +443,18 @@ where
 {
     let button = get_mouse_button(bare_event);
     match bare_event {
-        ncurses::BUTTON4_PRESSED => f(MouseEvent::WheelUp),
-        ncurses::BUTTON5_PRESSED => f(MouseEvent::WheelDown),
         ncurses::BUTTON1_RELEASED
         | ncurses::BUTTON2_RELEASED
         | ncurses::BUTTON3_RELEASED
-        | ncurses::BUTTON4_RELEASED
-        | ncurses::BUTTON5_RELEASED => f(MouseEvent::Release(button)),
+        | ncurses::BUTTON4_RELEASED => f(MouseEvent::Release(button)),
+        #[cfg(not(feature = "ncurses.mouse_v1"))]
+        ncurses::BUTTON5_RELEASED => f(MouseEvent::Release(button)),
         ncurses::BUTTON1_PRESSED
         | ncurses::BUTTON2_PRESSED
         | ncurses::BUTTON3_PRESSED => f(MouseEvent::Press(button)),
-        ncurses::BUTTON1_CLICKED
-        | ncurses::BUTTON2_CLICKED
-        | ncurses::BUTTON3_CLICKED
-        | ncurses::BUTTON4_CLICKED
-        | ncurses::BUTTON5_CLICKED => {
-            f(MouseEvent::Press(button));
-            f(MouseEvent::Release(button));
-        }
-        // Well, we disabled click detection
-        ncurses::BUTTON1_DOUBLE_CLICKED
-        | ncurses::BUTTON2_DOUBLE_CLICKED
-        | ncurses::BUTTON3_DOUBLE_CLICKED
-        | ncurses::BUTTON4_DOUBLE_CLICKED
-        | ncurses::BUTTON5_DOUBLE_CLICKED => for _ in 0..2 {
-            f(MouseEvent::Press(button));
-            f(MouseEvent::Release(button));
-        },
-        ncurses::BUTTON1_TRIPLE_CLICKED
-        | ncurses::BUTTON2_TRIPLE_CLICKED
-        | ncurses::BUTTON3_TRIPLE_CLICKED
-        | ncurses::BUTTON4_TRIPLE_CLICKED
-        | ncurses::BUTTON5_TRIPLE_CLICKED => for _ in 0..3 {
-            f(MouseEvent::Press(button));
-            f(MouseEvent::Release(button));
-        },
+        ncurses::BUTTON4_PRESSED => f(MouseEvent::WheelUp),
+        #[cfg(not(feature = "ncurses.mouse_v1"))]
+        ncurses::BUTTON5_PRESSED => f(MouseEvent::WheelDown),
         _ => debug!("Unknown event: {:032b}", bare_event),
     }
 }
