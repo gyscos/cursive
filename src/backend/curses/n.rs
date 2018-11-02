@@ -420,7 +420,6 @@ fn get_mouse_button(bare_event: i32) -> MouseButton {
         | ncurses::BUTTON4_CLICKED
         | ncurses::BUTTON4_DOUBLE_CLICKED
         | ncurses::BUTTON4_TRIPLE_CLICKED => MouseButton::Button4,
-        #[cfg(not(feature = "ncurses.mouse_v1"))]
         ncurses::BUTTON5_RELEASED
         | ncurses::BUTTON5_PRESSED
         | ncurses::BUTTON5_CLICKED
@@ -445,16 +444,14 @@ where
     match bare_event {
         ncurses::BUTTON1_RELEASED
         | ncurses::BUTTON2_RELEASED
-        | ncurses::BUTTON3_RELEASED
-        | ncurses::BUTTON4_RELEASED => f(MouseEvent::Release(button)),
-        #[cfg(not(feature = "ncurses.mouse_v1"))]
-        ncurses::BUTTON5_RELEASED => f(MouseEvent::Release(button)),
+        | ncurses::BUTTON3_RELEASED => f(MouseEvent::Release(button)),
         ncurses::BUTTON1_PRESSED
         | ncurses::BUTTON2_PRESSED
         | ncurses::BUTTON3_PRESSED => f(MouseEvent::Press(button)),
         ncurses::BUTTON4_PRESSED => f(MouseEvent::WheelUp),
-        #[cfg(not(feature = "ncurses.mouse_v1"))]
         ncurses::BUTTON5_PRESSED => f(MouseEvent::WheelDown),
+        // BUTTON4_RELEASED? BUTTON5_RELEASED?
+        // Do they ever happen?
         _ => debug!("Unknown event: {:032b}", bare_event),
     }
 }
