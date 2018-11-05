@@ -45,8 +45,7 @@ version = "1.3"
 [dependencies.ncurses]
 features = ["wide"]
 optional = true
-#version = "5.97"
-git = "https://github.com/jeaye/ncurses-rs"
+version = "5.97"
 
 [dependencies.pancurses]
 features = ["wide"]
