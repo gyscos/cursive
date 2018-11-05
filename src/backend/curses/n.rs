@@ -134,8 +134,7 @@ impl InputParser {
                         {
                             Some(MouseEvent::WheelDown)
                         } else {
-                            // None
-                            Some(MouseEvent::WheelDown)
+                            None
                         }
                     })
                     .map(&make_event)
