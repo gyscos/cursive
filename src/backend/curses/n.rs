@@ -123,8 +123,21 @@ impl InputParser {
             if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as mmask_t {
                 // The event is either a mouse drag event,
                 // or a weird double-release event. :S
+
                 self.last_mouse_button
                     .map(MouseEvent::Hold)
+                    .or_else(|| {
+                        // In legacy mode, some buttons overlap,
+                        // so we need to disambiguate.
+                        if mevent.bstate
+                            == ncurses::BUTTON5_DOUBLE_CLICKED as mmask_t
+                        {
+                            Some(MouseEvent::WheelDown)
+                        } else {
+                            // None
+                            Some(MouseEvent::WheelDown)
+                        }
+                    })
                     .map(&make_event)
                     .unwrap_or_else(|| Event::Unknown(vec![]))
             } else {
@@ -149,8 +162,14 @@ impl InputParser {
                     });
                 }
                 if let Some(event) = event {
-                    if let Some(btn) = event.button() {
-                        self.last_mouse_button = Some(btn);
+                    match event {
+                        MouseEvent::Press(btn) => {
+                            self.last_mouse_button = Some(btn);
+                        }
+                        MouseEvent::Release(_) => {
+                            self.last_mouse_button = None;
+                        }
+                        _ => (),
                     }
                     make_event(event)
                 } else {
