@@ -365,7 +365,7 @@ impl IndexedCow {
         }
     }
 
-    /// Returns `ŧrue` if this represents an empty span.
+    /// Returns `true` if this represents an empty span.
     pub fn is_empty(&self) -> bool {
         match *self {
             IndexedCow::Borrowed { start, end } => start == end,
