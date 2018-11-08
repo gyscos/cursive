@@ -5,6 +5,32 @@ use utils::Counter;
 ///
 /// Used to monitor a file downloading or other slow IO task
 /// in a progress bar.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// use std::io::Read;
+/// use cursive::utils::{Counter, ProgressReader};
+///
+/// // Read a file and report the progress
+/// let file = std::fs::File::open("large_file").unwrap();
+/// let counter = Counter::new(0);
+/// let mut reader = ProgressReader::new(counter.clone(), file);
+///
+/// std::thread::spawn(move || {
+///     // Left as an exercise: use an AtomicBool for a stop condition!
+///     loop {
+///         let progress = counter.get();
+///         println!("Read {} bytes so far", progress);
+///     }
+/// });
+///
+/// // As we read data, the counter will be updated and the control thread
+/// // will monitor the progress.
+/// let mut buffer = Vec::new();
+/// reader.read_to_end(&mut buffer).unwrap();
+/// ```
+#[derive(Clone, Debug)]
 pub struct ProgressReader<R: Read> {
     reader: R,
     counter: Counter,

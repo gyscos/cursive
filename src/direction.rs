@@ -1,6 +1,9 @@
 //! Direction-related structures.
 //!
-//! This module defines two main concepts: [Orientation] and [Direction].
+//! This module defines two main concepts: [`Orientation`] and [`Direction`].
+//!
+//! [`Orientation`]: direction::Orientation
+//! [`Direction`]: direction::Direction
 //!
 //! ### Orientation
 //!
@@ -12,8 +15,16 @@
 //! `Direction` is a bit more complex, and can be of two kinds:
 //!
 //! * Absolute direction: left, up, right, or down
-//! * Relative direction: front or back.
-//!   Its actual direction depends on the orientation.
+//! * Relative direction: front or back. Its actual direction depends on the
+//!   orientation.
+//!
+//!   Usually, "front" refers to the "forward" direction, or the "next"
+//!   element. For example, for a vertical `LinearLayout`, "front" would refer
+//!   to the "down" direction.
+//!
+//!   This is mostly relevant when referring to change of focus. Hitting the
+//!   `Tab` key would usually cycle focus in the "front" direction, while
+//!   using the arrow keys would use absolute directions instead.
 
 use vec::Vec2;
 use XY;
@@ -51,6 +62,17 @@ impl Orientation {
 
     /// Returns a mutable reference to the component of the given vector
     /// corresponding to this orientation.
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use cursive::XY;
+    /// # use cursive::direction::Orientation;
+    /// let o = Orientation::Horizontal;
+    /// let mut xy = XY::new(1, 2);
+    /// *o.get_ref(&mut xy) = 42;
+    ///
+    /// assert_eq!(xy, XY::new(42, 2));
+    /// ```
     pub fn get_ref<T>(self, v: &mut XY<T>) -> &mut T {
         match self {
             Orientation::Horizontal => &mut v.x,
@@ -61,8 +83,8 @@ impl Orientation {
     /// Takes an iterator on sizes, and stack them in the current orientation,
     /// returning the size of the required bounding box.
     ///
-    /// For an horizontal view, returns (Sum(x), Max(y)).
-    /// For a vertical view, returns (Max(x),Sum(y)).
+    /// * For an horizontal view, returns `(Sum(x), Max(y))`.
+    /// * For a vertical view, returns `(Max(x), Sum(y))`.
     pub fn stack<'a, T: Iterator<Item = &'a Vec2>>(self, iter: T) -> Vec2 {
         match self {
             Orientation::Horizontal => {
@@ -74,7 +96,24 @@ impl Orientation {
         }
     }
 
-    /// Creates a new `Vec2` with `value` in `self`'s axis.
+    /// Creates a new `Vec2` with `main_axis` in `self`'s axis, and
+    /// `second_axis` for the other axis.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::direction::Orientation;
+    /// # use cursive::vec::Vec2;
+    /// let o = Orientation::Horizontal;
+    /// let vec = o.make_vec(1, 2);
+    ///
+    /// assert_eq!(vec, Vec2::new(1, 2));
+    ///
+    /// let o = Orientation::Vertical;
+    /// let vec = o.make_vec(1, 2);
+    ///
+    /// assert_eq!(vec, Vec2::new(2, 1));
+    /// ```
     pub fn make_vec(self, main_axis: usize, second_axis: usize) -> Vec2 {
         let mut result = Vec2::zero();
         *self.get_ref(&mut result) = main_axis;
@@ -97,6 +136,9 @@ pub enum Direction {
 
 impl Direction {
     /// Returns the relative direction for the given orientation.
+    ///
+    /// Some combination have no corresponding relative position. For example,
+    /// `Direction::Abs(Up)` means nothing for `Orientation::Horizontal`.
     pub fn relative(self, orientation: Orientation) -> Option<Relative> {
         match self {
             Direction::Abs(abs) => abs.relative(orientation),
@@ -151,12 +193,11 @@ impl Direction {
 /// Direction relative to an orientation.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Relative {
+    // TODO: handle right-to-left? (Arabic, ...)
     /// Front relative direction.
     ///
     /// * Horizontally, this means `Left`
     /// * Vertically, this means `Up`
-    ///
-    /// TODO: handle right-to-left?
     Front,
 
     /// Back relative direction.
