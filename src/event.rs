@@ -74,7 +74,7 @@ impl EventTrigger {
 
     /// Returns an `EventTrigger` that doesn't accept any event.
     pub fn none() -> Self {
-        Self::from_fn(|_| true)
+        Self::from_fn(|_| false)
     }
 
     /// Returns an `EventTrigger` that applies if either `self` or `other` applies.
