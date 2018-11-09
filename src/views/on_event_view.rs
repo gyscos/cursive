@@ -135,13 +135,15 @@ impl<T: View> OnEventView<T> {
     /// Registers a callback when the given event is ignored by the child.
     ///
     /// This is an advanced method to get more control.
-    /// [`Self::on_event()`] may be easier to use.
+    /// [`on_event`] may be easier to use.
     ///
     /// If the child view ignores the event, `cb` will be called with the
     /// child view as argument.
     /// If the result is not `None`, it will be processed as well.
     ///
     /// Chainable variant.
+    ///
+    /// [`on_event`]: OnEventView::on_event()
     ///
     /// # Examples
     ///

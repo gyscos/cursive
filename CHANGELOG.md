@@ -5,6 +5,8 @@
 ### New features
 
 - Add `EventTrigger` and update `OnEventView` to use it.
+    - Breaking change: "inner" callbacks for OnEventView now take the event as
+      extra argument.
 - Add `Printer::enabled` and `EnableableView` to disable whole subtrees
 
 ### Bugfixes
@@ -56,6 +58,7 @@
 
 ### New features
 
+- Cursive now supports third-party backends
 - Add generic `ScrollView` wrapper. Removes internal scrolling behaviour from
   `TextView`.
 - Callbacks sent through `Cursive::cb_sink()` are now processed instantly,
@@ -78,6 +81,7 @@
 
 ### Changes
 
+- Replaced `Cursive::new()` with `Cursive::default()`
 - Renamed `Vec4` to `Margins`
 - `Callbacks` cannot be created from functions that return a value
     - The returned value used to be completely ignored
