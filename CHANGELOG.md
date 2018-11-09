@@ -5,6 +5,7 @@
 ### New features
 
 - Add `EventTrigger` and update `OnEventView` to use it.
+- Add `Printer::enabled` and `EnableableView` to disable whole subtrees
 
 ### Bugfixes
 
