@@ -1,5 +1,18 @@
 # Changelog
 
+## Next version (0.10.0)
+
+### New features
+
+- Add `EventTrigger` and update `OnEventView` to use it.
+
+### Bugfixes
+
+- Fix mouse events on Ubuntu
+
+### Doc
+
+- Added examples to most utility types (`XY`, `Vec2`, ...)
 
 ## 0.9.2
 
@@ -60,6 +73,7 @@
     - `SelectView::{set_selection, select_up, select_down, remove_item}`
     - `EditView::{set_content, insert, remove}`
 - Add `rect::Rect`
+- Add `HideableView`
 
 ### Changes
 
