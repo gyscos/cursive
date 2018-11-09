@@ -142,7 +142,7 @@ impl View for Button {
             return;
         }
 
-        let style = if !self.enabled {
+        let style = if !(self.enabled && printer.enabled) {
             ColorStyle::secondary()
         } else if !printer.focused {
             ColorStyle::primary()
@@ -182,11 +182,8 @@ impl View for Button {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            }
-                if position.fits_in_rect(
-                    offset + (self_offset, 0),
-                    self.req_size(),
-                ) =>
+            } if position
+                .fits_in_rect(offset + (self_offset, 0), self.req_size()) =>
             {
                 EventResult::Consumed(Some(self.callback.clone()))
             }

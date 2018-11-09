@@ -505,13 +505,12 @@ impl<T: 'static> SelectView<T> {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            }
-                if position
-                    .checked_sub(offset)
-                    .map(|position| {
-                        position < self.last_size && position.y < self.len()
-                    })
-                    .unwrap_or(false) =>
+            } if position
+                .checked_sub(offset)
+                .map(|position| {
+                    position < self.last_size && position.y < self.len()
+                })
+                .unwrap_or(false) =>
             {
                 self.focus.set(position.y - offset.y)
             }
@@ -519,8 +518,8 @@ impl<T: 'static> SelectView<T> {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            }
-                if self.on_submit.is_some() && position
+            } if self.on_submit.is_some()
+                && position
                     .checked_sub(offset)
                     .map(|position| {
                         position < self.last_size && position.y == self.focus()
@@ -610,9 +609,7 @@ impl<T: 'static> SelectView<T> {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            }
-                if position.fits_in_rect(offset, self.last_size) =>
-            {
+            } if position.fits_in_rect(offset, self.last_size) => {
                 self.open_popup()
             }
             _ => EventResult::Ignored,
@@ -679,7 +676,7 @@ impl<T: 'static> View for SelectView<T> {
         if self.popup {
             // Popup-select only draw the active element.
             // We'll draw the full list in a popup if needed.
-            let style = if !self.enabled {
+            let style = if !(self.enabled && printer.enabled) {
                 ColorStyle::secondary()
             } else if !printer.focused {
                 ColorStyle::primary()
@@ -715,7 +712,9 @@ impl<T: 'static> View for SelectView<T> {
                 printer.offset((0, i)).with_selection(
                     i == self.focus(),
                     |printer| {
-                        if i != self.focus() && !self.enabled {
+                        if i != self.focus()
+                            && !(self.enabled && printer.enabled)
+                        {
                             printer.with_color(
                                 ColorStyle::secondary(),
                                 |printer| self.draw_item(printer, i),

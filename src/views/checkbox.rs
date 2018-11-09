@@ -114,7 +114,7 @@ impl View for Checkbox {
     }
 
     fn draw(&self, printer: &Printer) {
-        if self.enabled {
+        if self.enabled && printer.enabled {
             printer.with_selection(printer.focused, |printer| {
                 self.draw_internal(printer)
             });
@@ -132,11 +132,7 @@ impl View for Checkbox {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            }
-                if position.fits_in_rect(offset, (3, 1)) =>
-            {
-                self.toggle()
-            }
+            } if position.fits_in_rect(offset, (3, 1)) => self.toggle(),
             _ => EventResult::Ignored,
         }
     }

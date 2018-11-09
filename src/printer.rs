@@ -17,6 +17,7 @@ use with::With;
 ///
 /// The part of the content it will print is defined by `content_offset`
 /// and `size`.
+#[derive(Clone)]
 pub struct Printer<'a, 'b> {
     /// Offset into the window this printer should start drawing at.
     ///
@@ -42,25 +43,14 @@ pub struct Printer<'a, 'b> {
     /// Whether the view to draw is currently focused or not.
     pub focused: bool,
 
+    /// Whether the view to draw is currently enabled or not.
+    pub enabled: bool,
+
     /// Currently used theme
     pub theme: &'a Theme,
 
     /// Backend used to actually draw things
     backend: &'b Backend,
-}
-
-impl<'a, 'b> Clone for Printer<'a, 'b> {
-    fn clone(&self) -> Self {
-        Printer {
-            offset: self.offset,
-            content_offset: self.content_offset,
-            output_size: self.output_size,
-            size: self.size,
-            focused: self.focused,
-            theme: self.theme,
-            backend: self.backend,
-        }
-    }
 }
 
 impl<'a, 'b> Printer<'a, 'b> {
@@ -78,6 +68,7 @@ impl<'a, 'b> Printer<'a, 'b> {
             output_size: size,
             size,
             focused: true,
+            enabled: true,
             theme,
             backend,
         }
@@ -304,16 +295,18 @@ impl<'a, 'b> Printer<'a, 'b> {
     where
         F: FnOnce(&Printer),
     {
-        let new_printer = Printer {
-            offset: self.offset,
-            size: self.size,
-            focused: self.focused,
+        f(&self.theme(theme));
+    }
+
+    /// Create a new sub-printer with the given theme.
+    pub fn theme<'c>(&self, theme: &'c Theme) -> Printer<'c, 'b>
+    where
+        'a: 'c,
+    {
+        Printer {
             theme,
-            backend: self.backend,
-            output_size: self.output_size,
-            content_offset: self.content_offset,
-        };
-        f(&new_printer);
+            ..self.clone()
+        }
     }
 
     /// Call the given closure with a modified printer
@@ -478,6 +471,15 @@ impl<'a, 'b> Printer<'a, 'b> {
         self.clone().with(|s| {
             s.focused &= focused;
         })
+    }
+
+    /// Returns a new sub-printer inheriting the given enabled state.
+    ///
+    /// If `self` is enabled and `enabled == true`, the child will be enabled.
+    ///
+    /// Otherwise, he will be disabled.
+    pub fn enabled(&self, enabled: bool) -> Self {
+        self.clone().with(|s| s.enabled &= enabled)
     }
 
     /// Returns a new sub-printer with a cropped area.

@@ -163,7 +163,7 @@ impl<T: 'static> View for RadioButton<T> {
     }
 
     fn draw(&self, printer: &Printer) {
-        if self.enabled {
+        if self.enabled && printer.enabled {
             printer.with_selection(printer.focused, |printer| {
                 self.draw_internal(printer)
             });
@@ -184,9 +184,7 @@ impl<T: 'static> View for RadioButton<T> {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            }
-                if position.fits_in_rect(offset, self.req_size()) =>
-            {
+            } if position.fits_in_rect(offset, self.req_size()) => {
                 self.select();
                 EventResult::Consumed(None)
             }

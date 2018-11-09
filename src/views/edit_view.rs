@@ -471,7 +471,8 @@ impl EditView {
             let suffix_length = simple_suffix(
                 &self.content[self.offset..self.cursor],
                 available,
-            ).length;
+            )
+            .length;
 
             assert!(suffix_length <= self.cursor);
             self.offset = self.cursor - suffix_length;
@@ -510,7 +511,7 @@ impl View for EditView {
 
         let width = self.content.width();
         printer.with_color(self.style, |printer| {
-            let effect = if self.enabled {
+            let effect = if self.enabled && printer.enabled {
                 Effect::Reverse
             } else {
                 Effect::Simple
@@ -542,7 +543,8 @@ impl View for EditView {
                             } else {
                                 Some(g)
                             }
-                        }).map(|g| g.len())
+                        })
+                        .map(|g| g.len())
                         .sum();
 
                     let content = &content[..display_bytes];
@@ -660,14 +662,14 @@ impl View for EditView {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            }
-                if position.fits_in_rect(offset, (self.last_length, 1)) =>
-            {
+            } if position.fits_in_rect(offset, (self.last_length, 1)) => {
                 if let Some(position) = position.checked_sub(offset) {
-                    self.cursor = self.offset + simple_prefix(
-                        &self.content[self.offset..],
-                        position.x,
-                    ).length;
+                    self.cursor = self.offset
+                        + simple_prefix(
+                            &self.content[self.offset..],
+                            position.x,
+                        )
+                        .length;
                 }
             }
             _ => return EventResult::Ignored,

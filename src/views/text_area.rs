@@ -461,7 +461,7 @@ impl View for TextArea {
 
     fn draw(&self, printer: &Printer) {
         printer.with_color(ColorStyle::secondary(), |printer| {
-            let effect = if self.enabled {
+            let effect = if self.enabled && printer.enabled {
                 Effect::Reverse
             } else {
                 Effect::Simple
@@ -545,18 +545,14 @@ impl View for TextArea {
             Event::Mouse {
                 event: MouseEvent::WheelUp,
                 ..
-            }
-                if self.scrollbase.can_scroll_up() =>
-            {
+            } if self.scrollbase.can_scroll_up() => {
                 fix_scroll = false;
                 self.scrollbase.scroll_up(5);
             }
             Event::Mouse {
                 event: MouseEvent::WheelDown,
                 ..
-            }
-                if self.scrollbase.can_scroll_down() =>
-            {
+            } if self.scrollbase.can_scroll_down() => {
                 fix_scroll = false;
                 self.scrollbase.scroll_down(5);
             }
@@ -564,12 +560,12 @@ impl View for TextArea {
                 event: MouseEvent::Press(MouseButton::Left),
                 position,
                 offset,
-            }
-                if position
-                    .checked_sub(offset)
-                    .map(|position| {
-                        self.scrollbase.start_drag(position, self.last_size.x)
-                    }).unwrap_or(false) =>
+            } if position
+                .checked_sub(offset)
+                .map(|position| {
+                    self.scrollbase.start_drag(position, self.last_size.x)
+                })
+                .unwrap_or(false) =>
             {
                 fix_scroll = false;
             }
@@ -586,9 +582,8 @@ impl View for TextArea {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            }
-                if !self.rows.is_empty()
-                    && position.fits_in_rect(offset, self.last_size) =>
+            } if !self.rows.is_empty()
+                && position.fits_in_rect(offset, self.last_size) =>
             {
                 if let Some(position) = position.checked_sub(offset) {
                     let y = position.y + self.scrollbase.start_line;

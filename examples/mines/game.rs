@@ -1,6 +1,6 @@
 use cursive::vec::Vec2;
 use rand::{thread_rng, Rng};
-use std::cmp::max;
+// use std::cmp::max;
 
 #[derive(Clone, Copy)]
 pub struct Options {
