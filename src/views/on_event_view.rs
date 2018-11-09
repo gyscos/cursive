@@ -77,6 +77,22 @@ impl<T: View> OnEventView<T> {
     /// Registers a callback when the given event is ignored by the child.
     ///
     /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    ///
+    /// ```rust
+    /// # use cursive::views::{OnEventView, DummyView};
+    /// # use cursive::event::{Key, EventTrigger};
+    /// let view = OnEventView::new(DummyView)
+    ///     .on_event('q', |s| s.quit())
+    ///     .on_event(Key::Esc, |s| {
+    ///         s.pop_layer();
+    ///     })
+    ///     .on_event(EventTrigger::mouse(), |s| {
+    ///         s.add_layer(DummyView);
+    ///     });
+    /// ```
     pub fn on_event<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,
@@ -118,11 +134,36 @@ impl<T: View> OnEventView<T> {
 
     /// Registers a callback when the given event is ignored by the child.
     ///
+    /// This is an advanced method to get more control.
+    /// [`Self::on_event()`] may be easier to use.
+    ///
     /// If the child view ignores the event, `cb` will be called with the
     /// child view as argument.
     /// If the result is not `None`, it will be processed as well.
     ///
     /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::views::{DummyView, OnEventView};
+    /// # use cursive::event::{Event, EventTrigger, MouseEvent, EventResult};
+    /// let view = OnEventView::new(DummyView)
+    ///     .on_event_inner(
+    ///         EventTrigger::mouse(),
+    ///         |d: &mut DummyView, e: &Event| {
+    ///             if let &Event::Mouse { event: MouseEvent::Press(_), .. } = e {
+    ///                 // Do something on mouse press
+    ///                 Some(EventResult::with_cb(|s| {
+    ///                     s.pop_layer();
+    ///                 }))
+    ///             } else {
+    ///                 // Otherwise, don't do anything
+    ///                 None
+    ///             }
+    ///         }
+    ///     );
+    /// ```
     pub fn on_event_inner<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,
@@ -201,6 +242,11 @@ impl<T: View> OnEventView<T> {
                 callback: Rc::new(Box::new(cb)),
             },
         ));
+    }
+
+    /// Remove any callbacks defined for this view.
+    pub fn clear_callbacks(&mut self) {
+        self.callbacks.clear();
     }
 
     inner_getters!(self.view: T);
