@@ -8,12 +8,16 @@ use event::Event;
 use theme;
 use vec::Vec2;
 
+/// Dummy backend that does nothing and immediately exits.
+///
+/// Mostly used for testing.
 pub struct Backend {
     inner_sender: Sender<Option<Event>>,
     inner_receiver: Receiver<Option<Event>>,
 }
 
 impl Backend {
+    /// Creates a new dummy backend.
     pub fn init() -> Box<backend::Backend>
     where
         Self: Sized,

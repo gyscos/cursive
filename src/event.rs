@@ -29,6 +29,91 @@ pub struct Callback(Rc<Box<Fn(&mut Cursive)>>);
 /// A boxed callback that can be run on `&mut Any`.
 pub type AnyCb<'a> = Box<FnMut(&mut Any) + 'a>;
 
+/// A trigger that only selects some types of events.
+pub struct EventTrigger(Box<Fn(&Event) -> bool>);
+
+impl EventTrigger {
+    /// Create a new `EventTrigger` using the given function as filter.
+    pub fn from_fn<F>(f: F) -> Self
+    where
+        F: 'static + Fn(&Event) -> bool,
+    {
+        EventTrigger(Box::new(f))
+    }
+
+    /// Checks if this trigger applies to the given `Event`.
+    pub fn apply(&self, event: &Event) -> bool {
+        (self.0)(event)
+    }
+
+    /// Returns an `EventTrigger` that only accepts arrow keys.
+    ///
+    /// Only bare arrow keys without modifiers (Shift, Ctrl, Alt) will be accepted.
+    pub fn arrows() -> Self {
+        Self::from_fn(|e| match e {
+            Event::Key(Key::Left)
+            | Event::Key(Key::Down)
+            | Event::Key(Key::Up)
+            | Event::Key(Key::Right) => true,
+            _ => false,
+        })
+    }
+
+    /// Returns an `EventTrigger` that only accepts mouse events.
+    pub fn mouse() -> Self {
+        Self::from_fn(|e| match e {
+            Event::Mouse { .. } => true,
+            _ => false,
+        })
+    }
+
+    /// Returns an `EventTrigger` that accepts any event.
+    pub fn any() -> Self {
+        Self::from_fn(|_| true)
+    }
+
+    /// Returns an `EventTrigger` that doesn't accept any event.
+    pub fn none() -> Self {
+        Self::from_fn(|_| true)
+    }
+
+    /// Returns an `EventTrigger` that applies if either `self` or `other` applies.
+    pub fn or<O>(self, other: O) -> Self
+    where
+        O: Into<EventTrigger>,
+    {
+        let other = other.into();
+        Self::from_fn(move |e| self.apply(e) || other.apply(e))
+    }
+}
+
+impl From<Event> for EventTrigger {
+    fn from(event: Event) -> Self {
+        Self::from_fn(move |e| *e == event)
+    }
+}
+
+impl From<char> for EventTrigger {
+    fn from(c: char) -> Self {
+        Self::from(Event::from(c))
+    }
+}
+
+impl From<Key> for EventTrigger {
+    fn from(k: Key) -> Self {
+        Self::from(Event::from(k))
+    }
+}
+
+impl<F> From<F> for EventTrigger
+where
+    F: 'static + Fn(&Event) -> bool,
+{
+    fn from(f: F) -> Self {
+        Self::from_fn(f)
+    }
+}
+
 impl Callback {
     /// Wraps the given function into a `Callback` object.
     pub fn from_fn<F>(f: F) -> Self

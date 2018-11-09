@@ -26,6 +26,7 @@ enum ColorRole {
     Background,
 }
 
+/// Backend using BearLibTerminal
 pub struct Backend {
     buttons_pressed: HashSet<MouseButton>,
     mouse_position: Vec2,
@@ -35,6 +36,7 @@ pub struct Backend {
 }
 
 impl Backend {
+    /// Creates a new BearLibTerminal-based backend.
     pub fn init() -> Box<backend::Backend> {
         terminal::open("Cursive", 80, 24);
         terminal::set(terminal::config::Window::empty().resizeable(true));

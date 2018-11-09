@@ -1,5 +1,4 @@
-use event::{Callback, Event, EventResult};
-use std::collections::HashMap;
+use event::{Callback, Event, EventResult, EventTrigger};
 use std::rc::Rc;
 use view::{View, ViewWrapper};
 use Cursive;
@@ -10,10 +9,8 @@ use With;
 /// This view registers a set of callbacks tied to specific events, to be run
 /// in certain conditions.
 ///
-/// **Note**: only one callback can be registered per event. Trying to register
-/// a new one will replace any existing one for that event.
+/// * Some callbacks are called only for events ignored by the wrapped view.
 ///
-/// * Some callbacks are called only for vents ignored by the wrapped view
 ///   (those registered by [`on_event`] or [`on_event_inner`])
 /// * Others are processed first, and can control whether the child view should
 ///   be given the event (those registered by [`on_pre_event`] or
@@ -43,10 +40,10 @@ use With;
 /// ```
 pub struct OnEventView<T: View> {
     view: T,
-    callbacks: HashMap<Event, Action<T>>,
+    callbacks: Vec<(EventTrigger, Action<T>)>,
 }
 
-type InnerCallback<T> = Rc<Box<Fn(&mut T) -> Option<EventResult>>>;
+type InnerCallback<T> = Rc<Box<Fn(&mut T, &Event) -> Option<EventResult>>>;
 
 struct Action<T> {
     phase: TriggerPhase,
@@ -73,19 +70,19 @@ impl<T: View> OnEventView<T> {
     pub fn new(view: T) -> Self {
         OnEventView {
             view,
-            callbacks: HashMap::new(),
+            callbacks: Vec::new(),
         }
     }
 
     /// Registers a callback when the given event is ignored by the child.
     ///
     /// Chainable variant.
-    pub fn on_event<F, E>(self, event: E, cb: F) -> Self
+    pub fn on_event<F, E>(self, trigger: E, cb: F) -> Self
     where
-        E: Into<Event>,
+        E: Into<EventTrigger>,
         F: 'static + Fn(&mut Cursive),
     {
-        self.with(|s| s.set_on_event(event, cb))
+        self.with(|s| s.set_on_event(trigger, cb))
     }
 
     /// Registers a callback when the given event is received.
@@ -93,12 +90,12 @@ impl<T: View> OnEventView<T> {
     /// The child will never receive this event.
     ///
     /// Chainable variant.
-    pub fn on_pre_event<F, E>(self, event: E, cb: F) -> Self
+    pub fn on_pre_event<F, E>(self, trigger: E, cb: F) -> Self
     where
-        E: Into<Event>,
+        E: Into<EventTrigger>,
         F: 'static + Fn(&mut Cursive),
     {
-        self.with(|s| s.set_on_pre_event(event, cb))
+        self.with(|s| s.set_on_pre_event(trigger, cb))
     }
 
     /// Registers a callback when the given event is received.
@@ -111,12 +108,12 @@ impl<T: View> OnEventView<T> {
     ///   result.
     ///
     /// Chainable variant.
-    pub fn on_pre_event_inner<F, E>(self, event: E, cb: F) -> Self
+    pub fn on_pre_event_inner<F, E>(self, trigger: E, cb: F) -> Self
     where
-        E: Into<Event>,
-        F: Fn(&mut T) -> Option<EventResult> + 'static,
+        E: Into<EventTrigger>,
+        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static,
     {
-        self.with(|s| s.set_on_pre_event_inner(event, cb))
+        self.with(|s| s.set_on_pre_event_inner(trigger, cb))
     }
 
     /// Registers a callback when the given event is ignored by the child.
@@ -126,41 +123,43 @@ impl<T: View> OnEventView<T> {
     /// If the result is not `None`, it will be processed as well.
     ///
     /// Chainable variant.
-    pub fn on_event_inner<F, E>(self, event: E, cb: F) -> Self
+    pub fn on_event_inner<F, E>(self, trigger: E, cb: F) -> Self
     where
-        E: Into<Event>,
-        F: Fn(&mut T) -> Option<EventResult> + 'static,
+        E: Into<EventTrigger>,
+        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static,
     {
-        self.with(|s| s.set_on_event_inner(event, cb))
+        self.with(|s| s.set_on_event_inner(trigger, cb))
     }
 
     /// Registers a callback when the given event is ignored by the child.
-    pub fn set_on_event<F, E>(&mut self, event: E, cb: F)
+    pub fn set_on_event<F, E>(&mut self, trigger: E, cb: F)
     where
-        E: Into<Event>,
+        E: Into<EventTrigger>,
         F: Fn(&mut Cursive) + 'static,
     {
         let cb = Callback::from_fn(cb);
-        let action =
-            move |_: &mut T| Some(EventResult::Consumed(Some(cb.clone())));
+        let action = move |_: &mut T, _: &Event| {
+            Some(EventResult::Consumed(Some(cb.clone())))
+        };
 
-        self.set_on_event_inner(event, action);
+        self.set_on_event_inner(trigger, action);
     }
 
     /// Registers a callback when the given event is received.
     ///
     /// The child will never receive this event.
-    pub fn set_on_pre_event<F, E>(&mut self, event: E, cb: F)
+    pub fn set_on_pre_event<F, E>(&mut self, trigger: E, cb: F)
     where
-        E: Into<Event>,
+        E: Into<EventTrigger>,
         F: 'static + Fn(&mut Cursive),
     {
         let cb = Callback::from_fn(cb);
         // We want to clone the Callback every time we call the closure
-        let action =
-            move |_: &mut T| Some(EventResult::Consumed(Some(cb.clone())));
+        let action = move |_: &mut T, _: &Event| {
+            Some(EventResult::Consumed(Some(cb.clone())))
+        };
 
-        self.set_on_pre_event_inner(event, action);
+        self.set_on_pre_event_inner(trigger, action);
     }
 
     /// Registers a callback when the given event is received.
@@ -171,18 +170,18 @@ impl<T: View> OnEventView<T> {
     ///   usual.
     /// * Otherwise, it bypasses the child view and directly processes the
     ///   result.
-    pub fn set_on_pre_event_inner<F, E>(&mut self, event: E, cb: F)
+    pub fn set_on_pre_event_inner<F, E>(&mut self, trigger: E, cb: F)
     where
-        E: Into<Event>,
-        F: Fn(&mut T) -> Option<EventResult> + 'static,
+        E: Into<EventTrigger>,
+        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static,
     {
-        self.callbacks.insert(
-            event.into(),
+        self.callbacks.push((
+            trigger.into(),
             Action {
                 phase: TriggerPhase::BeforeChild,
                 callback: Rc::new(Box::new(cb)),
             },
-        );
+        ));
     }
 
     /// Registers a callback when the given event is ignored by the child.
@@ -190,18 +189,18 @@ impl<T: View> OnEventView<T> {
     /// If the child view ignores the event, `cb` will be called with the
     /// child view as argument.
     /// If the result is not `None`, it will be processed as well.
-    pub fn set_on_event_inner<F, E>(&mut self, event: E, cb: F)
+    pub fn set_on_event_inner<F, E>(&mut self, trigger: E, cb: F)
     where
-        E: Into<Event>,
-        F: Fn(&mut T) -> Option<EventResult> + 'static,
+        E: Into<EventTrigger>,
+        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static,
     {
-        self.callbacks.insert(
-            event.into(),
+        self.callbacks.push((
+            trigger.into(),
             Action {
                 phase: TriggerPhase::AfterChild,
                 callback: Rc::new(Box::new(cb)),
             },
-        );
+        ));
     }
 
     inner_getters!(self.view: T);
@@ -211,22 +210,44 @@ impl<T: View> ViewWrapper for OnEventView<T> {
     wrap_impl!(self.view: T);
 
     fn wrap_on_event(&mut self, event: Event) -> EventResult {
-        let action = self.callbacks.get(&event).cloned();
-        let pre_child = action
-            .as_ref()
-            .map(|a| a.phase == TriggerPhase::BeforeChild)
-            .unwrap_or(false);
+        // Until we have better closure capture, define captured members separately.
+        let callbacks = &self.callbacks;
+        let view = &mut self.view;
 
-        if pre_child {
-            action
-                .and_then(|a| (*a.callback)(&mut self.view))
-                .unwrap_or_else(|| self.view.on_event(event))
-        } else {
-            self.view.on_event(event).or_else(|| {
-                action
-                    .and_then(|a| (*a.callback)(&mut self.view))
-                    .unwrap_or(EventResult::Ignored)
+        // * First, check all pre-child callbacks. Combine them.
+        //   If any gets triggered and returns Some(...), stop right there.
+        // * Otherwise, give the event to the child view.
+        //   If it returns EventResult::Consumed, stop right there.
+        // * Finally, check all post-child callbacks. Combine them.
+        //   And just return the result.
+
+        // First step: check pre-child
+        callbacks
+            .iter()
+            .filter(|&(_, action)| action.phase == TriggerPhase::BeforeChild)
+            .filter(|&(trigger, _)| trigger.apply(&event))
+            .filter_map(|(_, action)| (*action.callback)(view, &event))
+            .fold(None, |s, r| match s {
+                // Return `Some()` if any pre-callback was present.
+                None => Some(r),
+                Some(c) => Some(c.and(r)),
             })
-        }
+            .unwrap_or_else(|| {
+                // If it was None, it means no pre-callback was triggered.
+                // So let's give the view a chance!
+                view.on_event(event.clone())
+            })
+            .or_else(|| {
+                // No pre-child, and the child itself ignored the event?
+                // Let's have a closer look then, shall we?
+                callbacks
+                    .iter()
+                    .filter(|&(_, action)| {
+                        action.phase == TriggerPhase::AfterChild
+                    })
+                    .filter(|&(trigger, _)| trigger.apply(&event))
+                    .filter_map(|(_, action)| (*action.callback)(view, &event))
+                    .fold(EventResult::Ignored, EventResult::and)
+            })
     }
 }

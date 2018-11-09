@@ -123,7 +123,6 @@ mod xy;
 mod div;
 mod utf8;
 
-#[doc(hidden)]
 pub mod backend;
 
 pub use cursive::{CbFunc, Cursive, ScreenId};

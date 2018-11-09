@@ -31,6 +31,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 
+/// Backend using termion
 pub struct Backend {
     terminal: AlternateScreen<MouseTerminal<RawTerminal<Stdout>>>,
     current_style: Cell<theme::ColorPair>,
@@ -210,6 +211,7 @@ impl Effectable for theme::Effect {
 }
 
 impl Backend {
+    /// Creates a new termion-based backend.
     pub fn init() -> Box<backend::Backend> {
         print!("{}", termion::cursor::Hide);
 

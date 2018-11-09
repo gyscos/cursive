@@ -1,3 +1,4 @@
+//! Pancuses-specific backend.
 extern crate pancurses;
 
 use std::cell::{Cell, RefCell};
@@ -22,6 +23,7 @@ use vec::Vec2;
 use self::pancurses::mmask_t;
 use super::split_i32;
 
+/// Backend using pancurses.
 pub struct Backend {
     // Used
     current_style: Cell<ColorPair>,
@@ -84,7 +86,8 @@ impl InputParser {
                 pancurses::Input::Character(c) => Event::Char(c),
                 // TODO: Some key combos are not recognized by pancurses,
                 // but are sent as Unknown. We could still parse them here.
-                pancurses::Input::Unknown(code) => self.key_codes
+                pancurses::Input::Unknown(code) => self
+                    .key_codes
                     // pancurses does some weird keycode mapping
                     .get(&(code + 256 + 48))
                     .cloned()
@@ -286,6 +289,7 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
 }
 
 impl Backend {
+    /// Creates a new pancurses-based backend.
     pub fn init() -> Box<backend::Backend> {
         // We need to create this now, before ncurses initialization
         // Otherwise ncurses starts its own signal handling and it's a mess.
@@ -523,18 +527,22 @@ where
         | pancurses::BUTTON2_DOUBLE_CLICKED
         | pancurses::BUTTON3_DOUBLE_CLICKED
         | pancurses::BUTTON4_DOUBLE_CLICKED
-        | pancurses::BUTTON5_DOUBLE_CLICKED => for _ in 0..2 {
-            f(MouseEvent::Press(button));
-            f(MouseEvent::Release(button));
-        },
+        | pancurses::BUTTON5_DOUBLE_CLICKED => {
+            for _ in 0..2 {
+                f(MouseEvent::Press(button));
+                f(MouseEvent::Release(button));
+            }
+        }
         pancurses::BUTTON1_TRIPLE_CLICKED
         | pancurses::BUTTON2_TRIPLE_CLICKED
         | pancurses::BUTTON3_TRIPLE_CLICKED
         | pancurses::BUTTON4_TRIPLE_CLICKED
-        | pancurses::BUTTON5_TRIPLE_CLICKED => for _ in 0..3 {
-            f(MouseEvent::Press(button));
-            f(MouseEvent::Release(button));
-        },
+        | pancurses::BUTTON5_TRIPLE_CLICKED => {
+            for _ in 0..3 {
+                f(MouseEvent::Press(button));
+                f(MouseEvent::Release(button));
+            }
+        }
         _ => debug!("Unknown event: {:032b}", bare_event),
     }
 }

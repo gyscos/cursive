@@ -1,3 +1,4 @@
+//! Ncurses-specific backend.
 extern crate ncurses;
 
 use std::cell::{Cell, RefCell};
@@ -23,6 +24,7 @@ use vec::Vec2;
 use self::super::split_i32;
 use self::ncurses::mmask_t;
 
+/// Backend using ncurses.
 pub struct Backend {
     current_style: Cell<ColorPair>,
 
@@ -200,6 +202,7 @@ fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
 }
 
 impl Backend {
+    /// Creates a new ncurses-based backend.
     pub fn init() -> Box<backend::Backend> {
         let signals = Some(Signals::new(&[libc::SIGWINCH]).unwrap());
 
