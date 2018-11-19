@@ -11,6 +11,7 @@ pub struct ShadowView<T: View> {
     view: T,
     top_padding: bool,
     left_padding: bool,
+    // TODO: invalidate if we change the padding?
 }
 
 impl<T: View> ShadowView<T> {
