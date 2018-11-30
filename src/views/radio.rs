@@ -5,11 +5,14 @@ use std::rc::Rc;
 use theme::ColorStyle;
 use vec::Vec2;
 use view::View;
+use Cursive;
 use {Printer, With};
 
 struct SharedState<T> {
     selection: usize,
     values: Vec<Rc<T>>,
+
+    on_change: Option<Rc<Fn(&mut Cursive, &T)>>,
 }
 
 impl<T> SharedState<T> {
@@ -31,19 +34,20 @@ pub struct RadioGroup<T> {
     state: Rc<RefCell<SharedState<T>>>,
 }
 
-impl<T> Default for RadioGroup<T> {
+impl<T: 'static> Default for RadioGroup<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> RadioGroup<T> {
+impl<T: 'static> RadioGroup<T> {
     /// Creates an empty group for radio buttons.
     pub fn new() -> Self {
         RadioGroup {
             state: Rc::new(RefCell::new(SharedState {
                 selection: 0,
                 values: Vec::new(),
+                on_change: None,
             })),
         }
     }
@@ -69,6 +73,22 @@ impl<T> RadioGroup<T> {
     /// Returns the value associated with the selected button.
     pub fn selection(&self) -> Rc<T> {
         self.state.borrow().selection()
+    }
+
+    /// Sets a callback to be used when the selection changes.
+    pub fn set_on_change<F: 'static + Fn(&mut Cursive, &T)>(
+        &mut self, on_change: F,
+    ) {
+        self.state.borrow_mut().on_change = Some(Rc::new(on_change));
+    }
+
+    /// Sets a callback to be used when the selection changes.
+    ///
+    /// Chainable variant.
+    pub fn on_change<F: 'static + Fn(&mut Cursive, &T)>(
+        self, on_change: F,
+    ) -> Self {
+        self.with(|s| s.set_on_change(on_change))
     }
 }
 
@@ -100,7 +120,7 @@ pub struct RadioButton<T> {
     label: String,
 }
 
-impl<T> RadioButton<T> {
+impl<T: 'static> RadioButton<T> {
     impl_enabled!(self.enabled);
 
     fn new(
@@ -120,15 +140,26 @@ impl<T> RadioButton<T> {
     }
 
     /// Selects this button, un-selecting any other in the same group.
-    pub fn select(&mut self) {
-        self.state.borrow_mut().selection = self.id;
+    pub fn select(&mut self) -> EventResult {
+        let mut state = self.state.borrow_mut();
+        state.selection = self.id;
+        if let Some(ref on_change) = state.on_change {
+            let on_change = Rc::clone(on_change);
+            let value = state.selection();
+            EventResult::with_cb(move |s| on_change(s, &value))
+        } else {
+            EventResult::Consumed(None)
+        }
     }
 
     /// Selects this button, un-selecting any other in the same group.
     ///
     /// Chainable variant.
     pub fn selected(self) -> Self {
-        self.with(Self::select)
+        self.with(|s| {
+            // Ignore the potential callback here
+            s.select();
+        })
     }
 
     fn draw_internal(&self, printer: &Printer) {
@@ -177,16 +208,14 @@ impl<T: 'static> View for RadioButton<T> {
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
             Event::Key(Key::Enter) | Event::Char(' ') => {
-                self.select();
-                EventResult::Consumed(None)
+                self.select()
             }
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
             } if position.fits_in_rect(offset, self.req_size()) => {
-                self.select();
-                EventResult::Consumed(None)
+                self.select()
             }
             _ => EventResult::Ignored,
         }
