@@ -3,6 +3,7 @@
 //! This module defines various structs describing a span of text from a
 //! larger string.
 use std::borrow::Cow;
+use unicode_width::UnicodeWidthStr;
 
 /// A string with associated spans.
 ///
@@ -117,11 +118,12 @@ where
     }
 
     /// Gives access to the parsed styled spans.
-    pub fn spans(&self) -> Vec<Span<'a, T>> {
-        self.spans
-            .iter()
-            .map(|span| span.resolve(self.source))
-            .collect()
+    pub fn spans<'b>(&'b self) -> impl Iterator<Item = Span<'a, T>> + 'b
+    where
+        'a: 'b,
+    {
+        let source = self.source;
+        self.spans.iter().map(move |span| span.resolve(source))
     }
 
     /// Returns a reference to the indexed spans.
@@ -232,12 +234,9 @@ impl<T> SpannedString<T> {
     }
 
     /// Gives access to the parsed styled spans.
-    #[cfg_attr(feature = "cargo-clippy", allow(needless_lifetimes))]
-    pub fn spans<'a>(&'a self) -> Vec<Span<'a, T>> {
-        self.spans
-            .iter()
-            .map(|span| span.resolve(&self.source))
-            .collect()
+    pub fn spans<'a>(&'a self) -> impl Iterator<Item = Span<'a, T>> {
+        let source = &self.source;
+        self.spans.iter().map(move |span| span.resolve(source))
     }
 
     /// Returns a reference to the indexed spans.
@@ -255,6 +254,13 @@ impl<T> SpannedString<T> {
     /// Returns `true` if self is empty.
     pub fn is_empty(&self) -> bool {
         self.source.is_empty() || self.spans.is_empty()
+    }
+
+    /// Returns the width taken by this string.
+    ///
+    /// This is the sum of the width of each span.
+    pub fn width(&self) -> usize {
+        self.spans().map(|s| s.content.width()).sum()
     }
 }
 

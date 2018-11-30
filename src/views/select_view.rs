@@ -8,7 +8,7 @@ use std::cell::Cell;
 use std::cmp::min;
 use std::rc::Rc;
 use theme::ColorStyle;
-use unicode_width::UnicodeWidthStr;
+use utils::markup::StyledString;
 use vec::Vec2;
 use view::{Position, View};
 use views::MenuPopup;
@@ -253,7 +253,7 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Adds a item to the list, with given label and value.
-    pub fn add_item<S: Into<String>>(&mut self, label: S, value: T) {
+    pub fn add_item<S: Into<StyledString>>(&mut self, label: S, value: T) {
         self.items.push(Item::new(label.into(), value));
     }
 
@@ -267,13 +267,13 @@ impl<T: 'static> SelectView<T> {
     /// assert_eq!(select.get_item(0), Some(("Short", &1)));
     /// ```
     pub fn get_item(&self, i: usize) -> Option<(&str, &T)> {
-        self.items
-            .get(i)
-            .map(|item| (item.label.as_ref(), &*item.value))
+        self.iter().nth(i)
     }
 
     /// Gets a mut item at given idx or None.
-    pub fn get_item_mut(&mut self, i: usize) -> Option<(&mut String, &mut T)> {
+    pub fn get_item_mut(
+        &mut self, i: usize,
+    ) -> Option<(&mut StyledString, &mut T)> {
         if i >= self.items.len() {
             None
         } else {
@@ -293,7 +293,7 @@ impl<T: 'static> SelectView<T> {
     pub fn iter(&self) -> impl Iterator<Item = (&str, &T)> {
         self.items
             .iter()
-            .map(|item| (item.label.as_str(), &*item.value))
+            .map(|item| (item.label.source(), &*item.value))
     }
 
     /// Removes an item from the list.
@@ -315,7 +315,7 @@ impl<T: 'static> SelectView<T> {
     /// the right.
     pub fn insert_item<S>(&mut self, index: usize, label: S, value: T)
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         self.items.insert(index, Item::new(label.into(), value));
     }
@@ -328,7 +328,7 @@ impl<T: 'static> SelectView<T> {
     /// Adds all items from from an iterator.
     pub fn add_all<S, I>(&mut self, iter: I)
     where
-        S: Into<String>,
+        S: Into<StyledString>,
         I: IntoIterator<Item = (S, T)>,
     {
         for (s, t) in iter {
@@ -351,7 +351,7 @@ impl<T: 'static> SelectView<T> {
         let l = self.items[i].label.width();
         let x = self.align.h.get_offset(l, printer.size.x);
         printer.print_hline((0, 0), x, " ");
-        printer.print((x, 0), &self.items[i].label);
+        printer.print_styled((x, 0), (&self.items[i].label).into());
         if l < printer.size.x {
             assert!((l + x) <= printer.size.x);
             printer.print_hline((x + l, 0), printer.size.x - (l + x), " ");
@@ -554,7 +554,7 @@ impl<T: 'static> SelectView<T> {
             let focus = Rc::clone(&self.focus);
             let on_submit = self.on_submit.as_ref().cloned();
             let value = Rc::clone(&item.value);
-            tree.add_leaf(item.label.clone(), move |s| {
+            tree.add_leaf(item.label.source(), move |s| {
                 // TODO: What if an item was removed in the meantime?
                 focus.set(i);
                 if let Some(ref on_submit) = on_submit {
@@ -570,7 +570,7 @@ impl<T: 'static> SelectView<T> {
         // This is the offset for the label text.
         // We'll want to show the popup so that the text matches.
         // It'll be soo cool.
-        let item_length = self.items[focus].label.len();
+        let item_length = self.items[focus].label.width();
         let text_offset = (self.last_size.x.saturating_sub(item_length)) / 2;
         // The total offset for the window is:
         // * the last absolute offset at which we drew this view
@@ -698,9 +698,9 @@ impl<T: 'static> View for SelectView<T> {
                 let label = &self.items[self.focus()].label;
 
                 // And center the text?
-                let offset = HAlign::Center.get_offset(label.len(), x + 1);
+                let offset = HAlign::Center.get_offset(label.width(), x + 1);
 
-                printer.print((offset, 0), label);
+                printer.print_styled((offset, 0), label.into());
             });
         } else {
             // Non-popup mode: we always print the entire list.
@@ -772,15 +772,13 @@ impl<T: 'static> View for SelectView<T> {
 
 // We wrap each value in a `Rc` and add a label
 struct Item<T> {
-    label: String,
+    label: StyledString,
     value: Rc<T>,
 }
 
 impl<T> Item<T> {
-    fn new(label: String, value: T) -> Self {
-        Item {
-            label,
-            value: Rc::new(value),
-        }
+    fn new(label: StyledString, value: T) -> Self {
+        let value = Rc::new(value);
+        Item { label, value }
     }
 }

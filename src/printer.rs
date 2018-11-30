@@ -84,9 +84,24 @@ impl<'a, 'b> Printer<'a, 'b> {
             .clear(self.theme.palette[PaletteColor::Background]);
     }
 
+    /// Prints some styled text at the given position.
+    pub fn print_styled<S>(
+        &self, start: S, text: ::utils::span::SpannedStr<'_, Style>,
+    ) where
+        S: Into<Vec2>,
+    {
+        let Vec2 { mut x, y } = start.into();
+        for span in text.spans() {
+            self.with_style(*span.attr, |printer| {
+                printer.print((x, y), span.content);
+                x += span.content.width();
+            });
+        }
+    }
+
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
-    /// Prints some text at the given position relative to the window.
+    /// Prints some text at the given position
     pub fn print<S: Into<Vec2>>(&self, start: S, text: &str) {
         // Where we are asked to start printing. Oh boy.
         let start = start.into();
