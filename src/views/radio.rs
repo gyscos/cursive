@@ -81,6 +81,15 @@ impl<T: 'static> RadioGroup<T> {
     ) {
         self.state.borrow_mut().on_change = Some(Rc::new(on_change));
     }
+
+    /// Sets a callback to be used when the selection changes.
+    ///
+    /// Chainable variant.
+    pub fn on_change<F: 'static + Fn(&mut Cursive, &T)>(
+        self, on_change: F,
+    ) -> Self {
+        self.with(|s| s.set_on_change(on_change))
+    }
 }
 
 impl RadioGroup<String> {
@@ -148,6 +157,7 @@ impl<T: 'static> RadioButton<T> {
     /// Chainable variant.
     pub fn selected(self) -> Self {
         self.with(|s| {
+            // Ignore the potential callback here
             s.select();
         })
     }
