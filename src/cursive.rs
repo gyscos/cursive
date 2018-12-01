@@ -87,10 +87,7 @@ impl Default for Cursive {
     }
 }
 
-#[cfg(all(
-    not(feature = "termion-backend"),
-    feature = "pancurses-backend"
-))]
+#[cfg(all(not(feature = "termion-backend"), feature = "pancurses-backend"))]
 impl Default for Cursive {
     fn default() -> Self {
         Self::pancurses()
@@ -206,7 +203,7 @@ impl Cursive {
     /// siv.set_fps(10);
     ///
     /// // quit() will be called during the next event cycle
-    /// siv.cb_sink().send(Box::new(|s: &mut Cursive| s.quit()));
+    /// siv.cb_sink().send(Box::new(|s: &mut Cursive| s.quit())).unwrap();
     /// # }
     /// ```
     ///
@@ -607,7 +604,7 @@ impl Cursive {
         select! {
             // Skip to input if nothing is ready
             default => (),
-            recv(self.cb_source, cb) => return Some(Interruption::Callback(cb.unwrap())),
+            recv(self.cb_source) -> cb => return Some(Interruption::Callback(cb.unwrap())),
         }
 
         // No callback? Check input then
@@ -616,8 +613,11 @@ impl Cursive {
             return None;
         }
 
-        self.input_trigger.send(backend::InputRequest::Peek);
+        self.input_trigger
+            .send(backend::InputRequest::Peek)
+            .unwrap();
         self.backend.prepare_input(backend::InputRequest::Peek);
+
         self.event_source.recv().unwrap().map(Interruption::Event)
     }
 
@@ -626,7 +626,9 @@ impl Cursive {
     /// If `peek` is `true`, return `None` immediately if nothing is ready.
     fn poll(&mut self) -> Option<Interruption> {
         if !self.expecting_event {
-            self.input_trigger.send(backend::InputRequest::Block);
+            self.input_trigger
+                .send(backend::InputRequest::Block)
+                .unwrap();
             self.backend.prepare_input(backend::InputRequest::Block);
             self.expecting_event = true;
         }
@@ -639,16 +641,16 @@ impl Cursive {
         };
 
         select! {
-            recv(self.event_source, event) => {
+            recv(self.event_source) -> event => {
                 // Ok, we processed the event.
                 self.expecting_event = false;
 
                 event.unwrap().map(Interruption::Event)
             },
-            recv(self.cb_source, cb) => {
-                cb.map(Interruption::Callback)
+            recv(self.cb_source) -> cb => {
+                cb.ok().map(Interruption::Callback)
             },
-            recv(crossbeam_channel::after(timeout)) => {
+            recv(crossbeam_channel::after(timeout)) -> _ => {
                 Some(Interruption::Timeout)
             }
         }

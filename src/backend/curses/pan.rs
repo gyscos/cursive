@@ -484,7 +484,7 @@ impl backend::Backend for Backend {
                         input_parser.window.timeout(-1);
                     }
                 }
-                event_sink.send(input_parser.parse_next());
+                event_sink.send(input_parser.parse_next()).unwrap();
             }
             running.store(false, Ordering::Relaxed);
         });

@@ -33,21 +33,21 @@ pub fn start_resize_thread(
                     needs_resize.store(true, Ordering::Relaxed);
                 }
 
-                resize_sender.send(Some(Event::WindowResize));
+                resize_sender.send(Some(Event::WindowResize)).unwrap();
                 // We've sent the message.
                 // This means Cursive was listening, and will now soon be sending a new request.
                 // This means the input thread accepted a request, but hasn't sent a message yet.
                 // So we KNOW the input thread is not waiting for a new request.
 
                 // We sent an event for free, so pay for it now by consuming a request
-                while let Some(InputRequest::Peek) = resize_requests.recv() {
+                while let Ok(InputRequest::Peek) = resize_requests.recv() {
                     // At this point Cursive will now listen for input.
                     // There is a chance the input thread will send his event before us.
                     // But without some extra atomic flag, it'd be hard to know.
                     // So instead, keep sending `None`
 
                     // Repeat until we receive a blocking call
-                    resize_sender.send(None);
+                    resize_sender.send(None).unwrap();
                 }
             }
         }

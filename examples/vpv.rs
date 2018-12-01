@@ -65,7 +65,7 @@ fn main() {
         }
 
         // When we're done, shut down the application
-        cb_sink.send(Box::new(|s: &mut Cursive| s.quit()));
+        cb_sink.send(Box::new(|s: &mut Cursive| s.quit())).unwrap();
     });
 
     // Add a single view: progress status
@@ -112,8 +112,10 @@ fn main() {
                                 (0, 2),
                                 &format!("Speed:   {}/s", convert(speed)),
                             );
-                        }).fixed_size((25, 3)),
-                ).with(|l| {
+                        })
+                        .fixed_size((25, 3)),
+                )
+                .with(|l| {
                     // If we have a file length, add a progress bar
                     if let Some(len) = len {
                         l.add_child(

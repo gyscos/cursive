@@ -350,7 +350,9 @@ impl backend::Backend for Backend {
                 }
 
                 // Do the actual polling & parsing.
-                event_sink.send(parser.parse_next());
+                if event_sink.send(parser.parse_next()).is_err() {
+                    return;
+                }
             }
             // The request channel is closed, which means Cursive has been
             // dropped, so stop the resize-detection thread as well.
@@ -488,7 +490,7 @@ where
 
 fn initialize_keymap() -> HashMap<i32, Event> {
     // First, define the static mappings.
-    let mut map = hashmap!{
+    let mut map = hashmap! {
 
         // Value sent by ncurses when nothing happens
         -1 => Event::Refresh,

@@ -61,7 +61,10 @@ impl InputParser {
             for _ in request_receiver {
                 let event: Result<TEvent, ::std::io::Error> =
                     events.next().unwrap();
-                input_sender.send(event.unwrap());
+
+                if input_sender.send(event.unwrap()).is_err() {
+                    return;
+                }
             }
         });
 
@@ -78,7 +81,7 @@ impl InputParser {
     /// If we were already expecting input, this is a NO-OP.
     fn request(&mut self) {
         if !self.event_due {
-            self.requests.send(());
+            self.requests.send(()).unwrap();
             self.event_due = true;
         }
     }
@@ -89,10 +92,10 @@ impl InputParser {
         let timeout = ::std::time::Duration::from_millis(10);
 
         let input = select! {
-            recv(self.input, input) => {
+            recv(self.input) -> input => {
                 input
             }
-            recv(crossbeam_channel::after(timeout)) => return None,
+            recv(crossbeam_channel::after(timeout)) -> _ => return None,
         };
 
         // We got what we came for.
@@ -316,10 +319,10 @@ impl backend::Backend for Backend {
             for req in input_request {
                 match req {
                     backend::InputRequest::Peek => {
-                        event_sink.send(parser.peek());
+                        event_sink.send(parser.peek()).unwrap();
                     }
                     backend::InputRequest::Block => {
-                        event_sink.send(Some(parser.next_event()));
+                        event_sink.send(Some(parser.next_event())).unwrap();
                     }
                 }
             }

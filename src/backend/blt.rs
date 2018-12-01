@@ -329,8 +329,12 @@ impl backend::Backend for Backend {
         thread::spawn(move || {
             for _ in input_requests {
                 match receiver.recv() {
-                    None => return,
-                    Some(event) => event_sink.send(event),
+                    Err(_) => return,
+                    Ok(event) => {
+                        if event_sink.send(event).is_err() {
+                            return;
+                        }
+                    }
                 }
             }
         });
@@ -340,7 +344,7 @@ impl backend::Backend for Backend {
         match input_request {
             backend::InputRequest::Peek => {
                 let event = self.parse_next();
-                self.inner_sender.send(event);
+                self.inner_sender.send(event).unwrap();
             }
             backend::InputRequest::Block => {
                 let timeout = Duration::from_millis(30);
@@ -348,11 +352,11 @@ impl backend::Backend for Backend {
                 let start = Instant::now();
                 while start.elapsed() < timeout {
                     if let Some(event) = self.parse_next() {
-                        self.inner_sender.send(Some(event));
+                        self.inner_sender.send(Some(event)).unwrap();
                         return;
                     }
                 }
-                self.inner_sender.send(Some(Event::Refresh));
+                self.inner_sender.send(Some(Event::Refresh)).unwrap();
             }
         }
     }

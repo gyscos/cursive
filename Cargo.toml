@@ -28,7 +28,7 @@ unicode-width = "0.1"
 xi-unicode = "0.1"
 libc = "0.2"
 term_size = { version = "0.3", optional = true }
-crossbeam-channel = "0.2"
+crossbeam-channel = "0.3"
 
 [dependencies.num]
 default-features = false
@@ -55,7 +55,7 @@ version = "0.16"
 [dependencies.pulldown-cmark]
 default-features = false
 optional = true
-version = "0.1"
+version = "0.2"
 
 [dependencies.termion]
 optional = true
@@ -65,7 +65,7 @@ version = "1.5"
 version = "0.1"
 
 [dev-dependencies]
-rand = "0.5"
+rand = "0.6"
 pretty-bytes = "0.2"
 
 [features]

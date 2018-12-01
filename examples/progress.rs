@@ -52,7 +52,7 @@ fn phase_1(s: &mut Cursive) {
                 fake_load(n_max, &counter);
 
                 // When we're done, send a callback through the channel
-                cb.send(Box::new(coffee_break));
+                cb.send(Box::new(coffee_break)).unwrap();
             })
             .full_width(),
     ));
@@ -110,7 +110,7 @@ fn phase_2(s: &mut Cursive) {
             }
         }
 
-        cb.send(Box::new(final_step));
+        cb.send(Box::new(final_step)).unwrap();
     });
 }
 
@@ -124,8 +124,10 @@ fn final_step(s: &mut Cursive) {
                 TextView::new(
                     "Time travel was a success!\n\
                      We went forward a few seconds!!",
-                ).center(),
-            ).button("That's it?", |s| s.quit()),
+                )
+                .center(),
+            )
+            .button("That's it?", |s| s.quit()),
     );
 }
 

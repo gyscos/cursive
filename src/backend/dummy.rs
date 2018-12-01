@@ -44,7 +44,7 @@ impl backend::Backend for Backend {
     }
 
     fn prepare_input(&mut self, _input_request: backend::InputRequest) {
-        self.inner_sender.send(Some(Event::Exit));
+        self.inner_sender.send(Some(Event::Exit)).unwrap();
     }
 
     fn start_input_thread(
@@ -56,8 +56,12 @@ impl backend::Backend for Backend {
         thread::spawn(move || {
             for _ in input_requests {
                 match receiver.recv() {
-                    None => return,
-                    Some(event) => event_sink.send(event),
+                    Err(_) => return,
+                    Ok(event) => {
+                        if event_sink.send(event).is_err() {
+                            return;
+                        }
+                    }
                 }
             }
         });
