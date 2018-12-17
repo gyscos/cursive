@@ -239,8 +239,8 @@ impl From<toml::de::Error> for Error {
 pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
     let content = {
         let mut content = String::new();
-        let mut file = try!(File::open(filename));
-        try!(file.read_to_string(&mut content));
+        let mut file = File::open(filename)?;
+        file.read_to_string(&mut content)?;
         content
     };
 
