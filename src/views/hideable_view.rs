@@ -53,6 +53,11 @@ impl<V> HideableView<V> {
         self.with(Self::hide)
     }
 
+    /// Returns `true` if the wrapped view is going to be visible.
+    pub fn is_visible(&self) -> bool {
+        self.visible
+    }
+
     fn invalidate(&mut self) {
         self.invalidated = true;
     }
