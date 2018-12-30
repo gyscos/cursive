@@ -96,6 +96,20 @@ where
         self.with(|s| s.set_scroll_strategy(strategy))
     }
 
+    /// Control whether scroll bars are visibile.
+    ///
+    /// Defaults to `true`.
+    pub fn set_show_scrollbars(&mut self, show_scrollbars: bool) {
+        self.show_scrollbars = show_scrollbars;
+    }
+
+    /// Control whether scroll bars are visibile.
+    ///
+    /// Chainable variant
+    pub fn show_scrollbars(self, show_scrollbars: bool) -> Self {
+        self.with(|s| s.set_show_scrollbars(show_scrollbars))
+    }
+
     /// Sets the scroll offset to the given value
     pub fn set_offset<S>(&mut self, offset: S)
     where
