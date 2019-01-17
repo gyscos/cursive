@@ -21,6 +21,7 @@ pub mod dummy;
 pub mod blt;
 pub mod curses;
 pub mod termion;
+pub mod puppet;
 
 /// A request for input, sent to the backend.
 pub enum InputRequest {
