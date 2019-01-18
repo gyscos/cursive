@@ -1,36 +1,57 @@
 #![warn(missing_docs)]
 
-
+use enumset::EnumSet;
+use std::ops::Index;
+use std::ops::IndexMut;
 use std::rc::Rc;
+use theme::ColorPair;
+use theme::Effect;
 use theme::Style;
 use Vec2;
-use std::ops::IndexMut;
-use std::ops::Index;
 
+#[derive(Debug, Clone)]
+pub struct ObservedStyle {
+    pub colors: ColorPair,
+    pub effects: EnumSet<Effect>,
+}
+
+#[derive(Debug, Clone)]
+pub enum GraphemePart {
+    Begin(String),
+    Continuation,
+}
 
 #[derive(Debug, Clone)]
 pub struct ObservedCell {
-    style: Rc<Style>,
-    letter : String,
+    pub style: Rc<ObservedStyle>,
+    pub letter: GraphemePart,
 }
 
+impl ObservedCell {
+    pub fn new(style: Rc<ObservedStyle>, letter: Option<String>) -> Self {
+        let letter: GraphemePart = match letter {
+            Some(s) => GraphemePart::Begin(s),
+            None => GraphemePart::Continuation,
+        };
+
+        ObservedCell { style, letter }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct ObservedScreen {
-    size : Vec2,
-    contents : Vec<Option<ObservedCell>>,
+    size: Vec2,
+    contents: Vec<Option<ObservedCell>>,
 }
 
 impl ObservedScreen {
+    pub fn new(size: Vec2) -> Self {
+        let contents: Vec<Option<ObservedCell>> = vec![None; size.x * size.y];
 
-    pub fn new(size : Vec2) -> Self {
-        let contents : Vec<Option<ObservedCell>> = vec![None; size.x * size.y];
-
-        ObservedScreen {
-            size,
-            contents
-        }
+        ObservedScreen { size, contents }
     }
 
-    fn flatten_index(&self, index : &Vec2) -> usize {
+    fn flatten_index(&self, index: &Vec2) -> usize {
         assert!(index.x < self.size.x);
         assert!(index.y < self.size.y);
 
@@ -48,7 +69,7 @@ impl Index<&Vec2> for ObservedScreen {
 }
 
 impl IndexMut<&Vec2> for ObservedScreen {
-    fn index_mut(&mut self, index : &Vec2) -> &mut Option<ObservedCell> {
+    fn index_mut(&mut self, index: &Vec2) -> &mut Option<ObservedCell> {
         let idx = self.flatten_index(&index);
         &mut self.contents[idx]
     }
