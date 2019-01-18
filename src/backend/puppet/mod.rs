@@ -44,10 +44,14 @@ pub struct PuppetBackendState {
 
 impl PuppetBackendState {
     pub fn new() -> Self {
+        Self::new_with_size(DEFAULT_SIZE)
+    }
+
+    pub fn new_with_size(size : Vec2) -> Self {
         PuppetBackendState {
             prev_frame: None,
             current_frame: None,
-            size: DEFAULT_SIZE,
+            size,
             current_style: Rc::new(DEFAULT_OBSERVED_STYLE),
         }
     }
@@ -103,21 +107,6 @@ impl Backend {
 impl backend::Backend for Backend {
     fn finish(&mut self) {}
 
-    fn refresh(&mut self) {}
-
-    fn has_colors(&self) -> bool {
-        true
-    }
-
-    fn screen_size(&self) -> Vec2 {
-        let state = self.state.borrow();
-        state.size
-    }
-
-    fn prepare_input(&mut self, _input_request: backend::InputRequest) {
-        self.inner_sender.send(Some(Event::Exit)).unwrap();
-    }
-
     fn start_input_thread(
         &mut self, event_sink: Sender<Option<Event>>,
         input_requests: Receiver<backend::InputRequest>,
@@ -136,6 +125,25 @@ impl backend::Backend for Backend {
                 }
             }
         });
+    }
+
+    fn prepare_input(&mut self, _input_request: backend::InputRequest) {
+        self.inner_sender.send(Some(Event::Exit)).unwrap();
+    }
+
+    fn refresh(&mut self) {
+        let mut state = self.state.borrow_mut();
+        state.prev_frame = state.current_frame.take();
+        state.current_frame = Some(ObservedScreen::new(state.size));
+    }
+
+    fn has_colors(&self) -> bool {
+        true
+    }
+
+    fn screen_size(&self) -> Vec2 {
+        let state = self.state.borrow();
+        state.size
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
@@ -160,14 +168,33 @@ impl backend::Backend for Backend {
         }
     }
 
-    fn clear(&self, _: theme::Color) {}
+    fn clear(&self, clear_color: theme::Color) {
+        let mut screen = self.current_frame_mut().unwrap();
+        let mut cloned_style = (*self.current_style()).clone();
+        cloned_style.colors.back = clear_color;
+        screen.clear(&Rc::new(cloned_style))
+    }
 
     // This sets the Colours and returns the previous colours
     // to allow you to set them back when you're done.
-    fn set_color(&self, colors: theme::ColorPair) -> theme::ColorPair {
-        colors
+    fn set_color(&self, new_colors: theme::ColorPair) -> theme::ColorPair {
+        let mut copied_style = (*self.current_style()).clone();
+        let old_colors = copied_style.colors;
+        copied_style.colors = new_colors;
+        self.state.borrow_mut().current_style = Rc::new(copied_style);
+
+        old_colors
     }
 
-    fn set_effect(&self, _: theme::Effect) {}
-    fn unset_effect(&self, _: theme::Effect) {}
+    fn set_effect(&self, effect: theme::Effect) {
+        let mut copied_style = (*self.current_style()).clone();
+        copied_style.effects.insert(effect);
+        self.state.borrow_mut().current_style = Rc::new(copied_style);
+    }
+
+    fn unset_effect(&self, effect: theme::Effect) {
+        let mut copied_style = (*self.current_style()).clone();
+        copied_style.effects.remove(effect);
+        self.state.borrow_mut().current_style = Rc::new(copied_style);
+    }
 }

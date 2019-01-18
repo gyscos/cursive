@@ -8,6 +8,7 @@ use theme::ColorPair;
 use theme::Effect;
 use theme::Style;
 use Vec2;
+use theme::Color;
 
 #[derive(Debug, Clone)]
 pub struct ObservedStyle {
@@ -56,6 +57,12 @@ impl ObservedScreen {
         assert!(index.y < self.size.y);
 
         index.y * self.size.x + index.y
+    }
+
+    pub fn clear(&mut self, style : &Rc<ObservedStyle>) {
+        for idx in 0..self.contents.len(){
+            self.contents[idx] = Some(ObservedCell::new(style.clone(), None))
+        }
     }
 }
 
