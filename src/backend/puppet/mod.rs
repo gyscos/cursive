@@ -173,8 +173,8 @@ impl backend::Backend for Backend {
     }
 
     fn clear(&self, clear_color: theme::Color) {
-        let mut screen = self.current_frame_mut().unwrap();
         let mut cloned_style = (*self.current_style()).clone();
+        let mut screen = self.current_frame_mut().unwrap();
         cloned_style.colors.back = clear_color;
         screen.clear(&Rc::new(cloned_style))
     }
