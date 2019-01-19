@@ -62,7 +62,10 @@ impl Backend {
             screen_channel : crossbeam_channel::bounded(1)
         };
 
-        backend.refresh();
+        {
+            use backend::Backend;
+            backend.refresh();
+        }
 
         backend
     }
