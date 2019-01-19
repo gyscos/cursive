@@ -155,9 +155,8 @@ impl backend::Backend for Backend {
         //since some graphemes are visually longer than one char, we need to track printer offset.
         let mut offset: usize = 0;
 
-        let mut screen = self.current_frame_mut().unwrap();
         let style = self.current_style();
-
+        let mut screen = self.current_frame_mut().unwrap();
         let state = self.state.borrow();
 
         'printer: for (idx, c) in text.graphemes(true).enumerate() {
