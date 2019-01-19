@@ -7,7 +7,7 @@ use theme::ColorStyle;
 use theme::ColorType;
 use backend::puppet::observed::GraphemePart;
 
-struct ObservedScreenView {
+pub struct ObservedScreenView {
     screen : ObservedScreen,
 }
 
