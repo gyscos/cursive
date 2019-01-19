@@ -70,11 +70,15 @@ impl Backend {
     {
         let (inner_sender, inner_receiver) = crossbeam_channel::bounded(1);
 
-        Box::new(Backend {
+        let mut backend : Box<backend::Backend> = Box::new(Backend {
             inner_sender,
             inner_receiver,
             state: RefCell::new(PuppetBackendState::new()),
-        })
+        });
+
+        backend.refresh();
+
+        backend
     }
 
     pub fn current_frame(&self) -> Option<Ref<ObservedScreen>> {
