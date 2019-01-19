@@ -34,33 +34,13 @@ pub const DEFAULT_OBSERVED_STYLE: ObservedStyle = ObservedStyle {
     effects: enum_set!(),
 };
 
-#[derive(Debug, Clone)]
-pub struct PuppetBackendState {
-    prev_frame: Option<ObservedScreen>,
-    current_frame: Option<ObservedScreen>,
-    size: Vec2,
-    current_style: Rc<ObservedStyle>,
-}
-
-impl PuppetBackendState {
-    pub fn new() -> Self {
-        Self::new_with_size(DEFAULT_SIZE)
-    }
-
-    pub fn new_with_size(size : Vec2) -> Self {
-        PuppetBackendState {
-            prev_frame: None,
-            current_frame: None,
-            size,
-            current_style: Rc::new(DEFAULT_OBSERVED_STYLE),
-        }
-    }
-}
-
 pub struct Backend {
     inner_sender: Sender<Option<Event>>,
     inner_receiver: Receiver<Option<Event>>,
-    state: RefCell<PuppetBackendState>,
+    prev_frame: RefCell<Option<ObservedScreen>>,
+    current_frame: RefCell<ObservedScreen>,
+    size: RefCell<Vec2>,
+    current_style: RefCell<Rc<ObservedStyle>>,
 }
 
 impl Backend {
@@ -73,7 +53,10 @@ impl Backend {
         let mut backend : Box<backend::Backend> = Box::new(Backend {
             inner_sender,
             inner_receiver,
-            state: RefCell::new(PuppetBackendState::new()),
+            prev_frame: RefCell::new(None),
+            current_frame: RefCell::new(ObservedScreen::new(DEFAULT_SIZE)),
+            size: RefCell::new(DEFAULT_SIZE),
+            current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE)),
         });
 
         backend.refresh();
@@ -81,30 +64,8 @@ impl Backend {
         backend
     }
 
-    pub fn current_frame(&self) -> Option<Ref<ObservedScreen>> {
-        let is_frame = self.state.borrow().current_frame.is_some();
-        if is_frame {
-            Some(Ref::map(self.state.borrow(), |state| {
-                state.current_frame.as_ref().unwrap()
-            }))
-        } else {
-            None
-        }
-    }
-
     pub fn current_style(&self) -> Rc<ObservedStyle> {
-        self.state.borrow().current_style.clone()
-    }
-
-    fn current_frame_mut(&self) -> Option<RefMut<ObservedScreen>> {
-        let is_frame = self.state.borrow().current_frame.is_some();
-        if is_frame {
-            Some(RefMut::map(self.state.borrow_mut(), |state| {
-                state.current_frame.as_mut().unwrap()
-            }))
-        } else {
-            None
-        }
+        self.current_style.borrow().clone()
     }
 }
 
@@ -136,9 +97,9 @@ impl backend::Backend for Backend {
     }
 
     fn refresh(&mut self) {
-        let mut state = self.state.borrow_mut();
-        state.prev_frame = state.current_frame.take();
-        state.current_frame = Some(ObservedScreen::new(state.size));
+        let size = self.size.get_mut().clone();
+        let current_frame = self.current_frame.replace(ObservedScreen::new(size));
+        self.prev_frame.replace(Some(current_frame));
     }
 
     fn has_colors(&self) -> bool {
@@ -146,8 +107,7 @@ impl backend::Backend for Backend {
     }
 
     fn screen_size(&self) -> Vec2 {
-        let state = self.state.borrow();
-        state.size
+        self.size.borrow().clone()
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
@@ -155,9 +115,8 @@ impl backend::Backend for Backend {
         //since some graphemes are visually longer than one char, we need to track printer offset.
         let mut offset: usize = 0;
 
-        let style = self.current_style();
-        let mut screen = self.current_frame_mut().unwrap();
-        let state = self.state.borrow();
+        let style = self.current_style.borrow().clone();
+        let mut screen = self.current_frame.borrow_mut();
 
         'printer: for (idx, c) in text.graphemes(true).enumerate() {
             while skip > 0 {
@@ -173,7 +132,7 @@ impl backend::Backend for Backend {
 
     fn clear(&self, clear_color: theme::Color) {
         let mut cloned_style = (*self.current_style()).clone();
-        let mut screen = self.current_frame_mut().unwrap();
+        let mut screen = self.current_frame.borrow_mut();
         cloned_style.colors.back = clear_color;
         screen.clear(&Rc::new(cloned_style))
     }
@@ -184,7 +143,7 @@ impl backend::Backend for Backend {
         let mut copied_style = (*self.current_style()).clone();
         let old_colors = copied_style.colors;
         copied_style.colors = new_colors;
-        self.state.borrow_mut().current_style = Rc::new(copied_style);
+        self.current_style.replace(Rc::new(copied_style));
 
         old_colors
     }
@@ -192,12 +151,12 @@ impl backend::Backend for Backend {
     fn set_effect(&self, effect: theme::Effect) {
         let mut copied_style = (*self.current_style()).clone();
         copied_style.effects.insert(effect);
-        self.state.borrow_mut().current_style = Rc::new(copied_style);
+        self.current_style.replace(Rc::new(copied_style));
     }
 
     fn unset_effect(&self, effect: theme::Effect) {
         let mut copied_style = (*self.current_style()).clone();
         copied_style.effects.remove(effect);
-        self.state.borrow_mut().current_style = Rc::new(copied_style);
+        self.current_style.replace(Rc::new(copied_style));
     }
 }
