@@ -11,6 +11,12 @@ struct ObservedScreenView {
     screen : ObservedScreen,
 }
 
+impl ObservedScreenView {
+    pub fn new(obs : ObservedScreen) -> Self {
+        ObservedScreenView { screen : obs }
+    }
+}
+
 impl View for ObservedScreenView {
     fn draw(&self, printer: &Printer) {
 

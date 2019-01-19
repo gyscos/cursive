@@ -42,6 +42,7 @@ pub struct Backend {
     current_frame: RefCell<ObservedScreen>,
     size: RefCell<Vec2>,
     current_style: RefCell<Rc<ObservedStyle>>,
+    screen_channel : (Sender<ObservedScreen>, Receiver<ObservedScreen>)
 }
 
 impl Backend {
@@ -58,6 +59,7 @@ impl Backend {
             current_frame: RefCell::new(ObservedScreen::new(DEFAULT_SIZE)),
             size: RefCell::new(DEFAULT_SIZE),
             current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE)),
+            screen_channel : crossbeam_channel::bounded(1)
         });
 
         backend.refresh();
@@ -67,6 +69,10 @@ impl Backend {
 
     pub fn current_style(&self) -> Rc<ObservedStyle> {
         self.current_style.borrow().clone()
+    }
+
+    pub fn stream(&self) -> Receiver<ObservedScreen> {
+        self.screen_channel.1.clone()
     }
 }
 
@@ -100,7 +106,8 @@ impl backend::Backend for Backend {
     fn refresh(&mut self) {
         let size = self.size.get_mut().clone();
         let current_frame = self.current_frame.replace(ObservedScreen::new(size));
-        self.prev_frame.replace(Some(current_frame));
+        self.prev_frame.replace(Some(current_frame.clone()));
+        self.screen_channel.0.send(current_frame).unwrap();
     }
 
     fn has_colors(&self) -> bool {
