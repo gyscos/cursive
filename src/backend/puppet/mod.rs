@@ -46,7 +46,7 @@ pub struct Backend {
 }
 
 impl Backend {
-    pub fn init() -> Box<Backend>
+    pub fn init() -> Box<backend::Backend>
     where
         Self: Sized,
     {
