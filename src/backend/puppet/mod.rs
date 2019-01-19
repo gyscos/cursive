@@ -46,13 +46,13 @@ pub struct Backend {
 }
 
 impl Backend {
-    pub fn init() -> Box<backend::Backend>
+    pub fn init() -> Self
     where
         Self: Sized,
     {
         let (inner_sender, inner_receiver) = crossbeam_channel::bounded(1);
 
-        let mut backend : Box<backend::Backend> = Box::new(Backend {
+        let mut backend = Backend {
             inner_sender,
             inner_receiver,
             prev_frame: RefCell::new(None),
@@ -60,7 +60,7 @@ impl Backend {
             size: RefCell::new(DEFAULT_SIZE),
             current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE)),
             screen_channel : crossbeam_channel::bounded(1)
-        });
+        };
 
         backend.refresh();
 
