@@ -22,6 +22,22 @@ pub enum GraphemePart {
     Continuation,
 }
 
+impl GraphemePart {
+    pub fn is_continuation(&self) -> bool {
+        match self {
+            &GraphemePart::Continuation => true,
+            _ => false
+        }
+    }
+
+    pub fn unwrap(&self) -> &str {
+        match self {
+            &GraphemePart::Begin(ref s) => s,
+            _ => panic!("unwrapping GraphemePart::Continuation")
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ObservedCell {
     pub style: Rc<ObservedStyle>,
@@ -63,6 +79,10 @@ impl ObservedScreen {
         for idx in 0..self.contents.len(){
             self.contents[idx] = Some(ObservedCell::new(style.clone(), None))
         }
+    }
+
+    pub fn size(&self) -> Vec2 {
+        self.size
     }
 }
 

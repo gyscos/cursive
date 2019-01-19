@@ -24,6 +24,7 @@ use vec::Vec2;
 use XY;
 
 pub mod observed;
+pub mod observed_screen_view;
 
 pub const DEFAULT_SIZE: Vec2 = XY::<usize> { x: 120, y: 80 };
 pub const DEFAULT_OBSERVED_STYLE: ObservedStyle = ObservedStyle {
