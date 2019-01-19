@@ -46,7 +46,7 @@ pub struct Backend {
 }
 
 impl Backend {
-    pub fn init() -> Self
+    pub fn init() -> Box<Backend>
     where
         Self: Sized,
     {
@@ -67,7 +67,7 @@ impl Backend {
             backend.refresh();
         }
 
-        backend
+        Box::new(backend)
     }
 
     pub fn current_style(&self) -> Rc<ObservedStyle> {
