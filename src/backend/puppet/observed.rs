@@ -9,6 +9,7 @@ use theme::Effect;
 use theme::Style;
 use Vec2;
 use theme::Color;
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone)]
 pub struct ObservedStyle {
@@ -38,7 +39,7 @@ impl GraphemePart {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone)]//, Serialize, Deserialize)]
 pub struct ObservedCell {
     pub style: Rc<ObservedStyle>,
     pub letter: GraphemePart,
@@ -55,7 +56,7 @@ impl ObservedCell {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone)]//, Serialize, Deserialize)]
 pub struct ObservedScreen {
     size: Vec2,
     contents: Vec<Option<ObservedCell>>,

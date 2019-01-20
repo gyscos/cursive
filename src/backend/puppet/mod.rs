@@ -91,9 +91,14 @@ impl backend::Backend for Backend {
         thread::spawn(move || {
             for _ in input_requests {
                 match receiver.recv() {
-                    Err(_) => return,
+                    Err(e) => {
+                        error!("e1 {:?}", e);
+                        return
+                    },
                     Ok(event) => {
-                        if event_sink.send(event).is_err() {
+                        let res = event_sink.send(event);
+                        if res.is_err() {
+                            error!("e2 {:?}", res);
                             return;
                         }
                     }

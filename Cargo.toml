@@ -29,6 +29,8 @@ xi-unicode = "0.1"
 libc = "0.2"
 term_size = { version = "0.3", optional = true }
 crossbeam-channel = "0.3"
+serde = "1.0"
+serde_json = "1.0"
 
 [dependencies.num]
 default-features = false
