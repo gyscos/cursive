@@ -25,6 +25,7 @@ impl View for ObservedScreenView {
                 let pos = Vec2::new(x,y);
                 let cell_op : &Option<ObservedCell> = &self.screen[&pos];
                 if cell_op.is_none() {
+                    printer.print(pos, "o");
                     continue;
                 }
 
