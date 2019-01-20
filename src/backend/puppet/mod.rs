@@ -137,7 +137,7 @@ impl backend::Backend for Backend {
         let mut screen = self.current_frame.borrow_mut();
 
         'printer: for (idx, c) in text.graphemes(true).enumerate() {
-            let pos = Vec2::new(pos.x + offset, pos.y);
+            let pos = Vec2::new(pos.x + idx + offset, pos.y);
 
             // skipping the "continuation" tails
             while skip > 0 {
