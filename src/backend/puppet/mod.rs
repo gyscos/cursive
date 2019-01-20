@@ -96,13 +96,13 @@ impl backend::Backend for Backend {
             for _ in input_requests {
                 match receiver.recv() {
                     Err(e) => {
-                        error!("e1 {:?}", e);
+                        println!("e1 {:?}", e);
                         return
                     },
                     Ok(event) => {
                         let res = event_sink.send(event);
                         if res.is_err() {
-                            error!("e2 {:?}", res);
+                            println!("e2 {:?}", res);
                             return;
                         }
                     }
