@@ -59,7 +59,7 @@ impl Backend {
             current_frame: RefCell::new(ObservedScreen::new(DEFAULT_SIZE)),
             size: RefCell::new(DEFAULT_SIZE),
             current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE)),
-            screen_channel : crossbeam_channel::bounded(1)
+            screen_channel : crossbeam_channel::unbounded()
         };
 
         {
