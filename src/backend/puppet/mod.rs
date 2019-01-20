@@ -136,9 +136,13 @@ impl backend::Backend for Backend {
         let style = self.current_style.borrow().clone();
         let mut screen = self.current_frame.borrow_mut();
 
-        'printer: for (idx, c) in text.graphemes(true).enumerate() {
+        let mut graphemes = text.graphemes(true);
+
+        let mut idx = 0;
+        'printer: while let Some(g) = graphemes.next() {
             let lpos = Vec2::new(pos.x + idx + offset, pos.y);
-            let charp : String = c.chars().next().unwrap().to_string();
+            idx += g.len();
+            let charp : String = g.to_owned();
             // skipping the "continuation" tails
 //            while skip > 0 {
 //                screen[&pos] = Some(ObservedCell::new(style.clone(), None));
