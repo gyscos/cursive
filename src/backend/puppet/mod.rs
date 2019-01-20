@@ -137,20 +137,20 @@ impl backend::Backend for Backend {
         let mut screen = self.current_frame.borrow_mut();
 
         'printer: for (idx, c) in text.graphemes(true).enumerate() {
-            let pos = Vec2::new(pos.x + idx + offset, pos.y);
+            let lpos = Vec2::new(pos.x + idx + offset, pos.y);
 
             // skipping the "continuation" tails
-            while skip > 0 {
-                screen[&pos] = Some(ObservedCell::new(style.clone(), None));
-
-                skip -= 1;
-                offset += 1;
-                continue 'printer;
-            }
+//            while skip > 0 {
+//                screen[&pos] = Some(ObservedCell::new(style.clone(), None));
+//
+//                skip -= 1;
+//                offset += 1;
+//                continue 'printer;
+//            }
 
             // if we got here, we have to write a new character.
             // TODO(njskalski): add the support for "multiple cell" characters.
-            screen[&pos] = Some(ObservedCell::new(style.clone(), Some(c.to_owned())));
+            screen[&lpos] = Some(ObservedCell::new(style.clone(), Some(c.to_owned())));
         }
     }
 
