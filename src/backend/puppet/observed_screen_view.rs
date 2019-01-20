@@ -23,7 +23,12 @@ impl View for ObservedScreenView {
         for x in 0..self.screen.size().x {
             for y in 0..self.screen.size().y {
                 let pos = Vec2::new(x,y);
-                let cell : &ObservedCell = self.screen[&pos].as_ref().unwrap();
+                let cell_op : &Option<ObservedCell> = &self.screen[&pos];
+                if cell_op.is_none() {
+                    continue;
+                }
+
+                let cell = cell_op.as_ref().unwrap();
 
                 if cell.letter.is_continuation() {
                     continue;
