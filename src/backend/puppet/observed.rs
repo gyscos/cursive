@@ -73,7 +73,7 @@ impl ObservedScreen {
         assert!(index.x < self.size.x);
         assert!(index.y < self.size.y);
 
-        index.y * self.size.x + index.y
+        index.x * self.size.y + index.y
     }
 
     pub fn clear(&mut self, style : &Rc<ObservedStyle>) {
