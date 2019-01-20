@@ -77,6 +77,10 @@ impl Backend {
     pub fn stream(&self) -> Receiver<ObservedScreen> {
         self.screen_channel.1.clone()
     }
+
+    pub fn input(&self) -> Sender<Option<Event>> {
+        self.inner_sender.clone()
+    }
 }
 
 impl backend::Backend for Backend {
@@ -106,10 +110,6 @@ impl backend::Backend for Backend {
             }
         });
     }
-
-//    fn prepare_input(&mut self, _input_request: backend::InputRequest) {
-////        self.inner_sender.send(Some(Event::Exit)).unwrap();
-//    }
 
     fn refresh(&mut self) {
         let size = self.size.get_mut().clone();
