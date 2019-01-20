@@ -138,7 +138,7 @@ impl backend::Backend for Backend {
 
         'printer: for (idx, c) in text.graphemes(true).enumerate() {
             let lpos = Vec2::new(pos.x + idx + offset, pos.y);
-
+            let charp : String = c.chars().next().unwrap().to_string();
             // skipping the "continuation" tails
 //            while skip > 0 {
 //                screen[&pos] = Some(ObservedCell::new(style.clone(), None));
@@ -150,7 +150,7 @@ impl backend::Backend for Backend {
 
             // if we got here, we have to write a new character.
             // TODO(njskalski): add the support for "multiple cell" characters.
-            screen[&lpos] = Some(ObservedCell::new(style.clone(), Some(c.to_owned())));
+            screen[&lpos] = Some(ObservedCell::new(style.clone(), Some(charp)));
         }
     }
 
