@@ -31,9 +31,9 @@ impl GraphemePart {
         }
     }
 
-    pub fn unwrap(&self) -> &str {
+    pub fn unwrap(&self) -> String {
         match self {
-            &GraphemePart::Begin(ref s) => s,
+            &GraphemePart::Begin(ref s) => s.clone(),
             _ => panic!("unwrapping GraphemePart::Continuation")
         }
     }

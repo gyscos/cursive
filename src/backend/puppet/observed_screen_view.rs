@@ -41,7 +41,7 @@ impl View for ObservedScreenView {
                         back: ColorType::Color(cell.style.colors.back),
                     };
 
-                    printer.print(pos, cell.letter.unwrap());
+                    printer.print(pos, &cell.letter.unwrap());
                 })
             }
         }
