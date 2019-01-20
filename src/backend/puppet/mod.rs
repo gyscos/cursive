@@ -107,9 +107,9 @@ impl backend::Backend for Backend {
         });
     }
 
-    fn prepare_input(&mut self, _input_request: backend::InputRequest) {
-        self.inner_sender.send(Some(Event::Exit)).unwrap();
-    }
+//    fn prepare_input(&mut self, _input_request: backend::InputRequest) {
+////        self.inner_sender.send(Some(Event::Exit)).unwrap();
+//    }
 
     fn refresh(&mut self) {
         let size = self.size.get_mut().clone();
