@@ -1,5 +1,5 @@
 use align::*;
-use direction::Direction;
+use direction::{Absolute, Direction, Relative};
 use event::{AnyCb, Event, EventResult, Key};
 use rect::Rect;
 use std::cell::Cell;
@@ -300,9 +300,7 @@ impl Dialog {
             EventResult::Ignored => {
                 if !self.buttons.is_empty() {
                     match event {
-                        Event::Key(Key::Down)
-                        | Event::Key(Key::Tab)
-                        | Event::Shift(Key::Tab) => {
+                        Event::Key(Key::Down) | Event::Key(Key::Tab) => {
                             // Default to leftmost button when going down.
                             self.focus = DialogFocus::Button(0);
                             EventResult::Consumed(None)
@@ -310,25 +308,7 @@ impl Dialog {
                         _ => EventResult::Ignored,
                     }
                 } else {
-                    match event {
-                        Event::Shift(Key::Tab) => {
-                            if self.content.take_focus(Direction::back()) {
-                                self.focus = DialogFocus::Content;
-                                EventResult::Consumed(None)
-                            } else {
-                                EventResult::Ignored
-                            }
-                        }
-                        Event::Key(Key::Tab) => {
-                            if self.content.take_focus(Direction::front()) {
-                                self.focus = DialogFocus::Content;
-                                EventResult::Consumed(None)
-                            } else {
-                                EventResult::Ignored
-                            }
-                        }
-                        _ => EventResult::Ignored,
-                    }
+                    EventResult::Ignored
                 }
             }
             res => res,
@@ -357,7 +337,10 @@ impl Dialog {
                             EventResult::Ignored
                         }
                     }
-                    Event::Shift(Key::Tab) => {
+                    Event::Shift(Key::Tab)
+                        if self.focus == DialogFocus::Button(0) =>
+                    {
+                        // If we're at the first button, jump back to the content.
                         if self.content.take_focus(Direction::back()) {
                             self.focus = DialogFocus::Content;
                             EventResult::Consumed(None)
@@ -365,13 +348,30 @@ impl Dialog {
                             EventResult::Ignored
                         }
                     }
-                    Event::Key(Key::Tab) => {
-                        if self.content.take_focus(Direction::front()) {
-                            self.focus = DialogFocus::Content;
-                            EventResult::Consumed(None)
-                        } else {
-                            EventResult::Ignored
+                    Event::Shift(Key::Tab) => {
+                        // Otherwise, jump to the previous button.
+                        if let DialogFocus::Button(ref mut i) = self.focus {
+                            // This should always be the case.
+                            *i -= 1;
                         }
+                        EventResult::Consumed(None)
+                    }
+                    Event::Key(Key::Tab)
+                        if self.focus
+                            == DialogFocus::Button(
+                                self.buttons.len().saturating_sub(1),
+                            ) =>
+                    {
+                        // End of the line
+                        EventResult::Ignored
+                    }
+                    Event::Key(Key::Tab) => {
+                        // Otherwise, jump to the next button.
+                        if let DialogFocus::Button(ref mut i) = self.focus {
+                            // This should always be the case.
+                            *i += 1;
+                        }
+                        EventResult::Consumed(None)
                     }
                     // Left and Right move to other buttons
                     Event::Key(Key::Right)
@@ -406,10 +406,11 @@ impl Dialog {
         if printer.size.x < overhead.horizontal() {
             return None;
         }
-        let mut offset = overhead.left + self
-            .align
-            .h
-            .get_offset(width, printer.size.x - overhead.horizontal());
+        let mut offset = overhead.left
+            + self
+                .align
+                .h
+                .get_offset(width, printer.size.x - overhead.horizontal());
 
         let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
 
@@ -464,9 +465,10 @@ impl Dialog {
                 return;
             }
             let spacing = 3; //minimum distance to borders
-            let x = spacing + self
-                .title_position
-                .get_offset(len, printer.size.x - 2 * spacing);
+            let x = spacing
+                + self
+                    .title_position
+                    .get_offset(len, printer.size.x - 2 * spacing);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
@@ -616,16 +618,38 @@ impl View for Dialog {
     }
 
     fn take_focus(&mut self, source: Direction) -> bool {
-        // Dialogs aren't meant to be used in layouts, so...
-        // Let's be super lazy and not even care about the focus source.
-        if self.content.take_focus(source) {
-            self.focus = DialogFocus::Content;
-            true
-        } else if !self.buttons.is_empty() {
-            self.focus = DialogFocus::Button(0);
-            true
-        } else {
-            false
+        // TODO: This may depend on button position relative to the content?
+        //
+        match source {
+            Direction::Abs(Absolute::None)
+            | Direction::Rel(Relative::Front)
+            | Direction::Abs(Absolute::Left)
+            | Direction::Abs(Absolute::Up) => {
+                // Forward focus: content, then buttons
+                if self.content.take_focus(source) {
+                    self.focus = DialogFocus::Content;
+                    true
+                } else if !self.buttons.is_empty() {
+                    self.focus = DialogFocus::Button(0);
+                    true
+                } else {
+                    false
+                }
+            }
+            Direction::Rel(Relative::Back)
+            | Direction::Abs(Absolute::Right)
+            | Direction::Abs(Absolute::Down) => {
+                // Back focus: first buttons, then content
+                if !self.buttons.is_empty() {
+                    self.focus = DialogFocus::Button(self.buttons.len() - 1);
+                    true
+                } else if self.content.take_focus(source) {
+                    self.focus = DialogFocus::Content;
+                    true
+                } else {
+                    false
+                }
+            }
         }
     }
 
