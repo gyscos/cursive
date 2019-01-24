@@ -53,6 +53,8 @@ impl<T: View> CircularFocus<T> {
     pub fn wraps_arrows(&self) -> bool {
         self.wrap_arrows
     }
+
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> ViewWrapper for CircularFocus<T> {
