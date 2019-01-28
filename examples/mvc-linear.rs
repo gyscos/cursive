@@ -7,7 +7,7 @@ use cursive::Cursive;
 use std::sync::mpsc;
 
 // This example uses a LinearLayout to stick multiple views next to each other.
-// The example also shows a different setup where MVC is more or less implemented
+// The example also shows a different setup with a form of model-view-controller implementation.
 // The model part of the equation was too small, so it's within the UI as a text item.
 // I copied the setup from a blog entry of David Simmons. 
 // With respect to linear.rs I added a 'q' or 'Q' to quit (besides the button)
@@ -28,6 +28,7 @@ impl Ui {
     pub fn new(controller_tx: mpsc::Sender<ControllerMessage>) -> Ui {
 
         // Normally, this would be part of the model in stead of part of the ui
+        // like for instance a database
         let text = "This is a very simple example of linear layout. Two views \
                     are present, a short title above, and this text. The text \
                     has a fixed width, and the title is centered horizontally.";
