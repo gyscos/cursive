@@ -1,31 +1,53 @@
+use backend::puppet::observed::GraphemePart;
+use backend::puppet::observed::ObservedCell;
 use backend::puppet::observed::ObservedScreen;
+use theme::ColorStyle;
+use theme::ColorType;
 use view::View;
 use Printer;
 use Vec2;
-use backend::puppet::observed::ObservedCell;
-use theme::ColorStyle;
-use theme::ColorType;
-use backend::puppet::observed::GraphemePart;
 
 pub struct ObservedScreenView {
-    screen : ObservedScreen,
+    screen: ObservedScreen,
 }
 
 impl ObservedScreenView {
-    pub fn new(obs : ObservedScreen) -> Self {
-        ObservedScreenView { screen : obs }
+    pub fn new(obs: ObservedScreen) -> Self {
+        ObservedScreenView { screen: obs }
     }
+
+//    pub fn find_occurences(&self, s: &str) -> Vec<Vec2> {
+//        let mut v: Vec<Vec2> = vec![];
+//
+//        for line_no in 0..self.screen.size().y {
+//            let line = self.screen[line_no].unwrap();
+//
+//            let line_with_blanks: Vec<&str> = line
+//                .iter()
+//                .map(|cell| match cell {
+//                    None => " ".to_string(),
+//                    Some(cell) => match cell.letter {
+//                        GraphemePart::Begin(s) => s,
+//                        GraphemePart::Continuation => "".to_string(),
+//                    },
+//                })
+//                .collect();
+//
+//            let line_as_string = line_with_blanks.join();
+//        }
+//
+//        v
+//    }
 }
 
 impl View for ObservedScreenView {
     fn draw(&self, printer: &Printer) {
-
         for x in 0..self.screen.size().x {
             for y in 0..self.screen.size().y {
-                let pos = Vec2::new(x,y);
-                let cell_op : &Option<ObservedCell> = &self.screen[&pos];
+                let pos = Vec2::new(x, y);
+                let cell_op: &Option<ObservedCell> = &self.screen[&pos];
                 if cell_op.is_none() {
-//                    printer.print(pos, "o");
+                    //                    printer.print(pos, "o");
                     continue;
                 }
 
@@ -35,7 +57,7 @@ impl View for ObservedScreenView {
                     continue;
                 }
 
-                printer.with_effects(cell.style.effects, | printer | {
+                printer.with_effects(cell.style.effects, |printer| {
                     let color_style = ColorStyle {
                         front: ColorType::Color(cell.style.colors.front),
                         back: ColorType::Color(cell.style.colors.back),
@@ -50,5 +72,4 @@ impl View for ObservedScreenView {
     fn required_size(&mut self, _: Vec2) -> Vec2 {
         self.screen.size()
     }
-
 }

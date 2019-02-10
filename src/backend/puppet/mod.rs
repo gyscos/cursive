@@ -154,7 +154,7 @@ impl backend::Backend for Backend {
 
             // if we got here, we have to write a new character.
             // TODO(njskalski): add the support for "multiple cell" characters.
-            screen[&lpos] = Some(ObservedCell::new(style.clone(), Some(charp)));
+            screen[&lpos] = Some(ObservedCell::new(lpos,style.clone(), Some(charp)));
         }
     }
 

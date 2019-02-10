@@ -41,18 +41,19 @@ impl GraphemePart {
 
 #[derive(Debug, Clone)]//, Serialize, Deserialize)]
 pub struct ObservedCell {
+    pub pos: Vec2,
     pub style: Rc<ObservedStyle>,
     pub letter: GraphemePart,
 }
 
 impl ObservedCell {
-    pub fn new(style: Rc<ObservedStyle>, letter: Option<String>) -> Self {
+    pub fn new(pos: Vec2, style: Rc<ObservedStyle>, letter: Option<String>) -> Self {
         let letter: GraphemePart = match letter {
             Some(s) => GraphemePart::Begin(s),
             None => GraphemePart::Continuation,
         };
 
-        ObservedCell { style, letter }
+        ObservedCell { pos, style, letter }
     }
 }
 
@@ -76,9 +77,15 @@ impl ObservedScreen {
         index.x * self.size.y + index.y
     }
 
+    fn unflatten_index(&self, index: usize) -> Vec2 {
+        assert!(index < self.contents.len());
+
+        Vec2::new(index / self.size.y, index % self.size.y)
+    }
+
     pub fn clear(&mut self, style : &Rc<ObservedStyle>) {
         for idx in 0..self.contents.len(){
-            self.contents[idx] = Some(ObservedCell::new(style.clone(), None))
+            self.contents[idx] = Some(ObservedCell::new(self.unflatten_index(idx), style.clone(), None))
         }
     }
 
@@ -86,6 +93,67 @@ impl ObservedScreen {
         self.size
     }
 }
+
+pub trait ObservedPieceInterface {
+    fn min(&self) -> Vec2;
+    fn max(&self) -> Vec2;
+    fn parent(&self) -> &ObservedScreen;
+}
+
+struct ObservedPiece<'a> {
+    min : Vec2,
+    max : Vec2,
+    parent : &'a ObservedScreen
+}
+
+impl ObservedPieceInterface for ObservedScreen {
+    fn min(&self) -> Vec2 {
+        Vec2::new(0,0)
+    }
+
+    fn max(&self) -> Vec2 {
+        self.size
+    }
+
+    fn parent(&self) -> &ObservedScreen {
+        self
+    }
+}
+
+//impl <'a, 'b> Index<&Vec2> for ObservedPieceInterface<'a> {
+//    type Output = Option<ObservedCell>;
+//
+//    fn index(&'b self, index: &Vec2) -> &'b Self::Output {
+//        assert!(self.min().x >= index.x);
+//        assert!(self.max().x < index.x);
+//        assert!(self.min().y >= index.y);
+//        assert!(self.max().y < index.y);
+//
+//        &self.parent()[&(*index + self.min())]
+//    }
+//}
+
+//impl IndexMut<&Vec2> for ObservedScreen {
+//    fn index_mut(&mut self, index: &Vec2) -> &mut Option<ObservedCell> {
+//        let idx = self.flatten_index(&index);
+//        &mut self.contents[idx]
+//    }
+//}
+
+
+
+//impl Index<usize> for ObservedScreen {
+//    type Output = Option<[Option<ObservedCell>]>;
+//
+//    /// Returns line.
+//    fn index(&self, index: usize) -> Self::Output {
+//        if index > self.size.y {
+//            None
+//        } else {
+//            Some(self.contents[(index*self.size.x)..((index+1) * self.size.x)])
+//        }
+//    }
+//}
 
 impl Index<&Vec2> for ObservedScreen {
     type Output = Option<ObservedCell>;
