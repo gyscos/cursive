@@ -10,7 +10,7 @@ use theme::Effect;
 use theme::Style;
 use Vec2;
 use theme::Color;
-use serde::{Serialize, Deserialize};
+//use serde::{Serialize, Deserialize};
 use unicode_segmentation::UnicodeSegmentation;
 use core::borrow::Borrow;
 

@@ -86,8 +86,6 @@ extern crate toml;
 extern crate unicode_segmentation;
 extern crate unicode_width;
 extern crate xi_unicode;
-#[macro_use]
-extern crate serde;
 extern crate core;
 
 macro_rules! new_default(
