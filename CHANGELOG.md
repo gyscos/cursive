@@ -1,13 +1,19 @@
 # Changelog
 
-## Next version (0.10.0)
+## 0.10.0
 
 ### New features
 
 - Add `EventTrigger` and update `OnEventView` to use it.
     - Breaking change: "inner" callbacks for OnEventView now take the event as
       extra argument.
-- Add `Printer::enabled` and `EnableableView` to disable whole subtrees
+- Add `Printer::enabled` and `EnableableView` to disable whole subtrees.
+- Add `RadioGroup::on_change` to set a callback on selection change.
+- `SelectView` now uses `StyledString` to display colored text.
+- Add `PaddedView` to add padding to any view.
+- Update dependencies
+    - Breaking change: crossbeam-channel was updated, and using `send()` now
+      returns a `Result`.
 
 ### Bugfixes
 

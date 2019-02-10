@@ -5,7 +5,7 @@ use std::ops::Deref;
 use theme::ColorStyle;
 use vec::Vec2;
 use view::{IntoBoxedView, Offset, Position, Selector, View, ViewWrapper};
-use views::{Layer, ShadowView, ViewBox};
+use views::{CircularFocus, Layer, ShadowView, ViewBox};
 use Printer;
 use With;
 
@@ -55,27 +55,39 @@ impl Placement {
 // A child view can be wrapped in multiple ways.
 enum ChildWrapper<T: View> {
     // Some views include a shadow around.
-    Shadow(ShadowView<Layer<T>>),
+    Shadow(ShadowView<Layer<CircularFocus<T>>>),
 
     // Some include only include a background.
-    Backfilled(Layer<T>),
+    Backfilled(Layer<CircularFocus<T>>),
 
     // Some views don't even have a background (they'll be transparent).
-    Plain(T),
+    Plain(CircularFocus<T>),
 }
 
 impl<T: View> ChildWrapper<T> {
     fn unwrap(self) -> T {
         match self {
-            // ShadowView::into_inner and Layer::into_inner can never fail.
-            ChildWrapper::Shadow(shadow) => {
-                shadow.into_inner().ok().unwrap().into_inner().ok().unwrap()
-            }
+            // All these into_inner() can never fail.
+            // (ShadowView, Layer, CircularFocus)
+            ChildWrapper::Shadow(shadow) => shadow
+                .into_inner()
+                .ok()
+                .unwrap()
+                .into_inner()
+                .ok()
+                .unwrap()
+                .into_inner()
+                .ok()
+                .unwrap(),
             // Layer::into_inner can never fail.
-            ChildWrapper::Backfilled(background) => {
-                background.into_inner().ok().unwrap()
-            }
-            ChildWrapper::Plain(layer) => layer,
+            ChildWrapper::Backfilled(background) => background
+                .into_inner()
+                .ok()
+                .unwrap()
+                .into_inner()
+                .ok()
+                .unwrap(),
+            ChildWrapper::Plain(layer) => layer.into_inner().ok().unwrap(),
         }
     }
 }
@@ -84,9 +96,13 @@ impl<T: View> ChildWrapper<T> {
     /// Returns a reference to the inner view
     pub fn get_inner(&self) -> &T {
         match *self {
-            ChildWrapper::Shadow(ref shadow) => shadow.get_inner().get_inner(),
-            ChildWrapper::Backfilled(ref background) => background.get_inner(),
-            ChildWrapper::Plain(ref layer) => layer,
+            ChildWrapper::Shadow(ref shadow) => {
+                shadow.get_inner().get_inner().get_inner()
+            }
+            ChildWrapper::Backfilled(ref background) => {
+                background.get_inner().get_inner()
+            }
+            ChildWrapper::Plain(ref layer) => layer.get_inner(),
         }
     }
 
@@ -94,12 +110,12 @@ impl<T: View> ChildWrapper<T> {
     pub fn get_inner_mut(&mut self) -> &mut T {
         match *self {
             ChildWrapper::Shadow(ref mut shadow) => {
-                shadow.get_inner_mut().get_inner_mut()
+                shadow.get_inner_mut().get_inner_mut().get_inner_mut()
             }
             ChildWrapper::Backfilled(ref mut background) => {
-                background.get_inner_mut()
+                background.get_inner_mut().get_inner_mut()
             }
-            ChildWrapper::Plain(ref mut layer) => layer,
+            ChildWrapper::Plain(ref mut layer) => layer.get_inner_mut(),
         }
     }
 }
@@ -202,7 +218,9 @@ impl StackView {
     {
         let boxed = ViewBox::boxed(view);
         self.layers.push(Child {
-            view: ChildWrapper::Backfilled(Layer::new(boxed)),
+            view: ChildWrapper::Backfilled(Layer::new(
+                CircularFocus::wrap_tab(boxed),
+            )),
             size: Vec2::zero(),
             placement: Placement::Fullscreen,
             virgin: true,
@@ -307,7 +325,7 @@ impl StackView {
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
             view: ChildWrapper::Shadow(
-                ShadowView::new(Layer::new(boxed))
+                ShadowView::new(Layer::new(CircularFocus::wrap_tab(boxed)))
                     .top_padding(position.y == Offset::Center)
                     .left_padding(position.x == Offset::Center),
             ),
@@ -332,7 +350,7 @@ impl StackView {
     {
         let boxed = ViewBox::boxed(view);
         self.layers.push(Child {
-            view: ChildWrapper::Plain(boxed),
+            view: ChildWrapper::Plain(CircularFocus::wrap_tab(boxed)),
             size: Vec2::new(0, 0),
             placement: Placement::Floating(position),
             virgin: true,
@@ -531,7 +549,8 @@ impl View for StackView {
         match StackPositionIterator::new(
             self.layers.iter_mut(),
             self.last_size,
-        ).last()
+        )
+        .last()
         {
             None => EventResult::Ignored,
             Some((v, offset)) => v.view.on_event(event.relativized(offset)),
@@ -674,33 +693,25 @@ mod tests {
             .layer(TextView::new("1"))
             .layer(TextView::new("2"));
 
-        assert!(
-            stack
-                .get(LayerPosition::FromFront(0))
-                .unwrap()
-                .as_any()
-                .is::<TextView>()
-        );
-        assert!(
-            stack
-                .get(LayerPosition::FromBack(0))
-                .unwrap()
-                .as_any()
-                .is::<TextView>()
-        );
-        assert!(
-            stack
-                .get_mut(LayerPosition::FromFront(0))
-                .unwrap()
-                .as_any_mut()
-                .is::<TextView>()
-        );
-        assert!(
-            stack
-                .get_mut(LayerPosition::FromBack(0))
-                .unwrap()
-                .as_any_mut()
-                .is::<TextView>()
-        );
+        assert!(stack
+            .get(LayerPosition::FromFront(0))
+            .unwrap()
+            .as_any()
+            .is::<TextView>());
+        assert!(stack
+            .get(LayerPosition::FromBack(0))
+            .unwrap()
+            .as_any()
+            .is::<TextView>());
+        assert!(stack
+            .get_mut(LayerPosition::FromFront(0))
+            .unwrap()
+            .as_any_mut()
+            .is::<TextView>());
+        assert!(stack
+            .get_mut(LayerPosition::FromBack(0))
+            .unwrap()
+            .as_any_mut()
+            .is::<TextView>());
     }
 }

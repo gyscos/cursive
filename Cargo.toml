@@ -9,7 +9,7 @@ license = "MIT"
 name = "cursive"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/Cursive"
-version = "0.10.0"
+version = "0.10.1-alpha.0"
 
 [badges.travis-ci]
 repository = "gyscos/Cursive"
@@ -18,57 +18,55 @@ repository = "gyscos/Cursive"
 repository = "gyscos/Cursive"
 
 [dependencies]
-enum-map = "0.4"
-enumset = "0.3"
-log = "0.4"
-owning_ref = "0.4"
-toml = "0.4"
-unicode-segmentation = "1.0"
-unicode-width = "0.1"
-xi-unicode = "0.1"
-libc = "0.2"
-term_size = { version = "0.3", optional = true }
-crossbeam-channel = "0.3"
-serde = "1.0"
-serde_json = "1.0"
+enum-map = "0.5.0"
+enumset = "0.3.15"
+log = "0.4.6"
+owning_ref = "0.4.0"
+toml = "0.4.10"
+unicode-segmentation = "1.2.1"
+unicode-width = "0.1.5"
+xi-unicode = "0.1.0"
+libc = "0.2.47"
+term_size = { version = "0.3.1", optional = true }
+crossbeam-channel = "0.3.6"
 
 [dependencies.num]
 default-features = false
-version = "0.2"
+version = "0.2.0"
 
 [dependencies.maplit]
 optional = true
-version = "1.0"
+version = "1.0.1"
 
 [dependencies.bear-lib-terminal]
 optional = true
-version = "1.4"
+version = "2.0.0"
 
 [dependencies.ncurses]
 features = ["wide"]
 optional = true
-version = "5.97"
+version = "5.98.0"
 
 [dependencies.pancurses]
 features = ["wide"]
 optional = true
-version = "0.16"
+version = "0.16.1"
 
 [dependencies.pulldown-cmark]
 default-features = false
 optional = true
-version = "0.2"
+version = "0.2.0"
 
 [dependencies.termion]
 optional = true
-version = "1.5"
+version = "1.5.1"
 
-[target.'cfg(unix)'.dependencies.signal-hook]
-version = "0.1"
+[target.'cfg(unix)'.dependencies]
+signal-hook = "0.1.7"
 
 [dev-dependencies]
-rand = "0.6"
-pretty-bytes = "0.2"
+rand = "0.6.4"
+pretty-bytes = "0.2.2"
 
 [features]
 blt-backend = ["bear-lib-terminal"]
