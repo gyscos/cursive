@@ -198,6 +198,15 @@ pub trait ObservedPieceInterface {
         }
         v
     }
+
+    fn expanded(&self, up_left : Vec2, down_right : Vec2) -> ObservedPiece {
+        assert!(self.min().x >= up_left.x);
+        assert!(self.min().y >= up_left.y);
+        assert!(self.max().x + down_right.x <= self.parent().size.x);
+        assert!(self.max().y + down_right.y <= self.parent().size.y);
+
+        ObservedPiece::new(self.parent(), self.min() - up_left, self.max() + down_right)
+    }
 }
 
 pub struct ObservedPiece<'a> {
@@ -243,6 +252,17 @@ impl <'a> ObservedLine<'a> {
             parent,
             line_start,
             line_len
+        }
+    }
+
+    fn expanded_line(&self, left : usize, right: usize) -> Self {
+        assert!(left <= self.line_start.x);
+        assert!(self.line_start.x + self.line_len + right <= self.parent.size.x);
+
+        ObservedLine {
+            parent : self.parent,
+            line_start : Vec2::new(self.line_start.x - left, self.line_start.y),
+            line_len : self.line_len + right
         }
     }
 }
