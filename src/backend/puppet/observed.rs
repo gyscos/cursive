@@ -11,14 +11,16 @@ use theme::Style;
 use Vec2;
 use theme::Color;
 use serde::{Serialize, Deserialize};
+use unicode_segmentation::UnicodeSegmentation;
+use core::borrow::Borrow;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ObservedStyle {
     pub colors: ColorPair,
     pub effects: EnumSet<Effect>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum GraphemePart {
     Begin(String),
     Continuation,
@@ -32,6 +34,13 @@ impl GraphemePart {
         }
     }
 
+    pub fn as_option(&self) -> Option<&String> {
+        match self {
+            &GraphemePart::Begin(ref String) => Some(String),
+            &GraphemePart::Continuation => None
+        }
+    }
+
     pub fn unwrap(&self) -> String {
         match self {
             &GraphemePart::Begin(ref s) => s.clone(),
@@ -40,7 +49,7 @@ impl GraphemePart {
     }
 }
 
-#[derive(Debug, Clone)]//, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq)]//, Serialize, Deserialize)]
 pub struct ObservedCell {
     pub pos: Vec2,
     pub style: Rc<ObservedStyle>,
@@ -75,13 +84,13 @@ impl ObservedScreen {
         assert!(index.x < self.size.x);
         assert!(index.y < self.size.y);
 
-        index.x * self.size.y + index.y
+        index.y * self.size.x + index.x
     }
 
     fn unflatten_index(&self, index: usize) -> Vec2 {
         assert!(index < self.contents.len());
 
-        Vec2::new(index / self.size.y, index % self.size.y)
+        Vec2::new(index / self.size.x, index % self.size.x)
     }
 
     pub fn clear(&mut self, style : &Rc<ObservedStyle>) {
@@ -96,6 +105,70 @@ impl ObservedScreen {
 
     pub fn piece(&self, min : Vec2, max : Vec2) -> ObservedPiece {
         ObservedPiece::new(self, min, max)
+    }
+
+    pub fn find_occurences<'a>(&'a self, pattern : &str) -> Vec<ObservedLine<'a>> {
+        // TODO(njskalski): make this implementation less naive?
+        // TODO(njskalski): test for two-cell letters.
+
+        let mut hits : Vec<ObservedLine> = vec![];
+        for y in self.min().y..self.max().y {
+            'x: for x in self.min().x..self.max().x {
+                // check candidate.
+
+                if pattern.len() > self.size.x - x {
+                    continue;
+                }
+
+                let mut cursor : usize = 0;
+
+                loop {
+                    let pattern_symbol = pattern[cursor..]
+                        .graphemes(true)
+                        .next()
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Found no char at cursor {} in {}",
+                                cursor, &pattern
+                            )
+                        });
+
+                    let pos_it = Vec2::new(x + cursor, y);
+
+                    let found_symbol: Option<&String> = if let Some(ref cell) = self[&pos_it] {
+                        cell.letter.as_option()
+                    } else { None };
+
+                    match found_symbol {
+                        Some(screen_symbol) => {
+                            if pattern_symbol == screen_symbol {
+                                cursor += screen_symbol.len();
+                            } else {
+                                continue 'x;
+                            }
+                        }
+                        None => {
+                            if pattern_symbol == " " {
+                                cursor += 1;
+                            } else {
+                                break;
+                            }
+                        }
+                    };
+
+                    if cursor == pattern.len() {
+                        break;
+                    };
+                }
+
+                if cursor == pattern.len() {
+                    hits.push(
+                        ObservedLine::new(self, Vec2::new(x,y), pattern.len())
+                    );
+                }
+            }
+        }
+        hits
     }
 }
 
@@ -180,7 +253,7 @@ impl <'a> ObservedPieceInterface for ObservedLine<'a> {
     }
 
     fn max(&self) -> Vec2 {
-        self.line_start + Vec2::new(1, self.line_len)
+        self.line_start + Vec2::new(self.line_len, 1)
     }
 
     fn parent(&self) -> &ObservedScreen {
@@ -222,5 +295,106 @@ impl IndexMut<&Vec2> for ObservedScreen {
     fn index_mut(&mut self, index: &Vec2) -> &mut Option<ObservedCell> {
         let idx = self.flatten_index(&index);
         &mut self.contents[idx]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use backend::puppet::DEFAULT_OBSERVED_STYLE;
+
+    /// Expecting fake_screen to be square, # will be replaced with blank.
+    fn get_observed_screen(fake_screen : &Vec<&str>) -> ObservedScreen {
+        let observed_style : Rc<ObservedStyle> = Rc::new(DEFAULT_OBSERVED_STYLE.clone());
+
+        let height = fake_screen.len();
+        let width = fake_screen[0].len();
+        let size = Vec2::new(width, height);
+
+        let mut os = ObservedScreen::new(size);
+
+        for y in 0..fake_screen.len() {
+            for x in 0..width {
+                let letter = fake_screen[y][x..].graphemes(true).next().unwrap().to_owned();
+                let idx = os.flatten_index(&Vec2::new(x,y));
+                os.contents[idx] = if letter == "#" {
+                    None
+                } else {
+                    Some(ObservedCell::new(
+                        Vec2::new(x, y),
+                        observed_style.clone(),
+                        Some(letter)
+                    ))
+                };
+            }
+        }
+
+        os
+    }
+
+    #[test]
+    fn test_test() {
+        let fake_screen : Vec<&'static str> = vec![
+            "..hello***",
+            "!!##$$$$$*",
+            ".hello^^^^",
+        ];
+
+        let os = get_observed_screen(&fake_screen);
+
+        assert_eq!(os[&Vec2::new(0,0)].as_ref().unwrap().letter.as_option(), Some(&".".to_owned()));
+        assert_eq!(os[&Vec2::new(2,1)], None);
+    }
+
+    #[test]
+    fn find_occurrences_no_blanks() {
+        let fake_screen : Vec<&'static str> = vec![
+            "..hello***",
+            "!!##$$$$$*",
+            ".hello^^^^",
+        ];
+
+        let os = get_observed_screen(&fake_screen);
+
+        let hits = os.find_occurences("hello");
+
+        assert_eq!(hits.len(), 2);
+        assert_eq!(hits[0].size(), Vec2::new(5, 1));
+        assert_eq!(hits[1].size(), Vec2::new(5, 1));
+
+        assert_eq!(hits[0].to_string(), "hello");
+        assert_eq!(hits[1].to_string(), "hello");
+
+        assert_eq!(hits[0].min(), Vec2::new(2, 0));
+        assert_eq!(hits[0].max(), Vec2::new(7, 1));
+
+        assert_eq!(hits[1].min(), Vec2::new(1, 2));
+        assert_eq!(hits[1].max(), Vec2::new(6, 3));
+    }
+
+    #[test]
+    fn find_occurrences_some_blanks() {
+        let fake_screen : Vec<&'static str> = vec![
+            "__hello world_",
+            "hello!world___",
+            "___hello#world",
+        ];
+
+        let os = get_observed_screen(&fake_screen);
+
+        let hits = os.find_occurences("hello world");
+
+        assert_eq!(hits.len(), 2);
+        assert_eq!(hits[0].size(), Vec2::new(11, 1));
+        assert_eq!(hits[1].size(), Vec2::new(11, 1));
+
+        assert_eq!(hits[0].to_string(), "hello world");
+        assert_eq!(hits[1].to_string(), "hello world");
+
+        assert_eq!(hits[0].min(), Vec2::new(2, 0));
+        assert_eq!(hits[0].max(), Vec2::new(13, 1));
+
+        assert_eq!(hits[1].min(), Vec2::new(3, 2));
+        assert_eq!(hits[1].max(), Vec2::new(14, 3));
     }
 }
