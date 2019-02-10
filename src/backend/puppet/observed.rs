@@ -255,7 +255,7 @@ impl <'a> ObservedLine<'a> {
         }
     }
 
-    fn expanded_line(&self, left : usize, right: usize) -> Self {
+    pub fn expanded_line(&self, left : usize, right: usize) -> Self {
         assert!(left <= self.line_start.x);
         assert!(self.line_start.x + self.line_len + right <= self.parent.size.x);
 
