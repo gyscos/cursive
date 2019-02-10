@@ -262,7 +262,7 @@ impl <'a> ObservedLine<'a> {
         ObservedLine {
             parent : self.parent,
             line_start : Vec2::new(self.line_start.x - left, self.line_start.y),
-            line_len : self.line_len + right
+            line_len : self.line_len + left + right
         }
     }
 }
@@ -417,4 +417,24 @@ mod tests {
         assert_eq!(hits[1].min(), Vec2::new(3, 2));
         assert_eq!(hits[1].max(), Vec2::new(14, 3));
     }
+
+    #[test]
+    fn test_expand_lines() {
+        let fake_screen : Vec<&'static str> = vec![
+            "abc hello#efg",
+        ];
+
+        let os = get_observed_screen(&fake_screen);
+
+        let hits = os.find_occurences("hello");
+
+        assert_eq!(hits.len(), 1);
+        let hit = hits.first().unwrap();
+        assert_eq!(hit.size(), Vec2::new(5, 1));
+        let expanded_left_1 = hit.expanded_line(3, 0);
+        assert_eq!(expanded_left_1.size(), Vec2::new(8, 1));
+        assert_eq!(expanded_left_1.to_string(), "bc hello");
+
+    }
+
 }
