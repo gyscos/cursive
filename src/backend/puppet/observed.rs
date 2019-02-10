@@ -4,6 +4,7 @@ use enumset::EnumSet;
 use std::ops::Index;
 use std::ops::IndexMut;
 use std::rc::Rc;
+use std::string::ToString;
 use theme::ColorPair;
 use theme::Effect;
 use theme::Style;
@@ -92,18 +93,55 @@ impl ObservedScreen {
     pub fn size(&self) -> Vec2 {
         self.size
     }
+
+    pub fn piece(&self, min : Vec2, max : Vec2) -> ObservedPiece {
+        ObservedPiece::new(self, min, max)
+    }
 }
 
 pub trait ObservedPieceInterface {
     fn min(&self) -> Vec2;
     fn max(&self) -> Vec2;
     fn parent(&self) -> &ObservedScreen;
+
+    fn size(&self) -> Vec2 {
+        self.max() - self.min()
+    }
+
+    fn as_strings(&self) -> Vec<String> {
+        let mut v : Vec<String> = vec![];
+        for y in self.min().y..self.max().y {
+            let mut s = String::new();
+            for x in self.min().x..self.max().x {
+                match &self.parent()[&Vec2::new(x, y)] {
+                    None => s.push(' '),
+                    Some(cell) => match &cell.letter {
+                        GraphemePart::Begin(lex) => s.push_str(&lex),
+                        _ => {}
+                    }
+                }
+            }
+            v.push(s);
+        }
+        v
+    }
 }
 
-struct ObservedPiece<'a> {
+pub struct ObservedPiece<'a> {
     min : Vec2,
     max : Vec2,
     parent : &'a ObservedScreen
+}
+
+
+impl <'a> ObservedPiece<'a> {
+    fn new(parent : &'a ObservedScreen, min : Vec2, max : Vec2) -> Self {
+        ObservedPiece {
+            min,
+            max,
+            parent
+        }
+    }
 }
 
 impl ObservedPieceInterface for ObservedScreen {
@@ -120,40 +158,56 @@ impl ObservedPieceInterface for ObservedScreen {
     }
 }
 
-//impl <'a, 'b> Index<&Vec2> for ObservedPieceInterface<'a> {
-//    type Output = Option<ObservedCell>;
-//
-//    fn index(&'b self, index: &Vec2) -> &'b Self::Output {
-//        assert!(self.min().x >= index.x);
-//        assert!(self.max().x < index.x);
-//        assert!(self.min().y >= index.y);
-//        assert!(self.max().y < index.y);
-//
-//        &self.parent()[&(*index + self.min())]
-//    }
-//}
+pub struct ObservedLine<'a> {
+    line_start : Vec2,
+    line_len : usize,
+    parent : &'a ObservedScreen
+}
 
-//impl IndexMut<&Vec2> for ObservedScreen {
-//    fn index_mut(&mut self, index: &Vec2) -> &mut Option<ObservedCell> {
-//        let idx = self.flatten_index(&index);
-//        &mut self.contents[idx]
-//    }
-//}
+impl <'a> ObservedLine<'a> {
+    fn new(parent : &'a ObservedScreen, line_start : Vec2, line_len : usize) -> Self {
+        ObservedLine {
+            parent,
+            line_start,
+            line_len
+        }
+    }
+}
+
+impl <'a> ObservedPieceInterface for ObservedLine<'a> {
+    fn min(&self) -> Vec2 {
+        self.line_start
+    }
+
+    fn max(&self) -> Vec2 {
+        self.line_start + Vec2::new(1, self.line_len)
+    }
+
+    fn parent(&self) -> &ObservedScreen {
+        self.parent
+    }
+}
 
 
+impl <'a> ToString for ObservedLine<'a> {
+    fn to_string(&self) -> String {
+        self.as_strings().remove(0)
+    }
+}
 
-//impl Index<usize> for ObservedScreen {
-//    type Output = Option<[Option<ObservedCell>]>;
-//
-//    /// Returns line.
-//    fn index(&self, index: usize) -> Self::Output {
-//        if index > self.size.y {
-//            None
-//        } else {
-//            Some(self.contents[(index*self.size.x)..((index+1) * self.size.x)])
-//        }
-//    }
-//}
+
+impl Index<&Vec2> for ObservedPieceInterface {
+    type Output = Option<ObservedCell>;
+
+    fn index(&self, index: &Vec2) -> &Self::Output {
+        assert!(self.min().x >= index.x);
+        assert!(self.max().x < index.x);
+        assert!(self.min().y >= index.y);
+        assert!(self.max().y < index.y);
+
+        &self.parent()[&(*index + self.min())]
+    }
+}
 
 impl Index<&Vec2> for ObservedScreen {
     type Output = Option<ObservedCell>;

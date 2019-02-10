@@ -15,29 +15,6 @@ impl ObservedScreenView {
     pub fn new(obs: ObservedScreen) -> Self {
         ObservedScreenView { screen: obs }
     }
-
-//    pub fn find_occurences(&self, s: &str) -> Vec<Vec2> {
-//        let mut v: Vec<Vec2> = vec![];
-//
-//        for line_no in 0..self.screen.size().y {
-//            let line = self.screen[line_no].unwrap();
-//
-//            let line_with_blanks: Vec<&str> = line
-//                .iter()
-//                .map(|cell| match cell {
-//                    None => " ".to_string(),
-//                    Some(cell) => match cell.letter {
-//                        GraphemePart::Begin(s) => s,
-//                        GraphemePart::Continuation => "".to_string(),
-//                    },
-//                })
-//                .collect();
-//
-//            let line_as_string = line_with_blanks.join();
-//        }
-//
-//        v
-//    }
 }
 
 impl View for ObservedScreenView {
