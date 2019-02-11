@@ -322,14 +322,37 @@ impl IndexMut<&Vec2> for ObservedScreen {
 mod tests {
     use super::*;
     use backend::puppet::DEFAULT_OBSERVED_STYLE;
+    use Cursive;
+    use backend::puppet::Backend;
+    use views::TextView;
+    use views::TextArea;
+    use view::*;
+    use views::*;
+    use core::borrow::BorrowMut;
 
     /// Expecting fake_screen to be square, # will be replaced with blank.
     fn get_observed_screen(fake_screen : &Vec<&str>) -> ObservedScreen {
-        let observed_style : Rc<ObservedStyle> = Rc::new(DEFAULT_OBSERVED_STYLE.clone());
-
         let height = fake_screen.len();
         let width = fake_screen[0].len();
         let size = Vec2::new(width, height);
+
+        let backend = Backend::init(Some(size));
+        let sink = backend.stream();
+        let input = backend.input();
+
+        let mut siv = Cursive::new(move || backend);
+
+        let mut ta = TextArea::new().content("d").fixed_size(size);
+
+        siv.add_fullscreen_layer(ta);
+        let observed_style : Rc<ObservedStyle> = Rc::new(DEFAULT_OBSERVED_STYLE.clone());
+        siv.quit();
+        input.send(Some(Event::Refresh));
+        siv.step();
+
+        let screen = sink.recv().unwrap();
+
+
 
         let mut os = ObservedScreen::new(size);
 
@@ -431,10 +454,53 @@ mod tests {
         assert_eq!(hits.len(), 1);
         let hit = hits.first().unwrap();
         assert_eq!(hit.size(), Vec2::new(5, 1));
-        let expanded_left_1 = hit.expanded_line(3, 0);
-        assert_eq!(expanded_left_1.size(), Vec2::new(8, 1));
-        assert_eq!(expanded_left_1.to_string(), "bc hello");
+        let expanded_left = hit.expanded_line(3, 0);
+        assert_eq!(expanded_left.size(), Vec2::new(8, 1));
+        assert_eq!(expanded_left.to_string(), "bc hello");
 
+        let expanded_left = hit.expanded_line(4, 0);
+        assert_eq!(expanded_left.size(), Vec2::new(9, 1));
+        assert_eq!(expanded_left.to_string(), "abc hello");
+
+        let expanded_right = hit.expanded_line(0, 2);
+        assert_eq!(expanded_right.size(), Vec2::new(7, 1));
+        assert_eq!(expanded_right.to_string(), "hello e");
+
+        let expanded_right = hit.expanded_line(0, 4);
+        assert_eq!(expanded_right.size(), Vec2::new(9, 1));
+        assert_eq!(expanded_right.to_string(), "hello efg");
+    }
+
+    #[test]
+    fn test_expand_lines_weird_symbol() {
+        let fake_screen : Vec<&'static str> = vec![
+            "abc ▸ <root>#efg",
+        ];
+
+        let os = get_observed_screen(&fake_screen);
+
+        {
+            let hits = os.find_occurences("root");
+
+            assert_eq!(hits.len(), 1);
+            let hit = hits.first().unwrap();
+            assert_eq!(hit.size(), Vec2::new(4, 1));
+            let expanded_left = hit.expanded_line(3, 0);
+            assert_eq!(expanded_left.size(), Vec2::new(8, 1));
+            assert_eq!(expanded_left.to_string(), "bc hello");
+
+//            let expanded_left = hit.expanded_line(4, 0);
+//            assert_eq!(expanded_left.size(), Vec2::new(9, 1));
+//            assert_eq!(expanded_left.to_string(), "abc hello");
+//
+//            let expanded_right = hit.expanded_line(0, 2);
+//            assert_eq!(expanded_right.size(), Vec2::new(7, 1));
+//            assert_eq!(expanded_right.to_string(), "hello e");
+//
+//            let expanded_right = hit.expanded_line(0, 4);
+//            assert_eq!(expanded_right.size(), Vec2::new(9, 1));
+//            assert_eq!(expanded_right.to_string(), "hello efg");
+        }
     }
 
 }

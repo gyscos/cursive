@@ -49,17 +49,18 @@ pub struct Backend {
 }
 
 impl Backend {
-    pub fn init() -> Box<Backend>
+    pub fn init(size_op : Option<Vec2>) -> Box<Backend>
     where
         Self: Sized,
     {
         let (inner_sender, inner_receiver) = crossbeam_channel::bounded(1);
+        let size = size_op.unwrap_or(DEFAULT_SIZE);
 
         let mut backend = Backend {
             inner_sender,
             inner_receiver,
             prev_frame: RefCell::new(None),
-            current_frame: RefCell::new(ObservedScreen::new(DEFAULT_SIZE)),
+            current_frame: RefCell::new(ObservedScreen::new(size)),
             size: RefCell::new(DEFAULT_SIZE),
             current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE)),
             screen_channel : crossbeam_channel::unbounded()
