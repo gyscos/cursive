@@ -124,8 +124,9 @@ impl ObservedScreen {
                 let mut cursor : usize = 0;
 
                 loop {
-                    let pattern_symbol = pattern[cursor..]
+                    let pattern_symbol = pattern
                         .graphemes(true)
+                        .skip(cursor)
                         .next()
                         .unwrap_or_else(|| {
                             panic!(
@@ -157,14 +158,14 @@ impl ObservedScreen {
                         }
                     };
 
-                    if cursor == pattern.len() {
+                    if cursor == pattern.graphemes(true).count() {
                         break;
                     };
                 }
 
-                if cursor == pattern.len() {
+                if cursor == pattern.graphemes(true).count() {
                     hits.push(
-                        ObservedLine::new(self, Vec2::new(x,y), pattern.len())
+                        ObservedLine::new(self, Vec2::new(x,y), cursor)
                     );
                 }
             }
@@ -492,32 +493,52 @@ mod tests {
     }
 
     #[test]
-    fn test_expand_lines_weird_symbol() {
+    fn test_expand_lines_weird_symbol_1() {
         let fake_screen : Vec<&'static str> = vec![
             "abc ▸ <root>#efg",
         ];
 
         let os = get_observed_screen(&fake_screen);
 
-        {
-            let hits = os.find_occurences("root");
+        let hits = os.find_occurences("root");
 
-            assert_eq!(hits.len(), 1);
-            let hit = hits.first().unwrap();
-            assert_eq!(hit.size(), Vec2::new(4, 1));
-            let expanded_left = hit.expanded_line(3, 0);
-            assert_eq!(expanded_left.size(), Vec2::new(7, 1));
-            assert_eq!(expanded_left.to_string(), "▸ <root");
+        assert_eq!(hits.len(), 1);
+        let hit = hits.first().unwrap();
+        assert_eq!(hit.size(), Vec2::new(4, 1));
+        let expanded_left = hit.expanded_line(3, 0);
+        assert_eq!(expanded_left.size(), Vec2::new(7, 1));
+        assert_eq!(expanded_left.to_string(), "▸ <root");
 
-            let expanded_left = hit.expanded_line(7, 0);
-            assert_eq!(expanded_left.size(), Vec2::new(11, 1));
-            assert_eq!(expanded_left.to_string(), "abc ▸ <root");
+        let expanded_left = hit.expanded_line(7, 0);
+        assert_eq!(expanded_left.size(), Vec2::new(11, 1));
+        assert_eq!(expanded_left.to_string(), "abc ▸ <root");
 
-            let expanded_right = hit.expanded_line(0, 5);
-            assert_eq!(expanded_right.size(), Vec2::new(9, 1));
-            assert_eq!(expanded_right.to_string(), "root> efg");
+        let expanded_right = hit.expanded_line(0, 5);
+        assert_eq!(expanded_right.size(), Vec2::new(9, 1));
+        assert_eq!(expanded_right.to_string(), "root> efg");
 
-        }
     }
 
+    #[test]
+    fn test_expand_lines_weird_symbol_2() {
+        let fake_screen : Vec<&'static str> = vec![
+            "abc ▸ <root>#efg",
+        ];
+
+        let os = get_observed_screen(&fake_screen);
+
+        let hits = os.find_occurences("▸");
+
+        assert_eq!(hits.len(), 1);
+        let hit = hits.first().unwrap();
+        assert_eq!(hit.size(), Vec2::new(1, 1));
+        let expanded_left = hit.expanded_line(3, 0);
+        assert_eq!(expanded_left.size(), Vec2::new(4, 1));
+        assert_eq!(expanded_left.to_string(), "bc ▸");
+
+        let expanded_right = hit.expanded_line(0, 9);
+        assert_eq!(expanded_right.size(), Vec2::new(10, 1));
+        assert_eq!(expanded_right.to_string(), "▸ <root> e");
+
+    }
 }
