@@ -61,7 +61,7 @@ impl Backend {
             inner_receiver,
             prev_frame: RefCell::new(None),
             current_frame: RefCell::new(ObservedScreen::new(size)),
-            size: RefCell::new(DEFAULT_SIZE),
+            size: RefCell::new(size),
             current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE)),
             screen_channel : crossbeam_channel::unbounded()
         };

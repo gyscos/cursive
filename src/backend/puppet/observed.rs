@@ -13,6 +13,7 @@ use theme::Color;
 //use serde::{Serialize, Deserialize};
 use unicode_segmentation::UnicodeSegmentation;
 use core::borrow::Borrow;
+use unicode_width::UnicodeWidthStr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ObservedStyle {
@@ -142,7 +143,7 @@ impl ObservedScreen {
                     match found_symbol {
                         Some(screen_symbol) => {
                             if pattern_symbol == screen_symbol {
-                                cursor += screen_symbol.len();
+                                cursor += screen_symbol.width();
                             } else {
                                 continue 'x;
                             }
@@ -329,36 +330,24 @@ mod tests {
     use view::*;
     use views::*;
     use core::borrow::BorrowMut;
+    use event::Event;
+    use std::time::Duration;
 
     /// Expecting fake_screen to be square, # will be replaced with blank.
     fn get_observed_screen(fake_screen : &Vec<&str>) -> ObservedScreen {
-        let height = fake_screen.len();
-        let width = fake_screen[0].len();
-        let size = Vec2::new(width, height);
-
-        let backend = Backend::init(Some(size));
-        let sink = backend.stream();
-        let input = backend.input();
-
-        let mut siv = Cursive::new(move || backend);
-
-        let mut ta = TextArea::new().content("d").fixed_size(size);
-
-        siv.add_fullscreen_layer(ta);
         let observed_style : Rc<ObservedStyle> = Rc::new(DEFAULT_OBSERVED_STYLE.clone());
-        siv.quit();
-        input.send(Some(Event::Refresh));
-        siv.step();
 
-        let screen = sink.recv().unwrap();
-
-
+        let height = fake_screen.len();
+        let width = fake_screen[0].width();
+        let size = Vec2::new(width, height);
 
         let mut os = ObservedScreen::new(size);
 
         for y in 0..fake_screen.len() {
-            for x in 0..width {
-                let letter = fake_screen[y][x..].graphemes(true).next().unwrap().to_owned();
+
+            let mut x : usize = 0;
+            for letter in fake_screen[y].graphemes(true) {
+
                 let idx = os.flatten_index(&Vec2::new(x,y));
                 os.contents[idx] = if letter == "#" {
                     None
@@ -366,14 +355,45 @@ mod tests {
                     Some(ObservedCell::new(
                         Vec2::new(x, y),
                         observed_style.clone(),
-                        Some(letter)
+                        Some(letter.to_owned())
                     ))
                 };
+
+                x += letter.width();
             }
         }
 
         os
     }
+
+//    /// Expecting fake_screen to be square via Cursive draw
+//    fn get_observed_screen_via_draw(fake_screen : &Vec<&str>) -> ObservedScreen {
+//        let height = fake_screen.len();
+//        let width = fake_screen[0].graphemes(true).count();
+//        let size = Vec2::new(width, height);
+//
+//        let backend = Backend::init(Some(size));
+//        let sink = backend.stream();
+//        let input = backend.input();
+//
+//        let mut siv = Cursive::new(move || backend);
+//
+//        let mut ta = TextArea::new().content(fake_screen.join("")).fixed_size(size);
+//
+//        siv.add_fullscreen_layer(ta);
+//        let observed_style : Rc<ObservedStyle> = Rc::new(DEFAULT_OBSERVED_STYLE.clone());
+//        siv.quit();
+//        input.send(Some(Event::Refresh));
+//        siv.step();
+//
+//        let mut last_screen : Option<ObservedScreen> = None;
+//
+//        while let Ok(screen) = sink.recv_timeout(Duration::new(0,0)) {
+//            last_screen = Some(screen);
+//        }
+//
+//        last_screen.unwrap()
+//    }
 
     #[test]
     fn test_test() {
@@ -486,20 +506,17 @@ mod tests {
             let hit = hits.first().unwrap();
             assert_eq!(hit.size(), Vec2::new(4, 1));
             let expanded_left = hit.expanded_line(3, 0);
-            assert_eq!(expanded_left.size(), Vec2::new(8, 1));
-            assert_eq!(expanded_left.to_string(), "bc hello");
+            assert_eq!(expanded_left.size(), Vec2::new(7, 1));
+            assert_eq!(expanded_left.to_string(), "▸ <root");
 
-//            let expanded_left = hit.expanded_line(4, 0);
-//            assert_eq!(expanded_left.size(), Vec2::new(9, 1));
-//            assert_eq!(expanded_left.to_string(), "abc hello");
-//
-//            let expanded_right = hit.expanded_line(0, 2);
-//            assert_eq!(expanded_right.size(), Vec2::new(7, 1));
-//            assert_eq!(expanded_right.to_string(), "hello e");
-//
-//            let expanded_right = hit.expanded_line(0, 4);
-//            assert_eq!(expanded_right.size(), Vec2::new(9, 1));
-//            assert_eq!(expanded_right.to_string(), "hello efg");
+            let expanded_left = hit.expanded_line(7, 0);
+            assert_eq!(expanded_left.size(), Vec2::new(11, 1));
+            assert_eq!(expanded_left.to_string(), "abc ▸ <root");
+
+            let expanded_right = hit.expanded_line(0, 5);
+            assert_eq!(expanded_right.size(), Vec2::new(9, 1));
+            assert_eq!(expanded_right.to_string(), "root> efg");
+
         }
     }
 
