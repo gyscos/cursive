@@ -132,21 +132,22 @@ impl ObservedScreen {
                     continue;
                 }
 
-                let mut cursor: usize = 0;
+                let mut pattern_cursor: usize = 0;
+                let mut pos_cursor: usize = 0;
 
                 loop {
                     let pattern_symbol = pattern
                         .graphemes(true)
-                        .skip(cursor)
+                        .skip(pattern_cursor)
                         .next()
                         .unwrap_or_else(|| {
                             panic!(
                                 "Found no char at cursor {} in {}",
-                                cursor, &pattern
+                                pattern_cursor, &pattern
                             )
                         });
 
-                    let pos_it = Vec2::new(x + cursor, y);
+                    let pos_it = Vec2::new(x + pos_cursor, y);
 
                     let found_symbol: Option<&String> =
                         if let Some(ref cell) = self[&pos_it] {
@@ -158,30 +159,32 @@ impl ObservedScreen {
                     match found_symbol {
                         Some(screen_symbol) => {
                             if pattern_symbol == screen_symbol {
-                                cursor += screen_symbol.width();
+                                pattern_cursor += 1;
+                                pos_cursor += screen_symbol.width();
                             } else {
                                 continue 'x;
                             }
                         }
                         None => {
                             if pattern_symbol == " " {
-                                cursor += 1;
+                                pattern_cursor += 1;
+                                pos_cursor += 1;
                             } else {
-                                break;
+                                continue 'x;
                             }
                         }
                     };
 
-                    if cursor == pattern.graphemes(true).count() {
+                    if pattern_cursor == pattern.graphemes(true).count() {
                         break;
                     };
                 }
 
-                if cursor == pattern.graphemes(true).count() {
+                if pattern_cursor == pattern.graphemes(true).count() {
                     hits.push(ObservedLine::new(
                         self,
                         Vec2::new(x, y),
-                        cursor,
+                        pos_cursor,
                     ));
                 }
             }
