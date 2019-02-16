@@ -53,7 +53,7 @@ impl Backend {
     where
         Self: Sized,
     {
-        let (inner_sender, inner_receiver) = crossbeam_channel::new();
+        let (inner_sender, inner_receiver) = crossbeam_channel::unbounded();
         let size = size_op.unwrap_or(DEFAULT_SIZE);
 
         let mut backend = Backend {
