@@ -116,6 +116,7 @@ impl ObservedScreen {
         ObservedPiece::new(self, min, max)
     }
 
+    /// TODO(njskalski): fails with whitespaces like "\t".
     pub fn find_occurences<'a>(
         &'a self,
         pattern: &str,
