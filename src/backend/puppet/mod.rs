@@ -97,6 +97,7 @@ impl backend::Backend for Backend {
         let receiver = self.inner_receiver.clone();
 
         thread::spawn(move || {
+
             for _ in input_requests {
                 match receiver.recv() {
                     Err(e) => {

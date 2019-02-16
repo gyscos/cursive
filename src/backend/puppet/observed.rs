@@ -257,6 +257,20 @@ impl ObservedPieceInterface for ObservedScreen {
     }
 }
 
+impl <'a> ObservedPieceInterface for ObservedPiece<'a> {
+    fn min(&self) -> Vec2 {
+        self.min
+    }
+
+    fn max(&self) -> Vec2 {
+        self.max
+    }
+
+    fn parent(&self) -> &ObservedScreen {
+        self.parent
+    }
+}
+
 pub struct ObservedLine<'a> {
     line_start: Vec2,
     line_len: usize,
@@ -314,12 +328,12 @@ impl Index<&Vec2> for ObservedPieceInterface {
     type Output = Option<ObservedCell>;
 
     fn index(&self, index: &Vec2) -> &Self::Output {
-        assert!(self.min().x >= index.x);
-        assert!(self.max().x < index.x);
-        assert!(self.min().y >= index.y);
-        assert!(self.max().y < index.y);
+        assert!(self.max().x - self.min().x > index.x);
+        assert!(self.max().y - self.min().y > index.y);
 
-        &self.parent()[&(*index + self.min())]
+        let parent_index = self.min() + index;
+
+        &self.parent()[&parent_index]
     }
 }
 
