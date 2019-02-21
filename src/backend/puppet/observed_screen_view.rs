@@ -1,4 +1,4 @@
-use backend::puppet::observed::GraphemePart;
+//! View visualizing a captured PuppetBackend outputs.
 use backend::puppet::observed::ObservedCell;
 use backend::puppet::observed::ObservedScreen;
 use theme::ColorStyle;
@@ -24,7 +24,6 @@ impl View for ObservedScreenView {
                 let pos = Vec2::new(x, y);
                 let cell_op: &Option<ObservedCell> = &self.screen[&pos];
                 if cell_op.is_none() {
-                    //                    printer.print(pos, "o");
                     continue;
                 }
 
@@ -40,8 +39,10 @@ impl View for ObservedScreenView {
                         back: ColorType::Color(cell.style.colors.back),
                     };
 
-                    printer.print(pos, &cell.letter.unwrap());
-                })
+                    printer.with_color(color_style, |printer| {
+                        printer.print(pos, &cell.letter.unwrap());
+                    });
+                });
             }
         }
     }

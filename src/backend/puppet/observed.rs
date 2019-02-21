@@ -5,15 +5,11 @@ use std::ops::Index;
 use std::ops::IndexMut;
 use std::rc::Rc;
 use std::string::ToString;
-use theme::Color;
 use theme::ColorPair;
 use theme::Effect;
-use theme::Style;
-use Vec2;
-//use serde::{Serialize, Deserialize};
-use core::borrow::Borrow;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
+use Vec2;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ObservedStyle {
@@ -261,7 +257,7 @@ impl ObservedPieceInterface for ObservedScreen {
     }
 }
 
-impl <'a> ObservedPieceInterface for ObservedPiece<'a> {
+impl<'a> ObservedPieceInterface for ObservedPiece<'a> {
     fn min(&self) -> Vec2 {
         self.min
     }

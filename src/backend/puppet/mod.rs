@@ -1,7 +1,9 @@
-#![warn(missing_docs)]
-#![allow(warnings)]
-#![warn(unused)]
-#![allow(bad_style)]
+//! Puppet backend
+
+//#![warn(missing_docs)]
+//#![allow(warnings)]
+//#![warn(unused)]
+//#![allow(bad_style)]
 
 use std::thread;
 
@@ -12,17 +14,13 @@ use backend::puppet::observed::ObservedCell;
 use backend::puppet::observed::ObservedScreen;
 use backend::puppet::observed::ObservedStyle;
 use event::Event;
-use std::cell::Cell;
-use std::cell::Ref;
 use std::cell::RefCell;
-use std::cell::RefMut;
-use std::collections::HashSet;
 use std::rc::Rc;
 use theme;
 use theme::Color;
 use theme::ColorPair;
-use theme::Style;
 use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 use vec::Vec2;
 use XY;
 
@@ -45,11 +43,11 @@ pub struct Backend {
     current_frame: RefCell<ObservedScreen>,
     size: RefCell<Vec2>,
     current_style: RefCell<Rc<ObservedStyle>>,
-    screen_channel : (Sender<ObservedScreen>, Receiver<ObservedScreen>)
+    screen_channel: (Sender<ObservedScreen>, Receiver<ObservedScreen>),
 }
 
 impl Backend {
-    pub fn init(size_op : Option<Vec2>) -> Box<Backend>
+    pub fn init(size_op: Option<Vec2>) -> Box<Backend>
     where
         Self: Sized,
     {
@@ -63,7 +61,7 @@ impl Backend {
             current_frame: RefCell::new(ObservedScreen::new(size)),
             size: RefCell::new(size),
             current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE)),
-            screen_channel : crossbeam_channel::unbounded()
+            screen_channel: crossbeam_channel::unbounded(),
         };
 
         {
@@ -91,27 +89,18 @@ impl backend::Backend for Backend {
     fn finish(&mut self) {}
 
     fn start_input_thread(
-        &mut self, event_sink: Sender<Option<Event>>,
+        &mut self,
+        event_sink: Sender<Option<Event>>,
         input_requests: Receiver<backend::InputRequest>,
     ) {
         let receiver = self.inner_receiver.clone();
 
         thread::spawn(move || {
-
             for _ in input_requests {
                 match receiver.recv() {
-                    Err(e) => {
-//                        println!("e1 {:?}", e);
-                        return
-                    },
+                    Err(_) => return,
                     Ok(event) => {
-                        let res = event_sink.send(event);
-                        if res.is_err() {
-//                            println!("e2 {:?}", res);
-                            return;
-                        } else {
-//                            println!("got event {:?}", res);
-                        }
+                        event_sink.send(event).unwrap();
                     }
                 }
             }
@@ -120,7 +109,8 @@ impl backend::Backend for Backend {
 
     fn refresh(&mut self) {
         let size = self.size.get_mut().clone();
-        let current_frame = self.current_frame.replace(ObservedScreen::new(size));
+        let current_frame =
+            self.current_frame.replace(ObservedScreen::new(size));
         self.prev_frame.replace(Some(current_frame.clone()));
         self.screen_channel.0.send(current_frame).unwrap();
     }
@@ -134,32 +124,23 @@ impl backend::Backend for Backend {
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        let mut skip: usize = 0;
-        //since some graphemes are visually longer than one char, we need to track printer offset.
-        let mut offset: usize = 0;
-
         let style = self.current_style.borrow().clone();
         let mut screen = self.current_frame.borrow_mut();
+        let mut offset: usize = 0;
 
-        let mut graphemes = text.graphemes(true);
+        for (idx, grapheme) in text.graphemes(true).enumerate() {
+            let cpos = pos + Vec2::new(idx + offset, 0);
+            screen[&cpos] = Some(ObservedCell::new(
+                cpos,
+                style.clone(),
+                Some(grapheme.to_string()),
+            ));
 
-        let mut idx = 0;
-        'printer: while let Some(g) = graphemes.next() {
-            let lpos = Vec2::new(pos.x + idx + offset, pos.y);
-            idx += g.len();
-            let charp : String = g.to_owned();
-            // skipping the "continuation" tails
-//            while skip > 0 {
-//                screen[&pos] = Some(ObservedCell::new(style.clone(), None));
-//
-//                skip -= 1;
-//                offset += 1;
-//                continue 'printer;
-//            }
-
-            // if we got here, we have to write a new character.
-            // TODO(njskalski): add the support for "multiple cell" characters.
-            screen[&lpos] = Some(ObservedCell::new(lpos,style.clone(), Some(charp)));
+            for _ in 0..grapheme.width() - 1 {
+                offset += 1;
+                let spos = pos + Vec2::new(idx + offset, 0);
+                screen[&spos] = Some(ObservedCell::new(spos, style.clone(), None));
+            }
         }
     }
 
