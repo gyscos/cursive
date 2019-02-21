@@ -25,7 +25,8 @@ pub trait View: Any + AnyView {
     /// It is guaranteed to be the size available for the call to `draw()`.
     fn layout(&mut self, Vec2) {}
 
-    /// Returns `true` if the view content changed since last layout phase.
+    /// Should return `true` if the view content changed since the last call
+    /// to `layout()`.
     ///
     /// This is mostly an optimisation for views where the layout phase is
     /// expensive.
@@ -44,9 +45,11 @@ pub trait View: Any + AnyView {
     ///
     /// This is the main way a view communicate its size to its parent.
     ///
-    /// If the view is flexible (it has multiple size options), it can try
-    /// to return one that fits the given `constraint`.
-    /// It's also fine to ignore it and return a fixed value.
+    /// Some views have a fixed size, and will ignore the `constraint`
+    /// parameter entirely.
+    ///
+    /// Some views are flexible, and may adapt fully or partially to the
+    /// constraints.
     ///
     /// Default implementation always return `(1,1)`.
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
@@ -56,9 +59,14 @@ pub trait View: Any + AnyView {
 
     /// Called when an event is received (key press, mouse event, ...).
     ///
-    /// You can return an `EventResult`, with an optional callback to be run.
+    /// You can return an `EventResult`:
+    /// * `EventResult::Ignored` means the event was not processed and may be
+    ///    sent to another view.
+    /// * `EventResult::Consumed` means the event was consumed and should not
+    ///    be sent to any other view. It may in addition include a callback
+    ///    to be run.
     ///
-    /// Default implementation just ignores it.
+    /// The default implementation just ignores any event.
     fn on_event(&mut self, Event) -> EventResult {
         EventResult::Ignored
     }
@@ -71,6 +79,8 @@ pub trait View: Any + AnyView {
     /// [`Finder::call_on`]: trait.Finder.html#method.call_on
     ///
     /// If the selector doesn't find a match, the closure will not be run.
+    ///
+    /// View groups should implement this to forward the call to each children.
     ///
     /// Default implementation is a no-op.
     fn call_on_any<'a>(&mut self, _: &Selector, _: AnyCb<'a>) {
