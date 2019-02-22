@@ -121,6 +121,25 @@ impl Default for Cursive {
 
 impl Cursive {
     /// Creates a new Cursive root, and initialize the back-end.
+    ///
+    /// * If you just want a cursive instance, use `Cursive::default()`.
+    /// * If you want a specific backend, then:
+    ///   * `Cursive::ncurses()` if the `ncurses-backend` feature is enabled (it is by default).
+    ///   * `Cursive::pancurses()` if the `pancurses-backend` feature is enabled.
+    ///   * `Cursive::termion()` if the `termion-backend` feature is enabled.
+    ///   * `Cursive::blt()` if the `blt-backend` feature is enabled.
+    ///   * `Cursive::dummy()` for a dummy backend, mostly useful for tests.
+    /// * If you want to use a third-party backend, then `Cursive::new` is indeed the way to go:
+    ///   * `Cursive::new(bring::your::own::Backend::new)`
+    ///
+    /// Examples:
+    ///
+    /// ```rust
+    /// # use cursive::{Cursive, backend};
+    /// let siv = Cursive::new(backend::curses::n::Backend::init);
+    /// let siv = Cursive::ncurses(); // equivalent to the line above.
+    /// let siv = Cursive::default(); // with the default features, equivalent to the line above
+    /// ```
     pub fn new<F>(backend_init: F) -> Self
     where
         F: FnOnce() -> Box<backend::Backend>,
@@ -186,7 +205,7 @@ impl Cursive {
 
     /// Show the debug console.
     ///
-    /// Currently, this will show logs if [`logger::init()`] was called.
+    /// Currently, this will show logs if [`::logger::init()`] was called.
     pub fn show_debug_console(&mut self) {
         self.add_layer(
             views::Dialog::around(views::ScrollView::new(views::IdView::new(
@@ -198,6 +217,14 @@ impl Cursive {
     }
 
     /// Show the debug console, or hide it if it's already visible.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::Cursive;
+    /// # let mut siv = Cursive::dummy();
+    /// siv.add_global_callback('~', Cursive::toggle_debug_console);
+    /// ```
     pub fn toggle_debug_console(&mut self) {
         if let Some(pos) = self.screen_mut().find_layer_from_id(DEBUG_VIEW_ID)
         {

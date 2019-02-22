@@ -51,7 +51,7 @@ impl log::Log for CursiveLogger {
 ///
 /// Make sure this is the only logger your are using.
 ///
-/// Use a `DebugView` to see the logs.
+/// Use a [`::views::DebugView`] to see the logs, or use [`::Cursive::toggle_debug_console()`].
 pub fn init() {
     // TODO: Configure the deque size?
     LOGS.lock().unwrap().reserve(1_000);
