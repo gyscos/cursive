@@ -14,6 +14,8 @@ use vec::Vec2;
 use view::{self, Finder, IntoBoxedView, Position, View};
 use views::{self, LayerPosition};
 
+static DEBUG_VIEW_ID: &'static str = "_cursive_debug_view";
+
 /// Central part of the cursive library.
 ///
 /// It initializes ncurses on creation and cleans up on drop.
@@ -182,20 +184,26 @@ impl Cursive {
         Self::new(backend::dummy::Backend::init)
     }
 
-    /// Show the debug view, or hide it if it's already visible.
-    pub fn toggle_debug_view(&mut self) {
-        static DEBUG_VIEW_ID: &'static str = "_cursive_debug_view";
+    /// Show the debug console.
+    ///
+    /// Currently, this will show logs if [`logger::init()`] was called.
+    pub fn show_debug_console(&mut self) {
+        self.add_layer(
+            views::Dialog::around(views::ScrollView::new(views::IdView::new(
+                DEBUG_VIEW_ID,
+                views::DebugView::new(),
+            )))
+            .title("Debug console"),
+        );
+    }
 
-        let stack = self.screen_mut();
-        if let Some(pos) = stack.find_layer_from_id(DEBUG_VIEW_ID) {
-            stack.remove_layer(pos);
+    /// Show the debug console, or hide it if it's already visible.
+    pub fn toggle_debug_console(&mut self) {
+        if let Some(pos) = self.screen_mut().find_layer_from_id(DEBUG_VIEW_ID)
+        {
+            self.screen_mut().remove_layer(pos);
         } else {
-            stack.add_layer(
-                views::Dialog::around(views::ScrollView::new(
-                    views::IdView::new(DEBUG_VIEW_ID, views::DebugView::new()),
-                ))
-                .title("Debug console"),
-            );
+            self.show_debug_console();
         }
     }
 

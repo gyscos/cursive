@@ -35,6 +35,18 @@ pub enum BaseColor {
     White,
 }
 
+impl BaseColor {
+    /// Returns the regular (dark) version of this base color.
+    pub fn dark(self) -> Color {
+        Color::Dark(self)
+    }
+
+    /// Returns the light version of this base color.
+    pub fn light(self) -> Color {
+        Color::Light(self)
+    }
+}
+
 impl From<u8> for BaseColor {
     fn from(n: u8) -> Self {
         match n % 8 {

@@ -8,8 +8,7 @@ use unicode_width::UnicodeWidthStr;
 
 /// View used for debugging, showing logs.
 pub struct DebugView {
-    // We'll want to store the formatting (line split)
-// ... or 1 line per log?
+    // TODO: wrap log lines if needed, and save the line splits here.
 }
 
 impl DebugView {
@@ -27,6 +26,7 @@ impl View for DebugView {
 
         for (i, record) in logs.iter().skip(skipped).enumerate() {
             // TODO: Apply style to message? (Ex: errors in bold?)
+            // TODO: customizable time format? (24h/AM-PM)
             printer.print(
                 (0, i),
                 &format!(
@@ -36,11 +36,11 @@ impl View for DebugView {
                 ),
             );
             let color = match record.level {
-                log::Level::Error => theme::BaseColor::Red,
-                log::Level::Warn => theme::BaseColor::Yellow,
-                log::Level::Info => theme::BaseColor::Black,
-                log::Level::Debug => theme::BaseColor::Green,
-                log::Level::Trace => theme::BaseColor::Blue,
+                log::Level::Error => theme::BaseColor::Red.dark(),
+                log::Level::Warn => theme::BaseColor::Yellow.dark(),
+                log::Level::Info => theme::BaseColor::Black.light(),
+                log::Level::Debug => theme::BaseColor::Green.dark(),
+                log::Level::Trace => theme::BaseColor::Blue.dark(),
             };
             printer.with_color(color.into(), |printer| {
                 printer.print((16, i), &format!("{:5}", record.level))
@@ -54,7 +54,8 @@ impl View for DebugView {
 
         let level_width = 8; // Width of "[ERROR] "
         let time_width = 16; // Width of "23:59:59.123 | "
-                             // The longest line sets the width
+
+        // The longest line sets the width
         let w = logs
             .iter()
             .map(|record| record.message.width() + level_width + time_width)
