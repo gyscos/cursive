@@ -10,9 +10,19 @@ struct CursiveLogger;
 
 static LOGGER: CursiveLogger = CursiveLogger;
 
+/// A log record.
+pub struct Record {
+    /// Log level used for this record
+    pub level: log::Level,
+    /// Time this message was logged
+    pub time: chrono::DateTime<chrono::Utc>,
+    /// Message content
+    pub message: String,
+}
+
 lazy_static! {
     /// Circular buffer for logs. Use it to implement `DebugView`.
-    pub static ref LOGS: Mutex<VecDeque<(log::Level, String)>> =
+    pub static ref LOGS: Mutex<VecDeque<Record>> =
         Mutex::new(VecDeque::new());
 }
 
@@ -27,7 +37,11 @@ impl log::Log for CursiveLogger {
         if logs.len() == logs.capacity() {
             logs.pop_front();
         }
-        logs.push_back((record.level(), format!("{}", record.args())));
+        logs.push_back(Record {
+            level: record.level(),
+            message: format!("{}", record.args()),
+            time: chrono::Utc::now(),
+        });
     }
 
     fn flush(&self) {}

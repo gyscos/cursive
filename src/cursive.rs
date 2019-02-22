@@ -188,7 +188,6 @@ impl Cursive {
 
         let stack = self.screen_mut();
         if let Some(pos) = stack.find_layer_from_id(DEBUG_VIEW_ID) {
-            info!("Foundit");
             stack.remove_layer(pos);
         } else {
             stack.add_layer(

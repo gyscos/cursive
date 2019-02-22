@@ -10,7 +10,7 @@ fn main() {
     let mut siv = cursive::Cursive::default();
     siv.add_global_callback('q', cursive::Cursive::quit);
     siv.add_global_callback('~', cursive::Cursive::toggle_debug_view);
-    siv.add_global_callback('l', |_| debug!("Wooo"));
+    siv.add_global_callback('l', |_| warn!("Wooo"));
     error!("BAD!!!");
 
     siv.run();

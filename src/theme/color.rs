@@ -121,7 +121,7 @@ impl Color {
     /// * `"light green"` becomes `Color::Light(BaseColor::Green)`
     /// * `"default"` becomes `Color::TerminalDefault`
     /// * `"#123456"` becomes `Color::Rgb(0x12, 0x34, 0x56)`
-    pub(crate) fn parse(value: &str) -> Option<Self> {
+    pub fn parse(value: &str) -> Option<Self> {
         Some(match value {
             "black" => Color::Dark(BaseColor::Black),
             "red" => Color::Dark(BaseColor::Red),

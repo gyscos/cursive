@@ -1,4 +1,4 @@
-use super::{Color, ColorPair, Palette, PaletteColor};
+use super::{BaseColor, Color, ColorPair, Palette, PaletteColor};
 
 /// Possible color style for a cell.
 ///
@@ -88,6 +88,12 @@ impl ColorStyle {
 impl From<Color> for ColorStyle {
     fn from(color: Color) -> Self {
         Self::new(color, PaletteColor::View)
+    }
+}
+
+impl From<BaseColor> for ColorStyle {
+    fn from(color: BaseColor) -> Self {
+        Self::new(Color::Dark(color), PaletteColor::View)
     }
 }
 

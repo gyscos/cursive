@@ -81,6 +81,7 @@ extern crate maplit;
 #[cfg(unix)]
 extern crate signal_hook;
 
+extern crate chrono;
 extern crate libc;
 extern crate num;
 extern crate owning_ref;
