@@ -1,5 +1,4 @@
-#![warn(missing_docs)]
-
+//! Structs representing output of puppet backend
 use enumset::EnumSet;
 use std::ops::Index;
 use std::ops::IndexMut;
@@ -11,19 +10,26 @@ use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 use Vec2;
 
+/// Style of observed cell
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ObservedStyle {
+    /// Colors: front and back
     pub colors: ColorPair,
+    /// Effects enabled on observed cell
     pub effects: EnumSet<Effect>,
 }
 
+/// Contents of observed cell
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum GraphemePart {
+    /// Represents begin of wide character
     Begin(String),
+    /// Represents a cell that is filled with continuation of some character that begun in cell with lower x-index.
     Continuation,
 }
 
 impl GraphemePart {
+    /// Returns true iff GraphemePart is Continuation
     pub fn is_continuation(&self) -> bool {
         match self {
             &GraphemePart::Continuation => true,
@@ -31,13 +37,15 @@ impl GraphemePart {
         }
     }
 
+    /// Returns Some(String) if GraphemePart is Begin(String), else None.
     pub fn as_option(&self) -> Option<&String> {
         match self {
-            &GraphemePart::Begin(ref String) => Some(String),
+            &GraphemePart::Begin(ref string) => Some(string),
             &GraphemePart::Continuation => None,
         }
     }
 
+    /// Returns String if GraphemePart is Begin(String), panics otherwise.
     pub fn unwrap(&self) -> String {
         match self {
             &GraphemePart::Begin(ref s) => s.clone(),
@@ -46,14 +54,19 @@ impl GraphemePart {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)] //, Serialize, Deserialize)]
+/// Represents a single cell of terminal.
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ObservedCell {
+    /// Absolute position
     pub pos: Vec2,
+    /// Style
     pub style: Rc<ObservedStyle>,
+    /// Part of grapheme - either it's beginning or continuation when character is multi-cell long.
     pub letter: GraphemePart,
 }
 
 impl ObservedCell {
+    /// Constructor
     pub fn new(
         pos: Vec2,
         style: Rc<ObservedStyle>,
@@ -68,13 +81,19 @@ impl ObservedCell {
     }
 }
 
-#[derive(Debug, Clone)] //, Serialize, Deserialize)]
+/// Puppet backend output
+///
+/// Represents single frame.
+#[derive(Debug, Clone)]
 pub struct ObservedScreen {
+    /// Size
     size: Vec2,
+    /// Contents. Each cell can be set or empty.
     contents: Vec<Option<ObservedCell>>,
 }
 
 impl ObservedScreen {
+    /// Creates empty ObservedScreen
     pub fn new(size: Vec2) -> Self {
         let contents: Vec<Option<ObservedCell>> = vec![None; size.x * size.y];
 
@@ -94,6 +113,7 @@ impl ObservedScreen {
         Vec2::new(index / self.size.x, index % self.size.x)
     }
 
+    /// Sets all cells to empty cells with given style
     pub fn clear(&mut self, style: &Rc<ObservedStyle>) {
         for idx in 0..self.contents.len() {
             self.contents[idx] = Some(ObservedCell::new(
@@ -104,21 +124,24 @@ impl ObservedScreen {
         }
     }
 
+    /// Size
     pub fn size(&self) -> Vec2 {
         self.size
     }
 
+    /// Returns a rectangular subset of observed screen.
     pub fn piece(&self, min: Vec2, max: Vec2) -> ObservedPiece {
         ObservedPiece::new(self, min, max)
     }
 
-    /// TODO(njskalski): fails with whitespaces like "\t".
+
+    /// Returns occurences of given string pattern
     pub fn find_occurences<'a>(
         &'a self,
         pattern: &str,
     ) -> Vec<ObservedLine<'a>> {
-        // TODO(njskalski): make this implementation less naive?
         // TODO(njskalski): test for two-cell letters.
+        // TODO(njskalski): fails with whitespaces like "\t".
 
         let mut hits: Vec<ObservedLine> = vec![];
         for y in self.min().y..self.max().y {

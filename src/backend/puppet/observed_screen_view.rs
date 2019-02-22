@@ -1,4 +1,4 @@
-//! View visualizing a captured PuppetBackend outputs.
+//! View visualizing a captured PuppetBackend outputs
 use backend::puppet::observed::ObservedCell;
 use backend::puppet::observed::ObservedScreen;
 use theme::ColorStyle;
