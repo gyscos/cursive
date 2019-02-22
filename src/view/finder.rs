@@ -10,10 +10,12 @@ use views::{IdView, ViewRef};
 ///
 /// [`View::call_on_any`]: ./trait.View.html#method.call_on_any
 pub trait Finder {
-    /// Tries to find the view pointed to by the given selector.
+    /// Runs a callback on the view identified by `sel`.
+    ///
+    /// If the view is found, return the result of `callback`.
     ///
     /// If the view is not found, or if it is not of the asked type,
-    /// it returns None.
+    /// it returns `None`.
     fn call_on<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
     where
         V: View + Any,
