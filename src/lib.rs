@@ -69,6 +69,8 @@ extern crate enumset;
 extern crate log;
 #[macro_use]
 extern crate crossbeam_channel;
+#[macro_use]
+extern crate lazy_static;
 
 #[cfg(any(feature = "ncurses", feature = "pancurses"))]
 #[macro_use]
@@ -108,6 +110,7 @@ pub mod utils;
 
 pub mod align;
 pub mod direction;
+pub mod logger;
 pub mod menu;
 pub mod rect;
 pub mod theme;
