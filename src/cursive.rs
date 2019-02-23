@@ -134,7 +134,7 @@ impl Cursive {
     ///
     /// Examples:
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// # use cursive::{Cursive, backend};
     /// let siv = Cursive::new(backend::curses::n::Backend::init);
     /// let siv = Cursive::ncurses(); // equivalent to the line above.
