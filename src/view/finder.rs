@@ -1,6 +1,6 @@
 use std::any::Any;
 use view::{View, ViewPath, ViewWrapper};
-use views::IdView;
+use views::{IdView, ViewRef};
 
 /// Provides `call_on<V: View>` to views.
 ///
@@ -10,22 +10,34 @@ use views::IdView;
 ///
 /// [`View::call_on_any`]: ./trait.View.html#method.call_on_any
 pub trait Finder {
-    /// Tries to find the view pointed to by the given selector.
+    /// Runs a callback on the view identified by `sel`.
+    ///
+    /// If the view is found, return the result of `callback`.
     ///
     /// If the view is not found, or if it is not of the asked type,
-    /// it returns None.
+    /// it returns `None`.
     fn call_on<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
     where
         V: View + Any,
         F: FnOnce(&mut V) -> R;
 
     /// Convenient method to use `call_on` with a `view::Selector::Id`.
-    fn find_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
+    fn call_on_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
     where
         V: View + Any,
         F: FnOnce(&mut V) -> R,
     {
         self.call_on(&Selector::Id(id), callback)
+    }
+
+    /// Convenient method to find a view wrapped in an [`IdView`].
+    ///
+    /// [`IdView`]: views/struct.IdView.html
+    fn find_id<V>(&mut self, id: &str) -> Option<ViewRef<V>>
+    where
+        V: View + Any,
+    {
+        self.call_on_id(id, IdView::<V>::get_mut)
     }
 }
 

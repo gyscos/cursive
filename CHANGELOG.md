@@ -1,5 +1,15 @@
 # Changelog
 
+## Next version (0.11.0)
+
+### New features
+
+- Breaking change: `Finder::find_id()` is renamed to `call_on_id()`, and a proper
+  `find_id()` was added instead.
+- Add `StackView::remove_layer()`
+- Add `CircularFocus` view (and bring proper circular focus to dialogs)
+- Add `HideableView::is_visible()`
+
 ## 0.10.0
 
 ### New features

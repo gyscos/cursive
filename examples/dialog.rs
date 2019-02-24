@@ -13,7 +13,7 @@ fn main() {
         CircularFocus::wrap_tab(
             Dialog::around(TextView::new("Hello Dialog!"))
                 .title("Cursive")
-                .button("Foo", |s| ())
+                .button("Foo", |_s| ())
                 .button("Quit", |s| s.quit()),
         ),
     );
