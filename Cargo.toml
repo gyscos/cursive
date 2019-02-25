@@ -47,7 +47,7 @@ version = "2.0.0"
 [dependencies.ncurses]
 features = ["wide"]
 optional = true
-version = "5.98.0"
+version = "5.99.0"
 
 [dependencies.pancurses]
 features = ["wide"]
