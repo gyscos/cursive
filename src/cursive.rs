@@ -136,9 +136,7 @@ impl Cursive {
     ///
     /// ```rust,no_run
     /// # use cursive::{Cursive, backend};
-    /// let siv = Cursive::new(backend::curses::n::Backend::init);
-    /// let siv = Cursive::ncurses(); // equivalent to the line above.
-    /// let siv = Cursive::default(); // with the default features, equivalent to the line above
+    /// let siv = Cursive::new(backend::dummy::Backend::init); // equivalent to Cursive::dummy()
     /// ```
     pub fn new<F>(backend_init: F) -> Self
     where
