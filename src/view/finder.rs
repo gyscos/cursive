@@ -1,6 +1,6 @@
 use std::any::Any;
-use view::{View, ViewPath, ViewWrapper};
-use views::{IdView, ViewRef};
+use crate::view::{View, ViewPath, ViewWrapper};
+use crate::views::{IdView, ViewRef};
 
 /// Provides `call_on<V: View>` to views.
 ///

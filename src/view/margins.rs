@@ -1,5 +1,5 @@
 use std::ops::{Add, Div, Mul, Sub};
-use vec::Vec2;
+use crate::vec::Vec2;
 
 /// Four values representing each direction.
 #[derive(Clone, Copy)]

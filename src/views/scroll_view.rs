@@ -1,11 +1,11 @@
 use std::cmp::min;
 
-use direction::{Direction, Orientation};
-use event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
-use rect::Rect;
-use theme::ColorStyle;
-use view::{ScrollStrategy, Selector, SizeCache, View};
-use {Printer, Vec2, With, XY};
+use crate::direction::{Direction, Orientation};
+use crate::event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::rect::Rect;
+use crate::theme::ColorStyle;
+use crate::view::{ScrollStrategy, Selector, SizeCache, View};
+use crate::{Printer, Vec2, With, XY};
 
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {

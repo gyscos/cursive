@@ -1,13 +1,13 @@
-use direction;
-use event::{AnyCb, Event, EventResult, Key};
-use rect::Rect;
+use crate::direction;
+use crate::event::{AnyCb, Event, EventResult, Key};
+use crate::rect::Rect;
 use std::cmp::min;
 use std::ops::Deref;
-use vec::Vec2;
-use view::{Selector, SizeCache, View};
-use Printer;
-use With;
-use XY;
+use crate::vec::Vec2;
+use crate::view::{Selector, SizeCache, View};
+use crate::Printer;
+use crate::With;
+use crate::XY;
 
 /// Arranges its children linearly according to its orientation.
 pub struct LinearLayout {

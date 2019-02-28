@@ -1,12 +1,12 @@
-use align::HAlign;
-use direction::Direction;
-use event::*;
-use rect::Rect;
-use theme::ColorStyle;
+use crate::align::HAlign;
+use crate::direction::Direction;
+use crate::event::*;
+use crate::rect::Rect;
+use crate::theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::View;
-use {Cursive, Printer, With};
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::{Cursive, Printer, With};
 
 /// Simple text label with a callback when <Enter> is pressed.
 ///

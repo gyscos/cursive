@@ -1,6 +1,6 @@
 use std::cmp::min;
-use vec::Vec2;
-use XY;
+use crate::vec::Vec2;
+use crate::XY;
 
 /// Location of the view on screen
 pub type Position = XY<Offset>;
@@ -85,7 +85,7 @@ impl Offset {
 mod tests {
 
     use super::Position;
-    use vec::Vec2;
+    use crate::vec::Vec2;
 
     #[test]
     fn test_center() {

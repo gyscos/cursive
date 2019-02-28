@@ -2,7 +2,7 @@ use super::chunk::Chunk;
 use super::segment::Segment;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
-use utils::span::SpannedText;
+use crate::utils::span::SpannedText;
 use xi_unicode::LineBreakLeafIter;
 
 /// Iterator that returns non-breakable chunks of text.

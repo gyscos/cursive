@@ -5,10 +5,10 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::io::{stdout, Write};
 
-use backend;
-use event::{Event, Key, MouseButton, MouseEvent};
-use theme::{Color, ColorPair, Effect};
-use vec::Vec2;
+use crate::backend;
+use crate::event::{Event, Key, MouseButton, MouseEvent};
+use crate::theme::{Color, ColorPair, Effect};
+use crate::vec::Vec2;
 
 use self::pancurses::mmask_t;
 use super::split_i32;

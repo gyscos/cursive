@@ -5,14 +5,14 @@ use std::time::Duration;
 
 use crossbeam_channel::{self, Receiver, Sender};
 
-use backend;
-use direction;
-use event::{Callback, Event, EventResult};
-use printer::Printer;
-use theme;
-use vec::Vec2;
-use view::{self, Finder, IntoBoxedView, Position, View};
-use views::{self, LayerPosition};
+use crate::backend;
+use crate::direction;
+use crate::event::{Callback, Event, EventResult};
+use crate::printer::Printer;
+use crate::theme;
+use crate::vec::Vec2;
+use crate::view::{self, Finder, IntoBoxedView, Position, View};
+use crate::views::{self, LayerPosition};
 
 static DEBUG_VIEW_ID: &'static str = "_cursive_debug_view";
 
@@ -60,7 +60,7 @@ pub type CbSink = Sender<Box<CbFunc>>;
 /// working and `FnBox` is unstable.
 pub trait CbFunc: Send {
     /// Calls the function.
-    fn call_box(self: Box<Self>, &mut Cursive);
+    fn call_box(self: Box<Self>, _: &mut Cursive);
 }
 
 impl<F: FnOnce(&mut Cursive) -> () + Send> CbFunc for F {

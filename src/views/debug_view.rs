@@ -1,8 +1,8 @@
-use logger;
-use theme;
-use vec::Vec2;
-use view::View;
-use Printer;
+use crate::logger;
+use crate::theme;
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::Printer;
 
 use unicode_width::UnicodeWidthStr;
 

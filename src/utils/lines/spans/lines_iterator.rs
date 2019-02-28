@@ -8,7 +8,7 @@ use std::iter::Peekable;
 use std::rc::Rc;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::span::SpannedText;
+use crate::utils::span::SpannedText;
 
 /// Generates rows of text in constrainted width.
 ///

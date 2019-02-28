@@ -1,5 +1,5 @@
-use vec::Vec2;
-use XY;
+use crate::vec::Vec2;
+use crate::XY;
 
 /// Cache around a one-dimensional layout result.
 ///

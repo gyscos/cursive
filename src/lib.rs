@@ -129,8 +129,8 @@ mod utf8;
 
 pub mod backend;
 
-pub use cursive::{CbFunc, CbSink, Cursive, ScreenId};
-pub use printer::Printer;
-pub use vec::Vec2;
-pub use with::With;
-pub use xy::XY;
+pub use crate::cursive::{CbFunc, CbSink, Cursive, ScreenId};
+pub use crate::printer::Printer;
+pub use crate::vec::Vec2;
+pub use crate::with::With;
+pub use crate::xy::XY;

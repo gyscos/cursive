@@ -1,5 +1,5 @@
 use super::Segment;
-use utils::span::{IndexedCow, Span, SpannedStr};
+use crate::utils::span::{IndexedCow, Span, SpannedStr};
 
 /// A list of segments representing a row of text
 #[derive(Debug, Clone, PartialEq, Eq)]

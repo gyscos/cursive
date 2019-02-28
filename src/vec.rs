@@ -5,8 +5,8 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use num::traits::Zero;
 
-use div;
-use XY;
+use crate::div;
+use crate::XY;
 
 /// Simple 2D size, in cells.
 ///

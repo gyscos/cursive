@@ -1,10 +1,10 @@
-use direction::Direction;
-use event::{AnyCb, Event, EventResult};
-use rect::Rect;
-use vec::Vec2;
-use view::{Selector, View};
-use Printer;
-use With;
+use crate::direction::Direction;
+use crate::event::{AnyCb, Event, EventResult};
+use crate::rect::Rect;
+use crate::vec::Vec2;
+use crate::view::{Selector, View};
+use crate::Printer;
+use crate::With;
 
 /// A blank view that forwards calls to closures.
 ///

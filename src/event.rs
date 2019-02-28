@@ -17,8 +17,8 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
-use vec::Vec2;
-use Cursive;
+use crate::vec::Vec2;
+use crate::Cursive;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.

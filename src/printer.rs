@@ -1,15 +1,15 @@
 //! Provide higher-level abstraction to draw things on backends.
 
-use backend::Backend;
-use direction::Orientation;
+use crate::backend::Backend;
+use crate::direction::Orientation;
 use enumset::EnumSet;
 use std::cmp::min;
-use theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
+use crate::theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::lines::simple::{prefix, suffix};
-use vec::Vec2;
-use with::With;
+use crate::utils::lines::simple::{prefix, suffix};
+use crate::vec::Vec2;
+use crate::with::With;
 
 /// Convenient interface to draw on a subset of the screen.
 ///
@@ -86,7 +86,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Prints some styled text at the given position.
     pub fn print_styled<S>(
-        &self, start: S, text: ::utils::span::SpannedStr<'_, Style>,
+        &self, start: S, text: crate::utils::span::SpannedStr<'_, Style>,
     ) where
         S: Into<Vec2>,
     {

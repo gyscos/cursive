@@ -1,20 +1,20 @@
-use align::{Align, HAlign, VAlign};
-use direction::Direction;
-use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
-use menu::MenuTree;
-use rect::Rect;
+use crate::align::{Align, HAlign, VAlign};
+use crate::direction::Direction;
+use crate::event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::menu::MenuTree;
+use crate::rect::Rect;
 use std::borrow::Borrow;
 use std::cell::Cell;
 use std::cmp::min;
 use std::rc::Rc;
-use theme::ColorStyle;
-use utils::markup::StyledString;
-use vec::Vec2;
-use view::{Position, View};
-use views::MenuPopup;
-use Cursive;
-use Printer;
-use With;
+use crate::theme::ColorStyle;
+use crate::utils::markup::StyledString;
+use crate::vec::Vec2;
+use crate::view::{Position, View};
+use crate::views::MenuPopup;
+use crate::Cursive;
+use crate::Printer;
+use crate::With;
 
 /// View to select an item among a list.
 ///

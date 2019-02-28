@@ -1,13 +1,13 @@
-use direction::Direction;
-use event::{AnyCb, Event, EventResult};
+use crate::direction::Direction;
+use crate::event::{AnyCb, Event, EventResult};
 use std::cell;
 use std::ops::Deref;
-use theme::ColorStyle;
-use vec::Vec2;
-use view::{IntoBoxedView, Offset, Position, Selector, View, ViewWrapper};
-use views::{CircularFocus, Layer, ShadowView, ViewBox};
-use Printer;
-use With;
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::{IntoBoxedView, Offset, Position, Selector, View, ViewWrapper};
+use crate::views::{CircularFocus, Layer, ShadowView, ViewBox};
+use crate::Printer;
+use crate::With;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -673,7 +673,7 @@ impl View for StackView {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use views::TextView;
+    use crate::views::TextView;
 
     #[test]
     fn pop_add() {

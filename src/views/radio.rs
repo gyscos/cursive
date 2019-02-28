@@ -1,12 +1,12 @@
-use direction::Direction;
-use event::{Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::direction::Direction;
+use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
 use std::cell::RefCell;
 use std::rc::Rc;
-use theme::ColorStyle;
-use vec::Vec2;
-use view::View;
-use Cursive;
-use {Printer, With};
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::Cursive;
+use crate::{Printer, With};
 
 struct SharedState<T> {
     selection: usize,

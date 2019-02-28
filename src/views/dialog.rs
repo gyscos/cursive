@@ -1,17 +1,17 @@
-use align::*;
-use direction::{Absolute, Direction, Relative};
-use event::{AnyCb, Event, EventResult, Key};
-use rect::Rect;
+use crate::align::*;
+use crate::direction::{Absolute, Direction, Relative};
+use crate::event::{AnyCb, Event, EventResult, Key};
+use crate::rect::Rect;
 use std::cell::Cell;
 use std::cmp::max;
-use theme::ColorStyle;
+use crate::theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::{Margins, Selector, View};
-use views::{Button, DummyView, SizedView, TextView, ViewBox};
-use Cursive;
-use Printer;
-use With;
+use crate::vec::Vec2;
+use crate::view::{Margins, Selector, View};
+use crate::views::{Button, DummyView, SizedView, TextView, ViewBox};
+use crate::Cursive;
+use crate::Printer;
+use crate::With;
 
 /// Identifies currently focused element in [`Dialog`].
 ///

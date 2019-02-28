@@ -1,15 +1,15 @@
-use direction;
-use event::*;
-use menu::{MenuItem, MenuTree};
-use rect::Rect;
+use crate::direction;
+use crate::event::*;
+use crate::menu::{MenuItem, MenuTree};
+use crate::rect::Rect;
 use std::rc::Rc;
-use theme::ColorStyle;
+use crate::theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::{Position, View};
-use views::{MenuPopup, OnEventView};
-use Cursive;
-use Printer;
+use crate::vec::Vec2;
+use crate::view::{Position, View};
+use crate::views::{MenuPopup, OnEventView};
+use crate::Cursive;
+use crate::Printer;
 
 /// Current state of the menubar
 #[derive(PartialEq, Debug)]

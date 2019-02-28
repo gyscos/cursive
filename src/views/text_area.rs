@@ -1,14 +1,14 @@
-use direction::Direction;
-use event::{Event, EventResult, Key, MouseButton, MouseEvent};
-use rect::Rect;
+use crate::direction::Direction;
+use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::rect::Rect;
 use std::cmp::min;
-use theme::{ColorStyle, Effect};
+use crate::theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row};
-use vec::Vec2;
-use view::{ScrollBase, SizeCache, View};
-use {Printer, With, XY};
+use crate::utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row};
+use crate::vec::Vec2;
+use crate::view::{ScrollBase, SizeCache, View};
+use crate::{Printer, With, XY};
 
 /// Multi-lines text editor.
 ///

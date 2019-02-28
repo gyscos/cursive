@@ -1,16 +1,16 @@
-use align::Align;
-use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
-use menu::{MenuItem, MenuTree};
-use rect::Rect;
+use crate::align::Align;
+use crate::event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::menu::{MenuItem, MenuTree};
+use crate::rect::Rect;
 use std::cmp::min;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::{Position, ScrollBase, View};
-use views::OnEventView;
-use Cursive;
-use Printer;
-use With;
+use crate::vec::Vec2;
+use crate::view::{Position, ScrollBase, View};
+use crate::views::OnEventView;
+use crate::Cursive;
+use crate::Printer;
+use crate::With;
 
 /// Popup that shows a list of items.
 pub struct MenuPopup {

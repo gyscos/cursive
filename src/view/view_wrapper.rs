@@ -1,10 +1,10 @@
-use direction::Direction;
-use event::{AnyCb, Event, EventResult};
-use rect::Rect;
+use crate::direction::Direction;
+use crate::event::{AnyCb, Event, EventResult};
+use crate::rect::Rect;
 use std::any::Any;
-use vec::Vec2;
-use view::{Selector, View};
-use Printer;
+use crate::vec::Vec2;
+use crate::view::{Selector, View};
+use crate::Printer;
 
 /// Generic wrapper around a view.
 ///

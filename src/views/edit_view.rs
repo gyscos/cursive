@@ -1,15 +1,15 @@
-use direction::Direction;
-use event::{Callback, Event, EventResult, Key, MouseEvent};
-use rect::Rect;
+use crate::direction::Direction;
+use crate::event::{Callback, Event, EventResult, Key, MouseEvent};
+use crate::rect::Rect;
 use std::cell::RefCell;
 use std::rc::Rc;
-use theme::{ColorStyle, Effect};
+use crate::theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
-use utils::lines::simple::{simple_prefix, simple_suffix};
-use vec::Vec2;
-use view::View;
-use {Cursive, Printer, With};
+use crate::utils::lines::simple::{simple_prefix, simple_suffix};
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::{Cursive, Printer, With};
 
 /// Closure type for callbacks when the content is modified.
 ///

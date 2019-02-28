@@ -1,6 +1,6 @@
-use vec::Vec2;
-use view::{Selector, View, ViewWrapper};
-use With;
+use crate::vec::Vec2;
+use crate::view::{Selector, View, ViewWrapper};
+use crate::With;
 
 use std::any::Any;
 

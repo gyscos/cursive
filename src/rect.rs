@@ -1,6 +1,6 @@
 //! Rectangles on the 2D character grid.
 use std::ops::Add;
-use vec::Vec2;
+use crate::vec::Vec2;
 
 /// A non-empty rectangle on the 2D grid.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

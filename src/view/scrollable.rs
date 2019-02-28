@@ -1,5 +1,5 @@
-use view::View;
-use views::ScrollView;
+use crate::view::View;
+use crate::views::ScrollView;
 
 /// Makes a view wrappable in a [`ScrollView`].
 ///

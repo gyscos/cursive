@@ -1,11 +1,11 @@
-use direction::{Direction, Orientation};
-use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::direction::{Direction, Orientation};
+use crate::event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
 use std::rc::Rc;
-use theme::ColorStyle;
-use vec::Vec2;
-use view::View;
-use With;
-use {Cursive, Printer};
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::With;
+use crate::{Cursive, Printer};
 
 /// A horizontal or vertical slider.
 pub struct SliderView {

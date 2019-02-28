@@ -1,8 +1,8 @@
-use event::{Event, EventResult};
-use theme::ColorStyle;
-use vec::Vec2;
-use view::{View, ViewWrapper};
-use Printer;
+use crate::event::{Event, EventResult};
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::{View, ViewWrapper};
+use crate::Printer;
 
 /// Wrapper view that adds a shadow.
 ///

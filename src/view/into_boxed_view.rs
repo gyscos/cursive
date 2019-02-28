@@ -1,4 +1,4 @@
-use view::View;
+use crate::view::View;
 
 /// Represents a type that can be made into a `Box<View>`.
 pub trait IntoBoxedView {

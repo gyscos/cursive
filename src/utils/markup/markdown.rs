@@ -5,9 +5,9 @@
 extern crate pulldown_cmark;
 
 use self::pulldown_cmark::{Event, Tag};
-use theme::{Effect, Style};
-use utils::markup::{StyledIndexedSpan, StyledString};
-use utils::span::IndexedCow;
+use crate::theme::{Effect, Style};
+use crate::utils::markup::{StyledIndexedSpan, StyledString};
+use crate::utils::span::IndexedCow;
 
 /// Parses the given string as markdown text.
 pub fn parse<S>(input: S) -> StyledString
@@ -132,7 +132,7 @@ pub fn parse_spans<'a>(input: &'a str) -> Vec<StyledIndexedSpan> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use utils::span::Span;
+    use crate::utils::span::Span;
 
     #[test]
     fn test_parse() {

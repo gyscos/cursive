@@ -1,13 +1,13 @@
-use direction;
-use event::{AnyCb, Callback, Event, EventResult, Key};
-use rect::Rect;
+use crate::direction;
+use crate::event::{AnyCb, Callback, Event, EventResult, Key};
+use crate::rect::Rect;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::{Selector, View};
-use Cursive;
-use Printer;
-use With;
+use crate::vec::Vec2;
+use crate::view::{Selector, View};
+use crate::Cursive;
+use crate::Printer;
+use crate::With;
 
 /// Represents a child from a [`ListView`].
 ///

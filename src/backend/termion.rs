@@ -16,10 +16,10 @@ use self::termion::screen::AlternateScreen;
 use self::termion::style as tstyle;
 use crossbeam_channel::{self, Receiver};
 
-use backend;
-use event::{Event, Key, MouseButton, MouseEvent};
-use theme;
-use vec::Vec2;
+use crate::backend;
+use crate::event::{Event, Key, MouseButton, MouseEvent};
+use crate::theme;
+use crate::vec::Vec2;
 
 use std::cell::{Cell, RefCell};
 use std::fs::File;

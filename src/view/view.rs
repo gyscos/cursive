@@ -1,10 +1,10 @@
-use direction::Direction;
-use event::{AnyCb, Event, EventResult};
-use rect::Rect;
+use crate::direction::Direction;
+use crate::event::{AnyCb, Event, EventResult};
+use crate::rect::Rect;
 use std::any::Any;
-use vec::Vec2;
-use view::{AnyView, Selector};
-use Printer;
+use crate::vec::Vec2;
+use crate::view::{AnyView, Selector};
+use crate::Printer;
 
 /// Main trait defining a view behaviour.
 ///
@@ -23,7 +23,7 @@ pub trait View: Any + AnyView {
     ///
     /// At this point, the given size is final and cannot be negociated.
     /// It is guaranteed to be the size available for the call to `draw()`.
-    fn layout(&mut self, Vec2) {}
+    fn layout(&mut self, _: Vec2) {}
 
     /// Should return `true` if the view content changed since the last call
     /// to `layout()`.
@@ -67,7 +67,7 @@ pub trait View: Any + AnyView {
     ///    to be run.
     ///
     /// The default implementation just ignores any event.
-    fn on_event(&mut self, Event) -> EventResult {
+    fn on_event(&mut self, _: Event) -> EventResult {
         EventResult::Ignored
     }
 
@@ -92,7 +92,7 @@ pub trait View: Any + AnyView {
     /// Returns `Ok(())` if the view was found and selected.
     ///
     /// Default implementation simply returns `Err(())`.
-    fn focus_view(&mut self, &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, _: &Selector) -> Result<(), ()> {
         Err(())
     }
 

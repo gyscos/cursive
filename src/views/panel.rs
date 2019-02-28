@@ -1,12 +1,12 @@
-use align::*;
-use event::{Event, EventResult};
-use rect::Rect;
-use theme::ColorStyle;
+use crate::align::*;
+use crate::event::{Event, EventResult};
+use crate::rect::Rect;
+use crate::theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::{View, ViewWrapper};
-use Printer;
-use With;
+use crate::vec::Vec2;
+use crate::view::{View, ViewWrapper};
+use crate::Printer;
+use crate::With;
 
 /// Draws a border around a wrapped view.
 #[derive(Debug)]

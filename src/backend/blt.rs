@@ -13,10 +13,10 @@ use self::bear_lib_terminal::terminal::{
 };
 use self::bear_lib_terminal::Color as BltColor;
 
-use backend;
-use event::{Event, Key, MouseButton, MouseEvent};
-use theme::{BaseColor, Color, ColorPair, Effect};
-use vec::Vec2;
+use crate::backend;
+use crate::event::{Event, Key, MouseButton, MouseEvent};
+use crate::theme::{BaseColor, Color, ColorPair, Effect};
+use crate::vec::Vec2;
 
 enum ColorRole {
     Foreground,
