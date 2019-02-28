@@ -33,7 +33,7 @@ pub struct Cursive {
     // If it changed, clear the screen.
     last_sizes: Vec<Vec2>,
 
-    fps: u32,
+    autorefresh: bool,
 
     active_screen: ScreenId,
 
@@ -43,26 +43,13 @@ pub struct Cursive {
 
     cb_source: Receiver<Box<CbFunc>>,
     cb_sink: Sender<Box<CbFunc>>,
-
-    event_source: Receiver<Option<Event>>,
-
-    // Sends true or false after each event.
-    input_trigger: Sender<backend::InputRequest>,
-    expecting_event: bool,
-}
-
-/// Describes one of the possible interruptions we should handle.
-enum Interruption {
-    /// An input event was received
-    Event(Event),
-    /// A callback was received
-    Callback(Box<CbFunc>),
-    /// A timeout ran out
-    Timeout,
 }
 
 /// Identifies a screen in the cursive root.
 pub type ScreenId = usize;
+
+/// Convenient alias to the result of `Cursive::cb_sink`.
+pub type CbSink = Sender<Box<CbFunc>>;
 
 /// Asynchronous callback function trait.
 ///
@@ -145,15 +132,11 @@ impl Cursive {
         let theme = theme::load_default();
 
         let (cb_sink, cb_source) = crossbeam_channel::unbounded();
-        let (event_sink, event_source) = crossbeam_channel::bounded(0);
 
-        let (input_sink, input_source) = crossbeam_channel::bounded(0);
-
-        let mut backend = backend_init();
-        backend.start_input_thread(event_sink, input_source);
+        let backend = backend_init();
 
         Cursive {
-            fps: 0,
+            autorefresh: false,
             theme,
             screens: vec![views::StackView::new()],
             last_sizes: Vec::new(),
@@ -163,10 +146,7 @@ impl Cursive {
             running: true,
             cb_source,
             cb_sink,
-            event_source,
             backend,
-            input_trigger: input_sink,
-            expecting_event: false,
         }
     }
 
@@ -240,9 +220,6 @@ impl Cursive {
     /// Callbacks will be executed in the order
     /// of arrival on the next event cycle.
     ///
-    /// Note that you currently need to call [`set_fps`] to force cursive to
-    /// regularly check for messages.
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -250,15 +227,12 @@ impl Cursive {
     /// # use cursive::*;
     /// # fn main() {
     /// let mut siv = Cursive::dummy();
-    /// siv.set_fps(10);
     ///
     /// // quit() will be called during the next event cycle
     /// siv.cb_sink().send(Box::new(|s: &mut Cursive| s.quit())).unwrap();
     /// # }
     /// ```
-    ///
-    /// [`set_fps`]: #method.set_fps
-    pub fn cb_sink(&self) -> &Sender<Box<CbFunc>> {
+    pub fn cb_sink(&self) -> &CbSink {
         &self.cb_sink
     }
 
@@ -364,19 +338,11 @@ impl Cursive {
         theme::load_toml(content).map(|theme| self.set_theme(theme))
     }
 
-    /// Sets the refresh rate, in frames per second.
+    /// Enables or disables automatic refresh of the screen.
     ///
-    /// Regularly redraws everything, even when no input is given.
-    ///
-    /// You currently need this to regularly check
-    /// for events sent using [`cb_sink`].
-    ///
-    /// Between 0 and 1000. Call with `fps = 0` to disable (default value).
-    ///
-    /// [`cb_sink`]: #method.cb_sink
-    pub fn set_fps(&mut self, fps: u32) {
-        // self.backend.set_refresh_rate(fps)
-        self.fps = fps;
+    /// When on, regularly redraws everything, even when no input is given.
+    pub fn set_autorefresh(&mut self, autorefresh: bool) {
+        self.autorefresh = autorefresh;
     }
 
     /// Returns a reference to the currently active screen.
@@ -649,63 +615,6 @@ impl Cursive {
         self.screen_mut().reposition_layer(layer, position);
     }
 
-    fn peek(&mut self) -> Option<Interruption> {
-        // First, try a callback
-        select! {
-            // Skip to input if nothing is ready
-            default => (),
-            recv(self.cb_source) -> cb => return Some(Interruption::Callback(cb.unwrap())),
-        }
-
-        // No callback? Check input then
-        if self.expecting_event {
-            // We're already blocking.
-            return None;
-        }
-
-        self.input_trigger
-            .send(backend::InputRequest::Peek)
-            .unwrap();
-        self.backend.prepare_input(backend::InputRequest::Peek);
-
-        self.event_source.recv().unwrap().map(Interruption::Event)
-    }
-
-    /// Wait until something happens.
-    ///
-    /// If `peek` is `true`, return `None` immediately if nothing is ready.
-    fn poll(&mut self) -> Option<Interruption> {
-        if !self.expecting_event {
-            self.input_trigger
-                .send(backend::InputRequest::Block)
-                .unwrap();
-            self.backend.prepare_input(backend::InputRequest::Block);
-            self.expecting_event = true;
-        }
-
-        let timeout = if self.fps > 0 {
-            Duration::from_millis(1000 / self.fps as u64)
-        } else {
-            // Defaults to 1 refresh per hour.
-            Duration::from_secs(3600)
-        };
-
-        select! {
-            recv(self.event_source) -> event => {
-                // Ok, we processed the event.
-                self.expecting_event = false;
-
-                event.unwrap().map(Interruption::Event)
-            },
-            recv(self.cb_source) -> cb => {
-                cb.ok().map(Interruption::Callback)
-            },
-            recv(crossbeam_channel::after(timeout)) -> _ => {
-                Some(Interruption::Timeout)
-            }
-        }
-    }
-
     // Handles a key event when it was ignored by the current view
     fn on_ignored_event(&mut self, event: Event) {
         let cb_list = match self.global_callbacks.get(&event) {
@@ -830,6 +739,8 @@ impl Cursive {
     pub fn run(&mut self) {
         self.running = true;
 
+        self.refresh();
+
         // And the big event loop begins!
         while self.running {
             self.step();
@@ -843,6 +754,41 @@ impl Cursive {
     ///
     /// [`run(&mut self)`]: #method.run
     pub fn step(&mut self) {
+        let mut boring = true;
+
+        // First, handle all available input
+        while let Some(event) = self.backend.poll_event() {
+            boring = false;
+            self.on_event(event);
+
+            if !self.running {
+                return;
+            }
+        }
+
+        // Then, handle any available callback
+        while let Ok(cb) = self.cb_source.try_recv() {
+            boring = false;
+            cb.call_box(self);
+
+            if !self.running {
+                return;
+            }
+        }
+
+        if self.autorefresh || !boring {
+            // Only re-draw if nothing happened.
+            self.refresh();
+        }
+
+        if boring {
+            // Otherwise, sleep some more
+            std::thread::sleep(Duration::from_millis(30));
+        }
+    }
+
+    /// Refresh the screen with the current view tree state.
+    fn refresh(&mut self) {
         // Do we need to redraw everytime?
         // Probably, actually.
         // TODO: Do we need to re-layout everytime?
@@ -852,39 +798,16 @@ impl Cursive {
         // (Is this getting repetitive? :p)
         self.draw();
         self.backend.refresh();
-
-        if let Some(interruption) = self.poll() {
-            self.handle_interruption(interruption);
-            if !self.running {
-                return;
-            }
-        }
-
-        // Don't block, but try to read any other pending event.
-        // This lets us batch-process chunks of events, like big copy-paste or mouse drags.
-        while let Some(interruption) = self.peek() {
-            self.handle_interruption(interruption);
-            if !self.running {
-                return;
-            }
-        }
-    }
-
-    fn handle_interruption(&mut self, interruption: Interruption) {
-        match interruption {
-            Interruption::Event(event) => {
-                self.on_event(event);
-            }
-            Interruption::Callback(cb) => {
-                cb.call_box(self);
-            }
-            Interruption::Timeout => {}
-        }
     }
 
     /// Stops the event loop.
     pub fn quit(&mut self) {
         self.running = false;
+    }
+
+    /// Does not do anything.
+    pub fn noop(&mut self) {
+        // foo
     }
 }
 

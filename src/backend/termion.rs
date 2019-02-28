@@ -14,101 +14,94 @@ use self::termion::input::{MouseTerminal, TermRead};
 use self::termion::raw::{IntoRawMode, RawTerminal};
 use self::termion::screen::AlternateScreen;
 use self::termion::style as tstyle;
-use crossbeam_channel::{self, Receiver, Sender};
-use libc;
-
-#[cfg(unix)]
-use signal_hook::iterator::Signals;
+use crossbeam_channel::{self, Receiver};
 
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
 use theme;
 use vec::Vec2;
 
-use std::cell::Cell;
-use std::io::{Stdout, Write};
+use std::cell::{Cell, RefCell};
+use std::fs::File;
+use std::io::{BufWriter, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 
 /// Backend using termion
 pub struct Backend {
-    terminal: AlternateScreen<MouseTerminal<RawTerminal<Stdout>>>,
+    terminal:
+        RefCell<AlternateScreen<MouseTerminal<RawTerminal<BufWriter<File>>>>>,
     current_style: Cell<theme::ColorPair>,
-}
 
-struct InputParser {
     // Inner state required to parse input
     last_button: Option<MouseButton>,
 
-    event_due: bool,
-    requests: Sender<()>,
-    input: Receiver<TEvent>,
+    input_receiver: Receiver<TEvent>,
+    resize_receiver: Receiver<()>,
 }
 
-impl InputParser {
-    // Creates a non-blocking abstraction over the usual blocking input
-    fn new() -> Self {
-        let (input_sender, input_receiver) = crossbeam_channel::bounded(0);
-        let (request_sender, request_receiver) = crossbeam_channel::bounded(0);
+impl Backend {
+    /// Creates a new termion-based backend.
+    pub fn init() -> Box<backend::Backend> {
+        // Use a ~8MB buffer
+        // Should be enough for a single screen most of the time.
+        let terminal =
+            RefCell::new(AlternateScreen::from(MouseTerminal::from(
+                BufWriter::with_capacity(
+                    8_000_000,
+                    File::create("/dev/tty").unwrap(),
+                )
+                .into_raw_mode()
+                .unwrap(),
+            )));
 
-        // This thread will stop after an event when `InputParser` is dropped.
+        write!(terminal.borrow_mut(), "{}", termion::cursor::Hide).unwrap();
+
+        let (input_sender, input_receiver) = crossbeam_channel::unbounded();
+        let (resize_sender, resize_receiver) = crossbeam_channel::bounded(0);
+
+        let running = Arc::new(AtomicBool::new(true));
+
+        #[cfg(unix)]
+        backend::resize::start_resize_thread(
+            resize_sender,
+            Arc::clone(&running),
+        );
+
+        // We want nonblocking input, but termion is blocking by default
+        // Read input from a separate thread
         thread::spawn(move || {
-            let stdin = ::std::io::stdin();
-            let stdin = stdin.lock();
-            let mut events = stdin.events();
+            let input = std::fs::File::open("/dev/tty").unwrap();
+            let mut events = input.events();
 
-            for _ in request_receiver {
-                let event: Result<TEvent, ::std::io::Error> =
-                    events.next().unwrap();
-
-                if input_sender.send(event.unwrap()).is_err() {
-                    return;
+            // Take all the events we can
+            while let Some(Ok(event)) = events.next() {
+                // If we can't send, it means the receiving side closed,
+                // so just stop.
+                if input_sender.send(event).is_err() {
+                    break;
                 }
             }
+
+            running.store(false, Ordering::Relaxed);
         });
 
-        InputParser {
+        let c = Backend {
+            terminal,
+            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
+
             last_button: None,
-            input: input_receiver,
-            requests: request_sender,
-            event_due: false,
-        }
-    }
-
-    /// We pledge to want input.
-    ///
-    /// If we were already expecting input, this is a NO-OP.
-    fn request(&mut self) {
-        if !self.event_due {
-            self.requests.send(()).unwrap();
-            self.event_due = true;
-        }
-    }
-
-    fn peek(&mut self) -> Option<Event> {
-        self.request();
-
-        let timeout = ::std::time::Duration::from_millis(10);
-
-        let input = select! {
-            recv(self.input) -> input => {
-                input
-            }
-            recv(crossbeam_channel::after(timeout)) -> _ => return None,
+            input_receiver,
+            resize_receiver,
         };
 
-        // We got what we came for.
-        self.event_due = false;
-        Some(self.map_key(input.unwrap()))
+        Box::new(c)
     }
 
-    fn next_event(&mut self) -> Event {
-        self.request();
-
-        let input = self.input.recv().unwrap();
-        self.event_due = false;
-        self.map_key(input)
+    fn apply_colors(&self, colors: theme::ColorPair) {
+        with_color(&colors.front, |c| self.write(tcolor::Fg(c)));
+        with_color(&colors.back, |c| self.write(tcolor::Bg(c)));
     }
 
     fn map_key(&mut self, event: TEvent) -> Event {
@@ -184,68 +177,33 @@ impl InputParser {
             _ => Event::Unknown(vec![]),
         }
     }
-}
 
-trait Effectable {
-    fn on(&self);
-    fn off(&self);
-}
-
-impl Effectable for theme::Effect {
-    fn on(&self) {
-        match *self {
-            theme::Effect::Simple => (),
-            theme::Effect::Reverse => print!("{}", tstyle::Invert),
-            theme::Effect::Bold => print!("{}", tstyle::Bold),
-            theme::Effect::Italic => print!("{}", tstyle::Italic),
-            theme::Effect::Underline => print!("{}", tstyle::Underline),
-        }
-    }
-
-    fn off(&self) {
-        match *self {
-            theme::Effect::Simple => (),
-            theme::Effect::Reverse => print!("{}", tstyle::NoInvert),
-            theme::Effect::Bold => print!("{}", tstyle::NoBold),
-            theme::Effect::Italic => print!("{}", tstyle::NoItalic),
-            theme::Effect::Underline => print!("{}", tstyle::NoUnderline),
-        }
-    }
-}
-
-impl Backend {
-    /// Creates a new termion-based backend.
-    pub fn init() -> Box<backend::Backend> {
-        print!("{}", termion::cursor::Hide);
-
-        // TODO: lock stdout
-        let terminal = AlternateScreen::from(MouseTerminal::from(
-            ::std::io::stdout().into_raw_mode().unwrap(),
-        ));
-
-        let c = Backend {
-            terminal: terminal,
-            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
-        };
-
-        Box::new(c)
-    }
-
-    fn apply_colors(&self, colors: theme::ColorPair) {
-        with_color(&colors.front, |c| print!("{}", tcolor::Fg(c)));
-        with_color(&colors.back, |c| print!("{}", tcolor::Bg(c)));
+    fn write<T>(&self, content: T)
+    where
+        T: std::fmt::Display,
+    {
+        write!(self.terminal.borrow_mut(), "{}", content).unwrap();
     }
 }
 
 impl backend::Backend for Backend {
     fn finish(&mut self) {
-        print!("{}{}", termion::cursor::Show, termion::cursor::Goto(1, 1));
-        print!(
+        write!(
+            self.terminal.get_mut(),
+            "{}{}",
+            termion::cursor::Show,
+            termion::cursor::Goto(1, 1)
+        )
+        .unwrap();
+
+        write!(
+            self.terminal.get_mut(),
             "{}[49m{}[39m{}",
             27 as char,
             27 as char,
             termion::clear::All
-        );
+        )
+        .unwrap();
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
@@ -260,11 +218,23 @@ impl backend::Backend for Backend {
     }
 
     fn set_effect(&self, effect: theme::Effect) {
-        effect.on();
+        match effect {
+            theme::Effect::Simple => (),
+            theme::Effect::Reverse => self.write(tstyle::Invert),
+            theme::Effect::Bold => self.write(tstyle::Bold),
+            theme::Effect::Italic => self.write(tstyle::Italic),
+            theme::Effect::Underline => self.write(tstyle::Underline),
+        }
     }
 
     fn unset_effect(&self, effect: theme::Effect) {
-        effect.off();
+        match effect {
+            theme::Effect::Simple => (),
+            theme::Effect::Reverse => self.write(tstyle::NoInvert),
+            theme::Effect::Bold => self.write(tstyle::NoBold),
+            theme::Effect::Italic => self.write(tstyle::NoItalic),
+            theme::Effect::Underline => self.write(tstyle::NoUnderline),
+        }
     }
 
     fn has_colors(&self) -> bool {
@@ -273,6 +243,8 @@ impl backend::Backend for Backend {
     }
 
     fn screen_size(&self) -> Vec2 {
+        // TODO: termion::terminal_size currently requires stdout.
+        // When available, we should try to use /dev/tty instead.
         let (x, y) = termion::terminal_size().unwrap_or((1, 1));
         (x, y).into()
     }
@@ -282,52 +254,31 @@ impl backend::Backend for Backend {
             front: color,
             back: color,
         });
-        print!("{}", termion::clear::All);
+
+        self.write(termion::clear::All);
     }
 
     fn refresh(&mut self) {
-        self.terminal.flush().unwrap();
+        self.terminal.get_mut().flush().unwrap();
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        print!(
+        write!(
+            self.terminal.borrow_mut(),
             "{}{}",
             termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
             text
-        );
+        )
+        .unwrap();
     }
 
-    fn start_input_thread(
-        &mut self, event_sink: Sender<Option<Event>>,
-        input_request: Receiver<backend::InputRequest>,
-    ) {
-        let running = Arc::new(AtomicBool::new(true));
-
-        #[cfg(unix)]
-        {
-            backend::resize::start_resize_thread(
-                Signals::new(&[libc::SIGWINCH]).unwrap(),
-                event_sink.clone(),
-                input_request.clone(),
-                Arc::clone(&running),
-                None,
-            );
-        }
-
-        let mut parser = InputParser::new();
-        thread::spawn(move || {
-            for req in input_request {
-                match req {
-                    backend::InputRequest::Peek => {
-                        event_sink.send(parser.peek()).unwrap();
-                    }
-                    backend::InputRequest::Block => {
-                        event_sink.send(Some(parser.next_event())).unwrap();
-                    }
-                }
-            }
-            running.store(false, Ordering::Relaxed);
-        });
+    fn poll_event(&mut self) -> Option<Event> {
+        let event = select! {
+            recv(self.input_receiver) -> event => event.ok(),
+            recv(self.resize_receiver) -> _ => return Some(Event::WindowResize),
+            default => return None,
+        };
+        event.map(|event| self.map_key(event))
     }
 }
 

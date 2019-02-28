@@ -6,15 +6,12 @@
 extern crate bear_lib_terminal;
 
 use std::collections::HashSet;
-use std::thread;
-use std::time::{Duration, Instant};
 
 use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{
     self, state, Event as BltEvent, KeyCode,
 };
 use self::bear_lib_terminal::Color as BltColor;
-use crossbeam_channel::{self, Receiver, Sender};
 
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
@@ -30,9 +27,6 @@ enum ColorRole {
 pub struct Backend {
     buttons_pressed: HashSet<MouseButton>,
     mouse_position: Vec2,
-
-    inner_sender: Sender<Option<Event>>,
-    inner_receiver: Receiver<Option<Event>>,
 }
 
 impl Backend {
@@ -51,13 +45,9 @@ impl Backend {
             },
         ]);
 
-        let (inner_sender, inner_receiver) = crossbeam_channel::bounded(1);
-
         let c = Backend {
             buttons_pressed: HashSet::new(),
             mouse_position: Vec2::zero(),
-            inner_sender,
-            inner_receiver,
         };
 
         Box::new(c)
@@ -320,45 +310,8 @@ impl backend::Backend for Backend {
         terminal::print_xy(pos.x as i32, pos.y as i32, text);
     }
 
-    fn start_input_thread(
-        &mut self, event_sink: Sender<Option<Event>>,
-        input_requests: Receiver<backend::InputRequest>,
-    ) {
-        let receiver = self.inner_receiver.clone();
-
-        thread::spawn(move || {
-            for _ in input_requests {
-                match receiver.recv() {
-                    Err(_) => return,
-                    Ok(event) => {
-                        if event_sink.send(event).is_err() {
-                            return;
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    fn prepare_input(&mut self, input_request: backend::InputRequest) {
-        match input_request {
-            backend::InputRequest::Peek => {
-                let event = self.parse_next();
-                self.inner_sender.send(event).unwrap();
-            }
-            backend::InputRequest::Block => {
-                let timeout = Duration::from_millis(30);
-                // Wait for up to `timeout_ms`.
-                let start = Instant::now();
-                while start.elapsed() < timeout {
-                    if let Some(event) = self.parse_next() {
-                        self.inner_sender.send(Some(event)).unwrap();
-                        return;
-                    }
-                }
-                self.inner_sender.send(Some(Event::Refresh)).unwrap();
-            }
-        }
+    fn poll_event(&mut self) -> Option<Event> {
+        self.parse_next()
     }
 }
 

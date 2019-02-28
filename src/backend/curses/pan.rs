@@ -4,16 +4,6 @@ extern crate pancurses;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::io::{stdout, Write};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-use std::thread;
-
-use crossbeam_channel::{Receiver, Sender};
-
-#[cfg(unix)]
-use libc;
-#[cfg(unix)]
-use signal_hook::iterator::Signals;
 
 use backend;
 use event::{Event, Key, MouseButton, MouseEvent};
@@ -30,40 +20,97 @@ pub struct Backend {
     pairs: RefCell<HashMap<(i16, i16), i32>>,
 
     // pancurses needs a handle to the current window.
-    window: Arc<pancurses::Window>,
+    window: pancurses::Window,
 
-    // This is set by the SIGWINCH-triggered thread.
-    // When TRUE, we should tell ncurses about the new terminal size.
-    needs_resize: Arc<AtomicBool>,
-
-    // The signal hook to receive SIGWINCH (window resize)
-    #[cfg(unix)]
-    signals: Option<Signals>,
-}
-
-struct InputParser {
     key_codes: HashMap<i32, Event>,
     last_mouse_button: Option<MouseButton>,
     input_buffer: Option<Event>,
-    window: Arc<pancurses::Window>,
 }
 
-// Ncurses (and pancurses) are not thread-safe
-// (writing from two threads might cause garbage).
-// BUT it's probably fine to read while we write.
-// So `InputParser` will only read, and `Backend` will mostly write.
-unsafe impl Send for InputParser {}
+fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
+    super::find_closest_pair(pair, pancurses::COLORS() as i16)
+}
 
-impl InputParser {
-    fn new(window: Arc<pancurses::Window>) -> Self {
-        InputParser {
+impl Backend {
+    /// Creates a new pancurses-based backend.
+    pub fn init() -> Box<backend::Backend> {
+        ::std::env::set_var("ESCDELAY", "25");
+
+        let window = pancurses::initscr();
+        window.keypad(true);
+        window.timeout(0);
+        pancurses::noecho();
+        pancurses::cbreak();
+        pancurses::start_color();
+        pancurses::use_default_colors();
+        pancurses::curs_set(0);
+        pancurses::mouseinterval(0);
+        pancurses::mousemask(
+            pancurses::ALL_MOUSE_EVENTS | pancurses::REPORT_MOUSE_POSITION,
+            ::std::ptr::null_mut(),
+        );
+
+        // This asks the terminal to provide us with mouse drag events
+        // (Mouse move when a button is pressed).
+        // Replacing 1002 with 1003 would give us ANY mouse move.
+        print!("\x1B[?1002h");
+        stdout().flush().expect("could not flush stdout");
+
+        let c = Backend {
+            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
+            pairs: RefCell::new(HashMap::new()),
             key_codes: initialize_keymap(),
             last_mouse_button: None,
             input_buffer: None,
             window,
+        };
+
+        Box::new(c)
+    }
+
+    /// Save a new color pair.
+    fn insert_color(
+        &self, pairs: &mut HashMap<(i16, i16), i32>, (front, back): (i16, i16),
+    ) -> i32 {
+        let n = 1 + pairs.len() as i32;
+
+        // TODO: when COLORS_PAIRS is available...
+        let target = if 256 > n {
+            // We still have plenty of space for everyone.
+            n
+        } else {
+            // The world is too small for both of us.
+            let target = n - 1;
+            // Remove the mapping to n-1
+            pairs.retain(|_, &mut v| v != target);
+            target
+        };
+        pairs.insert((front, back), target);
+        pancurses::init_pair(target as i16, front, back);
+        target
+    }
+
+    /// Checks the pair in the cache, or re-define a color if needed.
+    fn get_or_create(&self, pair: ColorPair) -> i32 {
+        let mut pairs = self.pairs.borrow_mut();
+        let pair = find_closest_pair(pair);
+
+        // Find if we have this color in stock
+        if pairs.contains_key(&pair) {
+            // We got it!
+            pairs[&pair]
+        } else {
+            self.insert_color(&mut *pairs, pair)
         }
     }
 
+    fn set_colors(&self, pair: ColorPair) {
+        let i = self.get_or_create(pair);
+
+        self.current_style.set(pair);
+        let style = pancurses::COLOR_PAIR(i as pancurses::chtype);
+        self.window.attron(style);
+    }
     fn parse_next(&mut self) -> Option<Event> {
         if let Some(event) = self.input_buffer.take() {
             return Some(event);
@@ -284,107 +331,6 @@ impl InputParser {
     }
 }
 
-fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
-    super::find_closest_pair(pair, pancurses::COLORS() as i16)
-}
-
-impl Backend {
-    /// Creates a new pancurses-based backend.
-    pub fn init() -> Box<backend::Backend> {
-        // We need to create this now, before ncurses initialization
-        // Otherwise ncurses starts its own signal handling and it's a mess.
-        #[cfg(unix)]
-        let signals = Some(Signals::new(&[libc::SIGWINCH]).unwrap());
-
-        ::std::env::set_var("ESCDELAY", "25");
-
-        let window = pancurses::initscr();
-        window.keypad(true);
-        pancurses::noecho();
-        pancurses::cbreak();
-        pancurses::start_color();
-        pancurses::use_default_colors();
-        pancurses::curs_set(0);
-        pancurses::mouseinterval(0);
-        pancurses::mousemask(
-            pancurses::ALL_MOUSE_EVENTS | pancurses::REPORT_MOUSE_POSITION,
-            ::std::ptr::null_mut(),
-        );
-
-        // This asks the terminal to provide us with mouse drag events
-        // (Mouse move when a button is pressed).
-        // Replacing 1002 with 1003 would give us ANY mouse move.
-        print!("\x1B[?1002h");
-        stdout().flush().expect("could not flush stdout");
-
-        let c = Backend {
-            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
-            pairs: RefCell::new(HashMap::new()),
-            window: Arc::new(window),
-            needs_resize: Arc::new(AtomicBool::new(false)),
-            #[cfg(unix)]
-            signals,
-        };
-
-        Box::new(c)
-    }
-
-    /// Save a new color pair.
-    fn insert_color(
-        &self, pairs: &mut HashMap<(i16, i16), i32>, (front, back): (i16, i16),
-    ) -> i32 {
-        let n = 1 + pairs.len() as i32;
-
-        // TODO: when COLORS_PAIRS is available...
-        let target = if 256 > n {
-            // We still have plenty of space for everyone.
-            n
-        } else {
-            // The world is too small for both of us.
-            let target = n - 1;
-            // Remove the mapping to n-1
-            pairs.retain(|_, &mut v| v != target);
-            target
-        };
-        pairs.insert((front, back), target);
-        pancurses::init_pair(target as i16, front, back);
-        target
-    }
-
-    /// Checks the pair in the cache, or re-define a color if needed.
-    fn get_or_create(&self, pair: ColorPair) -> i32 {
-        let mut pairs = self.pairs.borrow_mut();
-        let pair = find_closest_pair(pair);
-
-        // Find if we have this color in stock
-        if pairs.contains_key(&pair) {
-            // We got it!
-            pairs[&pair]
-        } else {
-            self.insert_color(&mut *pairs, pair)
-        }
-    }
-
-    fn set_colors(&self, pair: ColorPair) {
-        let i = self.get_or_create(pair);
-
-        self.current_style.set(pair);
-        let style = pancurses::COLOR_PAIR(i as pancurses::chtype);
-        self.window.attron(style);
-    }
-}
-
-/// Called when a resize event is detected.
-///
-/// We need to have ncurses update its representation of the screen.
-fn on_resize() {
-    // Get size
-    let size = super::terminal_size();
-
-    // Send the size to ncurses
-    pancurses::resize_term(size.y as i32, size.x as i32);
-}
-
 impl backend::Backend for Backend {
     fn screen_size(&self) -> Vec2 {
         // Coordinates are reversed here
@@ -435,10 +381,6 @@ impl backend::Backend for Backend {
     }
 
     fn clear(&self, color: Color) {
-        if self.needs_resize.swap(false, Ordering::Relaxed) {
-            on_resize();
-        }
-
         let id = self.get_or_create(ColorPair {
             front: color,
             back: color,
@@ -455,39 +397,8 @@ impl backend::Backend for Backend {
         self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
-    fn start_input_thread(
-        &mut self, event_sink: Sender<Option<Event>>,
-        input_request: Receiver<backend::InputRequest>,
-    ) {
-        let running = Arc::new(AtomicBool::new(true));
-
-        #[cfg(unix)]
-        {
-            backend::resize::start_resize_thread(
-                self.signals.take().unwrap(),
-                event_sink.clone(),
-                input_request.clone(),
-                Arc::clone(&running),
-                Some(Arc::clone(&self.needs_resize)),
-            );
-        }
-
-        let mut input_parser = InputParser::new(Arc::clone(&self.window));
-
-        thread::spawn(move || {
-            for req in input_request {
-                match req {
-                    backend::InputRequest::Peek => {
-                        input_parser.window.timeout(0);
-                    }
-                    backend::InputRequest::Block => {
-                        input_parser.window.timeout(-1);
-                    }
-                }
-                event_sink.send(input_parser.parse_next()).unwrap();
-            }
-            running.store(false, Ordering::Relaxed);
-        });
+    fn poll_event(&mut self) -> Option<Event> {
+        self.parse_next()
     }
 }
 

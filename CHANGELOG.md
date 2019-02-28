@@ -6,9 +6,19 @@
 
 - Breaking change: `Finder::find_id()` is renamed to `call_on_id()`, and a proper
   `find_id()` was added instead.
+- Breaking change: replaced `set_fps(i32)` with `set_autorefresh(bool)`
+- Breaking change: updated the Backend trait for a simpler input system
+- Add a logging implementation (`logger::init()`) and a `DebugConsole`
+  (`cursive::toggle_debug_console()`)
 - Add `StackView::remove_layer()`
 - Add `CircularFocus` view (and bring proper circular focus to dialogs)
 - Add `HideableView::is_visible()`
+- Add `type CbSink = Sender<Box<CbFunc>>` as an alias for the return type of
+  `Cursive::cb_sink()`
+
+### Improvements
+
+- Updated termion backend to use direct /dev/tty access for improved performance.
 
 ## 0.10.0
 
