@@ -2,7 +2,7 @@
 //!
 //! Needs the `markdown` feature to be enabled.
 
-extern crate pulldown_cmark;
+use pulldown_cmark;
 
 use self::pulldown_cmark::{Event, Tag};
 use crate::theme::{Effect, Style};

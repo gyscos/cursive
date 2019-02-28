@@ -3,7 +3,7 @@
 //! Requires the `termion-backend` feature.
 #![cfg(feature = "termion")]
 
-extern crate termion;
+use termion;
 
 use self::termion::color as tcolor;
 use self::termion::event::Event as TEvent;
@@ -43,7 +43,7 @@ pub struct Backend {
 
 impl Backend {
     /// Creates a new termion-based backend.
-    pub fn init() -> Box<backend::Backend> {
+    pub fn init() -> Box<dyn backend::Backend> {
         // Use a ~8MB buffer
         // Should be enough for a single screen most of the time.
         let terminal =
@@ -284,7 +284,7 @@ impl backend::Backend for Backend {
 
 fn with_color<F, R>(clr: &theme::Color, f: F) -> R
 where
-    F: FnOnce(&tcolor::Color) -> R,
+    F: FnOnce(&dyn tcolor::Color) -> R,
 {
     match *clr {
         theme::Color::TerminalDefault => f(&tcolor::Reset),

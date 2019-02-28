@@ -16,7 +16,7 @@ pub trait Finder {
     ///
     /// If the view is not found, or if it is not of the asked type,
     /// it returns `None`.
-    fn call_on<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
+    fn call_on<V, F, R>(&mut self, sel: &Selector<'_>, callback: F) -> Option<R>
     where
         V: View + Any,
         F: FnOnce(&mut V) -> R;
@@ -42,7 +42,7 @@ pub trait Finder {
 }
 
 impl<T: View> Finder for T {
-    fn call_on<V, F, R>(&mut self, sel: &Selector, callback: F) -> Option<R>
+    fn call_on<V, F, R>(&mut self, sel: &Selector<'_>, callback: F) -> Option<R>
     where
         V: View + Any,
         F: FnOnce(&mut V) -> R,
@@ -52,7 +52,7 @@ impl<T: View> Finder for T {
             let result_ref = &mut result;
 
             let mut callback = Some(callback);
-            let callback = |v: &mut Any| {
+            let callback = |v: &mut dyn Any| {
                 if let Some(callback) = callback.take() {
                     if v.is::<V>() {
                         *result_ref =

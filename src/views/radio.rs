@@ -12,7 +12,7 @@ struct SharedState<T> {
     selection: usize,
     values: Vec<Rc<T>>,
 
-    on_change: Option<Rc<Fn(&mut Cursive, &T)>>,
+    on_change: Option<Rc<dyn Fn(&mut Cursive, &T)>>,
 }
 
 impl<T> SharedState<T> {
@@ -162,7 +162,7 @@ impl<T: 'static> RadioButton<T> {
         })
     }
 
-    fn draw_internal(&self, printer: &Printer) {
+    fn draw_internal(&self, printer: &Printer<'_, '_>) {
         printer.print((0, 0), "( )");
         if self.is_selected() {
             printer.print((1, 0), "X");
@@ -193,7 +193,7 @@ impl<T: 'static> View for RadioButton<T> {
         self.enabled
     }
 
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         if self.enabled && printer.enabled {
             printer.with_selection(printer.focused, |printer| {
                 self.draw_internal(printer)

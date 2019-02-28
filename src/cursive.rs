@@ -39,17 +39,17 @@ pub struct Cursive {
 
     running: bool,
 
-    backend: Box<backend::Backend>,
+    backend: Box<dyn backend::Backend>,
 
-    cb_source: Receiver<Box<CbFunc>>,
-    cb_sink: Sender<Box<CbFunc>>,
+    cb_source: Receiver<Box<dyn CbFunc>>,
+    cb_sink: Sender<Box<dyn CbFunc>>,
 }
 
 /// Identifies a screen in the cursive root.
 pub type ScreenId = usize;
 
 /// Convenient alias to the result of `Cursive::cb_sink`.
-pub type CbSink = Sender<Box<CbFunc>>;
+pub type CbSink = Sender<Box<dyn CbFunc>>;
 
 /// Asynchronous callback function trait.
 ///
@@ -127,7 +127,7 @@ impl Cursive {
     /// ```
     pub fn new<F>(backend_init: F) -> Self
     where
-        F: FnOnce() -> Box<backend::Backend>,
+        F: FnOnce() -> Box<dyn backend::Backend>,
     {
         let theme = theme::load_default();
 
@@ -422,7 +422,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn call_on<V, F, R>(
-        &mut self, sel: &view::Selector, callback: F,
+        &mut self, sel: &view::Selector<'_>, callback: F,
     ) -> Option<R>
     where
         V: View + Any,
@@ -522,7 +522,7 @@ impl Cursive {
     }
 
     /// Moves the focus to the view identified by `sel`.
-    pub fn focus(&mut self, sel: &view::Selector) -> Result<(), ()> {
+    pub fn focus(&mut self, sel: &view::Selector<'_>) -> Result<(), ()> {
         self.screen_mut().focus_view(sel)
     }
 
@@ -604,7 +604,7 @@ impl Cursive {
     }
 
     /// Convenient method to remove a layer from the current screen.
-    pub fn pop_layer(&mut self) -> Option<Box<View>> {
+    pub fn pop_layer(&mut self) -> Option<Box<dyn View>> {
         self.screen_mut().pop_layer()
     }
 

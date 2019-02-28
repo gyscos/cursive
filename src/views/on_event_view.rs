@@ -43,7 +43,7 @@ pub struct OnEventView<T: View> {
     callbacks: Vec<(EventTrigger, Action<T>)>,
 }
 
-type InnerCallback<T> = Rc<Box<Fn(&mut T, &Event) -> Option<EventResult>>>;
+type InnerCallback<T> = Rc<Box<dyn Fn(&mut T, &Event) -> Option<EventResult>>>;
 
 struct Action<T> {
     phase: TriggerPhase,

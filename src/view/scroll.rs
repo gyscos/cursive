@@ -241,9 +241,9 @@ impl ScrollBase {
     ///     printer.print((0,0), lines[i]);
     /// });
     /// ```
-    pub fn draw<F>(&self, printer: &Printer, line_drawer: F)
+    pub fn draw<F>(&self, printer: &Printer<'_, '_>, line_drawer: F)
     where
-        F: Fn(&Printer, usize),
+        F: Fn(&Printer<'_, '_>, usize),
     {
         if self.view_height == 0 {
             return;

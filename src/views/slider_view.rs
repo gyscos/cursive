@@ -10,8 +10,8 @@ use crate::{Cursive, Printer};
 /// A horizontal or vertical slider.
 pub struct SliderView {
     orientation: Orientation,
-    on_change: Option<Rc<Fn(&mut Cursive, usize)>>,
-    on_enter: Option<Rc<Fn(&mut Cursive, usize)>>,
+    on_change: Option<Rc<dyn Fn(&mut Cursive, usize)>>,
+    on_enter: Option<Rc<dyn Fn(&mut Cursive, usize)>>,
     value: usize,
     max_value: usize,
     dragging: bool,
@@ -112,7 +112,7 @@ impl SliderView {
 }
 
 impl View for SliderView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         match self.orientation {
             Orientation::Vertical => {
                 printer.print_vline((0, 0), self.max_value, "|")

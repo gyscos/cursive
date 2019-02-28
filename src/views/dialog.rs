@@ -124,12 +124,12 @@ impl Dialog {
     ///     .unwrap();
     /// assert_eq!(text_view.get_content().source(), "Hello!");
     /// ```
-    pub fn get_content(&self) -> &View {
+    pub fn get_content(&self) -> &dyn View {
         &*self.content.view
     }
 
     /// Gets mutable access to the content.
-    pub fn get_content_mut(&mut self) -> &mut View {
+    pub fn get_content_mut(&mut self) -> &mut dyn View {
         self.invalidate();
         &mut *self.content.view
     }
@@ -391,7 +391,7 @@ impl Dialog {
         }
     }
 
-    fn draw_buttons(&self, printer: &Printer) -> Option<usize> {
+    fn draw_buttons(&self, printer: &Printer<'_, '_>) -> Option<usize> {
         let mut buttons_height = 0;
         // Current horizontal position of the next button we'll draw.
 
@@ -439,7 +439,7 @@ impl Dialog {
         Some(buttons_height)
     }
 
-    fn draw_content(&self, printer: &Printer, buttons_height: usize) {
+    fn draw_content(&self, printer: &Printer<'_, '_>, buttons_height: usize) {
         // What do we have left?
         let taken = Vec2::new(0, buttons_height)
             + self.borders.combined()
@@ -458,7 +458,7 @@ impl Dialog {
         );
     }
 
-    fn draw_title(&self, printer: &Printer) {
+    fn draw_title(&self, printer: &Printer<'_, '_>) {
         if !self.title.is_empty() {
             let len = self.title.width();
             if len + 4 > printer.size.x {
@@ -521,7 +521,7 @@ impl Dialog {
 }
 
 impl View for Dialog {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         // This will be the buttons_height used by the buttons.
         let buttons_height = match self.draw_buttons(printer) {
             Some(height) => height,
@@ -653,11 +653,11 @@ impl View for Dialog {
         }
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector, callback: AnyCb<'a>) {
+    fn call_on_any<'a>(&mut self, selector: &Selector<'_>, callback: AnyCb<'a>) {
         self.content.call_on_any(selector, callback);
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         self.content.focus_view(selector)
     }
 

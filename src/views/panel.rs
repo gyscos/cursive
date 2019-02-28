@@ -62,7 +62,7 @@ impl<V: View> Panel<V> {
         self.title_position = align;
     }
 
-    fn draw_title(&self, printer: &Printer) {
+    fn draw_title(&self, printer: &Printer<'_, '_>) {
         if !self.title.is_empty() {
             let len = self.title.width();
             if len + 4 > printer.size.x {
@@ -102,7 +102,7 @@ impl<V: View> ViewWrapper for Panel<V> {
         self.view.required_size(req) + (2, 2)
     }
 
-    fn wrap_draw(&self, printer: &Printer) {
+    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
         printer.print_box((0, 0), printer.size, true);
         self.draw_title(&printer);
 

@@ -13,7 +13,7 @@ pub struct Checkbox {
     checked: bool,
     enabled: bool,
 
-    on_change: Option<Rc<Fn(&mut Cursive, bool)>>,
+    on_change: Option<Rc<dyn Fn(&mut Cursive, bool)>>,
 }
 
 new_default!(Checkbox);
@@ -96,7 +96,7 @@ impl Checkbox {
         }
     }
 
-    fn draw_internal(&self, printer: &Printer) {
+    fn draw_internal(&self, printer: &Printer<'_, '_>) {
         printer.print((0, 0), "[ ]");
         if self.checked {
             printer.print((1, 0), "X");
@@ -113,7 +113,7 @@ impl View for Checkbox {
         self.enabled
     }
 
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         if self.enabled && printer.enabled {
             printer.with_selection(printer.focused, |printer| {
                 self.draw_internal(printer)

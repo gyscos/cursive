@@ -6,10 +6,10 @@ use crate::view::View;
 /// This trait is automatically implemented for any `T: View`.
 pub trait AnyView {
     /// Downcast self to a `Any`.
-    fn as_any(&self) -> &Any;
+    fn as_any(&self) -> &dyn Any;
 
     /// Downcast self to a mutable `Any`.
-    fn as_any_mut(&mut self) -> &mut Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 
     /// Returns a boxed any from a boxed self.
     ///
@@ -25,21 +25,21 @@ pub trait AnyView {
     /// let text: Box<TextView> = boxed.as_boxed_any().downcast().unwrap();
     /// # }
     /// ```
-    fn as_boxed_any(self: Box<Self>) -> Box<Any>;
+    fn as_boxed_any(self: Box<Self>) -> Box<dyn Any>;
 }
 
 impl<T: View> AnyView for T {
     /// Downcast self to a `Any`.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Downcast self to a mutable `Any`.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
-    fn as_boxed_any(self: Box<Self>) -> Box<Any> {
+    fn as_boxed_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 }

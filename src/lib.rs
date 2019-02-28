@@ -78,17 +78,16 @@ extern crate maplit;
 
 // We use chan_signal to detect SIGWINCH.
 // It's not how windows work, so no need to use that.
-#[cfg(unix)]
-extern crate signal_hook;
 
-extern crate chrono;
-extern crate libc;
-extern crate num;
-extern crate owning_ref;
-extern crate toml;
-extern crate unicode_segmentation;
-extern crate unicode_width;
-extern crate xi_unicode;
+
+
+
+
+
+
+
+
+
 
 macro_rules! new_default(
     ($c:ty) => {

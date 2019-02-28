@@ -15,12 +15,12 @@ use crate::{Cursive, Printer, With};
 ///
 /// Arguments are the `Cursive`, current content of the input and cursor
 /// position
-pub type OnEdit = Fn(&mut Cursive, &str, usize);
+pub type OnEdit = dyn Fn(&mut Cursive, &str, usize);
 
 /// Closure type for callbacks when Enter is pressed.
 ///
 /// Arguments are the `Cursive` and the content of the input.
-pub type OnSubmit = Fn(&mut Cursive, &str);
+pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 
 /// Input box where the user can enter and edit text.
 ///
@@ -502,7 +502,7 @@ fn make_small_stars(length: usize) -> &'static str {
 }
 
 impl View for EditView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         assert_eq!(
             printer.size.x, self.last_length,
             "Was promised {}, received {}",

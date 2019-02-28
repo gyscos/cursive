@@ -19,7 +19,7 @@ pub struct LinearLayout {
 }
 
 struct Child {
-    view: Box<View>,
+    view: Box<dyn View>,
     // The last result from the child's required_size
     // Doesn't have to be what the child actually gets.
     size: Vec2,
@@ -33,7 +33,7 @@ impl Child {
         self.size
     }
 
-    fn as_view(&self) -> &View {
+    fn as_view(&self) -> &dyn View {
         &*self.view
     }
 }
@@ -176,12 +176,12 @@ impl LinearLayout {
     }
 
     /// Returns a reference to a child.
-    pub fn get_child(&self, i: usize) -> Option<&View> {
+    pub fn get_child(&self, i: usize) -> Option<&dyn View> {
         self.children.get(i).map(|child| &*child.view)
     }
 
     /// Returns a mutable reference to a child.
-    pub fn get_child_mut(&mut self, i: usize) -> Option<&mut View> {
+    pub fn get_child_mut(&mut self, i: usize) -> Option<&mut dyn View> {
         // Anything could happen to the child view, so bust the cache.
         self.invalidate();
         self.children.get_mut(i).map(|child| &mut *child.view)
@@ -190,7 +190,7 @@ impl LinearLayout {
     /// Removes a child.
     ///
     /// If `i` is within bounds, the removed child will be returned.
-    pub fn remove_child(&mut self, i: usize) -> Option<Box<View>> {
+    pub fn remove_child(&mut self, i: usize) -> Option<Box<dyn View>> {
         if i < self.children.len() {
             // Any alteration means we should invalidate the cache.
             self.invalidate();
@@ -240,7 +240,7 @@ impl LinearLayout {
     /// Returns a cyclic mutable iterator starting with the child in focus
     fn iter_mut<'a>(
         &'a mut self, from_focus: bool, source: direction::Relative,
-    ) -> Box<Iterator<Item = (usize, &mut Child)> + 'a> {
+    ) -> Box<dyn Iterator<Item = (usize, &mut Child)> + 'a> {
         match source {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
@@ -334,7 +334,7 @@ fn try_focus(
 }
 
 impl View for LinearLayout {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         // Use pre-computed sizes
         // debug!("Pre loop!");
         for (i, item) in ChildIterator::new(
@@ -597,7 +597,7 @@ impl View for LinearLayout {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
+        &mut self, selector: &Selector<'_>, mut callback: AnyCb<'a>,
     ) {
         for child in &mut self.children {
             child
@@ -606,7 +606,7 @@ impl View for LinearLayout {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         for (i, child) in self.children.iter_mut().enumerate() {
             if child.view.focus_view(selector).is_ok() {
                 self.focus = i;

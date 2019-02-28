@@ -1,5 +1,5 @@
 //! Ncurses-specific backend.
-extern crate ncurses;
+use ncurses;
 
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
@@ -56,7 +56,7 @@ fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
 
 impl Backend {
     /// Creates a new ncurses-based backend.
-    pub fn init() -> Box<backend::Backend> {
+    pub fn init() -> Box<dyn backend::Backend> {
         // Change the locale.
         // For some reasons it's mandatory to get some UTF-8 support.
         ncurses::setlocale(ncurses::LcCategory::all, "");

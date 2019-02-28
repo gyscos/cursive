@@ -40,7 +40,7 @@ pub struct ProgressBar {
     value: Counter,
     color: ColorType,
     // TODO: use a Promise instead?
-    label_maker: Box<Fn(usize, (usize, usize)) -> String>,
+    label_maker: Box<dyn Fn(usize, (usize, usize)) -> String>,
 }
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
@@ -225,7 +225,7 @@ fn sub_block(extra: usize) -> &'static str {
 }
 
 impl View for ProgressBar {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         // Now, the bar itself...
         let available = printer.size.x;
 

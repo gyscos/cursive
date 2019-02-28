@@ -13,7 +13,7 @@ pub trait View: Any + AnyView {
     /// Draws the view with the given printer (includes bounds) and focus.
     ///
     /// This is the only *required* method to implement.
-    fn draw(&self, printer: &Printer);
+    fn draw(&self, printer: &Printer<'_, '_>);
 
     /// Called once the size for this view has been decided.
     ///
@@ -83,7 +83,7 @@ pub trait View: Any + AnyView {
     /// View groups should implement this to forward the call to each children.
     ///
     /// Default implementation is a no-op.
-    fn call_on_any<'a>(&mut self, _: &Selector, _: AnyCb<'a>) {
+    fn call_on_any<'a>(&mut self, _: &Selector<'_>, _: AnyCb<'a>) {
         // TODO: FnMut -> FnOnce once it works
     }
 
@@ -92,7 +92,7 @@ pub trait View: Any + AnyView {
     /// Returns `Ok(())` if the view was found and selected.
     ///
     /// Default implementation simply returns `Err(())`.
-    fn focus_view(&mut self, _: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, _: &Selector<'_>) -> Result<(), ()> {
         Err(())
     }
 

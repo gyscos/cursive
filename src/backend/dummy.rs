@@ -12,7 +12,7 @@ pub struct Backend;
 
 impl Backend {
     /// Creates a new dummy backend.
-    pub fn init() -> Box<backend::Backend>
+    pub fn init() -> Box<dyn backend::Backend>
     where
         Self: Sized,
     {

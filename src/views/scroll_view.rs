@@ -431,7 +431,7 @@ impl<V> View for ScrollView<V>
 where
     V: View,
 {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         // Draw scrollbar?
         let scrolling = self.is_scrolling();
 
@@ -692,11 +692,11 @@ where
         size
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector, cb: AnyCb<'a>) {
+    fn call_on_any<'a>(&mut self, selector: &Selector<'_>, cb: AnyCb<'a>) {
         self.inner.call_on_any(selector, cb)
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         self.inner.focus_view(selector)
     }
 

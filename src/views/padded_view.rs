@@ -56,7 +56,7 @@ impl<V: View> ViewWrapper for PaddedView<V> {
         self.view.on_event(event.relativized(padding))
     }
 
-    fn wrap_draw(&self, printer: &Printer) {
+    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
         let top_left = self.margins.top_left();
         let bot_right = self.margins.bot_right();
         let printer = &printer.offset(top_left).shrinked(bot_right);

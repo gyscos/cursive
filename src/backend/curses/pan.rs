@@ -1,5 +1,5 @@
 //! Pancuses-specific backend.
-extern crate pancurses;
+use pancurses;
 
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
@@ -33,7 +33,7 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
 
 impl Backend {
     /// Creates a new pancurses-based backend.
-    pub fn init() -> Box<backend::Backend> {
+    pub fn init() -> Box<dyn backend::Backend> {
         ::std::env::set_var("ESCDELAY", "25");
 
         let window = pancurses::initscr();

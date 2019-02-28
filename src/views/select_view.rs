@@ -59,11 +59,11 @@ pub struct SelectView<T = String> {
 
     // This is a custom callback to include a &T.
     // It will be called whenever "Enter" is pressed or when an item is clicked.
-    on_submit: Option<Rc<Fn(&mut Cursive, &T)>>,
+    on_submit: Option<Rc<dyn Fn(&mut Cursive, &T)>>,
 
     // This callback is called when the selection is changed.
     // TODO: add the previous selection? Indices?
-    on_select: Option<Rc<Fn(&mut Cursive, &T)>>,
+    on_select: Option<Rc<dyn Fn(&mut Cursive, &T)>>,
 
     // If `true`, when a character is pressed, jump to the next item starting
     // with this character.
@@ -347,7 +347,7 @@ impl<T: 'static> SelectView<T> {
         self.with(|s| s.add_all(iter))
     }
 
-    fn draw_item(&self, printer: &Printer, i: usize) {
+    fn draw_item(&self, printer: &Printer<'_, '_>, i: usize) {
         let l = self.items[i].label.width();
         let x = self.align.h.get_offset(l, printer.size.x);
         printer.print_hline((0, 0), x, " ");
@@ -670,7 +670,7 @@ impl SelectView<String> {
 }
 
 impl<T: 'static> View for SelectView<T> {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         self.last_offset.set(printer.offset);
 
         if self.popup {
