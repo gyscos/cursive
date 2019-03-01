@@ -8,6 +8,7 @@
   `find_id()` was added instead.
 - Breaking change: replaced `set_fps(i32)` with `set_autorefresh(bool)`
 - Breaking change: updated the Backend trait for a simpler input system
+- Updated to Rust 2018 (now requires rustc > 1.31)
 - Add a logging implementation (`logger::init()`) and a `DebugConsole`
   (`cursive::toggle_debug_console()`)
 - Add `StackView::remove_layer()`
