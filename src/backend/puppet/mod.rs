@@ -1,9 +1,9 @@
 //! Puppet backend
 
-//#![warn(missing_docs)]
-//#![allow(warnings)]
-//#![warn(unused)]
-//#![allow(bad_style)]
+#![warn(missing_docs)]
+#![allow(warnings)]
+#![warn(unused)]
+#![allow(bad_style)]
 
 use std::thread;
 
