@@ -1,6 +1,6 @@
-use std::cmp::min;
 use crate::vec::Vec2;
 use crate::XY;
+use std::cmp::min;
 
 /// Location of the view on screen
 pub type Position = XY<Offset>;

@@ -1,13 +1,15 @@
 use crate::direction::Direction;
 use crate::event::{AnyCb, Event, EventResult};
-use std::cell;
-use std::ops::Deref;
 use crate::theme::ColorStyle;
 use crate::vec::Vec2;
-use crate::view::{IntoBoxedView, Offset, Position, Selector, View, ViewWrapper};
+use crate::view::{
+    IntoBoxedView, Offset, Position, Selector, View, ViewWrapper,
+};
 use crate::views::{CircularFocus, Layer, ShadowView, ViewBox};
 use crate::Printer;
 use crate::With;
+use std::cell;
+use std::ops::Deref;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -166,7 +168,9 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector<'_>, callback: AnyCb<'a>) {
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector<'_>, callback: AnyCb<'a>,
+    ) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => {
                 v.call_on_any(selector, callback)

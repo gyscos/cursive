@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 use crate::event::{Event, Key};
 use crate::theme::{BaseColor, Color, ColorPair};
+use maplit::hashmap;
 
 #[cfg(feature = "ncurses-backend")]
 pub mod n;

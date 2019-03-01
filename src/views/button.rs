@@ -3,10 +3,10 @@ use crate::direction::Direction;
 use crate::event::*;
 use crate::rect::Rect;
 use crate::theme::ColorStyle;
-use unicode_width::UnicodeWidthStr;
 use crate::vec::Vec2;
 use crate::view::View;
 use crate::{Cursive, Printer, With};
+use unicode_width::UnicodeWidthStr;
 
 /// Simple text label with a callback when <Enter> is pressed.
 ///

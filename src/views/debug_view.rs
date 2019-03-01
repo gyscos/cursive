@@ -4,7 +4,7 @@ use crate::vec::Vec2;
 use crate::view::View;
 use crate::Printer;
 
-use unicode_width::UnicodeWidthStr;
+use unicode_width::UnicodeWidthStr as _;
 
 /// View used for debugging, showing logs.
 pub struct DebugView {

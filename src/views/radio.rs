@@ -1,12 +1,12 @@
 use crate::direction::Direction;
 use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
-use std::cell::RefCell;
-use std::rc::Rc;
 use crate::theme::ColorStyle;
 use crate::vec::Vec2;
 use crate::view::View;
 use crate::Cursive;
 use crate::{Printer, With};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 struct SharedState<T> {
     selection: usize,
@@ -207,9 +207,7 @@ impl<T: 'static> View for RadioButton<T> {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Enter) | Event::Char(' ') => {
-                self.select()
-            }
+            Event::Key(Key::Enter) | Event::Char(' ') => self.select(),
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,

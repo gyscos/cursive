@@ -1,4 +1,6 @@
 //! Ncurses-specific backend.
+use log::{debug, warn};
+use maplit::hashmap;
 use ncurses;
 
 use std::cell::{Cell, RefCell};

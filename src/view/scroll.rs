@@ -1,8 +1,8 @@
 use crate::div::div_up;
-use std::cmp::{max, min};
 use crate::theme::ColorStyle;
 use crate::vec::Vec2;
 use crate::Printer;
+use std::cmp::{max, min};
 
 /// Provide scrolling functionalities to a view.
 ///

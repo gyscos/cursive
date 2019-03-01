@@ -13,9 +13,9 @@
 //! [menubar]: ../struct.Cursive.html#method.menubar
 
 use crate::event::Callback;
-use std::rc::Rc;
 use crate::Cursive;
 use crate::With;
+use std::rc::Rc;
 
 /// Root of a menu tree.
 #[derive(Default, Clone)]

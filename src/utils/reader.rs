@@ -1,5 +1,5 @@
-use std::io::{self, Read};
 use crate::utils::Counter;
+use std::io::{self, Read};
 
 /// Wrapper around a `Read` that reports the progress made.
 ///

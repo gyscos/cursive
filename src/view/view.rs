@@ -1,10 +1,10 @@
 use crate::direction::Direction;
 use crate::event::{AnyCb, Event, EventResult};
 use crate::rect::Rect;
-use std::any::Any;
 use crate::vec::Vec2;
 use crate::view::{AnyView, Selector};
 use crate::Printer;
+use std::any::Any;
 
 /// Main trait defining a view behaviour.
 ///

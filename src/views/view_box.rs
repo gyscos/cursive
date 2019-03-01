@@ -1,5 +1,5 @@
-use std::ops::{Deref, DerefMut};
 use crate::view::{IntoBoxedView, View, ViewWrapper};
+use std::ops::{Deref, DerefMut};
 
 /// A boxed `View`.
 ///

@@ -14,7 +14,7 @@ use self::termion::input::{MouseTerminal, TermRead};
 use self::termion::raw::{IntoRawMode, RawTerminal};
 use self::termion::screen::AlternateScreen;
 use self::termion::style as tstyle;
-use crossbeam_channel::{self, Receiver};
+use crossbeam_channel::{self, select, Receiver};
 
 use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};

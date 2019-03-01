@@ -72,7 +72,8 @@ where
                 current_width += delimiter_width;
                 true
             }
-        }).map(|token| token.len() + delimiter_len)
+        })
+        .map(|token| token.len() + delimiter_len)
         .sum();
 
     // We counted delimiter once too many times,

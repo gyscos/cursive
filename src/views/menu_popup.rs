@@ -1,16 +1,18 @@
 use crate::align::Align;
-use crate::event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::event::{
+    Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+};
 use crate::menu::{MenuItem, MenuTree};
 use crate::rect::Rect;
-use std::cmp::min;
-use std::rc::Rc;
-use unicode_width::UnicodeWidthStr;
 use crate::vec::Vec2;
 use crate::view::{Position, ScrollBase, View};
 use crate::views::OnEventView;
 use crate::Cursive;
 use crate::Printer;
 use crate::With;
+use std::cmp::min;
+use std::rc::Rc;
+use unicode_width::UnicodeWidthStr;
 
 /// Popup that shows a list of items.
 pub struct MenuPopup {
@@ -162,7 +164,8 @@ impl MenuPopup {
                             action_cb.clone()(s);
                         }
                     },
-                )).on_event(Key::Left, |s| {
+                ))
+                .on_event(Key::Left, |s| {
                     s.pop_layer();
                 }),
             );
@@ -297,18 +300,14 @@ impl View for MenuPopup {
             Event::Mouse {
                 event: MouseEvent::WheelUp,
                 ..
-            }
-                if self.scrollbase.can_scroll_up() =>
-            {
+            } if self.scrollbase.can_scroll_up() => {
                 fix_scroll = false;
                 self.scrollbase.scroll_up(1);
             }
             Event::Mouse {
                 event: MouseEvent::WheelDown,
                 ..
-            }
-                if self.scrollbase.can_scroll_down() =>
-            {
+            } if self.scrollbase.can_scroll_down() => {
                 fix_scroll = false;
                 self.scrollbase.scroll_down(1);
             }
@@ -316,12 +315,13 @@ impl View for MenuPopup {
                 event: MouseEvent::Press(MouseButton::Left),
                 position,
                 offset,
-            }
-                if self.scrollbase.scrollable() && position
+            } if self.scrollbase.scrollable()
+                && position
                     .checked_sub(offset + (0, 1))
                     .map(|position| {
                         self.scrollbase.start_drag(position, self.last_size.x)
-                    }).unwrap_or(false) =>
+                    })
+                    .unwrap_or(false) =>
             {
                 fix_scroll = false;
             }
@@ -339,9 +339,7 @@ impl View for MenuPopup {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            }
-                if position.fits_in_rect(offset, self.last_size) =>
-            {
+            } if position.fits_in_rect(offset, self.last_size) => {
                 // eprintln!("Position: {:?} / {:?}", position, offset);
                 // eprintln!("Last size: {:?}", self.last_size);
                 let inner_size = self.last_size.saturating_sub((2, 2));

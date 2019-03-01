@@ -1,15 +1,15 @@
 use crate::direction::Direction;
 use crate::event::{Callback, Event, EventResult, Key, MouseEvent};
 use crate::rect::Rect;
-use std::cell::RefCell;
-use std::rc::Rc;
 use crate::theme::{ColorStyle, Effect};
-use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 use crate::utils::lines::simple::{simple_prefix, simple_suffix};
 use crate::vec::Vec2;
 use crate::view::View;
 use crate::{Cursive, Printer, With};
+use std::cell::RefCell;
+use std::rc::Rc;
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 /// Closure type for callbacks when the content is modified.
 ///
@@ -597,7 +597,6 @@ impl View for EditView {
 
     fn layout(&mut self, size: Vec2) {
         self.last_length = size.x;
-        debug!("Promised: {}", size.x);
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {

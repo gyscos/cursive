@@ -1,9 +1,9 @@
+use crate::view::{Selector, View, ViewWrapper};
 use owning_ref::{OwningHandle, RcRef};
 use std::any::Any;
 use std::cell::{RefCell, RefMut};
 use std::ops::DerefMut;
 use std::rc::Rc;
-use crate::view::{Selector, View, ViewWrapper};
 
 /// Wrapper around a view to provide interior mutability.
 pub struct IdView<V: View> {

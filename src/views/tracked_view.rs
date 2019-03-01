@@ -1,8 +1,8 @@
-use std::cell::Cell;
 use crate::vec::Vec2;
 use crate::view::{View, ViewWrapper};
 use crate::views::IdView;
 use crate::Printer;
+use std::cell::Cell;
 
 /// Wrapper around a view that remembers its position.
 pub struct TrackedView<T: View> {

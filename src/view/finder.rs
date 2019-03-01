@@ -1,6 +1,6 @@
-use std::any::Any;
 use crate::view::{View, ViewPath, ViewWrapper};
 use crate::views::{IdView, ViewRef};
+use std::any::Any;
 
 /// Provides `call_on<V: View>` to views.
 ///
@@ -16,7 +16,9 @@ pub trait Finder {
     ///
     /// If the view is not found, or if it is not of the asked type,
     /// it returns `None`.
-    fn call_on<V, F, R>(&mut self, sel: &Selector<'_>, callback: F) -> Option<R>
+    fn call_on<V, F, R>(
+        &mut self, sel: &Selector<'_>, callback: F,
+    ) -> Option<R>
     where
         V: View + Any,
         F: FnOnce(&mut V) -> R;
@@ -42,7 +44,9 @@ pub trait Finder {
 }
 
 impl<T: View> Finder for T {
-    fn call_on<V, F, R>(&mut self, sel: &Selector<'_>, callback: F) -> Option<R>
+    fn call_on<V, F, R>(
+        &mut self, sel: &Selector<'_>, callback: F,
+    ) -> Option<R>
     where
         V: View + Any,
         F: FnOnce(&mut V) -> R,

@@ -1,13 +1,14 @@
 use crate::direction;
 use crate::event::{AnyCb, Event, EventResult, Key};
 use crate::rect::Rect;
-use std::cmp::min;
-use std::ops::Deref;
 use crate::vec::Vec2;
 use crate::view::{Selector, SizeCache, View};
 use crate::Printer;
 use crate::With;
 use crate::XY;
+use log::debug;
+use std::cmp::min;
+use std::ops::Deref;
 
 /// Arranges its children linearly according to its orientation.
 pub struct LinearLayout {
@@ -305,7 +306,8 @@ impl LinearLayout {
                 self.orientation,
                 // TODO: get actual width (not super important)
                 usize::max_value(),
-            ).enumerate()
+            )
+            .enumerate()
             {
                 // Get the child size:
                 // this will give us the allowed window for a click.
@@ -341,7 +343,8 @@ impl View for LinearLayout {
             self.children.iter(),
             self.orientation,
             *printer.size.get(self.orientation),
-        ).enumerate()
+        )
+        .enumerate()
         {
             // debug!("Printer size: {:?}", printer.size);
             // debug!("Child size: {:?}", item.child.size);

@@ -220,8 +220,6 @@ impl<T: View> ViewWrapper for BoxView<T> {
             .size
             .zip_map(child_size.zip(req), SizeConstraint::result);
 
-        debug!("{:?}", result);
-
         if !self.squishable {
             result
         } else {

@@ -1,4 +1,5 @@
 //! Pancuses-specific backend.
+use log::{debug, warn};
 use pancurses;
 
 use std::cell::{Cell, RefCell};

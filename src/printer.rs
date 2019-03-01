@@ -2,14 +2,16 @@
 
 use crate::backend::Backend;
 use crate::direction::Orientation;
-use enumset::EnumSet;
-use std::cmp::min;
-use crate::theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
-use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::UnicodeWidthStr;
+use crate::theme::{
+    BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme,
+};
 use crate::utils::lines::simple::{prefix, suffix};
 use crate::vec::Vec2;
 use crate::with::With;
+use enumset::EnumSet;
+use std::cmp::min;
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 /// Convenient interface to draw on a subset of the screen.
 ///
@@ -428,7 +430,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///     * If the printer currently has the focus,
     ///       uses `ColorStyle::highlight()`.
     ///     * Otherwise, uses `ColorStyle::highlight_inactive()`.
-    pub fn with_selection<F: FnOnce(&Printer<'_, '_>)>(&self, selection: bool, f: F) {
+    pub fn with_selection<F: FnOnce(&Printer<'_, '_>)>(
+        &self, selection: bool, f: F,
+    ) {
         self.with_color(
             if selection {
                 if self.focused {

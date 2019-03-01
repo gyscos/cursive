@@ -2,11 +2,11 @@ use crate::align::*;
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
 use crate::theme::ColorStyle;
-use unicode_width::UnicodeWidthStr;
 use crate::vec::Vec2;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 use crate::With;
+use unicode_width::UnicodeWidthStr;
 
 /// Draws a border around a wrapped view.
 #[derive(Debug)]
@@ -69,9 +69,10 @@ impl<V: View> Panel<V> {
                 return;
             }
             let spacing = 3; //minimum distance to borders
-            let x = spacing + self
-                .title_position
-                .get_offset(len, printer.size.x - 2 * spacing);
+            let x = spacing
+                + self
+                    .title_position
+                    .get_offset(len, printer.size.x - 2 * spacing);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");

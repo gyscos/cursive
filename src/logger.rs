@@ -1,5 +1,6 @@
 //! Logging utilities
 
+use lazy_static::lazy_static;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 

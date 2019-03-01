@@ -2,16 +2,16 @@ use crate::align::*;
 use crate::direction::{Absolute, Direction, Relative};
 use crate::event::{AnyCb, Event, EventResult, Key};
 use crate::rect::Rect;
-use std::cell::Cell;
-use std::cmp::max;
 use crate::theme::ColorStyle;
-use unicode_width::UnicodeWidthStr;
 use crate::vec::Vec2;
 use crate::view::{Margins, Selector, View};
 use crate::views::{Button, DummyView, SizedView, TextView, ViewBox};
 use crate::Cursive;
 use crate::Printer;
 use crate::With;
+use std::cell::Cell;
+use std::cmp::max;
+use unicode_width::UnicodeWidthStr;
 
 /// Identifies currently focused element in [`Dialog`].
 ///
@@ -653,7 +653,9 @@ impl View for Dialog {
         }
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector<'_>, callback: AnyCb<'a>) {
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector<'_>, callback: AnyCb<'a>,
+    ) {
         self.content.call_on_any(selector, callback);
     }
 

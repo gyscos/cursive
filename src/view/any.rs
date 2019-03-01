@@ -1,5 +1,5 @@
-use std::any::Any;
 use crate::view::View;
+use std::any::Any;
 
 /// A view that can be downcasted to its concrete type.
 ///

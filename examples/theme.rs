@@ -15,7 +15,8 @@ fn main() {
         Dialog::around(TextView::new(
             "This application uses a \
              custom theme!",
-        )).title("Themed dialog")
+        ))
+        .title("Themed dialog")
         .button("Quit", |s| s.quit()),
     );
 

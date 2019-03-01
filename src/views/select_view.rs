@@ -1,12 +1,10 @@
 use crate::align::{Align, HAlign, VAlign};
 use crate::direction::Direction;
-use crate::event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::event::{
+    Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+};
 use crate::menu::MenuTree;
 use crate::rect::Rect;
-use std::borrow::Borrow;
-use std::cell::Cell;
-use std::cmp::min;
-use std::rc::Rc;
 use crate::theme::ColorStyle;
 use crate::utils::markup::StyledString;
 use crate::vec::Vec2;
@@ -15,6 +13,10 @@ use crate::views::MenuPopup;
 use crate::Cursive;
 use crate::Printer;
 use crate::With;
+use std::borrow::Borrow;
+use std::cell::Cell;
+use std::cmp::min;
+use std::rc::Rc;
 
 /// View to select an item among a list.
 ///

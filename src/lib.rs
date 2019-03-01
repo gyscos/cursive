@@ -61,33 +61,8 @@
 //! Or you can use gdb as usual.
 #![deny(missing_docs)]
 
-#[macro_use]
-extern crate enum_map;
-#[macro_use]
-extern crate enumset;
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate crossbeam_channel;
-#[macro_use]
-extern crate lazy_static;
-
-#[cfg(any(feature = "ncurses", feature = "pancurses"))]
-#[macro_use]
-extern crate maplit;
-
 // We use chan_signal to detect SIGWINCH.
 // It's not how windows work, so no need to use that.
-
-
-
-
-
-
-
-
-
-
 
 macro_rules! new_default(
     ($c:ty) => {

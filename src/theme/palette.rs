@@ -1,5 +1,6 @@
 use super::Color;
-use enum_map::EnumMap;
+use enum_map::{enum_map, Enum, EnumMap};
+use log::warn;
 use toml;
 
 use std::collections::HashMap;
@@ -150,7 +151,7 @@ impl Default for Palette {
         use crate::theme::Color::*;
 
         Palette {
-            basic: enum_map!{
+            basic: enum_map! {
                 Background => Dark(Blue),
                 Shadow => Dark(Black),
                 View => Dark(White),
@@ -198,7 +199,7 @@ fn iterate_toml<'a>(
             }
             other => {
                 // Other - error?
-                debug!(
+                warn!(
                     "Found unexpected value in theme: {} = {:?}",
                     key, other
                 );

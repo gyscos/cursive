@@ -2,14 +2,14 @@ use crate::direction;
 use crate::event::*;
 use crate::menu::{MenuItem, MenuTree};
 use crate::rect::Rect;
-use std::rc::Rc;
 use crate::theme::ColorStyle;
-use unicode_width::UnicodeWidthStr;
 use crate::vec::Vec2;
 use crate::view::{Position, View};
 use crate::views::{MenuPopup, OnEventView};
 use crate::Cursive;
 use crate::Printer;
+use std::rc::Rc;
+use unicode_width::UnicodeWidthStr;
 
 /// Current state of the menubar
 #[derive(PartialEq, Debug)]
@@ -236,7 +236,8 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
             MenuPopup::new(menu)
                 .on_dismiss(|s| s.select_menubar())
                 .on_action(|s| s.menubar().state = State::Inactive),
-        ).on_event(Key::Right, |s| {
+        )
+        .on_event(Key::Right, |s| {
             s.pop_layer();
             s.select_menubar();
             // Act as if we sent "Right" then "Down"
@@ -246,7 +247,8 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
             {
                 cb(s);
             }
-        }).on_event(Key::Left, |s| {
+        })
+        .on_event(Key::Left, |s| {
             s.pop_layer();
             s.select_menubar();
             // Act as if we sent "Left" then "Down"
@@ -319,9 +321,7 @@ impl View for Menubar {
                 event: MouseEvent::Press(btn),
                 position,
                 offset,
-            }
-                if position.fits(offset) && position.y == offset.y =>
-            {
+            } if position.fits(offset) && position.y == offset.y => {
                 if let Some(child) = position
                     .checked_sub(offset)
                     .and_then(|pos| self.child_at(pos.x))
@@ -338,9 +338,7 @@ impl View for Menubar {
                 event: MouseEvent::Release(btn),
                 position,
                 offset,
-            }
-                if position.fits(offset) && position.y == offset.y =>
-            {
+            } if position.fits(offset) && position.y == offset.y => {
                 if let Some(child) = position
                     .checked_sub(offset)
                     .and_then(|pos| self.child_at(pos.x))

@@ -1,12 +1,12 @@
 use crate::direction::Direction;
 use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
-use std::rc::Rc;
 use crate::theme::ColorStyle;
 use crate::vec::Vec2;
 use crate::view::View;
 use crate::Cursive;
 use crate::Printer;
 use crate::With;
+use std::rc::Rc;
 
 /// Checkable box.
 pub struct Checkbox {

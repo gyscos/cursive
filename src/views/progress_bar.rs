@@ -1,10 +1,10 @@
 use crate::align::HAlign;
-use std::cmp;
-use std::thread;
 use crate::theme::{ColorStyle, ColorType, Effect};
 use crate::utils::Counter;
 use crate::view::View;
 use crate::{Printer, With};
+use std::cmp;
+use std::thread;
 
 // pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
 

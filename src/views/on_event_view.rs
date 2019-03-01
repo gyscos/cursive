@@ -1,8 +1,8 @@
 use crate::event::{Callback, Event, EventResult, EventTrigger};
-use std::rc::Rc;
 use crate::view::{View, ViewWrapper};
 use crate::Cursive;
 use crate::With;
+use std::rc::Rc;
 
 /// A wrapper view that can react to events.
 ///
