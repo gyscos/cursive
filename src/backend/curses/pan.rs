@@ -41,7 +41,7 @@ impl Backend {
         window.keypad(true);
         window.timeout(0);
         pancurses::noecho();
-        pancurses::cbreak();
+        pancurses::raw();
         pancurses::start_color();
         pancurses::use_default_colors();
         pancurses::curs_set(0);
@@ -128,6 +128,9 @@ impl Backend {
                 }
                 pancurses::Input::Character('\u{9}') => Event::Key(Key::Tab),
                 pancurses::Input::Character('\u{1b}') => Event::Key(Key::Esc),
+                // Ctrl+C
+                // TODO: Do not sent Exit here, but register it as a default callback
+                pancurses::Input::Character('\u{3}') => Event::Exit,
                 pancurses::Input::Character(c) if (c as u32) <= 26 => {
                     Event::CtrlChar((b'a' - 1 + c as u8) as char)
                 }
