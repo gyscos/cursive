@@ -1,16 +1,16 @@
+use crate::view::{IntoBoxedView, View, ViewWrapper};
 use std::ops::{Deref, DerefMut};
-use view::{IntoBoxedView, View, ViewWrapper};
 
 /// A boxed `View`.
 ///
 /// It derefs to the wrapped view.
 pub struct ViewBox {
-    view: Box<View>,
+    view: Box<dyn View>,
 }
 
 impl ViewBox {
     /// Creates a new `ViewBox` around the given boxed view.
-    pub fn new(view: Box<View>) -> Self {
+    pub fn new(view: Box<dyn View>) -> Self {
         ViewBox { view }
     }
 
@@ -23,27 +23,27 @@ impl ViewBox {
     }
 
     /// Returns the inner boxed view.
-    pub fn unwrap(self) -> Box<View> {
+    pub fn unwrap(self) -> Box<dyn View> {
         self.view
     }
 }
 
 impl Deref for ViewBox {
-    type Target = View;
+    type Target = dyn View;
 
-    fn deref(&self) -> &View {
+    fn deref(&self) -> &dyn View {
         &*self.view
     }
 }
 
 impl DerefMut for ViewBox {
-    fn deref_mut(&mut self) -> &mut View {
+    fn deref_mut(&mut self) -> &mut dyn View {
         &mut *self.view
     }
 }
 
 impl ViewWrapper for ViewBox {
-    type V = View;
+    type V = dyn View;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
     where

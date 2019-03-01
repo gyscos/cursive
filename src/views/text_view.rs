@@ -5,12 +5,12 @@ use std::sync::{Mutex, MutexGuard};
 use owning_ref::{ArcRef, OwningHandle};
 use unicode_width::UnicodeWidthStr;
 
-use align::*;
-use theme::Effect;
-use utils::lines::spans::{LinesIterator, Row};
-use utils::markup::StyledString;
-use view::{SizeCache, View};
-use {Printer, Vec2, With, XY};
+use crate::align::*;
+use crate::theme::Effect;
+use crate::utils::lines::spans::{LinesIterator, Row};
+use crate::utils::markup::StyledString;
+use crate::view::{SizeCache, View};
+use crate::{Printer, Vec2, With, XY};
 
 /// Provides access to the content of a [`TextView`].
 ///
@@ -346,7 +346,7 @@ impl TextView {
 }
 
 impl View for TextView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         let h = self.rows.len();
         // If the content is smaller than the view, align it somewhere.
         let offset = self.align.v.get_offset(h, printer.size.y);

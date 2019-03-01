@@ -1,6 +1,6 @@
-use vec::Vec2;
-use view::{Selector, View, ViewWrapper};
-use With;
+use crate::vec::Vec2;
+use crate::view::{Selector, View, ViewWrapper};
+use crate::With;
 
 use std::any::Any;
 
@@ -91,7 +91,8 @@ impl<V: View> ViewWrapper for HideableView<V> {
     }
 
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector<'_>,
+        callback: Box<FnMut(&mut dyn Any) + 'a>,
     ) {
         // We always run callbacks, even when invisible.
         self.view.call_on_any(selector, callback)

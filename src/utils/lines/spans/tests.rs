@@ -1,7 +1,7 @@
 use super::LinesIterator;
-use theme::{Effect, Style};
-use utils::markup::StyledString;
-use utils::span::Span;
+use crate::theme::{Effect, Style};
+use crate::utils::markup::StyledString;
+use crate::utils::span::Span;
 
 fn input() -> StyledString {
     let mut text = StyledString::plain("I ");

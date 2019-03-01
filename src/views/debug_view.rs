@@ -1,10 +1,10 @@
-use logger;
-use theme;
-use vec::Vec2;
-use view::View;
-use Printer;
+use crate::logger;
+use crate::theme;
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::Printer;
 
-use unicode_width::UnicodeWidthStr;
+use unicode_width::UnicodeWidthStr as _;
 
 /// View used for debugging, showing logs.
 pub struct DebugView {
@@ -19,7 +19,7 @@ impl DebugView {
 }
 
 impl View for DebugView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         let logs = logger::LOGS.lock().unwrap();
         // Only print the last logs, so skip what doesn't fit
         let skipped = logs.len().saturating_sub(printer.size.y);

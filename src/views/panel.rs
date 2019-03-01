@@ -1,12 +1,12 @@
-use align::*;
-use event::{Event, EventResult};
-use rect::Rect;
-use theme::ColorStyle;
+use crate::align::*;
+use crate::event::{Event, EventResult};
+use crate::rect::Rect;
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::{View, ViewWrapper};
+use crate::Printer;
+use crate::With;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::{View, ViewWrapper};
-use Printer;
-use With;
 
 /// Draws a border around a wrapped view.
 #[derive(Debug)]
@@ -62,16 +62,17 @@ impl<V: View> Panel<V> {
         self.title_position = align;
     }
 
-    fn draw_title(&self, printer: &Printer) {
+    fn draw_title(&self, printer: &Printer<'_, '_>) {
         if !self.title.is_empty() {
             let len = self.title.width();
             if len + 4 > printer.size.x {
                 return;
             }
             let spacing = 3; //minimum distance to borders
-            let x = spacing + self
-                .title_position
-                .get_offset(len, printer.size.x - 2 * spacing);
+            let x = spacing
+                + self
+                    .title_position
+                    .get_offset(len, printer.size.x - 2 * spacing);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
@@ -102,7 +103,7 @@ impl<V: View> ViewWrapper for Panel<V> {
         self.view.required_size(req) + (2, 2)
     }
 
-    fn wrap_draw(&self, printer: &Printer) {
+    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
         printer.print_box((0, 0), printer.size, true);
         self.draw_title(&printer);
 

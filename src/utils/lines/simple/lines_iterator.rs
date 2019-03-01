@@ -1,6 +1,6 @@
 use super::Row;
-use utils::lines::spans;
-use utils::span::{IndexedSpan, SpannedText};
+use crate::utils::lines::spans;
+use crate::utils::span::{IndexedSpan, SpannedText};
 
 /// Generates rows of text in constrained width.
 ///

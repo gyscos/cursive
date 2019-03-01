@@ -1,8 +1,8 @@
-use div::div_up;
+use crate::div::div_up;
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::Printer;
 use std::cmp::{max, min};
-use theme::ColorStyle;
-use vec::Vec2;
-use Printer;
 
 /// Provide scrolling functionalities to a view.
 ///
@@ -241,9 +241,9 @@ impl ScrollBase {
     ///     printer.print((0,0), lines[i]);
     /// });
     /// ```
-    pub fn draw<F>(&self, printer: &Printer, line_drawer: F)
+    pub fn draw<F>(&self, printer: &Printer<'_, '_>, line_drawer: F)
     where
-        F: Fn(&Printer, usize),
+        F: Fn(&Printer<'_, '_>, usize),
     {
         if self.view_height == 0 {
             return;

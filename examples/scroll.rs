@@ -16,7 +16,8 @@ fn main() {
                 .child(Button::new("Bar", |s| s.add_layer(Dialog::info("Uh"))))
                 .scrollable()
                 .scroll_x(true),
-        ).fixed_size((60, 30)),
+        )
+        .fixed_size((60, 30)),
     );
 
     siv.add_global_callback('q', |s| s.quit());

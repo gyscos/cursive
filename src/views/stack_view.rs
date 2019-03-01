@@ -1,13 +1,15 @@
-use direction::Direction;
-use event::{AnyCb, Event, EventResult};
+use crate::direction::Direction;
+use crate::event::{AnyCb, Event, EventResult};
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::{
+    IntoBoxedView, Offset, Position, Selector, View, ViewWrapper,
+};
+use crate::views::{CircularFocus, Layer, ShadowView, ViewBox};
+use crate::Printer;
+use crate::With;
 use std::cell;
 use std::ops::Deref;
-use theme::ColorStyle;
-use vec::Vec2;
-use view::{IntoBoxedView, Offset, Position, Selector, View, ViewWrapper};
-use views::{CircularFocus, Layer, ShadowView, ViewBox};
-use Printer;
-use With;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -126,7 +128,7 @@ impl<T: View> ChildWrapper<T> {
 
 // TODO: use macros to make this less ugly?
 impl<T: View> View for ChildWrapper<T> {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         match *self {
             ChildWrapper::Shadow(ref v) => v.draw(printer),
             ChildWrapper::Backfilled(ref v) => v.draw(printer),
@@ -166,7 +168,9 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector, callback: AnyCb<'a>) {
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector<'_>, callback: AnyCb<'a>,
+    ) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => {
                 v.call_on_any(selector, callback)
@@ -180,7 +184,7 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.focus_view(selector),
             ChildWrapper::Backfilled(ref mut v) => v.focus_view(selector),
@@ -266,14 +270,14 @@ impl StackView {
     }
 
     /// Returns a reference to the layer at the given position.
-    pub fn get(&self, pos: LayerPosition) -> Option<&View> {
+    pub fn get(&self, pos: LayerPosition) -> Option<&dyn View> {
         self.get_index(pos).and_then(|i| {
             self.layers.get(i).map(|child| &**child.view.get_inner())
         })
     }
 
     /// Returns a mutable reference to the layer at the given position.
-    pub fn get_mut(&mut self, pos: LayerPosition) -> Option<&mut View> {
+    pub fn get_mut(&mut self, pos: LayerPosition) -> Option<&mut dyn View> {
         self.get_index(pos).and_then(move |i| {
             self.layers
                 .get_mut(i)
@@ -397,13 +401,13 @@ impl StackView {
     /// # Panics
     ///
     /// If the given position is out of bounds.
-    pub fn remove_layer(&mut self, position: LayerPosition) -> Box<View> {
+    pub fn remove_layer(&mut self, position: LayerPosition) -> Box<dyn View> {
         let i = self.get_index(position).unwrap();
         self.layers.remove(i).view.unwrap().unwrap()
     }
 
     /// Remove the top-most layer.
-    pub fn pop_layer(&mut self) -> Option<Box<View>> {
+    pub fn pop_layer(&mut self) -> Option<Box<dyn View>> {
         self.bg_dirty.set(true);
         self.layers
             .pop()
@@ -500,7 +504,7 @@ impl StackView {
     /// ease inserting layers under the stackview but above its background.
     ///
     /// you probably just want to call draw()
-    pub fn draw_bg(&self, printer: &Printer) {
+    pub fn draw_bg(&self, printer: &Printer<'_, '_>) {
         // If the background is dirty draw a new background
         if self.bg_dirty.get() {
             for y in 0..printer.size.y {
@@ -520,7 +524,7 @@ impl StackView {
     /// ease inserting layers under the stackview but above its background.
     ///
     /// You probably just want to call draw()
-    pub fn draw_fg(&self, printer: &Printer) {
+    pub fn draw_fg(&self, printer: &Printer<'_, '_>) {
         let last = self.layers.len();
         printer.with_color(ColorStyle::primary(), |printer| {
             for (i, (v, offset)) in
@@ -585,7 +589,7 @@ where
 }
 
 impl View for StackView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         // This function is included for compat with the view trait,
         // it should behave the same as calling them seperately, but does
         // not pause to let you insert in between the layers.
@@ -650,7 +654,7 @@ impl View for StackView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
+        &mut self, selector: &Selector<'_>, mut callback: AnyCb<'a>,
     ) {
         for layer in &mut self.layers {
             layer
@@ -659,7 +663,7 @@ impl View for StackView {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         for layer in &mut self.layers {
             if layer.view.focus_view(selector).is_ok() {
                 return Ok(());
@@ -673,7 +677,7 @@ impl View for StackView {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use views::TextView;
+    use crate::views::TextView;
 
     #[test]
     fn pop_add() {

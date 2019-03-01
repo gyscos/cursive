@@ -1,11 +1,11 @@
 use std::cmp::min;
 
-use direction::{Direction, Orientation};
-use event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
-use rect::Rect;
-use theme::ColorStyle;
-use view::{ScrollStrategy, Selector, SizeCache, View};
-use {Printer, Vec2, With, XY};
+use crate::direction::{Direction, Orientation};
+use crate::event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::rect::Rect;
+use crate::theme::ColorStyle;
+use crate::view::{ScrollStrategy, Selector, SizeCache, View};
+use crate::{Printer, Vec2, With, XY};
 
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {
@@ -343,10 +343,13 @@ where
     /// Returns `(inner_size, desired_size)`
     fn sizes(&mut self, constraint: Vec2, strict: bool) -> (Vec2, Vec2) {
         // First: try the cache
-        if !self.inner.needs_relayout() && self
-            .size_cache
-            .map(|cache| cache.zip_map(constraint, SizeCache::accept).both())
-            .unwrap_or(false)
+        if !self.inner.needs_relayout()
+            && self
+                .size_cache
+                .map(|cache| {
+                    cache.zip_map(constraint, SizeCache::accept).both()
+                })
+                .unwrap_or(false)
         {
             // eprintln!("Cache: {:?}; constraint: {:?}", self.size_cache, constraint);
 
@@ -431,7 +434,7 @@ impl<V> View for ScrollView<V>
 where
     V: View,
 {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         // Draw scrollbar?
         let scrolling = self.is_scrolling();
 
@@ -534,18 +537,15 @@ where
                     Event::Mouse {
                         event: MouseEvent::WheelUp,
                         ..
-                    }
-                        if self.enabled.y && self.offset.y > 0 =>
-                    {
+                    } if self.enabled.y && self.offset.y > 0 => {
                         self.offset.y = self.offset.y.saturating_sub(3);
                     }
                     Event::Mouse {
                         event: MouseEvent::WheelDown,
                         ..
-                    }
-                        if self.enabled.y
-                            && (self.offset.y + self.available_size().y
-                                < self.inner_size.y) =>
+                    } if self.enabled.y
+                        && (self.offset.y + self.available_size().y
+                            < self.inner_size.y) =>
                     {
                         self.offset.y = min(
                             self.inner_size
@@ -558,8 +558,8 @@ where
                         event: MouseEvent::Press(MouseButton::Left),
                         position,
                         offset,
-                    }
-                        if self.show_scrollbars && position
+                    } if self.show_scrollbars
+                        && position
                             .checked_sub(offset)
                             .map(|position| self.start_drag(position))
                             .unwrap_or(false) =>
@@ -570,9 +570,7 @@ where
                         event: MouseEvent::Hold(MouseButton::Left),
                         position,
                         offset,
-                    }
-                        if self.show_scrollbars =>
-                    {
+                    } if self.show_scrollbars => {
                         let position = position.saturating_sub(offset);
                         self.drag(position);
                     }
@@ -692,11 +690,11 @@ where
         size
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector, cb: AnyCb<'a>) {
+    fn call_on_any<'a>(&mut self, selector: &Selector<'_>, cb: AnyCb<'a>) {
         self.inner.call_on_any(selector, cb)
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         self.inner.focus_view(selector)
     }
 

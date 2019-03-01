@@ -1,18 +1,18 @@
-use direction::Direction;
-use event::{Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::direction::Direction;
+use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::Cursive;
+use crate::{Printer, With};
 use std::cell::RefCell;
 use std::rc::Rc;
-use theme::ColorStyle;
-use vec::Vec2;
-use view::View;
-use Cursive;
-use {Printer, With};
 
 struct SharedState<T> {
     selection: usize,
     values: Vec<Rc<T>>,
 
-    on_change: Option<Rc<Fn(&mut Cursive, &T)>>,
+    on_change: Option<Rc<dyn Fn(&mut Cursive, &T)>>,
 }
 
 impl<T> SharedState<T> {
@@ -162,7 +162,7 @@ impl<T: 'static> RadioButton<T> {
         })
     }
 
-    fn draw_internal(&self, printer: &Printer) {
+    fn draw_internal(&self, printer: &Printer<'_, '_>) {
         printer.print((0, 0), "( )");
         if self.is_selected() {
             printer.print((1, 0), "X");
@@ -193,7 +193,7 @@ impl<T: 'static> View for RadioButton<T> {
         self.enabled
     }
 
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         if self.enabled && printer.enabled {
             printer.with_selection(printer.focused, |printer| {
                 self.draw_internal(printer)
@@ -207,9 +207,7 @@ impl<T: 'static> View for RadioButton<T> {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Enter) | Event::Char(' ') => {
-                self.select()
-            }
+            Event::Key(Key::Enter) | Event::Char(' ') => self.select(),
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,

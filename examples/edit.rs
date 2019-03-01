@@ -29,10 +29,12 @@ fn main() {
             .button("Ok", |s| {
                 // This will run the given closure, *ONLY* if a view with the
                 // correct type and the given ID is found.
-                let name = s.call_on_id("name", |view: &mut EditView| {
-                    // We can return content from the closure!
-                    view.get_content()
-                }).unwrap();
+                let name = s
+                    .call_on_id("name", |view: &mut EditView| {
+                        // We can return content from the closure!
+                        view.get_content()
+                    })
+                    .unwrap();
 
                 // Run the next step
                 show_popup(s, &name);

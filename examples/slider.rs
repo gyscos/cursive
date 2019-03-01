@@ -31,7 +31,8 @@ fn main() {
                             .button("Ok", Cursive::quit),
                     );
                 }),
-        ).title("[ 7 ]")
+        )
+        .title("[ 7 ]")
         .with_id("dialog"),
     );
 

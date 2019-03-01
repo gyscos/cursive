@@ -26,8 +26,8 @@
 //!   `Tab` key would usually cycle focus in the "front" direction, while
 //!   using the arrow keys would use absolute directions instead.
 
-use vec::Vec2;
-use XY;
+use crate::vec::Vec2;
+use crate::XY;
 
 /// Describes a vertical or horizontal orientation for a view.
 #[derive(Clone, Copy, Debug, PartialEq)]

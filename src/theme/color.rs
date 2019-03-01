@@ -198,9 +198,9 @@ fn load_hex(s: &str) -> u16 {
     for c in s.chars() {
         sum *= 16;
         sum += match c {
-            n @ '0'...'9' => n as i16 - '0' as i16,
-            n @ 'a'...'f' => n as i16 - 'a' as i16 + 10,
-            n @ 'A'...'F' => n as i16 - 'A' as i16 + 10,
+            n @ '0'..='9' => n as i16 - '0' as i16,
+            n @ 'a'..='f' => n as i16 - 'a' as i16 + 10,
+            n @ 'A'..='F' => n as i16 - 'A' as i16 + 10,
             _ => 0,
         };
     }

@@ -61,34 +61,8 @@
 //! Or you can use gdb as usual.
 #![deny(missing_docs)]
 
-#[macro_use]
-extern crate enum_map;
-#[macro_use]
-extern crate enumset;
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate crossbeam_channel;
-#[macro_use]
-extern crate lazy_static;
-
-#[cfg(any(feature = "ncurses", feature = "pancurses"))]
-#[macro_use]
-extern crate maplit;
-
 // We use chan_signal to detect SIGWINCH.
 // It's not how windows work, so no need to use that.
-#[cfg(unix)]
-extern crate signal_hook;
-
-extern crate chrono;
-extern crate libc;
-extern crate num;
-extern crate owning_ref;
-extern crate toml;
-extern crate unicode_segmentation;
-extern crate unicode_width;
-extern crate xi_unicode;
 
 macro_rules! new_default(
     ($c:ty) => {
@@ -129,8 +103,8 @@ mod utf8;
 
 pub mod backend;
 
-pub use cursive::{CbFunc, Cursive, ScreenId};
-pub use printer::Printer;
-pub use vec::Vec2;
-pub use with::With;
-pub use xy::XY;
+pub use crate::cursive::{CbFunc, CbSink, Cursive, ScreenId};
+pub use crate::printer::Printer;
+pub use crate::vec::Vec2;
+pub use crate::with::With;
+pub use crate::xy::XY;

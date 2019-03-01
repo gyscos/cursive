@@ -18,7 +18,8 @@ fn main() {
                 .child(EditView::new().on_edit(on_edit).with_id("2"))
                 .child(TextView::new("match").with_id("match"))
                 .fixed_width(10),
-        ).button("Quit", Cursive::quit),
+        )
+        .button("Quit", Cursive::quit),
     );
 
     siv.run();

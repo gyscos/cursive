@@ -1,15 +1,17 @@
 //! Provide higher-level abstraction to draw things on backends.
 
-use backend::Backend;
-use direction::Orientation;
+use crate::backend::Backend;
+use crate::direction::Orientation;
+use crate::theme::{
+    BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme,
+};
+use crate::utils::lines::simple::{prefix, suffix};
+use crate::vec::Vec2;
+use crate::with::With;
 use enumset::EnumSet;
 use std::cmp::min;
-use theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::lines::simple::{prefix, suffix};
-use vec::Vec2;
-use with::With;
 
 /// Convenient interface to draw on a subset of the screen.
 ///
@@ -50,7 +52,7 @@ pub struct Printer<'a, 'b> {
     pub theme: &'a Theme,
 
     /// Backend used to actually draw things
-    backend: &'b Backend,
+    backend: &'b dyn Backend,
 }
 
 impl<'a, 'b> Printer<'a, 'b> {
@@ -59,7 +61,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'b Backend,
+        size: T, theme: &'a Theme, backend: &'b dyn Backend,
     ) -> Self {
         let size = size.into();
         Printer {
@@ -86,7 +88,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Prints some styled text at the given position.
     pub fn print_styled<S>(
-        &self, start: S, text: ::utils::span::SpannedStr<'_, Style>,
+        &self, start: S, text: crate::utils::span::SpannedStr<'_, Style>,
     ) where
         S: Into<Vec2>,
     {
@@ -265,7 +267,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// ```
     pub fn with_color<F>(&self, c: ColorStyle, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         let old = self.backend.set_color(c.resolve(&self.theme.palette));
         f(self);
@@ -276,7 +278,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given style on prints.
     pub fn with_style<F, T>(&self, style: T, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
         T: Into<Style>,
     {
         let style = style.into();
@@ -297,7 +299,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given effect on prints.
     pub fn with_effect<F>(&self, effect: Effect, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         self.backend.set_effect(effect);
         f(self);
@@ -308,7 +310,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given theme on prints.
     pub fn with_theme<F>(&self, theme: &Theme, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         f(&self.theme(theme));
     }
@@ -328,7 +330,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply each given effect on prints.
     pub fn with_effects<F>(&self, effects: EnumSet<Effect>, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         match effects.iter().next() {
             None => f(self),
@@ -391,7 +393,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// * Otherwise, use `ColorStyle::Primary`.
     pub fn with_high_border<F>(&self, invert: bool, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
@@ -410,7 +412,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// * Otherwise, use `ColorStyle::primary()`.
     pub fn with_low_border<F>(&self, invert: bool, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
@@ -428,7 +430,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///     * If the printer currently has the focus,
     ///       uses `ColorStyle::highlight()`.
     ///     * Otherwise, uses `ColorStyle::highlight_inactive()`.
-    pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
+    pub fn with_selection<F: FnOnce(&Printer<'_, '_>)>(
+        &self, selection: bool, f: F,
+    ) {
         self.with_color(
             if selection {
                 if self.focused {
@@ -457,7 +461,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a sub-printer with the given offset.
     ///
     /// It will print in an area slightly to the bottom/right.
-    pub fn offset<S>(&self, offset: S) -> Printer
+    pub fn offset<S>(&self, offset: S) -> Printer<'_, '_>
     where
         S: Into<Vec2>,
     {

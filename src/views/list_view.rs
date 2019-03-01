@@ -1,20 +1,21 @@
-use direction;
-use event::{AnyCb, Callback, Event, EventResult, Key};
-use rect::Rect;
+use crate::direction;
+use crate::event::{AnyCb, Callback, Event, EventResult, Key};
+use crate::rect::Rect;
+use crate::vec::Vec2;
+use crate::view::{Selector, View};
+use crate::Cursive;
+use crate::Printer;
+use crate::With;
+use log::debug;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::{Selector, View};
-use Cursive;
-use Printer;
-use With;
 
 /// Represents a child from a [`ListView`].
 ///
 /// [`ListView`]: struct.ListView.html
 pub enum ListChild {
     /// A single row, with a label and a view.
-    Row(String, Box<View>),
+    Row(String, Box<dyn View>),
     /// A delimiter between groups.
     Delimiter,
 }
@@ -27,7 +28,7 @@ impl ListChild {
         }
     }
 
-    fn view(&mut self) -> Option<&mut View> {
+    fn view(&mut self) -> Option<&mut dyn View> {
         match *self {
             ListChild::Row(_, ref mut view) => Some(view.as_mut()),
             _ => None,
@@ -40,7 +41,7 @@ pub struct ListView {
     children: Vec<ListChild>,
     focus: usize,
     // This callback is called when the selection is changed.
-    on_select: Option<Rc<Fn(&mut Cursive, &String)>>,
+    on_select: Option<Rc<dyn Fn(&mut Cursive, &String)>>,
     last_size: Vec2,
 }
 
@@ -147,7 +148,7 @@ impl ListView {
 
     fn iter_mut<'a>(
         &'a mut self, from_focus: bool, source: direction::Relative,
-    ) -> Box<Iterator<Item = (usize, &mut ListChild)> + 'a> {
+    ) -> Box<dyn Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
@@ -250,7 +251,7 @@ fn try_focus(
 }
 
 impl View for ListView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         if self.children.is_empty() {
             return;
         }
@@ -379,14 +380,14 @@ impl View for ListView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
+        &mut self, selector: &Selector<'_>, mut callback: AnyCb<'a>,
     ) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, Box::new(|any| callback(any)));
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         if let Some(i) = self
             .children
             .iter_mut()

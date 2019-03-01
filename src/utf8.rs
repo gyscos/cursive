@@ -17,9 +17,9 @@ where
 
     // Number of leading 1s determines the number of bytes we'll have to read
     let n_bytes = match (!first).leading_zeros() {
-        n @ 2...6 => n as usize,
+        n @ 2..=6 => n as usize,
         1 => return Err("First byte is continuation byte.".to_string()),
-        7...8 => return Err("WTF is this byte??".to_string()),
+        7..=8 => return Err("WTF is this byte??".to_string()),
         _ => unreachable!(),
     };
 

@@ -1,8 +1,8 @@
+use crate::vec::Vec2;
+use crate::view::{View, ViewWrapper};
+use crate::views::IdView;
+use crate::Printer;
 use std::cell::Cell;
-use vec::Vec2;
-use view::{View, ViewWrapper};
-use views::IdView;
-use Printer;
 
 /// Wrapper around a view that remembers its position.
 pub struct TrackedView<T: View> {
@@ -37,7 +37,7 @@ impl<T: View> TrackedView<T> {
 impl<T: View> ViewWrapper for TrackedView<T> {
     wrap_impl!(self.view: T);
 
-    fn wrap_draw(&self, printer: &Printer) {
+    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
         self.offset.set(printer.offset);
         self.view.draw(printer);
     }

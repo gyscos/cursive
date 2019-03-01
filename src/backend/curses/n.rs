@@ -1,5 +1,7 @@
 //! Ncurses-specific backend.
-extern crate ncurses;
+use log::{debug, warn};
+use maplit::hashmap;
+use ncurses;
 
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
@@ -7,19 +9,14 @@ use std::ffi::CString;
 use std::fs::File;
 use std::io;
 use std::io::Write;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-use std::thread;
 
-use crossbeam_channel::{Receiver, Sender};
 use libc;
-use signal_hook::iterator::Signals;
 
-use backend;
-use event::{Event, Key, MouseButton, MouseEvent};
-use theme::{Color, ColorPair, Effect};
-use utf8;
-use vec::Vec2;
+use crate::backend;
+use crate::event::{Event, Key, MouseButton, MouseEvent};
+use crate::theme::{Color, ColorPair, Effect};
+use crate::utf8;
+use crate::vec::Vec2;
 
 use self::super::split_i32;
 use self::ncurses::mmask_t;
@@ -31,27 +28,135 @@ pub struct Backend {
     // Maps (front, back) ncurses colors to ncurses pairs
     pairs: RefCell<HashMap<(i16, i16), i16>>,
 
-    // This is set by the SIGWINCH-triggered thread.
-    // When TRUE, we should tell ncurses about the new terminal size.
-    needs_resize: Arc<AtomicBool>,
-
-    // The signal hook to receive SIGWINCH (window resize)
-    signals: Option<Signals>,
-}
-
-struct InputParser {
+    // Pre-computed map of ncurses codes to parsed Event
     key_codes: HashMap<i32, Event>,
+
+    // Remember the last pressed button to correctly feed Released Event
     last_mouse_button: Option<MouseButton>,
+
+    // Sometimes a code from ncurses should be split in two Events.
+    //
+    // So remember the one we didn't return.
     input_buffer: Option<Event>,
 }
 
-impl InputParser {
-    fn new() -> Self {
-        InputParser {
+fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
+    super::find_closest_pair(pair, ncurses::COLORS() as i16)
+}
+
+/// Writes some bytes directly to `/dev/tty`
+///
+/// Since this is not going to be used often, we can afford to re-open the
+/// file every time.
+fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
+    let mut tty_output =
+        File::create("/dev/tty").expect("cursive can only run with a tty");
+    tty_output.write_all(bytes)?;
+    // tty_output will be flushed automatically at the end of the function.
+    Ok(())
+}
+
+impl Backend {
+    /// Creates a new ncurses-based backend.
+    pub fn init() -> Box<dyn backend::Backend> {
+        // Change the locale.
+        // For some reasons it's mandatory to get some UTF-8 support.
+        ncurses::setlocale(ncurses::LcCategory::all, "");
+
+        // The delay is the time ncurses wait after pressing ESC
+        // to see if it's an escape sequence.
+        // Default delay is way too long. 25 is imperceptible yet works fine.
+        ::std::env::set_var("ESCDELAY", "25");
+
+        // Don't output to standard IO, directly feed into /dev/tty
+        // This leaves stdin and stdout usable for other purposes.
+        let tty_path = CString::new("/dev/tty").unwrap();
+        let mode = CString::new("r+").unwrap();
+        let tty = unsafe { libc::fopen(tty_path.as_ptr(), mode.as_ptr()) };
+        ncurses::newterm(None, tty, tty);
+        // Enable keypad (like arrows)
+        ncurses::keypad(ncurses::stdscr(), true);
+
+        // This disables mouse click detection,
+        // and provides 0-delay access to mouse presses.
+        ncurses::mouseinterval(0);
+        // Listen to all mouse events.
+        ncurses::mousemask(
+            (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION)
+                as mmask_t,
+            None,
+        );
+        // Enable non-blocking input, so getch() immediately returns.
+        ncurses::timeout(0);
+        // Don't echo user input, we'll take care of that
+        ncurses::noecho();
+        // This disables buffering and some input processing.
+        // TODO: use ncurses::raw() ?
+        ncurses::raw();
+        // This enables color support.
+        ncurses::start_color();
+        // Pick up background and text color from the terminal theme.
+        ncurses::use_default_colors();
+        // Don't print cursors.
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+
+        // This asks the terminal to provide us with mouse drag events
+        // (Mouse move when a button is pressed).
+        // Replacing 1002 with 1003 would give us ANY mouse move.
+        write_to_tty(b"\x1B[?1002h").unwrap();
+
+        let c = Backend {
+            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
+            pairs: RefCell::new(HashMap::new()),
             key_codes: initialize_keymap(),
             last_mouse_button: None,
             input_buffer: None,
+        };
+
+        Box::new(c)
+    }
+
+    /// Save a new color pair.
+    fn insert_color(
+        &self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16),
+    ) -> i16 {
+        let n = 1 + pairs.len() as i16;
+
+        let target = if ncurses::COLOR_PAIRS() > i32::from(n) {
+            // We still have plenty of space for everyone.
+            n
+        } else {
+            // The world is too small for both of us.
+            let target = n - 1;
+            // Remove the mapping to n-1
+            pairs.retain(|_, &mut v| v != target);
+            target
+        };
+        pairs.insert((front, back), target);
+        ncurses::init_pair(target, front, back);
+        target
+    }
+
+    /// Checks the pair in the cache, or re-define a color if needed.
+    fn get_or_create(&self, pair: ColorPair) -> i16 {
+        let mut pairs = self.pairs.borrow_mut();
+
+        // Find if we have this color in stock
+        let (front, back) = find_closest_pair(pair);
+        if pairs.contains_key(&(front, back)) {
+            // We got it!
+            pairs[&(front, back)]
+        } else {
+            self.insert_color(&mut *pairs, (front, back))
         }
+    }
+
+    fn set_colors(&self, pair: ColorPair) {
+        let i = self.get_or_create(pair);
+
+        self.current_style.set(pair);
+        let style = ncurses::COLOR_PAIR(i);
+        ncurses::attron(style);
     }
 
     fn parse_next(&mut self) -> Option<Event> {
@@ -61,6 +166,7 @@ impl InputParser {
 
         let ch: i32 = ncurses::getch();
 
+        // Non-blocking input will return -1 as long as no input is available.
         if ch == -1 {
             return None;
         }
@@ -185,129 +291,6 @@ impl InputParser {
     }
 }
 
-fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
-    super::find_closest_pair(pair, ncurses::COLORS() as i16)
-}
-
-/// Writes some bytes directly to `/dev/tty`
-///
-/// Since this is not going to be used often, we can afford to re-open the
-/// file every time.
-fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
-    let mut tty_output =
-        File::create("/dev/tty").expect("cursive can only run with a tty");
-    tty_output.write_all(bytes)?;
-    // tty_output will be flushed automatically at the end of the function.
-    Ok(())
-}
-
-impl Backend {
-    /// Creates a new ncurses-based backend.
-    pub fn init() -> Box<backend::Backend> {
-        let signals = Some(Signals::new(&[libc::SIGWINCH]).unwrap());
-
-        // Change the locale.
-        // For some reasons it's mandatory to get some UTF-8 support.
-        ncurses::setlocale(ncurses::LcCategory::all, "");
-
-        // The delay is the time ncurses wait after pressing ESC
-        // to see if it's an escape sequence.
-        // Default delay is way too long. 25 is imperceptible yet works fine.
-        ::std::env::set_var("ESCDELAY", "25");
-
-        let tty_path = CString::new("/dev/tty").unwrap();
-        let mode = CString::new("r+").unwrap();
-        let tty = unsafe { libc::fopen(tty_path.as_ptr(), mode.as_ptr()) };
-        ncurses::newterm(None, tty, tty);
-        ncurses::keypad(ncurses::stdscr(), true);
-
-        // This disables mouse click detection,
-        // and provides 0-delay access to mouse presses.
-        ncurses::mouseinterval(0);
-        // Listen to all mouse events.
-        ncurses::mousemask(
-            (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION)
-                as mmask_t,
-            None,
-        );
-        ncurses::noecho();
-        ncurses::cbreak();
-        ncurses::start_color();
-        // Pick up background and text color from the terminal theme.
-        ncurses::use_default_colors();
-        // No cursor
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-
-        // This asks the terminal to provide us with mouse drag events
-        // (Mouse move when a button is pressed).
-        // Replacing 1002 with 1003 would give us ANY mouse move.
-        write_to_tty(b"\x1B[?1002h").unwrap();
-
-        let c = Backend {
-            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
-            pairs: RefCell::new(HashMap::new()),
-            needs_resize: Arc::new(AtomicBool::new(false)),
-            signals,
-        };
-
-        Box::new(c)
-    }
-
-    /// Save a new color pair.
-    fn insert_color(
-        &self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16),
-    ) -> i16 {
-        let n = 1 + pairs.len() as i16;
-
-        let target = if ncurses::COLOR_PAIRS() > i32::from(n) {
-            // We still have plenty of space for everyone.
-            n
-        } else {
-            // The world is too small for both of us.
-            let target = n - 1;
-            // Remove the mapping to n-1
-            pairs.retain(|_, &mut v| v != target);
-            target
-        };
-        pairs.insert((front, back), target);
-        ncurses::init_pair(target, front, back);
-        target
-    }
-
-    /// Checks the pair in the cache, or re-define a color if needed.
-    fn get_or_create(&self, pair: ColorPair) -> i16 {
-        let mut pairs = self.pairs.borrow_mut();
-
-        // Find if we have this color in stock
-        let (front, back) = find_closest_pair(pair);
-        if pairs.contains_key(&(front, back)) {
-            // We got it!
-            pairs[&(front, back)]
-        } else {
-            self.insert_color(&mut *pairs, (front, back))
-        }
-    }
-
-    fn set_colors(&self, pair: ColorPair) {
-        let i = self.get_or_create(pair);
-
-        self.current_style.set(pair);
-        let style = ncurses::COLOR_PAIR(i);
-        ncurses::attron(style);
-    }
-}
-
-/// Called when a resize event is detected.
-///
-/// We need to have ncurses update its representation of the screen.
-fn on_resize() {
-    // Get size
-    let size = super::terminal_size();
-
-    // Send the size to ncurses
-    ncurses::resize_term(size.y as i32, size.x as i32);
-}
-
 impl backend::Backend for Backend {
     fn screen_size(&self) -> Vec2 {
         let mut x: i32 = 0;
@@ -320,44 +303,8 @@ impl backend::Backend for Backend {
         ncurses::has_colors()
     }
 
-    fn start_input_thread(
-        &mut self, event_sink: Sender<Option<Event>>,
-        input_request: Receiver<backend::InputRequest>,
-    ) {
-        let running = Arc::new(AtomicBool::new(true));
-
-        backend::resize::start_resize_thread(
-            self.signals.take().unwrap(),
-            event_sink.clone(),
-            input_request.clone(),
-            Arc::clone(&running),
-            Some(Arc::clone(&self.needs_resize)),
-        );
-
-        let mut parser = InputParser::new();
-
-        // This thread will take input from ncurses for each request.
-        thread::spawn(move || {
-            for req in input_request {
-                match req {
-                    backend::InputRequest::Peek => {
-                        // When peeking, we want an answer instantly from ncurses
-                        ncurses::timeout(0);
-                    }
-                    backend::InputRequest::Block => {
-                        ncurses::timeout(-1);
-                    }
-                }
-
-                // Do the actual polling & parsing.
-                if event_sink.send(parser.parse_next()).is_err() {
-                    return;
-                }
-            }
-            // The request channel is closed, which means Cursive has been
-            // dropped, so stop the resize-detection thread as well.
-            running.store(false, Ordering::Relaxed);
-        });
+    fn poll_event(&mut self) -> Option<Event> {
+        self.parse_next()
     }
 
     fn finish(&mut self) {
@@ -398,10 +345,6 @@ impl backend::Backend for Backend {
     }
 
     fn clear(&self, color: Color) {
-        if self.needs_resize.swap(false, Ordering::Relaxed) {
-            on_resize();
-        }
-
         let id = self.get_or_create(ColorPair {
             front: color,
             back: color,
@@ -539,6 +482,9 @@ fn initialize_keymap() -> HashMap<i32, Event> {
 
     for c in 1..26 {
         let event = match c {
+            // This is Ctrl+C
+            // TODO: Don't exit here, but add this as a default callback
+            3 => Event::Exit,
             9 => Event::Key(Key::Tab),
             10 => Event::Key(Key::Enter),
             other => Event::CtrlChar((b'a' - 1 + other as u8) as char),

@@ -1,5 +1,6 @@
 //! Logging utilities
 
+use lazy_static::lazy_static;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
@@ -27,11 +28,11 @@ lazy_static! {
 }
 
 impl log::Log for CursiveLogger {
-    fn enabled(&self, _metadata: &log::Metadata) -> bool {
+    fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
         true
     }
 
-    fn log(&self, record: &log::Record) {
+    fn log(&self, record: &log::Record<'_>) {
         let mut logs = LOGS.lock().unwrap();
         // TODO: customize the format? Use colors? Save more info?
         if logs.len() == logs.capacity() {

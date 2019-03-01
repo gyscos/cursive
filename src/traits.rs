@@ -9,7 +9,7 @@
 //! ```
 
 #[doc(no_inline)]
-pub use view::{Boxable, Finder, Identifiable, Scrollable, View};
+pub use crate::view::{Boxable, Finder, Identifiable, Scrollable, View};
 
 #[doc(no_inline)]
-pub use With;
+pub use crate::With;
