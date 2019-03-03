@@ -65,14 +65,15 @@ impl<V: View> Panel<V> {
     fn draw_title(&self, printer: &Printer<'_, '_>) {
         if !self.title.is_empty() {
             let len = self.title.width();
-            if len + 4 > printer.size.x {
+            let spacing = 3; //minimum distance to borders
+            let spacing_both_ends = 2 * spacing;
+            if len + spacing_both_ends > printer.size.x {
                 return;
             }
-            let spacing = 3; //minimum distance to borders
             let x = spacing
                 + self
                     .title_position
-                    .get_offset(len, printer.size.x - 2 * spacing);
+                    .get_offset(len, printer.size.x - spacing_both_ends);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
