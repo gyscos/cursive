@@ -12,6 +12,7 @@
   `find_id()` was added instead.
 - Updated the Backend trait for a simpler input system
 - Updated to Rust 2018 edition (now requires rustc > 1.31)
+- `Cursive::clear()` now takes `&mut self`
 
 ### API updates
 
