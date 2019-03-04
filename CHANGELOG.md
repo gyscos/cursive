@@ -2,16 +2,19 @@
 
 ## Next version (0.11.0)
 
-### API updates
+### Breaking changes
 
-- Breaking change: `Finder::find_id()` is renamed to `call_on_id()`, and a proper
-  `find_id()` was added instead.
-- Breaking change: replaced `set_fps(i32)` with `set_autorefresh(bool)`
-- Breaking change: updated the Backend trait for a simpler input system
-- Breaking change: `Cursive::{ncurses, pancurses, termion}` now return
+- `Cursive::{ncurses, pancurses, termion}` now return
   `io::Result<Self>` instead of panicking. `Cursive::default()` still unwraps.
   - Also added `Cursive::try_new` for failible backends.
-- Updated to Rust 2018 (now requires rustc > 1.31)
+- Replaced `set_fps(i32)` with `set_autorefresh(bool)`
+- `Finder::find_id()` is renamed to `call_on_id()`, and a proper
+  `find_id()` was added instead.
+- Updated the Backend trait for a simpler input system
+- Updated to Rust 2018 edition (now requires rustc > 1.31)
+
+### API updates
+
 - Add a logging implementation (`logger::init()`) and a `DebugConsole`
   (`cursive::toggle_debug_console()`)
 - Add user-data to Cursive.
