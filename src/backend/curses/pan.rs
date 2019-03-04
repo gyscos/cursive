@@ -35,6 +35,20 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
 impl Backend {
     /// Creates a new pancurses-based backend.
     pub fn init() -> std::io::Result<Box<dyn backend::Backend>> {
+        // Check the $TERM variable (at least on unix).
+        // Otherwise we'll just abort.
+        // TODO: On windows, is there anything to check?
+        if cfg!(unix)
+            && std::env::var("TERM")
+                .map(|var| var.is_empty())
+                .unwrap_or(true)
+        {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "$TERM is unset. Cannot initialize pancurses interface.",
+            ));
+        }
+
         ::std::env::set_var("ESCDELAY", "25");
 
         // TODO: use pancurses::newterm()
