@@ -107,3 +107,7 @@ There is initial support for [wide characters](https://en.wikipedia.org/wiki/CJK
 * UTF-8 input should work fine in a unicode-enabled terminal emulator, but raw linux TTY may be more capricious.
 
 ## [Contributing](CONTRIBUTING.md)
+
+## Alternatives
+
+See also [tui-rs](https://github.com/fdehau/tui-rs) - and a small [comparison page](https://github.com/gyscos/Cursive/wiki/Cursive-vs-tui%E2%80%90rs).
