@@ -32,6 +32,7 @@ pub struct Backend {
 impl Backend {
     /// Creates a new BearLibTerminal-based backend.
     pub fn init() -> Box<dyn backend::Backend> {
+        // TODO: Add some error handling?
         terminal::open("Cursive", 80, 24);
         terminal::set(terminal::config::Window::empty().resizeable(true));
         terminal::set(vec![

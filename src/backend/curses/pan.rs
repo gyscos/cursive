@@ -34,10 +34,12 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
 
 impl Backend {
     /// Creates a new pancurses-based backend.
-    pub fn init() -> Box<dyn backend::Backend> {
+    pub fn init() -> std::io::Result<Box<dyn backend::Backend>> {
         ::std::env::set_var("ESCDELAY", "25");
 
+        // TODO: use pancurses::newterm()
         let window = pancurses::initscr();
+
         window.keypad(true);
         window.timeout(0);
         pancurses::noecho();
@@ -55,7 +57,7 @@ impl Backend {
         // (Mouse move when a button is pressed).
         // Replacing 1002 with 1003 would give us ANY mouse move.
         print!("\x1B[?1002h");
-        stdout().flush().expect("could not flush stdout");
+        stdout().flush()?;
 
         let c = Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
@@ -66,7 +68,7 @@ impl Backend {
             window,
         };
 
-        Box::new(c)
+        Ok(Box::new(c))
     }
 
     /// Save a new color pair.

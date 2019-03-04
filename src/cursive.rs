@@ -75,14 +75,14 @@ impl<F: FnOnce(&mut Cursive) -> () + Send> CbFunc for F {
 #[cfg(feature = "termion-backend")]
 impl Default for Cursive {
     fn default() -> Self {
-        Self::termion()
+        Self::termion().unwrap()
     }
 }
 
 #[cfg(all(not(feature = "termion-backend"), feature = "pancurses-backend"))]
 impl Default for Cursive {
     fn default() -> Self {
-        Self::pancurses()
+        Self::pancurses().unwrap()
     }
 }
 
@@ -105,11 +105,23 @@ impl Default for Cursive {
 ))]
 impl Default for Cursive {
     fn default() -> Self {
-        Self::ncurses()
+        Self::ncurses().unwrap()
     }
 }
 
 impl Cursive {
+    /// Shortcut for `Cursive::try_new` with non-failible init function.
+    ///
+    /// You probably don't want to use this function directly. Instead,
+    /// `Cursive::default()` or `Cursive::ncurses()` may be what you're
+    /// looking for.
+    pub fn new<F>(backend_init: F) -> Self
+    where
+        F: FnOnce() -> Box<dyn backend::Backend>,
+    {
+        Self::try_new::<_, ()>(|| Ok(backend_init())).unwrap()
+    }
+
     /// Creates a new Cursive root, and initialize the back-end.
     ///
     /// * If you just want a cursive instance, use `Cursive::default()`.
@@ -128,17 +140,15 @@ impl Cursive {
     /// # use cursive::{Cursive, backend};
     /// let siv = Cursive::new(backend::dummy::Backend::init); // equivalent to Cursive::dummy()
     /// ```
-    pub fn new<F>(backend_init: F) -> Self
+    pub fn try_new<F, E>(backend_init: F) -> Result<Self, E>
     where
-        F: FnOnce() -> Box<dyn backend::Backend>,
+        F: FnOnce() -> Result<Box<dyn backend::Backend>, E>,
     {
         let theme = theme::load_default();
 
         let (cb_sink, cb_source) = crossbeam_channel::unbounded();
 
-        let backend = backend_init();
-
-        Cursive {
+        backend_init().map(|backend| Cursive {
             autorefresh: false,
             theme,
             screens: vec![views::StackView::new()],
@@ -151,25 +161,25 @@ impl Cursive {
             cb_sink,
             backend,
             user_data: Box::new(()),
-        }
+        })
     }
 
     /// Creates a new Cursive root using a ncurses backend.
     #[cfg(feature = "ncurses-backend")]
-    pub fn ncurses() -> Self {
-        Self::new(backend::curses::n::Backend::init)
+    pub fn ncurses() -> std::io::Result<Self> {
+        Self::try_new(backend::curses::n::Backend::init)
     }
 
     /// Creates a new Cursive root using a pancurses backend.
     #[cfg(feature = "pancurses-backend")]
-    pub fn pancurses() -> Self {
-        Self::new(backend::curses::pan::Backend::init)
+    pub fn pancurses() -> std::io::Result<Self> {
+        Self::try_new(backend::curses::pan::Backend::init)
     }
 
     /// Creates a new Cursive root using a termion backend.
     #[cfg(feature = "termion-backend")]
-    pub fn termion() -> Self {
-        Self::new(backend::termion::Backend::init)
+    pub fn termion() -> std::io::Result<Self> {
+        Self::try_new(backend::termion::Backend::init)
     }
 
     /// Creates a new Cursive root using a bear-lib-terminal backend.

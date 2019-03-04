@@ -58,13 +58,16 @@ fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
 
 impl Backend {
     /// Creates a new ncurses-based backend.
-    pub fn init() -> Box<dyn backend::Backend> {
+    pub fn init() -> io::Result<Box<dyn backend::Backend>> {
         // Check the $TERM variable.
         if std::env::var("TERM")
             .map(|var| var.is_empty())
             .unwrap_or(true)
         {
-            panic!("$TERM is unset. Cannot initialize ncurses interface.");
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "$TERM is unset. Cannot initialize ncurses interface.",
+            ));
         }
 
         // Change the locale.
@@ -111,7 +114,7 @@ impl Backend {
         // This asks the terminal to provide us with mouse drag events
         // (Mouse move when a button is pressed).
         // Replacing 1002 with 1003 would give us ANY mouse move.
-        write_to_tty(b"\x1B[?1002h").unwrap();
+        write_to_tty(b"\x1B[?1002h")?;
 
         let c = Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
@@ -121,7 +124,7 @@ impl Backend {
             input_buffer: None,
         };
 
-        Box::new(c)
+        Ok(Box::new(c))
     }
 
     /// Save a new color pair.

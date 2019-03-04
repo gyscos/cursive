@@ -43,20 +43,16 @@ pub struct Backend {
 
 impl Backend {
     /// Creates a new termion-based backend.
-    pub fn init() -> Box<dyn backend::Backend> {
+    pub fn init() -> std::io::Result<Box<dyn backend::Backend>> {
         // Use a ~8MB buffer
         // Should be enough for a single screen most of the time.
         let terminal =
             RefCell::new(AlternateScreen::from(MouseTerminal::from(
-                BufWriter::with_capacity(
-                    8_000_000,
-                    File::create("/dev/tty").unwrap(),
-                )
-                .into_raw_mode()
-                .unwrap(),
+                BufWriter::with_capacity(8_000_000, File::create("/dev/tty")?)
+                    .into_raw_mode()?,
             )));
 
-        write!(terminal.borrow_mut(), "{}", termion::cursor::Hide).unwrap();
+        write!(terminal.borrow_mut(), "{}", termion::cursor::Hide)?;
 
         let (input_sender, input_receiver) = crossbeam_channel::unbounded();
         let (resize_sender, resize_receiver) = crossbeam_channel::bounded(0);
@@ -96,7 +92,7 @@ impl Backend {
             resize_receiver,
         };
 
-        Box::new(c)
+        Ok(Box::new(c))
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
