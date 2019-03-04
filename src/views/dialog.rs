@@ -298,7 +298,9 @@ impl Dialog {
             event.relativized((self.padding + self.borders).top_left()),
         ) {
             EventResult::Ignored => {
-                if !self.buttons.is_empty() {
+                if self.buttons.is_empty() {
+                    EventResult::Ignored
+                } else {
                     match event {
                         Event::Key(Key::Down) | Event::Key(Key::Tab) => {
                             // Default to leftmost button when going down.
@@ -307,8 +309,6 @@ impl Dialog {
                         }
                         _ => EventResult::Ignored,
                     }
-                } else {
-                    EventResult::Ignored
                 }
             }
             res => res,
@@ -630,11 +630,11 @@ impl View for Dialog {
                 if self.content.take_focus(source) {
                     self.focus = DialogFocus::Content;
                     true
-                } else if !self.buttons.is_empty() {
+                } else if self.buttons.is_empty() {
+                    false
+                } else {
                     self.focus = DialogFocus::Button(0);
                     true
-                } else {
-                    false
                 }
             }
             Direction::Rel(Relative::Back)

@@ -18,6 +18,12 @@ impl DebugView {
     }
 }
 
+impl Default for DebugView {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl View for DebugView {
     fn draw(&self, printer: &Printer<'_, '_>) {
         let logs = logger::LOGS.lock().unwrap();

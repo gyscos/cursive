@@ -33,8 +33,7 @@ pub trait SpannedText {
     fn spans(&self) -> &[Self::S];
 
     /// Returns a `SpannedText` by reference.
-    #[cfg_attr(feature = "cargo-clippy", allow(needless_lifetimes))]
-    fn as_ref<'a>(&'a self) -> SpannedTextRef<'a, Self> {
+    fn as_ref(&self) -> SpannedTextRef<'_, Self> {
         SpannedTextRef { r: self }
     }
 }
@@ -231,7 +230,7 @@ impl<T> SpannedString<T> {
     }
 
     /// Gives access to the parsed styled spans.
-    pub fn spans<'a>(&'a self) -> impl Iterator<Item = Span<'a, T>> {
+    pub fn spans(&self) -> impl Iterator<Item = Span<'_, T>> {
         let source = &self.source;
         self.spans.iter().map(move |span| span.resolve(source))
     }

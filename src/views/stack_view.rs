@@ -222,6 +222,11 @@ impl StackView {
         self.layers.len()
     }
 
+    /// Returns `true` if there is no layer in this `StackView`.
+    pub fn is_empty(&self) -> bool {
+        self.layers.is_empty()
+    }
+
     /// Returns `true` if `position` points to a valid layer.
     ///
     /// Returns `false` if it exceeds the bounds.

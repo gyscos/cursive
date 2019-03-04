@@ -343,14 +343,15 @@ where
     /// Returns `(inner_size, desired_size)`
     fn sizes(&mut self, constraint: Vec2, strict: bool) -> (Vec2, Vec2) {
         // First: try the cache
-        if !self.inner.needs_relayout()
+        let valid_cache = !self.inner.needs_relayout()
             && self
                 .size_cache
                 .map(|cache| {
                     cache.zip_map(constraint, SizeCache::accept).both()
                 })
-                .unwrap_or(false)
-        {
+                .unwrap_or(false);
+
+        if valid_cache {
             // eprintln!("Cache: {:?}; constraint: {:?}", self.size_cache, constraint);
 
             // The new constraint shouldn't change much,
@@ -374,7 +375,10 @@ where
             // Try again with some space for the scrollbar.
             let (inner_size, size, new_scrollable) =
                 self.sizes_when_scrolling(constraint, scrollable, strict);
-            if scrollable != new_scrollable {
+            if scrollable == new_scrollable {
+                // Yup, scrolling did it. We're good to go now.
+                (inner_size, size)
+            } else {
                 // Again? We're now scrolling in a new direction?
                 // There is no end to this!
                 let (inner_size, size, _) = self.sizes_when_scrolling(
@@ -385,9 +389,6 @@ where
 
                 // That's enough. If the inner view changed again, ignore it!
                 // That'll teach it.
-                (inner_size, size)
-            } else {
-                // Yup, scrolling did it. We're goot to go now.
                 (inner_size, size)
             }
         } else {

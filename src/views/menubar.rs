@@ -234,7 +234,7 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
         Position::absolute(offset),
         OnEventView::new(
             MenuPopup::new(menu)
-                .on_dismiss(|s| s.select_menubar())
+                .on_dismiss(Cursive::select_menubar)
                 .on_action(|s| s.menubar().state = State::Inactive),
         )
         .on_event(Key::Right, |s| {
@@ -289,7 +289,7 @@ impl View for Menubar {
         match event {
             Event::Key(Key::Esc) => {
                 self.hide();
-                return EventResult::with_cb(|s| s.clear());
+                return EventResult::with_cb(Cursive::clear);
             }
             Event::Key(Key::Left) => loop {
                 if self.focus > 0 {
@@ -356,7 +356,7 @@ impl View for Menubar {
                 ..
             } => {
                 self.hide();
-                return EventResult::with_cb(|s| s.clear());
+                return EventResult::with_cb(Cursive::clear);
             }
             _ => return EventResult::Ignored,
         }

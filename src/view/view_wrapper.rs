@@ -92,7 +92,7 @@ pub trait ViewWrapper: 'static {
 
     /// Wraps the `needs_relayout` method.
     fn wrap_needs_relayout(&self) -> bool {
-        self.with_view(|v| v.needs_relayout()).unwrap_or(true)
+        self.with_view(View::needs_relayout).unwrap_or(true)
     }
 
     /// Wraps the `important_area` method.

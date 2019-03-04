@@ -27,7 +27,7 @@ pub mod termion;
 ///
 /// It usually delegates the work to a terminal-handling library like ncurses
 /// or termion, or it can entirely simulate a terminal and show it as a
-/// graphical window (BearLibTerminal).
+/// graphical window (`BearLibTerminal`).
 ///
 /// When creating a new cursive tree with `Cursive::new()`, you will need to
 /// provide a backend initializer - usually their `init()` function.

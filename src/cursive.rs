@@ -358,7 +358,7 @@ impl Cursive {
     /// Clears the screen.
     ///
     /// Users rarely have to call this directly.
-    pub fn clear(&self) {
+    pub fn clear(&mut self) {
         self.backend
             .clear(self.theme.palette[theme::PaletteColor::Background]);
     }

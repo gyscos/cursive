@@ -220,9 +220,7 @@ impl<T: View> ViewWrapper for BoxView<T> {
             .size
             .zip_map(child_size.zip(req), SizeConstraint::result);
 
-        if !self.squishable {
-            result
-        } else {
+        if self.squishable {
             // When we're squishable, special behaviour:
             //
 
@@ -232,6 +230,8 @@ impl<T: View> ViewWrapper for BoxView<T> {
             // If we respect the request, keep the result
             // Otherwise, take the child as squish attempt.
             respect_req.select_or(result, child_size)
+        } else {
+            result
         }
     }
 

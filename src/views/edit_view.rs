@@ -454,7 +454,7 @@ impl EditView {
             // (either a char, or _)
             let c_len = self.content[self.cursor..]
                 .graphemes(true)
-                .map(|g| g.width())
+                .map(UnicodeWidthStr::width)
                 .next()
                 .unwrap_or(1);
 
@@ -544,7 +544,7 @@ impl View for EditView {
                                 Some(g)
                             }
                         })
-                        .map(|g| g.len())
+                        .map(str::len)
                         .sum();
 
                     let content = &content[..display_bytes];

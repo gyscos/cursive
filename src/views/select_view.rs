@@ -680,10 +680,10 @@ impl<T: 'static> View for SelectView<T> {
             // We'll draw the full list in a popup if needed.
             let style = if !(self.enabled && printer.enabled) {
                 ColorStyle::secondary()
-            } else if !printer.focused {
-                ColorStyle::primary()
-            } else {
+            } else if printer.focused {
                 ColorStyle::highlight()
+            } else {
+                ColorStyle::primary()
             };
             let x = match printer.size.x.checked_sub(1) {
                 Some(x) => x,

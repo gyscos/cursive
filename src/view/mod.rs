@@ -45,8 +45,8 @@ mod margins;
 mod position;
 mod size_cache;
 mod size_constraint;
-mod view;
 mod view_path;
+mod view_trait;
 
 // Helper bases
 mod boxable;
@@ -67,6 +67,6 @@ pub use self::scroll::{ScrollBase, ScrollStrategy};
 pub use self::scrollable::Scrollable;
 pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
-pub use self::view::View;
 pub use self::view_path::ViewPath;
+pub use self::view_trait::View;
 pub use self::view_wrapper::ViewWrapper;
