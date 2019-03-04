@@ -27,7 +27,7 @@ use crate::{Printer, Vec2, With, XY};
 ///
 /// // Later, possibly in a different thread
 /// content.set_content("new content");
-/// assert!(content.get_content().source().contains("new"));
+/// assert!(view.get_content().source().contains("new"));
 /// ```
 #[derive(Clone)]
 pub struct TextContent {
@@ -198,7 +198,7 @@ impl TextView {
     ///
     /// // Later, possibly in a different thread
     /// content.set_content("new content");
-    /// assert!(content.get_content().source().contains("new"));
+    /// assert!(view.get_content().source().contains("new"));
     /// ```
     pub fn new_with_content(content: TextContent) -> Self {
         TextView {
