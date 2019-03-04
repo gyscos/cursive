@@ -461,7 +461,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a sub-printer with the given offset.
     ///
     /// It will print in an area slightly to the bottom/right.
-    pub fn offset<S>(&self, offset: S) -> Printer<'_, '_>
+    pub fn offset<S>(&self, offset: S) -> Self
     where
         S: Into<Vec2>,
     {
@@ -517,6 +517,24 @@ impl<'a, 'b> Printer<'a, 'b> {
         })
     }
 
+    /// Returns a new sub-printer with a cropped area.
+    ///
+    /// The new printer size will be the minimum of `size` and its current size.
+    ///
+    /// The view will stay centered.
+    ///
+    /// Note that if shrinking by an odd number, the view will round to the top-left.
+    pub fn cropped_centered<S>(&self, size: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        let size = size.into();
+        let borders = self.size.saturating_sub(size);
+        let half_borders = borders / 2;
+
+        self.cropped(size).offset(half_borders)
+    }
+
     /// Returns a new sub-printer with a shrinked area.
     ///
     /// The printer size will be reduced by the given border from the bottom-right.
@@ -525,6 +543,21 @@ impl<'a, 'b> Printer<'a, 'b> {
         S: Into<Vec2>,
     {
         self.cropped(self.size.saturating_sub(borders))
+    }
+
+    /// Returns a new sub-printer with a shrinked area.
+    ///
+    /// The printer size will be reduced by the given border, and will stay centered.
+    ///
+    /// Note that if shrinking by an odd number, the view will round to the top-left.
+    pub fn shrinked_centered<S>(&self, borders: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        let borders = borders.into();
+        let half_borders = borders / 2;
+
+        self.shrinked(borders).offset(half_borders)
     }
 
     /// Returns a new sub-printer with a content offset.

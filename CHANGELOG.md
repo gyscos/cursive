@@ -29,6 +29,7 @@
   `Cursive::cb_sink()`
 - Add `LinearLayout::{insert_child, swap_children, set_weight}` for more
   in-place modifications.
+- Add `Printer::{cropped_centered,shrinked_centered}`
 
 ### Improvements
 
