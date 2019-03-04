@@ -2,7 +2,7 @@
 
 ## Next version (0.11.0)
 
-### New features
+### API updates
 
 - Breaking change: `Finder::find_id()` is renamed to `call_on_id()`, and a proper
   `find_id()` was added instead.
@@ -16,10 +16,18 @@
 - Add `HideableView::is_visible()`
 - Add `type CbSink = Sender<Box<CbFunc>>` as an alias for the return type of
   `Cursive::cb_sink()`
+- Add `LinearLayout::{insert_child, swap_children, set_weight}` for more
+  in-place modifications.
 
 ### Improvements
 
 - Updated termion backend to use direct /dev/tty access for improved performance.
+- Enabled raw mode for ncurses and pancurses. Among other improvements, this
+  lets applications receive Ctrl+S and Ctrl+Q events.
+
+### Bugfixes
+
+- Fixed overflow check for titles in `Dialog` and `Panel`
 
 ## 0.10.0
 
