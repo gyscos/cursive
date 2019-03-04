@@ -43,6 +43,9 @@ pub struct Cursive {
 
     cb_source: Receiver<Box<dyn CbFunc>>,
     cb_sink: Sender<Box<dyn CbFunc>>,
+
+    // User-provided data.
+    user_data: Box<Any>,
 }
 
 /// Identifies a screen in the cursive root.
@@ -147,6 +150,7 @@ impl Cursive {
             cb_source,
             cb_sink,
             backend,
+            user_data: Box::new(()),
         }
     }
 
@@ -179,6 +183,33 @@ impl Cursive {
     /// Nothing will be output. This is mostly here for tests.
     pub fn dummy() -> Self {
         Self::new(backend::dummy::Backend::init)
+    }
+
+    /// Sets some data to be stored in Cursive.
+    ///
+    /// It can later on be accessed with `Cursive::user_data()`
+    pub fn set_user_data<T: Any>(&mut self, user_data: T) {
+        self.user_data = Box::new(user_data);
+    }
+
+    /// Attempts to access the user-provided data.
+    ///
+    /// If some data was set previously with the same type, returns a reference to it.
+    /// If nothing was set or if the type is different, returns `None`.
+    pub fn user_data<T: Any>(&mut self) -> Option<&mut T> {
+        self.user_data.downcast_mut()
+    }
+
+    /// Runs the given closure on the stored user data, if any.
+    ///
+    /// If no user data was supplied, or if the type is different, nothing will be run.
+    /// Otherwise, the result will be returned.
+    pub fn with_user_data<F, T, R>(&mut self, f: F) -> Option<R>
+    where
+        F: FnOnce(&mut T) -> R,
+        T: Any,
+    {
+        self.user_data().map(f)
     }
 
     /// Show the debug console.

@@ -11,6 +11,10 @@
 - Updated to Rust 2018 (now requires rustc > 1.31)
 - Add a logging implementation (`logger::init()`) and a `DebugConsole`
   (`cursive::toggle_debug_console()`)
+- Add user-data to Cursive.
+    - `Cursive::set_user_data()` can store some user-defined data structure.
+    - `Cursive::user_data()` and `Cursive::with_user_data()` can be used to
+      access the data.
 - Add `StackView::remove_layer()`
 - Add `CircularFocus` view (and bring proper circular focus to dialogs)
 - Add `HideableView::is_visible()`
