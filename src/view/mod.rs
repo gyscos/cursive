@@ -51,7 +51,8 @@ mod view_trait;
 // Helper bases
 mod boxable;
 mod identifiable;
-mod scroll;
+pub mod scroll;
+mod scroll_base;
 mod scrollable;
 
 mod into_boxed_view;
@@ -63,7 +64,7 @@ pub use self::identifiable::Identifiable;
 pub use self::into_boxed_view::IntoBoxedView;
 pub use self::margins::Margins;
 pub use self::position::{Offset, Position};
-pub use self::scroll::{ScrollBase, ScrollStrategy};
+pub use self::scroll_base::{ScrollBase, ScrollStrategy};
 pub use self::scrollable::Scrollable;
 pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
