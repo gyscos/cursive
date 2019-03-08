@@ -1,5 +1,4 @@
 use crate::event::{Event, EventResult};
-use crate::printer::Printer;
 use crate::rect::Rect;
 
 use crate::vec::Vec2;
@@ -24,17 +23,6 @@ impl<'a, V: View> InnerOnEvent for &'a mut V {
 }
 
 /// Inner implementation for `ScrollCore::draw()`
-pub trait InnerDraw {
-    /// Performs `View::draw()`
-    fn draw(&self, printer: &Printer<'_, '_>);
-}
-
-impl<'a, V: View> InnerDraw for &'a V {
-    fn draw(&self, printer: &Printer<'_, '_>) {
-        <V as View>::draw(self, printer);
-    }
-}
-
 /// Inner implementation for `ScrollCore::InnerLayout()`
 pub trait InnerLayout {
     /// Performs `View::layout()`

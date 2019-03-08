@@ -29,6 +29,9 @@ pub struct Printer<'a, 'b> {
     /// Size of the area we are allowed to draw on.
     ///
     /// Anything outside of this should be discarded.
+    ///
+    /// The view being drawn can ingore this, but anything further than that
+    /// will be ignored.
     pub output_size: Vec2,
 
     /// Size allocated to the view.
@@ -38,6 +41,9 @@ pub struct Printer<'a, 'b> {
     pub size: Vec2,
 
     /// Offset into the view for this printer.
+    ///
+    /// The view being drawn can ignore this, but anything to the top-left of
+    /// this will actually be ignored, so it can be used to skip this part.
     ///
     /// A print request `x`, will really print at `x - content_offset`.
     pub content_offset: Vec2,

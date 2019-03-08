@@ -10,13 +10,12 @@ use crate::view::{ScrollStrategy, Selector, SizeCache};
 use crate::with::With;
 use crate::XY;
 
-use crate::view::scroll::{
-    InnerDraw, InnerLayout, InnerOnEvent, InnerRequiredSize,
-};
+use crate::view::scroll::{InnerLayout, InnerOnEvent, InnerRequiredSize};
 
 /// Core system for scrolling views.
 ///
 /// See also [`ScrollView`](crate::views::ScrollView).
+#[derive(Debug)]
 pub struct ScrollCore {
     /// This is the size the child thinks we're giving him.
     inner_size: Vec2,
@@ -81,7 +80,10 @@ impl ScrollCore {
     }
 
     /// Performs the `View::draw()` operation.
-    pub fn draw<I: InnerDraw>(&self, printer: &Printer<'_, '_>, inner: I) {
+    pub fn draw<F>(&self, printer: &Printer<'_, '_>, inner_draw: F)
+    where
+        F: FnOnce(&Printer<'_, '_>),
+    {
         // Draw scrollbar?
         let scrolling = self.is_scrolling();
 
@@ -141,7 +143,7 @@ impl ScrollCore {
             .content_offset(self.offset)
             .inner_size(self.inner_size);
 
-        inner.draw(&printer);
+        inner_draw(&printer);
     }
 
     /// Performs `View::on_event()`
@@ -180,10 +182,12 @@ impl ScrollCore {
 
         match result {
             EventResult::Ignored => {
+                // The view ignored the event, so we're free to use it.
+
                 // If it's an arrow, try to scroll in the given direction.
                 // If it's a mouse scroll, try to scroll as well.
                 // Also allow Ctrl+arrow to move the view,
-                // but not the selection.
+                // without affecting the selection.
                 match event {
                     Event::Mouse {
                         event: MouseEvent::WheelUp,
@@ -287,6 +291,8 @@ impl ScrollCore {
                 EventResult::Consumed(None)
             }
             other => {
+                // The view consumed the event. Maybe something changed?
+
                 // Fix offset?
                 let important = inner.important_area(self.inner_size);
 
@@ -409,6 +415,22 @@ impl ScrollCore {
         self.with(|s| s.set_scroll_strategy(strategy))
     }
 
+    /// Sets the padding between content and scrollbar.
+    pub fn set_scrollbar_padding<V: Into<Vec2>>(
+        &mut self, scrollbar_padding: V,
+    ) {
+        self.scrollbar_padding = scrollbar_padding.into();
+    }
+
+    /// Sets the padding between content and scrollbar.
+    ///
+    /// Chainable variant.
+    pub fn scrollbar_padding<V: Into<Vec2>>(
+        self, scrollbar_padding: V,
+    ) -> Self {
+        self.with(|s| s.set_scrollbar_padding(scrollbar_padding))
+    }
+
     /// Control whether scroll bars are visibile.
     ///
     /// Defaults to `true`.
@@ -464,6 +486,15 @@ impl ScrollCore {
     /// Chainable variant.
     pub fn scroll_x(self, enabled: bool) -> Self {
         self.with(|s| s.set_scroll_x(enabled))
+    }
+
+    /// Scroll until the given column is visible.
+    pub fn scroll_to_x(&mut self, x: usize) {
+        if x > self.offset.x + self.last_size.x {
+            self.offset.x = 1 + x - self.last_size.x;
+        } else if x < self.offset.x {
+            self.offset.x = x;
+        }
     }
 
     /// Programmatically scroll to the top of the view.

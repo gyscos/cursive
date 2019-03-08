@@ -4,13 +4,13 @@
 //!
 //! [`ScrollView`](crate::views::ScrollView) may be an easier way to add scrolling to an existing view.
 
+mod base;
 mod core;
 mod traits;
 
+pub use self::base::ScrollBase;
 pub use self::core::ScrollCore;
-pub use self::traits::{
-    InnerDraw, InnerLayout, InnerOnEvent, InnerRequiredSize,
-};
+pub use self::traits::{InnerLayout, InnerOnEvent, InnerRequiredSize};
 
 /// Defines the scrolling behaviour on content or size change
 #[derive(Debug)]
