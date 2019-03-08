@@ -538,7 +538,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let borders = self.size.saturating_sub(size);
         let half_borders = borders / 2;
 
-        self.cropped(size).offset(half_borders)
+        self.cropped(size - half_borders).offset(half_borders)
     }
 
     /// Returns a new sub-printer with a shrinked area.
@@ -563,7 +563,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let borders = borders.into();
         let half_borders = borders / 2;
 
-        self.shrinked(borders).offset(half_borders)
+        self.shrinked(borders - half_borders).offset(half_borders)
     }
 
     /// Returns a new sub-printer with a content offset.

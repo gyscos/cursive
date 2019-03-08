@@ -13,15 +13,6 @@ use crate::view::scroll::{InnerLayout, InnerOnEvent, InnerRequiredSize};
 #[derive(Default, Debug)]
 pub struct ScrollBase {
     core: ScrollCore,
-
-    /// Number of lines displayed
-    pub view_height: usize,
-
-    /// Blank between the text and the scrollbar.
-    pub right_padding: usize,
-
-    /// Initial position of the cursor when dragging.
-    pub thumb_grab: Option<usize>,
 }
 
 struct RequiredSize<F>(F);
@@ -43,7 +34,7 @@ impl<F> InnerLayout for RequiredSize<F>
 where
     F: FnMut(Vec2) -> Vec2,
 {
-    fn layout(&mut self, size: Vec2) {}
+    fn layout(&mut self, _size: Vec2) {}
 
     fn needs_relayout(&self) -> bool {
         true
@@ -59,10 +50,6 @@ impl ScrollBase {
     pub fn new() -> Self {
         ScrollBase {
             core: ScrollCore::new(),
-
-            view_height: 0,
-            right_padding: 1,
-            thumb_grab: None,
         }
     }
 
@@ -118,7 +105,7 @@ impl ScrollBase {
             let end = start + printer.output_size.y;
             for y in start..end {
                 let printer =
-                    printer.offset((y, 0)).cropped((printer.size.x, 1));
+                    printer.offset((0, y)).cropped((printer.size.x, 1));
                 line_drawer(&printer, y);
             }
         });

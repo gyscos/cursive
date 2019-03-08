@@ -134,7 +134,7 @@ where
     V: View,
 {
     fn draw(&self, printer: &Printer<'_, '_>) {
-        self.core.draw(printer, &self.inner);
+        self.core.draw(printer, |printer| self.inner.draw(printer));
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
