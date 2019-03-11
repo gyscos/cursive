@@ -53,7 +53,9 @@ mod boxable;
 mod identifiable;
 #[cfg(feature = "unstable_scroll")]
 pub mod scroll;
+
 #[cfg(not(feature = "unstable_scroll"))]
+#[allow(dead_code)]
 pub(crate) mod scroll;
 
 mod scroll_base;
