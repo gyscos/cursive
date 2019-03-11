@@ -10,6 +10,7 @@ use crate::vec::Vec2;
 use crate::with::With;
 use enumset::EnumSet;
 use std::cmp::min;
+use std::sync::{Arc, Mutex};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
@@ -59,6 +60,9 @@ pub struct Printer<'a, 'b> {
 
     /// Backend used to actually draw things
     backend: &'b dyn Backend,
+
+    /// Buffer of space characters that we reuse for drawing horizontal lines of blank background.
+    spc_buffer: Arc<Mutex<String>>,
 }
 
 impl<'a, 'b> Printer<'a, 'b> {
@@ -79,6 +83,7 @@ impl<'a, 'b> Printer<'a, 'b> {
             enabled: true,
             theme,
             backend,
+            spc_buffer: Arc::new(Mutex::new(String::new())),
         }
     }
 
@@ -247,12 +252,19 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         // Don't write too much if we're close to the end
         let width = min(width, (self.output_size.x - start.x) / c.width());
-
-        // Could we avoid allocating?
-        let text: String = ::std::iter::repeat(c).take(width).collect();
-
         let start = start + self.offset;
-        self.backend.print_at(start, &text);
+
+        if c == " " {
+            let mut guard = self.spc_buffer.lock().unwrap();
+            while guard.len() < width {
+                guard.push_str(" ");
+            }
+            self.backend.print_at(start, &guard[..width]);
+        } else {
+            // Could we avoid allocating?
+            let text: String = ::std::iter::repeat(c).take(width).collect();
+            self.backend.print_at(start, &text);
+        };
     }
 
     /// Call the given closure with a colored printer,
