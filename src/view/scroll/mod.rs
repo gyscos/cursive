@@ -1,5 +1,7 @@
 //! Core mechanisms to implement scrolling.
 //!
+//! *This module is still unstable and may go through breaking changes.*
+//!
 //! This module defines [`ScrollCore`](crate::view::scroll::ScrollCore) and related traits.
 //!
 //! [`ScrollView`](crate::views::ScrollView) may be an easier way to add scrolling to an existing view.

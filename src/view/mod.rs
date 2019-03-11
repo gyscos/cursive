@@ -51,7 +51,11 @@ mod view_trait;
 // Helper bases
 mod boxable;
 mod identifiable;
+#[cfg(feature = "unstable_scroll")]
 pub mod scroll;
+#[cfg(not(feature = "unstable_scroll"))]
+pub(crate) mod scroll;
+
 mod scroll_base;
 mod scrollable;
 

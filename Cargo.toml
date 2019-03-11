@@ -78,6 +78,7 @@ markdown = ["pulldown-cmark"]
 ncurses-backend = ["ncurses", "maplit", "term_size"]
 pancurses-backend = ["pancurses", "maplit", "term_size"]
 termion-backend = ["termion"]
+unstable_scroll = []
 
 [lib]
 name = "cursive"
