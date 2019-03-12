@@ -153,12 +153,13 @@ impl Backend {
         let mut pairs = self.pairs.borrow_mut();
 
         // Find if we have this color in stock
-        let (front, back) = find_closest_pair(pair);
-        if pairs.contains_key(&(front, back)) {
+        let result = find_closest_pair(pair);
+        let lookup = pairs.get(&result);
+        if lookup.is_some() {
             // We got it!
-            pairs[&(front, back)]
+            *lookup.unwrap()
         } else {
-            self.insert_color(&mut *pairs, (front, back))
+            self.insert_color(&mut *pairs, result)
         }
     }
 
