@@ -248,11 +248,8 @@ impl<'a, 'b> Printer<'a, 'b> {
         // Don't write too much if we're close to the end
         let width = min(width, (self.output_size.x - start.x) / c.width());
 
-        // Could we avoid allocating?
-        let text: String = ::std::iter::repeat(c).take(width).collect();
-
         let start = start + self.offset;
-        self.backend.print_at(start, &text);
+        self.backend.print_at_rep(start, width, &c);
     }
 
     /// Call the given closure with a colored printer,

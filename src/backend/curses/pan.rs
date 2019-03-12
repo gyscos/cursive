@@ -417,6 +417,17 @@ impl backend::Backend for Backend {
         self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
     }
 
+    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
+        if repetitions > 0 {
+            self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
+            let mut dupes_left = repetitions - 1;
+            while dupes_left > 0 {
+                self.window.addstr(text);
+                dupes_left -= 1;
+            }
+        }
+    }
+
     fn poll_event(&mut self) -> Option<Event> {
         self.parse_next()
     }

@@ -17,6 +17,8 @@ use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{BaseColor, Color, ColorPair, Effect};
 use crate::vec::Vec2;
+use unicode_width::UnicodeWidthStr;
+use std::convert::TryInto;
 
 enum ColorRole {
     Foreground,
@@ -309,6 +311,26 @@ impl backend::Backend for Backend {
 
     fn print_at(&self, pos: Vec2, text: &str) {
         terminal::print_xy(pos.x as i32, pos.y as i32, text);
+    }
+
+    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
+        if repetitions > 0 {
+            let width: i32 = text.width().try_into().expect(
+                "Cannot repeatedly print text that is too wide (in characters) \
+                to be described by a 32-bit signed integer.");
+            
+            let mut pos_x = pos.x as i32;
+            let pos_y = pos.y as i32;
+            let mut dupes_left = repetitions - 1;
+            
+            terminal::print_xy(pos_x, pos_y, text);
+            
+            while dupes_left > 0 {
+                pos_x += width;
+                terminal::print_xy(pos_x, pos_y, text);
+                dupes_left -= 1;
+            }
+        }
     }
 
     fn poll_event(&mut self) -> Option<Event> {

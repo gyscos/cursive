@@ -373,6 +373,17 @@ impl backend::Backend for Backend {
     fn print_at(&self, pos: Vec2, text: &str) {
         ncurses::mvaddstr(pos.y as i32, pos.x as i32, text);
     }
+
+    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
+        if repetitions > 0 {
+            ncurses::mvaddstr(pos.y as i32, pos.x as i32, text);
+            let mut dupes_left = repetitions - 1;
+            while dupes_left > 0 {
+                ncurses::addstr(text);
+                dupes_left -= 1;
+            }
+        }
+    }
 }
 
 /// Returns the Key enum corresponding to the given ncurses event.
