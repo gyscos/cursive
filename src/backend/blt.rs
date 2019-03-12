@@ -312,24 +312,6 @@ impl backend::Backend for Backend {
         terminal::print_xy(pos.x as i32, pos.y as i32, text);
     }
 
-    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
-        if repetitions > 0 {
-            let width: i32 = text.width() as i32;
-            
-            let mut pos_x = pos.x as i32;
-            let pos_y = pos.y as i32;
-            let mut dupes_left = repetitions - 1;
-            
-            terminal::print_xy(pos_x, pos_y, text);
-            
-            while dupes_left > 0 {
-                pos_x += width;
-                terminal::print_xy(pos_x, pos_y, text);
-                dupes_left -= 1;
-            }
-        }
-    }
-
     fn poll_event(&mut self) -> Option<Event> {
         self.parse_next()
     }
