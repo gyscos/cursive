@@ -129,46 +129,55 @@ impl<'a, 'b> Printer<'a, 'b> {
             return;
         }
 
-        let text_width = text.width();
+        let mut text_width = text.width();
 
         // If we're waaaay too far left, just give up.
         if hidden_part.x > text_width {
             return;
         }
+        
+        let mut text = text;
+        let mut start = start;
+        
+        if hidden_part.x > 0 {
+            // We have to drop hidden_part.x width from the start of the string.
+            // prefix() may be too short if there's a double-width character.
+            // So instead, keep the suffix and drop the prefix.
 
-        // We have to drop hidden_part.x width from the start of the string.
-        // prefix() may be too short if there's a double-width character.
-        // So instead, keep the suffix and drop the prefix.
+            // TODO: use a different prefix method that is *at least* the width
+            // (and not *at most*)
+            let tail =
+                suffix(text.graphemes(true), text_width - hidden_part.x, "");
+            let skipped_len = text.len() - tail.length;
+            let skipped_width = text_width - tail.width;
+            assert_eq!(text[..skipped_len].width(), skipped_width);
 
-        // TODO: use a different prefix method that is *at least* the width
-        // (and not *at most*)
-        let tail =
-            suffix(text.graphemes(true), text_width - hidden_part.x, "");
-        let skipped_len = text.len() - tail.length;
-        let skipped_width = text_width - tail.width;
-        assert_eq!(text[..skipped_len].width(), skipped_width);
+            // This should be equal most of the time, except when there's a double
+            // character preventing us from splitting perfectly.
+            assert!(skipped_width >= hidden_part.x);
 
-        // This should be equal most of the time, except when there's a double
-        // character preventing us from splitting perfectly.
-        assert!(skipped_width >= hidden_part.x);
-
-        // Drop part of the text, and move the cursor correspondingly.
-        let text = &text[skipped_len..];
-        let start = start + (skipped_width, 0);
+            // Drop part of the text, and move the cursor correspondingly.
+            text = &text[skipped_len..];
+            start = start + (skipped_width, 0);
+            text_width -= skipped_width;
+        }
+        
         assert!(start.fits(self.content_offset));
 
         // What we did before should guarantee that this won't overflow.
-        let start = start - self.content_offset;
+        start = start - self.content_offset;
 
         // Do we have enough room for the entire line?
         let room = self.output_size.x - start.x;
 
-        // Drop the end of the text if it's too long
-        // We want the number of CHARACTERS, not bytes.
-        // (Actually we want the "width" of the string, see unicode-width)
-        let prefix_len = prefix(text.graphemes(true), room, "").length;
-        let text = &text[..prefix_len];
-        assert!(text.width() <= room);
+        if room < text_width {
+            // Drop the end of the text if it's too long
+            // We want the number of CHARACTERS, not bytes.
+            // (Actually we want the "width" of the string, see unicode-width)
+            let prefix_len = prefix(text.graphemes(true), room, "").length;
+            text = &text[..prefix_len];
+            assert!(text.width() <= room);
+        }
 
         let start = start + self.offset;
         self.backend.print_at(start, text);
