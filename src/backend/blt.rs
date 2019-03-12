@@ -314,7 +314,7 @@ impl backend::Backend for Backend {
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
-            let width: i32 = text.width().into();
+            let width: i32 = text.width() as i32;
             
             let mut pos_x = pos.x as i32;
             let pos_y = pos.y as i32;
