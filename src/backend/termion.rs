@@ -268,6 +268,24 @@ impl backend::Backend for Backend {
         .unwrap();
     }
 
+    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
+        if repetitions > 0 {
+            let mut out = self.terminal.borrow_mut();
+            write!(
+                out,
+                "{}{}",
+                termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
+                text
+            ).unwrap();
+            
+            let mut dupes_left = repetitions - 1;
+            while dupes_left > 0 {
+                write!(out, "{}", text).unwrap();
+                dupes_left -= 1;
+            }
+        }
+    }
+
     fn poll_event(&mut self) -> Option<Event> {
         let event = select! {
             recv(self.input_receiver) -> event => event.ok(),

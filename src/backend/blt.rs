@@ -17,6 +17,7 @@ use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{BaseColor, Color, ColorPair, Effect};
 use crate::vec::Vec2;
+use unicode_width::UnicodeWidthStr;
 
 enum ColorRole {
     Foreground,

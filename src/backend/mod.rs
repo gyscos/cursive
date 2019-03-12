@@ -10,6 +10,7 @@
 use crate::event::Event;
 use crate::theme;
 use crate::vec::Vec2;
+use unicode_width::UnicodeWidthStr;
 
 #[cfg(unix)]
 mod resize;
@@ -63,6 +64,24 @@ pub trait Backend {
 
     /// Main method used for printing
     fn print_at(&self, pos: Vec2, text: &str);
+    
+    /// First positions the cursor, similar to `print_at`, and then prints the given number of
+    /// `repetitions` of `text`.
+    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
+        if repetitions > 0 {
+            self.print_at(pos, text);
+
+            let width = text.width();
+            let mut pos = pos;
+            let mut dupes_left = repetitions - 1;
+
+            while dupes_left > 0 {
+                pos = pos.saturating_add((width, 0));
+                self.print_at(pos, text);
+                dupes_left -= 1;
+            }
+        }
+    }
 
     /// Clears the screen with the given color.
     fn clear(&self, color: theme::Color);
