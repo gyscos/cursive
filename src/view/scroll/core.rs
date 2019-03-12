@@ -498,12 +498,40 @@ impl Core {
         self.with(|s| s.set_scroll_x(enabled))
     }
 
+    /// Try to keep the given `rect` in view.
+    pub fn keep_in_view(&mut self, rect: Rect) {
+        let min = rect.bottom_right().saturating_sub(self.last_size);
+        let max = rect.top_left();
+        let (min, max) = (Vec2::min(min, max), Vec2::max(min, max));
+
+        self.offset = self.offset.or_min(max).or_max(min);
+    }
+
+    /// Scroll until the given point is visible.
+    pub fn scroll_to(&mut self, pos: Vec2) {
+        // The furthest top-left we can go
+        let min = pos.saturating_sub(self.last_size);
+        // How far to the bottom-right we can go
+        let max = pos;
+
+        self.offset = self.offset.or_min(max).or_max(min);
+    }
+
     /// Scroll until the given column is visible.
     pub fn scroll_to_x(&mut self, x: usize) {
-        if x > self.offset.x + self.last_size.x {
+        if x >= self.offset.x + self.last_size.x {
             self.offset.x = 1 + x - self.last_size.x;
         } else if x < self.offset.x {
             self.offset.x = x;
+        }
+    }
+
+    /// Scroll until the given row is visible.
+    pub fn scroll_to_y(&mut self, y: usize) {
+        if y >= self.offset.y + self.last_size.y {
+            self.offset.y = 1 + y - self.last_size.y;
+        } else if y < self.offset.y {
+            self.offset.y = y;
         }
     }
 
