@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use crate::direction::{Direction, Orientation};
+use crate::direction::Orientation;
 use crate::event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
 use crate::printer::Printer;
 use crate::rect::Rect;
@@ -10,13 +10,25 @@ use crate::view::{ScrollStrategy, Selector, SizeCache};
 use crate::with::With;
 use crate::XY;
 
-use crate::view::scroll::{InnerLayout, InnerOnEvent, InnerRequiredSize};
+/// Describes an item with a scroll core.
+///
+/// This trait is used to represent "something that can scroll".
+/// All it needs is an accessible core.
+///
+/// See the various methods in the [`scroll`](crate::view::scroll) module.
+pub trait Scroller {
+    /// Returns a mutable access to the scroll core.
+    fn get_scroller_mut(&mut self) -> &mut Core;
+
+    /// Returns an immutable access to the scroll core.
+    fn get_scroller(&self) -> &Core;
+}
 
 /// Core system for scrolling views.
 ///
 /// See also [`ScrollView`](crate::views::ScrollView).
 #[derive(Debug)]
-pub struct ScrollCore {
+pub struct Core {
     /// This is the size the child thinks we're giving him.
     inner_size: Vec2,
 
@@ -57,16 +69,16 @@ pub struct ScrollCore {
     scroll_strategy: ScrollStrategy,
 }
 
-impl Default for ScrollCore {
+impl Default for Core {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ScrollCore {
-    /// Creates a new `ScrollCore`.
+impl Core {
+    /// Creates a new `Core`.
     pub fn new() -> Self {
-        ScrollCore {
+        Core {
             inner_size: Vec2::zero(),
             offset: Vec2::zero(),
             last_size: Vec2::zero(),
@@ -79,11 +91,10 @@ impl ScrollCore {
         }
     }
 
-    /// Performs the `View::draw()` operation.
-    pub fn draw<F>(&self, printer: &Printer<'_, '_>, inner_draw: F)
-    where
-        F: FnOnce(&Printer<'_, '_>),
-    {
+    /// Returns a sub-printer ready to draw the content.
+    pub fn sub_printer<'a, 'b>(
+        &self, printer: &Printer<'a, 'b>,
+    ) -> Printer<'a, 'b> {
         // Draw scrollbar?
         let scrolling = self.is_scrolling();
 
@@ -138,27 +149,21 @@ impl ScrollCore {
         }
 
         // Draw content
-        let printer = printer
+        printer
             .cropped(size)
             .content_offset(self.offset)
-            .inner_size(self.inner_size);
-
-        inner_draw(&printer);
+            .inner_size(self.inner_size)
     }
 
-    /// Performs `View::on_event()`
-    pub fn on_event<I: InnerOnEvent>(
-        &mut self, event: Event, mut inner: I,
-    ) -> EventResult {
-        // Relativize event accorging to the offset
-        let mut relative_event = event.clone();
-
-        // Should the event be treated inside, by the inner view?
-        let inside = if let Event::Mouse {
+    /// Returns `true` if `event` should be processed by the content.
+    ///
+    /// This also updates `event` so that it is relative to the content.
+    pub fn is_event_inside(&self, event: &mut Event) -> bool {
+        if let Event::Mouse {
             ref mut position,
             ref offset,
             ..
-        } = relative_event
+        } = event
         {
             // For mouse events, check if it falls inside the available area
             let inside = position
@@ -170,17 +175,15 @@ impl ScrollCore {
         } else {
             // For key events, assume it's inside by default.
             true
-        };
+        }
+    }
 
-        let result = if inside {
-            // If the event is inside, give it to the child.
-            inner.on_event(relative_event)
-        } else {
-            // Otherwise, pretend it wasn't there.
-            EventResult::Ignored
-        };
-
-        match result {
+    /// Handle an event after processing by the content.
+    pub fn on_inner_event(
+        &mut self, event: Event, inner_result: EventResult,
+        important_area: Rect,
+    ) -> EventResult {
+        match inner_result {
             EventResult::Ignored => {
                 // The view ignored the event, so we're free to use it.
 
@@ -294,7 +297,7 @@ impl ScrollCore {
                 // The view consumed the event. Maybe something changed?
 
                 // Fix offset?
-                let important = inner.important_area(self.inner_size);
+                let important = important_area;
 
                 // The furthest top-left we can go
                 let top_left = (important.bottom_right() + (1, 1))
@@ -315,21 +318,28 @@ impl ScrollCore {
         }
     }
 
-    /// Performs `View::layout()`
-    pub fn layout<I: InnerLayout>(&mut self, size: Vec2, mut inner: I) {
-        // Size is final now, negociations are over.
-        self.last_size = size;
+    /// Specifies the size given in a layout phase.
+    pub(crate) fn set_last_size(&mut self, last_size: Vec2) {
+        self.last_size = last_size;
+    }
 
-        // This is what we'd like
-        let (inner_size, self_size) =
-            self.sizes(size, true, Layout2Sizes { inner: &mut inner });
+    /// Returns the size last given in `set_last_size()`.
+    pub fn last_size(&self) -> Vec2 {
+        self.last_size
+    }
 
+    /// Specifies the size allocated to the content.
+    pub(crate) fn set_inner_size(&mut self, inner_size: Vec2) {
         self.inner_size = inner_size;
+    }
 
-        self.size_cache = Some(SizeCache::build(self_size, size));
+    /// Rebuild the cache with the given parameters.
+    pub(crate) fn build_cache(&mut self, self_size: Vec2, last_size: Vec2) {
+        self.size_cache = Some(SizeCache::build(self_size, last_size));
+    }
 
-        inner.layout(self.inner_size);
-
+    /// Makes sure the viewport is within the content.
+    pub(crate) fn update_offset(&mut self) {
         // Keep the offset in the valid range.
         self.offset = self
             .offset
@@ -339,25 +349,11 @@ impl ScrollCore {
         self.adjust_scroll();
     }
 
-    /// Performs `View::needs_relayout()`
-    pub fn needs_relayout<F>(&self, inner_needs_relayout: F) -> bool
-    where
-        F: FnOnce() -> bool,
-    {
-        self.size_cache.is_none() || inner_needs_relayout()
-    }
-
-    /// Performs `View::required_size()`
-    pub fn required_size<I: InnerRequiredSize>(
-        &mut self, constraint: Vec2, mut inner: I,
-    ) -> Vec2 {
-        let (_, size) = self.sizes(
-            constraint,
-            false,
-            Required2Sizes { inner: &mut inner },
-        );
-
-        size
+    /// Returns `true` if we should relayout, no matter the content.
+    ///
+    /// Even if this returns `false`, the content itself might still needs to relayout.
+    pub fn needs_relayout(&self) -> bool {
+        self.size_cache.is_none()
     }
 
     /// Performs `View::call_on_any()`
@@ -378,17 +374,6 @@ impl ScrollCore {
         F: FnOnce(&Selector) -> Result<(), ()>,
     {
         inner_focus_view(selector)
-    }
-
-    /// Performs `View::take_focus()`
-    pub fn take_focus<F>(
-        &mut self, source: Direction, inner_take_focus: F,
-    ) -> bool
-    where
-        F: FnOnce(Direction) -> bool,
-    {
-        let is_scrollable = self.is_scrolling().any();
-        inner_take_focus(source) || is_scrollable
     }
 
     /// Returns the viewport in the inner content.
@@ -431,6 +416,19 @@ impl ScrollCore {
         self.with(|s| s.set_scrollbar_padding(scrollbar_padding))
     }
 
+    /// Returns the padding between content and scrollbar.
+    pub fn get_scrollbar_padding(&self) -> Vec2 {
+        self.scrollbar_padding
+    }
+
+    /// For each axis, returns `true` if this view can scroll.
+    ///
+    /// For example, a vertically-scrolling view will return
+    /// `XY { x: false, y: true }`.
+    pub fn is_enabled(&self) -> XY<bool> {
+        self.enabled
+    }
+
     /// Control whether scroll bars are visibile.
     ///
     /// Defaults to `true`.
@@ -443,6 +441,18 @@ impl ScrollCore {
     /// Chainable variant
     pub fn show_scrollbars(self, show_scrollbars: bool) -> Self {
         self.with(|s| s.set_show_scrollbars(show_scrollbars))
+    }
+
+    /// Returns `true` if we will show scrollbars when needed.
+    ///
+    /// Scrollbars are always hidden when not needed.
+    pub fn get_show_scrollbars(&self) -> bool {
+        self.show_scrollbars
+    }
+
+    /// Returns the size given to the content on the last layout phase.
+    pub fn inner_size(&self) -> Vec2 {
+        self.inner_size
     }
 
     /// Sets the scroll offset to the given value
@@ -529,7 +539,7 @@ impl ScrollCore {
     }
 
     /// Returns for each axis if we are scrolling.
-    fn is_scrolling(&self) -> XY<bool> {
+    pub fn is_scrolling(&self) -> XY<bool> {
         self.inner_size.zip_map(self.last_size, |i, s| i > s)
     }
 
@@ -543,7 +553,7 @@ impl ScrollCore {
     /// Will be zero in axis where we're not scrolling.
     ///
     /// The scrollbar_size().x will be the horizontal space taken by the vertical scrollbar.
-    fn scrollbar_size(&self) -> Vec2 {
+    pub fn scrollbar_size(&self) -> Vec2 {
         self.is_scrolling()
             .swap()
             .select_or(self.scrollbar_padding + (1, 1), Vec2::zero())
@@ -556,49 +566,6 @@ impl ScrollCore {
         } else {
             self.last_size
         }
-    }
-
-    /// Compute the size we would need.
-    ///
-    /// Given the constraints, and the axis that need scrollbars.
-    ///
-    /// Returns `(inner_size, size, scrollable)`.
-    fn sizes_when_scrolling<I: InnerSizes>(
-        &mut self, constraint: Vec2, scrollable: XY<bool>, strict: bool,
-        inner: &mut I,
-    ) -> (Vec2, Vec2, XY<bool>) {
-        // This is the size taken by the scrollbars.
-        let scrollbar_size = scrollable
-            .swap()
-            .select_or(self.scrollbar_padding + (1, 1), Vec2::zero());
-
-        let available = constraint.saturating_sub(scrollbar_size);
-
-        // This the ideal size for the child. May not be what he gets.
-        let inner_size = inner.required_size(available);
-
-        // Where we're "enabled", accept the constraints.
-        // Where we're not, just forward inner_size.
-        let size = self.enabled.select_or(
-            Vec2::min(inner_size + scrollbar_size, constraint),
-            inner_size + scrollbar_size,
-        );
-
-        // In strict mode, there's no way our size is over constraints.
-        let size = if strict {
-            size.or_min(constraint)
-        } else {
-            size
-        };
-
-        // On non-scrolling axis, give inner_size the available space instead.
-        let inner_size = self
-            .enabled
-            .select_or(inner_size, size.saturating_sub(scrollbar_size));
-
-        let new_scrollable = inner_size.zip_map(size, |i, s| i > s);
-
-        (inner_size, size, new_scrollable)
     }
 
     /// Starts scrolling from the cursor position.
@@ -679,74 +646,17 @@ impl ScrollCore {
             .set_axis_from(orientation, &new_offset.or_min(max_offset));
     }
 
-    /// Computes the size we would need given the constraints.
+    /// Tries to apply the cache to the current constraint.
     ///
-    /// First be optimistic and try without scrollbars.
-    /// Then try with scrollbars if needed.
-    /// Then try again in case we now need to scroll both ways (!!!)
-    ///
-    /// Returns `(inner_size, desired_size)`
-    fn sizes<I: InnerSizes>(
-        &mut self, constraint: Vec2, strict: bool, mut inner: I,
-    ) -> (Vec2, Vec2) {
-        // First: try the cache
-        let valid_cache = !inner.needs_relayout()
-            && self
-                .size_cache
-                .map(|cache| {
-                    cache.zip_map(constraint, SizeCache::accept).both()
-                })
-                .unwrap_or(false);
-
-        if valid_cache {
-            // eprintln!("Cache: {:?}; constraint: {:?}", self.size_cache, constraint);
-
-            // The new constraint shouldn't change much,
-            // so we can re-use previous values
-            return (
-                self.inner_size,
-                self.size_cache.unwrap().map(|c| c.value),
-            );
-        }
-
-        // Attempt 1: try without scrollbars
-        let (inner_size, size, scrollable) = self.sizes_when_scrolling(
-            constraint,
-            XY::new(false, false),
-            strict,
-            &mut inner,
-        );
-
-        // If we need to add scrollbars, the available size will change.
-        if scrollable.any() && self.show_scrollbars {
-            // Attempt 2: he wants to scroll? Sure!
-            // Try again with some space for the scrollbar.
-            let (inner_size, size, new_scrollable) = self
-                .sizes_when_scrolling(
-                    constraint, scrollable, strict, &mut inner,
-                );
-            if scrollable == new_scrollable {
-                // Yup, scrolling did it. We're good to go now.
-                (inner_size, size)
+    /// Returns the cached value if it works, or `None`.
+    pub(crate) fn try_cache(&self, constraint: Vec2) -> Option<(Vec2, Vec2)> {
+        self.size_cache.and_then(|cache| {
+            if cache.zip_map(constraint, SizeCache::accept).both() {
+                Some((self.inner_size, cache.map(|c| c.value)))
             } else {
-                // Again? We're now scrolling in a new direction?
-                // There is no end to this!
-                let (inner_size, size, _) = self.sizes_when_scrolling(
-                    constraint,
-                    new_scrollable,
-                    strict,
-                    &mut inner,
-                );
-
-                // That's enough. If the inner view changed again, ignore it!
-                // That'll teach it.
-                (inner_size, size)
+                None
             }
-        } else {
-            // We're not showing any scrollbar, either because we don't scroll
-            // or because scrollbars are hidden.
-            (inner_size, size)
-        }
+        })
     }
 
     fn scrollbar_thumb_lengths(&self) -> Vec2 {
@@ -772,36 +682,5 @@ impl ScrollCore {
             ScrollStrategy::StickToBottom => self.scroll_to_bottom(),
             ScrollStrategy::KeepRow => (),
         }
-    }
-}
-
-struct Layout2Sizes<'a, I> {
-    inner: &'a mut I,
-}
-
-trait InnerSizes {
-    fn needs_relayout(&self) -> bool;
-    fn required_size(&mut self, constraint: Vec2) -> Vec2;
-}
-
-impl<'a, I: InnerLayout> InnerSizes for Layout2Sizes<'a, I> {
-    fn needs_relayout(&self) -> bool {
-        self.inner.needs_relayout()
-    }
-    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
-        self.inner.required_size(constraint)
-    }
-}
-
-struct Required2Sizes<'a, I> {
-    inner: &'a mut I,
-}
-
-impl<'a, I: InnerRequiredSize> InnerSizes for Required2Sizes<'a, I> {
-    fn needs_relayout(&self) -> bool {
-        self.inner.needs_relayout()
-    }
-    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
-        self.inner.required_size(constraint)
     }
 }
