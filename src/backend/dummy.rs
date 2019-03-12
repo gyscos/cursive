@@ -38,7 +38,7 @@ impl backend::Backend for Backend {
 
     fn print_at(&self, _: Vec2, _: &str) {}
 
-    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {}
+    fn print_at_rep(&self, _pos: Vec2, _repetitions: usize, _text: &str) {}
 
     fn clear(&self, _: theme::Color) {}
 
