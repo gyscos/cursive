@@ -18,7 +18,6 @@ use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{BaseColor, Color, ColorPair, Effect};
 use crate::vec::Vec2;
 use unicode_width::UnicodeWidthStr;
-use std::convert::TryInto;
 
 enum ColorRole {
     Foreground,
@@ -315,9 +314,7 @@ impl backend::Backend for Backend {
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
-            let width: i32 = text.width().try_into().expect(
-                "Cannot repeatedly print text that is too wide (in characters) \
-                to be described by a 32-bit signed integer.");
+            let width: i32 = text.width().into();
             
             let mut pos_x = pos.x as i32;
             let pos_y = pos.y as i32;
