@@ -1,5 +1,26 @@
 # Changelog
 
+# Next version (0.11.2)
+
+_No change yet_
+
+## 0.11.1
+
+### API updates
+
+- Added manual scrolling methods to `view::scroll::Core`:
+    - `keep_in_view`, `scroll_to`, `scroll_to_x`, `scroll_to_y`
+    Note: the `view::scroll` module is hidden behind an experimental
+    feature `unstable_scroll`.
+
+### Improvements
+
+- Improved printer performance (thanks to @chrisvest).
+
+### Bugfixes
+
+- Fixed `MenuPopup` borders near delimiters.
+
 ## 0.11.0
 
 ### Breaking changes
