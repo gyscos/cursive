@@ -2,8 +2,8 @@
 use log::{debug, warn};
 use pancurses;
 
+use hashbrown::HashMap;
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
 use std::io::{stdout, Write};
 
 use crate::backend;

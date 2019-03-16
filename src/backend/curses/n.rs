@@ -1,10 +1,9 @@
 //! Ncurses-specific backend.
 use log::{debug, warn};
-use maplit::hashmap;
 use ncurses;
 
+use hashbrown::HashMap;
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
 use std::ffi::CString;
 use std::fs::File;
 use std::io;
@@ -456,50 +455,47 @@ where
 
 fn initialize_keymap() -> HashMap<i32, Event> {
     // First, define the static mappings.
-    let mut map = hashmap! {
+    let mut map = HashMap::new();
+    // Value sent by ncurses when nothing happens
+    map.insert(-1, Event::Refresh);
 
-        // Value sent by ncurses when nothing happens
-        -1 => Event::Refresh,
+    // Values under 256 are chars and control values
+    // Tab is '\t'
+    map.insert(9, Event::Key(Key::Tab));
+    // Treat '\n' and the numpad Enter the same
+    map.insert(10, Event::Key(Key::Enter));
+    map.insert(ncurses::KEY_ENTER, Event::Key(Key::Enter));
+    // This is the escape key when pressed by itself.
+    // When used for control sequences,
+    // it should have been caught earlier.
+    map.insert(27, Event::Key(Key::Esc));
+    // `Backspace` sends 127, but Ctrl-H sends `Backspace`
+    map.insert(127, Event::Key(Key::Backspace));
+    map.insert(ncurses::KEY_BACKSPACE, Event::Key(Key::Backspace));
 
-        // Values under 256 are chars and control values
-        //
-        // Tab is '\t'
-        9 => Event::Key(Key::Tab),
-        // Treat '\n' and the numpad Enter the same
-        10 => Event::Key(Key::Enter),
-        ncurses::KEY_ENTER => Event::Key(Key::Enter),
-        // This is the escape key when pressed by itself.
-        // When used for control sequences,
-        // it should have been caught earlier.
-        27 => Event::Key(Key::Esc),
-        // `Backspace` sends 127, but Ctrl-H sends `Backspace`
-        127 => Event::Key(Key::Backspace),
-        ncurses::KEY_BACKSPACE => Event::Key(Key::Backspace),
+    map.insert(410, Event::WindowResize);
 
-        410 => Event::WindowResize,
-
-        ncurses::KEY_B2 => Event::Key(Key::NumpadCenter),
-        ncurses::KEY_DC => Event::Key(Key::Del),
-        ncurses::KEY_IC => Event::Key(Key::Ins),
-        ncurses::KEY_BTAB => Event::Shift(Key::Tab),
-        ncurses::KEY_SLEFT => Event::Shift(Key::Left),
-        ncurses::KEY_SRIGHT => Event::Shift(Key::Right),
-        ncurses::KEY_LEFT => Event::Key(Key::Left),
-        ncurses::KEY_RIGHT => Event::Key(Key::Right),
-        ncurses::KEY_UP => Event::Key(Key::Up),
-        ncurses::KEY_DOWN => Event::Key(Key::Down),
-        ncurses::KEY_SR => Event::Shift(Key::Up),
-        ncurses::KEY_SF => Event::Shift(Key::Down),
-        ncurses::KEY_PPAGE => Event::Key(Key::PageUp),
-        ncurses::KEY_NPAGE => Event::Key(Key::PageDown),
-        ncurses::KEY_HOME => Event::Key(Key::Home),
-        ncurses::KEY_END => Event::Key(Key::End),
-        ncurses::KEY_SHOME => Event::Shift(Key::Home),
-        ncurses::KEY_SEND => Event::Shift(Key::End),
-        ncurses::KEY_SDC => Event::Shift(Key::Del),
-        ncurses::KEY_SNEXT => Event::Shift(Key::PageDown),
-        ncurses::KEY_SPREVIOUS => Event::Shift(Key::PageUp),
-    };
+    map.insert(ncurses::KEY_B2, Event::Key(Key::NumpadCenter));
+    map.insert(ncurses::KEY_DC, Event::Key(Key::Del));
+    map.insert(ncurses::KEY_IC, Event::Key(Key::Ins));
+    map.insert(ncurses::KEY_BTAB, Event::Shift(Key::Tab));
+    map.insert(ncurses::KEY_SLEFT, Event::Shift(Key::Left));
+    map.insert(ncurses::KEY_SRIGHT, Event::Shift(Key::Right));
+    map.insert(ncurses::KEY_LEFT, Event::Key(Key::Left));
+    map.insert(ncurses::KEY_RIGHT, Event::Key(Key::Right));
+    map.insert(ncurses::KEY_UP, Event::Key(Key::Up));
+    map.insert(ncurses::KEY_DOWN, Event::Key(Key::Down));
+    map.insert(ncurses::KEY_SR, Event::Shift(Key::Up));
+    map.insert(ncurses::KEY_SF, Event::Shift(Key::Down));
+    map.insert(ncurses::KEY_PPAGE, Event::Key(Key::PageUp));
+    map.insert(ncurses::KEY_NPAGE, Event::Key(Key::PageDown));
+    map.insert(ncurses::KEY_HOME, Event::Key(Key::Home));
+    map.insert(ncurses::KEY_END, Event::Key(Key::End));
+    map.insert(ncurses::KEY_SHOME, Event::Shift(Key::Home));
+    map.insert(ncurses::KEY_SEND, Event::Shift(Key::End));
+    map.insert(ncurses::KEY_SDC, Event::Shift(Key::Del));
+    map.insert(ncurses::KEY_SNEXT, Event::Shift(Key::PageDown));
+    map.insert(ncurses::KEY_SPREVIOUS, Event::Shift(Key::PageUp));
 
     // Then add some dynamic ones
 

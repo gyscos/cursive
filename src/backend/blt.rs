@@ -5,7 +5,7 @@
 
 use bear_lib_terminal;
 
-use std::collections::HashSet;
+use hashbrown::HashSet;
 
 use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{
@@ -17,7 +17,6 @@ use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{BaseColor, Color, ColorPair, Effect};
 use crate::vec::Vec2;
-use unicode_width::UnicodeWidthStr;
 
 enum ColorRole {
     Foreground,

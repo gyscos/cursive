@@ -1,5 +1,5 @@
+use hashbrown::HashMap;
 use std::any::Any;
-use std::collections::HashMap;
 use std::path::Path;
 use std::time::Duration;
 
