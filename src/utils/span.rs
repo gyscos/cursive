@@ -193,13 +193,7 @@ impl<T> SpannedString<T> {
     {
         let source = source.into();
 
-        let spans = vec![IndexedSpan {
-            content: IndexedCow::Borrowed {
-                start: 0,
-                end: source.len(),
-            },
-            attr,
-        }];
+        let spans = vec![IndexedSpan::simple_borrowed(&source, attr)];
 
         Self::with_spans(source, spans)
     }
@@ -256,7 +250,7 @@ impl<T> SpannedString<T> {
     ///
     /// This is the sum of the width of each span.
     pub fn width(&self) -> usize {
-        self.spans().map(|s| s.content.width()).sum()
+        self.spans().map(|s| s.width).sum()
     }
 }
 
@@ -274,6 +268,9 @@ pub struct IndexedSpan<T> {
 
     /// Attribute applied to the span.
     pub attr: T,
+
+    /// Width of the text for this span.
+    pub width: usize,
 }
 
 impl<T> AsRef<IndexedCow> for IndexedSpan<T> {
@@ -290,6 +287,9 @@ pub struct Span<'a, T> {
 
     /// Attribute associated to this span.
     pub attr: &'a T,
+
+    /// Width of the text for this span.
+    pub width: usize,
 }
 
 impl<T> IndexedSpan<T> {
@@ -301,6 +301,7 @@ impl<T> IndexedSpan<T> {
         Span {
             content: self.content.resolve(source),
             attr: &self.attr,
+            width: self.width,
         }
     }
 
@@ -309,14 +310,25 @@ impl<T> IndexedSpan<T> {
         self.content.is_empty()
     }
 
-    /// Returns a single span around the entire text.
-    pub fn simple(content: &str, attr: T) -> Self {
+    /// Returns a single indexed span around the entire text.
+    pub fn simple_borrowed(content: &str, attr: T) -> Self {
         IndexedSpan {
             content: IndexedCow::Borrowed {
                 start: 0,
                 end: content.len(),
             },
             attr,
+            width: content.width(),
+        }
+    }
+
+    /// Returns a single owned indexed span around the entire text.
+    pub fn simple_owned(content: String, attr: T) -> Self {
+        let width = content.width();
+        IndexedSpan {
+            content: IndexedCow::Owned(content),
+            attr,
+            width,
         }
     }
 }

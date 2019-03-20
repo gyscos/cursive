@@ -102,7 +102,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         for span in text.spans() {
             self.with_style(*span.attr, |printer| {
                 printer.print((x, y), span.content);
-                x += span.content.width();
+                x += span.width;
             });
         }
     }
@@ -135,10 +135,10 @@ impl<'a, 'b> Printer<'a, 'b> {
         if hidden_part.x > text_width {
             return;
         }
-        
+
         let mut text = text;
         let mut start = start;
-        
+
         if hidden_part.x > 0 {
             // We have to drop hidden_part.x width from the start of the string.
             // prefix() may be too short if there's a double-width character.
@@ -161,7 +161,7 @@ impl<'a, 'b> Printer<'a, 'b> {
             start = start + (skipped_width, 0);
             text_width -= skipped_width;
         }
-        
+
         assert!(start.fits(self.content_offset));
 
         // What we did before should guarantee that this won't overflow.

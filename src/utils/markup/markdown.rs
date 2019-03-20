@@ -2,12 +2,12 @@
 //!
 //! Needs the `markdown` feature to be enabled.
 
-use pulldown_cmark;
-
-use self::pulldown_cmark::{Event, Tag};
 use crate::theme::{Effect, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
+
+use pulldown_cmark::{self, Event, Tag};
+use unicode_width::UnicodeWidthStr;
 
 /// Parses the given string as markdown text.
 pub fn parse<S>(input: S) -> StyledString
@@ -45,10 +45,7 @@ impl<'a> Parser<'a> {
     where
         S: Into<String>,
     {
-        StyledIndexedSpan {
-            content: IndexedCow::Owned(text.into()),
-            attr: Style::merge(&self.stack),
-        }
+        StyledIndexedSpan::simple_owned(text.into(), Style::merge(&self.stack))
     }
 }
 
@@ -110,10 +107,12 @@ impl<'a> Iterator for Parser<'a> {
                 | Event::InlineHtml(text)
                 | Event::Html(text)
                 | Event::Text(text) => {
+                    let width = text.width();
                     // Return something!
                     return Some(StyledIndexedSpan {
                         content: IndexedCow::from_cow(text, self.input),
                         attr: Style::merge(&self.stack),
+                        width,
                     });
                 }
             }
