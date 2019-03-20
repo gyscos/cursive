@@ -101,7 +101,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let Vec2 { mut x, y } = start.into();
         for span in text.spans() {
             self.with_style(*span.attr, |printer| {
-                printer.print((x, y), span.content);
+                printer.print_with_width((x, y), span.content, |_| span.width);
                 x += span.width;
             });
         }
@@ -111,7 +111,19 @@ impl<'a, 'b> Printer<'a, 'b> {
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position
     pub fn print<S: Into<Vec2>>(&self, start: S, text: &str) {
-        // Where we are asked to start printing. Oh boy.
+        self.print_with_width(start, text, UnicodeWidthStr::width);
+    }
+
+    /// Prints some text, using the given callback to compute width.
+    ///
+    /// Mostly used with `UnicodeWidthStr::width`.
+    /// If you already know the width, you can give it as a constant instead.
+    fn print_with_width<S, F>(&self, start: S, text: &str, width: F)
+    where
+        S: Into<Vec2>,
+        F: FnOnce(&str) -> usize,
+    {
+        // Where we are asked to start printing. Oh boy. It's not that simple.
         let start = start.into();
 
         // We accept requests between `content_offset` and
@@ -129,7 +141,7 @@ impl<'a, 'b> Printer<'a, 'b> {
             return;
         }
 
-        let mut text_width = text.width();
+        let mut text_width = width(text);
 
         // If we're waaaay too far left, just give up.
         if hidden_part.x > text_width {
