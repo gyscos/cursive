@@ -33,32 +33,39 @@ fn test_line_breaks() {
                 Span {
                     content: "I ",
                     attr: &Style::none(),
+                    width: 2,
                 },
                 Span {
                     content: "didn't",
                     attr: &Style::from(Effect::Bold),
+                    width: 6,
                 },
                 Span {
                     content: " say ",
                     attr: &Style::none(),
+                    width: 5,
                 },
                 Span {
                     content: "half",
                     attr: &Style::from(Effect::Italic),
+                    width: 4,
                 },
             ],
             vec![Span {
                 content: "the things people",
                 attr: &Style::none(),
+                width: 17,
             }],
             vec![Span {
                 content: "say I did.",
                 attr: &Style::none(),
+                width: 10,
             }],
             vec![],
             vec![Span {
                 content: "    - A. Einstein",
                 attr: &Style::none(),
+                width: 17
             }],
         ]
     );
