@@ -15,7 +15,7 @@ use crate::Printer;
 use crate::With;
 use std::borrow::Borrow;
 use std::cell::Cell;
-use std::cmp::min;
+use std::cmp::{min, Ordering};
 use std::rc::Rc;
 
 /// View to select an item among a list.
@@ -383,6 +383,13 @@ impl<T: 'static> SelectView<T> {
 
     fn focus(&self) -> usize {
         self.focus.get()
+    }
+    
+    /// Sort the current items lexicographically by their label.
+    /// Note that this does not change the current focus index, which means that the currently
+    /// selection will likely be changed by the sorting.
+    pub fn sort(&mut self) {
+        self.items.sort();
     }
 
     /// Moves the selection to the given position.
@@ -782,5 +789,53 @@ impl<T> Item<T> {
     fn new(label: StyledString, value: T) -> Self {
         let value = Rc::new(value);
         Item { label, value }
+    }
+}
+
+impl<T> PartialEq for Item<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.label.source().eq(other.label.source())
+    }
+}
+
+impl<T> Eq for Item<T> {
+}
+
+impl<T> PartialOrd for Item<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.label.source().partial_cmp(other.label.source())
+    }
+}
+
+impl<T> Ord for Item<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.label.source().cmp(other.label.source())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn select_view_sorting() {
+        // We add items in no particular order, from going by their label.
+        let mut view = SelectView::new();
+        view.add_item_str("Y");
+        view.add_item_str("Z");
+        view.add_item_str("X");
+
+        // Then sorting the list...
+        view.sort();
+
+        // ... should observe the items in sorted order.
+        // And focus is NOT changed by the sorting, so the first item is "X".
+        assert_eq!(view.selection(), Some(Rc::new(String::from("X"))));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(String::from("Y"))));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(String::from("Z"))));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(String::from("Z"))));
     }
 }
