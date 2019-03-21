@@ -6,6 +6,9 @@ use crate::view::{Selector, View};
 use crate::Printer;
 use crate::With;
 
+// Define this type separately to appease the Clippy god
+type CallOnAny<T> = Box<dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>;
+
 /// A blank view that forwards calls to closures.
 ///
 /// You can use this view to easily draw your own interface.
@@ -19,7 +22,7 @@ pub struct Canvas<T> {
     take_focus: Box<dyn FnMut(&mut T, Direction) -> bool>,
     needs_relayout: Box<dyn Fn(&T) -> bool>,
     focus_view: Box<dyn FnMut(&mut T, &Selector) -> Result<(), ()>>,
-    call_on_any: Box<dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>,
+    call_on_any: CallOnAny<T>,
     important_area: Box<dyn Fn(&T, Vec2) -> Rect>,
 }
 
