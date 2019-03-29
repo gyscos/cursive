@@ -6,6 +6,10 @@
 
 - Bring back `Cursive::set_fps` for <30Hz refresh rates.
 
+### Improvements
+
+- Improved printer performance with styled spans.
+
 ## 0.11.1
 
 ### API updates
