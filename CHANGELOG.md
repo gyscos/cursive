@@ -2,7 +2,9 @@
 
 # Next version (0.11.2)
 
-_No change yet_
+### API updates
+
+- Bring back `Cursive::set_fps` for <30Hz refresh rates.
 
 ## 0.11.1
 

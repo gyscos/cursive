@@ -1,5 +1,6 @@
 use hashbrown::HashMap;
 use std::any::Any;
+use std::num::NonZeroU32;
 use std::path::Path;
 use std::time::Duration;
 
@@ -15,6 +16,9 @@ use crate::view::{self, Finder, IntoBoxedView, Position, View};
 use crate::views::{self, LayerPosition};
 
 static DEBUG_VIEW_ID: &'static str = "_cursive_debug_view";
+
+// How long we wait between two empty input polls
+const INPUT_POLL_DELAY_MS: u64 = 30;
 
 /// Central part of the cursive library.
 ///
@@ -33,8 +37,6 @@ pub struct Cursive {
     // If it changed, clear the screen.
     last_sizes: Vec<Vec2>,
 
-    autorefresh: bool,
-
     active_screen: ScreenId,
 
     running: bool,
@@ -46,6 +48,9 @@ pub struct Cursive {
 
     // User-provided data.
     user_data: Box<Any>,
+
+    fps: Option<NonZeroU32>,
+    boring_frame_count: u32,
 }
 
 /// Identifies a screen in the cursive root.
@@ -149,7 +154,6 @@ impl Cursive {
         let (cb_sink, cb_source) = crossbeam_channel::unbounded();
 
         backend_init().map(|backend| Cursive {
-            autorefresh: false,
             theme,
             screens: vec![views::StackView::new()],
             last_sizes: Vec::new(),
@@ -160,6 +164,8 @@ impl Cursive {
             cb_source,
             cb_sink,
             backend,
+            fps: None,
+            boring_frame_count: 0,
             user_data: Box::new(()),
         })
     }
@@ -379,11 +385,21 @@ impl Cursive {
         theme::load_toml(content).map(|theme| self.set_theme(theme))
     }
 
+    /// Sets the refresh rate, in frames per second.
+    ///
+    /// Note that the actual frequency is not guaranteed.
+    ///
+    /// Between 0 and 30. Call with `fps = 0` to disable (default value).
+    pub fn set_fps(&mut self, fps: u32) {
+        self.fps = NonZeroU32::new(fps);
+    }
+
     /// Enables or disables automatic refresh of the screen.
     ///
-    /// When on, regularly redraws everything, even when no input is given.
+    /// This is a shortcut to call `set_fps` with `30` or `0` depending on
+    /// `autorefresh`.
     pub fn set_autorefresh(&mut self, autorefresh: bool) {
-        self.autorefresh = autorefresh;
+        self.set_fps(if autorefresh { 30 } else { 0 });
     }
 
     /// Returns a reference to the currently active screen.
@@ -795,6 +811,7 @@ impl Cursive {
     ///
     /// [`run(&mut self)`]: #method.run
     pub fn step(&mut self) {
+        // Things are boring if nothing significant happened.
         let mut boring = true;
 
         // First, handle all available input
@@ -817,14 +834,24 @@ impl Cursive {
             }
         }
 
-        if self.autorefresh || !boring {
-            // Only re-draw if nothing happened.
+        // How many times should we try if it's still boring?
+        // Total duration will be INPUT_POLL_DELAY_MS * repeats
+        // So effectively fps = 1000 / INPUT_POLL_DELAY_MS / repeats
+        if !boring
+            || self
+                .fps
+                .map(|fps| 1000 / INPUT_POLL_DELAY_MS as u32 / fps.get())
+                .map(|repeats| self.boring_frame_count >= repeats)
+                .unwrap_or(false)
+        {
+            // We deserve to draw something!
+            self.boring_frame_count = 0;
             self.refresh();
         }
 
         if boring {
-            // Otherwise, sleep some more
-            std::thread::sleep(Duration::from_millis(30));
+            std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
+            self.boring_frame_count += 1;
         }
     }
 
