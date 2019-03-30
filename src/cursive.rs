@@ -809,8 +809,11 @@ impl Cursive {
     /// Useful if you need tighter control on the event loop.
     /// Otherwise, [`run(&mut self)`] might be more convenient.
     ///
+    /// Returns `true` if an input event or callback was received
+    /// during this step, and `false` otherwise.
+    ///
     /// [`run(&mut self)`]: #method.run
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> bool {
         // Things are boring if nothing significant happened.
         let mut boring = true;
 
@@ -820,7 +823,7 @@ impl Cursive {
             self.on_event(event);
 
             if !self.running {
-                return;
+                return true;
             }
         }
 
@@ -830,7 +833,7 @@ impl Cursive {
             cb.call_box(self);
 
             if !self.running {
-                return;
+                return true;
             }
         }
 
@@ -845,7 +848,6 @@ impl Cursive {
                 .unwrap_or(false)
         {
             // We deserve to draw something!
-            self.boring_frame_count = 0;
             self.refresh();
         }
 
@@ -853,10 +855,14 @@ impl Cursive {
             std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
             self.boring_frame_count += 1;
         }
+
+        !boring
     }
 
     /// Refresh the screen with the current view tree state.
-    fn refresh(&mut self) {
+    pub fn refresh(&mut self) {
+        self.boring_frame_count = 0;
+
         // Do we need to redraw everytime?
         // Probably, actually.
         // TODO: Do we need to re-layout everytime?
