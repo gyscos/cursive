@@ -389,7 +389,7 @@ impl<T: 'static> SelectView<T> {
     /// Note that this does not change the current focus index, which means that the current
     /// selection will likely be changed by the sorting.
     /// This sort is stable: items with identical label will not be reordered.
-    pub fn sort(&mut self) {
+    pub fn sort_by_label(&mut self) {
         self.items.sort();
     }
     
@@ -848,7 +848,7 @@ mod tests {
         view.add_item_str("X");
 
         // Then sorting the list...
-        view.sort();
+        view.sort_by_label();
 
         // ... should observe the items in sorted order.
         // And focus is NOT changed by the sorting, so the first item is "X".
