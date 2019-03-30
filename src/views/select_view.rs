@@ -700,6 +700,16 @@ impl SelectView<String> {
     }
 }
 
+impl<T: 'static> SelectView<T> where T: Ord {
+    /// Sort the current items by their natural ordering.
+    /// Note that this does not change the current focus index, which means that the current
+    /// selection will likely be changed by the sorting.
+    /// This sort is stable: items that are equal will not be reordered.
+    pub fn sort(&mut self) {
+        self.items.sort_by(|a, b| a.value.cmp(&b.value));
+    }
+}
+
 impl<T: 'static> View for SelectView<T> {
     fn draw(&self, printer: &Printer<'_, '_>) {
         self.last_offset.set(printer.offset);
@@ -887,5 +897,27 @@ mod tests {
         assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 3 })));
         view.on_event(Event::Key(Key::Down));
         assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 3 })));
+    }
+
+    #[test]
+    fn select_view_sorting_orderable_items() {
+        // We add items in no particular order, from going by their value.
+        let mut view = SelectView::new();
+        view.add_item("Y", 2);
+        view.add_item("Z", 1);
+        view.add_item("X", 3);
+
+        // Then sorting the list...
+        view.sort();
+
+        // ... should observe the items in sorted order.
+        // And focus is NOT changed by the sorting, so the first item is "X".
+        assert_eq!(view.selection(), Some(Rc::new(1)));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(2)));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(3)));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(3)));
     }
 }
