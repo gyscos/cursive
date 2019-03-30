@@ -386,10 +386,32 @@ impl<T: 'static> SelectView<T> {
     }
     
     /// Sort the current items lexicographically by their label.
-    /// Note that this does not change the current focus index, which means that the currently
+    /// Note that this does not change the current focus index, which means that the current
     /// selection will likely be changed by the sorting.
+    /// This sort is stable: items with identical label will not be reordered.
     pub fn sort(&mut self) {
         self.items.sort();
+    }
+    
+    /// Sort the current items with the given comparator function.
+    /// Note that this does not change the current focus index, which means that the current
+    /// selection will likely be changed by the sorting.
+    /// The given comparator function must define a total order for the items.
+    /// If the comparator function does not define a total order, then the order after the sort is
+    /// unspecified.
+    /// This sort is stable: equal items will not be reordered. 
+    pub fn sort_by<F>(&mut self, mut compare: F)
+        where F: FnMut(&T, &T) -> Ordering {
+        self.items.sort_by(|a, b| compare(&a.value, &b.value));
+    }
+    
+    /// Sort the current items with the given key extraction function.
+    /// Note that this does not change the current focus index, which means that the current
+    /// selection will likely be changed by the sorting.
+    /// This sort is stable: items with equal keys will not be reordered.
+    pub fn sort_by_key<K, F>(&mut self, mut key_of: F)
+        where F: FnMut(&T) -> K, K: Ord {
+        self.items.sort_by_key(|item| key_of(&item.value));
     }
 
     /// Moves the selection to the given position.
@@ -837,5 +859,54 @@ mod tests {
         assert_eq!(view.selection(), Some(Rc::new(String::from("Z"))));
         view.on_event(Event::Key(Key::Down));
         assert_eq!(view.selection(), Some(Rc::new(String::from("Z"))));
+    }
+    
+    #[test]
+    fn select_view_sorting_with_comparator() {
+        // We add items in no particular order, from going by their value.
+        let mut view = SelectView::new();
+        view.add_item("Y", 2);
+        view.add_item("Z", 1);
+        view.add_item("X", 3);
+
+        // Then sorting the list...
+        view.sort_by(|a, b| a.cmp(b));
+
+        // ... should observe the items in sorted order.
+        // And focus is NOT changed by the sorting, so the first item is "X".
+        assert_eq!(view.selection(), Some(Rc::new(1)));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(2)));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(3)));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(3)));
+    }
+    
+    #[test]
+    fn select_view_sorting_by_key() {
+        // We add items in no particular order, from going by their key value.
+        #[derive(Eq, PartialEq, Debug)]
+        struct MyStruct {
+            key: i32
+        }
+        
+        let mut view = SelectView::new();
+        view.add_item("Y", MyStruct{ key: 2 });
+        view.add_item("Z", MyStruct{ key: 1 });
+        view.add_item("X", MyStruct{ key: 3 });
+
+        // Then sorting the list...
+        view.sort_by_key(|s| s.key);
+
+        // ... should observe the items in sorted order.
+        // And focus is NOT changed by the sorting, so the first item is "X".
+        assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 1 })));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 2 })));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 3 })));
+        view.on_event(Event::Key(Key::Down));
+        assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 3 })));
     }
 }
