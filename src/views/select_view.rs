@@ -390,7 +390,7 @@ impl<T: 'static> SelectView<T> {
     /// selection will likely be changed by the sorting.
     /// This sort is stable: items with identical label will not be reordered.
     pub fn sort_by_label(&mut self) {
-        self.items.sort();
+        self.items.sort_by(|a, b| a.label.source().cmp(b.label.source()));
     }
     
     /// Sort the current items with the given comparator function.
@@ -811,27 +811,6 @@ impl<T> Item<T> {
     fn new(label: StyledString, value: T) -> Self {
         let value = Rc::new(value);
         Item { label, value }
-    }
-}
-
-impl<T> PartialEq for Item<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.label.source().eq(other.label.source())
-    }
-}
-
-impl<T> Eq for Item<T> {
-}
-
-impl<T> PartialOrd for Item<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.label.source().partial_cmp(other.label.source())
-    }
-}
-
-impl<T> Ord for Item<T> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.label.source().cmp(other.label.source())
     }
 }
 
