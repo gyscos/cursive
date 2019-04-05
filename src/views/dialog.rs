@@ -317,7 +317,9 @@ impl Dialog {
 
     // An event is received while a button is in focus
     fn on_event_button(
-        &mut self, event: Event, button_id: usize,
+        &mut self,
+        event: Event,
+        button_id: usize,
     ) -> EventResult {
         let result = {
             let button = &mut self.buttons[button_id];
@@ -655,7 +657,9 @@ impl View for Dialog {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector<'_>, callback: AnyCb<'a>,
+        &mut self,
+        selector: &Selector<'_>,
+        callback: AnyCb<'a>,
     ) {
         self.content.call_on_any(selector, callback);
     }

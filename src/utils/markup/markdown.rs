@@ -75,7 +75,7 @@ impl<'a> Iterator for Parser<'a> {
                                 "{} ",
                                 header(level as usize)
                             )),
-                        )
+                        );
                     }
                     Tag::Rule => return Some(self.literal("---")),
                     Tag::BlockQuote => return Some(self.literal("> ")),
@@ -83,7 +83,7 @@ impl<'a> Iterator for Parser<'a> {
                     Tag::Code => return Some(self.literal("```")),
                     Tag::Strong => self.stack.push(Style::from(Effect::Bold)),
                     Tag::Paragraph if !self.first => {
-                        return Some(self.literal("\n\n"))
+                        return Some(self.literal("\n\n"));
                     }
                     _ => (),
                 },
@@ -92,7 +92,7 @@ impl<'a> Iterator for Parser<'a> {
                     Tag::Paragraph if self.first => self.first = false,
                     Tag::Header(_) => return Some(self.literal("\n\n")),
                     Tag::Link(link, _) => {
-                        return Some(self.literal(format!("]({})", link)))
+                        return Some(self.literal(format!("]({})", link)));
                     }
                     Tag::Code => return Some(self.literal("```")),
                     Tag::Emphasis | Tag::Strong => {

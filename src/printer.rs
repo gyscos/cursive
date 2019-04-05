@@ -67,7 +67,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'b dyn Backend,
+        size: T,
+        theme: &'a Theme,
+        backend: &'b dyn Backend,
     ) -> Self {
         let size = size.into();
         Printer {
@@ -94,7 +96,9 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Prints some styled text at the given position.
     pub fn print_styled<S>(
-        &self, start: S, text: crate::utils::span::SpannedStr<'_, Style>,
+        &self,
+        start: S,
+        text: crate::utils::span::SpannedStr<'_, Style>,
     ) where
         S: Into<Vec2>,
     {
@@ -197,7 +201,10 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Prints a vertical line using the given character.
     pub fn print_vline<T: Into<Vec2>>(
-        &self, start: T, height: usize, c: &str,
+        &self,
+        start: T,
+        height: usize,
+        c: &str,
     ) {
         let start = start.into();
 
@@ -234,7 +241,11 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Prints a line using the given character.
     pub fn print_line<T: Into<Vec2>>(
-        &self, orientation: Orientation, start: T, length: usize, c: &str,
+        &self,
+        orientation: Orientation,
+        start: T,
+        length: usize,
+        c: &str,
     ) {
         match orientation {
             Orientation::Vertical => self.print_vline(start, length, c),
@@ -384,7 +395,10 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// printer.print_box((0,0), (6,4), false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
-        &self, start: T, size: S, invert: bool,
+        &self,
+        start: T,
+        size: S,
+        invert: bool,
     ) {
         let start = start.into();
         let size = size.into();
@@ -455,7 +469,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///       uses `ColorStyle::highlight()`.
     ///     * Otherwise, uses `ColorStyle::highlight_inactive()`.
     pub fn with_selection<F: FnOnce(&Printer<'_, '_>)>(
-        &self, selection: bool, f: F,
+        &self,
+        selection: bool,
+        f: F,
     ) {
         self.with_color(
             if selection {

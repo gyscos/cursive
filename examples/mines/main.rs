@@ -135,7 +135,7 @@ impl BoardView {
                             s.pop_layer();
                             s.pop_layer();
                         }));
-                    })
+                    });
                 }
                 game::Cell::Free(n) => {
                     self.overlay[i] = Cell::Visible(n);

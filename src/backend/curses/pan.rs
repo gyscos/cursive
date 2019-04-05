@@ -87,7 +87,9 @@ impl Backend {
 
     /// Save a new color pair.
     fn insert_color(
-        &self, pairs: &mut HashMap<(i16, i16), i32>, (front, back): (i16, i16),
+        &self,
+        pairs: &mut HashMap<(i16, i16), i32>,
+        (front, back): (i16, i16),
     ) -> i32 {
         let n = 1 + pairs.len() as i32;
 

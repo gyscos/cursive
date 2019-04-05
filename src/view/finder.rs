@@ -17,7 +17,9 @@ pub trait Finder {
     /// If the view is not found, or if it is not of the asked type,
     /// it returns `None`.
     fn call_on<V, F, R>(
-        &mut self, sel: &Selector<'_>, callback: F,
+        &mut self,
+        sel: &Selector<'_>,
+        callback: F,
     ) -> Option<R>
     where
         V: View + Any,
@@ -45,7 +47,9 @@ pub trait Finder {
 
 impl<T: View> Finder for T {
     fn call_on<V, F, R>(
-        &mut self, sel: &Selector<'_>, callback: F,
+        &mut self,
+        sel: &Selector<'_>,
+        callback: F,
     ) -> Option<R>
     where
         V: View + Any,

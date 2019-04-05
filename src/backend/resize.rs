@@ -8,7 +8,8 @@ use signal_hook::iterator::Signals;
 /// This starts a new thread to listen for SIGWINCH signals
 #[allow(unused)]
 pub fn start_resize_thread(
-    resize_sender: Sender<()>, resize_running: Arc<AtomicBool>,
+    resize_sender: Sender<()>,
+    resize_running: Arc<AtomicBool>,
 ) {
     let signals = Signals::new(&[libc::SIGWINCH]).unwrap();
     thread::spawn(move || {

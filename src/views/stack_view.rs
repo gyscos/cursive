@@ -42,7 +42,10 @@ pub enum LayerPosition {
 
 impl Placement {
     pub fn compute_offset<S, A, P>(
-        &self, size: S, available: A, parent: P,
+        &self,
+        size: S,
+        available: A,
+        parent: P,
     ) -> Vec2
     where
         S: Into<Vec2>,
@@ -169,7 +172,9 @@ impl<T: View> View for ChildWrapper<T> {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector<'_>, callback: AnyCb<'a>,
+        &mut self,
+        selector: &Selector<'_>,
+        callback: AnyCb<'a>,
     ) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => {
@@ -490,7 +495,9 @@ impl StackView {
     ///
     /// If `layer` is out of bounds.
     pub fn reposition_layer(
-        &mut self, layer: LayerPosition, position: Position,
+        &mut self,
+        layer: LayerPosition,
+        position: Position,
     ) {
         let i = self.get_index(layer).unwrap();
         let child = &mut self.layers[i];
@@ -659,7 +666,9 @@ impl View for StackView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector<'_>, mut callback: AnyCb<'a>,
+        &mut self,
+        selector: &Selector<'_>,
+        mut callback: AnyCb<'a>,
     ) {
         for layer in &mut self.layers {
             layer

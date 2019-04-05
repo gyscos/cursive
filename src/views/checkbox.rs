@@ -32,7 +32,8 @@ impl Checkbox {
 
     /// Sets a callback to be used when the state changes.
     pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(
-        &mut self, on_change: F,
+        &mut self,
+        on_change: F,
     ) {
         self.on_change = Some(Rc::new(on_change));
     }
@@ -41,7 +42,8 @@ impl Checkbox {
     ///
     /// Chainable variant.
     pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(
-        self, on_change: F,
+        self,
+        on_change: F,
     ) -> Self {
         self.with(|s| s.set_on_change(on_change))
     }

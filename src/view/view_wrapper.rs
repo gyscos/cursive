@@ -79,7 +79,9 @@ pub trait ViewWrapper: 'static {
 
     /// Wraps the `find` method.
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector<'_>, callback: AnyCb<'a>,
+        &mut self,
+        selector: &Selector<'_>,
+        callback: AnyCb<'a>,
     ) {
         self.with_view_mut(|v| v.call_on_any(selector, callback));
     }
@@ -125,7 +127,8 @@ impl<T: ViewWrapper> View for T {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector<'_>,
+        &mut self,
+        selector: &Selector<'_>,
         callback: Box<FnMut(&mut dyn Any) + 'a>,
     ) {
         self.wrap_call_on_any(selector, callback)

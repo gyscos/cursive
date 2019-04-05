@@ -125,7 +125,9 @@ impl Palette {
 
     /// Adds a color namespace to this palette.
     pub fn add_namespace(
-        &mut self, key: &str, namespace: HashMap<String, PaletteNode>,
+        &mut self,
+        key: &str,
+        namespace: HashMap<String, PaletteNode>,
     ) {
         self.custom
             .insert(key.to_string(), PaletteNode::Namespace(namespace));
