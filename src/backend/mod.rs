@@ -64,7 +64,7 @@ pub trait Backend {
 
     /// Main method used for printing
     fn print_at(&self, pos: Vec2, text: &str);
-    
+
     /// First positions the cursor, similar to `print_at`, and then prints the given number of
     /// `repetitions` of `text`.
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {

@@ -276,8 +276,9 @@ impl backend::Backend for Backend {
                 "{}{}",
                 termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
                 text
-            ).unwrap();
-            
+            )
+            .unwrap();
+
             let mut dupes_left = repetitions - 1;
             while dupes_left > 0 {
                 write!(out, "{}", text).unwrap();
