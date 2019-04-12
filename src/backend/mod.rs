@@ -18,6 +18,7 @@ mod resize;
 pub mod dummy;
 
 pub mod blt;
+pub mod crossterm;
 pub mod curses;
 pub mod termion;
 
