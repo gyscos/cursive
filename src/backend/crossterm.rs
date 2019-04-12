@@ -182,7 +182,7 @@ impl backend::Backend for Backend {
 
     fn screen_size(&self) -> Vec2 {
         let size = self.terminal.terminal_size();
-        return Vec2::new(size.0 as usize + 1, size.1 as usize + 1);
+        Vec2::from(size) + (1, 1)
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
@@ -196,8 +196,6 @@ impl backend::Backend for Backend {
 
             self.cursor.goto(pos.x as u16, pos.y as u16);
 
-            // as I (Timon) wrote this I figured out that calling `write_str` for unix was flushing the stdout.
-            // Current work aground is writing bytes instead of a string to the terminal.
             out.write(text.as_bytes()).unwrap();
 
             let mut dupes_left = repetitions - 1;

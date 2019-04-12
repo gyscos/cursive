@@ -79,7 +79,7 @@ pretty-bytes = "0.2.2"
 
 [features]
 blt-backend = ["bear-lib-terminal"]
-default = ["ncurses-backend"]
+default = ["crossterm"]
 markdown = ["pulldown-cmark"]
 ncurses-backend = ["ncurses", "maplit", "term_size"]
 pancurses-backend = ["pancurses", "maplit", "term_size"]
