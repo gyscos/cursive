@@ -160,34 +160,42 @@ I *really* love __Cursive__!";
             &[
                 Span {
                     content: "# ",
+                    width: 2,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "Attention",
+                    width: 9,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "\n\n",
+                    width: 0,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "I ",
+                    width: 2,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "really",
+                    width: 6,
                     attr: &Style::from(Effect::Italic),
                 },
                 Span {
                     content: " love ",
+                    width: 6,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "Cursive",
+                    width: 7,
                     attr: &Style::from(Effect::Bold),
                 },
                 Span {
                     content: "!",
+                    width: 1,
                     attr: &Style::none(),
                 }
             ]
