@@ -2,11 +2,13 @@
 //!
 //! Needs the `markdown` feature to be enabled.
 
+use std::borrow::Cow;
+
 use crate::theme::{Effect, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
 
-use pulldown_cmark::{self, Event, Tag};
+use pulldown_cmark::{self, CowStr, Event, Tag};
 use unicode_width::UnicodeWidthStr;
 
 /// Parses the given string as markdown text.
@@ -79,7 +81,7 @@ impl<'a> Iterator for Parser<'a> {
                     }
                     Tag::Rule => return Some(self.literal("---")),
                     Tag::BlockQuote => return Some(self.literal("> ")),
-                    Tag::Link(_, _) => return Some(self.literal("[")),
+                    Tag::Link(_, _, _) => return Some(self.literal("[")),
                     Tag::Code => return Some(self.literal("```")),
                     Tag::Strong => self.stack.push(Style::from(Effect::Bold)),
                     Tag::Paragraph if !self.first => {
@@ -91,7 +93,7 @@ impl<'a> Iterator for Parser<'a> {
                     // Remove from stack!
                     Tag::Paragraph if self.first => self.first = false,
                     Tag::Header(_) => return Some(self.literal("\n\n")),
-                    Tag::Link(link, _) => {
+                    Tag::Link(_, link, _) => {
                         return Some(self.literal(format!("]({})", link)))
                     }
                     Tag::Code => return Some(self.literal("```")),
@@ -107,6 +109,11 @@ impl<'a> Iterator for Parser<'a> {
                 | Event::InlineHtml(text)
                 | Event::Html(text)
                 | Event::Text(text) => {
+                    let text = match text {
+                        CowStr::Boxed(text) => Cow::Owned(text.into()),
+                        CowStr::Borrowed(text) => Cow::Borrowed(text),
+                        CowStr::Inlined(text) => Cow::Owned(text.to_string()),
+                    };
                     let width = text.width();
                     // Return something!
                     return Some(StyledIndexedSpan {
@@ -114,6 +121,10 @@ impl<'a> Iterator for Parser<'a> {
                         attr: Style::merge(&self.stack),
                         width,
                     });
+                }
+                Event::TaskListMarker(checked) => {
+                    let mark = if checked { "[x]" } else { "[ ]" };
+                    return Some(self.literal(mark));
                 }
             }
         }

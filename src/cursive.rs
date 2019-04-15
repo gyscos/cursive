@@ -77,41 +77,33 @@ impl<F: FnOnce(&mut Cursive) -> () + Send> CbFunc for F {
     }
 }
 
-#[cfg(feature = "termion-backend")]
-impl Default for Cursive {
-    fn default() -> Self {
-        Self::termion().unwrap()
+cfg_if::cfg_if! {
+    if #[cfg(feature = "blt-backend")] {
+        impl Default for Cursive {
+            fn default() -> Self {
+                Self::blt()
+            }
+        }
+    } else if #[cfg(feature = "termion-backend")] {
+        impl Default for Cursive {
+            fn default() -> Self {
+                Self::termion().unwrap()
+            }
+        }
+    } else if #[cfg(feature = "pancurses-backend")] {
+        impl Default for Cursive {
+            fn default() -> Self {
+                Self::pancurses().unwrap()
+            }
+        }
+    } else if #[cfg(feature = "ncurses-backend")] {
+        impl Default for Cursive {
+            fn default() -> Self {
+                Self::ncurses().unwrap()
+            }
+        }
     }
-}
-
-#[cfg(all(not(feature = "termion-backend"), feature = "pancurses-backend"))]
-impl Default for Cursive {
-    fn default() -> Self {
-        Self::pancurses().unwrap()
-    }
-}
-
-#[cfg(all(
-    not(feature = "termion-backend"),
-    not(feature = "pancurses-backend"),
-    feature = "blt-backend"
-))]
-impl Default for Cursive {
-    fn default() -> Self {
-        Self::blt()
-    }
-}
-
-#[cfg(all(
-    not(feature = "termion-backend"),
-    not(feature = "pancurses-backend"),
-    not(feature = "blt-backend"),
-    feature = "ncurses-backend"
-))]
-impl Default for Cursive {
-    fn default() -> Self {
-        Self::ncurses().unwrap()
-    }
+    // No Default implementation otherwise.
 }
 
 impl Cursive {
