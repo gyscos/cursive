@@ -90,7 +90,14 @@ cfg_if::cfg_if! {
                 Self::termion().unwrap()
             }
         }
-    } else if #[cfg(feature = "pancurses-backend")] {
+    }else if #[cfg(feature = "crossterm-backend")] {
+        impl Default for Cursive {
+            fn default() -> Self {
+                Self::crossterm().unwrap()
+            }
+       }
+    }
+    else if #[cfg(feature = "pancurses-backend")] {
         impl Default for Cursive {
             fn default() -> Self {
                 Self::pancurses().unwrap()
@@ -103,7 +110,6 @@ cfg_if::cfg_if! {
             }
         }
     }
-    // No Default implementation otherwise.
 }
 
 impl Cursive {
@@ -126,6 +132,7 @@ impl Cursive {
     ///   * `Cursive::ncurses()` if the `ncurses-backend` feature is enabled (it is by default).
     ///   * `Cursive::pancurses()` if the `pancurses-backend` feature is enabled.
     ///   * `Cursive::termion()` if the `termion-backend` feature is enabled.
+    ///   * `Cursive::crossterm()` if the `crossterm-backend` feature is enabled.
     ///   * `Cursive::blt()` if the `blt-backend` feature is enabled.
     ///   * `Cursive::dummy()` for a dummy backend, mostly useful for tests.
     /// * If you want to use a third-party backend, then `Cursive::new` is indeed the way to go:
@@ -178,6 +185,12 @@ impl Cursive {
     #[cfg(feature = "termion-backend")]
     pub fn termion() -> std::io::Result<Self> {
         Self::try_new(backend::termion::Backend::init)
+    }
+
+    /// Creates a new Cursive root using a crossterm backend.
+    #[cfg(feature = "crossterm-backend")]
+    pub fn crossterm() -> std::io::Result<Self> {
+        Self::try_new(backend::crossterm::Backend::init)
     }
 
     /// Creates a new Cursive root using a bear-lib-terminal backend.

@@ -6,3 +6,4 @@ tags
 *.bk
 TODO.txt
 *.rustfmt
+.idea
