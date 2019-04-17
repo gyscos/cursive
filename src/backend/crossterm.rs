@@ -23,7 +23,7 @@ pub struct Backend {
     last_button: Option<MouseButton>,
     // reader to read user input async.
     async_reader: AsyncReader,
-    alternate_screen: AlternateScreen,
+    _alternate_screen: AlternateScreen,
     stdout: RefCell<Stdout>,
     cursor: TerminalCursor,
     terminal: Terminal,
@@ -35,19 +35,19 @@ impl Backend {
     where
         Self: Sized,
     {
-        let alternate_screen = AlternateScreen::to_alternate(true)?;
+        let _alternate_screen = AlternateScreen::to_alternate(true)?;
 
         let input = input();
         let async_reader = input.read_async();
         input.enable_mouse_mode().unwrap();
 
-        cursor().hide();
+        cursor().hide()?;
 
         Ok(Box::new(Backend {
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
             last_button: None,
             async_reader,
-            alternate_screen,
+            _alternate_screen,
             stdout: RefCell::new(io::stdout()),
             terminal: terminal(),
             cursor: cursor(),
@@ -55,8 +55,8 @@ impl Backend {
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
-        with_color(&colors.front, |c| self.write(Colored::Fg(*c)));
-        with_color(&colors.back, |c| self.write(Colored::Bg(*c)));
+        with_color(colors.front, |c| self.write(Colored::Fg(*c)));
+        with_color(colors.back, |c| self.write(Colored::Bg(*c)));
     }
 
     fn write<T>(&self, content: T)
@@ -68,92 +68,84 @@ impl Backend {
 
     fn map_key(&mut self, event: CInputEvent) -> Event {
         match event {
-            CInputEvent::Keyboard(key_event) => {
-                return match key_event {
-                    CKeyEvent::Esc => Event::Key(Key::Esc),
-                    CKeyEvent::Backspace => Event::Key(Key::Backspace),
-                    CKeyEvent::Left => Event::Key(Key::Left),
-                    CKeyEvent::Right => Event::Key(Key::Right),
-                    CKeyEvent::Up => Event::Key(Key::Up),
-                    CKeyEvent::Down => Event::Key(Key::Down),
-                    CKeyEvent::Home => Event::Key(Key::Home),
-                    CKeyEvent::End => Event::Key(Key::End),
-                    CKeyEvent::PageUp => Event::Key(Key::PageUp),
-                    CKeyEvent::PageDown => Event::Key(Key::PageDown),
-                    CKeyEvent::Delete => Event::Key(Key::Del),
-                    CKeyEvent::Insert => Event::Key(Key::Ins),
-                    CKeyEvent::F(n) => Event::Key(Key::from_f(n)),
-                    CKeyEvent::Char('\n') => Event::Key(Key::Enter),
-                    CKeyEvent::Char('\t') => Event::Key(Key::Tab),
-                    CKeyEvent::Char(c) => Event::Char(c),
-                    CKeyEvent::Ctrl('c') => Event::Exit,
-                    CKeyEvent::Ctrl(c) => Event::CtrlChar(c),
-                    CKeyEvent::Alt(c) => Event::AltChar(c),
-                    _ => Event::Unknown(vec![]),
-                };
-            }
-            CInputEvent::Mouse(mouse_event) => {
-                return match mouse_event {
-                    CMouseEvent::Press(btn, x, y) => {
-                        let position = (x - 1, y - 1).into();
+            CInputEvent::Keyboard(key_event) => match key_event {
+                CKeyEvent::Esc => Event::Key(Key::Esc),
+                CKeyEvent::Backspace => Event::Key(Key::Backspace),
+                CKeyEvent::Left => Event::Key(Key::Left),
+                CKeyEvent::Right => Event::Key(Key::Right),
+                CKeyEvent::Up => Event::Key(Key::Up),
+                CKeyEvent::Down => Event::Key(Key::Down),
+                CKeyEvent::Home => Event::Key(Key::Home),
+                CKeyEvent::End => Event::Key(Key::End),
+                CKeyEvent::PageUp => Event::Key(Key::PageUp),
+                CKeyEvent::PageDown => Event::Key(Key::PageDown),
+                CKeyEvent::Delete => Event::Key(Key::Del),
+                CKeyEvent::Insert => Event::Key(Key::Ins),
+                CKeyEvent::F(n) => Event::Key(Key::from_f(n)),
+                CKeyEvent::Char('\n') => Event::Key(Key::Enter),
+                CKeyEvent::Char('\t') => Event::Key(Key::Tab),
+                CKeyEvent::Char(c) => Event::Char(c),
+                CKeyEvent::Ctrl('c') => Event::Exit,
+                CKeyEvent::Ctrl(c) => Event::CtrlChar(c),
+                CKeyEvent::Alt(c) => Event::AltChar(c),
+                _ => Event::Unknown(vec![]),
+            },
+            CInputEvent::Mouse(mouse_event) => match mouse_event {
+                CMouseEvent::Press(btn, x, y) => {
+                    let position = (x - 1, y - 1).into();
 
-                        let event = match btn {
-                            CMouseButton::Left => {
-                                MouseEvent::Press(MouseButton::Left)
-                            }
-                            CMouseButton::Middle => {
-                                MouseEvent::Press(MouseButton::Middle)
-                            }
-                            CMouseButton::Right => {
-                                MouseEvent::Press(MouseButton::Right)
-                            }
-                            CMouseButton::WheelUp => MouseEvent::WheelUp,
-                            CMouseButton::WheelDown => MouseEvent::WheelDown,
-                        };
-
-                        if let MouseEvent::Press(btn) = event {
-                            self.last_button = Some(btn);
+                    let event = match btn {
+                        CMouseButton::Left => {
+                            MouseEvent::Press(MouseButton::Left)
                         }
+                        CMouseButton::Middle => {
+                            MouseEvent::Press(MouseButton::Middle)
+                        }
+                        CMouseButton::Right => {
+                            MouseEvent::Press(MouseButton::Right)
+                        }
+                        CMouseButton::WheelUp => MouseEvent::WheelUp,
+                        CMouseButton::WheelDown => MouseEvent::WheelDown,
+                    };
 
-                        return Event::Mouse {
-                            event,
-                            position,
-                            offset: Vec2::zero(),
-                        };
+                    if let MouseEvent::Press(btn) = event {
+                        self.last_button = Some(btn);
                     }
-                    CMouseEvent::Release(x, y)
-                        if self.last_button.is_some() =>
-                    {
-                        let event =
-                            MouseEvent::Release(self.last_button.unwrap());
-                        let position = (x - 1, y - 1).into();
 
-                        return Event::Mouse {
-                            event,
-                            position,
-                            offset: Vec2::zero(),
-                        };
+                    Event::Mouse {
+                        event,
+                        position,
+                        offset: Vec2::zero(),
                     }
-                    CMouseEvent::Hold(x, y) if self.last_button.is_some() => {
-                        let event =
-                            MouseEvent::Hold(self.last_button.unwrap());
-                        let position = (x - 1, y - 1).into();
+                }
+                CMouseEvent::Release(x, y) if self.last_button.is_some() => {
+                    let event = MouseEvent::Release(self.last_button.unwrap());
+                    let position = (x - 1, y - 1).into();
 
-                        return Event::Mouse {
-                            event,
-                            position,
-                            offset: Vec2::zero(),
-                        };
+                    Event::Mouse {
+                        event,
+                        position,
+                        offset: Vec2::zero(),
                     }
-                    _ => {
-                        log::warn!(
-                            "Unknown mouse button event {:?}!",
-                            mouse_event
-                        );
-                        Event::Unknown(vec![])
+                }
+                CMouseEvent::Hold(x, y) if self.last_button.is_some() => {
+                    let event = MouseEvent::Hold(self.last_button.unwrap());
+                    let position = (x - 1, y - 1).into();
+
+                    Event::Mouse {
+                        event,
+                        position,
+                        offset: Vec2::zero(),
                     }
-                };
-            }
+                }
+                _ => {
+                    log::warn!(
+                        "Unknown mouse button event {:?}!",
+                        mouse_event
+                    );
+                    Event::Unknown(vec![])
+                }
+            },
             _ => {
                 log::warn!("Unknown mouse event {:?}!", event);
                 Event::Unknown(vec![])
@@ -163,16 +155,20 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
+    fn name(&self) -> &str {
+        "crossterm"
+    }
+
     fn poll_event(&mut self) -> Option<Event> {
         self.async_reader.next().map(|event| self.map_key(event))
     }
 
     fn finish(&mut self) {
-        self.cursor.goto(1, 1);
-        self.terminal.clear(ClearType::All);
+        self.cursor.goto(1, 1).unwrap();
+        self.terminal.clear(ClearType::All).unwrap();
         self.write(Attribute::Reset);
-        input().disable_mouse_mode();
-        cursor().show();
+        input().disable_mouse_mode().unwrap();
+        cursor().show().unwrap();
     }
 
     fn refresh(&mut self) {
@@ -186,11 +182,11 @@ impl backend::Backend for Backend {
 
     fn screen_size(&self) -> Vec2 {
         let size = self.terminal.terminal_size();
-        return Vec2::new(size.0 as usize + 1, size.1 as usize + 1);
+        Vec2::from(size) + (1, 1)
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        self.cursor.goto(pos.x as u16, pos.y as u16);
+        self.cursor.goto(pos.x as u16, pos.y as u16).unwrap();
         self.write(text);
     }
 
@@ -198,15 +194,15 @@ impl backend::Backend for Backend {
         if repetitions > 0 {
             let mut out = self.stdout.borrow_mut();
 
-            self.cursor.goto(pos.x as u16, pos.y as u16);
+            self.cursor.goto(pos.x as u16, pos.y as u16).unwrap();
 
             // as I (Timon) wrote this I figured out that calling `write_str` for unix was flushing the stdout.
             // Current work aground is writing bytes instead of a string to the terminal.
-            out.write(text.as_bytes()).unwrap();
+            out.write_all(text.as_bytes()).unwrap();
 
             let mut dupes_left = repetitions - 1;
             while dupes_left > 0 {
-                out.write(text.as_bytes()).unwrap();
+                out.write_all(text.as_bytes()).unwrap();
                 dupes_left -= 1;
             }
         }
@@ -218,7 +214,7 @@ impl backend::Backend for Backend {
             back: color,
         });
 
-        self.terminal.clear(ClearType::All);
+        self.terminal.clear(ClearType::All).unwrap();
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
@@ -229,7 +225,7 @@ impl backend::Backend for Backend {
             self.current_style.set(color);
         }
 
-        return current_style;
+        current_style
     }
 
     fn set_effect(&self, effect: theme::Effect) {
@@ -253,11 +249,11 @@ impl backend::Backend for Backend {
     }
 }
 
-fn with_color<F, R>(clr: &theme::Color, f: F) -> R
+fn with_color<F, R>(clr: theme::Color, f: F) -> R
 where
     F: FnOnce(&Color) -> R,
 {
-    match *clr {
+    match clr {
         theme::Color::Dark(theme::BaseColor::Black) => f(&Color::Black),
         theme::Color::Dark(theme::BaseColor::Red) => f(&Color::DarkRed),
         theme::Color::Dark(theme::BaseColor::Green) => f(&Color::DarkGreen),

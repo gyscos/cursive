@@ -101,4 +101,11 @@ pub trait Backend {
 
     /// Disables the given effect.
     fn unset_effect(&self, effect: theme::Effect);
+
+    /// Returns a name to identify the backend.
+    ///
+    /// Mostly used for debugging.
+    fn name(&self) -> &str {
+        "unknown"
+    }
 }

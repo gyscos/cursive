@@ -21,6 +21,10 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
+    fn name(&self) -> &str {
+        "dummy"
+    }
+
     fn finish(&mut self) {}
 
     fn refresh(&mut self) {}

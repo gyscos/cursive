@@ -90,14 +90,13 @@ cfg_if::cfg_if! {
                 Self::termion().unwrap()
             }
         }
-    }else if #[cfg(feature = "crossterm-backend")] {
+    } else if #[cfg(feature = "crossterm-backend")] {
         impl Default for Cursive {
             fn default() -> Self {
                 Self::crossterm().unwrap()
             }
        }
-    }
-    else if #[cfg(feature = "pancurses-backend")] {
+    } else if #[cfg(feature = "pancurses-backend")] {
         impl Default for Cursive {
             fn default() -> Self {
                 Self::pancurses().unwrap()
@@ -887,6 +886,13 @@ impl Cursive {
     /// Does not do anything.
     pub fn noop(&mut self) {
         // foo
+    }
+
+    /// Return the name of the backend used.
+    ///
+    /// Mostly used for debugging.
+    pub fn backend_name(&self) -> &str {
+        self.backend.name()
     }
 }
 

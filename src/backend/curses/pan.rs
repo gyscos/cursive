@@ -133,7 +133,7 @@ impl Backend {
             return Some(event);
         }
 
-        let event = if let Some(ev) = self.window.getch() {
+        if let Some(ev) = self.window.getch() {
             Some(match ev {
                 pancurses::Input::Character('\n') => Event::Key(Key::Enter),
                 // TODO: wait for a very short delay. If more keys are
@@ -286,8 +286,7 @@ impl Backend {
             })
         } else {
             None
-        };
-        event
+        }
     }
 
     fn parse_mouse_event(&mut self) -> Event {
@@ -307,7 +306,7 @@ impl Backend {
         let make_event = |event| Event::Mouse {
             offset: Vec2::zero(),
             position: Vec2::new(mevent.x as usize, mevent.y as usize),
-            event: event,
+            event,
         };
 
         if mevent.bstate == pancurses::REPORT_MOUSE_POSITION as mmask_t {
@@ -352,6 +351,10 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
+    fn name(&self) -> &str {
+        "pancurses"
+    }
+
     fn screen_size(&self) -> Vec2 {
         // Coordinates are reversed here
         let (y, x) = self.window.get_max_yx();

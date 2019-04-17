@@ -303,6 +303,10 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
+    fn name(&self) -> &str {
+        "ncurses"
+    }
+
     fn screen_size(&self) -> Vec2 {
         let mut x: i32 = 0;
         let mut y: i32 = 0;

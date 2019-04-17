@@ -134,9 +134,8 @@ impl<'a> Iterator for Parser<'a> {
 /// Parse the given markdown text into a list of spans.
 ///
 /// This is a shortcut for `Parser::new(input).collect()`.
-pub fn parse_spans<'a>(input: &'a str) -> Vec<StyledIndexedSpan> {
+pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
     Parser::new(input).collect()
-    // Parser::new(input).inspect(|span| eprintln!("{:?}", span)).collect()
 }
 
 #[cfg(test)]
