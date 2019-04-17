@@ -5,7 +5,7 @@
 
 use bear_lib_terminal;
 
-use std::collections::HashSet;
+use hashbrown::HashSet;
 
 use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{
@@ -32,6 +32,7 @@ pub struct Backend {
 impl Backend {
     /// Creates a new BearLibTerminal-based backend.
     pub fn init() -> Box<dyn backend::Backend> {
+        // TODO: Add some error handling?
         terminal::open("Cursive", 80, 24);
         terminal::set(terminal::config::Window::empty().resizeable(true));
         terminal::set(vec![

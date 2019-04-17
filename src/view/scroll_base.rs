@@ -35,23 +35,6 @@ pub struct ScrollBase {
     pub thumb_grab: Option<usize>,
 }
 
-/// Defines the scrolling behaviour on content or size change
-#[derive(Debug)]
-pub enum ScrollStrategy {
-    /// Keeps the same row number
-    KeepRow,
-    /// Sticks to the top.
-    StickToTop,
-    /// Sticks to the bottom of the view.
-    StickToBottom,
-}
-
-impl Default for ScrollStrategy {
-    fn default() -> Self {
-        ScrollStrategy::KeepRow
-    }
-}
-
 impl ScrollBase {
     /// Creates a new, uninitialized scrollbar.
     pub fn new() -> Self {

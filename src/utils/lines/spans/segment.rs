@@ -26,6 +26,7 @@ impl Segment {
         Span {
             content,
             attr: &span.attr,
+            width: self.width,
         }
     }
 

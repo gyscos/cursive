@@ -23,7 +23,7 @@ where
         _ => unreachable!(),
     };
 
-    let mut res = 0u32;
+    let mut res = 0_u32;
 
     // First, get the data - only the few last bits
     res |= u32::from(first & make_mask(7 - n_bytes));
@@ -52,7 +52,7 @@ where
 // Returns a simple bitmask with n 1s to the right.
 #[allow(dead_code)]
 fn make_mask(n: usize) -> u8 {
-    let mut r = 0u8;
+    let mut r = 0_u8;
     for i in 0..n {
         r |= 1 << i;
     }

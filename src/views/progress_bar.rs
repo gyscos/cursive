@@ -45,7 +45,7 @@ pub struct ProgressBar {
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
     if value < min {
-        return format!("0 %");
+        return String::from("0 %");
     }
 
     let (percentage, extra) = ratio(value - min, max - min, 100);

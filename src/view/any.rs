@@ -43,3 +43,26 @@ impl<T: View> AnyView for T {
         self
     }
 }
+
+impl dyn AnyView {
+    /// Attempts to downcast `self` to a concrete type.
+    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
+        self.as_any().downcast_ref()
+    }
+
+    /// Attempts to downcast `self` to a concrete type.
+    pub fn downcast_mut<T: Any>(&mut self) -> Option<&mut T> {
+        self.as_any_mut().downcast_mut()
+    }
+
+    /// Attempts to downcast `Box<Self>` to a concrete type.
+    pub fn downcast<T: Any>(self: Box<Self>) -> Result<Box<T>, Box<Self>> {
+        // Do the check here + unwrap, so the error
+        // value is `Self` and not `dyn Any`.
+        if self.as_any().is::<T>() {
+            Ok(self.as_boxed_any().downcast().unwrap())
+        } else {
+            Err(self)
+        }
+    }
+}

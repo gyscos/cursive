@@ -120,6 +120,15 @@ impl LinearLayout {
         }
     }
 
+    /// Sets the weight of the given child.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.len()`.
+    pub fn set_weight(&mut self, i: usize, weight: usize) {
+        self.children[i].weight = weight;
+    }
+
     /// Modifies the weight of the last child added.
     ///
     /// It is an error to call this before adding a child (and it will panic).
@@ -144,6 +153,29 @@ impl LinearLayout {
             weight: 0,
         });
         self.invalidate();
+    }
+
+    /// Inserts a child at the given position.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i > self.len()`.
+    pub fn insert_child<V: View + 'static>(&mut self, i: usize, view: V) {
+        self.children.insert(
+            i,
+            Child {
+                view: Box::new(view),
+                size: Vec2::zero(),
+                weight: 0,
+            },
+        );
+        self.invalidate();
+    }
+
+    /// Swaps two children.
+    pub fn swap_children(&mut self, i: usize, j: usize) {
+        self.children.swap(i, j);
+        // No need to invalidate, total size should be the same.
     }
 
     /// Returns the number of children.

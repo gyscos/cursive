@@ -2,12 +2,14 @@
 //!
 //! Needs the `markdown` feature to be enabled.
 
-use pulldown_cmark;
+use std::borrow::Cow;
 
-use self::pulldown_cmark::{Event, Tag};
 use crate::theme::{Effect, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
+
+use pulldown_cmark::{self, CowStr, Event, Tag};
+use unicode_width::UnicodeWidthStr;
 
 /// Parses the given string as markdown text.
 pub fn parse<S>(input: S) -> StyledString
@@ -45,10 +47,7 @@ impl<'a> Parser<'a> {
     where
         S: Into<String>,
     {
-        StyledIndexedSpan {
-            content: IndexedCow::Owned(text.into()),
-            attr: Style::merge(&self.stack),
-        }
+        StyledIndexedSpan::simple_owned(text.into(), Style::merge(&self.stack))
     }
 }
 
@@ -82,7 +81,7 @@ impl<'a> Iterator for Parser<'a> {
                     }
                     Tag::Rule => return Some(self.literal("---")),
                     Tag::BlockQuote => return Some(self.literal("> ")),
-                    Tag::Link(_, _) => return Some(self.literal("[")),
+                    Tag::Link(_, _, _) => return Some(self.literal("[")),
                     Tag::Code => return Some(self.literal("```")),
                     Tag::Strong => self.stack.push(Style::from(Effect::Bold)),
                     Tag::Paragraph if !self.first => {
@@ -94,7 +93,7 @@ impl<'a> Iterator for Parser<'a> {
                     // Remove from stack!
                     Tag::Paragraph if self.first => self.first = false,
                     Tag::Header(_) => return Some(self.literal("\n\n")),
-                    Tag::Link(link, _) => {
+                    Tag::Link(_, link, _) => {
                         return Some(self.literal(format!("]({})", link)))
                     }
                     Tag::Code => return Some(self.literal("```")),
@@ -110,11 +109,22 @@ impl<'a> Iterator for Parser<'a> {
                 | Event::InlineHtml(text)
                 | Event::Html(text)
                 | Event::Text(text) => {
+                    let text = match text {
+                        CowStr::Boxed(text) => Cow::Owned(text.into()),
+                        CowStr::Borrowed(text) => Cow::Borrowed(text),
+                        CowStr::Inlined(text) => Cow::Owned(text.to_string()),
+                    };
+                    let width = text.width();
                     // Return something!
                     return Some(StyledIndexedSpan {
                         content: IndexedCow::from_cow(text, self.input),
                         attr: Style::merge(&self.stack),
+                        width,
                     });
+                }
+                Event::TaskListMarker(checked) => {
+                    let mark = if checked { "[x]" } else { "[ ]" };
+                    return Some(self.literal(mark));
                 }
             }
         }
@@ -150,34 +160,42 @@ I *really* love __Cursive__!";
             &[
                 Span {
                     content: "# ",
+                    width: 2,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "Attention",
+                    width: 9,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "\n\n",
+                    width: 0,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "I ",
+                    width: 2,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "really",
+                    width: 6,
                     attr: &Style::from(Effect::Italic),
                 },
                 Span {
                     content: " love ",
+                    width: 6,
                     attr: &Style::none(),
                 },
                 Span {
                     content: "Cursive",
+                    width: 7,
                     attr: &Style::from(Effect::Bold),
                 },
                 Span {
                     content: "!",
+                    width: 1,
                     attr: &Style::none(),
                 }
             ]

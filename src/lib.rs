@@ -87,7 +87,6 @@ pub mod align;
 pub mod direction;
 pub mod logger;
 pub mod menu;
-pub mod rect;
 pub mod theme;
 pub mod vec;
 pub mod views;
@@ -95,6 +94,7 @@ pub mod views;
 // This probably doesn't need to be public?
 mod cursive;
 mod printer;
+mod rect;
 mod with;
 mod xy;
 
@@ -103,8 +103,9 @@ mod utf8;
 
 pub mod backend;
 
-pub use crate::cursive::{CbFunc, CbSink, Cursive, ScreenId};
-pub use crate::printer::Printer;
-pub use crate::vec::Vec2;
-pub use crate::with::With;
-pub use crate::xy::XY;
+pub use self::cursive::{CbFunc, CbSink, Cursive, ScreenId};
+pub use self::printer::Printer;
+pub use self::rect::Rect;
+pub use self::vec::Vec2;
+pub use self::with::With;
+pub use self::xy::XY;

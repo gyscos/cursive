@@ -112,7 +112,7 @@ impl MenuTree {
 
     /// Adds a delimiter to the end of this tree - chainable variant.
     pub fn delimiter(self) -> Self {
-        self.with(|menu| menu.add_delimiter())
+        self.with(Self::add_delimiter)
     }
 
     /// Adds a actionnable leaf to the end of this tree.

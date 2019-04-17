@@ -2,8 +2,8 @@
 use log::{debug, warn};
 use pancurses;
 
+use hashbrown::HashMap;
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
 use std::io::{stdout, Write};
 
 use crate::backend;
@@ -34,10 +34,26 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
 
 impl Backend {
     /// Creates a new pancurses-based backend.
-    pub fn init() -> Box<dyn backend::Backend> {
+    pub fn init() -> std::io::Result<Box<dyn backend::Backend>> {
+        // Check the $TERM variable (at least on unix).
+        // Otherwise we'll just abort.
+        // TODO: On windows, is there anything to check?
+        if cfg!(unix)
+            && std::env::var("TERM")
+                .map(|var| var.is_empty())
+                .unwrap_or(true)
+        {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "$TERM is unset. Cannot initialize pancurses interface.",
+            ));
+        }
+
         ::std::env::set_var("ESCDELAY", "25");
 
+        // TODO: use pancurses::newterm()
         let window = pancurses::initscr();
+
         window.keypad(true);
         window.timeout(0);
         pancurses::noecho();
@@ -55,7 +71,7 @@ impl Backend {
         // (Mouse move when a button is pressed).
         // Replacing 1002 with 1003 would give us ANY mouse move.
         print!("\x1B[?1002h");
-        stdout().flush().expect("could not flush stdout");
+        stdout().flush()?;
 
         let c = Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
@@ -66,7 +82,7 @@ impl Backend {
             window,
         };
 
-        Box::new(c)
+        Ok(Box::new(c))
     }
 
     /// Save a new color pair.
@@ -399,6 +415,17 @@ impl backend::Backend for Backend {
 
     fn print_at(&self, pos: Vec2, text: &str) {
         self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
+    }
+
+    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
+        if repetitions > 0 {
+            self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
+            let mut dupes_left = repetitions - 1;
+            while dupes_left > 0 {
+                self.window.addstr(text);
+                dupes_left -= 1;
+            }
+        }
     }
 
     fn poll_event(&mut self) -> Option<Event> {

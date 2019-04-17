@@ -29,6 +29,9 @@ pub struct Printer<'a, 'b> {
     /// Size of the area we are allowed to draw on.
     ///
     /// Anything outside of this should be discarded.
+    ///
+    /// The view being drawn can ingore this, but anything further than that
+    /// will be ignored.
     pub output_size: Vec2,
 
     /// Size allocated to the view.
@@ -38,6 +41,9 @@ pub struct Printer<'a, 'b> {
     pub size: Vec2,
 
     /// Offset into the view for this printer.
+    ///
+    /// The view being drawn can ignore this, but anything to the top-left of
+    /// this will actually be ignored, so it can be used to skip this part.
     ///
     /// A print request `x`, will really print at `x - content_offset`.
     pub content_offset: Vec2,
@@ -95,8 +101,8 @@ impl<'a, 'b> Printer<'a, 'b> {
         let Vec2 { mut x, y } = start.into();
         for span in text.spans() {
             self.with_style(*span.attr, |printer| {
-                printer.print((x, y), span.content);
-                x += span.content.width();
+                printer.print_with_width((x, y), span.content, |_| span.width);
+                x += span.width;
             });
         }
     }
@@ -105,12 +111,24 @@ impl<'a, 'b> Printer<'a, 'b> {
     // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position
     pub fn print<S: Into<Vec2>>(&self, start: S, text: &str) {
-        // Where we are asked to start printing. Oh boy.
+        self.print_with_width(start, text, UnicodeWidthStr::width);
+    }
+
+    /// Prints some text, using the given callback to compute width.
+    ///
+    /// Mostly used with `UnicodeWidthStr::width`.
+    /// If you already know the width, you can give it as a constant instead.
+    fn print_with_width<S, F>(&self, start: S, text: &str, width: F)
+    where
+        S: Into<Vec2>,
+        F: FnOnce(&str) -> usize,
+    {
+        // Where we are asked to start printing. Oh boy. It's not that simple.
         let start = start.into();
 
         // We accept requests between `content_offset` and
         // `content_offset + output_size`.
-        if !(start < (self.output_size + self.content_offset)) {
+        if !start.strictly_lt(self.output_size + self.content_offset) {
             return;
         }
 
@@ -123,46 +141,55 @@ impl<'a, 'b> Printer<'a, 'b> {
             return;
         }
 
-        let text_width = text.width();
+        let mut text_width = width(text);
 
         // If we're waaaay too far left, just give up.
         if hidden_part.x > text_width {
             return;
         }
 
-        // We have to drop hidden_part.x width from the start of the string.
-        // prefix() may be too short if there's a double-width character.
-        // So instead, keep the suffix and drop the prefix.
+        let mut text = text;
+        let mut start = start;
 
-        // TODO: use a different prefix method that is *at least* the width
-        // (and not *at most*)
-        let tail =
-            suffix(text.graphemes(true), text_width - hidden_part.x, "");
-        let skipped_len = text.len() - tail.length;
-        let skipped_width = text_width - tail.width;
-        assert_eq!(text[..skipped_len].width(), skipped_width);
+        if hidden_part.x > 0 {
+            // We have to drop hidden_part.x width from the start of the string.
+            // prefix() may be too short if there's a double-width character.
+            // So instead, keep the suffix and drop the prefix.
 
-        // This should be equal most of the time, except when there's a double
-        // character preventing us from splitting perfectly.
-        assert!(skipped_width >= hidden_part.x);
+            // TODO: use a different prefix method that is *at least* the width
+            // (and not *at most*)
+            let tail =
+                suffix(text.graphemes(true), text_width - hidden_part.x, "");
+            let skipped_len = text.len() - tail.length;
+            let skipped_width = text_width - tail.width;
+            assert_eq!(text[..skipped_len].width(), skipped_width);
 
-        // Drop part of the text, and move the cursor correspondingly.
-        let text = &text[skipped_len..];
-        let start = start + (skipped_width, 0);
+            // This should be equal most of the time, except when there's a double
+            // character preventing us from splitting perfectly.
+            assert!(skipped_width >= hidden_part.x);
+
+            // Drop part of the text, and move the cursor correspondingly.
+            text = &text[skipped_len..];
+            start = start + (skipped_width, 0);
+            text_width -= skipped_width;
+        }
+
         assert!(start.fits(self.content_offset));
 
         // What we did before should guarantee that this won't overflow.
-        let start = start - self.content_offset;
+        start = start - self.content_offset;
 
         // Do we have enough room for the entire line?
         let room = self.output_size.x - start.x;
 
-        // Drop the end of the text if it's too long
-        // We want the number of CHARACTERS, not bytes.
-        // (Actually we want the "width" of the string, see unicode-width)
-        let prefix_len = prefix(text.graphemes(true), room, "").length;
-        let text = &text[..prefix_len];
-        assert!(text.width() <= room);
+        if room < text_width {
+            // Drop the end of the text if it's too long
+            // We want the number of CHARACTERS, not bytes.
+            // (Actually we want the "width" of the string, see unicode-width)
+            let prefix_len = prefix(text.graphemes(true), room, "").length;
+            text = &text[..prefix_len];
+            assert!(text.width() <= room);
+        }
 
         let start = start + self.offset;
         self.backend.print_at(start, text);
@@ -176,7 +203,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         // Here again, we can abort if we're trying to print too far right or
         // too low.
-        if !(start < (self.output_size + self.content_offset)) {
+        if !start.strictly_lt(self.output_size + self.content_offset) {
             return;
         }
 
@@ -220,7 +247,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let start = start.into();
 
         // Nothing to be done if the start if too far to the bottom/right
-        if !(start < (self.output_size + self.content_offset)) {
+        if !start.strictly_lt(self.output_size + self.content_offset) {
             return;
         }
 
@@ -240,13 +267,10 @@ impl<'a, 'b> Printer<'a, 'b> {
         let start = start - self.content_offset;
 
         // Don't write too much if we're close to the end
-        let width = min(width, (self.output_size.x - start.x) / c.width());
-
-        // Could we avoid allocating?
-        let text: String = ::std::iter::repeat(c).take(width).collect();
+        let repetitions = min(width, self.output_size.x - start.x) / c.width();
 
         let start = start + self.offset;
-        self.backend.print_at(start, &text);
+        self.backend.print_at_rep(start, repetitions, c);
     }
 
     /// Call the given closure with a colored printer,
@@ -461,7 +485,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a sub-printer with the given offset.
     ///
     /// It will print in an area slightly to the bottom/right.
-    pub fn offset<S>(&self, offset: S) -> Printer<'_, '_>
+    pub fn offset<S>(&self, offset: S) -> Self
     where
         S: Into<Vec2>,
     {
@@ -517,6 +541,24 @@ impl<'a, 'b> Printer<'a, 'b> {
         })
     }
 
+    /// Returns a new sub-printer with a cropped area.
+    ///
+    /// The new printer size will be the minimum of `size` and its current size.
+    ///
+    /// The view will stay centered.
+    ///
+    /// Note that if shrinking by an odd number, the view will round to the top-left.
+    pub fn cropped_centered<S>(&self, size: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        let size = size.into();
+        let borders = self.size.saturating_sub(size);
+        let half_borders = borders / 2;
+
+        self.cropped(size - half_borders).offset(half_borders)
+    }
+
     /// Returns a new sub-printer with a shrinked area.
     ///
     /// The printer size will be reduced by the given border from the bottom-right.
@@ -525,6 +567,21 @@ impl<'a, 'b> Printer<'a, 'b> {
         S: Into<Vec2>,
     {
         self.cropped(self.size.saturating_sub(borders))
+    }
+
+    /// Returns a new sub-printer with a shrinked area.
+    ///
+    /// The printer size will be reduced by the given border, and will stay centered.
+    ///
+    /// Note that if shrinking by an odd number, the view will round to the top-left.
+    pub fn shrinked_centered<S>(&self, borders: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        let borders = borders.into();
+        let half_borders = borders / 2;
+
+        self.shrinked(borders - half_borders).offset(half_borders)
     }
 
     /// Returns a new sub-printer with a content offset.

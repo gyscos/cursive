@@ -3,7 +3,7 @@
 //! Requires either of `ncurses-backend` or `pancurses-backend`.
 #![cfg(any(feature = "ncurses-backend", feature = "pancurses-backend"))]
 
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 use crate::event::{Event, Key};
 use crate::theme::{BaseColor, Color, ColorPair};
