@@ -5,6 +5,10 @@
 ### API updates
 
 - Bring back `Cursive::set_fps` for <30Hz refresh rates.
+- Add `Cursive::backend_name` to get the name of the current backend.
+- Add a new backend based on the crossterm library.
+- Add direct downcast methods to `dyn AnyView`
+- Add sort methods to `SelectView`
 
 ### Improvements
 
