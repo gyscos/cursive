@@ -1,10 +1,10 @@
-use direction::Direction;
-use event::{AnyCb, Event, EventResult};
-use rect::Rect;
-use vec::Vec2;
-use view::{Selector, View};
-use Printer;
-use With;
+use crate::direction::Direction;
+use crate::event::{AnyCb, Event, EventResult};
+use crate::rect::Rect;
+use crate::vec::Vec2;
+use crate::view::{Selector, View};
+use crate::Printer;
+use crate::With;
 
 /// A blank view that forwards calls to closures.
 ///
@@ -12,15 +12,15 @@ use With;
 pub struct Canvas<T> {
     state: T,
 
-    draw: Box<Fn(&T, &Printer)>,
-    on_event: Box<FnMut(&mut T, Event) -> EventResult>,
-    required_size: Box<FnMut(&mut T, Vec2) -> Vec2>,
-    layout: Box<FnMut(&mut T, Vec2)>,
-    take_focus: Box<FnMut(&mut T, Direction) -> bool>,
-    needs_relayout: Box<Fn(&T) -> bool>,
-    focus_view: Box<FnMut(&mut T, &Selector) -> Result<(), ()>>,
-    call_on_any: Box<for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>,
-    important_area: Box<Fn(&T, Vec2) -> Rect>,
+    draw: Box<dyn Fn(&T, &Printer)>,
+    on_event: Box<dyn FnMut(&mut T, Event) -> EventResult>,
+    required_size: Box<dyn FnMut(&mut T, Vec2) -> Vec2>,
+    layout: Box<dyn FnMut(&mut T, Vec2)>,
+    take_focus: Box<dyn FnMut(&mut T, Direction) -> bool>,
+    needs_relayout: Box<dyn Fn(&T) -> bool>,
+    focus_view: Box<dyn FnMut(&mut T, &Selector) -> Result<(), ()>>,
+    call_on_any: Box<dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>,
+    important_area: Box<dyn Fn(&T, Vec2) -> Rect>,
 }
 
 impl<T: 'static + View> Canvas<T> {
@@ -78,7 +78,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `draw(&Printer)`.
     pub fn set_draw<F>(&mut self, f: F)
     where
-        F: 'static + Fn(&T, &Printer),
+        F: 'static + Fn(&T, &Printer<'_, '_>),
     {
         self.draw = Box::new(f);
     }
@@ -88,7 +88,7 @@ impl<T> Canvas<T> {
     /// Chainable variant.
     pub fn with_draw<F>(self, f: F) -> Self
     where
-        F: 'static + Fn(&T, &Printer),
+        F: 'static + Fn(&T, &Printer<'_, '_>),
     {
         self.with(|s| s.set_draw(f))
     }
@@ -186,7 +186,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `call_on_any()`.
     pub fn set_call_on_any<F>(&mut self, f: F)
     where
-        F: 'static + for<'a> FnMut(&mut T, &Selector, AnyCb<'a>),
+        F: 'static + for<'a> FnMut(&mut T, &Selector<'_>, AnyCb<'a>),
     {
         self.call_on_any = Box::new(f);
     }
@@ -196,7 +196,7 @@ impl<T> Canvas<T> {
     /// Chainable variant.
     pub fn with_call_on_any<F>(self, f: F) -> Self
     where
-        F: 'static + for<'a> FnMut(&mut T, &Selector, AnyCb<'a>),
+        F: 'static + for<'a> FnMut(&mut T, &Selector<'_>, AnyCb<'a>),
     {
         self.with(|s| s.set_call_on_any(f))
     }
@@ -222,7 +222,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `focus_view()`.
     pub fn set_focus_view<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, &Selector) -> Result<(), ()>,
+        F: 'static + FnMut(&mut T, &Selector<'_>) -> Result<(), ()>,
     {
         self.focus_view = Box::new(f);
     }
@@ -232,14 +232,14 @@ impl<T> Canvas<T> {
     /// Chainable variant.
     pub fn with_focus_view<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, &Selector) -> Result<(), ()>,
+        F: 'static + FnMut(&mut T, &Selector<'_>) -> Result<(), ()>,
     {
         self.with(|s| s.set_focus_view(f))
     }
 }
 
 impl<T: 'static> View for Canvas<T> {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         (self.draw)(&self.state, printer);
     }
 
@@ -263,7 +263,7 @@ impl<T: 'static> View for Canvas<T> {
         (self.needs_relayout)(&self.state)
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         (self.focus_view)(&mut self.state, selector)
     }
 
@@ -271,7 +271,7 @@ impl<T: 'static> View for Canvas<T> {
         (self.important_area)(&self.state, view_size)
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector, cb: AnyCb<'a>) {
+    fn call_on_any<'a>(&mut self, selector: &Selector<'_>, cb: AnyCb<'a>) {
         (self.call_on_any)(&mut self.state, selector, cb);
     }
 }

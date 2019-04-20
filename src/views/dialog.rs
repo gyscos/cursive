@@ -1,17 +1,17 @@
-use align::*;
-use direction::{Absolute, Direction, Relative};
-use event::{AnyCb, Event, EventResult, Key};
-use rect::Rect;
+use crate::align::*;
+use crate::direction::{Absolute, Direction, Relative};
+use crate::event::{AnyCb, Event, EventResult, Key};
+use crate::rect::Rect;
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::{Margins, Selector, View};
+use crate::views::{Button, DummyView, SizedView, TextView, ViewBox};
+use crate::Cursive;
+use crate::Printer;
+use crate::With;
 use std::cell::Cell;
 use std::cmp::max;
-use theme::ColorStyle;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::{Margins, Selector, View};
-use views::{Button, DummyView, SizedView, TextView, ViewBox};
-use Cursive;
-use Printer;
-use With;
 
 /// Identifies currently focused element in [`Dialog`].
 ///
@@ -124,12 +124,12 @@ impl Dialog {
     ///     .unwrap();
     /// assert_eq!(text_view.get_content().source(), "Hello!");
     /// ```
-    pub fn get_content(&self) -> &View {
+    pub fn get_content(&self) -> &dyn View {
         &*self.content.view
     }
 
     /// Gets mutable access to the content.
-    pub fn get_content_mut(&mut self) -> &mut View {
+    pub fn get_content_mut(&mut self) -> &mut dyn View {
         self.invalidate();
         &mut *self.content.view
     }
@@ -298,7 +298,9 @@ impl Dialog {
             event.relativized((self.padding + self.borders).top_left()),
         ) {
             EventResult::Ignored => {
-                if !self.buttons.is_empty() {
+                if self.buttons.is_empty() {
+                    EventResult::Ignored
+                } else {
                     match event {
                         Event::Key(Key::Down) | Event::Key(Key::Tab) => {
                             // Default to leftmost button when going down.
@@ -307,8 +309,6 @@ impl Dialog {
                         }
                         _ => EventResult::Ignored,
                     }
-                } else {
-                    EventResult::Ignored
                 }
             }
             res => res,
@@ -391,7 +391,7 @@ impl Dialog {
         }
     }
 
-    fn draw_buttons(&self, printer: &Printer) -> Option<usize> {
+    fn draw_buttons(&self, printer: &Printer<'_, '_>) -> Option<usize> {
         let mut buttons_height = 0;
         // Current horizontal position of the next button we'll draw.
 
@@ -439,7 +439,7 @@ impl Dialog {
         Some(buttons_height)
     }
 
-    fn draw_content(&self, printer: &Printer, buttons_height: usize) {
+    fn draw_content(&self, printer: &Printer<'_, '_>, buttons_height: usize) {
         // What do we have left?
         let taken = Vec2::new(0, buttons_height)
             + self.borders.combined()
@@ -458,17 +458,18 @@ impl Dialog {
         );
     }
 
-    fn draw_title(&self, printer: &Printer) {
+    fn draw_title(&self, printer: &Printer<'_, '_>) {
         if !self.title.is_empty() {
             let len = self.title.width();
-            if len + 4 > printer.size.x {
+            let spacing = 3; //minimum distance to borders
+            let spacing_both_ends = 2 * spacing;
+            if len + spacing_both_ends > printer.size.x {
                 return;
             }
-            let spacing = 3; //minimum distance to borders
             let x = spacing
                 + self
                     .title_position
-                    .get_offset(len, printer.size.x - 2 * spacing);
+                    .get_offset(len, printer.size.x - spacing_both_ends);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
@@ -521,7 +522,7 @@ impl Dialog {
 }
 
 impl View for Dialog {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         // This will be the buttons_height used by the buttons.
         let buttons_height = match self.draw_buttons(printer) {
             Some(height) => height,
@@ -629,11 +630,11 @@ impl View for Dialog {
                 if self.content.take_focus(source) {
                     self.focus = DialogFocus::Content;
                     true
-                } else if !self.buttons.is_empty() {
+                } else if self.buttons.is_empty() {
+                    false
+                } else {
                     self.focus = DialogFocus::Button(0);
                     true
-                } else {
-                    false
                 }
             }
             Direction::Rel(Relative::Back)
@@ -653,11 +654,13 @@ impl View for Dialog {
         }
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector, callback: AnyCb<'a>) {
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector<'_>, callback: AnyCb<'a>,
+    ) {
         self.content.call_on_any(selector, callback);
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         self.content.focus_view(selector)
     }
 

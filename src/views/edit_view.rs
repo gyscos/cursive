@@ -1,26 +1,26 @@
-use direction::Direction;
-use event::{Callback, Event, EventResult, Key, MouseEvent};
-use rect::Rect;
+use crate::direction::Direction;
+use crate::event::{Callback, Event, EventResult, Key, MouseEvent};
+use crate::rect::Rect;
+use crate::theme::{ColorStyle, Effect};
+use crate::utils::lines::simple::{simple_prefix, simple_suffix};
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::{Cursive, Printer, With};
 use std::cell::RefCell;
 use std::rc::Rc;
-use theme::{ColorStyle, Effect};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
-use utils::lines::simple::{simple_prefix, simple_suffix};
-use vec::Vec2;
-use view::View;
-use {Cursive, Printer, With};
 
 /// Closure type for callbacks when the content is modified.
 ///
 /// Arguments are the `Cursive`, current content of the input and cursor
 /// position
-pub type OnEdit = Fn(&mut Cursive, &str, usize);
+pub type OnEdit = dyn Fn(&mut Cursive, &str, usize);
 
 /// Closure type for callbacks when Enter is pressed.
 ///
 /// Arguments are the `Cursive` and the content of the input.
-pub type OnSubmit = Fn(&mut Cursive, &str);
+pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 
 /// Input box where the user can enter and edit text.
 ///
@@ -454,7 +454,7 @@ impl EditView {
             // (either a char, or _)
             let c_len = self.content[self.cursor..]
                 .graphemes(true)
-                .map(|g| g.width())
+                .map(UnicodeWidthStr::width)
                 .next()
                 .unwrap_or(1);
 
@@ -502,7 +502,7 @@ fn make_small_stars(length: usize) -> &'static str {
 }
 
 impl View for EditView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         assert_eq!(
             printer.size.x, self.last_length,
             "Was promised {}, received {}",
@@ -544,7 +544,7 @@ impl View for EditView {
                                 Some(g)
                             }
                         })
-                        .map(|g| g.len())
+                        .map(str::len)
                         .sum();
 
                     let content = &content[..display_bytes];
@@ -597,7 +597,6 @@ impl View for EditView {
 
     fn layout(&mut self, size: Vec2) {
         self.last_length = size.x;
-        debug!("Promised: {}", size.x);
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {

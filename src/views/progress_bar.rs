@@ -1,10 +1,10 @@
-use align::HAlign;
+use crate::align::HAlign;
+use crate::theme::{ColorStyle, ColorType, Effect};
+use crate::utils::Counter;
+use crate::view::View;
+use crate::{Printer, With};
 use std::cmp;
 use std::thread;
-use theme::{ColorStyle, ColorType, Effect};
-use utils::Counter;
-use view::View;
-use {Printer, With};
 
 // pub type CbPromise = Option<Box<Fn(&mut Cursive) + Send>>;
 
@@ -40,12 +40,12 @@ pub struct ProgressBar {
     value: Counter,
     color: ColorType,
     // TODO: use a Promise instead?
-    label_maker: Box<Fn(usize, (usize, usize)) -> String>,
+    label_maker: Box<dyn Fn(usize, (usize, usize)) -> String>,
 }
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
     if value < min {
-        return format!("0 %");
+        return String::from("0 %");
     }
 
     let (percentage, extra) = ratio(value - min, max - min, 100);
@@ -225,7 +225,7 @@ fn sub_block(extra: usize) -> &'static str {
 }
 
 impl View for ProgressBar {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         // Now, the bar itself...
         let available = printer.size.x;
 

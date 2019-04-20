@@ -1,6 +1,6 @@
-use vec::Vec2;
-use view::View;
-use view::ViewWrapper;
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::view::ViewWrapper;
 
 /// Wrapper around a view that remembers its size.
 pub struct SizedView<T> {

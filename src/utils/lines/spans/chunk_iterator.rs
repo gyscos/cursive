@@ -1,8 +1,8 @@
 use super::chunk::Chunk;
 use super::segment::Segment;
+use crate::utils::span::SpannedText;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
-use utils::span::SpannedText;
 use xi_unicode::LineBreakLeafIter;
 
 /// Iterator that returns non-breakable chunks of text.
@@ -123,7 +123,8 @@ where
                 while let Some(true) =
                     self.source.spans().get(self.current_span).map(|span| {
                         span.as_ref().resolve(self.source.source()).is_empty()
-                    }) {
+                    })
+                {
                     self.current_span += 1;
                 }
 

@@ -29,7 +29,8 @@ fn main() {
                 };
 
                 s.set_theme(theme);
-            }).button("Quit", Cursive::quit),
+            })
+            .button("Quit", Cursive::quit),
     );
 
     siv.run();

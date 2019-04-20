@@ -1,15 +1,17 @@
 //! Provide higher-level abstraction to draw things on backends.
 
-use backend::Backend;
-use direction::Orientation;
+use crate::backend::Backend;
+use crate::direction::Orientation;
+use crate::theme::{
+    BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme,
+};
+use crate::utils::lines::simple::{prefix, suffix};
+use crate::vec::Vec2;
+use crate::with::With;
 use enumset::EnumSet;
 use std::cmp::min;
-use theme::{BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::lines::simple::{prefix, suffix};
-use vec::Vec2;
-use with::With;
 
 /// Convenient interface to draw on a subset of the screen.
 ///
@@ -27,6 +29,9 @@ pub struct Printer<'a, 'b> {
     /// Size of the area we are allowed to draw on.
     ///
     /// Anything outside of this should be discarded.
+    ///
+    /// The view being drawn can ingore this, but anything further than that
+    /// will be ignored.
     pub output_size: Vec2,
 
     /// Size allocated to the view.
@@ -36,6 +41,9 @@ pub struct Printer<'a, 'b> {
     pub size: Vec2,
 
     /// Offset into the view for this printer.
+    ///
+    /// The view being drawn can ignore this, but anything to the top-left of
+    /// this will actually be ignored, so it can be used to skip this part.
     ///
     /// A print request `x`, will really print at `x - content_offset`.
     pub content_offset: Vec2,
@@ -50,7 +58,7 @@ pub struct Printer<'a, 'b> {
     pub theme: &'a Theme,
 
     /// Backend used to actually draw things
-    backend: &'b Backend,
+    backend: &'b dyn Backend,
 }
 
 impl<'a, 'b> Printer<'a, 'b> {
@@ -59,7 +67,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// But nobody needs to know that.
     #[doc(hidden)]
     pub fn new<T: Into<Vec2>>(
-        size: T, theme: &'a Theme, backend: &'b Backend,
+        size: T, theme: &'a Theme, backend: &'b dyn Backend,
     ) -> Self {
         let size = size.into();
         Printer {
@@ -86,7 +94,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Prints some styled text at the given position.
     pub fn print_styled<S>(
-        &self, start: S, text: ::utils::span::SpannedStr<'_, Style>,
+        &self, start: S, text: crate::utils::span::SpannedStr<'_, Style>,
     ) where
         S: Into<Vec2>,
     {
@@ -108,7 +116,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         // We accept requests between `content_offset` and
         // `content_offset + output_size`.
-        if !(start < (self.output_size + self.content_offset)) {
+        if !start.strictly_lt(self.output_size + self.content_offset) {
             return;
         }
 
@@ -174,7 +182,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         // Here again, we can abort if we're trying to print too far right or
         // too low.
-        if !(start < (self.output_size + self.content_offset)) {
+        if !start.strictly_lt(self.output_size + self.content_offset) {
             return;
         }
 
@@ -218,7 +226,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let start = start.into();
 
         // Nothing to be done if the start if too far to the bottom/right
-        if !(start < (self.output_size + self.content_offset)) {
+        if !start.strictly_lt(self.output_size + self.content_offset) {
             return;
         }
 
@@ -265,7 +273,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// ```
     pub fn with_color<F>(&self, c: ColorStyle, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         let old = self.backend.set_color(c.resolve(&self.theme.palette));
         f(self);
@@ -276,7 +284,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given style on prints.
     pub fn with_style<F, T>(&self, style: T, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
         T: Into<Style>,
     {
         let style = style.into();
@@ -297,7 +305,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given effect on prints.
     pub fn with_effect<F>(&self, effect: Effect, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         self.backend.set_effect(effect);
         f(self);
@@ -308,7 +316,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given theme on prints.
     pub fn with_theme<F>(&self, theme: &Theme, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         f(&self.theme(theme));
     }
@@ -328,7 +336,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply each given effect on prints.
     pub fn with_effects<F>(&self, effects: EnumSet<Effect>, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         match effects.iter().next() {
             None => f(self),
@@ -391,7 +399,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// * Otherwise, use `ColorStyle::Primary`.
     pub fn with_high_border<F>(&self, invert: bool, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
@@ -410,7 +418,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// * Otherwise, use `ColorStyle::primary()`.
     pub fn with_low_border<F>(&self, invert: bool, f: F)
     where
-        F: FnOnce(&Printer),
+        F: FnOnce(&Printer<'_, '_>),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
@@ -428,7 +436,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///     * If the printer currently has the focus,
     ///       uses `ColorStyle::highlight()`.
     ///     * Otherwise, uses `ColorStyle::highlight_inactive()`.
-    pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
+    pub fn with_selection<F: FnOnce(&Printer<'_, '_>)>(
+        &self, selection: bool, f: F,
+    ) {
         self.with_color(
             if selection {
                 if self.focused {
@@ -457,7 +467,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a sub-printer with the given offset.
     ///
     /// It will print in an area slightly to the bottom/right.
-    pub fn offset<S>(&self, offset: S) -> Printer
+    pub fn offset<S>(&self, offset: S) -> Self
     where
         S: Into<Vec2>,
     {
@@ -513,6 +523,24 @@ impl<'a, 'b> Printer<'a, 'b> {
         })
     }
 
+    /// Returns a new sub-printer with a cropped area.
+    ///
+    /// The new printer size will be the minimum of `size` and its current size.
+    ///
+    /// The view will stay centered.
+    ///
+    /// Note that if shrinking by an odd number, the view will round to the top-left.
+    pub fn cropped_centered<S>(&self, size: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        let size = size.into();
+        let borders = self.size.saturating_sub(size);
+        let half_borders = borders / 2;
+
+        self.cropped(size - half_borders).offset(half_borders)
+    }
+
     /// Returns a new sub-printer with a shrinked area.
     ///
     /// The printer size will be reduced by the given border from the bottom-right.
@@ -521,6 +549,21 @@ impl<'a, 'b> Printer<'a, 'b> {
         S: Into<Vec2>,
     {
         self.cropped(self.size.saturating_sub(borders))
+    }
+
+    /// Returns a new sub-printer with a shrinked area.
+    ///
+    /// The printer size will be reduced by the given border, and will stay centered.
+    ///
+    /// Note that if shrinking by an odd number, the view will round to the top-left.
+    pub fn shrinked_centered<S>(&self, borders: S) -> Self
+    where
+        S: Into<Vec2>,
+    {
+        let borders = borders.into();
+        let half_borders = borders / 2;
+
+        self.shrinked(borders - half_borders).offset(half_borders)
     }
 
     /// Returns a new sub-printer with a content offset.

@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.11.0
+
+### Breaking changes
+
+- `Cursive::{ncurses, pancurses, termion}` now return
+  `io::Result<Self>` instead of panicking. `Cursive::default()` still unwraps.
+  - Also added `Cursive::try_new` for failible backends.
+- Replaced `set_fps(i32)` with `set_autorefresh(bool)`
+- `Finder::find_id()` is renamed to `call_on_id()`, and a proper
+  `find_id()` was added instead.
+- Updated the Backend trait for a simpler input system
+- Updated to Rust 2018 edition (now requires rustc > 1.31)
+- `Cursive::clear()` now takes `&mut self`
+
+### API updates
+
+- Add a logging implementation (`logger::init()`) and a `DebugConsole`
+  (`cursive::toggle_debug_console()`)
+- Add user-data to Cursive.
+    - `Cursive::set_user_data()` can store some user-defined data structure.
+    - `Cursive::user_data()` and `Cursive::with_user_data()` can be used to
+      access the data.
+- Add `StackView::remove_layer()`
+- Add `CircularFocus` view (and bring proper circular focus to dialogs)
+- Add `HideableView::is_visible()`
+- Add `type CbSink = Sender<Box<CbFunc>>` as an alias for the return type of
+  `Cursive::cb_sink()`
+- Add `LinearLayout::{insert_child, swap_children, set_weight}` for more
+  in-place modifications.
+- Add `Printer::{cropped_centered,shrinked_centered}`
+
+### Improvements
+
+- Updated termion backend to use direct /dev/tty access for improved performance.
+- Enabled raw mode for ncurses and pancurses. Among other improvements, this
+  lets applications receive Ctrl+S and Ctrl+Q events.
+
+### Bugfixes
+
+- Fixed overflow check for titles in `Dialog` and `Panel`
+
 ## 0.10.0
 
 ### New features

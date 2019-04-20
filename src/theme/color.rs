@@ -35,6 +35,18 @@ pub enum BaseColor {
     White,
 }
 
+impl BaseColor {
+    /// Returns the regular (dark) version of this base color.
+    pub fn dark(self) -> Color {
+        Color::Dark(self)
+    }
+
+    /// Returns the light version of this base color.
+    pub fn light(self) -> Color {
+        Color::Light(self)
+    }
+}
+
 impl From<u8> for BaseColor {
     fn from(n: u8) -> Self {
         match n % 8 {
@@ -121,7 +133,7 @@ impl Color {
     /// * `"light green"` becomes `Color::Light(BaseColor::Green)`
     /// * `"default"` becomes `Color::TerminalDefault`
     /// * `"#123456"` becomes `Color::Rgb(0x12, 0x34, 0x56)`
-    pub(crate) fn parse(value: &str) -> Option<Self> {
+    pub fn parse(value: &str) -> Option<Self> {
         Some(match value {
             "black" => Color::Dark(BaseColor::Black),
             "red" => Color::Dark(BaseColor::Red),
@@ -186,9 +198,9 @@ fn load_hex(s: &str) -> u16 {
     for c in s.chars() {
         sum *= 16;
         sum += match c {
-            n @ '0'...'9' => n as i16 - '0' as i16,
-            n @ 'a'...'f' => n as i16 - 'a' as i16 + 10,
-            n @ 'A'...'F' => n as i16 - 'A' as i16 + 10,
+            n @ '0'..='9' => n as i16 - '0' as i16,
+            n @ 'a'..='f' => n as i16 - 'a' as i16 + 10,
+            n @ 'A'..='F' => n as i16 - 'A' as i16 + 10,
             _ => 0,
         };
     }

@@ -17,13 +17,13 @@ where
 
     // Number of leading 1s determines the number of bytes we'll have to read
     let n_bytes = match (!first).leading_zeros() {
-        n @ 2...6 => n as usize,
+        n @ 2..=6 => n as usize,
         1 => return Err("First byte is continuation byte.".to_string()),
-        7...8 => return Err("WTF is this byte??".to_string()),
+        7..=8 => return Err("WTF is this byte??".to_string()),
         _ => unreachable!(),
     };
 
-    let mut res = 0u32;
+    let mut res = 0_u32;
 
     // First, get the data - only the few last bits
     res |= u32::from(first & make_mask(7 - n_bytes));
@@ -52,7 +52,7 @@ where
 // Returns a simple bitmask with n 1s to the right.
 #[allow(dead_code)]
 fn make_mask(n: usize) -> u8 {
-    let mut r = 0u8;
+    let mut r = 0_u8;
     for i in 0..n {
         r |= 1 << i;
     }

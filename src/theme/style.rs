@@ -1,5 +1,5 @@
 use super::{Color, ColorStyle, ColorType, Effect, PaletteColor};
-use enumset::EnumSet;
+use enumset::{enum_set, EnumSet};
 
 /// Combine a color and an effect.
 ///

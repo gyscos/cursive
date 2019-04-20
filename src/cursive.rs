@@ -5,14 +5,16 @@ use std::time::Duration;
 
 use crossbeam_channel::{self, Receiver, Sender};
 
-use backend;
-use direction;
-use event::{Callback, Event, EventResult};
-use printer::Printer;
-use theme;
-use vec::Vec2;
-use view::{self, Finder, IntoBoxedView, Position, View};
-use views::{self, LayerPosition};
+use crate::backend;
+use crate::direction;
+use crate::event::{Callback, Event, EventResult};
+use crate::printer::Printer;
+use crate::theme;
+use crate::vec::Vec2;
+use crate::view::{self, Finder, IntoBoxedView, Position, View};
+use crate::views::{self, LayerPosition};
+
+static DEBUG_VIEW_ID: &'static str = "_cursive_debug_view";
 
 /// Central part of the cursive library.
 ///
@@ -31,36 +33,26 @@ pub struct Cursive {
     // If it changed, clear the screen.
     last_sizes: Vec<Vec2>,
 
-    fps: u32,
+    autorefresh: bool,
 
     active_screen: ScreenId,
 
     running: bool,
 
-    backend: Box<backend::Backend>,
+    backend: Box<dyn backend::Backend>,
 
-    cb_source: Receiver<Box<CbFunc>>,
-    cb_sink: Sender<Box<CbFunc>>,
+    cb_source: Receiver<Box<dyn CbFunc>>,
+    cb_sink: Sender<Box<dyn CbFunc>>,
 
-    event_source: Receiver<Option<Event>>,
-
-    // Sends true or false after each event.
-    input_trigger: Sender<backend::InputRequest>,
-    expecting_event: bool,
-}
-
-/// Describes one of the possible interruptions we should handle.
-enum Interruption {
-    /// An input event was received
-    Event(Event),
-    /// A callback was received
-    Callback(Box<CbFunc>),
-    /// A timeout ran out
-    Timeout,
+    // User-provided data.
+    user_data: Box<Any>,
 }
 
 /// Identifies a screen in the cursive root.
 pub type ScreenId = usize;
+
+/// Convenient alias to the result of `Cursive::cb_sink`.
+pub type CbSink = Sender<Box<dyn CbFunc>>;
 
 /// Asynchronous callback function trait.
 ///
@@ -71,7 +63,7 @@ pub type ScreenId = usize;
 /// working and `FnBox` is unstable.
 pub trait CbFunc: Send {
     /// Calls the function.
-    fn call_box(self: Box<Self>, &mut Cursive);
+    fn call_box(self: Box<Self>, _: &mut Cursive);
 }
 
 impl<F: FnOnce(&mut Cursive) -> () + Send> CbFunc for F {
@@ -83,14 +75,14 @@ impl<F: FnOnce(&mut Cursive) -> () + Send> CbFunc for F {
 #[cfg(feature = "termion-backend")]
 impl Default for Cursive {
     fn default() -> Self {
-        Self::termion()
+        Self::termion().unwrap()
     }
 }
 
 #[cfg(all(not(feature = "termion-backend"), feature = "pancurses-backend"))]
 impl Default for Cursive {
     fn default() -> Self {
-        Self::pancurses()
+        Self::pancurses().unwrap()
     }
 }
 
@@ -113,28 +105,51 @@ impl Default for Cursive {
 ))]
 impl Default for Cursive {
     fn default() -> Self {
-        Self::ncurses()
+        Self::ncurses().unwrap()
     }
 }
 
 impl Cursive {
-    /// Creates a new Cursive root, and initialize the back-end.
+    /// Shortcut for `Cursive::try_new` with non-failible init function.
+    ///
+    /// You probably don't want to use this function directly. Instead,
+    /// `Cursive::default()` or `Cursive::ncurses()` may be what you're
+    /// looking for.
     pub fn new<F>(backend_init: F) -> Self
     where
-        F: FnOnce() -> Box<backend::Backend>,
+        F: FnOnce() -> Box<dyn backend::Backend>,
+    {
+        Self::try_new::<_, ()>(|| Ok(backend_init())).unwrap()
+    }
+
+    /// Creates a new Cursive root, and initialize the back-end.
+    ///
+    /// * If you just want a cursive instance, use `Cursive::default()`.
+    /// * If you want a specific backend, then:
+    ///   * `Cursive::ncurses()` if the `ncurses-backend` feature is enabled (it is by default).
+    ///   * `Cursive::pancurses()` if the `pancurses-backend` feature is enabled.
+    ///   * `Cursive::termion()` if the `termion-backend` feature is enabled.
+    ///   * `Cursive::blt()` if the `blt-backend` feature is enabled.
+    ///   * `Cursive::dummy()` for a dummy backend, mostly useful for tests.
+    /// * If you want to use a third-party backend, then `Cursive::new` is indeed the way to go:
+    ///   * `Cursive::new(bring::your::own::Backend::new)`
+    ///
+    /// Examples:
+    ///
+    /// ```rust,no_run
+    /// # use cursive::{Cursive, backend};
+    /// let siv = Cursive::new(backend::dummy::Backend::init); // equivalent to Cursive::dummy()
+    /// ```
+    pub fn try_new<F, E>(backend_init: F) -> Result<Self, E>
+    where
+        F: FnOnce() -> Result<Box<dyn backend::Backend>, E>,
     {
         let theme = theme::load_default();
 
         let (cb_sink, cb_source) = crossbeam_channel::unbounded();
-        let (event_sink, event_source) = crossbeam_channel::bounded(0);
 
-        let (input_sink, input_source) = crossbeam_channel::bounded(0);
-
-        let mut backend = backend_init();
-        backend.start_input_thread(event_sink, input_source);
-
-        Cursive {
-            fps: 0,
+        backend_init().map(|backend| Cursive {
+            autorefresh: false,
             theme,
             screens: vec![views::StackView::new()],
             last_sizes: Vec::new(),
@@ -144,29 +159,27 @@ impl Cursive {
             running: true,
             cb_source,
             cb_sink,
-            event_source,
             backend,
-            input_trigger: input_sink,
-            expecting_event: false,
-        }
+            user_data: Box::new(()),
+        })
     }
 
     /// Creates a new Cursive root using a ncurses backend.
     #[cfg(feature = "ncurses-backend")]
-    pub fn ncurses() -> Self {
-        Self::new(backend::curses::n::Backend::init)
+    pub fn ncurses() -> std::io::Result<Self> {
+        Self::try_new(backend::curses::n::Backend::init)
     }
 
     /// Creates a new Cursive root using a pancurses backend.
     #[cfg(feature = "pancurses-backend")]
-    pub fn pancurses() -> Self {
-        Self::new(backend::curses::pan::Backend::init)
+    pub fn pancurses() -> std::io::Result<Self> {
+        Self::try_new(backend::curses::pan::Backend::init)
     }
 
     /// Creates a new Cursive root using a termion backend.
     #[cfg(feature = "termion-backend")]
-    pub fn termion() -> Self {
-        Self::new(backend::termion::Backend::init)
+    pub fn termion() -> std::io::Result<Self> {
+        Self::try_new(backend::termion::Backend::init)
     }
 
     /// Creates a new Cursive root using a bear-lib-terminal backend.
@@ -182,6 +195,64 @@ impl Cursive {
         Self::new(backend::dummy::Backend::init)
     }
 
+    /// Sets some data to be stored in Cursive.
+    ///
+    /// It can later on be accessed with `Cursive::user_data()`
+    pub fn set_user_data<T: Any>(&mut self, user_data: T) {
+        self.user_data = Box::new(user_data);
+    }
+
+    /// Attempts to access the user-provided data.
+    ///
+    /// If some data was set previously with the same type, returns a reference to it.
+    /// If nothing was set or if the type is different, returns `None`.
+    pub fn user_data<T: Any>(&mut self) -> Option<&mut T> {
+        self.user_data.downcast_mut()
+    }
+
+    /// Runs the given closure on the stored user data, if any.
+    ///
+    /// If no user data was supplied, or if the type is different, nothing will be run.
+    /// Otherwise, the result will be returned.
+    pub fn with_user_data<F, T, R>(&mut self, f: F) -> Option<R>
+    where
+        F: FnOnce(&mut T) -> R,
+        T: Any,
+    {
+        self.user_data().map(f)
+    }
+
+    /// Show the debug console.
+    ///
+    /// Currently, this will show logs if [`logger::init()`](crate::logger::init()) was called.
+    pub fn show_debug_console(&mut self) {
+        self.add_layer(
+            views::Dialog::around(views::ScrollView::new(views::IdView::new(
+                DEBUG_VIEW_ID,
+                views::DebugView::new(),
+            )))
+            .title("Debug console"),
+        );
+    }
+
+    /// Show the debug console, or hide it if it's already visible.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive::Cursive;
+    /// # let mut siv = Cursive::dummy();
+    /// siv.add_global_callback('~', Cursive::toggle_debug_console);
+    /// ```
+    pub fn toggle_debug_console(&mut self) {
+        if let Some(pos) = self.screen_mut().find_layer_from_id(DEBUG_VIEW_ID)
+        {
+            self.screen_mut().remove_layer(pos);
+        } else {
+            self.show_debug_console();
+        }
+    }
+
     /// Returns a sink for asynchronous callbacks.
     ///
     /// Returns the sender part of a channel, that allows to send
@@ -190,9 +261,6 @@ impl Cursive {
     /// Callbacks will be executed in the order
     /// of arrival on the next event cycle.
     ///
-    /// Note that you currently need to call [`set_fps`] to force cursive to
-    /// regularly check for messages.
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -200,15 +268,12 @@ impl Cursive {
     /// # use cursive::*;
     /// # fn main() {
     /// let mut siv = Cursive::dummy();
-    /// siv.set_fps(10);
     ///
     /// // quit() will be called during the next event cycle
     /// siv.cb_sink().send(Box::new(|s: &mut Cursive| s.quit())).unwrap();
     /// # }
     /// ```
-    ///
-    /// [`set_fps`]: #method.set_fps
-    pub fn cb_sink(&self) -> &Sender<Box<CbFunc>> {
+    pub fn cb_sink(&self) -> &CbSink {
         &self.cb_sink
     }
 
@@ -293,7 +358,7 @@ impl Cursive {
     /// Clears the screen.
     ///
     /// Users rarely have to call this directly.
-    pub fn clear(&self) {
+    pub fn clear(&mut self) {
         self.backend
             .clear(self.theme.palette[theme::PaletteColor::Background]);
     }
@@ -314,19 +379,11 @@ impl Cursive {
         theme::load_toml(content).map(|theme| self.set_theme(theme))
     }
 
-    /// Sets the refresh rate, in frames per second.
+    /// Enables or disables automatic refresh of the screen.
     ///
-    /// Regularly redraws everything, even when no input is given.
-    ///
-    /// You currently need this to regularly check
-    /// for events sent using [`cb_sink`].
-    ///
-    /// Between 0 and 1000. Call with `fps = 0` to disable (default value).
-    ///
-    /// [`cb_sink`]: #method.cb_sink
-    pub fn set_fps(&mut self, fps: u32) {
-        // self.backend.set_refresh_rate(fps)
-        self.fps = fps;
+    /// When on, regularly redraws everything, even when no input is given.
+    pub fn set_autorefresh(&mut self, autorefresh: bool) {
+        self.autorefresh = autorefresh;
     }
 
     /// Returns a reference to the currently active screen.
@@ -406,7 +463,7 @@ impl Cursive {
     /// # }
     /// ```
     pub fn call_on<V, F, R>(
-        &mut self, sel: &view::Selector, callback: F,
+        &mut self, sel: &view::Selector<'_>, callback: F,
     ) -> Option<R>
     where
         V: View + Any,
@@ -506,7 +563,7 @@ impl Cursive {
     }
 
     /// Moves the focus to the view identified by `sel`.
-    pub fn focus(&mut self, sel: &view::Selector) -> Result<(), ()> {
+    pub fn focus(&mut self, sel: &view::Selector<'_>) -> Result<(), ()> {
         self.screen_mut().focus_view(sel)
     }
 
@@ -588,7 +645,7 @@ impl Cursive {
     }
 
     /// Convenient method to remove a layer from the current screen.
-    pub fn pop_layer(&mut self) -> Option<Box<View>> {
+    pub fn pop_layer(&mut self) -> Option<Box<dyn View>> {
         self.screen_mut().pop_layer()
     }
 
@@ -597,63 +654,6 @@ impl Cursive {
         &mut self, layer: LayerPosition, position: Position,
     ) {
         self.screen_mut().reposition_layer(layer, position);
-    }
-
-    fn peek(&mut self) -> Option<Interruption> {
-        // First, try a callback
-        select! {
-            // Skip to input if nothing is ready
-            default => (),
-            recv(self.cb_source) -> cb => return Some(Interruption::Callback(cb.unwrap())),
-        }
-
-        // No callback? Check input then
-        if self.expecting_event {
-            // We're already blocking.
-            return None;
-        }
-
-        self.input_trigger
-            .send(backend::InputRequest::Peek)
-            .unwrap();
-        self.backend.prepare_input(backend::InputRequest::Peek);
-
-        self.event_source.recv().unwrap().map(Interruption::Event)
-    }
-
-    /// Wait until something happens.
-    ///
-    /// If `peek` is `true`, return `None` immediately if nothing is ready.
-    fn poll(&mut self) -> Option<Interruption> {
-        if !self.expecting_event {
-            self.input_trigger
-                .send(backend::InputRequest::Block)
-                .unwrap();
-            self.backend.prepare_input(backend::InputRequest::Block);
-            self.expecting_event = true;
-        }
-
-        let timeout = if self.fps > 0 {
-            Duration::from_millis(1000 / self.fps as u64)
-        } else {
-            // Defaults to 1 refresh per hour.
-            Duration::from_secs(3600)
-        };
-
-        select! {
-            recv(self.event_source) -> event => {
-                // Ok, we processed the event.
-                self.expecting_event = false;
-
-                event.unwrap().map(Interruption::Event)
-            },
-            recv(self.cb_source) -> cb => {
-                cb.ok().map(Interruption::Callback)
-            },
-            recv(crossbeam_channel::after(timeout)) -> _ => {
-                Some(Interruption::Timeout)
-            }
-        }
     }
 
     // Handles a key event when it was ignored by the current view
@@ -780,6 +780,8 @@ impl Cursive {
     pub fn run(&mut self) {
         self.running = true;
 
+        self.refresh();
+
         // And the big event loop begins!
         while self.running {
             self.step();
@@ -793,6 +795,41 @@ impl Cursive {
     ///
     /// [`run(&mut self)`]: #method.run
     pub fn step(&mut self) {
+        let mut boring = true;
+
+        // First, handle all available input
+        while let Some(event) = self.backend.poll_event() {
+            boring = false;
+            self.on_event(event);
+
+            if !self.running {
+                return;
+            }
+        }
+
+        // Then, handle any available callback
+        while let Ok(cb) = self.cb_source.try_recv() {
+            boring = false;
+            cb.call_box(self);
+
+            if !self.running {
+                return;
+            }
+        }
+
+        if self.autorefresh || !boring {
+            // Only re-draw if nothing happened.
+            self.refresh();
+        }
+
+        if boring {
+            // Otherwise, sleep some more
+            std::thread::sleep(Duration::from_millis(30));
+        }
+    }
+
+    /// Refresh the screen with the current view tree state.
+    fn refresh(&mut self) {
         // Do we need to redraw everytime?
         // Probably, actually.
         // TODO: Do we need to re-layout everytime?
@@ -802,39 +839,16 @@ impl Cursive {
         // (Is this getting repetitive? :p)
         self.draw();
         self.backend.refresh();
-
-        if let Some(interruption) = self.poll() {
-            self.handle_interruption(interruption);
-            if !self.running {
-                return;
-            }
-        }
-
-        // Don't block, but try to read any other pending event.
-        // This lets us batch-process chunks of events, like big copy-paste or mouse drags.
-        while let Some(interruption) = self.peek() {
-            self.handle_interruption(interruption);
-            if !self.running {
-                return;
-            }
-        }
-    }
-
-    fn handle_interruption(&mut self, interruption: Interruption) {
-        match interruption {
-            Interruption::Event(event) => {
-                self.on_event(event);
-            }
-            Interruption::Callback(cb) => {
-                cb.call_box(self);
-            }
-            Interruption::Timeout => {}
-        }
     }
 
     /// Stops the event loop.
     pub fn quit(&mut self) {
         self.running = false;
+    }
+
+    /// Does not do anything.
+    pub fn noop(&mut self) {
+        // foo
     }
 }
 

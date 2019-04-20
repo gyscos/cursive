@@ -4,11 +4,11 @@ use std::ops::Index;
 use std::ops::IndexMut;
 use std::rc::Rc;
 use std::string::ToString;
-use theme::ColorPair;
-use theme::Effect;
+use crate::theme::ColorPair;
+use crate::theme::Effect;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use Vec2;
+use crate::Vec2;
 
 /// Style of observed cell
 #[derive(Debug, Clone, Eq, PartialEq)]

@@ -45,13 +45,18 @@ mod margins;
 mod position;
 mod size_cache;
 mod size_constraint;
-mod view;
 mod view_path;
+mod view_trait;
 
 // Helper bases
 mod boxable;
 mod identifiable;
-mod scroll;
+#[cfg(feature = "unstable_scroll")]
+pub mod scroll;
+#[cfg(not(feature = "unstable_scroll"))]
+pub(crate) mod scroll;
+
+mod scroll_base;
 mod scrollable;
 
 mod into_boxed_view;
@@ -63,10 +68,11 @@ pub use self::identifiable::Identifiable;
 pub use self::into_boxed_view::IntoBoxedView;
 pub use self::margins::Margins;
 pub use self::position::{Offset, Position};
-pub use self::scroll::{ScrollBase, ScrollStrategy};
+pub use self::scroll::ScrollStrategy;
+pub use self::scroll_base::ScrollBase;
 pub use self::scrollable::Scrollable;
 pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
-pub use self::view::View;
 pub use self::view_path::ViewPath;
+pub use self::view_trait::View;
 pub use self::view_wrapper::ViewWrapper;

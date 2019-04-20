@@ -9,32 +9,39 @@ use std::thread;
 
 use crossbeam_channel::{self, Receiver, Sender};
 
-use backend;
-use backend::puppet::observed::ObservedCell;
-use backend::puppet::observed::ObservedScreen;
-use backend::puppet::observed::ObservedStyle;
-use event::Event;
+use crate::backend;
+use crate::backend::puppet::observed::ObservedCell;
+use crate::backend::puppet::observed::ObservedScreen;
+use crate::backend::puppet::observed::ObservedStyle;
+use crate::event::Event;
 use std::cell::RefCell;
 use std::rc::Rc;
-use theme;
-use theme::Color;
-use theme::ColorPair;
+use crate::theme;
+use crate::theme::{Color, Effect};
+use crate::theme::ColorPair;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use XY;
+use crate::vec::Vec2;
+use crate::XY;
+
+#[macro_use]
+use lazy_static::lazy_static;
+
+use enumset::EnumSet;
 
 pub mod observed;
 pub mod observed_screen_view;
 
-pub const DEFAULT_SIZE: Vec2 = XY::<usize> { x: 120, y: 80 };
-pub const DEFAULT_OBSERVED_STYLE: ObservedStyle = ObservedStyle {
-    colors: ColorPair {
-        front: Color::TerminalDefault,
-        back: Color::TerminalDefault,
-    },
-    effects: enum_set!(),
-};
+lazy_static! {
+    pub static ref DEFAULT_SIZE: Vec2 = XY::<usize> { x: 120, y: 80 };
+    pub static ref DEFAULT_OBSERVED_STYLE: ObservedStyle = ObservedStyle {
+        colors: ColorPair {
+            front: Color::TerminalDefault,
+            back: Color::TerminalDefault,
+        },
+        effects: EnumSet::<Effect>::empty(),
+    };
+}
 
 pub struct Backend {
     inner_sender: Sender<Option<Event>>,
@@ -52,7 +59,7 @@ impl Backend {
         Self: Sized,
     {
         let (inner_sender, inner_receiver) = crossbeam_channel::unbounded();
-        let size = size_op.unwrap_or(DEFAULT_SIZE);
+        let size = size_op.unwrap_or(*DEFAULT_SIZE);
 
         let mut backend = Backend {
             inner_sender,
@@ -60,7 +67,7 @@ impl Backend {
             prev_frame: RefCell::new(None),
             current_frame: RefCell::new(ObservedScreen::new(size)),
             size: RefCell::new(size),
-            current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE)),
+            current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE.clone())),
             screen_channel: crossbeam_channel::unbounded(),
         };
 
@@ -86,26 +93,12 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
-    fn finish(&mut self) {}
 
-    fn start_input_thread(
-        &mut self,
-        event_sink: Sender<Option<Event>>,
-        input_requests: Receiver<backend::InputRequest>,
-    ) {
-        let receiver = self.inner_receiver.clone();
-
-        thread::spawn(move || {
-            for _ in input_requests {
-                match receiver.recv() {
-                    Err(_) => return,
-                    Ok(event) => {
-                        event_sink.send(event).unwrap();
-                    }
-                }
-            }
-        });
+    fn poll_event(&mut self) -> Option<Event> {
+        self.inner_receiver.recv().ok().unwrap()
     }
+
+    fn finish(&mut self) {}
 
     fn refresh(&mut self) {
         let size = self.size.get_mut().clone();

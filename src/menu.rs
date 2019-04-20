@@ -12,10 +12,10 @@
 //!
 //! [menubar]: ../struct.Cursive.html#method.menubar
 
-use event::Callback;
+use crate::event::Callback;
+use crate::Cursive;
+use crate::With;
 use std::rc::Rc;
-use Cursive;
-use With;
 
 /// Root of a menu tree.
 #[derive(Default, Clone)]
@@ -112,7 +112,7 @@ impl MenuTree {
 
     /// Adds a delimiter to the end of this tree - chainable variant.
     pub fn delimiter(self) -> Self {
-        self.with(|menu| menu.add_delimiter())
+        self.with(Self::add_delimiter)
     }
 
     /// Adds a actionnable leaf to the end of this tree.

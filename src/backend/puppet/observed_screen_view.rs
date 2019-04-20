@@ -1,11 +1,11 @@
 //! View visualizing a captured PuppetBackend outputs
-use backend::puppet::observed::ObservedCell;
-use backend::puppet::observed::ObservedScreen;
-use theme::ColorStyle;
-use theme::ColorType;
-use view::View;
-use Printer;
-use Vec2;
+use crate::backend::puppet::observed::ObservedCell;
+use crate::backend::puppet::observed::ObservedScreen;
+use crate::theme::ColorStyle;
+use crate::theme::ColorType;
+use crate::view::View;
+use crate::Printer;
+use crate::Vec2;
 
 pub struct ObservedScreenView {
     screen: ObservedScreen,

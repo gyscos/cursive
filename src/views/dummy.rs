@@ -1,5 +1,5 @@
-use view::View;
-use Printer;
+use crate::view::View;
+use crate::Printer;
 
 /// Dummy view.
 ///
@@ -7,7 +7,7 @@ use Printer;
 pub struct DummyView;
 
 impl View for DummyView {
-    fn draw(&self, _: &Printer) {}
+    fn draw(&self, _: &Printer<'_, '_>) {}
 
     fn needs_relayout(&self) -> bool {
         false

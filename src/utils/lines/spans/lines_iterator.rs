@@ -4,11 +4,11 @@ use super::prefix::prefix;
 use super::row::Row;
 use super::segment::Segment;
 use super::segment_merge_iterator::SegmentMergeIterator;
+use crate::utils::span::SpannedText;
 use std::iter::Peekable;
 use std::rc::Rc;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use utils::span::SpannedText;
 
 /// Generates rows of text in constrainted width.
 ///
@@ -168,7 +168,8 @@ where
                 .into_iter()
                 .flat_map(|chunk| chunk.segments)
                 //.filter(|segment| segment.start != segment.end),
-        ).collect();
+        )
+        .collect();
 
         // TODO: merge consecutive segments of the same span
 

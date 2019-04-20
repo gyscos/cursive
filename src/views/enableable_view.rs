@@ -1,6 +1,6 @@
-use event::{Event, EventResult};
-use view::{View, ViewWrapper};
-use {Printer, With};
+use crate::event::{Event, EventResult};
+use crate::view::{View, ViewWrapper};
+use crate::{Printer, With};
 
 /// Wrapper around another view that can be enabled/disabled at will.
 ///
@@ -35,7 +35,7 @@ impl<V: View> ViewWrapper for EnableableView<V> {
         }
     }
 
-    fn wrap_draw(&self, printer: &Printer) {
+    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
         self.view.draw(&printer.enabled(self.enabled));
     }
 }

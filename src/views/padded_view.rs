@@ -1,7 +1,7 @@
-use event::{Event, EventResult};
-use vec::Vec2;
-use view::{Margins, View, ViewWrapper};
-use Printer;
+use crate::event::{Event, EventResult};
+use crate::vec::Vec2;
+use crate::view::{Margins, View, ViewWrapper};
+use crate::Printer;
 
 /// Adds padding to another view.
 ///
@@ -56,7 +56,7 @@ impl<V: View> ViewWrapper for PaddedView<V> {
         self.view.on_event(event.relativized(padding))
     }
 
-    fn wrap_draw(&self, printer: &Printer) {
+    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
         let top_left = self.margins.top_left();
         let bot_right = self.margins.bot_right();
         let printer = &printer.offset(top_left).shrinked(bot_right);

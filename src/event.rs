@@ -13,24 +13,24 @@
 //!   [global callback](../struct.Cursive.html#method.add_global_callback)
 //!   table is checked.
 
+use crate::vec::Vec2;
+use crate::Cursive;
 use std::any::Any;
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
-use vec::Vec2;
-use Cursive;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
 #[derive(Clone)]
-pub struct Callback(Rc<Box<Fn(&mut Cursive)>>);
+pub struct Callback(Rc<Box<dyn Fn(&mut Cursive)>>);
 // TODO: remove the Box when Box<T: Sized> -> Rc<T> is possible
 
 /// A boxed callback that can be run on `&mut Any`.
-pub type AnyCb<'a> = Box<FnMut(&mut Any) + 'a>;
+pub type AnyCb<'a> = Box<FnMut(&mut dyn Any) + 'a>;
 
 /// A trigger that only selects some types of events.
-pub struct EventTrigger(Box<Fn(&Event) -> bool>);
+pub struct EventTrigger(Box<dyn Fn(&Event) -> bool>);
 
 impl EventTrigger {
     /// Create a new `EventTrigger` using the given function as filter.
@@ -148,26 +148,26 @@ impl Callback {
 }
 
 impl Deref for Callback {
-    type Target = Box<Fn(&mut Cursive)>;
-    fn deref<'a>(&'a self) -> &'a Box<Fn(&mut Cursive)> {
+    type Target = Box<dyn Fn(&mut Cursive)>;
+    fn deref<'a>(&'a self) -> &'a Box<dyn Fn(&mut Cursive)> {
         &self.0
     }
 }
 
-impl From<Rc<Box<Fn(&mut Cursive)>>> for Callback {
-    fn from(f: Rc<Box<Fn(&mut Cursive)>>) -> Self {
+impl From<Rc<Box<dyn Fn(&mut Cursive)>>> for Callback {
+    fn from(f: Rc<Box<dyn Fn(&mut Cursive)>>) -> Self {
         Callback(f)
     }
 }
 
-impl From<Box<Fn(&mut Cursive) + Send>> for Callback {
-    fn from(f: Box<Fn(&mut Cursive) + Send>) -> Self {
+impl From<Box<dyn Fn(&mut Cursive) + Send>> for Callback {
+    fn from(f: Box<dyn Fn(&mut Cursive) + Send>) -> Self {
         Callback(Rc::new(f))
     }
 }
 
-impl From<Box<Fn(&mut Cursive)>> for Callback {
-    fn from(f: Box<Fn(&mut Cursive)>) -> Self {
+impl From<Box<dyn Fn(&mut Cursive)>> for Callback {
+    fn from(f: Box<dyn Fn(&mut Cursive)>) -> Self {
         Callback(Rc::new(f))
     }
 }

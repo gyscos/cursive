@@ -128,7 +128,7 @@ fn main() {
         ),
     );
 
-    siv.set_fps(10);
+    siv.set_autorefresh(true);
 
     siv.run();
 }

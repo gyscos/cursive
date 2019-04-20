@@ -1,12 +1,12 @@
-use align::HAlign;
-use direction::Direction;
-use event::*;
-use rect::Rect;
-use theme::ColorStyle;
+use crate::align::HAlign;
+use crate::direction::Direction;
+use crate::event::*;
+use crate::rect::Rect;
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::{Cursive, Printer, With};
 use unicode_width::UnicodeWidthStr;
-use vec::Vec2;
-use view::View;
-use {Cursive, Printer, With};
 
 /// Simple text label with a callback when <Enter> is pressed.
 ///
@@ -137,17 +137,17 @@ impl Button {
 }
 
 impl View for Button {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         if printer.size.x == 0 {
             return;
         }
 
         let style = if !(self.enabled && printer.enabled) {
             ColorStyle::secondary()
-        } else if !printer.focused {
-            ColorStyle::primary()
-        } else {
+        } else if printer.focused {
             ColorStyle::highlight()
+        } else {
+            ColorStyle::primary()
         };
 
         let offset =

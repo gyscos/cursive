@@ -1,5 +1,5 @@
-use view::{View, ViewWrapper};
-use Printer;
+use crate::view::{View, ViewWrapper};
+use crate::Printer;
 
 /// Wrapper view that fills the background.
 ///
@@ -23,7 +23,7 @@ impl<T: View> Layer<T> {
 impl<T: View> ViewWrapper for Layer<T> {
     wrap_impl!(self.view: T);
 
-    fn wrap_draw(&self, printer: &Printer) {
+    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
         for y in 0..printer.size.y {
             printer.print_hline((0, y), printer.size.x, " ");
         }

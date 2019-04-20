@@ -27,9 +27,6 @@ fn main() {
             .content(Button::new("Start", phase_1)),
     );
 
-    // Auto-refresh is required for animated views
-    siv.set_fps(30);
-
     siv.run();
 }
 
@@ -56,10 +53,12 @@ fn phase_1(s: &mut Cursive) {
             })
             .full_width(),
     ));
+    s.set_autorefresh(true);
 }
 
 fn coffee_break(s: &mut Cursive) {
     // A little break before things get serious.
+    s.set_autorefresh(false);
     s.pop_layer();
     s.add_layer(
         Dialog::new()
@@ -112,10 +111,12 @@ fn phase_2(s: &mut Cursive) {
 
         cb.send(Box::new(final_step)).unwrap();
     });
+    s.set_autorefresh(true);
 }
 
 fn final_step(s: &mut Cursive) {
     // A little break before things get serious.
+    s.set_autorefresh(false);
     s.pop_layer();
     s.add_layer(
         Dialog::new()

@@ -5,8 +5,8 @@
 #[cfg(feature = "markdown")]
 pub mod markdown;
 
-use theme::Style;
-use utils::span::{IndexedSpan, Span, SpannedString};
+use crate::theme::Style;
+use crate::utils::span::{IndexedSpan, Span, SpannedString};
 
 /// A parsed string with markup style.
 ///

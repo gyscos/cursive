@@ -1,13 +1,15 @@
-use direction::Direction;
-use event::{AnyCb, Event, EventResult};
+use crate::direction::Direction;
+use crate::event::{AnyCb, Event, EventResult};
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::{
+    IntoBoxedView, Offset, Position, Selector, View, ViewWrapper,
+};
+use crate::views::{CircularFocus, Layer, ShadowView, ViewBox};
+use crate::Printer;
+use crate::With;
 use std::cell;
 use std::ops::Deref;
-use theme::ColorStyle;
-use vec::Vec2;
-use view::{IntoBoxedView, Offset, Position, Selector, View, ViewWrapper};
-use views::{CircularFocus, Layer, ShadowView, ViewBox};
-use Printer;
-use With;
 
 /// Simple stack of views.
 /// Only the top-most view is active and can receive input.
@@ -20,8 +22,12 @@ pub struct StackView {
     bg_dirty: cell::Cell<bool>,
 }
 
+/// Where should the view be on the screen (per dimension).
 enum Placement {
+    /// View is floating at a specific position.
     Floating(Position),
+
+    /// View is full-screen; it should not have a 1-cell border.
     Fullscreen,
 }
 
@@ -52,7 +58,7 @@ impl Placement {
     }
 }
 
-// A child view can be wrapped in multiple ways.
+/// A child view can be wrapped in multiple ways.
 enum ChildWrapper<T: View> {
     // Some views include a shadow around.
     Shadow(ShadowView<Layer<CircularFocus<T>>>),
@@ -122,7 +128,7 @@ impl<T: View> ChildWrapper<T> {
 
 // TODO: use macros to make this less ugly?
 impl<T: View> View for ChildWrapper<T> {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         match *self {
             ChildWrapper::Shadow(ref v) => v.draw(printer),
             ChildWrapper::Backfilled(ref v) => v.draw(printer),
@@ -162,7 +168,9 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector, callback: AnyCb<'a>) {
+    fn call_on_any<'a>(
+        &mut self, selector: &Selector<'_>, callback: AnyCb<'a>,
+    ) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => {
                 v.call_on_any(selector, callback)
@@ -176,7 +184,7 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.focus_view(selector),
             ChildWrapper::Backfilled(ref mut v) => v.focus_view(selector),
@@ -207,6 +215,27 @@ impl StackView {
             last_size: Vec2::zero(),
             bg_dirty: cell::Cell::new(true),
         }
+    }
+
+    /// Returns the number of layers in this `StackView`.
+    pub fn len(&self) -> usize {
+        self.layers.len()
+    }
+
+    /// Returns `true` if there is no layer in this `StackView`.
+    pub fn is_empty(&self) -> bool {
+        self.layers.is_empty()
+    }
+
+    /// Returns `true` if `position` points to a valid layer.
+    ///
+    /// Returns `false` if it exceeds the bounds.
+    pub fn fits(&self, position: LayerPosition) -> bool {
+        let i = match position {
+            LayerPosition::FromBack(i) | LayerPosition::FromFront(i) => i,
+        };
+
+        i < self.len()
     }
 
     /// Adds a new full-screen layer on top of the stack.
@@ -246,17 +275,19 @@ impl StackView {
     }
 
     /// Returns a reference to the layer at the given position.
-    pub fn get(&self, pos: LayerPosition) -> Option<&View> {
-        let i = self.get_index(pos);
-        self.layers.get(i).map(|child| &**child.view.get_inner())
+    pub fn get(&self, pos: LayerPosition) -> Option<&dyn View> {
+        self.get_index(pos).and_then(|i| {
+            self.layers.get(i).map(|child| &**child.view.get_inner())
+        })
     }
 
     /// Returns a mutable reference to the layer at the given position.
-    pub fn get_mut(&mut self, pos: LayerPosition) -> Option<&mut View> {
-        let i = self.get_index(pos);
-        self.layers
-            .get_mut(i)
-            .map(|child| &mut **child.view.get_inner_mut())
+    pub fn get_mut(&mut self, pos: LayerPosition) -> Option<&mut dyn View> {
+        self.get_index(pos).and_then(move |i| {
+            self.layers
+                .get_mut(i)
+                .map(|child| &mut **child.view.get_inner_mut())
+        })
     }
 
     /// Looks for the layer containing a view with the given ID.
@@ -265,6 +296,9 @@ impl StackView {
     /// or is a parent of a view with this ID.
     ///
     /// Returns `None` if the given ID is not found.
+    ///
+    /// Note that the returned position may be invalidated if some layers are
+    /// removed from the view.
     ///
     /// # Examples
     ///
@@ -357,7 +391,7 @@ impl StackView {
         });
     }
 
-    /// Adds a view on top of the stack.
+    /// Adds a view on top of the stack at the given position.
     ///
     /// Chainable variant.
     pub fn layer_at<T>(self, position: Position, view: T) -> Self
@@ -367,8 +401,18 @@ impl StackView {
         self.with(|s| s.add_layer_at(position, view))
     }
 
+    /// Remove a layer from this `StackView`.
+    ///
+    /// # Panics
+    ///
+    /// If the given position is out of bounds.
+    pub fn remove_layer(&mut self, position: LayerPosition) -> Box<dyn View> {
+        let i = self.get_index(position).unwrap();
+        self.layers.remove(i).view.unwrap().unwrap()
+    }
+
     /// Remove the top-most layer.
-    pub fn pop_layer(&mut self) -> Option<Box<View>> {
+    pub fn pop_layer(&mut self) -> Option<Box<dyn View>> {
         self.bg_dirty.set(true);
         self.layers
             .pop()
@@ -396,10 +440,12 @@ impl StackView {
         self.layers.iter().map(|layer| layer.size).collect()
     }
 
-    fn get_index(&self, pos: LayerPosition) -> usize {
+    fn get_index(&self, pos: LayerPosition) -> Option<usize> {
         match pos {
-            LayerPosition::FromBack(i) => i,
-            LayerPosition::FromFront(i) => self.layers.len() - i - 1,
+            LayerPosition::FromBack(i) => Some(i),
+            LayerPosition::FromFront(i) => {
+                self.layers.len().checked_sub(i + 1)
+            }
         }
     }
 
@@ -407,38 +453,47 @@ impl StackView {
     ///
     /// This only affects the elevation of a layer (whether it is drawn over
     /// or under other views).
+    ///
+    /// # Panics
+    ///
+    /// If either `from` or `to` is out of bounds.
     pub fn move_layer(&mut self, from: LayerPosition, to: LayerPosition) {
         // Convert relative positions to indices in the array
-        let from_i = self.get_index(from);
-        let to_i = self.get_index(to);
+        let from = self.get_index(from).unwrap();
+        let to = self.get_index(to).unwrap();
 
-        let removed = self.layers.remove(from_i);
-
-        self.layers.insert(to_i, removed);
+        let removed = self.layers.remove(from);
+        self.layers.insert(to, removed);
     }
 
     /// Brings the given view to the front of the stack.
+    ///
+    /// # Panics
+    ///
+    /// If `layer` is out of bounds.
     pub fn move_to_front(&mut self, layer: LayerPosition) {
         self.move_layer(layer, LayerPosition::FromFront(0));
     }
 
     /// Pushes the given view to the back of the stack.
+    ///
+    /// # Panics
+    ///
+    /// If `layer` is out of bounds.
     pub fn move_to_back(&mut self, layer: LayerPosition) {
         self.move_layer(layer, LayerPosition::FromBack(0));
     }
 
     /// Moves a layer to a new position on the screen.
     ///
-    /// Has no effect on fullscreen layers
-    /// Has no effect if layer is not found
+    /// # Panics
+    ///
+    /// If `layer` is out of bounds.
     pub fn reposition_layer(
         &mut self, layer: LayerPosition, position: Position,
     ) {
-        let i = self.get_index(layer);
-        let child = match self.layers.get_mut(i) {
-            Some(i) => i,
-            None => return,
-        };
+        let i = self.get_index(layer).unwrap();
+        let child = &mut self.layers[i];
         match child.placement {
             Placement::Floating(_) => {
                 child.placement = Placement::Floating(position);
@@ -451,9 +506,10 @@ impl StackView {
     /// Background drawing
     ///
     /// Drawing functions are split into forground and background to
-    /// ease inserting layers under the stackview but above it's background
+    /// ease inserting layers under the stackview but above its background.
+    ///
     /// you probably just want to call draw()
-    pub fn draw_bg(&self, printer: &Printer) {
+    pub fn draw_bg(&self, printer: &Printer<'_, '_>) {
         // If the background is dirty draw a new background
         if self.bg_dirty.get() {
             for y in 0..printer.size.y {
@@ -470,9 +526,10 @@ impl StackView {
     /// Forground drawing
     ///
     /// Drawing functions are split into forground and background to
-    /// ease inserting layers under the stackview but above it's background
-    /// you probably just want to call draw()
-    pub fn draw_fg(&self, printer: &Printer) {
+    /// ease inserting layers under the stackview but above its background.
+    ///
+    /// You probably just want to call draw()
+    pub fn draw_fg(&self, printer: &Printer<'_, '_>) {
         let last = self.layers.len();
         printer.with_color(ColorStyle::primary(), |printer| {
             for (i, (v, offset)) in
@@ -490,14 +547,17 @@ impl StackView {
     }
 }
 
-struct StackPositionIterator<R: Deref<Target = Child>, I: Iterator<Item = R>> {
+/// Iterates on the layers and compute the position of each.
+struct StackPositionIterator<I> {
     inner: I,
     previous: Vec2,
     total_size: Vec2,
 }
 
-impl<R: Deref<Target = Child>, I: Iterator<Item = R>>
-    StackPositionIterator<R, I>
+impl<I> StackPositionIterator<I>
+where
+    I: Iterator,
+    I::Item: Deref<Target = Child>,
 {
     /// Returns a new StackPositionIterator
     pub fn new(inner: I, total_size: Vec2) -> Self {
@@ -510,12 +570,14 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>>
     }
 }
 
-impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
-    for StackPositionIterator<R, I>
+impl<I> Iterator for StackPositionIterator<I>
+where
+    I: Iterator,
+    I::Item: Deref<Target = Child>,
 {
-    type Item = (R, Vec2);
+    type Item = (I::Item, Vec2);
 
-    fn next(&mut self) -> Option<(R, Vec2)> {
+    fn next(&mut self) -> Option<(I::Item, Vec2)> {
         self.inner.next().map(|v| {
             let offset = v.placement.compute_offset(
                 v.size,
@@ -532,7 +594,7 @@ impl<R: Deref<Target = Child>, I: Iterator<Item = R>> Iterator
 }
 
 impl View for StackView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         // This function is included for compat with the view trait,
         // it should behave the same as calling them seperately, but does
         // not pause to let you insert in between the layers.
@@ -597,7 +659,7 @@ impl View for StackView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, mut callback: AnyCb<'a>,
+        &mut self, selector: &Selector<'_>, mut callback: AnyCb<'a>,
     ) {
         for layer in &mut self.layers {
             layer
@@ -606,7 +668,7 @@ impl View for StackView {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         for layer in &mut self.layers {
             if layer.view.focus_view(selector).is_ok() {
                 return Ok(());
@@ -620,7 +682,7 @@ impl View for StackView {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use views::TextView;
+    use crate::views::TextView;
 
     #[test]
     fn pop_add() {

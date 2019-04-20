@@ -1,10 +1,10 @@
-use direction::Direction;
-use event::{AnyCb, Event, EventResult};
-use rect::Rect;
+use crate::direction::Direction;
+use crate::event::{AnyCb, Event, EventResult};
+use crate::rect::Rect;
+use crate::vec::Vec2;
+use crate::view::{Selector, View};
+use crate::Printer;
 use std::any::Any;
-use vec::Vec2;
-use view::{Selector, View};
-use Printer;
 
 /// Generic wrapper around a view.
 ///
@@ -50,7 +50,7 @@ pub trait ViewWrapper: 'static {
     }
 
     /// Wraps the `draw` method.
-    fn wrap_draw(&self, printer: &Printer) {
+    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
         self.with_view(|v| v.draw(printer));
     }
 
@@ -79,20 +79,20 @@ pub trait ViewWrapper: 'static {
 
     /// Wraps the `find` method.
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector, callback: AnyCb<'a>,
+        &mut self, selector: &Selector<'_>, callback: AnyCb<'a>,
     ) {
         self.with_view_mut(|v| v.call_on_any(selector, callback));
     }
 
     /// Wraps the `focus_view` method.
-    fn wrap_focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn wrap_focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         self.with_view_mut(|v| v.focus_view(selector))
             .unwrap_or(Err(()))
     }
 
     /// Wraps the `needs_relayout` method.
     fn wrap_needs_relayout(&self) -> bool {
-        self.with_view(|v| v.needs_relayout()).unwrap_or(true)
+        self.with_view(View::needs_relayout).unwrap_or(true)
     }
 
     /// Wraps the `important_area` method.
@@ -104,7 +104,7 @@ pub trait ViewWrapper: 'static {
 
 // The main point of implementing ViewWrapper is to have View for free.
 impl<T: ViewWrapper> View for T {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         self.wrap_draw(printer);
     }
 
@@ -125,7 +125,8 @@ impl<T: ViewWrapper> View for T {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector, callback: Box<FnMut(&mut Any) + 'a>,
+        &mut self, selector: &Selector<'_>,
+        callback: Box<FnMut(&mut dyn Any) + 'a>,
     ) {
         self.wrap_call_on_any(selector, callback)
     }
@@ -134,7 +135,7 @@ impl<T: ViewWrapper> View for T {
         self.wrap_needs_relayout()
     }
 
-    fn focus_view(&mut self, selector: &Selector) -> Result<(), ()> {
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         self.wrap_focus_view(selector)
     }
 

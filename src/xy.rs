@@ -1,4 +1,4 @@
-use direction::Orientation;
+use crate::direction::Orientation;
 use std::iter;
 
 /// A generic structure with a value for each axis.

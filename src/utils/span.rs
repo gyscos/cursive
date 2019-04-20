@@ -16,10 +16,7 @@ pub struct SpannedString<T> {
 
 /// The immutable, borrowed equivalent of `SpannedString`.
 #[derive(Debug, PartialEq, Eq)]
-pub struct SpannedStr<'a, T>
-where
-    T: 'a,
-{
+pub struct SpannedStr<'a, T> {
     source: &'a str,
     spans: &'a [IndexedSpan<T>],
 }
@@ -36,8 +33,7 @@ pub trait SpannedText {
     fn spans(&self) -> &[Self::S];
 
     /// Returns a `SpannedText` by reference.
-    #[cfg_attr(feature = "cargo-clippy", allow(needless_lifetimes))]
-    fn as_ref<'a>(&'a self) -> SpannedTextRef<'a, Self> {
+    fn as_ref(&self) -> SpannedTextRef<'_, Self> {
         SpannedTextRef { r: self }
     }
 }
@@ -45,7 +41,7 @@ pub trait SpannedText {
 /// A reference to another `SpannedText`.
 pub struct SpannedTextRef<'a, C>
 where
-    C: 'a + SpannedText + ?Sized,
+    C: SpannedText + ?Sized,
 {
     r: &'a C,
 }
@@ -234,7 +230,7 @@ impl<T> SpannedString<T> {
     }
 
     /// Gives access to the parsed styled spans.
-    pub fn spans<'a>(&'a self) -> impl Iterator<Item = Span<'a, T>> {
+    pub fn spans(&self) -> impl Iterator<Item = Span<'_, T>> {
         let source = &self.source;
         self.spans.iter().map(move |span| span.resolve(source))
     }
@@ -288,7 +284,7 @@ impl<T> AsRef<IndexedCow> for IndexedSpan<T> {
 
 /// A resolved span borrowing its source string.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Span<'a, T: 'a> {
+pub struct Span<'a, T> {
     /// Content of this span.
     pub content: &'a str,
 
@@ -353,7 +349,7 @@ impl IndexedCow {
     /// Returns an indexed view of the given item.
     ///
     /// **Note**: it is assumed `cow`, if borrowed, is a substring of `source`.
-    pub fn from_cow(cow: Cow<str>, source: &str) -> Self {
+    pub fn from_cow(cow: Cow<'_, str>, source: &str) -> Self {
         match cow {
             Cow::Owned(value) => IndexedCow::Owned(value),
             Cow::Borrowed(value) => {

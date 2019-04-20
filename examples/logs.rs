@@ -16,8 +16,9 @@ fn main() {
     // As usual, create the Cursive root
     let mut siv = Cursive::default();
 
+    let cb_sink = siv.cb_sink().clone();
+
     // We want to refresh the page even when no input is given.
-    siv.set_fps(10);
     siv.add_global_callback('q', |s| s.quit());
 
     // A channel will communicate data from our running task to the UI.
@@ -25,7 +26,7 @@ fn main() {
 
     // Generate data in a separate thread.
     thread::spawn(move || {
-        generate_logs(&tx);
+        generate_logs(&tx, cb_sink);
     });
 
     // And sets the view to read from the other end of the channel.
@@ -36,7 +37,7 @@ fn main() {
 
 // We will only simulate log generation here.
 // In real life, this may come from a running task, a separate process, ...
-fn generate_logs(tx: &mpsc::Sender<String>) {
+fn generate_logs(tx: &mpsc::Sender<String>, cb_sink: cursive::CbSink) {
     let mut i = 1;
     loop {
         let line = format!("Interesting log line {}", i);
@@ -46,6 +47,7 @@ fn generate_logs(tx: &mpsc::Sender<String>) {
         if tx.send(line).is_err() {
             return;
         }
+        cb_sink.send(Box::new(Cursive::noop)).unwrap();
         thread::sleep(Duration::from_millis(30));
     }
 }

@@ -1,7 +1,7 @@
-use vec::Vec2;
-use view::{SizeConstraint, View, ViewWrapper};
-use With;
-use XY;
+use crate::vec::Vec2;
+use crate::view::{SizeConstraint, View, ViewWrapper};
+use crate::With;
+use crate::XY;
 
 /// Wrapper around another view, with a controlled size.
 ///
@@ -220,11 +220,7 @@ impl<T: View> ViewWrapper for BoxView<T> {
             .size
             .zip_map(child_size.zip(req), SizeConstraint::result);
 
-        debug!("{:?}", result);
-
-        if !self.squishable {
-            result
-        } else {
+        if self.squishable {
             // When we're squishable, special behaviour:
             //
 
@@ -234,6 +230,8 @@ impl<T: View> ViewWrapper for BoxView<T> {
             // If we respect the request, keep the result
             // Otherwise, take the child as squish attempt.
             respect_req.select_or(result, child_size)
+        } else {
+            result
         }
     }
 
@@ -250,9 +248,9 @@ impl<T: View> ViewWrapper for BoxView<T> {
 #[cfg(test)]
 mod tests {
 
-    use vec::Vec2;
-    use view::{Boxable, View};
-    use views::DummyView;
+    use crate::vec::Vec2;
+    use crate::view::{Boxable, View};
+    use crate::views::DummyView;
 
     // No need to test `draw()` method as it's directly forwarded.
 
@@ -316,7 +314,7 @@ mod tests {
 
     #[test]
     fn test_get_inner() {
-        use views::TextView;
+        use crate::views::TextView;
 
         let parent = TextView::new("abc").full_screen();
         let child = parent.get_inner();
@@ -324,7 +322,7 @@ mod tests {
     }
     #[test]
     fn test_get_inner_mut() {
-        use views::TextView;
+        use crate::views::TextView;
 
         let mut parent = TextView::new("").full_screen();
         let new_value = "new";

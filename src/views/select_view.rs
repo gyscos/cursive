@@ -1,20 +1,22 @@
-use align::{Align, HAlign, VAlign};
-use direction::Direction;
-use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
-use menu::MenuTree;
-use rect::Rect;
+use crate::align::{Align, HAlign, VAlign};
+use crate::direction::Direction;
+use crate::event::{
+    Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+};
+use crate::menu::MenuTree;
+use crate::rect::Rect;
+use crate::theme::ColorStyle;
+use crate::utils::markup::StyledString;
+use crate::vec::Vec2;
+use crate::view::{Position, View};
+use crate::views::MenuPopup;
+use crate::Cursive;
+use crate::Printer;
+use crate::With;
 use std::borrow::Borrow;
 use std::cell::Cell;
 use std::cmp::min;
 use std::rc::Rc;
-use theme::ColorStyle;
-use utils::markup::StyledString;
-use vec::Vec2;
-use view::{Position, View};
-use views::MenuPopup;
-use Cursive;
-use Printer;
-use With;
 
 /// View to select an item among a list.
 ///
@@ -59,11 +61,11 @@ pub struct SelectView<T = String> {
 
     // This is a custom callback to include a &T.
     // It will be called whenever "Enter" is pressed or when an item is clicked.
-    on_submit: Option<Rc<Fn(&mut Cursive, &T)>>,
+    on_submit: Option<Rc<dyn Fn(&mut Cursive, &T)>>,
 
     // This callback is called when the selection is changed.
     // TODO: add the previous selection? Indices?
-    on_select: Option<Rc<Fn(&mut Cursive, &T)>>,
+    on_select: Option<Rc<dyn Fn(&mut Cursive, &T)>>,
 
     // If `true`, when a character is pressed, jump to the next item starting
     // with this character.
@@ -347,7 +349,7 @@ impl<T: 'static> SelectView<T> {
         self.with(|s| s.add_all(iter))
     }
 
-    fn draw_item(&self, printer: &Printer, i: usize) {
+    fn draw_item(&self, printer: &Printer<'_, '_>, i: usize) {
         let l = self.items[i].label.width();
         let x = self.align.h.get_offset(l, printer.size.x);
         printer.print_hline((0, 0), x, " ");
@@ -670,7 +672,7 @@ impl SelectView<String> {
 }
 
 impl<T: 'static> View for SelectView<T> {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         self.last_offset.set(printer.offset);
 
         if self.popup {
@@ -678,10 +680,10 @@ impl<T: 'static> View for SelectView<T> {
             // We'll draw the full list in a popup if needed.
             let style = if !(self.enabled && printer.enabled) {
                 ColorStyle::secondary()
-            } else if !printer.focused {
-                ColorStyle::primary()
-            } else {
+            } else if printer.focused {
                 ColorStyle::highlight()
+            } else {
+                ColorStyle::primary()
             };
             let x = match printer.size.x.checked_sub(1) {
                 Some(x) => x,

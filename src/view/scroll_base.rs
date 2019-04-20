@@ -1,8 +1,8 @@
-use div::div_up;
+use crate::div::div_up;
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::Printer;
 use std::cmp::{max, min};
-use theme::ColorStyle;
-use vec::Vec2;
-use Printer;
 
 /// Provide scrolling functionalities to a view.
 ///
@@ -33,23 +33,6 @@ pub struct ScrollBase {
 
     /// Initial position of the cursor when dragging.
     pub thumb_grab: Option<usize>,
-}
-
-/// Defines the scrolling behaviour on content or size change
-#[derive(Debug)]
-pub enum ScrollStrategy {
-    /// Keeps the same row number
-    KeepRow,
-    /// Sticks to the top.
-    StickToTop,
-    /// Sticks to the bottom of the view.
-    StickToBottom,
-}
-
-impl Default for ScrollStrategy {
-    fn default() -> Self {
-        ScrollStrategy::KeepRow
-    }
 }
 
 impl ScrollBase {
@@ -241,9 +224,9 @@ impl ScrollBase {
     ///     printer.print((0,0), lines[i]);
     /// });
     /// ```
-    pub fn draw<F>(&self, printer: &Printer, line_drawer: F)
+    pub fn draw<F>(&self, printer: &Printer<'_, '_>, line_drawer: F)
     where
-        F: Fn(&Printer, usize),
+        F: Fn(&Printer<'_, '_>, usize),
     {
         if self.view_height == 0 {
             return;

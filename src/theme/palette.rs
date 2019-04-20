@@ -1,5 +1,6 @@
 use super::Color;
-use enum_map::EnumMap;
+use enum_map::{enum_map, Enum, EnumMap};
+use log::warn;
 use toml;
 
 use std::collections::HashMap;
@@ -102,7 +103,7 @@ impl Palette {
     ///
     /// This will update either the basic palette or the custom values.
     pub fn set_color(&mut self, key: &str, color: Color) {
-        use theme::PaletteColor::*;
+        use crate::theme::PaletteColor::*;
 
         match key {
             "background" => self.basic[Background] = color,
@@ -146,11 +147,11 @@ impl Palette {
 impl Default for Palette {
     fn default() -> Palette {
         use self::PaletteColor::*;
-        use theme::BaseColor::*;
-        use theme::Color::*;
+        use crate::theme::BaseColor::*;
+        use crate::theme::Color::*;
 
         Palette {
-            basic: enum_map!{
+            basic: enum_map! {
                 Background => Dark(Blue),
                 Shadow => Dark(Black),
                 View => Dark(White),
@@ -198,7 +199,7 @@ fn iterate_toml<'a>(
             }
             other => {
                 // Other - error?
-                debug!(
+                warn!(
                     "Found unexpected value in theme: {} = {:?}",
                     key, other
                 );

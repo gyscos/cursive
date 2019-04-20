@@ -1,6 +1,6 @@
-use direction::Direction;
-use event::{Event, EventResult, Key};
-use view::{View, ViewWrapper};
+use crate::direction::Direction;
+use crate::event::{Event, EventResult, Key};
+use crate::view::{View, ViewWrapper};
 
 /// Adds circular focus to a wrapped view.
 ///

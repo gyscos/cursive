@@ -1,17 +1,19 @@
-use direction::{Direction, Orientation};
-use event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent};
+use crate::direction::{Direction, Orientation};
+use crate::event::{
+    Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+};
+use crate::theme::ColorStyle;
+use crate::vec::Vec2;
+use crate::view::View;
+use crate::With;
+use crate::{Cursive, Printer};
 use std::rc::Rc;
-use theme::ColorStyle;
-use vec::Vec2;
-use view::View;
-use With;
-use {Cursive, Printer};
 
 /// A horizontal or vertical slider.
 pub struct SliderView {
     orientation: Orientation,
-    on_change: Option<Rc<Fn(&mut Cursive, usize)>>,
-    on_enter: Option<Rc<Fn(&mut Cursive, usize)>>,
+    on_change: Option<Rc<dyn Fn(&mut Cursive, usize)>>,
+    on_enter: Option<Rc<dyn Fn(&mut Cursive, usize)>>,
     value: usize,
     max_value: usize,
     dragging: bool,
@@ -112,7 +114,7 @@ impl SliderView {
 }
 
 impl View for SliderView {
-    fn draw(&self, printer: &Printer) {
+    fn draw(&self, printer: &Printer<'_, '_>) {
         match self.orientation {
             Orientation::Vertical => {
                 printer.print_vline((0, 0), self.max_value, "|")
@@ -169,9 +171,7 @@ impl View for SliderView {
                 event: MouseEvent::Hold(MouseButton::Left),
                 position,
                 offset,
-            }
-                if self.dragging =>
-            {
+            } if self.dragging => {
                 let position = position.saturating_sub(offset);
                 let position = self.orientation.get(&position);
                 let position = ::std::cmp::min(
@@ -185,9 +185,7 @@ impl View for SliderView {
                 event: MouseEvent::Press(MouseButton::Left),
                 position,
                 offset,
-            }
-                if position.fits_in_rect(offset, self.req_size()) =>
-            {
+            } if position.fits_in_rect(offset, self.req_size()) => {
                 if let Some(position) = position.checked_sub(offset) {
                     self.dragging = true;
                     self.value = self.orientation.get(&position);

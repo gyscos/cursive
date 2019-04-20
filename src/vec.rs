@@ -5,8 +5,8 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use num::traits::Zero;
 
-use div;
-use XY;
+use crate::div;
+use crate::XY;
 
 /// Simple 2D size, in cells.
 ///
@@ -184,6 +184,18 @@ impl<T: Ord> XY<T> {
     pub fn fits<O: Into<Self>>(&self, other: O) -> bool {
         let other = other.into();
         self.x >= other.x && self.y >= other.y
+    }
+
+    /// Returns `true` if `other` is strictly less than `self` in each axis.
+    pub fn strictly_lt<O: Into<Self>>(&self, other: O) -> bool {
+        let other = other.into();
+        self < &other
+    }
+
+    /// Returns `true` if `other` is strictly greater than `self` in each axis.
+    pub fn strictly_gt<O: Into<Self>>(&self, other: O) -> bool {
+        let other = other.into();
+        self > &other
     }
 
     /// Returns a new Vec2 that is a maximum per coordinate.

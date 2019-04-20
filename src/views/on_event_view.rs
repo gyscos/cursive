@@ -1,8 +1,8 @@
-use event::{Callback, Event, EventResult, EventTrigger};
+use crate::event::{Callback, Event, EventResult, EventTrigger};
+use crate::view::{View, ViewWrapper};
+use crate::Cursive;
+use crate::With;
 use std::rc::Rc;
-use view::{View, ViewWrapper};
-use Cursive;
-use With;
 
 /// A wrapper view that can react to events.
 ///
@@ -43,7 +43,7 @@ pub struct OnEventView<T: View> {
     callbacks: Vec<(EventTrigger, Action<T>)>,
 }
 
-type InnerCallback<T> = Rc<Box<Fn(&mut T, &Event) -> Option<EventResult>>>;
+type InnerCallback<T> = Rc<Box<dyn Fn(&mut T, &Event) -> Option<EventResult>>>;
 
 struct Action<T> {
     phase: TriggerPhase,
