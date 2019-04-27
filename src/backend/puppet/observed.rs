@@ -379,16 +379,16 @@ impl IndexMut<&Vec2> for ObservedScreen {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use backend::puppet::Backend;
-    use backend::puppet::DEFAULT_OBSERVED_STYLE;
+    use crate::backend::puppet::Backend;
+    use crate::backend::puppet::DEFAULT_OBSERVED_STYLE;
     use core::borrow::BorrowMut;
-    use event::Event;
+    use crate::event::Event;
     use std::time::Duration;
-    use view::*;
-    use views::TextArea;
-    use views::TextView;
-    use views::*;
-    use Cursive;
+    use crate::view::*;
+    use crate::views::TextArea;
+    use crate::views::TextView;
+    use crate::views::*;
+    use crate::Cursive;
 
     /// Expecting fake_screen to be square, # will be replaced with blank.
     fn get_observed_screen(fake_screen: &Vec<&str>) -> ObservedScreen {
