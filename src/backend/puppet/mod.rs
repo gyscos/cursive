@@ -96,7 +96,7 @@ impl backend::Backend for Backend {
 
     fn poll_event(&mut self) -> Option<Event> {
         match self.inner_receiver.try_recv() {
-            Ok(event) => Some(Event),
+            Ok(event) => event,
             Err(TryRecvError::Empty) => None,
             Err(e) => panic!(e)
         }
