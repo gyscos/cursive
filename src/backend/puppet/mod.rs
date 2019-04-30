@@ -7,7 +7,7 @@
 
 use std::thread;
 
-use crossbeam_channel::{self, Receiver, Sender};
+use crossbeam_channel::{self, Receiver, Sender, TryRecvError};
 
 use crate::backend;
 use crate::backend::puppet::observed::ObservedCell;
@@ -95,7 +95,11 @@ impl Backend {
 impl backend::Backend for Backend {
 
     fn poll_event(&mut self) -> Option<Event> {
-        self.inner_receiver.recv().ok().unwrap()
+        match self.inner_receiver.try_recv() {
+            Ok(event) => Some(Event),
+            Err(TryRecvError::Empty) => None,
+            Err(e) => panic!(e)
+        }
     }
 
     fn finish(&mut self) {}
