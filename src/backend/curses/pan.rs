@@ -135,7 +135,8 @@ impl Backend {
 
         if let Some(ev) = self.window.getch() {
             Some(match ev {
-                pancurses::Input::Character('\n') => Event::Key(Key::Enter),
+                pancurses::Input::Character('\n')
+                | pancurses::Input::Character('\r') => Event::Key(Key::Enter),
                 // TODO: wait for a very short delay. If more keys are
                 // pipelined, it may be an escape sequence.
                 pancurses::Input::Character('\u{7f}')
