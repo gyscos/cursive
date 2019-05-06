@@ -285,10 +285,13 @@ impl Cursive {
     /// Currently, this will show logs if [`logger::init()`](crate::logger::init()) was called.
     pub fn show_debug_console(&mut self) {
         self.add_layer(
-            views::Dialog::around(views::ScrollView::new(views::IdView::new(
-                DEBUG_VIEW_ID,
-                views::DebugView::new(),
-            )))
+            views::Dialog::around(
+                views::ScrollView::new(views::IdView::new(
+                    DEBUG_VIEW_ID,
+                    views::DebugView::new(),
+                ))
+                .scroll_x(true),
+            )
             .title("Debug console"),
         );
     }
