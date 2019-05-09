@@ -82,7 +82,7 @@ impl<'a> Iterator for Parser<'a> {
                     Tag::Rule => return Some(self.literal("---")),
                     Tag::BlockQuote => return Some(self.literal("> ")),
                     Tag::Link(_, _, _) => return Some(self.literal("[")),
-                    Tag::Code => return Some(self.literal("```")),
+                    Tag::CodeBlock(_) => return Some(self.literal("```")),
                     Tag::Strong => self.stack.push(Style::from(Effect::Bold)),
                     Tag::Paragraph if !self.first => {
                         return Some(self.literal("\n\n"))
@@ -96,7 +96,7 @@ impl<'a> Iterator for Parser<'a> {
                     Tag::Link(_, link, _) => {
                         return Some(self.literal(format!("]({})", link)))
                     }
-                    Tag::Code => return Some(self.literal("```")),
+                    Tag::CodeBlock(_) => return Some(self.literal("```")),
                     Tag::Emphasis | Tag::Strong => {
                         self.stack.pop().unwrap();
                     }
@@ -108,7 +108,8 @@ impl<'a> Iterator for Parser<'a> {
                 Event::FootnoteReference(text)
                 | Event::InlineHtml(text)
                 | Event::Html(text)
-                | Event::Text(text) => {
+                | Event::Text(text)
+                | Event::Code(text) => {
                     let text = match text {
                         CowStr::Boxed(text) => Cow::Owned(text.into()),
                         CowStr::Borrowed(text) => Cow::Borrowed(text),
