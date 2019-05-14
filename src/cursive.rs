@@ -903,6 +903,12 @@ impl Cursive {
                 .unwrap_or(false)
         {
             // We deserve to draw something!
+
+            if boring {
+                // We're only here because of a timeout.
+                self.on_event(Event::Refresh);
+            }
+
             self.refresh();
         }
 
