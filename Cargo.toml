@@ -76,6 +76,7 @@ signal-hook = "0.1.8"
 [dev-dependencies]
 rand = "0.6.5"
 pretty-bytes = "0.2.2"
+atty = "0.2.11"
 
 [features]
 blt-backend = ["bear-lib-terminal"]
