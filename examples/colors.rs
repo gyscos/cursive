@@ -1,8 +1,16 @@
 extern crate cursive;
 
+use cursive::align;
 use cursive::theme::{Color, ColorStyle};
+use cursive::traits::Identifiable;
 use cursive::view::Boxable;
+use cursive::views::BoxView;
 use cursive::views::Canvas;
+use cursive::views::DummyView;
+use cursive::views::Layer;
+use cursive::views::LinearLayout;
+use cursive::views::PaddedView;
+use cursive::views::TextView;
 use cursive::{Cursive, Printer};
 
 // This example will draw a colored square with a gradient.
@@ -24,6 +32,8 @@ fn main() {
     // Canvas lets us easily override any method.
     // Canvas can have states, but we don't need any here, so we use `()`.
     siv.add_layer(Canvas::new(()).with_draw(draw).fixed_size((20, 10)));
+
+    status_line(&mut siv);
 
     siv.run();
 }
@@ -71,4 +81,21 @@ fn back_color(x: u8, y: u8, x_max: u8, y_max: u8) -> Color {
         255 - y * (255 / y_max),
         255 - x * (255 / x_max),
     )
+}
+
+fn status_line(siv: &mut Cursive) {
+    // Status bar
+    let mut panes = LinearLayout::vertical();
+
+    panes.add_child(BoxView::with_full_screen(DummyView));
+    panes.add_child(Layer::new(PaddedView::new(
+        ((1, 1), (0, 0)),
+        TextView::new("© 2018 Cursive")
+            .h_align(align::HAlign::Right)
+            .with_id("status")
+            .full_width()
+            .fixed_height(1),
+    )));
+
+    siv.screen_mut().add_transparent_layer(panes);
 }

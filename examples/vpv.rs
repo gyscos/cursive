@@ -1,7 +1,14 @@
 use std::io;
 
+use cursive::align;
+use cursive::traits::Identifiable;
 use cursive::traits::{Boxable, With};
 use cursive::utils;
+use cursive::views::BoxView;
+use cursive::views::DummyView;
+use cursive::views::Layer;
+use cursive::views::PaddedView;
+use cursive::views::TextView;
 use cursive::views::{Canvas, Dialog, LinearLayout, ProgressBar};
 use cursive::Cursive;
 use pretty_bytes::converter::convert;
@@ -138,8 +145,27 @@ cargo run --example vpv </dev/zero >/dev/null",
             // When we're done, shut down the application
             cb_sink.send(Box::new(|s: &mut Cursive| s.quit())).unwrap();
         });
+        status_line(&mut siv);
         siv.set_autorefresh(true);
     }
 
     siv.run();
+}
+
+fn status_line(siv: &mut Cursive) {
+    // Status bar
+    let mut panes = LinearLayout::vertical();
+    let sline = format!("backend = {}; © 2018 Cursive", siv.backend_name());
+
+    panes.add_child(BoxView::with_full_screen(DummyView));
+    panes.add_child(Layer::new(PaddedView::new(
+        ((1, 1), (0, 0)),
+        TextView::new(sline)
+            .h_align(align::HAlign::Right)
+            .with_id("status")
+            .full_width()
+            .fixed_height(1),
+    )));
+
+    siv.screen_mut().add_transparent_layer(panes);
 }
