@@ -214,15 +214,63 @@ impl Cursive {
 
     /// Attempts to access the user-provided data.
     ///
-    /// If some data was set previously with the same type, returns a reference to it.
+    /// If some data was set previously with the same type, returns a
+    /// reference to it.
+    ///
     /// If nothing was set or if the type is different, returns `None`.
     pub fn user_data<T: Any>(&mut self) -> Option<&mut T> {
         self.user_data.downcast_mut()
     }
 
+    /// Attemps to take by value the current user-data.
+    ///
+    /// If successful, this will replace the current user-data with the unit
+    /// type `()`.
+    ///
+    /// If the current user data is not of the requested type, `None` will be
+    /// returned.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let mut siv = cursive::Cursive::dummy();
+    ///
+    /// // Start with a simple `Vec<i32>` as user data.
+    /// siv.set_user_data(vec![1i32, 2, 3]);
+    /// assert_eq!(siv.user_data::<Vec<i32>>(), Some(&mut vec![1i32, 2, 3]));
+    ///
+    /// // Let's mutate the data a bit.
+    /// siv.with_user_data(|numbers: &mut Vec<i32>| numbers.push(4));
+    ///
+    /// // If mutable reference is not enough, we can take the data by value.
+    /// let data: Vec<i32> = siv.take_user_data().unwrap();
+    /// assert_eq!(data, vec![1i32, 2, 3, 4]);
+    ///
+    /// // At this point the user data was removed and is no longer available.
+    /// assert_eq!(siv.user_data::<Vec<i32>>(), None);
+    /// ```
+    pub fn take_user_data<T: Any>(&mut self) -> Option<T> {
+        // Start by taking the user data and replacing it with a dummy.
+        let user_data = std::mem::replace(&mut self.user_data, Box::new(()));
+
+        // Downcast the data to the requested type.
+        // If it works, unbox it.
+        // It if doesn't, take it back.
+        user_data
+            .downcast()
+            .map_err(|user_data| {
+                // If we asked for the wrong type, put it back.
+                self.user_data = user_data;
+            })
+            .map(|boxed| *boxed)
+            .ok()
+    }
+
     /// Runs the given closure on the stored user data, if any.
     ///
-    /// If no user data was supplied, or if the type is different, nothing will be run.
+    /// If no user data was supplied, or if the type is different, nothing
+    /// will be run.
+    ///
     /// Otherwise, the result will be returned.
     pub fn with_user_data<F, T, R>(&mut self, f: F) -> Option<R>
     where
@@ -237,10 +285,13 @@ impl Cursive {
     /// Currently, this will show logs if [`logger::init()`](crate::logger::init()) was called.
     pub fn show_debug_console(&mut self) {
         self.add_layer(
-            views::Dialog::around(views::ScrollView::new(views::IdView::new(
-                DEBUG_VIEW_ID,
-                views::DebugView::new(),
-            )))
+            views::Dialog::around(
+                views::ScrollView::new(views::IdView::new(
+                    DEBUG_VIEW_ID,
+                    views::DebugView::new(),
+                ))
+                .scroll_x(true),
+            )
             .title("Debug console"),
         );
     }
@@ -852,6 +903,12 @@ impl Cursive {
                 .unwrap_or(false)
         {
             // We deserve to draw something!
+
+            if boring {
+                // We're only here because of a timeout.
+                self.on_event(Event::Refresh);
+            }
+
             self.refresh();
         }
 

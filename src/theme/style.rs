@@ -62,7 +62,7 @@ impl Style {
 impl From<Effect> for Style {
     fn from(effect: Effect) -> Self {
         Style {
-            effects: enum_set!(Effect, effect),
+            effects: enum_set!(effect),
             color: None,
         }
     }

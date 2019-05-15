@@ -1,6 +1,22 @@
 # Changelog
 
-# Next version (0.11.2)
+## 0.12.0
+
+### Breaking changes
+
+- Updated `enumset` from 0.3 to 0.4
+
+### API updates
+
+- Add `Cursive::take_user_data`, replaces the current user data with `()`.
+
+### Improvements
+
+- `DebugConsole` now has horizontal scrolling enabled.
+- `pancurses` backend now correctly recognizes the "Enter" key from the numpad
+  as "Enter".
+
+## 0.11.2
 
 ### API updates
 
