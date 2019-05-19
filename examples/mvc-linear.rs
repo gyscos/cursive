@@ -9,7 +9,7 @@ use std::sync::mpsc;
 // This example uses a LinearLayout to stick multiple views next to each other.
 // The example also shows a different setup with a form of model-view-controller implementation.
 // The model part of the equation was too small, so it's within the UI as a text item.
-// I copied the setup from a blog entry of David Simmons. 
+// I copied the setup from a blog entry of David Simmons.
 // With respect to linear.rs I added a 'q' or 'Q' to quit (besides the button)
 pub struct Ui {
     cursive: Cursive,
@@ -19,19 +19,19 @@ pub struct Ui {
 }
 
 pub enum UiMessage {
-    Quit()
+    Quit(),
 }
 
 impl Ui {
-    // Create a new Ui. It will use the Sender provided 
+    // Create a new Ui. It will use the Sender provided
     // to send message to the controller.
     pub fn new(controller_tx: mpsc::Sender<ControllerMessage>) -> Ui {
-
         // Normally, this would be part of the model in stead of part of the ui
         // like for instance a database
-        let text = "This is a very simple example of linear layout. Two views \
-                    are present, a short title above, and this text. The text \
-                    has a fixed width, and the title is centered horizontally.";
+        let text =
+            "This is a very simple example of linear layout. Two views \
+             are present, a short title above, and this text. The text \
+             has a fixed width, and the title is centered horizontally.";
 
         let (ui_tx, ui_rx) = mpsc::channel::<UiMessage>();
         let mut ui = Ui {
@@ -42,31 +42,40 @@ impl Ui {
         };
 
         // Create a dialog with a TextView serving as a title
-        ui.cursive.add_layer(Dialog::around(
+        ui.cursive.add_layer(
+            Dialog::around(
                 LinearLayout::vertical()
-                .child(TextView::new("Title").h_align(HAlign::Center))
-                .child(DummyView.fixed_height(1))
-                .child(TextView::new("Press q or <quit> to quit")
-                       .h_align(HAlign::Center)
-                      )
-                .child(DummyView.fixed_height(1))
-                .child(TextView::new(text))
-                .child(TextView::new(text).scrollable())
-                .child(TextView::new(text).scrollable())
-                .child(TextView::new(text).scrollable())
-                .fixed_width(30),
-                ).button("Quit", |s| s.quit())
+                    .child(TextView::new("Title").h_align(HAlign::Center))
+                    .child(DummyView.fixed_height(1))
+                    .child(
+                        TextView::new("Press q or <quit> to quit")
+                            .h_align(HAlign::Center),
+                    )
+                    .child(DummyView.fixed_height(1))
+                    .child(TextView::new(text))
+                    .child(TextView::new(text).scrollable())
+                    .child(TextView::new(text).scrollable())
+                    .child(TextView::new(text).scrollable())
+                    .fixed_width(30),
+            )
+            .button("Quit", |s| s.quit())
             .h_align(HAlign::Center),
-            );
+        );
 
         let controller_tx_clone = ui.controller_tx.clone();
-        ui.cursive.add_global_callback(cursive::event::Event::from('q'), move |_c| {
-            controller_tx_clone.send(ControllerMessage::Quit()).unwrap();
-        });
+        ui.cursive.add_global_callback(
+            cursive::event::Event::from('q'),
+            move |_c| {
+                controller_tx_clone.send(ControllerMessage::Quit()).unwrap();
+            },
+        );
         let controller_tx_clone = ui.controller_tx.clone();
-        ui.cursive.add_global_callback(cursive::event::Event::from('Q'), move |_c| {
-            controller_tx_clone.send(ControllerMessage::Quit()).unwrap();
-        });
+        ui.cursive.add_global_callback(
+            cursive::event::Event::from('Q'),
+            move |_c| {
+                controller_tx_clone.send(ControllerMessage::Quit()).unwrap();
+            },
+        );
         ui
     }
 
@@ -119,10 +128,9 @@ impl Controller {
                 // Handle messages arriving from the UI.
                 match message {
                     ControllerMessage::Quit() => {
-                        self.ui
-                            .cursive.quit();
-                    }   
-               };
+                        self.ui.cursive.quit();
+                    }
+                };
             }
         }
     }
