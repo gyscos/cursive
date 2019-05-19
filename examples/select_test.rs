@@ -3,6 +3,10 @@
 // To run this example call:
 // cargo test --example select_test -- --nocapture
 
+fn main() {
+    print!("To run this example call:\n$ cargo test --example select_test -- --nocapture\n");
+}
+
 #[cfg(test)]
 pub mod tests {
     extern crate cursive;
