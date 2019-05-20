@@ -52,9 +52,7 @@ pub fn immutify<F: FnMut(&mut Cursive)>(
 /// # Examples
 ///
 /// ```rust
-/// # #[macro_use]
-/// # extern crate cursive;
-/// # use cursive::Cursive;
+/// # use cursive::{Cursive, immut1};
 /// # fn main() {
 /// # let mut siv = Cursive::dummy();
 /// let mut i = 0;

@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::align::HAlign;
 use cursive::event::EventResult;
 use cursive::traits::*;

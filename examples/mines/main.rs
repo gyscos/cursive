@@ -1,6 +1,3 @@
-extern crate cursive;
-extern crate rand;
-
 mod game;
 
 use cursive::direction::Direction;
@@ -148,7 +145,7 @@ impl BoardView {
                 }
             }
         }
-        return EventResult::Consumed(None);
+        EventResult::Consumed(None)
     }
 
     fn auto_reveal(&mut self, pos: Vec2) -> EventResult {

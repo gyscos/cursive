@@ -39,8 +39,6 @@ pub fn make_lines(content: &str, width: usize) -> Vec<Row> {
 /// Example:
 ///
 /// ```
-/// # extern crate cursive;
-/// extern crate unicode_segmentation;
 /// use unicode_segmentation::UnicodeSegmentation;
 ///
 /// # use cursive::utils::lines::simple::prefix;

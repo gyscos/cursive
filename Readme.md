@@ -30,8 +30,6 @@ cursive = { git = "https://github.com/gyscos/Cursive" }
 ([You will also need ncurses installed.](https://github.com/gyscos/Cursive/wiki/Install-ncurses))
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 use cursive::views::{Dialog, TextView};
 

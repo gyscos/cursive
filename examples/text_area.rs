@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::event::{Event, Key};
 use cursive::traits::*;
 use cursive::views::{Dialog, EditView, OnEventView, TextArea};

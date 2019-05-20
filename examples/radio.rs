@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::views::{Dialog, DummyView, LinearLayout, RadioGroup};
 use cursive::Cursive;
 

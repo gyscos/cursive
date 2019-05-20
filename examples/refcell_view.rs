@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::view::{Boxable, Identifiable};
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 use cursive::Cursive;

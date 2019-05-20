@@ -1,6 +1,3 @@
-extern crate cursive;
-extern crate rand;
-
 use cursive::traits::*;
 use cursive::utils::Counter;
 use cursive::views::{Button, Dialog, LinearLayout, ProgressBar, TextView};
