@@ -43,8 +43,8 @@ pub struct Cursive {
 
     backend: Box<dyn backend::Backend>,
 
-    cb_source: Receiver<Box<dyn CbFunc>>,
-    cb_sink: Sender<Box<dyn CbFunc>>,
+    cb_source: Receiver<Box<dyn FnOnce(&mut Cursive) + Send>>,
+    cb_sink: Sender<Box<dyn FnOnce(&mut Cursive) + Send>>,
 
     // User-provided data.
     user_data: Box<Any>,
@@ -57,25 +57,7 @@ pub struct Cursive {
 pub type ScreenId = usize;
 
 /// Convenient alias to the result of `Cursive::cb_sink`.
-pub type CbSink = Sender<Box<dyn CbFunc>>;
-
-/// Asynchronous callback function trait.
-///
-/// Every `FnOnce(&mut Cursive) -> () + Send` automatically
-/// implements this.
-///
-/// This is a workaround only because `Box<FnOnce()>` is not
-/// working and `FnBox` is unstable.
-pub trait CbFunc: Send {
-    /// Calls the function.
-    fn call_box(self: Box<Self>, _: &mut Cursive);
-}
-
-impl<F: FnOnce(&mut Cursive) -> () + Send> CbFunc for F {
-    fn call_box(self: Box<Self>, siv: &mut Cursive) {
-        (*self)(siv)
-    }
-}
+pub type CbSink = Sender<Box<dyn FnOnce(&mut Cursive) + Send>>;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "blt-backend")] {
@@ -330,7 +312,7 @@ impl Cursive {
     /// let mut siv = Cursive::dummy();
     ///
     /// // quit() will be called during the next event cycle
-    /// siv.cb_sink().send(Box::new(|s: &mut Cursive| s.quit())).unwrap();
+    /// siv.cb_sink().send(Box::new(|s| s.quit())).unwrap();
     /// # }
     /// ```
     pub fn cb_sink(&self) -> &CbSink {
@@ -877,7 +859,7 @@ impl Cursive {
         // Then, handle any available callback
         while let Ok(cb) = self.cb_source.try_recv() {
             boring = false;
-            cb.call_box(self);
+            cb(self);
 
             if !self.running {
                 return true;

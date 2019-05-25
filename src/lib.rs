@@ -101,7 +101,7 @@ mod utf8;
 
 pub mod backend;
 
-pub use self::cursive::{CbFunc, CbSink, Cursive, ScreenId};
+pub use self::cursive::{CbSink, Cursive, ScreenId};
 pub use self::printer::Printer;
 pub use self::rect::Rect;
 pub use self::vec::Vec2;
