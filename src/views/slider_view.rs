@@ -63,6 +63,16 @@ impl SliderView {
         })
     }
 
+    /// Gets the current value.
+    pub fn get_value(&self) -> usize {
+        self.value
+    }
+
+    /// Gets the max value.
+    pub fn get_max_value(&self) -> usize {
+        self.max_value
+    }
+
     /// Sets a callback to be called when the slider is moved.
     pub fn on_change<F>(mut self, callback: F) -> Self
     where
