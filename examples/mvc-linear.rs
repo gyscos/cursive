@@ -123,6 +123,7 @@ impl Controller {
 
     /// Run the controller
     pub fn run(&mut self) {
+        self.ui.cursive.refresh();
         while self.ui.step() {
             while let Some(message) = self.rx.try_iter().next() {
                 // Handle messages arriving from the UI.
