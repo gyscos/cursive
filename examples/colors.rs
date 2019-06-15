@@ -1,6 +1,3 @@
-extern crate cursive;
-
-use cursive::align;
 use cursive::theme::{Color, ColorStyle};
 use cursive::traits::Identifiable;
 use cursive::view::Boxable;

@@ -54,7 +54,8 @@ fn main() {
                                 let duration = now - start;
 
                                 let seconds = duration.as_secs() as f64
-                                    + duration.subsec_nanos() as f64 * 1e-9;
+                                    + f64::from(duration.subsec_nanos())
+                                        * 1e-9;
 
                                 let speed = ticks / seconds;
 

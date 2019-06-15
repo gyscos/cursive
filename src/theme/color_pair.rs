@@ -13,7 +13,7 @@ pub struct ColorPair {
 impl ColorPair {
     /// Return an inverted color pair.
     ///
-    /// With swapped front abd back color.
+    /// With swapped front and back color.
     pub fn invert(self) -> Self {
         ColorPair {
             front: self.back,

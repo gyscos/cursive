@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::align::HAlign;
 use cursive::view::Scrollable;
 use cursive::views::{Dialog, Panel, TextView};

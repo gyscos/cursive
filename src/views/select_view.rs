@@ -25,7 +25,6 @@ use std::rc::Rc;
 /// # Examples
 ///
 /// ```rust
-/// # extern crate cursive;
 /// # use cursive::Cursive;
 /// # use cursive::views::{SelectView, Dialog, TextView};
 /// # use cursive::align::HAlign;

@@ -31,7 +31,6 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 /// [1]: https://github.com/gyscos/Cursive/blob/master/examples/edit.rs
 ///
 /// ```rust
-/// # extern crate cursive;
 /// # use cursive::Cursive;
 /// # use cursive::traits::*;
 /// # use cursive::views::{Dialog, EditView, TextView};

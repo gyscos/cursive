@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::views::{CircularFocus, Dialog, TextView};
 use cursive::Cursive;
 

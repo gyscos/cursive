@@ -33,8 +33,6 @@
 //! ## Examples
 //!
 //! ```rust
-//! extern crate cursive;
-//!
 //! use cursive::Cursive;
 //! use cursive::views::TextView;
 //!

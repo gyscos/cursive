@@ -6,8 +6,6 @@ In this first tutorial, we'll learn the basics of cursive,
 and write a very basic first application:
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 use cursive::views::TextView;
 
@@ -51,8 +49,6 @@ cursive = "*"
 Finally, update `src/main.rs` to import it:
 
 ```rust,no_run
-extern crate cursive;
-
 fn main() {
 }
 ```
@@ -75,8 +71,6 @@ so let's skip it for now.
 In its simplest form, a cursive application is therefore:
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 
 fn main() {
@@ -112,8 +106,6 @@ This method takes 2 arguments: a trigger, and a callback.
 In the end, we have:
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 
 fn main() {
@@ -153,8 +145,6 @@ exactly that.
 Once we've added this line, our first application is complete:
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 use cursive::views::TextView;
 

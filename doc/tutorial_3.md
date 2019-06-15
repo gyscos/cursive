@@ -9,8 +9,6 @@ them to update them.
 Here is the code we'll end up with:
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 use cursive::views::{Button, Dialog, DummyView, EditView,
                      LinearLayout, SelectView};

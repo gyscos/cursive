@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::theme::BaseColor;
 use cursive::theme::Color;
 use cursive::theme::Effect;

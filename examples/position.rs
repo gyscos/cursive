@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::view::Position;
 use cursive::views::LayerPosition;
 use cursive::views::TextView;
