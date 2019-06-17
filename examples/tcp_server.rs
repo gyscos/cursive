@@ -45,7 +45,7 @@ fn start_server(model: Arc<Mutex<Model>>) {
                 .cb_sink
                 .send(Box::new(move |s: &mut cursive::Cursive| {
                     s.add_layer(
-                        views::Dialog::text(&format!("{:?}", err))
+                        views::Dialog::text(format!("{:?}", err))
                             .title("Error in TCP server")
                             .button("Quit", |s| s.quit()),
                     );
@@ -135,7 +135,7 @@ fn build_selector(model: Arc<Mutex<Model>>) -> impl cursive::view::View {
         .child(views::Button::new("Test", |s| {
             if let Err(err) = test_server() {
                 s.add_layer(
-                    views::Dialog::info(&format!("{:?}", err))
+                    views::Dialog::info(format!("{:?}", err))
                         .title("Error running test."),
                 );
             }
