@@ -47,7 +47,7 @@ pub struct Cursive {
     cb_sink: Sender<Box<dyn CbFunc>>,
 
     // User-provided data.
-    user_data: Box<Any>,
+    user_data: Box<dyn Any>,
 
     fps: Option<NonZeroU32>,
     boring_frame_count: u32,

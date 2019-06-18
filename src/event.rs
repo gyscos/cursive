@@ -27,7 +27,7 @@ pub struct Callback(Rc<Box<dyn Fn(&mut Cursive)>>);
 // TODO: remove the Box when Box<T: Sized> -> Rc<T> is possible
 
 /// A boxed callback that can be run on `&mut Any`.
-pub type AnyCb<'a> = Box<FnMut(&mut dyn Any) + 'a>;
+pub type AnyCb<'a> = Box<dyn FnMut(&mut dyn Any) + 'a>;
 
 /// A trigger that only selects some types of events.
 pub struct EventTrigger(Box<dyn Fn(&Event) -> bool>);
