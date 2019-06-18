@@ -1,3 +1,4 @@
+use cursive::align::HAlign;
 use cursive::theme::{Color, ColorStyle};
 use cursive::traits::Identifiable;
 use cursive::view::Boxable;
@@ -88,7 +89,7 @@ fn status_line(siv: &mut Cursive) {
     panes.add_child(Layer::new(PaddedView::new(
         ((1, 1), (0, 0)),
         TextView::new("© 2018 Cursive")
-            .h_align(align::HAlign::Right)
+            .h_align(HAlign::Right)
             .with_id("status")
             .full_width()
             .fixed_height(1),
