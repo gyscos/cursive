@@ -3,7 +3,7 @@
 //! [Cursive] is a [TUI] library - it lets you easily build rich interfaces
 //! for use in a terminal.
 //!
-//! [Cursive]: https://github.com/gyscos/Cursive
+//! [Cursive]: https://github.com/gyscos/cursive
 //! [TUI]: https://en.wikipedia.org/wiki/Text-based_user_interface
 //!
 //! ## Getting started
