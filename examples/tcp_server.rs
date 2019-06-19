@@ -1,8 +1,7 @@
 use cursive::traits::*;
 use cursive::views;
 
-use std::io::Read as _;
-use std::io::Write as _;
+use std::io::{Read as _, Write as _};
 use std::sync::{Arc, Mutex};
 
 // This example builds a simple TCP server with some parameters and some output.
@@ -12,8 +11,8 @@ fn main() {
     let mut siv = cursive::Cursive::default();
 
     // Build a shared model
-    let model = Arc::new(Mutex::new(Model {
-        offset: 0,
+    let model = Arc::new(Mutex::new(ModelData {
+        offset: 10,
         logs: Vec::new(),
         cb_sink: siv.cb_sink().clone(),
     }));
@@ -30,18 +29,32 @@ fn main() {
     siv.run();
 }
 
-struct Model {
+struct ModelData {
+    /// The offset will be controlled by the UI and used in the server
     offset: u8,
-    logs: Vec<(u8, u8)>,
+    /// Logs will be filled by the server and displayed on the UI
+    logs: Vec<LogEntry>,
+    /// A callback sink is used to control the UI from the server
+    /// (eg. force refresh, error popups)
     cb_sink: cursive::CbSink,
 }
 
-fn start_server(model: Arc<Mutex<Model>>) {
+// Here we use a single mutex, but bigger models might
+// prefer individual mutexes for different variables.
+type Model = Arc<Mutex<ModelData>>;
+
+#[derive(Clone, Copy)]
+struct LogEntry {
+    input: u8,
+    output: u8,
+}
+
+/// Starts serving on a separate thread, and show a popup on error.
+fn start_server(model: Model) {
     std::thread::spawn(move || {
         if let Err(err) = serve(Arc::clone(&model)) {
+            let model = model.lock().unwrap();
             model
-                .lock()
-                .unwrap()
                 .cb_sink
                 .send(Box::new(move |s: &mut cursive::Cursive| {
                     s.add_layer(
@@ -55,18 +68,30 @@ fn start_server(model: Arc<Mutex<Model>>) {
     });
 }
 
-fn serve(model: Arc<Mutex<Model>>) -> std::io::Result<()> {
+/// Starts a simple, single-threaded TCP server.
+/// Adds a configurable offset to each byte received and sent it back.
+fn serve(model: Model) -> std::io::Result<()> {
+    // Bind on some local address
     let listener = std::net::TcpListener::bind("localhost:1234")?;
 
+    // Handle each connection sequentially
     for stream in listener.incoming() {
         let stream = stream?;
 
+        // Process each byte according to the current model.
         for byte in (&stream).bytes() {
             let byte = byte?;
             let mut model = model.lock().unwrap();
             let response = byte.wrapping_add(model.offset);
-            model.logs.push((byte, response));
             (&stream).write_all(&[response])?;
+
+            // Save processed jobs
+            model.logs.push(LogEntry {
+                input: byte,
+                output: response,
+            });
+
+            // Send a noop to refresh the display
             model
                 .cb_sink
                 .send(Box::new(cursive::Cursive::noop))
@@ -77,6 +102,42 @@ fn serve(model: Arc<Mutex<Model>>) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Build the UI for the given model.
+fn build_ui(model: Model) -> impl cursive::view::View {
+    // Build the UI in 3 parts, stacked together in a LinearLayout.
+    views::LinearLayout::vertical()
+        .child(build_selector(Arc::clone(&model)))
+        .child(build_tester(Arc::clone(&model)))
+        .child(views::DummyView.fixed_height(1))
+        .child(build_log_viewer(Arc::clone(&model)))
+}
+
+/// Build a view that shows processed jobs from the model.
+fn build_log_viewer(model: Model) -> impl cursive::view::View {
+    views::Canvas::new(model)
+        .with_draw(|model, printer| {
+            let model = model.lock().unwrap();
+            for (i, &log) in model.logs.iter().enumerate() {
+                printer.print(
+                    (0, i),
+                    &format!(
+                        "{:3} '{}'  ->  {:3} '{}'",
+                        log.input,
+                        readable_char(log.input),
+                        log.output,
+                        readable_char(log.output),
+                    ),
+                );
+            }
+        })
+        .with_required_size(|model, _req| {
+            let model = model.lock().unwrap();
+            cursive::Vec2::new(20, model.logs.len())
+        })
+        .scrollable()
+}
+
+/// Pretty print an ascii u8 if possible.
 fn readable_char(byte: u8) -> char {
     if byte.is_ascii_control() {
         '�'
@@ -85,34 +146,13 @@ fn readable_char(byte: u8) -> char {
     }
 }
 
-fn build_log_viewer(model: Arc<Mutex<Model>>) -> impl cursive::view::View {
-    views::Canvas::new(model)
-        .with_draw(|model, printer| {
-            let model = model.lock().unwrap();
-            for (i, &(byte, answer)) in model.logs.iter().enumerate() {
-                printer.print(
-                    (0, i),
-                    &format!(
-                        "{:3} '{}' -> {:3} '{}'",
-                        byte,
-                        readable_char(byte),
-                        answer,
-                        readable_char(answer),
-                    ),
-                );
-            }
-        })
-        .with_required_size(|model, _req| {
-            let model = model.lock().unwrap();
-            cursive::Vec2::new(10, model.logs.len())
-        })
-}
-
-fn build_selector(model: Arc<Mutex<Model>>) -> impl cursive::view::View {
+/// Build a view that can update the model.
+fn build_selector(model: Model) -> impl cursive::view::View {
+    let offset = model.lock().unwrap().offset;
     views::LinearLayout::horizontal()
         .child(
             views::EditView::new()
-                .content("0")
+                .content(format!("{}", offset))
                 .with_id("edit")
                 .min_width(5),
         )
@@ -131,6 +171,23 @@ fn build_selector(model: Arc<Mutex<Model>>) -> impl cursive::view::View {
                 ));
             }
         }))
+}
+
+/// Build a view that can run test connections.
+fn build_tester(model: Model) -> impl cursive::view::View {
+    views::LinearLayout::horizontal()
+        .child(views::TextView::new("Current value:"))
+        .child(views::DummyView.fixed_width(1))
+        .child(
+            views::Canvas::new(model)
+                .with_draw(|model, printer| {
+                    printer.print(
+                        (0, 0),
+                        &format!("{}", model.lock().unwrap().offset),
+                    )
+                })
+                .with_required_size(|_, _| cursive::Vec2::new(3, 1)),
+        )
         .child(views::DummyView.fixed_width(1))
         .child(views::Button::new("Test", |s| {
             if let Err(err) = test_server() {
@@ -142,18 +199,13 @@ fn build_selector(model: Arc<Mutex<Model>>) -> impl cursive::view::View {
         }))
 }
 
+/// Run a test connection.
 fn test_server() -> std::io::Result<()> {
     let mut stream = std::net::TcpStream::connect("localhost:1234")?;
-    for &byte in &[1, 2, 3, b'a', b'c', b'd'] {
+    for &byte in b"cursive123" {
         let mut buf = [0];
         stream.write_all(&[byte])?;
         stream.read_exact(&mut buf)?;
     }
     Ok(())
-}
-
-fn build_ui(model: Arc<Mutex<Model>>) -> impl cursive::view::View {
-    views::LinearLayout::vertical()
-        .child(build_selector(Arc::clone(&model)))
-        .child(build_log_viewer(Arc::clone(&model)))
 }
