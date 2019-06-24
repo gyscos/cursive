@@ -40,6 +40,39 @@ where
         self.core.content_viewport()
     }
 
+    /// Returns the size of the content view, as it was on the last layout
+    /// phase.
+    ///
+    /// This is only the size the content _thinks_ it has, and may be larger
+    /// than the actual size used by this `ScrollView`.
+    pub fn inner_size(&self) -> Vec2 {
+        self.core.inner_size()
+    }
+
+    /// Returns `true` if the top row of the content is in view.
+    pub fn is_at_top(&self) -> bool {
+        self.content_viewport().top() == 0
+    }
+
+    /// Returns `true` if the bottom row of the content is in view.
+    pub fn is_at_bottom(&self) -> bool {
+        // The viewport indicates which row is in view.
+        // So the bottom row will be (height - 1)
+        (1 + self.content_viewport().bottom()) >= self.inner_size().y
+    }
+
+    /// Return `true` if the left-most column of the content is in view.
+    pub fn is_at_left_edge(&self) -> bool {
+        self.content_viewport().left() == 0
+    }
+
+    /// Return `true` if the right-most column of the content is in view.
+    pub fn is_at_right_edge(&self) -> bool {
+        // The viewport indicates which row is in view.
+        // So the right-most column will be (width - 1)
+        (1 + self.content_viewport().right()) >= self.inner_size().x
+    }
+
     /// Defines the way scrolling is adjusted on content or size change.
     ///
     /// The scroll strategy defines how the scrolling position is adjusted
