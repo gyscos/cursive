@@ -9,6 +9,7 @@
 ### API updates
 
 - Add `Cursive::take_user_data`, replaces the current user data with `()`.
+- Add `SliderView::{get_value, get_max_value}`.
 
 ### Improvements
 
