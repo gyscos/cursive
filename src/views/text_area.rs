@@ -303,10 +303,8 @@ impl TextArea {
     }
 
     fn backspace(&mut self) {
-        if self.cursor != 0 {
             self.move_left();
             self.delete();
-        }
     }
 
     fn delete(&mut self) {
