@@ -26,7 +26,11 @@ pub trait Scroller {
 
 /// Core system for scrolling views.
 ///
-/// See also [`ScrollView`](crate::views::ScrollView).
+/// This is the lowest-level element handling scroll logic.
+///
+/// Higher-level abstractions are probably what you're after.
+///
+/// In particular, see also [`ScrollView`](crate::views::ScrollView).
 #[derive(Debug)]
 pub struct Core {
     /// This is the size the child thinks we're giving him.
@@ -93,7 +97,8 @@ impl Core {
 
     /// Returns a sub-printer ready to draw the content.
     pub fn sub_printer<'a, 'b>(
-        &self, printer: &Printer<'a, 'b>,
+        &self,
+        printer: &Printer<'a, 'b>,
     ) -> Printer<'a, 'b> {
         // Draw scrollbar?
         let scrolling = self.is_scrolling();
@@ -180,7 +185,9 @@ impl Core {
 
     /// Handle an event after processing by the content.
     pub fn on_inner_event(
-        &mut self, event: Event, inner_result: EventResult,
+        &mut self,
+        event: Event,
+        inner_result: EventResult,
         important_area: Rect,
     ) -> EventResult {
         match inner_result {
@@ -358,7 +365,9 @@ impl Core {
 
     /// Performs `View::call_on_any()`
     pub fn call_on_any<'a, F>(
-        &mut self, selector: &Selector<'_>, cb: AnyCb<'a>,
+        &mut self,
+        selector: &Selector<'_>,
+        cb: AnyCb<'a>,
         inner_call_on_any: F,
     ) where
         F: FnOnce(&Selector, AnyCb),
@@ -368,7 +377,9 @@ impl Core {
 
     /// Performs `View::focus_view()`
     pub fn focus_view<F>(
-        &mut self, selector: &Selector<'_>, inner_focus_view: F,
+        &mut self,
+        selector: &Selector<'_>,
+        inner_focus_view: F,
     ) -> Result<(), ()>
     where
         F: FnOnce(&Selector) -> Result<(), ()>,
@@ -402,7 +413,8 @@ impl Core {
 
     /// Sets the padding between content and scrollbar.
     pub fn set_scrollbar_padding<V: Into<Vec2>>(
-        &mut self, scrollbar_padding: V,
+        &mut self,
+        scrollbar_padding: V,
     ) {
         self.scrollbar_padding = scrollbar_padding.into();
     }
@@ -411,7 +423,8 @@ impl Core {
     ///
     /// Chainable variant.
     pub fn scrollbar_padding<V: Into<Vec2>>(
-        self, scrollbar_padding: V,
+        self,
+        scrollbar_padding: V,
     ) -> Self {
         self.with(|s| s.set_scrollbar_padding(scrollbar_padding))
     }

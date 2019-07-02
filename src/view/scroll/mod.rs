@@ -1,8 +1,21 @@
 //! Core mechanisms to implement scrolling.
 //!
 //! *This module is still unstable and may go through breaking changes.*
+//! In addition, it is private unless you enable the `unstable_scroll` feature.
 //!
-//! This module defines [`Core`](crate::view::scroll::Core) and related traits.
+//! This modules defines:
+//!
+//! * [`scroll::Core`](crate::view::scroll::Core): stores the state variables
+//!   required to handle scrolling. Any view that needs to implement scrolling
+//!   should embed a `scroll::Core`.
+//!     * [`scroll::Scroller`](crate::view::scroll::Scroller): a trait for
+//!       something that embeds a such a `scroll::Core`.
+//! * Some free functions to help implement the usual `View` trait for a type
+//!   implementing `scroll::Scroller`.
+//!   Some methods, like `View::call_on_any`, are not affected by scrolling
+//!   and are not covered here.
+//!     * The functions defined here will usually take a reference to the
+//!       `Scroller` object, as well as closures to implement the "inner view".
 //!
 //! [`ScrollView`](crate::views::ScrollView) may be an easier way to add scrolling to an existing view.
 
@@ -41,7 +54,9 @@ impl Default for ScrollStrategy {
 /// }
 /// ```
 pub fn on_event<T, OnEvent, ImportantArea>(
-    scroller: &mut T, event: Event, on_event: OnEvent,
+    scroller: &mut T,
+    event: Event,
+    on_event: OnEvent,
     important_area: ImportantArea,
 ) -> EventResult
 where
@@ -60,7 +75,9 @@ where
 
 /// Performs `View::important_area` on a `scroll::Scroller`.
 pub fn important_area<T, ImportantArea>(
-    scroller: &T, size: Vec2, mut important_area: ImportantArea,
+    scroller: &T,
+    size: Vec2,
+    mut important_area: ImportantArea,
 ) -> Rect
 where
     T: Scroller,
@@ -79,7 +96,10 @@ where
 
 /// Performs `View::layout` on a `scroll::Scroller`.
 pub fn layout<T, Layout, RequiredSize>(
-    scroller: &mut T, size: Vec2, needs_relayout: bool, layout: Layout,
+    scroller: &mut T,
+    size: Vec2,
+    needs_relayout: bool,
+    layout: Layout,
     required_size: RequiredSize,
 ) where
     T: Scroller,
@@ -98,7 +118,9 @@ pub fn layout<T, Layout, RequiredSize>(
 
 /// Performs `View::required_size` on a `scroll::Scroller`.
 pub fn required_size<T, RequiredSize>(
-    scroller: &mut T, size: Vec2, needs_relayout: bool,
+    scroller: &mut T,
+    size: Vec2,
+    needs_relayout: bool,
     required_size: RequiredSize,
 ) -> Vec2
 where
@@ -127,7 +149,9 @@ where
 ///
 /// This is an alternative to `scroll::draw()` when you just need to print individual lines.
 pub fn draw_lines<T, LineDrawer>(
-    scroller: &T, printer: &Printer, mut line_drawer: LineDrawer,
+    scroller: &T,
+    printer: &Printer,
+    mut line_drawer: LineDrawer,
 ) where
     T: Scroller,
     LineDrawer: FnMut(&T, &Printer, usize),
@@ -146,8 +170,11 @@ pub fn draw_lines<T, LineDrawer>(
 ///
 /// `left_border` will be called for each row to draw the left border for the given line number.
 pub fn draw_frame<T, LeftBorder, TopBorder, RightBorder, BottomBorder>(
-    scroller: &T, printer: &Printer, mut left_border: LeftBorder,
-    mut top_border: TopBorder, mut right_border: RightBorder,
+    scroller: &T,
+    printer: &Printer,
+    mut left_border: LeftBorder,
+    mut top_border: TopBorder,
+    mut right_border: RightBorder,
     mut bottom_border: BottomBorder,
 ) where
     T: Scroller,
@@ -197,7 +224,9 @@ pub fn draw_frame<T, LeftBorder, TopBorder, RightBorder, BottomBorder>(
 ///
 /// It will print a box with the appropriate `├`, `┤` and so on.
 pub fn draw_box_frame<T, IsHDelim, IsVDelim>(
-    scroller: &T, printer: &Printer, is_h_delim: IsHDelim,
+    scroller: &T,
+    printer: &Printer,
+    is_h_delim: IsHDelim,
     is_v_delim: IsVDelim,
 ) where
     T: Scroller,
