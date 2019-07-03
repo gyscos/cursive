@@ -445,8 +445,11 @@ impl CustList {
 //// Start of Ui definitions
 //////////////////////////////////////////////////
 
+use cursive::align::HAlign;
 use cursive::traits::*;
 use cursive::views;
+use cursive::views::Dialog;
+use cursive::views::DummyView;
 use cursive::views::TextView;
 use cursive::Cursive;
 
@@ -471,7 +474,8 @@ impl Ui {
         // define the view showing the data
         ui.siv.add_global_callback('q', Cursive::quit);
         ui.siv.add_layer(TextView::new("Hello World!"));
-        ui.siv.add_layer(Ui::define_data_view(&ui.fields));
+        ui.siv
+            .add_layer(Dialog::around(Ui::define_data_view(&ui.fields)));
         ui
     }
 
@@ -543,13 +547,18 @@ impl Ui {
         if maxlen < 10 {
             maxlen = 10;
         }
-        view = view.child(TextView::new(title).with_id("title"));
+        view = view
+            .child(
+                TextView::new(title)
+                    .h_align(HAlign::Center)
+                    .with_id("title"),
+            )
+            .child(DummyView.fixed_height(1));
         for field in &fields.fields {
-            view = view
-                .child(TextView::new(field.name.clone()).fixed_width(maxlen))
-                .child(TextView::new(" :"));
+            let text = format!("{}: ", field.name.clone());
+            view = view.child(TextView::new(text).fixed_width(maxlen))
         }
-        view
+        view.fixed_width(30)
     }
 
     pub fn run(&mut self) {
