@@ -29,6 +29,11 @@ fn markup() {
 }
 
 pub fn main() {
+    // Better not to use this. For ncurses background
+    // it seems to work from Linux (tested in Fedora).
+    // But, the other backends might barf.
     let handle = thread::spawn(|| markup());
+    // The join is necessary, or the tui might not even
+    // finish its initialization before main calls it a day!
     handle.join().unwrap();
 }
