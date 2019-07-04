@@ -450,6 +450,7 @@ use cursive::traits::*;
 use cursive::views;
 use cursive::views::Dialog;
 use cursive::views::DummyView;
+use cursive::views::EditView;
 use cursive::views::TextView;
 use cursive::Cursive;
 
@@ -475,7 +476,7 @@ impl Ui {
         ui.siv.add_global_callback('q', Cursive::quit);
         ui.siv.add_layer(TextView::new("Hello World!"));
         ui.siv
-            .add_layer(Dialog::around(Ui::define_data_view(&ui.fields)));
+            .add_layer(Ui::define_data_dialog(&ui.fields, &ui.data));
         ui
     }
 
@@ -502,31 +503,15 @@ impl Ui {
         let _response = match response {
             Response::DataResponse(Some(data)) => Some(data),
             Response::DataResponse(None) => None,
-            Response::SelectDataResponse(_) => {
-                panic!("received selectdata response when dataresponse was expected");
-            }
-            Response::UpdateOk(msg) => {
-                eprintln!("{}", msg);
-                None
-            }
-            Response::UpdateNok(msg) => {
-                eprintln!("{}", msg);
-                None
-            }
-            Response::RemoveOk(msg) => {
-                eprintln!("{}", msg);
-                None
-            }
-            Response::RemoveNok(msg) => {
-                eprintln!("{}", msg);
-                None
-            }
             Response::ErrorResponse(err) => {
                 eprintln!("{}", err);
                 None
             }
+            _ => {
+                eprintln!("unexpected response to load of data");
+                None
+            }
         };
-        // Do something to add data to view
         _response
     }
 
@@ -534,9 +519,26 @@ impl Ui {
         Ui::load_first(&mut self.model)
     }
 
-    pub fn define_data_view(fields: &DataFields) -> impl cursive::view::View {
+    fn define_data_dialog(
+        fields: &DataFields,
+        data: &Option<Data>,
+    ) -> impl cursive::view::View {
+        Dialog::new()
+            .title("Detail View")
+            .padding((1, 1, 1, 0))
+            .content(Ui::define_data_view(fields, data))
+            .button("Quit (q)", |s| {
+                s.quit();
+            })
+            .button("Next", |_s| {})
+            .button("Prev", |_s| {})
+    }
+
+    fn define_data_view(
+        fields: &DataFields,
+        data: &Option<Data>,
+    ) -> impl cursive::view::View {
         let mut view = views::LinearLayout::vertical();
-        let title = "Detail View";
         let mut maxlen: usize = 0;
         for field in &fields.fields {
             maxlen = match field.name.len() > maxlen {
@@ -544,19 +546,17 @@ impl Ui {
                 false => maxlen,
             }
         }
-        if maxlen < 10 {
-            maxlen = 10;
+        if maxlen < 20 {
+            maxlen = 20;
         }
-        view = view
-            .child(
-                TextView::new(title)
-                    .h_align(HAlign::Center)
-                    .with_id("title"),
-            )
-            .child(DummyView.fixed_height(1));
         for field in &fields.fields {
             let text = format!("{}: ", field.name.clone());
-            view = view.child(TextView::new(text).fixed_width(maxlen))
+            let id = format!("id_{}", field.name.clone());
+            let mut hview = views::LinearLayout::horizontal();
+            hview = hview
+                .child(TextView::new(text).fixed_width(maxlen))
+                .child(EditView::new().with_id(id).min_width(10));
+            view = view.child(hview);
         }
         view.fixed_width(30)
     }
