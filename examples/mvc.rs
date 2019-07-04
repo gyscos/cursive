@@ -102,6 +102,21 @@ impl UiModel<ModelEvent> {
             .unwrap();
         receiver.recv().unwrap()
     }
+
+    pub fn get_next(
+        &mut self,
+        record_name: String,
+        current: Data,
+    ) -> Response {
+        if record_name != "CustList" {
+            panic!("Record name not valid: {}", record_name);
+        }
+        let (sender, receiver) = mpsc::channel::<Response>();
+        self.request
+            .send(ModelEvent::GetNext("CustList".to_string(), current, sender))
+            .unwrap();
+        receiver.recv().unwrap()
+    }
 }
 
 trait DataDescription {
@@ -129,6 +144,7 @@ pub struct DataFields {
 }
 
 /// The concrete data as per a definition of DataFields.
+#[derive(Clone)]
 pub struct Data {
     pub data: Vec<String>,
 }
@@ -238,7 +254,7 @@ impl CustList {
                 next = true;
             }
         }
-        // unfortunately not found
+        // not found
         None
     }
 
@@ -461,25 +477,23 @@ pub struct Ui {
 
 impl Ui {
     pub fn new(mut model: UiModel<ModelEvent>) -> Ui {
-        let fields = Ui::get_fields(&mut model);
-        let data = Ui::load_first(&mut model);
-        let mut ui = Ui {
+        let fields = DataFields {
+            identifier: None,
+            fields: vec![],
+        };
+        let data = None;
+        let ui = Ui {
             siv: cursive::Cursive::default(),
             model,
             fields,
             data,
         };
-        // define the view showing the data
-        ui.siv.add_global_callback('q', Cursive::quit);
-        ui.siv.add_layer(TextView::new("Hello World!"));
-        ui.siv
-            .add_layer(Ui::define_data_dialog(&ui.fields, &ui.data));
         ui
     }
 
-    pub fn get_fields(model: &mut UiModel<ModelEvent>) -> DataFields {
+    fn get_fields(&mut self) -> DataFields {
         // send GetFields and process response
-        let response = model.get_fields("CustList".to_string());
+        let response = self.model.get_fields("CustList".to_string());
         match response {
             ResponseMeta::DataFields(data_fields) => data_fields,
             ResponseMeta::DataFieldNames(_) => {
@@ -494,8 +508,8 @@ impl Ui {
         }
     }
 
-    pub fn load_first(model: &mut UiModel<ModelEvent>) -> Option<Data> {
-        let response = model.get_first("CustList".to_string());
+    fn load_first(&mut self) -> Option<Data> {
+        let response = self.model.get_first("CustList".to_string());
         match response {
             Response::DataResponse(Some(data)) => Some(data),
             Response::DataResponse(None) => None,
@@ -504,38 +518,30 @@ impl Ui {
                 None
             }
             _ => {
+                // TODO: this should be in a status line
                 eprintln!("unexpected response to load of data");
                 None
             }
         }
     }
 
-    pub fn get_first(&mut self) -> Option<Data> {
-        Ui::load_first(&mut self.model)
-    }
-
-    fn define_data_dialog(
-        fields: &DataFields,
-        data: &Option<Data>,
-    ) -> impl cursive::view::View {
+    fn define_data_dialog(&mut self) -> impl cursive::view::View {
         Dialog::new()
             .title("Detail View")
             .padding((1, 1, 1, 0))
-            .content(Ui::define_data_view(fields, data))
+            .content(self.define_data_view())
             .button("Quit (q)", |s| {
                 s.quit();
             })
-            .button("Next", |_s| {})
-            .button("Prev", |_s| {})
+            // TODO: HOW to use Ui::get_next?
+            .button("First", |_s| self.data = self.get_first())
+            .button("Next", |_s| self.data = self.get_next())
     }
 
-    fn define_data_view(
-        fields: &DataFields,
-        data: &Option<Data>,
-    ) -> impl cursive::view::View {
+    fn define_data_view(&mut self) -> impl cursive::view::View {
         let mut view = views::LinearLayout::vertical();
         let mut maxlen: usize = 0;
-        for field in &fields.fields {
+        for field in &self.fields.fields {
             maxlen = if field.name.len() > maxlen {
                 field.name.len()
             } else {
@@ -545,11 +551,11 @@ impl Ui {
         if maxlen < 20 {
             maxlen = 20;
         }
-        for (count, field) in fields.fields.iter().enumerate() {
+        for (count, field) in self.fields.fields.iter().enumerate() {
             let text = format!("{}: ", field.name.clone());
             let id = format!("id_{}", field.name.clone());
             let fld_data: String;
-            if let Some(d) = data {
+            if let Some(d) = &self.data {
                 fld_data = d.data[count].clone();
             } else {
                 fld_data = String::new();
@@ -568,7 +574,40 @@ impl Ui {
         view.fixed_width(30)
     }
 
+    fn get_first(&mut self) -> Option<Data> {
+        self.load_first()
+    }
+
+    fn get_next(&mut self) -> Option<Data> {
+        let before: Data;
+        if let Some(data) = &self.data {
+            before = data.clone();
+        } else {
+            return None;
+        }
+
+        let response = self.model.get_next("CustList".to_string(), before);
+        match response {
+            Response::DataResponse(Some(data)) => Some(data),
+            Response::DataResponse(None) => None,
+            Response::ErrorResponse(err) => {
+                eprintln!("{}", err);
+                None
+            }
+            _ => {
+                // TODO: this should be in a status line
+                eprintln!("unexpected response to load of data");
+                None
+            }
+        }
+    }
+
     pub fn run(&mut self) {
+        // define the view showing the data
+        self.siv.add_global_callback('q', Cursive::quit);
+        self.siv.add_layer(TextView::new("Hello World!"));
+        let dialog = self.define_data_dialog();
+        self.siv.add_layer(dialog);
         self.siv.run();
     }
 }
@@ -580,5 +619,7 @@ pub fn main() {
         cust_list.run();
     });
     let mut ui = Ui::new(ui_model);
+    ui.fields = ui.get_fields();
+    ui.data = ui.get_first();
     ui.run();
 }
