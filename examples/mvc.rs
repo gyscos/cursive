@@ -180,17 +180,16 @@ impl CustList {
             request_queue: receiver,
             request_sender: sender,
             identifier: Some(fields[0].clone()),
-            fields: fields,
+            fields,
         };
         CustList::preload(clist)
     }
 
     fn data_fields(&self) -> DataFields {
-        let reclist = DataFields {
+        DataFields {
             identifier: self.identifier.clone(),
             fields: self.fields.clone(),
-        };
-        reclist
+        }
     }
 
     fn preload(mut clist: CustList) -> CustList {
@@ -292,11 +291,9 @@ impl CustList {
     }
 
     pub fn ui_model(&mut self) -> UiModel<ModelEvent> {
-        let ui_model = UiModel {
+        UiModel {
             request: self.request_sender.clone(),
-        };
-
-        ui_model
+        }
     }
 
     fn run(&mut self) {
@@ -377,8 +374,10 @@ impl CustList {
                         sender.send(Response::ErrorResponse(msg)).unwrap();
                     }
                     if before.data.len() != 2 {
-                        let msg = format!("before data is of invalid length");
-                        sender.send(Response::ErrorResponse(msg)).unwrap();
+                        let msg = "before data is of invalid length";
+                        sender
+                            .send(Response::ErrorResponse(msg.to_string()))
+                            .unwrap();
                     }
                     let name = before.data[0].clone();
                     let tel_nr = before.data[1].clone();
@@ -407,10 +406,10 @@ impl CustList {
                         sender.send(Response::ErrorResponse(msg)).unwrap();
                     }
                     if cust_del.data.len() != 2 {
-                        let msg = format!(
-                            "[Remove] customer data has wrong length."
-                        );
-                        sender.send(Response::ErrorResponse(msg)).unwrap();
+                        let msg = "[Remove] customer data has wrong length.";
+                        sender
+                            .send(Response::ErrorResponse(msg.to_string()))
+                            .unwrap();
                     }
                     let customer = Customer {
                         name: cust_del.data[0].clone(),
@@ -445,11 +444,9 @@ impl CustList {
 //// Start of Ui definitions
 //////////////////////////////////////////////////
 
-use cursive::align::HAlign;
 use cursive::traits::*;
 use cursive::views;
 use cursive::views::Dialog;
-use cursive::views::DummyView;
 use cursive::views::EditView;
 use cursive::views::TextView;
 use cursive::Cursive;
@@ -468,9 +465,9 @@ impl Ui {
         let data = Ui::load_first(&mut model);
         let mut ui = Ui {
             siv: cursive::Cursive::default(),
-            model: model,
-            fields: fields,
-            data: data,
+            model,
+            fields,
+            data,
         };
         // define the view showing the data
         ui.siv.add_global_callback('q', Cursive::quit);
@@ -483,7 +480,7 @@ impl Ui {
     pub fn get_fields(model: &mut UiModel<ModelEvent>) -> DataFields {
         // send GetFields and process response
         let response = model.get_fields("CustList".to_string());
-        let response = match response {
+        match response {
             ResponseMeta::DataFields(data_fields) => data_fields,
             ResponseMeta::DataFieldNames(_) => {
                 panic!(
@@ -494,13 +491,12 @@ impl Ui {
                 // Do something with the error response
                 panic!("Do something with the error response: {}", error);
             }
-        };
-        response
+        }
     }
 
     pub fn load_first(model: &mut UiModel<ModelEvent>) -> Option<Data> {
         let response = model.get_first("CustList".to_string());
-        let _response = match response {
+        match response {
             Response::DataResponse(Some(data)) => Some(data),
             Response::DataResponse(None) => None,
             Response::ErrorResponse(err) => {
@@ -511,8 +507,7 @@ impl Ui {
                 eprintln!("unexpected response to load of data");
                 None
             }
-        };
-        _response
+        }
     }
 
     pub fn get_first(&mut self) -> Option<Data> {
@@ -541,23 +536,35 @@ impl Ui {
         let mut view = views::LinearLayout::vertical();
         let mut maxlen: usize = 0;
         for field in &fields.fields {
-            maxlen = match field.name.len() > maxlen {
-                true => field.name.len(),
-                false => maxlen,
+            maxlen = if field.name.len() > maxlen {
+                field.name.len()
+            } else {
+                maxlen
             }
         }
         if maxlen < 20 {
             maxlen = 20;
         }
-        for field in &fields.fields {
+        for (count, field) in fields.fields.iter().enumerate() {
             let text = format!("{}: ", field.name.clone());
             let id = format!("id_{}", field.name.clone());
+            let fld_data: String;
+            if let Some(d) = data {
+                fld_data = d.data[count].clone();
+            } else {
+                fld_data = String::new();
+            }
             let mut hview = views::LinearLayout::horizontal();
-            hview = hview
-                .child(TextView::new(text).fixed_width(maxlen))
-                .child(EditView::new().with_id(id).min_width(10));
+            hview =
+                hview.child(TextView::new(text).fixed_width(maxlen)).child(
+                    EditView::new()
+                        .content(fld_data)
+                        .with_id(id)
+                        .min_width(10),
+                );
             view = view.child(hview);
         }
+        /////// returning result
         view.fixed_width(30)
     }
 
