@@ -29,14 +29,6 @@ fn markup() {
 }
 
 pub fn main() {
-    // if you precede the thread spawn with a call to
-    // markup without thread, this call will work
-    // markup();
-    // This will never work, for now at least.
     let handle = thread::spawn(|| markup());
-    // if you follow this statement by a call of
-    // markup without thread, it will be *very* confused
-    // like a cat trying to find it's image behind the mirror
-    // markup();
     handle.join().unwrap();
 }
