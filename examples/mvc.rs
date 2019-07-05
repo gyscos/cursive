@@ -470,30 +470,36 @@ use cursive::Cursive;
 ///
 pub struct Ui {
     siv: cursive::Cursive,
-    model: UiModel<ModelEvent>,
     fields: DataFields,
     data: Option<Data>,
 }
 
 impl Ui {
-    pub fn new(mut model: UiModel<ModelEvent>) -> Ui {
+    pub fn new(model: UiModel<ModelEvent>) -> Ui {
         let fields = DataFields {
             identifier: None,
             fields: vec![],
         };
         let data = None;
-        let ui = Ui {
+        let mut ui = Ui {
             siv: cursive::Cursive::default(),
-            model,
             fields,
             data,
         };
+        ui.siv.set_user_data(model);
         ui
+    }
+
+    fn model(&mut self) -> &mut UiModel<ModelEvent> {
+        match self.siv.user_data() {
+            Some(model) => model,
+            None => panic!("Model not in user_data"),
+        }
     }
 
     fn get_fields(&mut self) -> DataFields {
         // send GetFields and process response
-        let response = self.model.get_fields("CustList".to_string());
+        let response = self.model().get_fields("CustList".to_string());
         match response {
             ResponseMeta::DataFields(data_fields) => data_fields,
             ResponseMeta::DataFieldNames(_) => {
@@ -509,7 +515,7 @@ impl Ui {
     }
 
     fn load_first(&mut self) -> Option<Data> {
-        let response = self.model.get_first("CustList".to_string());
+        let response = self.model().get_first("CustList".to_string());
         match response {
             Response::DataResponse(Some(data)) => Some(data),
             Response::DataResponse(None) => None,
@@ -525,6 +531,28 @@ impl Ui {
         }
     }
 
+    fn execute_get_first() -> Box<dyn Fn(&mut Cursive) -> ()> {
+        Box::new(|s: &mut Cursive| {
+            let ui: &mut Ui = match s.user_data() {
+                Some(ui) => ui,
+                None => return,
+            };
+            ui.data = ui.get_first();
+            s.refresh();
+        })
+    }
+
+    fn execute_get_next() -> Box<dyn Fn(&mut Cursive) -> ()> {
+        Box::new(|s| {
+            let ui: &mut Ui = match s.user_data() {
+                Some(ui) => ui,
+                None => return,
+            };
+            ui.data = ui.get_next();
+            s.refresh();
+        })
+    }
+
     fn define_data_dialog(&mut self) -> impl cursive::view::View {
         Dialog::new()
             .title("Detail View")
@@ -534,8 +562,8 @@ impl Ui {
                 s.quit();
             })
             // TODO: HOW to use Ui::get_next?
-            .button("First", |_s| self.data = self.get_first())
-            .button("Next", |_s| self.data = self.get_next())
+            .button("First", Ui::execute_get_first())
+            .button("Next", Ui::execute_get_next())
     }
 
     fn define_data_view(&mut self) -> impl cursive::view::View {
@@ -586,7 +614,7 @@ impl Ui {
             return None;
         }
 
-        let response = self.model.get_next("CustList".to_string(), before);
+        let response = self.model().get_next("CustList".to_string(), before);
         match response {
             Response::DataResponse(Some(data)) => Some(data),
             Response::DataResponse(None) => None,
@@ -602,12 +630,18 @@ impl Ui {
         }
     }
 
-    pub fn run(&mut self) {
+    fn init_ui(&mut self) {
+        // Load first data and field definition
+        self.fields = self.get_fields();
+        self.data = self.get_first();
         // define the view showing the data
         self.siv.add_global_callback('q', Cursive::quit);
-        self.siv.add_layer(TextView::new("Hello World!"));
         let dialog = self.define_data_dialog();
         self.siv.add_layer(dialog);
+    }
+
+    pub fn run(&mut self) {
+        self.init_ui();
         self.siv.run();
     }
 }
@@ -619,7 +653,5 @@ pub fn main() {
         cust_list.run();
     });
     let mut ui = Ui::new(ui_model);
-    ui.fields = ui.get_fields();
-    ui.data = ui.get_first();
     ui.run();
 }
