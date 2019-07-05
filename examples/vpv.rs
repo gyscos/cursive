@@ -137,7 +137,7 @@ cargo run --example vpv </dev/zero >/dev/null",
             }
 
             // When we're done, shut down the application
-            cb_sink.send(Box::new(|s: &mut Cursive| s.quit())).unwrap();
+            cb_sink.send(Box::new(Cursive::quit)).unwrap();
         });
         siv.set_autorefresh(true);
     }
