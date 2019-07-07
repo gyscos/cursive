@@ -948,13 +948,41 @@ impl Ui {
         self.data = self.get_first();
         // define the view showing the data
         self.siv.add_global_callback('q', Cursive::quit);
-        // TODO: These keys don't seem to work: find out why
-        self.siv.add_global_callback(Key::PageDown, |_s| {
-            Ui::execute_get_next();
-        });
-        self.siv.add_global_callback(Key::PageUp, |_s| {
-            Ui::execute_get_prev();
-        });
+        // TODO: These keys don't seem to work: from execute, but do work if copied in directly
+        self.siv
+            .add_global_callback(Key::PageDown, |s: &mut Cursive| {
+                let sender: &mut mpsc::Sender<UiMessage> = match s.user_data()
+                {
+                    Some(sender) => sender,
+                    None => return,
+                };
+                match sender.send(UiMessage::Next) {
+                    Ok(_) => return,
+                    Err(e) => {
+                        log::error!(
+                            "[button next] Sending for next data failed: {}.",
+                            e
+                        );
+                    }
+                };
+            });
+        self.siv
+            .add_global_callback(Key::PageUp, |s: &mut Cursive| {
+                let sender: &mut mpsc::Sender<UiMessage> = match s.user_data()
+                {
+                    Some(sender) => sender,
+                    None => return,
+                };
+                match sender.send(UiMessage::Prev) {
+                    Ok(_) => return,
+                    Err(e) => {
+                        log::error!(
+                            "[button next] Sending for prev data failed: {}.",
+                            e
+                        );
+                    }
+                };
+            });
         self.siv
             .add_global_callback('`', Cursive::toggle_debug_console);
         let dialog = self.define_data_dialog();
