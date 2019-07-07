@@ -18,7 +18,8 @@ use std::sync::mpsc;
 /// Update has a before and after image of the data in that order.
 /// Remove has the image of the data before removal.
 ///
-/// Remark: it is weird that you cannot name the variables in the enum functions.
+/// Remark: it is weird that you cannot name the variables in the enum functions to
+/// indicate the role they have.
 ///
 pub enum ModelEvent {
     // the metadata events
@@ -27,6 +28,8 @@ pub enum ModelEvent {
     // the data events
     GetFirst(String, mpsc::Sender<Response>),
     GetNext(String, Data, mpsc::Sender<Response>),
+    GetPrev(String, Data, mpsc::Sender<Response>),
+    GetLast(String, mpsc::Sender<Response>),
     GetAll(String, mpsc::Sender<Response>),
     Update(String, Data, Data, mpsc::Sender<Response>),
     Remove(String, Data, mpsc::Sender<Response>),
@@ -52,6 +55,34 @@ pub enum ResponseMeta {
     DataFields(DataFields),
     DataFieldNames(Option<Vec<String>>),
     ErrorResponse(String),
+}
+
+/// The description of each field is in this struct.
+///
+#[derive(Clone)]
+pub struct Field {
+    pub name: String,
+    pub label: String,
+    pub secret: bool,
+    pub multiline: bool,
+}
+
+/// The combination of fields that make up the data the model sends to the requestor.
+///
+/// The identifier is the name of the field that identifies a group of fields. The
+/// reason this is not in Field, is because a field could be identifier in one group
+/// of data, and not an identifier in the next group of data.
+pub struct DataFields {
+    pub identifier: Option<Field>,
+    pub fields: Vec<Field>,
+}
+
+/// The concrete data as per a definition of DataFields.
+#[derive(Clone)]
+pub struct Data {
+    pub first_item: bool,
+    pub last_item: bool,
+    pub data: Vec<String>,
 }
 
 /// The UiModel contains the request field to send a request and the definition of the
@@ -117,36 +148,32 @@ impl UiModel<ModelEvent> {
             .unwrap();
         receiver.recv().unwrap()
     }
-}
 
-trait DataDescription {
-    fn data_fields(&self) -> DataFields;
-}
+    pub fn get_prev(
+        &mut self,
+        record_name: String,
+        current: Data,
+    ) -> Response {
+        if record_name != "CustList" {
+            panic!("Record name not valid: {}", record_name);
+        }
+        let (sender, receiver) = mpsc::channel::<Response>();
+        self.request
+            .send(ModelEvent::GetPrev("CustList".to_string(), current, sender))
+            .unwrap();
+        receiver.recv().unwrap()
+    }
 
-/// The description of each field is in this struct.
-///
-#[derive(Clone)]
-pub struct Field {
-    pub name: String,
-    pub label: String,
-    pub secret: bool,
-    pub multiline: bool,
-}
-
-/// The combination of fields that make up the data the model sends to the requestor.
-///
-/// The identifier is the name of the field that identifies a group of fields. The
-/// reason this is not in Field, is because a field could be identifier in one group
-/// of data, and not an identifier in the next group of data.
-pub struct DataFields {
-    pub identifier: Option<Field>,
-    pub fields: Vec<Field>,
-}
-
-/// The concrete data as per a definition of DataFields.
-#[derive(Clone)]
-pub struct Data {
-    pub data: Vec<String>,
+    pub fn get_last(&mut self, record_name: String) -> Response {
+        if record_name != "CustList" {
+            panic!("Record name not valid: {}", record_name);
+        }
+        let (sender, receiver) = mpsc::channel::<Response>();
+        self.request
+            .send(ModelEvent::GetLast("CustList".to_string(), sender))
+            .unwrap();
+        receiver.recv().unwrap()
+    }
 }
 
 //////////////////////////////////////////////////
@@ -225,7 +252,8 @@ impl CustList {
     }
 
     fn get_first(&self) -> Option<Data> {
-        let customer = self.customers.get(1);
+        let counter = 0;
+        let customer = self.customers.get(counter);
         let customer = match customer {
             Some(cust) => cust,
             None => return None,
@@ -233,24 +261,32 @@ impl CustList {
         let mut data = Vec::new();
         data.push(customer.name.clone());
         data.push(customer.tel_nr.clone());
-        Some(Data { data })
+        Some(Data {
+            first_item: counter == 0,
+            last_item: counter == self.customers.len() - 1,
+            data,
+        })
     }
 
     fn get_next(&self, current: Data) -> Option<Data> {
         let name = current.data.get(0);
         let name = match name {
-            Some(nm) => nm,
+            Some(nm) => nm.to_string(),
             None => return None,
         };
         let mut next = false;
         let mut data = Vec::new();
-        for customer in &self.customers {
+        for (counter, customer) in self.customers.iter().enumerate() {
             if next {
                 data.push(customer.name.clone());
                 data.push(customer.tel_nr.clone());
-                return Some(Data { data });
+                return Some(Data {
+                    first_item: counter == 0,
+                    last_item: counter == self.customers.len() - 1,
+                    data,
+                });
             }
-            if customer.name == name.clone() {
+            if customer.name == name {
                 next = true;
             }
         }
@@ -258,13 +294,61 @@ impl CustList {
         None
     }
 
+    fn get_prev(&self, current: Data) -> Option<Data> {
+        let name = current.data.get(0);
+        let name = match name {
+            Some(nm) => nm.to_string(),
+            None => return None,
+        };
+        let mut data = Vec::new();
+        for (counter, customer) in self.customers.iter().enumerate() {
+            if customer.name == name {
+                if counter > 0 {
+                    data.push(self.customers[counter - 1].name.clone());
+                    data.push(self.customers[counter - 1].tel_nr.clone());
+                    return Some(Data {
+                        first_item: counter == 0,
+                        last_item: counter == self.customers.len() - 1,
+                        data,
+                    });
+                }
+            }
+        }
+        // If not found
+        None
+    }
+
+    fn get_last(&self) -> Option<Data> {
+        if self.customers.len() == 0 {
+            return None;
+        }
+        let counter = self.customers.len() - 1;
+        let customer = self.customers.get(counter);
+        let customer = match customer {
+            Some(cust) => cust,
+            None => return None,
+        };
+        let mut data = Vec::new();
+        data.push(customer.name.clone());
+        data.push(customer.tel_nr.clone());
+        Some(Data {
+            first_item: counter == 0,
+            last_item: counter == self.customers.len() - 1,
+            data,
+        })
+    }
+
     fn get_all(&self) -> Vec<Data> {
         let mut all = vec![];
-        for customer in &self.customers {
+        for (counter, customer) in self.customers.iter().enumerate() {
             let mut data = vec![];
             data.push(customer.name.clone());
             data.push(customer.tel_nr.clone());
-            all.push(Data { data });
+            all.push(Data {
+                first_item: counter == 0,
+                last_item: counter == self.customers.len() - 1,
+                data,
+            });
         }
         all
     }
@@ -321,17 +405,20 @@ impl CustList {
             };
             match msg {
                 ModelEvent::GetRecords(sender) => {
+                    log::info!(
+                        "[UiModel GetRecords] Not implementted: sending None"
+                    );
                     sender.send(ResponseMeta::DataFieldNames(None)).unwrap();
                 }
                 ModelEvent::GetFields(record_name, sender) => {
                     if record_name != "CustList" {
-                        sender
-                            .send(ResponseMeta::ErrorResponse(
-                                "Received non-custlist record_name"
-                                    .to_string(),
-                            ))
-                            .unwrap();
+                        let msg =
+                            "Received non-custlist record_name".to_string();
+                        log::info!("[UiModel::run GetFields] {}", msg);
+                        sender.send(ResponseMeta::ErrorResponse(msg)).unwrap();
                     } else {
+                        let msg = "Sending datafields".to_string();
+                        log::info!("[UiModel::run GetFields] {}", msg);
                         sender
                             .send(ResponseMeta::DataFields(self.data_fields()))
                             .unwrap();
@@ -339,13 +426,13 @@ impl CustList {
                 }
                 ModelEvent::GetFirst(record_name, sender) => {
                     if record_name != "CustList" {
-                        sender
-                            .send(Response::ErrorResponse(
-                                "Received non-custlist record_name"
-                                    .to_string(),
-                            ))
-                            .unwrap();
+                        let msg =
+                            "Received non-custlist record_name".to_string();
+                        log::info!("[UiModel::run GetFirst] {}", msg);
+                        sender.send(Response::ErrorResponse(msg)).unwrap();
                     } else {
+                        let msg = "Sending first data".to_string();
+                        log::info!("[UiModel::run GetFirst] {}", msg);
                         sender
                             .send(Response::DataResponse(self.get_first()))
                             .unwrap();
@@ -353,13 +440,13 @@ impl CustList {
                 }
                 ModelEvent::GetNext(record_name, current, sender) => {
                     if record_name != "CustList" {
-                        sender
-                            .send(Response::ErrorResponse(
-                                "Received non-custlist record_name"
-                                    .to_string(),
-                            ))
-                            .unwrap();
+                        let msg =
+                            "Received non-custlist record_name".to_string();
+                        log::info!("[UiModel::run GetNext] {}", msg);
+                        sender.send(Response::ErrorResponse(msg)).unwrap();
                     } else {
+                        let msg = "Sending next data".to_string();
+                        log::info!("[UiModel::run GetNext] {}", msg);
                         sender
                             .send(Response::DataResponse(
                                 self.get_next(current),
@@ -367,15 +454,45 @@ impl CustList {
                             .unwrap();
                     }
                 }
-                ModelEvent::GetAll(record_name, sender) => {
+                ModelEvent::GetPrev(record_name, current, sender) => {
                     if record_name != "CustList" {
+                        let msg =
+                            "Received non-custlist record_name".to_string();
+                        log::info!("[UiModel::run GetPrev] {}", msg);
+                        sender.send(Response::ErrorResponse(msg)).unwrap();
+                    } else {
+                        let msg = "Sending next data".to_string();
+                        log::info!("[UiModel::run GetPrev] {}", msg);
                         sender
-                            .send(Response::ErrorResponse(
-                                "Received non-custlist record_name"
-                                    .to_string(),
+                            .send(Response::DataResponse(
+                                self.get_prev(current),
                             ))
                             .unwrap();
+                    }
+                }
+                ModelEvent::GetLast(record_name, sender) => {
+                    if record_name != "CustList" {
+                        let msg =
+                            "Received non-custlist record_name".to_string();
+                        log::info!("[UiModel::run GetLast] {}", msg);
+                        sender.send(Response::ErrorResponse(msg)).unwrap();
                     } else {
+                        let msg = "Sending first data".to_string();
+                        log::info!("[UiModel::run GetLast] {}", msg);
+                        sender
+                            .send(Response::DataResponse(self.get_last()))
+                            .unwrap();
+                    }
+                }
+                ModelEvent::GetAll(record_name, sender) => {
+                    if record_name != "CustList" {
+                        let msg =
+                            "Received non-custlist record_name".to_string();
+                        log::info!("[UiModel::run GetAll] {}", msg);
+                        sender.send(Response::ErrorResponse(msg)).unwrap();
+                    } else {
+                        let msg = "Sending all data".to_string();
+                        log::info!("[UiModel::run GetAll] {}", msg);
                         sender
                             .send(Response::SelectDataResponse(self.get_all()))
                             .unwrap();
@@ -383,10 +500,9 @@ impl CustList {
                 }
                 ModelEvent::Update(record_name, before, after, sender) => {
                     if record_name != "CustList" {
-                        let msg = format!(
-                            "[Update] record name {} unknown.",
-                            record_name
-                        );
+                        let msg =
+                            "Received non-custlist record_name".to_string();
+                        log::info!("[UiModel::run Update] {}", msg);
                         sender.send(Response::ErrorResponse(msg)).unwrap();
                     }
                     if before.data.len() != 2 {
@@ -415,10 +531,9 @@ impl CustList {
                 }
                 ModelEvent::Remove(record_name, cust_del, sender) => {
                     if record_name != "CustList" {
-                        let msg = format!(
-                            "[Remove] record name {} unknown.",
-                            record_name
-                        );
+                        let msg =
+                            "Received non-custlist record_name".to_string();
+                        log::info!("[UiModel::run Remove] {}", msg);
                         sender.send(Response::ErrorResponse(msg)).unwrap();
                     }
                     if cust_del.data.len() != 2 {
@@ -467,11 +582,28 @@ use cursive::views::EditView;
 use cursive::views::TextView;
 use cursive::Cursive;
 
+const ID_DETAIL: &str = "id_detail";
+const BTN_FIRST: &str = "First";
+const BTN_LAST: &str = "Last";
+const BTN_NEXT: &str = "Next";
+const BTN_PREV: &str = "Prev";
+const BTN_QUIT: &str = "Quit";
 ///
 pub struct Ui {
     siv: cursive::Cursive,
+    model: UiModel<ModelEvent>,
     fields: DataFields,
     data: Option<Data>,
+    receiver: mpsc::Receiver<UiMessage>,
+}
+
+/// message from callback functions to Ui struct
+enum UiMessage {
+    First,
+    Next,
+    Prev,
+    Last,
+    Quit,
 }
 
 impl Ui {
@@ -481,25 +613,21 @@ impl Ui {
             fields: vec![],
         };
         let data = None;
+        let (sender, receiver) = mpsc::channel::<UiMessage>();
         let mut ui = Ui {
             siv: cursive::Cursive::default(),
+            model,
             fields,
             data,
+            receiver,
         };
-        ui.siv.set_user_data(model);
+        ui.siv.set_user_data(sender);
         ui
-    }
-
-    fn model(&mut self) -> &mut UiModel<ModelEvent> {
-        match self.siv.user_data() {
-            Some(model) => model,
-            None => panic!("Model not in user_data"),
-        }
     }
 
     fn get_fields(&mut self) -> DataFields {
         // send GetFields and process response
-        let response = self.model().get_fields("CustList".to_string());
+        let response = self.model.get_fields("CustList".to_string());
         match response {
             ResponseMeta::DataFields(data_fields) => data_fields,
             ResponseMeta::DataFieldNames(_) => {
@@ -514,42 +642,93 @@ impl Ui {
         }
     }
 
-    fn load_first(&mut self) -> Option<Data> {
-        let response = self.model().get_first("CustList".to_string());
-        match response {
-            Response::DataResponse(Some(data)) => Some(data),
-            Response::DataResponse(None) => None,
-            Response::ErrorResponse(err) => {
-                eprintln!("{}", err);
-                None
-            }
-            _ => {
-                // TODO: this should be in a status line
-                eprintln!("unexpected response to load of data");
-                None
-            }
-        }
-    }
-
     fn execute_get_first() -> Box<dyn Fn(&mut Cursive) -> ()> {
         Box::new(|s: &mut Cursive| {
-            let ui: &mut Ui = match s.user_data() {
-                Some(ui) => ui,
+            let sender: &mut mpsc::Sender<UiMessage> = match s.user_data() {
+                Some(sender) => sender,
                 None => return,
             };
-            ui.data = ui.get_first();
-            s.refresh();
+            match sender.send(UiMessage::First) {
+                Ok(_) => return,
+                Err(e) => {
+                    log::error!(
+                        "[button first] Sending for first data failed: {}.",
+                        e
+                    );
+                }
+            };
         })
     }
 
     fn execute_get_next() -> Box<dyn Fn(&mut Cursive) -> ()> {
-        Box::new(|s| {
-            let ui: &mut Ui = match s.user_data() {
-                Some(ui) => ui,
+        Box::new(|s: &mut Cursive| {
+            let sender: &mut mpsc::Sender<UiMessage> = match s.user_data() {
+                Some(sender) => sender,
                 None => return,
             };
-            ui.data = ui.get_next();
-            s.refresh();
+            match sender.send(UiMessage::Next) {
+                Ok(_) => return,
+                Err(e) => {
+                    log::error!(
+                        "[button next] Sending for next data failed: {}.",
+                        e
+                    );
+                }
+            };
+        })
+    }
+
+    fn execute_get_prev() -> Box<dyn Fn(&mut Cursive) -> ()> {
+        Box::new(|s: &mut Cursive| {
+            let sender: &mut mpsc::Sender<UiMessage> = match s.user_data() {
+                Some(sender) => sender,
+                None => return,
+            };
+            match sender.send(UiMessage::Prev) {
+                Ok(_) => return,
+                Err(e) => {
+                    log::error!(
+                        "[button next] Sending for prev data failed: {}.",
+                        e
+                    );
+                }
+            };
+        })
+    }
+
+    fn execute_get_last() -> Box<dyn Fn(&mut Cursive) -> ()> {
+        Box::new(|s: &mut Cursive| {
+            let sender: &mut mpsc::Sender<UiMessage> = match s.user_data() {
+                Some(sender) => sender,
+                None => return,
+            };
+            match sender.send(UiMessage::Last) {
+                Ok(_) => return,
+                Err(e) => {
+                    log::error!(
+                        "[button next] Sending for last data failed: {}.",
+                        e
+                    );
+                }
+            };
+        })
+    }
+
+    fn execute_quit() -> Box<dyn Fn(&mut Cursive) -> ()> {
+        Box::new(|s: &mut Cursive| {
+            let sender: &mut mpsc::Sender<UiMessage> = match s.user_data() {
+                Some(sender) => sender,
+                None => return,
+            };
+            match sender.send(UiMessage::Quit) {
+                Ok(_) => return,
+                Err(e) => {
+                    log::error!(
+                        "[button next] Sending for quit failed: {}.",
+                        e
+                    );
+                }
+            };
         })
     }
 
@@ -558,12 +737,12 @@ impl Ui {
             .title("Detail View")
             .padding((1, 1, 1, 0))
             .content(self.define_data_view())
-            .button("Quit (q)", |s| {
-                s.quit();
-            })
-            // TODO: HOW to use Ui::get_next?
-            .button("First", Ui::execute_get_first())
-            .button("Next", Ui::execute_get_next())
+            .button(BTN_QUIT, Ui::execute_quit())
+            .button(BTN_FIRST, Ui::execute_get_first())
+            .button(BTN_NEXT, Ui::execute_get_next())
+            .button(BTN_PREV, Ui::execute_get_prev())
+            .button(BTN_LAST, Ui::execute_get_last())
+            .with_id(ID_DETAIL)
     }
 
     fn define_data_view(&mut self) -> impl cursive::view::View {
@@ -603,7 +782,25 @@ impl Ui {
     }
 
     fn get_first(&mut self) -> Option<Data> {
-        self.load_first()
+        let response = self.model.get_first("CustList".to_string());
+        match response {
+            Response::DataResponse(Some(data)) => {
+                log::info!("Received data response to get first");
+                Some(data)
+            }
+            Response::DataResponse(None) => {
+                log::info!("Received none response to get first");
+                None
+            }
+            Response::ErrorResponse(err) => {
+                log::error!("{}", err);
+                None
+            }
+            _ => {
+                log::warn!("unexpected response to get first");
+                None
+            }
+        }
     }
 
     fn get_next(&mut self) -> Option<Data> {
@@ -614,39 +811,210 @@ impl Ui {
             return None;
         }
 
-        let response = self.model().get_next("CustList".to_string(), before);
+        let response = self.model.get_next("CustList".to_string(), before);
         match response {
-            Response::DataResponse(Some(data)) => Some(data),
-            Response::DataResponse(None) => None,
+            Response::DataResponse(Some(data)) => {
+                log::info!("Received data response to get next");
+                Some(data)
+            }
+            Response::DataResponse(None) => {
+                log::info!("Received none response to get next");
+                None
+            }
             Response::ErrorResponse(err) => {
-                eprintln!("{}", err);
+                log::error!("{}", err);
                 None
             }
             _ => {
-                // TODO: this should be in a status line
-                eprintln!("unexpected response to load of data");
+                log::warn!("unexpected response to get next");
                 None
             }
         }
     }
 
+    fn get_last(&mut self) -> Option<Data> {
+        let response = self.model.get_last("CustList".to_string());
+        match response {
+            Response::DataResponse(Some(data)) => {
+                log::info!("Received data response to get last");
+                Some(data)
+            }
+            Response::DataResponse(None) => {
+                log::info!("Received none response to get last");
+                None
+            }
+            Response::ErrorResponse(err) => {
+                log::error!("{}", err);
+                None
+            }
+            _ => {
+                log::warn!("unexpected response to get last");
+                None
+            }
+        }
+    }
+
+    fn get_prev(&mut self) -> Option<Data> {
+        let before: Data;
+        if let Some(data) = &self.data {
+            before = data.clone();
+        } else {
+            return None;
+        }
+
+        let response = self.model.get_prev("CustList".to_string(), before);
+        match response {
+            Response::DataResponse(Some(data)) => {
+                log::info!("Received data response to get last");
+                Some(data)
+            }
+            Response::DataResponse(None) => {
+                log::info!("Received none response to get last");
+                None
+            }
+            Response::ErrorResponse(err) => {
+                log::error!("{}", err);
+                None
+            }
+            _ => {
+                log::warn!("unexpected response to get last");
+                None
+            }
+        }
+    }
+
+    fn fields_refresh(&mut self) {
+        let d = &self.data;
+        if let Some(data) = d {
+            if data.data.len() < self.fields.fields.len() {
+                log::error!("[Fields refresh] Error in Data.data length. Len fields = {}, len of data = {}",
+                        data.data.len(), self.fields.fields.len());
+                return;
+            }
+        }
+        for (counter, field) in self.fields.fields.iter().enumerate() {
+            let id = format!("id_{}", field.name);
+            self.siv.call_on_id(id.as_str(), |view: &mut EditView| {
+                match d {
+                    Some(d) => view.set_content(d.data[counter].clone()),
+                    None => view.set_content(String::new()),
+                };
+            });
+        }
+        let mut dialog = self.siv.find_id::<Dialog>(ID_DETAIL).unwrap();
+        for button in dialog.buttons_mut() {
+            match d {
+                None => button.disable(),
+                Some(d) => match button.label() {
+                    BTN_FIRST => {
+                        if d.first_item == true {
+                            button.disable();
+                        } else {
+                            button.enable();
+                        }
+                    }
+                    BTN_LAST => {
+                        if d.last_item == true {
+                            button.disable();
+                        } else {
+                            button.enable();
+                        }
+                    }
+                    BTN_NEXT => {
+                        if d.last_item {
+                            button.disable()
+                        } else {
+                            button.enable()
+                        }
+                    }
+                    BTN_PREV => {
+                        if d.first_item {
+                            button.disable()
+                        } else {
+                            button.enable()
+                        }
+                    }
+                    _ => (),
+                },
+            }
+        }
+    }
+
     fn init_ui(&mut self) {
+        log::info!("Starting init for user interface");
         // Load first data and field definition
         self.fields = self.get_fields();
         self.data = self.get_first();
         // define the view showing the data
         self.siv.add_global_callback('q', Cursive::quit);
+        self.siv
+            .add_global_callback('`', Cursive::toggle_debug_console);
         let dialog = self.define_data_dialog();
         self.siv.add_layer(dialog);
     }
 
     pub fn run(&mut self) {
         self.init_ui();
-        self.siv.run();
+        //self.siv.run();
+        // We need to receive messages in between steps
+        while self.step() {
+            while let Some(msg) = self.receiver.try_iter().next() {
+                match msg {
+                    UiMessage::First => {
+                        let data = self.get_first();
+                        match data {
+                            None => (),
+                            Some(d) => self.data = Some(d),
+                        }
+                        self.fields_refresh();
+                    }
+                    UiMessage::Next => {
+                        let data = self.get_next();
+                        match data {
+                            None => (),
+                            Some(d) => self.data = Some(d),
+                        }
+                        self.fields_refresh();
+                    }
+                    UiMessage::Last => {
+                        let data = self.get_last();
+                        match data {
+                            None => (),
+                            Some(d) => self.data = Some(d),
+                        }
+                        self.fields_refresh();
+                    }
+                    UiMessage::Prev => {
+                        let data = self.get_prev();
+                        match data {
+                            None => (),
+                            Some(d) => self.data = Some(d),
+                        }
+                        self.fields_refresh();
+                    }
+                    UiMessage::Quit => {
+                        self.siv.quit();
+                        self.fields_refresh();
+                    }
+                }
+            }
+            self.siv.refresh();
+        }
+    }
+
+    pub fn step(&mut self) -> bool {
+        if !self.siv.is_running() {
+            return false;
+        }
+
+        self.siv.step();
+        true
     }
 }
 
 pub fn main() {
+    cursive::logger::init();
+    log::set_max_level(log::LevelFilter::Info);
     let mut cust_list = CustList::new();
     let ui_model = cust_list.ui_model();
     thread::spawn(move || {
