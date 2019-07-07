@@ -575,6 +575,7 @@ impl CustList {
 //// Start of Ui definitions
 //////////////////////////////////////////////////
 
+use cursive::event::Key;
 use cursive::traits::*;
 use cursive::views;
 use cursive::views::Dialog;
@@ -947,6 +948,13 @@ impl Ui {
         self.data = self.get_first();
         // define the view showing the data
         self.siv.add_global_callback('q', Cursive::quit);
+        // TODO: These keys don't seem to work: find out why
+        self.siv.add_global_callback(Key::PageDown, |_s| {
+            Ui::execute_get_next();
+        });
+        self.siv.add_global_callback(Key::PageUp, |_s| {
+            Ui::execute_get_prev();
+        });
         self.siv
             .add_global_callback('`', Cursive::toggle_debug_console);
         let dialog = self.define_data_dialog();
