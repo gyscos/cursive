@@ -85,8 +85,12 @@ pub struct Data {
     pub data: Vec<String>,
 }
 
-/// The UiModel contains the request field to send a request and the definition of the
-/// datafields through a function.
+/// The model for the ui created by the model object and given to the ui.
+///
+/// The UiModel contains but one field: the sender part of the channel to
+/// communicate with the model. The Ui will use this to send requests to
+/// the model, like getting a list of fields (meta request) or getting the
+/// first or the next set of data.
 ///
 /// The name UiModel represents the fact that this is *not* the model itself, but a
 /// an accesspoint to the model for a requestor.
@@ -100,19 +104,20 @@ impl UiModel<ModelEvent> {
         UiModel { request }
     }
 
+    /// This function requests the list of records and waits for a
+    /// response. It returns the response to the caller (the Ui).
     pub fn get_records(&mut self) -> ResponseMeta {
         let (sender, receiver) = mpsc::channel::<ResponseMeta>();
         self.request.send(ModelEvent::GetRecords(sender)).unwrap();
         receiver.recv().unwrap()
     }
 
+    /// This function requests the list of fields for a specified record
+    /// and waits for a response.
     pub fn get_fields(&mut self, record_name: String) -> ResponseMeta {
-        if record_name != "CustList" {
-            panic!("Record name not valid: {}", record_name);
-        }
         let (sender, receiver) = mpsc::channel::<ResponseMeta>();
         self.request
-            .send(ModelEvent::GetFields("CustList".to_string(), sender))
+            .send(ModelEvent::GetFields(record_name, sender))
             .unwrap();
         match receiver.recv() {
             Ok(result) => result,
@@ -123,54 +128,50 @@ impl UiModel<ModelEvent> {
         }
     }
 
+    /// This is a request for the first set of data of the specified record
+    /// and waits for a response.
     pub fn get_first(&mut self, record_name: String) -> Response {
-        if record_name != "CustList" {
-            panic!("Record name not valid: {}", record_name);
-        }
         let (sender, receiver) = mpsc::channel::<Response>();
         self.request
-            .send(ModelEvent::GetFirst("CustList".to_string(), sender))
+            .send(ModelEvent::GetFirst(record_name, sender))
             .unwrap();
         receiver.recv().unwrap()
     }
 
+    /// This is a request for the next set of data of the specified record
+    /// and waits for a response.
     pub fn get_next(
         &mut self,
         record_name: String,
         current: Data,
     ) -> Response {
-        if record_name != "CustList" {
-            panic!("Record name not valid: {}", record_name);
-        }
         let (sender, receiver) = mpsc::channel::<Response>();
         self.request
-            .send(ModelEvent::GetNext("CustList".to_string(), current, sender))
+            .send(ModelEvent::GetNext(record_name, current, sender))
             .unwrap();
         receiver.recv().unwrap()
     }
 
+    /// This is a request for the previous set of data of the specified record
+    /// and waits for a response.
     pub fn get_prev(
         &mut self,
         record_name: String,
         current: Data,
     ) -> Response {
-        if record_name != "CustList" {
-            panic!("Record name not valid: {}", record_name);
-        }
         let (sender, receiver) = mpsc::channel::<Response>();
         self.request
-            .send(ModelEvent::GetPrev("CustList".to_string(), current, sender))
+            .send(ModelEvent::GetPrev(record_name, current, sender))
             .unwrap();
         receiver.recv().unwrap()
     }
 
+    /// This is a request for the last set of data of the specified record
+    /// and waits for a response.
     pub fn get_last(&mut self, record_name: String) -> Response {
-        if record_name != "CustList" {
-            panic!("Record name not valid: {}", record_name);
-        }
         let (sender, receiver) = mpsc::channel::<Response>();
         self.request
-            .send(ModelEvent::GetLast("CustList".to_string(), sender))
+            .send(ModelEvent::GetLast(record_name, sender))
             .unwrap();
         receiver.recv().unwrap()
     }
@@ -198,9 +199,17 @@ struct CustList {
     identifier: Option<Field>,
     fields: Vec<Field>,
 }
-
+// TODO: separate out general model part and communication part from CustList.
+// Custlist should be about customer only and have communication and metadata available.
+//
+// Idea: create a struct ModelComm for communcation between model and ui. Create a struct MetaModel
+//       for the metadata (records and fields). Much of that processing is general and not specific
+//       to custlist.
 impl CustList {
+    // Create a new customer list. The example is a fixed list: this could be reading
+    // a file or a database
     pub fn new() -> CustList {
+        // Meta data the custlist should provide to the metamodel.
         let fields: [Field; 2] = [
             Field {
                 name: "custname".to_string(),
@@ -216,8 +225,10 @@ impl CustList {
             },
         ];
 
+        // communication parameters for the model communcation.
         let (sender, receiver) = mpsc::channel::<ModelEvent>();
         let fields = fields.to_vec();
+        // TODO: disentangle date, metadata and communication.
         let clist = CustList {
             customers: vec![],
             request_queue: receiver,
@@ -225,6 +236,7 @@ impl CustList {
             identifier: Some(fields[0].clone()),
             fields,
         };
+        // read the database or file
         CustList::preload(clist)
     }
 
@@ -235,6 +247,7 @@ impl CustList {
         }
     }
 
+    // load the database or file
     fn preload(mut clist: CustList) -> CustList {
         clist.customers.push(Customer {
             name: "John".to_string(),
@@ -251,6 +264,7 @@ impl CustList {
         clist
     }
 
+    /// Retrieve the first occurrence of data and translate to Data.
     fn get_first(&self) -> Option<Data> {
         let counter = 0;
         let customer = self.customers.get(counter);
@@ -403,6 +417,8 @@ impl CustList {
                 Ok(received) => received,
                 Err(e) => ModelEvent::Error(e),
             };
+            // The following should go into model communication with a call
+            // to the customer list to fulfill the request.
             match msg {
                 ModelEvent::GetRecords(sender) => {
                     log::info!(
@@ -589,7 +605,11 @@ const BTN_LAST: &str = "Last";
 const BTN_NEXT: &str = "Next";
 const BTN_PREV: &str = "Prev";
 const BTN_QUIT: &str = "Quit";
+/// The Ui struct containing all user interface required data and actions.
 ///
+/// The user interface should have no knowledge of the model or the meaning behind the
+/// specific fields. Through the interface UiModel it should be able to retrieve
+/// all information that is necessary to display information.
 pub struct Ui {
     siv: cursive::Cursive,
     model: UiModel<ModelEvent>,
@@ -607,6 +627,9 @@ enum UiMessage {
     Quit,
 }
 
+// TODO: separate out the communication part. Not sure whether that is specific to
+// the user interface or maybe general. That all depends on whether the enum for
+// UiModel communication can be general.
 impl Ui {
     pub fn new(model: UiModel<ModelEvent>) -> Ui {
         let fields = DataFields {
