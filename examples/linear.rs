@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::align::HAlign;
 use cursive::traits::*;
 use cursive::views::{Dialog, DummyView, LinearLayout, TextView};

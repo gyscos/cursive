@@ -42,7 +42,7 @@ impl<V: View> IdView<V> {
 }
 
 // Shortcut for a boxed callback (for the wrap_call_on_any method).
-type BoxedCallback<'a> = Box<for<'b> FnMut(&'b mut dyn Any) + 'a>;
+type BoxedCallback<'a> = Box<dyn for<'b> FnMut(&'b mut dyn Any) + 'a>;
 
 impl<T: View + 'static> ViewWrapper for IdView<T> {
     type V = T;

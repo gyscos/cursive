@@ -20,7 +20,7 @@ struct DummySpannedText<'a> {
 
 impl<'a> DummySpannedText<'a> {
     fn new(content: &'a str) -> Self {
-        let attrs = vec![IndexedSpan::simple(content, ())];
+        let attrs = vec![IndexedSpan::simple_borrowed(content, ())];
         DummySpannedText { content, attrs }
     }
 }

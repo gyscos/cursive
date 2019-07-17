@@ -3,7 +3,7 @@ use enum_map::{enum_map, Enum, EnumMap};
 use log::warn;
 use toml;
 
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use std::ops::{Index, IndexMut};
 
 /// Color configuration for the application.

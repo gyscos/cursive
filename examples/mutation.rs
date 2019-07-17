@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::traits::*;
 use cursive::view::{Offset, Position};
 use cursive::views::{Dialog, OnEventView, TextView};

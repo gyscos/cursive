@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::traits::*;
 use cursive::vec::Vec2;
 use cursive::{Cursive, Printer};
@@ -65,10 +63,7 @@ impl BufferView {
     fn new(size: usize, rx: mpsc::Receiver<String>) -> Self {
         let mut buffer = VecDeque::new();
         buffer.resize(size, String::new());
-        BufferView {
-            rx: rx,
-            buffer: buffer,
-        }
+        BufferView { rx, buffer }
     }
 
     // Reads available data from the stream into the buffer

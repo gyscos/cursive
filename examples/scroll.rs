@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::traits::Boxable;
 use cursive::view::Scrollable;
 use cursive::views::{Button, Canvas, Dialog, LinearLayout};

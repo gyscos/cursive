@@ -96,8 +96,8 @@ impl Backend {
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
-        with_color(&colors.front, |c| self.write(tcolor::Fg(c)));
-        with_color(&colors.back, |c| self.write(tcolor::Bg(c)));
+        with_color(colors.front, |c| self.write(tcolor::Fg(c)));
+        with_color(colors.back, |c| self.write(tcolor::Bg(c)));
     }
 
     fn map_key(&mut self, event: TEvent) -> Event {
@@ -183,6 +183,10 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
+    fn name(&self) -> &str {
+        "termion"
+    }
+
     fn finish(&mut self) {
         write!(
             self.terminal.get_mut(),
@@ -210,7 +214,7 @@ impl backend::Backend for Backend {
             self.current_style.set(color);
         }
 
-        return current_style;
+        current_style
     }
 
     fn set_effect(&self, effect: theme::Effect) {
@@ -268,6 +272,25 @@ impl backend::Backend for Backend {
         .unwrap();
     }
 
+    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
+        if repetitions > 0 {
+            let mut out = self.terminal.borrow_mut();
+            write!(
+                out,
+                "{}{}",
+                termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
+                text
+            )
+            .unwrap();
+
+            let mut dupes_left = repetitions - 1;
+            while dupes_left > 0 {
+                write!(out, "{}", text).unwrap();
+                dupes_left -= 1;
+            }
+        }
+    }
+
     fn poll_event(&mut self) -> Option<Event> {
         let event = select! {
             recv(self.input_receiver) -> event => event.ok(),
@@ -278,11 +301,11 @@ impl backend::Backend for Backend {
     }
 }
 
-fn with_color<F, R>(clr: &theme::Color, f: F) -> R
+fn with_color<F, R>(clr: theme::Color, f: F) -> R
 where
     F: FnOnce(&dyn tcolor::Color) -> R,
 {
-    match *clr {
+    match clr {
         theme::Color::TerminalDefault => f(&tcolor::Reset),
         theme::Color::Dark(theme::BaseColor::Black) => f(&tcolor::Black),
         theme::Color::Dark(theme::BaseColor::Red) => f(&tcolor::Red),

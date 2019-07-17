@@ -1,15 +1,26 @@
 use crate::direction::Direction;
 use crate::event::{AnyCb, Event, EventResult};
-use crate::rect::Rect;
 use crate::view::{scroll, ScrollStrategy, Selector, View};
-use crate::{Printer, Vec2, With};
+use crate::{Printer, Rect, Vec2, With};
 
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {
     /// The wrapped view.
     inner: V,
 
-    core: scroll::ScrollCore,
+    core: scroll::Core,
+}
+
+impl<V> scroll::Scroller for ScrollView<V>
+where
+    V: View,
+{
+    fn get_scroller(&self) -> &scroll::Core {
+        &self.core
+    }
+    fn get_scroller_mut(&mut self) -> &mut scroll::Core {
+        &mut self.core
+    }
 }
 
 impl<V> ScrollView<V>
@@ -20,13 +31,46 @@ where
     pub fn new(inner: V) -> Self {
         ScrollView {
             inner,
-            core: scroll::ScrollCore::new(),
+            core: scroll::Core::new(),
         }
     }
 
     /// Returns the viewport in the inner content.
     pub fn content_viewport(&self) -> Rect {
         self.core.content_viewport()
+    }
+
+    /// Returns the size of the content view, as it was on the last layout
+    /// phase.
+    ///
+    /// This is only the size the content _thinks_ it has, and may be larger
+    /// than the actual size used by this `ScrollView`.
+    pub fn inner_size(&self) -> Vec2 {
+        self.core.inner_size()
+    }
+
+    /// Returns `true` if the top row of the content is in view.
+    pub fn is_at_top(&self) -> bool {
+        self.content_viewport().top() == 0
+    }
+
+    /// Returns `true` if the bottom row of the content is in view.
+    pub fn is_at_bottom(&self) -> bool {
+        // The viewport indicates which row is in view.
+        // So the bottom row will be (height - 1)
+        (1 + self.content_viewport().bottom()) >= self.inner_size().y
+    }
+
+    /// Return `true` if the left-most column of the content is in view.
+    pub fn is_at_left_edge(&self) -> bool {
+        self.content_viewport().left() == 0
+    }
+
+    /// Return `true` if the right-most column of the content is in view.
+    pub fn is_at_right_edge(&self) -> bool {
+        // The viewport indicates which row is in view.
+        // So the right-most column will be (width - 1)
+        (1 + self.content_viewport().right()) >= self.inner_size().x
     }
 
     /// Defines the way scrolling is adjusted on content or size change.
@@ -134,23 +178,39 @@ where
     V: View,
 {
     fn draw(&self, printer: &Printer<'_, '_>) {
-        self.core.draw(printer, |printer| self.inner.draw(printer));
+        scroll::draw(self, printer, |s, p| s.inner.draw(p));
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        self.core.on_event(event, &mut self.inner)
+        scroll::on_event(
+            self,
+            event,
+            |s, e| s.inner.on_event(e),
+            |s, si| s.inner.important_area(si),
+        )
     }
 
     fn layout(&mut self, size: Vec2) {
-        self.core.layout(size, &mut self.inner);
+        scroll::layout(
+            self,
+            size,
+            self.inner.needs_relayout(),
+            |s, si| s.inner.layout(si),
+            |s, c| s.inner.required_size(c),
+        );
     }
 
     fn needs_relayout(&self) -> bool {
-        self.core.needs_relayout(|| self.inner.needs_relayout())
+        self.core.needs_relayout() || self.inner.needs_relayout()
     }
 
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
-        self.core.required_size(constraint, &mut self.inner)
+        scroll::required_size(
+            self,
+            constraint,
+            self.inner.needs_relayout(),
+            |s, c| s.inner.required_size(c),
+        )
     }
 
     fn call_on_any<'a>(&mut self, selector: &Selector<'_>, cb: AnyCb<'a>) {
@@ -162,8 +222,10 @@ where
     }
 
     fn take_focus(&mut self, source: Direction) -> bool {
-        let inner = &mut self.inner;
-        self.core
-            .take_focus(source, |source| inner.take_focus(source))
+        self.inner.take_focus(source) || self.core.is_scrolling().any()
+    }
+
+    fn important_area(&self, size: Vec2) -> Rect {
+        scroll::important_area(self, size, |s, si| s.inner.important_area(si))
     }
 }

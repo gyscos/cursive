@@ -5,7 +5,7 @@
 
 use bear_lib_terminal;
 
-use std::collections::HashSet;
+use hashbrown::HashSet;
 
 use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{
@@ -101,7 +101,7 @@ impl Backend {
                                 offset: Vec2::zero(),
                             }
                         })
-                        .unwrap_or(Event::Unknown(vec![]))
+                        .unwrap_or_else(|| Event::Unknown(vec![]))
                 }
                 BltEvent::ShiftReleased | BltEvent::ControlReleased => {
                     Event::Refresh
@@ -162,7 +162,7 @@ impl Backend {
                         offset: Vec2::zero(),
                     }
                 })
-                .unwrap_or(Event::Unknown(vec![])),
+                .unwrap_or_else(|| Event::Unknown(vec![])),
             KeyCode::A
             | KeyCode::B
             | KeyCode::C
@@ -237,6 +237,10 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
+    fn name(&self) -> &str {
+        "bear-lib-terminal"
+    }
+
     fn finish(&mut self) {
         terminal::close();
     }
@@ -353,9 +357,9 @@ fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
 
         Color::Rgb(r, g, b) => (r, g, b),
         Color::RgbLowRes(r, g, b) => (
-            (r as f32 / 5.0 * 255.0) as u8,
-            (g as f32 / 5.0 * 255.0) as u8,
-            (b as f32 / 5.0 * 255.0) as u8,
+            (f32::from(r) / 5.0 * 255.0) as u8,
+            (f32::from(g) / 5.0 * 255.0) as u8,
+            (f32::from(b) / 5.0 * 255.0) as u8,
         ),
     };
     BltColor::from_rgb(r, g, b)

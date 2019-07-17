@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::event::{Event, EventResult};
 use cursive::traits::*;
 use cursive::{Cursive, Printer};
@@ -24,7 +22,7 @@ impl KeyCodeView {
     fn new(size: usize) -> Self {
         KeyCodeView {
             history: Vec::new(),
-            size: size,
+            size,
         }
     }
 }

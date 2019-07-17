@@ -5,7 +5,7 @@ use crate::event::{
 use crate::menu::{MenuItem, MenuTree};
 use crate::rect::Rect;
 use crate::vec::Vec2;
-use crate::view::scroll::{InnerOnEvent, ScrollBase};
+use crate::view::scroll;
 use crate::view::{Position, View};
 use crate::views::OnEventView;
 use crate::Cursive;
@@ -19,11 +19,23 @@ use unicode_width::UnicodeWidthStr;
 pub struct MenuPopup {
     menu: Rc<MenuTree>,
     focus: usize,
-    scrollbase: ScrollBase,
+    scroll_core: scroll::Core,
     align: Align,
     on_dismiss: Option<Callback>,
     on_action: Option<Callback>,
-    last_size: Vec2,
+}
+
+// The `scroll::Scroller` trait is used to weave the borrow phases.
+//
+// TODO: use some macro to auto-generate this.
+impl scroll::Scroller for MenuPopup {
+    fn get_scroller(&self) -> &scroll::Core {
+        &self.scroll_core
+    }
+
+    fn get_scroller_mut(&mut self) -> &mut scroll::Core {
+        &mut self.scroll_core
+    }
 }
 
 impl MenuPopup {
@@ -32,11 +44,10 @@ impl MenuPopup {
         MenuPopup {
             menu,
             focus: 0,
-            scrollbase: ScrollBase::new(),
+            scroll_core: scroll::Core::new(),
             align: Align::top_left(),
             on_dismiss: None,
             on_action: None,
-            last_size: Vec2::zero(),
         }
     }
 
@@ -50,6 +61,11 @@ impl MenuPopup {
     /// Chainable variant.
     pub fn focus(self, focus: usize) -> Self {
         self.with(|s| s.set_focus(focus))
+    }
+
+    /// Returns the position of the currently focused child.
+    pub fn get_focus(&self) -> usize {
+        self.focus
     }
 
     fn item_width(item: &MenuItem) -> usize {
@@ -107,6 +123,193 @@ impl MenuPopup {
     pub fn set_on_action<F: 'static + Fn(&mut Cursive)>(&mut self, f: F) {
         self.on_action = Some(Callback::from_fn(f));
     }
+
+    fn scroll_up(&mut self, mut n: usize, cycle: bool) {
+        while n > 0 {
+            if self.focus > 0 {
+                self.focus -= 1;
+            } else if cycle {
+                self.focus = self.menu.children.len() - 1;
+            } else {
+                break;
+            }
+
+            if !self.menu.children[self.focus].is_delimiter() {
+                n -= 1;
+            }
+        }
+    }
+
+    fn scroll_down(&mut self, mut n: usize, cycle: bool) {
+        while n > 0 {
+            if self.focus + 1 < self.menu.children.len() {
+                self.focus += 1;
+            } else if cycle {
+                self.focus = 0;
+            } else {
+                // Stop if we're at the bottom.
+                break;
+            }
+
+            if !self.menu.children[self.focus].is_delimiter() {
+                n -= 1;
+            }
+        }
+    }
+
+    fn submit(&mut self) -> EventResult {
+        match self.menu.children[self.focus] {
+            MenuItem::Leaf(_, ref cb) => {
+                let cb = cb.clone();
+                let action_cb = self.on_action.clone();
+                EventResult::with_cb(move |s| {
+                    // Remove ourselves from the face of the earth
+                    s.pop_layer();
+                    // If we had prior orders, do it now.
+                    if let Some(ref action_cb) = action_cb {
+                        action_cb.clone()(s);
+                    }
+                    // And transmit his last words.
+                    cb.clone()(s);
+                })
+            }
+            MenuItem::Subtree(_, ref tree) => self.make_subtree_cb(tree),
+            _ => unreachable!("Delimiters cannot be submitted."),
+        }
+    }
+
+    fn dismiss(&mut self) -> EventResult {
+        let dismiss_cb = self.on_dismiss.clone();
+        EventResult::with_cb(move |s| {
+            if let Some(ref cb) = dismiss_cb {
+                cb.clone()(s);
+            }
+            s.pop_layer();
+        })
+    }
+
+    fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
+        let tree = Rc::clone(tree);
+        let max_width = 4 + self
+            .menu
+            .children
+            .iter()
+            .map(MenuPopup::item_width)
+            .max()
+            .unwrap_or(1);
+        let offset = Vec2::new(max_width, self.focus);
+        let action_cb = self.on_action.clone();
+
+        EventResult::with_cb(move |s| {
+            let action_cb = action_cb.clone();
+            s.screen_mut().add_layer_at(
+                Position::parent(offset),
+                OnEventView::new(MenuPopup::new(Rc::clone(&tree)).on_action(
+                    move |s| {
+                        // This will happen when the subtree popup
+                        // activates something;
+                        // First, remove ourselve.
+                        s.pop_layer();
+                        if let Some(ref action_cb) = action_cb {
+                            action_cb.clone()(s);
+                        }
+                    },
+                ))
+                .on_event(Key::Left, |s| {
+                    s.pop_layer();
+                }),
+            );
+        })
+    }
+
+    /// Handle an event for the content.
+    ///
+    /// Here the event has already been relativized. This means `y=0` points to the first item.
+    fn inner_on_event(&mut self, event: Event) -> EventResult {
+        match event {
+            Event::Key(Key::Up) => self.scroll_up(1, true),
+            Event::Key(Key::PageUp) => self.scroll_up(5, false),
+            Event::Key(Key::Down) => self.scroll_down(1, true),
+            Event::Key(Key::PageDown) => self.scroll_down(5, false),
+
+            Event::Key(Key::Home) => self.focus = 0,
+            Event::Key(Key::End) => {
+                self.focus = self.menu.children.len().saturating_sub(1)
+            }
+
+            Event::Key(Key::Right)
+                if self.menu.children[self.focus].is_subtree() =>
+            {
+                return match self.menu.children[self.focus] {
+                    MenuItem::Subtree(_, ref tree) => {
+                        self.make_subtree_cb(tree)
+                    }
+                    _ => unreachable!("Child is a subtree"),
+                };
+            }
+            Event::Key(Key::Enter)
+                if !self.menu.children[self.focus].is_delimiter() =>
+            {
+                return self.submit();
+            }
+            Event::Mouse {
+                event: MouseEvent::Press(_),
+                position,
+                offset,
+            } => {
+                // eprintln!("Position: {:?} / {:?}", position, offset);
+                if let Some(position) = position.checked_sub(offset) {
+                    // Now `position` is relative to the top-left of the content.
+                    let focus = position.y;
+                    if !self.menu.children[focus].is_delimiter() {
+                        self.focus = focus;
+                    }
+                }
+            }
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                position,
+                offset,
+            } if !self.menu.children[self.focus].is_delimiter()
+                && position
+                    .checked_sub(offset)
+                    .map(|position| position.y == self.focus)
+                    .unwrap_or(false) =>
+            {
+                return self.submit();
+            }
+            Event::Key(Key::Esc) => {
+                return self.dismiss();
+            }
+
+            _ => return EventResult::Ignored,
+        }
+
+        EventResult::Consumed(None)
+    }
+
+    /// Compute the required size for the content.
+    fn inner_required_size(&mut self, _req: Vec2) -> Vec2 {
+        let w = 2 + self
+            .menu
+            .children
+            .iter()
+            .map(Self::item_width)
+            .max()
+            .unwrap_or(1);
+
+        let h = self.menu.children.len();
+
+        Vec2::new(w, h)
+    }
+
+    fn inner_important_area(&self, size: Vec2) -> Rect {
+        if self.menu.is_empty() {
+            return Rect::from((0, 0));
+        }
+
+        Rect::from_size((0, self.focus), (size.x, 1))
+    }
 }
 
 impl View for MenuPopup {
@@ -121,14 +324,19 @@ impl View for MenuPopup {
         let printer = &printer.offset((0, offset));
 
         // Start with a box
-        printer.print_box(Vec2::new(0, 0), printer.size, false);
+        scroll::draw_box_frame(
+            self,
+            &printer,
+            |s, y| s.menu.children[y].is_delimiter(),
+            |_s, _x| false,
+        );
 
         // We're giving it a reduced size because of borders.
         let printer = printer.shrinked_centered((2, 2));
 
-        self.scrollbase.draw(&printer, |printer, i| {
-            printer.with_selection(i == self.focus, |printer| {
-                let item = &self.menu.children[i];
+        scroll::draw_lines(self, &printer, |s, printer, i| {
+            printer.with_selection(i == s.focus, |printer| {
+                let item = &s.menu.children[i];
                 match *item {
                     MenuItem::Delimiter => {
                         // printer.print_hdelim((0, 0), printer.size.x)
@@ -159,43 +367,38 @@ impl View for MenuPopup {
         // We can't really shrink our items here, so it's not flexible.
 
         // 2 is the padding
-        let w = 2 + self
-            .menu
-            .children
-            .iter()
-            .map(Self::item_width)
-            .max()
-            .unwrap_or(1);
 
-        let h = self.menu.children.len();
-
-        let res = self
-            .scrollbase
-            .required_size(req.saturating_sub((2, 2)), |_| Vec2::new(w, h))
-            + (2, 2);
-
-        res
+        scroll::required_size(
+            self,
+            req.saturating_sub((2, 2)),
+            true,
+            Self::inner_required_size,
+        ) + (2, 2)
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        match self.scrollbase.on_event(
+        match scroll::on_event(
+            self,
             event.relativized((1, 1)),
-            OnEvent {
-                focus: &mut self.focus,
-                menu: &self.menu,
-                on_dismiss: &self.on_dismiss,
-                on_action: &self.on_action,
-                last_size: &self.last_size,
-            },
+            Self::inner_on_event,
+            Self::inner_important_area,
         ) {
             EventResult::Ignored => {
+                // Check back the non-relativized event now
                 if let Event::Mouse {
                     event: MouseEvent::Press(_),
                     position,
                     offset,
                 } = event
                 {
-                    if !position.fits_in_rect(offset, self.last_size) {
+                    // Mouse press will be ignored if they are outside of the content.
+                    // They can be on the border, or entirely outside of the popup.
+
+                    // Mouse clicks outside of the popup should dismiss it.
+                    if !position.fits_in_rect(
+                        offset,
+                        self.scroll_core.last_size() + (2, 2),
+                    ) {
                         let dismiss_cb = self.on_dismiss.clone();
                         return EventResult::with_cb(move |s| {
                             if let Some(ref cb) = dismiss_cb {
@@ -213,210 +416,21 @@ impl View for MenuPopup {
     }
 
     fn layout(&mut self, size: Vec2) {
-        self.last_size = size;
-
-        let children = &self.menu.children;
-
-        self.scrollbase.layout(size.saturating_sub((2, 2)), |size| {
-            Vec2::new(size.x, children.len())
-        });
+        scroll::layout(
+            self,
+            size.saturating_sub((2, 2)),
+            true,
+            |_s, _size| (),
+            Self::inner_required_size,
+        );
     }
 
     fn important_area(&self, size: Vec2) -> Rect {
-        if self.menu.is_empty() {
-            return Rect::from((0, 0));
-        }
-
-        Rect::from_size((0, self.focus), (size.x, 1))
-    }
-}
-
-struct OnEvent<'a> {
-    focus: &'a mut usize,
-    menu: &'a Rc<MenuTree>,
-    on_dismiss: &'a Option<Callback>,
-    on_action: &'a Option<Callback>,
-    last_size: &'a Vec2,
-}
-
-impl<'a> OnEvent<'a> {
-    fn scroll_up(&mut self, mut n: usize, cycle: bool) {
-        while n > 0 {
-            if *self.focus > 0 {
-                *self.focus -= 1;
-            } else if cycle {
-                *self.focus = self.menu.children.len() - 1;
-            } else {
-                break;
-            }
-
-            if !self.menu.children[*self.focus].is_delimiter() {
-                n -= 1;
-            }
-        }
-    }
-
-    fn scroll_down(&mut self, mut n: usize, cycle: bool) {
-        while n > 0 {
-            if *self.focus + 1 < self.menu.children.len() {
-                *self.focus += 1;
-            } else if cycle {
-                *self.focus = 0;
-            } else {
-                break;
-            }
-            if !self.menu.children[*self.focus].is_delimiter() {
-                n -= 1;
-            }
-        }
-    }
-    fn submit(&mut self) -> EventResult {
-        match self.menu.children[*self.focus] {
-            MenuItem::Leaf(_, ref cb) => {
-                let cb = cb.clone();
-                let action_cb = self.on_action.clone();
-                EventResult::with_cb(move |s| {
-                    // Remove ourselves from the face of the earth
-                    s.pop_layer();
-                    // If we had prior orders, do it now.
-                    if let Some(ref action_cb) = action_cb {
-                        action_cb.clone()(s);
-                    }
-                    // And transmit his last words.
-                    cb.clone()(s);
-                })
-            }
-            MenuItem::Subtree(_, ref tree) => self.make_subtree_cb(tree),
-            _ => panic!("No delimiter here"),
-        }
-    }
-
-    fn dismiss(&mut self) -> EventResult {
-        let dismiss_cb = self.on_dismiss.clone();
-        EventResult::with_cb(move |s| {
-            if let Some(ref cb) = dismiss_cb {
-                cb.clone()(s);
-            }
-            s.pop_layer();
-        })
-    }
-
-    fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
-        let tree = Rc::clone(tree);
-        let max_width = 4 + self
-            .menu
-            .children
-            .iter()
-            .map(MenuPopup::item_width)
-            .max()
-            .unwrap_or(1);
-        let offset = Vec2::new(max_width, *self.focus);
-        let action_cb = self.on_action.clone();
-
-        EventResult::with_cb(move |s| {
-            let action_cb = action_cb.clone();
-            s.screen_mut().add_layer_at(
-                Position::parent(offset),
-                OnEventView::new(MenuPopup::new(Rc::clone(&tree)).on_action(
-                    move |s| {
-                        // This will happen when the subtree popup
-                        // activates something;
-                        // First, remove ourselve.
-                        s.pop_layer();
-                        if let Some(ref action_cb) = action_cb {
-                            action_cb.clone()(s);
-                        }
-                    },
-                ))
-                .on_event(Key::Left, |s| {
-                    s.pop_layer();
-                }),
-            );
-        })
-    }
-}
-
-impl<'a> InnerOnEvent for OnEvent<'a> {
-    fn on_event(&mut self, event: Event) -> EventResult {
-        match event {
-            Event::Key(Key::Up) => self.scroll_up(1, true),
-            Event::Key(Key::PageUp) => self.scroll_up(5, false),
-            Event::Key(Key::Down) => self.scroll_down(1, true),
-            Event::Key(Key::PageDown) => self.scroll_down(5, false),
-
-            Event::Key(Key::Home) => *self.focus = 0,
-            Event::Key(Key::End) => {
-                *self.focus = self.menu.children.len().saturating_sub(1)
-            }
-
-            Event::Key(Key::Right)
-                if self.menu.children[*self.focus].is_subtree() =>
-            {
-                return match self.menu.children[*self.focus] {
-                    MenuItem::Subtree(_, ref tree) => {
-                        self.make_subtree_cb(tree)
-                    }
-                    _ => panic!("Not a subtree???"),
-                };
-            }
-            Event::Key(Key::Enter)
-                if !self.menu.children[*self.focus].is_delimiter() =>
-            {
-                return self.submit();
-            }
-            Event::Mouse {
-                event: MouseEvent::Press(_),
-                position,
-                offset,
-            } if position.fits_in_rect(
-                offset,
-                self.last_size.saturating_sub((2, 2)),
-            ) =>
-            {
-                // eprintln!("Position: {:?} / {:?}", position, offset);
-                // eprintln!("Last size: {:?}", self.last_size);
-                let inner_size = self.last_size.saturating_sub((2, 2));
-                if let Some(position) = position.checked_sub(offset) {
-                    // `position` is not relative to the content
-                    // (It's inside the border)
-                    if position < inner_size {
-                        let focus = position.y;
-                        if !self.menu.children[focus].is_delimiter() {
-                            *self.focus = focus;
-                        }
-                    }
-                }
-            }
-            Event::Mouse {
-                event: MouseEvent::Release(MouseButton::Left),
-                position,
-                offset,
-            } if !self.menu.children[*self.focus].is_delimiter()
-                && position
-                    .checked_sub(offset)
-                    .map(|position| {
-                        position < self.last_size.saturating_sub((2, 2))
-                            && (position.y == *self.focus)
-                    })
-                    .unwrap_or(false) =>
-            {
-                return self.submit();
-            }
-            Event::Key(Key::Esc)
-            | Event::Mouse {
-                event: MouseEvent::Press(_),
-                ..
-            } => {
-                return self.dismiss();
-            }
-
-            _ => return EventResult::Ignored,
-        }
-
-        EventResult::Consumed(None)
-    }
-
-    fn important_area(&self, size: Vec2) -> Rect {
-        Rect::from_size((0, *self.focus), (size.x, 1))
+        scroll::important_area(
+            self,
+            size.saturating_sub((2, 2)),
+            Self::inner_important_area,
+        )
+        .with(|area| area.offset((1, 1)))
     }
 }

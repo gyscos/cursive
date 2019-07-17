@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.12.0
+
+### Breaking changes
+
+- Updated `enumset` from 0.3 to 0.4
+
+### API updates
+
+- Add `Cursive::take_user_data`, replaces the current user data with `()`.
+- Add `SliderView::{get_value, get_max_value}`.
+
+### Improvements
+
+- `DebugConsole` now has horizontal scrolling enabled.
+- `pancurses` backend now correctly recognizes the "Enter" key from the numpad
+  as "Enter".
+
+## 0.11.2
+
+### API updates
+
+- Bring back `Cursive::set_fps` for <30Hz refresh rates.
+- Add `Cursive::backend_name` to get the name of the current backend.
+- Add a new backend based on the crossterm library.
+- Add direct downcast methods to `dyn AnyView`
+- Add sort methods to `SelectView`
+
+### Improvements
+
+- Improved printer performance with styled spans.
+
+## 0.11.1
+
+### API updates
+
+- Added manual scrolling methods to `view::scroll::Core`:
+    - `keep_in_view`, `scroll_to`, `scroll_to_x`, `scroll_to_y`
+    Note: the `view::scroll` module is hidden behind an experimental
+    feature `unstable_scroll`.
+
+### Improvements
+
+- Improved printer performance (thanks to @chrisvest).
+
+### Bugfixes
+
+- Fixed `MenuPopup` borders near delimiters.
+
 ## 0.11.0
 
 ### Breaking changes

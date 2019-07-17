@@ -126,7 +126,7 @@ impl<T: ViewWrapper> View for T {
 
     fn call_on_any<'a>(
         &mut self, selector: &Selector<'_>,
-        callback: Box<FnMut(&mut dyn Any) + 'a>,
+        callback: Box<dyn FnMut(&mut dyn Any) + 'a>,
     ) {
         self.wrap_call_on_any(selector, callback)
     }
@@ -154,14 +154,13 @@ impl<T: ViewWrapper> View for T {
 /// # Examples
 ///
 /// ```rust
-/// # #[macro_use] extern crate cursive;
 /// # use cursive::view::{View,ViewWrapper};
 /// struct FooView<T: View> {
 ///     view: T,
 /// }
 ///
 /// impl <T: View> ViewWrapper for FooView<T> {
-///     wrap_impl!(self.view: T);
+///     cursive::wrap_impl!(self.view: T);
 /// }
 /// # fn main() { }
 /// ```
@@ -199,18 +198,17 @@ macro_rules! wrap_impl {
 /// # Examples
 ///
 /// ```rust
-/// # #[macro_use] extern crate cursive;
-/// # use cursive::view::{View,ViewWrapper};
+/// # use cursive::view::{View, ViewWrapper};
 /// struct FooView<T: View> {
 ///     view: T,
 /// }
 ///
 /// impl<T: View> FooView<T> {
-///     inner_getters!(self.view: T);
+///     cursive::inner_getters!(self.view: T);
 /// }
 ///
 /// impl <T: View> ViewWrapper for FooView<T> {
-///     wrap_impl!(self.view: T);
+///     cursive::wrap_impl!(self.view: T);
 /// }
 /// # fn main() { }
 /// ```

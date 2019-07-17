@@ -2,8 +2,8 @@
 use log::{debug, warn};
 use pancurses;
 
+use hashbrown::HashMap;
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
 use std::io::{stdout, Write};
 
 use crate::backend;
@@ -133,9 +133,10 @@ impl Backend {
             return Some(event);
         }
 
-        let event = if let Some(ev) = self.window.getch() {
+        if let Some(ev) = self.window.getch() {
             Some(match ev {
-                pancurses::Input::Character('\n') => Event::Key(Key::Enter),
+                pancurses::Input::Character('\n')
+                | pancurses::Input::Character('\r') => Event::Key(Key::Enter),
                 // TODO: wait for a very short delay. If more keys are
                 // pipelined, it may be an escape sequence.
                 pancurses::Input::Character('\u{7f}')
@@ -286,8 +287,7 @@ impl Backend {
             })
         } else {
             None
-        };
-        event
+        }
     }
 
     fn parse_mouse_event(&mut self) -> Event {
@@ -307,7 +307,7 @@ impl Backend {
         let make_event = |event| Event::Mouse {
             offset: Vec2::zero(),
             position: Vec2::new(mevent.x as usize, mevent.y as usize),
-            event: event,
+            event,
         };
 
         if mevent.bstate == pancurses::REPORT_MOUSE_POSITION as mmask_t {
@@ -352,6 +352,10 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
+    fn name(&self) -> &str {
+        "pancurses"
+    }
+
     fn screen_size(&self) -> Vec2 {
         // Coordinates are reversed here
         let (y, x) = self.window.get_max_yx();
@@ -415,6 +419,17 @@ impl backend::Backend for Backend {
 
     fn print_at(&self, pos: Vec2, text: &str) {
         self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
+    }
+
+    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
+        if repetitions > 0 {
+            self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
+            let mut dupes_left = repetitions - 1;
+            while dupes_left > 0 {
+                self.window.addstr(text);
+                dupes_left -= 1;
+            }
+        }
     }
 
     fn poll_event(&mut self) -> Option<Event> {

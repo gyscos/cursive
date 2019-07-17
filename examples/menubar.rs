@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::event::Key;
 use cursive::menu::MenuTree;
 use cursive::traits::*;

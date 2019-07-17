@@ -1,5 +1,3 @@
-extern crate cursive;
-
 use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle};
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 use cursive::Cursive;

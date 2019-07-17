@@ -6,8 +6,6 @@ This time, we'll work on a slightly bigger example, where the user will need to
 actually make some choices. Here is what the code will look like:
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 use cursive::views::Dialog;
 
@@ -46,8 +44,6 @@ This time you're not a beginner anymore, so we'll skip the introduction!
 Let's start from a basic cursive application:
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 
 fn main() {
@@ -67,8 +63,6 @@ and/or buttons.
 `TextView`:
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 use cursive::views::Dialog;
 use cursive::views::TextView;
@@ -129,8 +123,6 @@ packing everything into the closure, let's use a separate function for the
 callback. Here is the current state:
 
 ```rust,no_run
-extern crate cursive;
-
 use cursive::Cursive;
 use cursive::views::Dialog;
 
