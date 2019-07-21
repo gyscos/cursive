@@ -395,16 +395,7 @@ impl IndexMut<&Vec2> for ObservedScreen {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backend::puppet::Backend;
     use crate::backend::puppet::DEFAULT_OBSERVED_STYLE;
-    use core::borrow::BorrowMut;
-    use crate::event::Event;
-    use std::time::Duration;
-    use crate::view::*;
-    use crate::views::TextArea;
-    use crate::views::TextView;
-    use crate::views::*;
-    use crate::Cursive;
 
     /// Expecting fake_screen to be square, # will be replaced with blank.
     fn get_observed_screen(fake_screen: &Vec<&str>) -> ObservedScreen {
@@ -437,35 +428,6 @@ mod tests {
 
         os
     }
-
-    //    /// Expecting fake_screen to be square via Cursive draw
-    //    fn get_observed_screen_via_draw(fake_screen : &Vec<&str>) -> ObservedScreen {
-    //        let height = fake_screen.len();
-    //        let width = fake_screen[0].graphemes(true).count();
-    //        let size = Vec2::new(width, height);
-    //
-    //        let backend = Backend::init(Some(size));
-    //        let sink = backend.stream();
-    //        let input = backend.input();
-    //
-    //        let mut siv = Cursive::new(move || backend);
-    //
-    //        let mut ta = TextArea::new().content(fake_screen.join("")).fixed_size(size);
-    //
-    //        siv.add_fullscreen_layer(ta);
-    //        let observed_style : Rc<ObservedStyle> = Rc::new(DEFAULT_OBSERVED_STYLE.clone());
-    //        siv.quit();
-    //        input.send(Some(Event::Refresh));
-    //        siv.step();
-    //
-    //        let mut last_screen : Option<ObservedScreen> = None;
-    //
-    //        while let Ok(screen) = sink.recv_timeout(Duration::new(0,0)) {
-    //            last_screen = Some(screen);
-    //        }
-    //
-    //        last_screen.unwrap()
-    //    }
 
     #[test]
     fn test_test() {
