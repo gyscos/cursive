@@ -213,15 +213,23 @@ impl ObservedScreen {
     }
 }
 
+/// Represents rectangular piece of observed screen (Puppet backend output)
 pub trait ObservedPieceInterface {
+
+    /// Minimums of coordinates
     fn min(&self) -> Vec2;
+    /// Maximums of coordinates
     fn max(&self) -> Vec2;
+
+    /// Reference of ObservablePiece this one is a subsection of or Self
     fn parent(&self) -> &ObservedScreen;
 
+    /// Size of piece
     fn size(&self) -> Vec2 {
         self.max() - self.min()
     }
 
+    /// Returns a string representation of consecutive lines of this piece.
     fn as_strings(&self) -> Vec<String> {
         let mut v: Vec<String> = vec![];
         for y in self.min().y..self.max().y {
@@ -240,6 +248,9 @@ pub trait ObservedPieceInterface {
         v
     }
 
+    /// Returns expanded sibling of this piece
+    ///
+    /// Asserts if request can be satisfied.
     fn expanded(&self, up_left: Vec2, down_right: Vec2) -> ObservedPiece {
         assert!(self.min().x >= up_left.x);
         assert!(self.min().y >= up_left.y);
@@ -254,6 +265,7 @@ pub trait ObservedPieceInterface {
     }
 }
 
+/// Represents a piece or whole of observed screen.
 pub struct ObservedPiece<'a> {
     min: Vec2,
     max: Vec2,
@@ -294,6 +306,7 @@ impl<'a> ObservedPieceInterface for ObservedPiece<'a> {
     }
 }
 
+/// Represents a single line of observed screen.
 pub struct ObservedLine<'a> {
     line_start: Vec2,
     line_len: usize,
@@ -313,6 +326,9 @@ impl<'a> ObservedLine<'a> {
         }
     }
 
+    /// Returns the same line, but expanded.
+    ///
+    /// Asserts whether request can be satisfied
     pub fn expanded_line(&self, left: usize, right: usize) -> Self {
         assert!(left <= self.line_start.x);
         assert!(

@@ -1,12 +1,4 @@
 //! Puppet backend
-
-#![warn(missing_docs)]
-#![allow(warnings)]
-#![warn(unused)]
-#![allow(bad_style)]
-
-use std::thread;
-
 use crossbeam_channel::{self, Receiver, Sender, TryRecvError};
 
 use crate::backend;
@@ -17,32 +9,17 @@ use crate::event::Event;
 use std::cell::RefCell;
 use std::rc::Rc;
 use crate::theme;
-use crate::theme::{Color, Effect};
-use crate::theme::ColorPair;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 use crate::vec::Vec2;
-use crate::XY;
-
-#[macro_use]
-use lazy_static::lazy_static;
-
-use enumset::EnumSet;
 
 pub mod observed;
 pub mod observed_screen_view;
+mod static_values;
 
-lazy_static! {
-    pub static ref DEFAULT_SIZE: Vec2 = XY::<usize> { x: 120, y: 80 };
-    pub static ref DEFAULT_OBSERVED_STYLE: ObservedStyle = ObservedStyle {
-        colors: ColorPair {
-            front: Color::TerminalDefault,
-            back: Color::TerminalDefault,
-        },
-        effects: EnumSet::<Effect>::empty(),
-    };
-}
+use static_values::*;
 
+/// Puppet backend for testing.
 pub struct Backend {
     inner_sender: Sender<Option<Event>>,
     inner_receiver: Receiver<Option<Event>>,
@@ -54,6 +31,7 @@ pub struct Backend {
 }
 
 impl Backend {
+    /// Creates new Puppet backend of given or default size.
     pub fn init(size_op: Option<Vec2>) -> Box<Backend>
     where
         Self: Sized,
@@ -79,14 +57,17 @@ impl Backend {
         Box::new(backend)
     }
 
+    /// Returns current ObservedStyle
     pub fn current_style(&self) -> Rc<ObservedStyle> {
         self.current_style.borrow().clone()
     }
 
+    /// Ouput stream of consecutive frames rendered by Puppet backend
     pub fn stream(&self) -> Receiver<ObservedScreen> {
         self.screen_channel.1.clone()
     }
 
+    /// Input stream to inject artificial input to Puppet backend.
     pub fn input(&self) -> Sender<Option<Event>> {
         self.inner_sender.clone()
     }

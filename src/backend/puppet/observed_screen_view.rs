@@ -7,11 +7,13 @@ use crate::view::View;
 use crate::Printer;
 use crate::Vec2;
 
+/// A view that visualize observed screen
 pub struct ObservedScreenView {
     screen: ObservedScreen,
 }
 
 impl ObservedScreenView {
+    /// Constructor
     pub fn new(obs: ObservedScreen) -> Self {
         ObservedScreenView { screen: obs }
     }
