@@ -481,10 +481,10 @@ mod tests {
         let os = get_observed_screen(&fake_screen);
 
         assert_eq!(
-            os[&Vec2::new(0, 0)].as_ref().unwrap().letter.as_option(),
+            os[Vec2::new(0, 0)].as_ref().unwrap().letter.as_option(),
             Some(&".".to_owned())
         );
-        assert_eq!(os[&Vec2::new(2, 1)], None);
+        assert_eq!(os[Vec2::new(2, 1)], None);
     }
 
     #[test]
