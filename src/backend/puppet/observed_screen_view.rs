@@ -24,7 +24,7 @@ impl View for ObservedScreenView {
         for x in 0..self.screen.size().x {
             for y in 0..self.screen.size().y {
                 let pos = Vec2::new(x, y);
-                let cell_op: &Option<ObservedCell> = &self.screen[&pos];
+                let cell_op: &Option<ObservedCell> = &self.screen[pos];
                 if cell_op.is_none() {
                     continue;
                 }

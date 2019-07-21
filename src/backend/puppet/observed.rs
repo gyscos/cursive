@@ -100,7 +100,7 @@ impl ObservedScreen {
         ObservedScreen { size, contents }
     }
 
-    fn flatten_index(&self, index: &Vec2) -> usize {
+    fn flatten_index(&self, index: Vec2) -> usize {
         assert!(index.x < self.size.x);
         assert!(index.y < self.size.y);
 
@@ -134,12 +134,56 @@ impl ObservedScreen {
         ObservedPiece::new(self, min, max)
     }
 
+    /// Prints the piece to stdout.
+    pub fn print_stdout(&self) {
+        println!("captured piece:");
+
+        print!("x");
+        for x in 0..self.size().x {
+            print!("{}", x % 10);
+        }
+        println!("x");
+
+        for y in 0..self.size().y {
+            print!("{}", y % 10);
+
+            for x in 0..self.size().x {
+                let pos = Vec2::new(x, y);
+                let cell_op: &Option<ObservedCell> = &self[pos];
+                if cell_op.is_some() {
+                    let cell = cell_op.as_ref().unwrap();
+
+                    if cell.letter.is_continuation() {
+                        print!("c");
+                        continue;
+                    } else {
+                        let letter = cell.letter.unwrap();
+                        if letter == " " {
+                            print!(" ");
+                        } else {
+                            print!("{}", letter);
+                        }
+                    }
+                } else {
+                    print!(".");
+                }
+            }
+            print!("|");
+            println!();
+        }
+
+        print!("x");
+        for _x in 0..self.size().x {
+            print!("-");
+        }
+        println!("x");
+    }
 
     /// Returns occurences of given string pattern
-    pub fn find_occurences<'a>(
-        &'a self,
+    pub fn find_occurences(
+        &self,
         pattern: &str,
-    ) -> Vec<ObservedLine<'a>> {
+    ) -> Vec<ObservedLine> {
         // TODO(njskalski): test for two-cell letters.
         // TODO(njskalski): fails with whitespaces like "\t".
 
@@ -148,7 +192,7 @@ impl ObservedScreen {
             'x: for x in self.min().x..self.max().x {
                 // check candidate.
 
-                if pattern.len() > self.size.x - x {
+                if pattern.len() > self.size().x - x {
                     continue;
                 }
 
@@ -170,7 +214,7 @@ impl ObservedScreen {
                     let pos_it = Vec2::new(x + pos_cursor, y);
 
                     let found_symbol: Option<&String> =
-                        if let Some(ref cell) = self[&pos_it] {
+                        if let Some(ref cell) = self[pos_it] {
                             cell.letter.as_option()
                         } else {
                             None
@@ -235,7 +279,7 @@ pub trait ObservedPieceInterface {
         for y in self.min().y..self.max().y {
             let mut s = String::new();
             for x in self.min().x..self.max().x {
-                match &self.parent()[&Vec2::new(x, y)] {
+                match &self.parent()[Vec2::new(x, y)] {
                     None => s.push(' '),
                     Some(cell) => match &cell.letter {
                         GraphemePart::Begin(lex) => s.push_str(&lex),
@@ -363,31 +407,31 @@ impl<'a> ToString for ObservedLine<'a> {
     }
 }
 
-impl Index<&Vec2> for ObservedPieceInterface {
+impl Index<Vec2> for ObservedPieceInterface {
     type Output = Option<ObservedCell>;
 
-    fn index(&self, index: &Vec2) -> &Self::Output {
+    fn index(&self, index: Vec2) -> &Self::Output {
         assert!(self.max().x - self.min().x > index.x);
         assert!(self.max().y - self.min().y > index.y);
 
         let parent_index = self.min() + index;
 
-        &self.parent()[&parent_index]
+        &self.parent()[parent_index]
     }
 }
 
-impl Index<&Vec2> for ObservedScreen {
+impl Index<Vec2> for ObservedScreen {
     type Output = Option<ObservedCell>;
 
-    fn index(&self, index: &Vec2) -> &Self::Output {
-        let idx = self.flatten_index(&index);
+    fn index(&self, index: Vec2) -> &Self::Output {
+        let idx = self.flatten_index(index);
         &self.contents[idx]
     }
 }
 
-impl IndexMut<&Vec2> for ObservedScreen {
-    fn index_mut(&mut self, index: &Vec2) -> &mut Option<ObservedCell> {
-        let idx = self.flatten_index(&index);
+impl IndexMut<Vec2> for ObservedScreen {
+    fn index_mut(&mut self, index: Vec2) -> &mut Option<ObservedCell> {
+        let idx = self.flatten_index(index);
         &mut self.contents[idx]
     }
 }
@@ -411,7 +455,7 @@ mod tests {
         for y in 0..fake_screen.len() {
             let mut x: usize = 0;
             for letter in fake_screen[y].graphemes(true) {
-                let idx = os.flatten_index(&Vec2::new(x, y));
+                let idx = os.flatten_index(Vec2::new(x, y));
                 os.contents[idx] = if letter == "#" {
                     None
                 } else {

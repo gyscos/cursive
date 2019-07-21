@@ -108,7 +108,7 @@ impl backend::Backend for Backend {
 
         for (idx, grapheme) in text.graphemes(true).enumerate() {
             let cpos = pos + Vec2::new(idx + offset, 0);
-            screen[&cpos] = Some(ObservedCell::new(
+            screen[cpos] = Some(ObservedCell::new(
                 cpos,
                 style.clone(),
                 Some(grapheme.to_string()),
@@ -117,7 +117,7 @@ impl backend::Backend for Backend {
             for _ in 0..grapheme.width() - 1 {
                 offset += 1;
                 let spos = pos + Vec2::new(idx + offset, 0);
-                screen[&spos] = Some(ObservedCell::new(spos, style.clone(), None));
+                screen[spos] = Some(ObservedCell::new(spos, style.clone(), None));
             }
         }
     }

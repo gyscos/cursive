@@ -21,11 +21,11 @@ pub mod tests {
     use std::cell::RefCell;
     use std::time::Duration;
     use cursive::event::Key;
-    use self::cursive::backend::puppet::observed::ObservedCell;
+    use self::cursive::backend::puppet::observed::{ObservedCell, ObservedPieceInterface};
 
     pub struct BasicSetup {
         siv: Cursive,
-        screen_sink: crossbeam_channel::Receiver<ObservedScreen>,
+        screen_stream: crossbeam_channel::Receiver<ObservedScreen>,
         input: crossbeam_channel::Sender<Option<Event>>,
         last_screen: RefCell<Option<ObservedScreen>>,
     }
@@ -75,67 +75,23 @@ pub mod tests {
 
             BasicSetup {
                 siv,
-                screen_sink : sink,
+                screen_stream: sink,
                 input,
                 last_screen : RefCell::new(None)
             }
         }
 
         pub fn last_screen(&self) -> Option<ObservedScreen> {
-            while let Ok(screen) = self.screen_sink.recv_timeout(Duration::new(0, 0)) {
+            while let Ok(screen) = self.screen_stream.try_recv() {
                 self.last_screen.replace(Some(screen));
             }
 
             self.last_screen.borrow().clone()
         }
 
-        pub fn draw_screen(&self, screen: &ObservedScreen) {
-            println!("captured screen:");
-
-            print!("x");
-            for x in 0..screen.size().x {
-                print!("{}", x % 10);
-            }
-            println!("x");
-
-            for y in 0..screen.size().y {
-                print!("{}", y % 10);
-
-                for x in 0..screen.size().x {
-                    let pos = Vec2::new(x, y);
-                    let cell_op: &Option<ObservedCell> = &screen[&pos];
-                    if cell_op.is_some() {
-                        let cell = cell_op.as_ref().unwrap();
-
-                        if cell.letter.is_continuation() {
-                            print!("c");
-                            continue;
-                        } else {
-                            let letter = cell.letter.unwrap();
-                            if letter == " " {
-                                print!(" ");
-                            } else {
-                                print!("{}", letter);
-                            }
-                        }
-                    } else {
-                        print!(".");
-                    }
-                }
-                print!("|");
-                println!();
-            }
-
-            print!("x");
-            for x in 0..screen.size().x {
-                print!("-");
-            }
-            println!("x");
-        }
-
         pub fn dump_debug(&self) {
             self.last_screen().as_ref().map(|s| {
-                self.draw_screen(s);
+                s.print_stdout()
             });
         }
 
