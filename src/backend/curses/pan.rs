@@ -388,6 +388,7 @@ impl backend::Backend for Backend {
             Effect::Reverse => pancurses::Attribute::Reverse,
             Effect::Bold => pancurses::Attribute::Bold,
             Effect::Italic => pancurses::Attribute::Italic,
+            Effect::Strikethrough => pancurses::Attribute::Strikeout,
             Effect::Underline => pancurses::Attribute::Underline,
         };
         self.window.attron(style);
@@ -399,6 +400,7 @@ impl backend::Backend for Backend {
             Effect::Reverse => pancurses::Attribute::Reverse,
             Effect::Bold => pancurses::Attribute::Bold,
             Effect::Italic => pancurses::Attribute::Italic,
+            Effect::Strikethrough => pancurses::Attribute::Strikeout,
             Effect::Underline => pancurses::Attribute::Underline,
         };
         self.window.attroff(style);

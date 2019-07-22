@@ -234,6 +234,7 @@ impl backend::Backend for Backend {
             theme::Effect::Reverse => self.write(Attribute::Reverse),
             theme::Effect::Bold => self.write(Attribute::Bold),
             theme::Effect::Italic => self.write(Attribute::Italic),
+            theme::Effect::Strikethrough => self.write(Attribute::CrossedOut),
             theme::Effect::Underline => self.write(Attribute::Underlined),
         }
     }
@@ -244,6 +245,7 @@ impl backend::Backend for Backend {
             theme::Effect::Reverse => self.write(Attribute::Reverse),
             theme::Effect::Bold => self.write(Attribute::NoBold),
             theme::Effect::Italic => self.write(Attribute::NoItalic),
+            theme::Effect::Strikethrough => self.write(Attribute::NotCrossedOut),
             theme::Effect::Underline => self.write(Attribute::Underlined),
         }
     }
