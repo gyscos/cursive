@@ -343,7 +343,7 @@ impl backend::Backend for Backend {
             Effect::Simple => ncurses::A_NORMAL(),
             Effect::Bold => ncurses::A_BOLD(),
             Effect::Italic => ncurses::A_ITALIC(),
-            Effect::Strikethrough => {},
+            Effect::Strikethrough => ncurses::A_NORMAL(),
             Effect::Underline => ncurses::A_UNDERLINE(),
         };
         ncurses::attron(style);
@@ -355,7 +355,7 @@ impl backend::Backend for Backend {
             Effect::Simple => ncurses::A_NORMAL(),
             Effect::Bold => ncurses::A_BOLD(),
             Effect::Italic => ncurses::A_ITALIC(),
-            Effect::Strikethrough => {},
+            Effect::Strikethrough => ncurses::A_NORMAL(),
             Effect::Underline => ncurses::A_UNDERLINE(),
         };
         ncurses::attroff(style);
