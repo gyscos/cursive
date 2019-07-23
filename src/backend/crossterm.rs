@@ -11,6 +11,8 @@ use crossterm::{
     ClearType, Color, Colored, InputEvent as CInputEvent,
     KeyEvent as CKeyEvent, MouseButton as CMouseButton,
     MouseEvent as CMouseEvent, Terminal, TerminalCursor,
+    Output,
+    Goto, SetAttr, Hide, Show, Clear, Command, execute, queue
 };
 
 use crate::event::{Event, Key, MouseButton, MouseEvent};
@@ -164,11 +166,8 @@ impl backend::Backend for Backend {
     }
 
     fn finish(&mut self) {
-        self.cursor.goto(1, 1).unwrap();
-        self.terminal.clear(ClearType::All).unwrap();
-        self.write(Attribute::Reset);
+        execute!(self.stdout.borrow_mut(), Goto(0,0), Clear(ClearType::All), SetAttr(Attribute::Reset), Show);
         input().disable_mouse_mode().unwrap();
-        cursor().show().unwrap();
     }
 
     fn refresh(&mut self) {
@@ -182,28 +181,22 @@ impl backend::Backend for Backend {
 
     fn screen_size(&self) -> Vec2 {
         let size = self.terminal.terminal_size();
-        Vec2::from(size) + (1, 1)
+        Vec2::from(size)
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        self.cursor.goto(pos.x as u16, pos.y as u16).unwrap();
-        self.write(text);
+        queue!(self.stdout.borrow_mut(), Goto(pos.x as u16, pos.y as u16));
+        write!(self.stdout.borrow_mut(), "{}", text);
     }
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
-            let mut out = self.stdout.borrow_mut();
-
-            self.cursor.goto(pos.x as u16, pos.y as u16).unwrap();
-
-            // as I (Timon) wrote this I figured out that calling `write_str` for unix was flushing the stdout.
-            // Current work aground is writing bytes instead of a string to the terminal.
-            out.write_all(text.as_bytes()).unwrap();
+            queue!(self.stdout.borrow_mut(), Goto(pos.x as u16, pos.y as u16));
+            write!(self.stdout.borrow_mut(), "{}", text);
 
             let mut dupes_left = repetitions - 1;
             while dupes_left > 0 {
-                out.write_all(text.as_bytes()).unwrap();
-                dupes_left -= 1;
+                write!(self.stdout.borrow_mut(), "{}", text);
             }
         }
     }
@@ -214,7 +207,7 @@ impl backend::Backend for Backend {
             back: color,
         });
 
-        self.terminal.clear(ClearType::All).unwrap();
+        queue!(self.stdout.borrow_mut(), Clear(ClearType::All));
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {

@@ -274,7 +274,7 @@ impl backend::Backend for Backend {
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
-            let mut out = self.terminal.borrow_mut();
+            let mut out =
             write!(
                 out,
                 "{}{}",
