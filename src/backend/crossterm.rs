@@ -6,12 +6,18 @@
 
 use crate::vec::Vec2;
 use crate::{backend, theme};
-use crossterm::{cursor, input, terminal, AlternateScreen, AsyncReader, Attribute, ClearType, Color, Colored, InputEvent as CInputEvent, KeyEvent as CKeyEvent, MouseButton as CMouseButton, MouseEvent as CMouseEvent, Terminal, TerminalCursor, Output, Goto, SetAttr, Hide, Show, Clear, Command, execute, queue, SetFg, SetBg, RawScreen};
+use crossterm::{
+    cursor, execute, input, queue, terminal, AlternateScreen, AsyncReader,
+    Attribute, Clear, ClearType, Color, Colored, Command, Goto, Hide,
+    InputEvent as CInputEvent, KeyEvent as CKeyEvent,
+    MouseButton as CMouseButton, MouseEvent as CMouseEvent, Output, RawScreen,
+    SetAttr, SetBg, SetFg, Show, Terminal, TerminalCursor,
+};
 
 use crate::event::{Event, Key, MouseButton, MouseEvent};
-use std::cell::{Cell, RefCell};
-use std::io::{self, Stdout, Write, StdoutLock, BufWriter};
 use core::borrow::BorrowMut;
+use std::cell::{Cell, RefCell};
+use std::io::{self, BufWriter, Stdout, StdoutLock, Write};
 
 /// Backend using crossterm
 pub struct Backend {
@@ -51,19 +57,24 @@ impl Backend {
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
-        with_color(colors.front, |c| queue!(self.stdout.borrow_mut(), SetFg(*c)));
-        with_color(colors.back, |c| queue!(self.stdout.borrow_mut(), SetBg(*c)));
+        with_color(colors.front, |c| {
+            queue!(self.stdout.borrow_mut(), SetFg(*c))
+        });
+        with_color(colors.back, |c| {
+            queue!(self.stdout.borrow_mut(), SetBg(*c))
+        });
     }
-    
-//    fn stdout(&self) -> &mut BufWriter<Stdout> {
-//       self.stdout.borrow_mut().borrow_mut()
-//    }
+
+    //    fn stdout(&self) -> &mut BufWriter<Stdout> {
+    //       self.stdout.borrow_mut().borrow_mut()
+    //    }
 
     fn write<T>(&self, content: T)
     where
         T: std::fmt::Display,
     {
-        write!(self.stdout.borrow_mut(), "{}", format!("{}", content)).unwrap();
+        write!(self.stdout.borrow_mut(), "{}", format!("{}", content))
+            .unwrap();
     }
 
     fn set_attr(&self, attr: Attribute) {
@@ -168,7 +179,15 @@ impl backend::Backend for Backend {
     }
 
     fn finish(&mut self) {
-        execute!(self.stdout.borrow_mut(), Goto(0,0), Clear(ClearType::All), SetBg(Color::Reset), SetFg(Color::Reset), SetAttr(Attribute::Reset), Show);
+        execute!(
+            self.stdout.borrow_mut(),
+            Goto(0, 0),
+            Clear(ClearType::All),
+            SetBg(Color::Reset),
+            SetFg(Color::Reset),
+            SetAttr(Attribute::Reset),
+            Show
+        );
         input().disable_mouse_mode().unwrap();
     }
 
@@ -183,11 +202,12 @@ impl backend::Backend for Backend {
 
     fn screen_size(&self) -> Vec2 {
         let size = self.terminal.terminal_size();
-        Vec2::from(size) + (1,1)
+        Vec2::from(size) + (1, 1)
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        queue!(self.stdout.borrow_mut(), Goto(pos.x as u16, pos.y as u16)).unwrap();
+        queue!(self.stdout.borrow_mut(), Goto(pos.x as u16, pos.y as u16))
+            .unwrap();
         self.write(text);
     }
 
@@ -232,9 +252,9 @@ impl backend::Backend for Backend {
     fn set_effect(&self, effect: theme::Effect) {
         match effect {
             theme::Effect::Simple => (),
-            theme::Effect::Reverse =>self.set_attr(Attribute::Reverse),
-            theme::Effect::Bold =>self.set_attr(Attribute::Bold),
-            theme::Effect::Italic =>self.set_attr(Attribute::Italic),
+            theme::Effect::Reverse => self.set_attr(Attribute::Reverse),
+            theme::Effect::Bold => self.set_attr(Attribute::Bold),
+            theme::Effect::Italic => self.set_attr(Attribute::Italic),
             theme::Effect::Underline => self.set_attr(Attribute::Underlined),
         }
     }

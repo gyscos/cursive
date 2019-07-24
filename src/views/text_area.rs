@@ -303,8 +303,8 @@ impl TextArea {
     }
 
     fn backspace(&mut self) {
-            self.move_left();
-            self.delete();
+        self.move_left();
+        self.delete();
     }
 
     fn delete(&mut self) {
