@@ -276,7 +276,7 @@ impl backend::Backend for Backend {
         if repetitions > 0 {
             let mut out =
             write!(
-                out,
+                self.terminal.borrow_mut(),
                 "{}{}",
                 termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
                 text
@@ -285,7 +285,7 @@ impl backend::Backend for Backend {
 
             let mut dupes_left = repetitions - 1;
             while dupes_left > 0 {
-                write!(out, "{}", text).unwrap();
+                write!(self.terminal.borrow_mut(), "{}", text).unwrap();
                 dupes_left -= 1;
             }
         }
