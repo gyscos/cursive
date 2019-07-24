@@ -19,7 +19,7 @@ pub struct Backend {
     last_button: Option<MouseButton>,
     // reader to read user input async.
     async_reader: AsyncReader,
-//    _alternate_screen: AlternateScreen,
+    _alternate_screen: AlternateScreen,
     stdout: RefCell<BufWriter<Stdout>>,
     cursor: TerminalCursor,
     terminal: Terminal,
@@ -31,9 +31,7 @@ impl Backend {
     where
         Self: Sized,
     {
-//        let _alternate_screen = AlternateScreen::to_alternate(true)?;
-        let mut screen = RawScreen::into_raw_mode().unwrap();
-        screen.disable_drop();
+        let _alternate_screen = AlternateScreen::to_alternate(true)?;
 
         let input = input();
         let async_reader = input.read_async();
@@ -45,7 +43,7 @@ impl Backend {
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
             last_button: None,
             async_reader,
-//            _alternate_screen,
+            _alternate_screen,
             stdout: RefCell::new(BufWriter::new(io::stdout())),
             terminal: terminal(),
             cursor: cursor(),

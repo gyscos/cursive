@@ -72,8 +72,8 @@ path="../termion_w"
 
 [dependencies.crossterm]
 optional = true
-#git = "https://github.com/TimonPost/crossterm"
-path ="../crossterm"
+git = "https://github.com/TimonPost/crossterm"
+#path ="../crossterm"
 branch = "command_api"
 
 [target.'cfg(unix)'.dependencies]

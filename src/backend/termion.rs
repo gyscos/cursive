@@ -243,10 +243,11 @@ impl backend::Backend for Backend {
     }
 
     fn screen_size(&self) -> Vec2 {
-        // TODO: termion::terminal_size currently requires stdout.
-        // When available, we should try to use /dev/tty instead.
-        let (x, y) = termion::terminal_size().unwrap_or((1, 1));
-        (x, y).into()
+//        // TODO: termion::terminal_size currently requires stdout.
+//        // When available, we should try to use /dev/tty instead.
+//        let (x, y) = termion::terminal_size().unwrap_or((1, 1));
+//        (x, y).into()
+        (100,50).into()
     }
 
     fn clear(&self, color: theme::Color) {
