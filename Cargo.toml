@@ -67,13 +67,11 @@ version = "0.5"
 
 [dependencies.termion]
 optional = true
-#version = "1.5.1"
-path="../termion_w"
+version = "1.5.1"
 
 [dependencies.crossterm]
 optional = true
 git = "https://github.com/TimonPost/crossterm"
-#path ="../crossterm"
 branch = "command_api"
 
 [target.'cfg(unix)'.dependencies]
@@ -86,7 +84,7 @@ atty = "0.2.11"
 
 [features]
 blt-backend = ["bear-lib-terminal"]
-default = ["termion"]
+default = ["ncurses-backend"]
 markdown = ["pulldown-cmark"]
 ncurses-backend = ["ncurses", "maplit", "term_size"]
 pancurses-backend = ["pancurses", "maplit", "term_size"]

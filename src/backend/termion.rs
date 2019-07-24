@@ -31,7 +31,7 @@ use std::thread;
 /// Backend using termion
 pub struct Backend {
     terminal:
-        RefCell<AlternateScreen<MouseTerminal<RawTerminal<BufWriter<File>>>>>,
+    RefCell<AlternateScreen<MouseTerminal<RawTerminal<BufWriter<File>>>>>,
     current_style: Cell<theme::ColorPair>,
 
     // Inner state required to parse input
@@ -60,7 +60,7 @@ impl Backend {
         let running = Arc::new(AtomicBool::new(true));
 
         #[cfg(unix)]
-        backend::resize::start_resize_thread(
+            backend::resize::start_resize_thread(
             resize_sender,
             Arc::clone(&running),
         );
@@ -149,34 +149,34 @@ impl Backend {
                 }
             }
             TEvent::Mouse(TMouseEvent::Release(x, y))
-                if self.last_button.is_some() =>
-            {
-                let event = MouseEvent::Release(self.last_button.unwrap());
-                let position = (x - 1, y - 1).into();
-                Event::Mouse {
-                    event,
-                    position,
-                    offset: Vec2::zero(),
+            if self.last_button.is_some() =>
+                {
+                    let event = MouseEvent::Release(self.last_button.unwrap());
+                    let position = (x - 1, y - 1).into();
+                    Event::Mouse {
+                        event,
+                        position,
+                        offset: Vec2::zero(),
+                    }
                 }
-            }
             TEvent::Mouse(TMouseEvent::Hold(x, y))
-                if self.last_button.is_some() =>
-            {
-                let event = MouseEvent::Hold(self.last_button.unwrap());
-                let position = (x - 1, y - 1).into();
-                Event::Mouse {
-                    event,
-                    position,
-                    offset: Vec2::zero(),
+            if self.last_button.is_some() =>
+                {
+                    let event = MouseEvent::Hold(self.last_button.unwrap());
+                    let position = (x - 1, y - 1).into();
+                    Event::Mouse {
+                        event,
+                        position,
+                        offset: Vec2::zero(),
+                    }
                 }
-            }
             _ => Event::Unknown(vec![]),
         }
     }
 
     fn write<T>(&self, content: T)
-    where
-        T: std::fmt::Display,
+        where
+            T: std::fmt::Display,
     {
         write!(self.terminal.borrow_mut(), "{}", content).unwrap();
     }
@@ -194,7 +194,7 @@ impl backend::Backend for Backend {
             termion::cursor::Show,
             termion::cursor::Goto(1, 1)
         )
-        .unwrap();
+            .unwrap();
 
         write!(
             self.terminal.get_mut(),
@@ -203,7 +203,7 @@ impl backend::Backend for Backend {
             27 as char,
             termion::clear::All
         )
-        .unwrap();
+            .unwrap();
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
@@ -243,11 +243,10 @@ impl backend::Backend for Backend {
     }
 
     fn screen_size(&self) -> Vec2 {
-//        // TODO: termion::terminal_size currently requires stdout.
-//        // When available, we should try to use /dev/tty instead.
-//        let (x, y) = termion::terminal_size().unwrap_or((1, 1));
-//        (x, y).into()
-        (100,50).into()
+        // TODO: termion::terminal_size currently requires stdout.
+        // When available, we should try to use /dev/tty instead.
+        let (x, y) = termion::terminal_size().unwrap_or((1, 1));
+        (x, y).into()
     }
 
     fn clear(&self, color: theme::Color) {
@@ -270,23 +269,23 @@ impl backend::Backend for Backend {
             termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
             text
         )
-        .unwrap();
+            .unwrap();
     }
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
-            let mut out =
+            let mut out = self.terminal.borrow_mut();
             write!(
-                self.terminal.borrow_mut(),
+                out,
                 "{}{}",
                 termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
                 text
             )
-            .unwrap();
+                .unwrap();
 
             let mut dupes_left = repetitions - 1;
             while dupes_left > 0 {
-                write!(self.terminal.borrow_mut(), "{}", text).unwrap();
+                write!(out, "{}", text).unwrap();
                 dupes_left -= 1;
             }
         }
@@ -303,8 +302,8 @@ impl backend::Backend for Backend {
 }
 
 fn with_color<F, R>(clr: theme::Color, f: F) -> R
-where
-    F: FnOnce(&dyn tcolor::Color) -> R,
+    where
+        F: FnOnce(&dyn tcolor::Color) -> R,
 {
     match clr {
         theme::Color::TerminalDefault => f(&tcolor::Reset),
