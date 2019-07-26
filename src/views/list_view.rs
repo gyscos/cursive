@@ -121,6 +121,15 @@ impl ListView {
         self.with(Self::add_delimiter)
     }
 
+    /// Removes a child from the view.
+    ///
+    /// # Panics
+    ///
+    /// If `index >= self.len()`.
+    pub fn remove_child(&mut self, index: usize) -> ListChild {
+        self.children.remove(index)
+    }
+
     /// Sets a callback to be used when an item is selected.
     pub fn set_on_select<F>(&mut self, cb: F)
     where
@@ -147,7 +156,9 @@ impl ListView {
     }
 
     fn iter_mut<'a>(
-        &'a mut self, from_focus: bool, source: direction::Relative,
+        &'a mut self,
+        from_focus: bool,
+        source: direction::Relative,
     ) -> Box<dyn Iterator<Item = (usize, &mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
@@ -167,7 +178,9 @@ impl ListView {
     }
 
     fn move_focus(
-        &mut self, n: usize, source: direction::Direction,
+        &mut self,
+        n: usize,
+        source: direction::Direction,
     ) -> EventResult {
         let i = if let Some(i) = source
             .relative(direction::Orientation::Vertical)
@@ -236,7 +249,8 @@ impl ListView {
 }
 
 fn try_focus(
-    (i, child): (usize, &mut ListChild), source: direction::Direction,
+    (i, child): (usize, &mut ListChild),
+    source: direction::Direction,
 ) -> Option<usize> {
     match *child {
         ListChild::Delimiter => None,
@@ -380,7 +394,9 @@ impl View for ListView {
     }
 
     fn call_on_any<'a>(
-        &mut self, selector: &Selector<'_>, mut callback: AnyCb<'a>,
+        &mut self,
+        selector: &Selector<'_>,
+        mut callback: AnyCb<'a>,
     ) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, Box::new(|any| callback(any)));
