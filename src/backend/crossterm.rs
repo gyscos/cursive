@@ -65,10 +65,6 @@ impl Backend {
         });
     }
 
-    //    fn stdout(&self) -> &mut BufWriter<Stdout> {
-    //       self.stdout.borrow_mut().borrow_mut()
-    //    }
-
     fn write<T>(&self, content: T)
     where
         T: std::fmt::Display,
@@ -202,7 +198,7 @@ impl backend::Backend for Backend {
 
     fn screen_size(&self) -> Vec2 {
         let size = self.terminal.terminal_size();
-        Vec2::from(size) + (1, 1)
+        Vec2::from(size)
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {

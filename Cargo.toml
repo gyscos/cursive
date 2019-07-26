@@ -71,8 +71,7 @@ version = "1.5.1"
 
 [dependencies.crossterm]
 optional = true
-git = "https://github.com/TimonPost/crossterm"
-branch = "command_api"
+version = "0.10.1"
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.1.8"
