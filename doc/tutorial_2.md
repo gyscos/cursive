@@ -86,14 +86,14 @@ siv.add_layer(Dialog::text("..."));
 ```
 
 Next, let's add a title. To do that, `Dialog` has a chainable [`Dialog::title`]
-method. It takes the dialog by value, and return it back, making function
+method. It takes the dialog by value, and returns it back, making function
 chains easy:
 
 ```rust,ignore
 siv.add_layer(Dialog::text("...").title("..."));
 ```
 
-This way of chaining method to set-up the view is very common in cursive. Most
+This way of chaining methods to set-up the view is very common in cursive. Most
 views provide chainable variants of their methods, to allow creating the view
 and configuring it in one spot.
 
@@ -120,7 +120,7 @@ siv.add_layer(Dialog::text("...")
 
 Only this time, we don't want to exit the application right away. Instead of
 packing everything into the closure, let's use a separate function for the
-callback. Here is the current state:
+callback. Here's the current state:
 
 ```rust,no_run
 use cursive::Cursive;
@@ -209,7 +209,7 @@ a new `Dialog` instead.
 Your code should now look like the one at the top of this guide.
 
 As you've seen, the `Dialog` view is a nice way to present a `TextView`, but it
-works with any other content. Actually, most layers you'll add will start with
+also works with any other content. Actually, most layers you'll add will start with
 a `Dialog` wrapping some other view.
 
 Next: [Starting with Cursive (3/3)](./tutorial_3.md)

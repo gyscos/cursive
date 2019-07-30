@@ -23,8 +23,8 @@ const INPUT_POLL_DELAY_MS: u64 = 30;
 /// Central part of the cursive library.
 ///
 /// It initializes ncurses on creation and cleans up on drop.
-/// To use it, you should populate it with views, layouts and callbacks,
-/// then start the event loop with run().
+/// To use it, you should populate it with views, layouts, and callbacks,
+/// then start the event loop with `run()`.
 ///
 /// It uses a list of screen, with one screen active at a time.
 pub struct Cursive {
