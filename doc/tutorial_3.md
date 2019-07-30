@@ -146,12 +146,12 @@ replace the layer with a simple dialog.
 
 ## Linear layouts
 
-Our main screen is more complex than our previous examples: it is made of
+Our main screen is more complex than in our previous examples: it is made of
 several views. There is a `SelectView` on the left, and three [`Button`]s to
-the right. But our [`Dialog::around`] method only takes one view! How will we do?
+the right. But our [`Dialog::around`] method only takes one view! How will we do this?
 
 The solution is to use a layout view to display multiple children side-by-side.
-[`LinearLayout`] for instance can display views in a line.
+[`LinearLayout`], for instance, can display views in a line.
 We'll use two of them:
 
 * One, set vertically, will hold the buttons on the right.
@@ -171,7 +171,7 @@ fn delete_name(s: &mut Cursive) {}
 ```
 
 Buttons here take a regular callback. We're also adding a [`DummyView`] here:
-this view doesn't do anything, it just occupies a single row - we're using it
+this view doesn't do anything, it just occupies some space - we're using it
 as a cheap spacer.
 
 We can now create the second linear layout inside a Dialog:

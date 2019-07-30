@@ -20,7 +20,7 @@ fn main() {
 }
 ```
 
-Run this application, and you should have something like that:
+Run the application, and you should have something like this:
 
 ![Tutorial 1 goal](./tutorial_1.png)
 
@@ -61,9 +61,9 @@ The cursive library is configured through a main [`Cursive`] root.
 A typical cursive application will consist of three phases,
 all centered around this object:
 
-1. Create a `Cursive` object.
-2. Configure the `Cursive` object.
-3. Run the `Cursive` object.
+1. Create a `Cursive` object
+2. Configure the `Cursive` object
+3. Run the `Cursive` object
 
 Of these, the configuration phase is often the largest one,
 so let's skip it for now.
@@ -93,14 +93,14 @@ Let's first add a way to stop the application. We want to quit when the user
 presses the letter `q`.
 
 Cursive sends an event for every user input; most of these are just ignored
-and have no effect. The `Cursive` root has a [`add_global_callback`] method to
+and have no effect. The `Cursive` root has an [`add_global_callback`] method to
 call a function anytime a certain event is fired.
 This method takes 2 arguments: a trigger, and a callback.
 
 * The trigger needs to implement `Into<event::Event>`. In addition to
   [`event::Event`] itself, this includes [`event::Key`], or simply `char`.
   These will trigger when the corresponding key (or letter) is pressed.
-* The callback should be a function taking a `&mut Cursive` as argument. Here,
+* The callback should be a function taking an `&mut Cursive` as an argument. Here,
   we want to quit, so we'll use [`Cursive::quit`] in a closure: `|s| s.quit()`.
 
 In the end, we have:
@@ -117,8 +117,8 @@ fn main() {
 }
 ```
 
-As expected, running it show no visible change, but hitting the `q` key at
-least closes the application.
+As expected, running it shows no visible change, but hitting the `q` key does
+close the application.
 
 [`add_global_callback`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.add_global_callback
 [`event::Event`]: https://docs.rs/cursive/0/cursive/event/enum.Event.html
@@ -139,7 +139,7 @@ The `TextView` constructor just takes the text to use: `TextView::new("...")`.
 
 The `Cursive` root itself uses a [`StackView`] on the entire screen. This
 `StackView` unsurprisingly stacks views in layers. It starts empty, so we'll
-just need to add our `TextView` as a layer. The [`Cursive::add_layer`] does
+just need to add our `TextView` as a layer. [`Cursive::add_layer`] lets us do
 exactly that.
 
 Once we've added this line, our first application is complete:
