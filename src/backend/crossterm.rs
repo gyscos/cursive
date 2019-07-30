@@ -251,6 +251,7 @@ impl backend::Backend for Backend {
             theme::Effect::Reverse => self.set_attr(Attribute::Reverse),
             theme::Effect::Bold => self.set_attr(Attribute::Bold),
             theme::Effect::Italic => self.set_attr(Attribute::Italic),
+            theme::Effect::Strikethrough => self.set_attr(Attribute::CrossedOut),
             theme::Effect::Underline => self.set_attr(Attribute::Underlined),
         }
     }
@@ -261,6 +262,7 @@ impl backend::Backend for Backend {
             theme::Effect::Reverse => self.set_attr(Attribute::Reverse),
             theme::Effect::Bold => self.set_attr(Attribute::NoBold),
             theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
+            theme::Effect::Strikethrough =>  self.set_attr(Attribute::NotCrossedOut),
             theme::Effect::Underline => self.set_attr(Attribute::Underlined),
         }
     }

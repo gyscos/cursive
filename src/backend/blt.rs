@@ -261,10 +261,11 @@ impl backend::Backend for Backend {
 
     fn set_effect(&self, effect: Effect) {
         match effect {
-            // TODO: does BLT support bold/italic/underline?
+            // TODO: does BLT support bold/italic/strikethrough/underline?
             Effect::Bold
             | Effect::Italic
             | Effect::Underline
+            | Effect::Strikethrough
             | Effect::Simple => {}
             // TODO: how to do this correctly?`
             //       BLT itself doesn't do this kind of thing,
@@ -278,10 +279,11 @@ impl backend::Backend for Backend {
 
     fn unset_effect(&self, effect: Effect) {
         match effect {
-            // TODO: does BLT support bold/italic/underline?
+            // TODO: does BLT support bold/italic/strikethrough/underline?
             Effect::Bold
             | Effect::Italic
             | Effect::Underline
+            | Effect::Strikethrough
             | Effect::Simple => {}
             // The process of reversing is the same as unreversing
             Effect::Reverse => {

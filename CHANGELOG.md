@@ -1,5 +1,20 @@
 # Changelog
 
+## Next version: 0.13.0
+
+### Breaking changes
+
+- Update `enum-map` fron 0.5 to 0.6
+
+### API updates
+
+- Add `Effect::Strikethrough` (not supported on ncurses)
+- Add `ListView::remove_child`
+- Replace `xursive::CbFunc` with `Box<FnOnce>`
+- Add `ScrollView::{inner_size, is_as_{bottom, top, left, right} }`
+- Add getters for current value in `SliderView`
+- More fields made public in `cursive::logger`
+
 ## 0.12.0
 
 ### Breaking changes
