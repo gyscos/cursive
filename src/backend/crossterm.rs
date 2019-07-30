@@ -7,15 +7,17 @@
 use crate::vec::Vec2;
 use crate::{backend, theme};
 use crossterm::{
-    cursor, input, terminal, AlternateScreen, AsyncReader, Attribute,
-    ClearType, Color, Colored, InputEvent as CInputEvent,
-    KeyEvent as CKeyEvent, MouseButton as CMouseButton,
-    MouseEvent as CMouseEvent, Terminal, TerminalCursor,
+    cursor, execute, input, queue, terminal, AlternateScreen, AsyncReader,
+    Attribute, Clear, ClearType, Color, Colored, Command, Goto, Hide,
+    InputEvent as CInputEvent, KeyEvent as CKeyEvent,
+    MouseButton as CMouseButton, MouseEvent as CMouseEvent, Output, RawScreen,
+    SetAttr, SetBg, SetFg, Show, Terminal, TerminalCursor,
 };
 
 use crate::event::{Event, Key, MouseButton, MouseEvent};
+use core::borrow::BorrowMut;
 use std::cell::{Cell, RefCell};
-use std::io::{self, Stdout, Write};
+use std::io::{self, BufWriter, Stdout, StdoutLock, Write};
 
 /// Backend using crossterm
 pub struct Backend {
@@ -24,7 +26,7 @@ pub struct Backend {
     // reader to read user input async.
     async_reader: AsyncReader,
     _alternate_screen: AlternateScreen,
-    stdout: RefCell<Stdout>,
+    stdout: RefCell<BufWriter<Stdout>>,
     cursor: TerminalCursor,
     terminal: Terminal,
 }
@@ -48,22 +50,31 @@ impl Backend {
             last_button: None,
             async_reader,
             _alternate_screen,
-            stdout: RefCell::new(io::stdout()),
+            stdout: RefCell::new(BufWriter::new(io::stdout())),
             terminal: terminal(),
             cursor: cursor(),
         }))
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
-        with_color(colors.front, |c| self.write(Colored::Fg(*c)));
-        with_color(colors.back, |c| self.write(Colored::Bg(*c)));
+        with_color(colors.front, |c| {
+            queue!(self.stdout.borrow_mut(), SetFg(*c))
+        });
+        with_color(colors.back, |c| {
+            queue!(self.stdout.borrow_mut(), SetBg(*c))
+        });
     }
 
     fn write<T>(&self, content: T)
     where
         T: std::fmt::Display,
     {
-        write!(self.stdout.borrow_mut(), "{}", format!("{}", content)).unwrap()
+        write!(self.stdout.borrow_mut(), "{}", format!("{}", content))
+            .unwrap();
+    }
+
+    fn set_attr(&self, attr: Attribute) {
+        queue!(self.stdout.borrow_mut(), SetAttr(attr));
     }
 
     fn map_key(&mut self, event: CInputEvent) -> Event {
@@ -164,11 +175,16 @@ impl backend::Backend for Backend {
     }
 
     fn finish(&mut self) {
-        self.cursor.goto(1, 1).unwrap();
-        self.terminal.clear(ClearType::All).unwrap();
-        self.write(Attribute::Reset);
+        execute!(
+            self.stdout.borrow_mut(),
+            Goto(0, 0),
+            Clear(ClearType::All),
+            SetBg(Color::Reset),
+            SetFg(Color::Reset),
+            SetAttr(Attribute::Reset),
+            Show
+        );
         input().disable_mouse_mode().unwrap();
-        cursor().show().unwrap();
     }
 
     fn refresh(&mut self) {
@@ -182,11 +198,12 @@ impl backend::Backend for Backend {
 
     fn screen_size(&self) -> Vec2 {
         let size = self.terminal.terminal_size();
-        Vec2::from(size) + (1, 1)
+        Vec2::from(size)
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        self.cursor.goto(pos.x as u16, pos.y as u16).unwrap();
+        queue!(self.stdout.borrow_mut(), Goto(pos.x as u16, pos.y as u16))
+            .unwrap();
         self.write(text);
     }
 
@@ -194,7 +211,7 @@ impl backend::Backend for Backend {
         if repetitions > 0 {
             let mut out = self.stdout.borrow_mut();
 
-            self.cursor.goto(pos.x as u16, pos.y as u16).unwrap();
+            queue!(out, Goto(pos.x as u16, pos.y as u16)).unwrap();
 
             // as I (Timon) wrote this I figured out that calling `write_str` for unix was flushing the stdout.
             // Current work aground is writing bytes instead of a string to the terminal.
@@ -214,7 +231,7 @@ impl backend::Backend for Backend {
             back: color,
         });
 
-        self.terminal.clear(ClearType::All).unwrap();
+        queue!(self.stdout.borrow_mut(), Clear(ClearType::All)).unwrap();
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
@@ -231,22 +248,22 @@ impl backend::Backend for Backend {
     fn set_effect(&self, effect: theme::Effect) {
         match effect {
             theme::Effect::Simple => (),
-            theme::Effect::Reverse => self.write(Attribute::Reverse),
-            theme::Effect::Bold => self.write(Attribute::Bold),
-            theme::Effect::Italic => self.write(Attribute::Italic),
-            theme::Effect::Strikethrough => self.write(Attribute::CrossedOut),
-            theme::Effect::Underline => self.write(Attribute::Underlined),
+            theme::Effect::Reverse => self.set_attr(Attribute::Reverse),
+            theme::Effect::Bold => self.set_attr(Attribute::Bold),
+            theme::Effect::Italic => self.set_attr(Attribute::Italic),
+            theme::Effect::Strikethrough => self.set_attr(Attribute::CrossedOut),
+            theme::Effect::Underline => self.set_attr(Attribute::Underlined),
         }
     }
 
     fn unset_effect(&self, effect: theme::Effect) {
         match effect {
             theme::Effect::Simple => (),
-            theme::Effect::Reverse => self.write(Attribute::Reverse),
-            theme::Effect::Bold => self.write(Attribute::NoBold),
-            theme::Effect::Italic => self.write(Attribute::NoItalic),
-            theme::Effect::Strikethrough => self.write(Attribute::NotCrossedOut),
-            theme::Effect::Underline => self.write(Attribute::Underlined),
+            theme::Effect::Reverse => self.set_attr(Attribute::Reverse),
+            theme::Effect::Bold => self.set_attr(Attribute::NoBold),
+            theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
+            theme::Effect::Strikethrough =>  self.set_attr(Attribute::NotCrossedOut),
+            theme::Effect::Underline => self.set_attr(Attribute::Underlined),
         }
     }
 }
