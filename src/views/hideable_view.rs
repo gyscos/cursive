@@ -91,7 +91,8 @@ impl<V: View> ViewWrapper for HideableView<V> {
     }
 
     fn wrap_call_on_any<'a>(
-        &mut self, selector: &Selector<'_>,
+        &mut self,
+        selector: &Selector<'_>,
         callback: Box<dyn FnMut(&mut dyn Any) + 'a>,
     ) {
         // We always run callbacks, even when invisible.

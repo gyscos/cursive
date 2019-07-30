@@ -8,7 +8,9 @@ use crate::views::BoxView;
 pub trait Boxable: View + Sized {
     /// Wraps `self` in a `BoxView` with the given size constraints.
     fn boxed(
-        self, width: SizeConstraint, height: SizeConstraint,
+        self,
+        width: SizeConstraint,
+        height: SizeConstraint,
     ) -> BoxView<Self> {
         BoxView::new(width, height, self)
     }

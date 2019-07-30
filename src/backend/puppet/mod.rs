@@ -6,12 +6,12 @@ use crate::backend::puppet::observed::ObservedCell;
 use crate::backend::puppet::observed::ObservedScreen;
 use crate::backend::puppet::observed::ObservedStyle;
 use crate::event::Event;
+use crate::theme;
+use crate::vec::Vec2;
 use std::cell::RefCell;
 use std::rc::Rc;
-use crate::theme;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use crate::vec::Vec2;
 
 pub mod observed;
 pub mod observed_screen_view;
@@ -45,7 +45,9 @@ impl Backend {
             prev_frame: RefCell::new(None),
             current_frame: RefCell::new(ObservedScreen::new(size)),
             size: RefCell::new(size),
-            current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE.clone())),
+            current_style: RefCell::new(Rc::new(
+                DEFAULT_OBSERVED_STYLE.clone(),
+            )),
             screen_channel: crossbeam_channel::unbounded(),
         };
 
@@ -74,12 +76,11 @@ impl Backend {
 }
 
 impl backend::Backend for Backend {
-
     fn poll_event(&mut self) -> Option<Event> {
         match self.inner_receiver.try_recv() {
             Ok(event) => event,
             Err(TryRecvError::Empty) => None,
-            Err(e) => panic!(e)
+            Err(e) => panic!(e),
         }
     }
 
@@ -117,7 +118,8 @@ impl backend::Backend for Backend {
             for _ in 0..grapheme.width() - 1 {
                 offset += 1;
                 let spos = pos + Vec2::new(idx + offset, 0);
-                screen[spos] = Some(ObservedCell::new(spos, style.clone(), None));
+                screen[spos] =
+                    Some(ObservedCell::new(spos, style.clone(), None));
             }
         }
     }

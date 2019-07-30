@@ -54,7 +54,9 @@ impl Default for ScrollStrategy {
 /// }
 /// ```
 pub fn on_event<T, OnEvent, ImportantArea>(
-    scroller: &mut T, event: Event, on_event: OnEvent,
+    scroller: &mut T,
+    event: Event,
+    on_event: OnEvent,
     important_area: ImportantArea,
 ) -> EventResult
 where
@@ -73,7 +75,9 @@ where
 
 /// Performs `View::important_area` on a `scroll::Scroller`.
 pub fn important_area<T, ImportantArea>(
-    scroller: &T, size: Vec2, mut important_area: ImportantArea,
+    scroller: &T,
+    size: Vec2,
+    mut important_area: ImportantArea,
 ) -> Rect
 where
     T: Scroller,
@@ -92,7 +96,10 @@ where
 
 /// Performs `View::layout` on a `scroll::Scroller`.
 pub fn layout<T, Layout, RequiredSize>(
-    scroller: &mut T, size: Vec2, needs_relayout: bool, layout: Layout,
+    scroller: &mut T,
+    size: Vec2,
+    needs_relayout: bool,
+    layout: Layout,
     required_size: RequiredSize,
 ) where
     T: Scroller,
@@ -111,7 +118,9 @@ pub fn layout<T, Layout, RequiredSize>(
 
 /// Performs `View::required_size` on a `scroll::Scroller`.
 pub fn required_size<T, RequiredSize>(
-    scroller: &mut T, size: Vec2, needs_relayout: bool,
+    scroller: &mut T,
+    size: Vec2,
+    needs_relayout: bool,
     required_size: RequiredSize,
 ) -> Vec2
 where
@@ -140,7 +149,9 @@ where
 ///
 /// This is an alternative to `scroll::draw()` when you just need to print individual lines.
 pub fn draw_lines<T, LineDrawer>(
-    scroller: &T, printer: &Printer, mut line_drawer: LineDrawer,
+    scroller: &T,
+    printer: &Printer,
+    mut line_drawer: LineDrawer,
 ) where
     T: Scroller,
     LineDrawer: FnMut(&T, &Printer, usize),
@@ -159,8 +170,11 @@ pub fn draw_lines<T, LineDrawer>(
 ///
 /// `left_border` will be called for each row to draw the left border for the given line number.
 pub fn draw_frame<T, LeftBorder, TopBorder, RightBorder, BottomBorder>(
-    scroller: &T, printer: &Printer, mut left_border: LeftBorder,
-    mut top_border: TopBorder, mut right_border: RightBorder,
+    scroller: &T,
+    printer: &Printer,
+    mut left_border: LeftBorder,
+    mut top_border: TopBorder,
+    mut right_border: RightBorder,
     mut bottom_border: BottomBorder,
 ) where
     T: Scroller,
@@ -180,11 +194,7 @@ pub fn draw_frame<T, LeftBorder, TopBorder, RightBorder, BottomBorder>(
     // Also draw padding
     let scrollbar_size = scroller.get_scroller().scrollbar_size();
     printer.print_hline((viewport.right() + 2, 0), scrollbar_size.x, "─");
-    printer.print_hline(
-        (viewport.right() + 2, size.y),
-        scrollbar_size.x,
-        "─",
-    );
+    printer.print_hline((viewport.right() + 2, size.y), scrollbar_size.x, "─");
     printer.print_vline((0, viewport.bottom() + 2), scrollbar_size.y, "│");
     printer.print_vline(
         (size.x, viewport.bottom() + 2),
@@ -210,7 +220,9 @@ pub fn draw_frame<T, LeftBorder, TopBorder, RightBorder, BottomBorder>(
 ///
 /// It will print a box with the appropriate `├`, `┤` and so on.
 pub fn draw_box_frame<T, IsHDelim, IsVDelim>(
-    scroller: &T, printer: &Printer, is_h_delim: IsHDelim,
+    scroller: &T,
+    printer: &Printer,
+    is_h_delim: IsHDelim,
     is_v_delim: IsVDelim,
 ) where
     T: Scroller,

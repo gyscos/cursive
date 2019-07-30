@@ -1,14 +1,14 @@
 //! Structs representing output of puppet backend
+use crate::theme::ColorPair;
+use crate::theme::Effect;
+use crate::Vec2;
 use enumset::EnumSet;
 use std::ops::Index;
 use std::ops::IndexMut;
 use std::rc::Rc;
 use std::string::ToString;
-use crate::theme::ColorPair;
-use crate::theme::Effect;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
-use crate::Vec2;
 
 /// Style of observed cell
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -180,10 +180,7 @@ impl ObservedScreen {
     }
 
     /// Returns occurences of given string pattern
-    pub fn find_occurences(
-        &self,
-        pattern: &str,
-    ) -> Vec<ObservedLine> {
+    pub fn find_occurences(&self, pattern: &str) -> Vec<ObservedLine> {
         // TODO(njskalski): test for two-cell letters.
         // TODO(njskalski): fails with whitespaces like "\t".
 
@@ -259,7 +256,6 @@ impl ObservedScreen {
 
 /// Represents rectangular piece of observed screen (Puppet backend output)
 pub trait ObservedPieceInterface {
-
     /// Minimums of coordinates
     fn min(&self) -> Vec2;
     /// Maximums of coordinates
@@ -393,7 +389,7 @@ impl<'a> ObservedPieceInterface for ObservedLine<'a> {
     }
 
     fn max(&self) -> Vec2 {
-        self.line_start + Vec2::new(self.line_len, 1)
+        self.line_start + (self.line_len, 1)
     }
 
     fn parent(&self) -> &ObservedScreen {
@@ -407,12 +403,11 @@ impl<'a> ToString for ObservedLine<'a> {
     }
 }
 
-impl Index<Vec2> for ObservedPieceInterface {
+impl Index<Vec2> for dyn ObservedPieceInterface {
     type Output = Option<ObservedCell>;
 
     fn index(&self, index: Vec2) -> &Self::Output {
-        assert!(self.max().x - self.min().x > index.x);
-        assert!(self.max().y - self.min().y > index.y);
+        assert!(self.max() - self.min() > index);
 
         let parent_index = self.min() + index;
 

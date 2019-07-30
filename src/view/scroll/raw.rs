@@ -11,7 +11,9 @@ use crate::Vec2;
 
 /// Implements `View::draw` over the `model`.
 pub fn draw<Model, GetScroller, Draw>(
-    printer: &Printer, model: &Model, mut get_scroller: GetScroller,
+    printer: &Printer,
+    model: &Model,
+    mut get_scroller: GetScroller,
     inner_draw: Draw,
 ) where
     Model: ?Sized,
@@ -30,8 +32,12 @@ pub fn draw<Model, GetScroller, Draw>(
 ///
 /// Returns (Inner size, Outer size, New scrolling)
 fn sizes_when_scrolling<Model, GetScroller, RequiredSize>(
-    constraint: Vec2, scrolling: XY<bool>, strict: bool, model: &mut Model,
-    get_scroller: &mut GetScroller, required_size: &mut RequiredSize,
+    constraint: Vec2,
+    scrolling: XY<bool>,
+    strict: bool,
+    model: &mut Model,
+    get_scroller: &mut GetScroller,
+    required_size: &mut RequiredSize,
 ) -> (Vec2, Vec2, XY<bool>)
 where
     Model: ?Sized,
@@ -77,8 +83,12 @@ where
 ///
 /// Returns (Inner size, Outer size)
 fn sizes<Model, GetScroller, RequiredSize>(
-    constraint: Vec2, strict: bool, needs_relayout: bool, model: &mut Model,
-    get_scroller: &mut GetScroller, required_size: &mut RequiredSize,
+    constraint: Vec2,
+    strict: bool,
+    needs_relayout: bool,
+    model: &mut Model,
+    get_scroller: &mut GetScroller,
+    required_size: &mut RequiredSize,
 ) -> (Vec2, Vec2)
 where
     Model: ?Sized,
@@ -141,8 +151,11 @@ where
 
 /// Implements `View::layout` on the given model.
 pub fn layout<Model, GetScroller, RequiredSize, Layout>(
-    size: Vec2, needs_relayout: bool, model: &mut Model,
-    mut get_scroller: GetScroller, mut required_size: RequiredSize,
+    size: Vec2,
+    needs_relayout: bool,
+    model: &mut Model,
+    mut get_scroller: GetScroller,
+    mut required_size: RequiredSize,
     mut layout: Layout,
 ) where
     Model: ?Sized,
@@ -172,8 +185,11 @@ pub fn layout<Model, GetScroller, RequiredSize, Layout>(
 
 /// Implements `View::required_size` on the given model.
 pub fn required_size<Model, GetScroller, RequiredSize>(
-    constraint: Vec2, needs_relayout: bool, model: &mut Model,
-    mut get_scroller: GetScroller, mut required_size: RequiredSize,
+    constraint: Vec2,
+    needs_relayout: bool,
+    model: &mut Model,
+    mut get_scroller: GetScroller,
+    mut required_size: RequiredSize,
 ) -> Vec2
 where
     Model: ?Sized,
@@ -194,8 +210,11 @@ where
 
 /// Implements `View::on_event` on the given model.
 pub fn on_event<Model, GetScroller, OnEvent, ImportantArea>(
-    event: Event, model: &mut Model, mut get_scroller: GetScroller,
-    mut on_event: OnEvent, mut important_area: ImportantArea,
+    event: Event,
+    model: &mut Model,
+    mut get_scroller: GetScroller,
+    mut on_event: OnEvent,
+    mut important_area: ImportantArea,
 ) -> EventResult
 where
     Model: ?Sized,

@@ -273,7 +273,8 @@ impl<T: 'static> SelectView<T> {
 
     /// Gets a mut item at given idx or None.
     pub fn get_item_mut(
-        &mut self, i: usize,
+        &mut self,
+        i: usize,
     ) -> Option<(&mut StyledString, &mut T)> {
         if i >= self.items.len() {
             None

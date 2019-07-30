@@ -43,7 +43,9 @@ impl<T: View> BoxView<T> {
     ///
     /// `None` values will use the wrapped view's preferences.
     pub fn new(
-        width: SizeConstraint, height: SizeConstraint, view: T,
+        width: SizeConstraint,
+        height: SizeConstraint,
+        view: T,
     ) -> Self {
         BoxView {
             size: (width, height).into(),
@@ -55,7 +57,9 @@ impl<T: View> BoxView<T> {
 
     /// Sets the size constraints for this view.
     pub fn set_constraints(
-        &mut self, width: SizeConstraint, height: SizeConstraint,
+        &mut self,
+        width: SizeConstraint,
+        height: SizeConstraint,
     ) {
         self.set_width(width);
         self.set_height(height);

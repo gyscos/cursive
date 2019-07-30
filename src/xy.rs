@@ -280,7 +280,10 @@ impl<T> XY<T> {
     /// );
     /// ```
     pub fn zip4<U, V, W>(
-        self, a: XY<U>, b: XY<V>, c: XY<W>,
+        self,
+        a: XY<U>,
+        b: XY<V>,
+        c: XY<W>,
     ) -> XY<(T, U, V, W)> {
         XY::new((self.x, a.x, b.x, c.x), (self.y, a.y, b.y, c.y))
     }
@@ -308,7 +311,11 @@ impl<T> XY<T> {
     /// assert_eq!(xy, XY::new(Some('a'), Some('y')));
     /// ```
     pub fn zip5<U, V, W, Z>(
-        self, a: XY<U>, b: XY<V>, c: XY<W>, d: XY<Z>,
+        self,
+        a: XY<U>,
+        b: XY<V>,
+        c: XY<W>,
+        d: XY<Z>,
     ) -> XY<(T, U, V, W, Z)> {
         XY::new((self.x, a.x, b.x, c.x, d.x), (self.y, a.y, b.y, c.y, d.y))
     }

@@ -11,17 +11,19 @@ fn main() {
 pub mod tests {
     extern crate cursive;
 
+    use self::cursive::backend::puppet::observed::{
+        ObservedCell, ObservedPieceInterface,
+    };
     use cursive::align::HAlign;
+    use cursive::backend::puppet::observed::ObservedScreen;
+    use cursive::event::Event;
     use cursive::event::EventResult;
+    use cursive::event::Key;
     use cursive::traits::*;
     use cursive::views::*;
     use cursive::*;
-    use cursive::backend::puppet::observed::ObservedScreen;
-    use cursive::event::Event;
     use std::cell::RefCell;
     use std::time::Duration;
-    use cursive::event::Key;
-    use self::cursive::backend::puppet::observed::{ObservedCell, ObservedPieceInterface};
 
     pub struct BasicSetup {
         siv: Cursive,
@@ -77,7 +79,7 @@ pub mod tests {
                 siv,
                 screen_stream: sink,
                 input,
-                last_screen : RefCell::new(None)
+                last_screen: RefCell::new(None),
             }
         }
 
@@ -90,9 +92,7 @@ pub mod tests {
         }
 
         pub fn dump_debug(&self) {
-            self.last_screen().as_ref().map(|s| {
-                s.print_stdout()
-            });
+            self.last_screen().as_ref().map(|s| s.print_stdout());
         }
 
         pub fn hit_keystroke(&mut self, key: Key) {
@@ -111,7 +111,6 @@ pub mod tests {
         );
     }
 
-
     #[test]
     fn displays() {
         let mut s = BasicSetup::new();
@@ -129,7 +128,10 @@ pub mod tests {
 
         let mut screen = s.last_screen().unwrap();
         s.dump_debug();
-        assert_eq!(screen.find_occurences("Abu Dhabi is a great city!").len(), 1);
+        assert_eq!(
+            screen.find_occurences("Abu Dhabi is a great city!").len(),
+            1
+        );
         assert_eq!(screen.find_occurences("Abidjan").len(), 0);
     }
 }

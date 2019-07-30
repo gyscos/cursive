@@ -1,5 +1,5 @@
 unstable_features = true
 max_width = 79
 reorder_imports = true
-fn_args_density = "Compressed"
+fn_args_layout = "Tall"
 

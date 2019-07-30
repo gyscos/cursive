@@ -20,8 +20,8 @@ pub mod dummy;
 pub mod blt;
 pub mod crossterm;
 pub mod curses;
-pub mod termion;
 pub mod puppet;
+pub mod termion;
 
 /// Trait defining the required methods to be a backend.
 ///

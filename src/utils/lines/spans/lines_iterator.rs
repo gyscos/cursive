@@ -164,10 +164,7 @@ where
 
         // Concatenate all segments
         let segments = SegmentMergeIterator::new(
-            chunks
-                .into_iter()
-                .flat_map(|chunk| chunk.segments)
-                //.filter(|segment| segment.start != segment.end),
+            chunks.into_iter().flat_map(|chunk| chunk.segments), //.filter(|segment| segment.start != segment.end),
         )
         .collect();
 

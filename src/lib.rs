@@ -89,7 +89,6 @@ pub mod theme;
 pub mod vec;
 pub mod views;
 
-
 // This probably doesn't need to be public?
 mod cursive;
 mod printer;
