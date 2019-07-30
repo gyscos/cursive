@@ -8,7 +8,7 @@ use crate::backend::puppet::observed::ObservedStyle;
 use crate::event::Event;
 use crate::theme;
 use crate::vec::Vec2;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -25,7 +25,7 @@ pub struct Backend {
     inner_receiver: Receiver<Option<Event>>,
     prev_frame: RefCell<Option<ObservedScreen>>,
     current_frame: RefCell<ObservedScreen>,
-    size: RefCell<Vec2>,
+    size: Cell<Vec2>,
     current_style: RefCell<Rc<ObservedStyle>>,
     screen_channel: (Sender<ObservedScreen>, Receiver<ObservedScreen>),
 }
@@ -44,7 +44,7 @@ impl Backend {
             inner_receiver,
             prev_frame: RefCell::new(None),
             current_frame: RefCell::new(ObservedScreen::new(size)),
-            size: RefCell::new(size),
+            size: Cell::new(size),
             current_style: RefCell::new(Rc::new(
                 DEFAULT_OBSERVED_STYLE.clone(),
             )),
@@ -87,7 +87,7 @@ impl backend::Backend for Backend {
     fn finish(&mut self) {}
 
     fn refresh(&mut self) {
-        let size = self.size.get_mut().clone();
+        let size = self.size.get();
         let current_frame =
             self.current_frame.replace(ObservedScreen::new(size));
         self.prev_frame.replace(Some(current_frame.clone()));
@@ -99,7 +99,7 @@ impl backend::Backend for Backend {
     }
 
     fn screen_size(&self) -> Vec2 {
-        self.size.borrow().clone()
+        self.size.get()
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {

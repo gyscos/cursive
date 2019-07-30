@@ -15,7 +15,7 @@ use crate::vec::Vec2;
 use crate::view::{self, Finder, IntoBoxedView, Position, View};
 use crate::views::{self, LayerPosition};
 
-static DEBUG_VIEW_ID: &'static str = "_cursive_debug_view";
+static DEBUG_VIEW_ID: &str = "_cursive_debug_view";
 
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;

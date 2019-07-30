@@ -31,24 +31,24 @@ pub enum GraphemePart {
 impl GraphemePart {
     /// Returns true iff GraphemePart is Continuation
     pub fn is_continuation(&self) -> bool {
-        match self {
-            &GraphemePart::Continuation => true,
+        match *self {
+            GraphemePart::Continuation => true,
             _ => false,
         }
     }
 
     /// Returns Some(String) if GraphemePart is Begin(String), else None.
     pub fn as_option(&self) -> Option<&String> {
-        match self {
-            &GraphemePart::Begin(ref string) => Some(string),
-            &GraphemePart::Continuation => None,
+        match *self {
+            GraphemePart::Begin(ref string) => Some(string),
+            GraphemePart::Continuation => None,
         }
     }
 
     /// Returns String if GraphemePart is Begin(String), panics otherwise.
     pub fn unwrap(&self) -> String {
-        match self {
-            &GraphemePart::Begin(ref s) => s.clone(),
+        match *self {
+            GraphemePart::Begin(ref s) => s.clone(),
             _ => panic!("unwrapping GraphemePart::Continuation"),
         }
     }
@@ -199,8 +199,7 @@ impl ObservedScreen {
                 loop {
                     let pattern_symbol = pattern
                         .graphemes(true)
-                        .skip(pattern_cursor)
-                        .next()
+                        .nth(pattern_cursor)
                         .unwrap_or_else(|| {
                             panic!(
                                 "Found no char at cursor {} in {}",
@@ -277,10 +276,11 @@ pub trait ObservedPieceInterface {
             for x in self.min().x..self.max().x {
                 match &self.parent()[Vec2::new(x, y)] {
                     None => s.push(' '),
-                    Some(cell) => match &cell.letter {
-                        GraphemePart::Begin(lex) => s.push_str(&lex),
-                        _ => {}
-                    },
+                    Some(cell) => {
+                        if let GraphemePart::Begin(lex) = &cell.letter {
+                            s.push_str(&lex);
+                        }
+                    }
                 }
             }
             v.push(s);

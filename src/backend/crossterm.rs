@@ -8,16 +8,14 @@ use crate::vec::Vec2;
 use crate::{backend, theme};
 use crossterm::{
     cursor, execute, input, queue, terminal, AlternateScreen, AsyncReader,
-    Attribute, Clear, ClearType, Color, Colored, Command, Goto, Hide,
-    InputEvent as CInputEvent, KeyEvent as CKeyEvent,
-    MouseButton as CMouseButton, MouseEvent as CMouseEvent, Output, RawScreen,
-    SetAttr, SetBg, SetFg, Show, Terminal, TerminalCursor,
+    Attribute, Clear, ClearType, Color, Goto, InputEvent as CInputEvent,
+    KeyEvent as CKeyEvent, MouseButton as CMouseButton,
+    MouseEvent as CMouseEvent, SetAttr, SetBg, SetFg, Show, Terminal,
 };
 
 use crate::event::{Event, Key, MouseButton, MouseEvent};
-use core::borrow::BorrowMut;
 use std::cell::{Cell, RefCell};
-use std::io::{self, BufWriter, Stdout, StdoutLock, Write};
+use std::io::{self, BufWriter, Stdout, Write};
 
 /// Backend using crossterm
 pub struct Backend {
@@ -27,7 +25,6 @@ pub struct Backend {
     async_reader: AsyncReader,
     _alternate_screen: AlternateScreen,
     stdout: RefCell<BufWriter<Stdout>>,
-    cursor: TerminalCursor,
     terminal: Terminal,
 }
 
@@ -52,17 +49,18 @@ impl Backend {
             _alternate_screen,
             stdout: RefCell::new(BufWriter::new(io::stdout())),
             terminal: terminal(),
-            cursor: cursor(),
         }))
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
         with_color(colors.front, |c| {
             queue!(self.stdout.borrow_mut(), SetFg(*c))
-        });
+        })
+        .unwrap();
         with_color(colors.back, |c| {
             queue!(self.stdout.borrow_mut(), SetBg(*c))
-        });
+        })
+        .unwrap();
     }
 
     fn write<T>(&self, content: T)
@@ -74,7 +72,7 @@ impl Backend {
     }
 
     fn set_attr(&self, attr: Attribute) {
-        queue!(self.stdout.borrow_mut(), SetAttr(attr));
+        queue!(self.stdout.borrow_mut(), SetAttr(attr)).unwrap();
     }
 
     fn map_key(&mut self, event: CInputEvent) -> Event {
@@ -183,7 +181,8 @@ impl backend::Backend for Backend {
             SetFg(Color::Reset),
             SetAttr(Attribute::Reset),
             Show
-        );
+        )
+        .unwrap();
         input().disable_mouse_mode().unwrap();
     }
 
