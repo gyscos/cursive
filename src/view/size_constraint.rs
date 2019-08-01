@@ -43,7 +43,7 @@ impl SizeConstraint {
             SizeConstraint::AtLeast(value) if result < value => value,
             SizeConstraint::AtMost(value) if result > value => value,
             SizeConstraint::Fixed(value) => value,
-            SizeConstraint::Full => available,
+            SizeConstraint::Full if available > result => available,
             _ => result,
         }
     }
