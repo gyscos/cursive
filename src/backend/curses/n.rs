@@ -155,13 +155,8 @@ impl Backend {
 
         // Find if we have this color in stock
         let result = find_closest_pair(pair);
-        let lookup = pairs.get(&result);
-        if lookup.is_some() {
-            // We got it!
-            *lookup.unwrap()
-        } else {
-            self.insert_color(&mut *pairs, result)
-        }
+        let lookup = pairs.get(&result).copied();
+        lookup.unwrap_or_else(|| self.insert_color(&mut *pairs, result))
     }
 
     fn set_colors(&self, pair: ColorPair) {

@@ -1,6 +1,4 @@
-use std::cell::RefCell;
 use std::ops::Deref;
-use std::ptr;
 use std::sync::Arc;
 use std::sync::{Mutex, MutexGuard};
 
@@ -15,7 +13,7 @@ use crate::view::{SizeCache, View};
 use crate::{Printer, Vec2, With, XY};
 
 // Content type used internally for caching and storage
-type InnerContentType = RefCell<Arc<StyledString>>;
+type InnerContentType = Arc<StyledString>;
 
 /// Provides access to the content of a [`TextView`].
 ///
@@ -51,8 +49,8 @@ impl TextContent {
 
         TextContent {
             content: Arc::new(Mutex::new(TextContentInner {
-                content_value: RefCell::new(content),
-                content_cache: RefCell::new(Arc::new(StyledString::default())),
+                content_value: content,
+                content_cache: Arc::new(StyledString::default()),
                 size_cache: None,
             })),
         }
@@ -66,7 +64,6 @@ impl TextContent {
 /// [`StyledString`]: ../utils/markup/type.StyledString.html
 ///
 /// This keeps the content locked. Do not store this!
-
 pub struct TextContentRef {
     _handle: OwningHandle<
         ArcRef<Mutex<TextContentInner>>,
@@ -92,7 +89,7 @@ impl TextContent {
         S: Into<StyledString>,
     {
         self.with_content(|c| {
-            c.content_value.replace(Arc::new(content.into()))
+            *Arc::make_mut(&mut c.content_value) = content.into();
         });
     }
 
@@ -104,13 +101,7 @@ impl TextContent {
         self.with_content(|c| {
             // This will only clone content if content_cached and content_value
             // are sharing the same underlying Rc.
-            if c.is_content_shared() {
-                c.content_value
-                    .replace(Arc::new(c.get_value().as_ref().clone()));
-            };
-            Arc::get_mut(&mut c.content_value.borrow_mut())
-                .expect("should not have a shared content here")
-                .append(content)
+            Arc::make_mut(&mut c.content_value).append(content);
         })
     }
 
@@ -126,11 +117,11 @@ impl TextContent {
     where
         F: FnOnce(&mut TextContentInner) -> O,
     {
-        let mut lock = self.content.lock().unwrap();
+        let mut content = self.content.lock().unwrap();
 
-        let out = f(&mut lock);
+        let out = f(&mut content);
 
-        lock.size_cache = None;
+        content.size_cache = None;
 
         out
     }
@@ -160,7 +151,7 @@ impl TextContentInner {
             (*mutex).lock().unwrap()
         });
 
-        let data = _handle.get_value();
+        let data = Arc::clone(&_handle.content_value);
 
         TextContentRef { _handle, data }
     }
@@ -172,16 +163,8 @@ impl TextContentInner {
         }
     }
 
-    fn get_value(&self) -> Arc<StyledString> {
-        Arc::clone(&*self.content_value.borrow())
-    }
-
-    fn get_cache(&self) -> Arc<StyledString> {
-        Arc::clone(&*self.content_cache.borrow())
-    }
-
-    fn is_content_shared(&self) -> bool {
-        ptr::eq(self.get_value().as_ref(), self.get_cache().as_ref())
+    fn get_cache(&self) -> &InnerContentType {
+        &self.content_cache
     }
 }
 
@@ -239,7 +222,7 @@ impl TextView {
     /// ```
     pub fn new_with_content(content: TextContent) -> Self {
         TextView {
-            content: content,
+            content,
             effect: Effect::Simple,
             rows: Vec::new(),
             wrap: true,
@@ -360,9 +343,7 @@ impl TextView {
         // Completely bust the cache
         // Just in case we fail, we don't want to leave a bad cache.
         content.size_cache = None;
-        content
-            .content_cache
-            .replace(content.content_value.borrow().clone());
+        content.content_cache = Arc::clone(&content.content_value);
 
         if size.x == 0 {
             // Nothing we can do at this point.
