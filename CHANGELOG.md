@@ -1,6 +1,6 @@
 # Changelog
 
-## Next version: 0.13.0
+## 0.13.0
 
 ### Breaking changes
 
@@ -14,6 +14,17 @@
 - Add `ScrollView::{inner_size, is_as_{bottom, top, left, right} }`
 - Add getters for current value in `SliderView`
 - More fields made public in `cursive::logger`
+- Add a "puppet" backend for testing and instrumentation
+
+### Improvements
+
+- Performance improvements for the crossterm backend
+
+### Bugfixes
+
+- Fix a possible panic when a TextView is updated asynchronously while it's
+  being layed out.
+- Fixed weird behaviour of `SizeConstraint::Full` with `ScrollView`.
 
 ## 0.12.0
 
