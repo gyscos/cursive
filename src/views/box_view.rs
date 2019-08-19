@@ -1,3 +1,4 @@
+use crate::printer::Printer;
 use crate::vec::Vec2;
 use crate::view::{SizeConstraint, View, ViewWrapper};
 use crate::With;
@@ -212,12 +213,19 @@ impl<T: View> BoxView<T> {
 impl<T: View> ViewWrapper for BoxView<T> {
     wrap_impl!(self.view: T);
 
+    fn wrap_draw(&self, printer: &Printer) {
+        self.view.draw(&printer.inner_size(
+            self.size.zip_map(printer.size, |c, s| c.result((s, s))),
+        ));
+    }
+
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
         // This is what the child will see as request.
         let req = self.size.zip_map(req, SizeConstraint::available);
 
         // This is the size the child would like to have.
-        let child_size = self.view.required_size(req);
+        // Given the constraints of our box.
+        let child_size = self.size.zip_map(req, |c, s| c.result((s, s)));
 
         // Some of this request will be granted, but maybe not all.
         let result = self
