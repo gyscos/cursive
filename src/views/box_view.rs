@@ -214,12 +214,9 @@ impl<T: View> ViewWrapper for BoxView<T> {
     wrap_impl!(self.view: T);
 
     fn wrap_draw(&self, printer: &Printer) {
-        let mut printer = printer.clone();
-        // Set values hard here, since cropping would allow smaller size if fixed or at least set
-        printer.size.x = self.size.x.result((printer.size.x, printer.size.x));
-        printer.size.y = self.size.y.result((printer.size.y, printer.size.y));
-        self.view.draw(&printer);
-        self.view.draw(&printer);
+        self.view.draw(&printer.inner_size(
+            self.size.zip_map(printer.size, |c, s| c.result((s, s))),
+        ));
     }
 
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
@@ -228,10 +225,7 @@ impl<T: View> ViewWrapper for BoxView<T> {
 
         // This is the size the child would like to have.
         // Given the constraints of our box.
-        let child_size = self.view.required_size(Vec2::new(
-            self.size.x.result((req.x, req.x)),
-            self.size.y.result((req.y, req.y)),
-        ));
+        let child_size = self.size.zip_map(req, |c, s| c.result((s, s)));
 
         // Some of this request will be granted, but maybe not all.
         let result = self
