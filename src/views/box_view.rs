@@ -25,13 +25,6 @@ pub struct BoxView<T: View> {
     /// Constraint on each axis
     size: XY<SizeConstraint>,
 
-    /// `true` if the view can be squished.
-    ///
-    /// This means if the required size is less than the computed size,
-    /// consider returning a smaller size.
-    /// For instance, try to return the child's desired size.
-    squishable: bool, // TODO: remove?
-
     /// Set to `true` whenever we change some settings. Means we should re-layout just in case.
     invalidated: bool,
 
@@ -50,7 +43,6 @@ impl<T: View> BoxView<T> {
     ) -> Self {
         BoxView {
             size: (width, height).into(),
-            squishable: false,
             invalidated: true,
             view,
         }
@@ -79,24 +71,6 @@ impl<T: View> BoxView<T> {
     /// Leaves the width unchanged.
     pub fn set_height(&mut self, height: SizeConstraint) {
         self.size.y = height;
-        self.invalidate();
-    }
-
-    /// Sets `self` to be squishable.
-    ///
-    /// A squishable `BoxView` will take a smaller size than it should when
-    /// the available space is too small. In that case, it will allow the
-    /// child view to contract, if it can.
-    ///
-    /// More specifically, if the available space is less than the size we
-    /// would normally ask for, return the child size.
-    pub fn squishable(self) -> Self {
-        self.with(|s| s.set_squishable(true))
-    }
-
-    /// Controls the "squishability" of `self`.
-    pub fn set_squishable(&mut self, squishable: bool) {
-        self.squishable = squishable;
         self.invalidate();
     }
 
@@ -228,28 +202,14 @@ impl<T: View> ViewWrapper for BoxView<T> {
         let child_size = self.view.required_size(req);
 
         // Some of this request will be granted, but maybe not all.
-        let result = self
-            .size
-            .zip_map(child_size.zip(req), SizeConstraint::result);
-
-        if self.squishable {
-            // When we're squishable, special behaviour:
-            //
-
-            // We respect the request if we're less or equal.
-            let respect_req = result.zip_map(req, |res, req| res <= req);
-
-            // If we respect the request, keep the result
-            // Otherwise, take the child as squish attempt.
-            respect_req.select_or(result, child_size)
-        } else {
-            result
-        }
+        self.size
+            .zip_map(child_size.zip(req), SizeConstraint::result)
     }
 
     fn wrap_layout(&mut self, size: Vec2) {
         self.invalidated = false;
-        self.view.layout(size);
+        self.view
+            .layout(self.size.zip_map(size, |c, s| c.result((s, s))));
     }
 
     fn wrap_needs_relayout(&self) -> bool {
