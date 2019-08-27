@@ -225,7 +225,7 @@ impl<T: View> ViewWrapper for BoxView<T> {
 
         // This is the size the child would like to have.
         // Given the constraints of our box.
-        let child_size = self.size.zip_map(req, |c, s| c.result((s, s)));
+        let child_size = self.view.required_size(req);
 
         // Some of this request will be granted, but maybe not all.
         let result = self
