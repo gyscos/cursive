@@ -1,7 +1,6 @@
 use crate::printer::Printer;
 use crate::vec::Vec2;
 use crate::view::{SizeConstraint, View, ViewWrapper};
-use crate::With;
 use crate::XY;
 
 /// Wrapper around another view, with a controlled size.

@@ -639,12 +639,10 @@ impl View for LinearLayout {
     fn call_on_any<'a>(
         &mut self,
         selector: &Selector<'_>,
-        mut callback: AnyCb<'a>,
+        callback: AnyCb<'a>,
     ) {
         for child in &mut self.children {
-            child
-                .view
-                .call_on_any(selector, Box::new(|any| callback(any)));
+            child.view.call_on_any(selector, callback);
         }
     }
 

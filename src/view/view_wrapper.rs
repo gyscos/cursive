@@ -4,7 +4,6 @@ use crate::rect::Rect;
 use crate::vec::Vec2;
 use crate::view::{Selector, View};
 use crate::Printer;
-use std::any::Any;
 
 /// Generic wrapper around a view.
 ///
@@ -129,7 +128,7 @@ impl<T: ViewWrapper> View for T {
     fn call_on_any<'a>(
         &mut self,
         selector: &Selector<'_>,
-        callback: Box<dyn FnMut(&mut dyn Any) + 'a>,
+        callback: AnyCb<'a>,
     ) {
         self.wrap_call_on_any(selector, callback)
     }

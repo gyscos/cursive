@@ -22,14 +22,20 @@ use std::rc::Rc;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
+///
+/// It is meant to be stored in views.
 #[derive(Clone)]
 pub struct Callback(Rc<Box<dyn Fn(&mut Cursive)>>);
 // TODO: remove the Box when Box<T: Sized> -> Rc<T> is possible
 
-/// A boxed callback that can be run on `&mut Any`.
-pub type AnyCb<'a> = Box<dyn FnMut(&mut dyn Any) + 'a>;
+/// A callback that can be run on `&mut Any`.
+///
+/// It is meant to be used as parameter in `View::call_on_any`, and not much else.
+pub type AnyCb<'a> = &'a mut dyn FnMut(&mut dyn Any);
 
 /// A trigger that only selects some types of events.
+///
+/// It is meant to be stored in views.
 pub struct EventTrigger(Box<dyn Fn(&Event) -> bool>);
 
 impl EventTrigger {

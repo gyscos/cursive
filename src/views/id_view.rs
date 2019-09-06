@@ -1,6 +1,6 @@
+use crate::event::AnyCb;
 use crate::view::{Selector, View, ViewWrapper};
 use owning_ref::{OwningHandle, RcRef};
-use std::any::Any;
 use std::cell::{RefCell, RefMut};
 use std::ops::DerefMut;
 use std::rc::Rc;
@@ -41,9 +41,6 @@ impl<V: View> IdView<V> {
     }
 }
 
-// Shortcut for a boxed callback (for the wrap_call_on_any method).
-type BoxedCallback<'a> = Box<dyn for<'b> FnMut(&'b mut dyn Any) + 'a>;
-
 impl<T: View + 'static> ViewWrapper for IdView<T> {
     type V = T;
 
@@ -79,7 +76,7 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
     fn wrap_call_on_any<'a>(
         &mut self,
         selector: &Selector<'_>,
-        mut callback: BoxedCallback<'a>,
+        callback: AnyCb<'a>,
     ) {
         match selector {
             &Selector::Id(id) if id == self.id => callback(self),

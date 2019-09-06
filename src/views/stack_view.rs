@@ -324,9 +324,7 @@ impl StackView {
 
         for (i, child) in self.layers.iter_mut().enumerate() {
             let mut found = false;
-            child
-                .view
-                .call_on_any(&selector, Box::new(|_| found = true));
+            child.view.call_on_any(&selector, &mut |_| found = true);
             if found {
                 return Some(LayerPosition::FromBack(i));
             }
@@ -668,12 +666,10 @@ impl View for StackView {
     fn call_on_any<'a>(
         &mut self,
         selector: &Selector<'_>,
-        mut callback: AnyCb<'a>,
+        callback: AnyCb<'a>,
     ) {
         for layer in &mut self.layers {
-            layer
-                .view
-                .call_on_any(selector, Box::new(|any| callback(any)));
+            layer.view.call_on_any(selector, callback);
         }
     }
 

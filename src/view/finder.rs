@@ -60,7 +60,7 @@ impl<T: View> Finder for T {
             let result_ref = &mut result;
 
             let mut callback = Some(callback);
-            let callback = |v: &mut dyn Any| {
+            let mut callback = |v: &mut dyn Any| {
                 if let Some(callback) = callback.take() {
                     if v.is::<V>() {
                         *result_ref =
@@ -72,7 +72,7 @@ impl<T: View> Finder for T {
                     }
                 }
             };
-            self.call_on_any(sel, Box::new(callback));
+            self.call_on_any(sel, &mut callback);
         }
         result
     }

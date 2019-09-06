@@ -396,10 +396,10 @@ impl View for ListView {
     fn call_on_any<'a>(
         &mut self,
         selector: &Selector<'_>,
-        mut callback: AnyCb<'a>,
+        callback: AnyCb<'a>,
     ) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
-            view.call_on_any(selector, Box::new(|any| callback(any)));
+            view.call_on_any(selector, callback);
         }
     }
 
