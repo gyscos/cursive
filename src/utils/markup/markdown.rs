@@ -51,7 +51,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-fn header(level: usize) -> &'static str {
+fn heading(level: usize) -> &'static str {
     &"##########"[..level]
 }
 
@@ -71,15 +71,14 @@ impl<'a> Iterator for Parser<'a> {
                     Tag::Emphasis => {
                         self.stack.push(Style::from(Effect::Italic))
                     }
-                    Tag::Header(level) => {
+                    Tag::Heading(level) => {
                         return Some(
                             self.literal(format!(
                                 "{} ",
-                                header(level as usize)
+                                heading(level as usize)
                             )),
                         )
                     }
-                    Tag::Rule => return Some(self.literal("---")),
                     Tag::BlockQuote => return Some(self.literal("> ")),
                     Tag::Link(_, _, _) => return Some(self.literal("[")),
                     Tag::CodeBlock(_) => return Some(self.literal("```")),
@@ -92,7 +91,7 @@ impl<'a> Iterator for Parser<'a> {
                 Event::End(tag) => match tag {
                     // Remove from stack!
                     Tag::Paragraph if self.first => self.first = false,
-                    Tag::Header(_) => return Some(self.literal("\n\n")),
+                    Tag::Heading(_) => return Some(self.literal("\n\n")),
                     Tag::Link(_, link, _) => {
                         return Some(self.literal(format!("]({})", link)))
                     }
@@ -102,11 +101,11 @@ impl<'a> Iterator for Parser<'a> {
                     }
                     _ => (),
                 },
+                Event::Rule => return Some(self.literal("---")),
                 Event::SoftBreak => return Some(self.literal("\n")),
                 Event::HardBreak => return Some(self.literal("\n")),
                 // Treat all text the same
                 Event::FootnoteReference(text)
-                | Event::InlineHtml(text)
                 | Event::Html(text)
                 | Event::Text(text)
                 | Event::Code(text) => {
