@@ -63,7 +63,7 @@ version = "0.16.1"
 [dependencies.pulldown-cmark]
 default-features = false
 optional = true
-version = "0.5.3"
+version = "0.6.0"
 
 [dependencies.termion]
 optional = true
