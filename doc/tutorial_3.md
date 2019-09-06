@@ -71,7 +71,7 @@ fn delete_name(s: &mut Cursive) {
     }
 }
 
-fn on_submit(s: &mut Cursive, name: &String) {
+fn on_submit(s: &mut Cursive, name: &str) {
     s.pop_layer();
     s.add_layer(Dialog::text(format!("Name: {}\nAwesome: yes", name))
         .title(format!("{}'s info", name))
@@ -117,14 +117,14 @@ let select = SelectView::<String>::new()
 We'll also want to add a callback when the user chooses a name. The
 [`SelectView::on_submit`] method takes a callback with a second argument:
  the selected item. Since we're using `String`, our callback will have to be
- `Fn(&mut Cursive, &String)`:
+ `Fn(&mut Cursive, &str)`:
 
 ```rust,ignore
 let select = SelectView::<String>::new()
     .on_submit(on_submit)
     .fixed_size((10, 5));
 
-fn on_submit(s: &mut Cursive, name: &String) {
+fn on_submit(s: &mut Cursive, name: &str) {
     s.pop_layer();
     s.add_layer(Dialog::text(format!("Name: {}\nAwesome: yes", name))
         .title(format!("{}'s info", name))
