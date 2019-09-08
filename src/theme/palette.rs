@@ -161,7 +161,7 @@ impl Default for Palette {
                 Secondary => Dark(Blue),
                 Tertiary => Dark(White),
                 TitlePrimary => Dark(Red),
-                TitleSecondary => Dark(Yellow),
+                TitleSecondary => Light(Blue),
                 Highlight => Dark(Red),
                 HighlightInactive => Dark(Blue),
             },
