@@ -2,7 +2,6 @@
 use log::{debug, warn};
 use ncurses;
 
-use hashbrown::HashMap;
 use std::cell::{Cell, RefCell};
 use std::ffi::CString;
 use std::fs::File;
@@ -19,6 +18,9 @@ use crate::vec::Vec2;
 
 use self::super::split_i32;
 use self::ncurses::mmask_t;
+
+// Use AHash instead of the slower SipHash
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
 
 /// Backend using ncurses.
 pub struct Backend {
@@ -117,7 +119,7 @@ impl Backend {
 
         let c = Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
-            pairs: RefCell::new(HashMap::new()),
+            pairs: RefCell::new(HashMap::default()),
             key_codes: initialize_keymap(),
             last_mouse_button: None,
             input_buffer: None,
@@ -458,7 +460,8 @@ where
 
 fn initialize_keymap() -> HashMap<i32, Event> {
     // First, define the static mappings.
-    let mut map = HashMap::new();
+    let mut map = HashMap::default();
+
     // Value sent by ncurses when nothing happens
     map.insert(-1, Event::Refresh);
 

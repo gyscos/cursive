@@ -5,7 +5,7 @@
 
 use bear_lib_terminal;
 
-use hashbrown::HashSet;
+use std::collections::HashSet;
 
 use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{
@@ -17,6 +17,9 @@ use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{BaseColor, Color, ColorPair, Effect};
 use crate::vec::Vec2;
+
+// Use AHash instead of the slower SipHash
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
 
 enum ColorRole {
     Foreground,
@@ -47,7 +50,7 @@ impl Backend {
         ]);
 
         let c = Backend {
-            buttons_pressed: HashSet::new(),
+            buttons_pressed: HashSet::default(),
             mouse_position: Vec2::zero(),
         };
 

@@ -3,8 +3,6 @@
 //! Requires either of `ncurses-backend` or `pancurses-backend`.
 #![cfg(any(feature = "ncurses-backend", feature = "pancurses-backend"))]
 
-use hashbrown::HashMap;
-
 use crate::event::{Event, Key};
 use crate::theme::{BaseColor, Color, ColorPair};
 use maplit::hashmap;
@@ -14,6 +12,9 @@ pub mod n;
 
 #[cfg(feature = "pancurses-backend")]
 pub mod pan;
+
+// Use AHash instead of the slower SipHash
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
 
 fn split_i32(code: i32) -> Vec<u8> {
     (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()

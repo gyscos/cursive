@@ -1,4 +1,3 @@
-use hashbrown::HashMap;
 use std::any::Any;
 use std::num::NonZeroU32;
 use std::path::Path;
@@ -19,6 +18,9 @@ static DEBUG_VIEW_ID: &str = "_cursive_debug_view";
 
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;
+
+// Use AHash instead of the slower SipHash
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
 
 /// Central part of the cursive library.
 ///
@@ -137,7 +139,7 @@ impl Cursive {
             theme,
             screens: vec![views::StackView::new()],
             last_sizes: Vec::new(),
-            global_callbacks: HashMap::new(),
+            global_callbacks: HashMap::default(),
             menubar: views::Menubar::new(),
             active_screen: 0,
             running: true,

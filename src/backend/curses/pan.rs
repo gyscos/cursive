@@ -2,7 +2,6 @@
 use log::{debug, warn};
 use pancurses;
 
-use hashbrown::HashMap;
 use std::cell::{Cell, RefCell};
 use std::io::{stdout, Write};
 
@@ -13,6 +12,9 @@ use crate::vec::Vec2;
 
 use self::pancurses::mmask_t;
 use super::split_i32;
+
+// Use AHash instead of the slower SipHash
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
 
 /// Backend using pancurses.
 pub struct Backend {
@@ -75,7 +77,7 @@ impl Backend {
 
         let c = Backend {
             current_style: Cell::new(ColorPair::from_256colors(0, 0)),
-            pairs: RefCell::new(HashMap::new()),
+            pairs: RefCell::new(HashMap::default()),
             key_codes: initialize_keymap(),
             last_mouse_button: None,
             input_buffer: None,
@@ -530,7 +532,7 @@ fn get_mouse_button(bare_event: mmask_t) -> MouseButton {
 }
 
 fn initialize_keymap() -> HashMap<i32, Event> {
-    let mut map = HashMap::new();
+    let mut map = HashMap::default();
 
     super::fill_key_codes(&mut map, pancurses::keyname);
 

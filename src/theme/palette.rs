@@ -3,8 +3,10 @@ use enum_map::{enum_map, Enum, EnumMap};
 use log::warn;
 use toml;
 
-use hashbrown::HashMap;
 use std::ops::{Index, IndexMut};
+
+// Use AHash instead of the slower SipHash
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
 
 /// Color configuration for the application.
 ///
@@ -165,7 +167,7 @@ impl Default for Palette {
                 Highlight => Dark(Red),
                 HighlightInactive => Dark(Blue),
             },
-            custom: HashMap::new(),
+            custom: HashMap::default(),
         }
     }
 }
