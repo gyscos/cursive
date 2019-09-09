@@ -1,5 +1,6 @@
 use std::any::Any;
 use std::num::NonZeroU32;
+#[cfg(feature = "toml")]
 use std::path::Path;
 use std::time::Duration;
 
@@ -405,9 +406,12 @@ impl Cursive {
             .clear(self.theme.palette[theme::PaletteColor::Background]);
     }
 
+    #[cfg(feature = "toml")]
     /// Loads a theme from the given file.
     ///
     /// `filename` must point to a valid toml file.
+    ///
+    /// Must have the `toml` feature enabled.
     pub fn load_theme_file<P: AsRef<Path>>(
         &mut self,
         filename: P,
@@ -415,9 +419,12 @@ impl Cursive {
         theme::load_theme_file(filename).map(|theme| self.set_theme(theme))
     }
 
+    #[cfg(feature = "toml")]
     /// Loads a theme from the given string content.
     ///
     /// Content must be valid toml.
+    ///
+    /// Must have the `toml` feature enabled.
     pub fn load_toml(&mut self, content: &str) -> Result<(), theme::Error> {
         theme::load_toml(content).map(|theme| self.set_theme(theme))
     }

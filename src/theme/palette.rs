@@ -1,7 +1,7 @@
 use super::Color;
 use enum_map::{enum_map, Enum, EnumMap};
+#[cfg(feature = "toml")]
 use log::warn;
-use toml;
 
 use std::ops::{Index, IndexMut};
 
@@ -173,6 +173,7 @@ impl Default for Palette {
 }
 
 // Iterate over a toml
+#[cfg(feature = "toml")]
 fn iterate_toml<'a>(
     table: &'a toml::value::Table,
 ) -> impl Iterator<Item = (&'a str, PaletteNode)> + 'a {
@@ -216,6 +217,7 @@ fn iterate_toml<'a>(
 }
 
 /// Fills `palette` with the colors from the given `table`.
+#[cfg(feature = "toml")]
 pub(crate) fn load_toml(palette: &mut Palette, table: &toml::value::Table) {
     // TODO: use serde for that?
     // Problem: toml-rs doesn't do well with Enums...

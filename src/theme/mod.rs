@@ -171,11 +171,13 @@ pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::Effect;
 pub use self::palette::{Palette, PaletteColor};
 pub use self::style::Style;
+#[cfg(feature = "toml")]
 use std::fs::File;
 use std::io;
+#[cfg(feature = "toml")]
 use std::io::Read;
+#[cfg(feature = "toml")]
 use std::path::Path;
-use toml;
 
 /// Represents the style a Cursive application will use.
 #[derive(Clone, Debug)]
@@ -199,6 +201,7 @@ impl Default for Theme {
 }
 
 impl Theme {
+    #[cfg(feature = "toml")]
     fn load_toml(&mut self, table: &toml::value::Table) {
         if let Some(&toml::Value::Boolean(shadow)) = table.get("shadow") {
             self.shadow = shadow;
@@ -219,23 +222,30 @@ impl Theme {
 pub enum Error {
     /// An error occured when reading the file.
     Io(io::Error),
+
+    #[cfg(feature = "toml")]
     /// An error occured when parsing the toml content.
     Parse(toml::de::Error),
 }
 
+#[cfg(feature = "toml")]
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
         Error::Io(err)
     }
 }
 
+#[cfg(feature = "toml")]
 impl From<toml::de::Error> for Error {
     fn from(err: toml::de::Error) -> Self {
         Error::Parse(err)
     }
 }
 
+#[cfg(feature = "toml")]
 /// Loads a theme from file and sets it as active.
+///
+/// Must have the `toml` feature enabled.
 pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
     let content = {
         let mut content = String::new();
@@ -248,6 +258,9 @@ pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
 }
 
 /// Loads a theme string and sets it as active.
+///
+/// Must have the `toml` feature enabled.
+#[cfg(feature = "toml")]
 pub fn load_toml(content: &str) -> Result<Theme, Error> {
     let table = toml::de::from_str(content)?;
 
