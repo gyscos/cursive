@@ -74,16 +74,24 @@ These tutorials may help you get started with cursive:
 
 Here are a few crates implementing new views for you to use:
 
-* [cursive-aligned-view](https://github.com/deinstapel/cursive-aligned-view)
-* [cursive-async-view](https://github.com/deinstapel/cursive-async-view)
-* [cursive-flexi-logger-view](https://github.com/deinstapel/cursive-flexi-logger-view)
-* [cursive-multiplex](https://github.com/deinstapel/cursive-multiplex)
-* [cursive-tabs](https://github.com/deinstapel/cursive-tabs)
-* [cursive_calendar_view](https://github.com/BonsaiDen/cursive_calendar_view)
-* [cursive_hexview](https://github.com/hellow554/cursive_hexview)
-* [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view)
-* [cursive_tree_view](https://github.com/BonsaiDen/cursive_tree_view)
+* [cursive-aligned-view](https://github.com/deinstapel/cursive-aligned-view): A view wrapper for gyscos/cursive views which aligns child views.
+* [cursive-async-view](https://github.com/deinstapel/cursive-async-view): A loading-screen wrapper.
+* [cursive-flexi-logger-view](https://github.com/deinstapel/cursive-flexi-logger-view): An alternative debug view using `emabee/flexi_logger`.
+* [cursive-multiplex](https://github.com/deinstapel/cursive-multiplex): A tmux like multiplexer.
+* [cursive-tabs](https://github.com/deinstapel/cursive-tabs): Tabs.
+* [cursive_calendar_view](https://github.com/BonsaiDen/cursive_calendar_view): A basic calendar view implementation.
+* [cursive_hexview](https://github.com/hellow554/cursive_hexview): A simple hexview.
+* [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view): A basic table view component.
+* [cursive_tree_view](https://github.com/BonsaiDen/cursive_tree_view): A tree view implementation.
 
+## Showcases
+
+Here are some cool applications using cursive:
+
+* [RustyChat](https://github.com/SambaDialloB/RustyChat): Chat client made using Rust and Cursive.
+* [fui](https://github.com/xliiv/fui): Add CLI & form interface to your program.
+* [grin-tui](https://github.com/mimblewimble/grin): Minimal implementation of the MimbleWimble protocol.
+* [ripasso](https://github.com/cortex/ripasso): A simple password manager written in Rust.
 
 ## Goals
 
