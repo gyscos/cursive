@@ -101,56 +101,60 @@ impl Core {
         printer: &Printer<'a, 'b>,
     ) -> Printer<'a, 'b> {
         // Draw scrollbar?
-        let scrolling = self.is_scrolling();
-
-        let lengths = self.scrollbar_thumb_lengths();
-        let offsets = self.scrollbar_thumb_offsets(lengths);
-
-        let line_c = XY::new("-", "|");
-
-        let color = if printer.focused {
-            ColorStyle::highlight()
-        } else {
-            ColorStyle::highlight_inactive()
-        };
 
         let size = self.available_size();
 
         // Draw the scrollbars
-        XY::zip5(lengths, offsets, size, line_c, Orientation::pair()).run_if(
-            scrolling,
-            |(length, offset, size, c, orientation)| {
-                let start = printer
-                    .size
-                    .saturating_sub((1, 1))
-                    .with_axis(orientation, 0);
-                let offset = orientation.make_vec(offset, 0);
+        if self.get_show_scrollbars() {
+            let scrolling = self.is_scrolling();
 
-                printer.print_line(orientation, start, size, c);
+            let lengths = self.scrollbar_thumb_lengths();
+            let offsets = self.scrollbar_thumb_offsets(lengths);
 
-                let thumb_c = if self
-                    .thumb_grab
-                    .map(|(o, _)| o == orientation)
-                    .unwrap_or(false)
-                {
-                    " "
-                } else {
-                    "▒"
-                };
-                printer.with_color(color, |printer| {
-                    printer.print_line(
-                        orientation,
-                        start + offset,
-                        length,
-                        thumb_c,
-                    );
-                });
-            },
-        );
+            let line_c = XY::new("-", "|");
 
-        // Draw the X between the two scrollbars.
-        if scrolling.both() {
-            printer.print(printer.size.saturating_sub((1, 1)), "╳");
+            let color = if printer.focused {
+                ColorStyle::highlight()
+            } else {
+                ColorStyle::highlight_inactive()
+            };
+
+            XY::zip5(lengths, offsets, size, line_c, Orientation::pair())
+                .run_if(
+                    scrolling,
+                    |(length, offset, size, c, orientation)| {
+                        let start = printer
+                            .size
+                            .saturating_sub((1, 1))
+                            .with_axis(orientation, 0);
+                        let offset = orientation.make_vec(offset, 0);
+
+                        printer.print_line(orientation, start, size, c);
+
+                        let thumb_c = if self
+                            .thumb_grab
+                            .map(|(o, _)| o == orientation)
+                            .unwrap_or(false)
+                        {
+                            " "
+                        } else {
+                            "▒"
+                        };
+                        printer.with_color(color, |printer| {
+                            printer.print_line(
+                                orientation,
+                                start + offset,
+                                length,
+                                thumb_c,
+                            );
+                        });
+                    },
+                );
+
+            // Draw the X between the two scrollbars.
+            if scrolling.both() {
+                printer.print(printer.size.saturating_sub((1, 1)), "╳");
+            }
         }
 
         // Draw content
