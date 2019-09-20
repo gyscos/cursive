@@ -5,8 +5,6 @@
 
 use bear_lib_terminal;
 
-use std::collections::HashSet;
-
 use self::bear_lib_terminal::geometry::Size;
 use self::bear_lib_terminal::terminal::{
     self, state, Event as BltEvent, KeyCode,
@@ -19,7 +17,7 @@ use crate::theme::{BaseColor, Color, ColorPair, Effect};
 use crate::vec::Vec2;
 
 // Use AHash instead of the slower SipHash
-type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
+type HashSet<K> = std::collections::HashSet<K, ahash::ABuildHasher>;
 
 enum ColorRole {
     Foreground,
