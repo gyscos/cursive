@@ -74,10 +74,16 @@ These tutorials may help you get started with cursive:
 
 Here are a few crates implementing new views for you to use:
 
-* [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view)
+* [cursive-aligned-view](https://github.com/deinstapel/cursive-aligned-view)
+* [cursive-async-view](https://github.com/deinstapel/cursive-async-view)
+* [cursive-flexi-logger-view](https://github.com/deinstapel/cursive-flexi-logger-view)
+* [cursive-multiplex](https://github.com/deinstapel/cursive-multiplex)
+* [cursive-tabs](https://github.com/deinstapel/cursive-tabs)
 * [cursive_calendar_view](https://github.com/BonsaiDen/cursive_calendar_view)
-* [cursive_tree_view](https://github.com/BonsaiDen/cursive_tree_view)
 * [cursive_hexview](https://github.com/hellow554/cursive_hexview)
+* [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view)
+* [cursive_tree_view](https://github.com/BonsaiDen/cursive_tree_view)
+
 
 ## Goals
 
