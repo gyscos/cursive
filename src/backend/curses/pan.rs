@@ -72,6 +72,7 @@ impl Backend {
         // This asks the terminal to provide us with mouse drag events
         // (Mouse move when a button is pressed).
         // Replacing 1002 with 1003 would give us ANY mouse move.
+        #[cfg(not(windows))]
         print!("\x1B[?1002h");
         stdout().flush()?;
 
