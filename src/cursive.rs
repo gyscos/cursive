@@ -173,7 +173,7 @@ impl Cursive {
 
     /// Creates a new Cursive root using a crossterm backend.
     #[cfg(feature = "crossterm-backend")]
-    pub fn crossterm() -> std::io::Result<Self> {
+    pub fn crossterm() -> Result<Self, crossterm::ErrorKind> {
         Self::try_new(backend::crossterm::Backend::init)
     }
 

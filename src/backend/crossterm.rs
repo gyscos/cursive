@@ -30,7 +30,7 @@ pub struct Backend {
 
 impl Backend {
     /// Creates a new crossterm backend.
-    pub fn init() -> std::io::Result<Box<dyn backend::Backend>>
+    pub fn init() -> Result<Box<dyn backend::Backend>, crossterm::ErrorKind>
     where
         Self: Sized,
     {
@@ -196,7 +196,7 @@ impl backend::Backend for Backend {
     }
 
     fn screen_size(&self) -> Vec2 {
-        let size = self.terminal.terminal_size();
+        let size = self.terminal.size().unwrap_or((0, 0));
         Vec2::from(size)
     }
 

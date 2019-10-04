@@ -7,6 +7,7 @@
 - `cursive::event::AnyCb` changed from `Box<...>` to `&mut ...`, so users of
   `View::call_on_any` no longer need to box their closures.
 - Remove `BoxView::squishable`.
+- Update crossterm to 0.11
 
 ### API updates
 
