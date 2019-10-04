@@ -307,6 +307,14 @@ impl Cursive {
     /// Callbacks will be executed in the order
     /// of arrival on the next event cycle.
     ///
+    /// # Notes
+    ///
+    /// Callbacks need to be `Send`, which can be limiting in some cases.
+    ///
+    /// In some case [`send_wrapper`] may help you work around that.
+    ///
+    /// [`send_wrapper`]: https://crates.io/crates/send_wrapper
+    ///
     /// # Examples
     ///
     /// ```rust

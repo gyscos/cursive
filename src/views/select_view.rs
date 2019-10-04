@@ -174,6 +174,31 @@ impl<T: 'static> SelectView<T> {
     /// Sets a callback to be used when an item is selected.
     ///
     /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::traits::Identifiable;
+    /// use cursive::views::{TextView, SelectView};
+    ///
+    /// let text_view = TextView::new("").with_id("text");
+    ///
+    /// let select_view = SelectView::new()
+    ///     .item("One", 1)
+    ///     .item("Two", 2)
+    ///     .on_select(|s, item| {
+    ///         let content = match *item {
+    ///             1 => "Content number one",
+    ///             2 => "Content number two! Much better!",
+    ///             _ => unreachable!("no such item"),
+    ///         };
+    ///
+    ///         // Update the textview with the currently selected item.
+    ///         s.call_on_id("text", |v: &mut TextView| {
+    ///             v.set_content(content);
+    ///         }).unwrap();
+    ///     });
+    /// ```
     pub fn on_select<F>(self, cb: F) -> Self
     where
         F: Fn(&mut Cursive, &T) + 'static,
@@ -205,6 +230,26 @@ impl<T: 'static> SelectView<T> {
     /// The item currently selected will be given to the callback.
     ///
     /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::{Dialog, SelectView};
+    ///
+    /// let select_view = SelectView::new()
+    ///     .item("One", 1)
+    ///     .item("Two", 2)
+    ///     .on_submit(|s, item| {
+    ///         let content = match *item {
+    ///             1 => "Content number one",
+    ///             2 => "Content number two! Much better!",
+    ///             _ => unreachable!("no such item"),
+    ///         };
+    ///
+    ///         // Show a popup whenever the user presses <Enter>.
+    ///         s.add_layer(Dialog::info(content));
+    ///     });
+    /// ```
     pub fn on_submit<F, V: ?Sized>(self, cb: F) -> Self
     where
         F: Fn(&mut Cursive, &V) + 'static,
@@ -214,6 +259,17 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Sets the alignment for this view.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::align;
+    /// use cursive::views::SelectView;
+    ///
+    /// let select_view = SelectView::new()
+    ///     .item("One", 1)
+    ///     .align(align::Align::top_center());
+    /// ```
     pub fn align(mut self, align: Align) -> Self {
         self.align = align;
 
@@ -254,6 +310,17 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Adds a item to the list, with given label and value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::SelectView;
+    ///
+    /// let mut select_view = SelectView::new();
+    ///
+    /// select_view.add_item("Item 1", 1);
+    /// select_view.add_item("Item 2", 2);
+    /// ```
     pub fn add_item<S: Into<StyledString>>(&mut self, label: S, value: T) {
         self.items.push(Item::new(label.into(), value));
     }
@@ -323,6 +390,17 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Chainable variant of add_item
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::SelectView;
+    ///
+    /// let select_view = SelectView::new()
+    ///     .item("Item 1", 1)
+    ///     .item("Item 2", 2)
+    ///     .item("Surprise item", 42);
+    /// ```
     pub fn item<S: Into<StyledString>>(self, label: S, value: T) -> Self {
         self.with(|s| s.add_item(label, value))
     }
@@ -341,6 +419,18 @@ impl<T: 'static> SelectView<T> {
     /// Adds all items from from an iterator.
     ///
     /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::SelectView;
+    ///
+    /// // Create a SelectView with 100 items
+    /// let select_view = SelectView::new()
+    ///     .with_all((1u8..100).into_iter().map(|i| {
+    ///         (format!("Item {}", i), i)
+    ///     }));
+    /// ```
     pub fn with_all<S, I>(self, iter: I) -> Self
     where
         S: Into<StyledString>,
@@ -372,11 +462,40 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Returns the number of items in this list.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::SelectView;
+    ///
+    /// let select_view = SelectView::new()
+    ///     .item("Item 1", 1)
+    ///     .item("Item 2", 2)
+    ///     .item("Item 3", 3);
+    ///
+    /// assert_eq!(select_view.len(), 3);
+    /// ```
     pub fn len(&self) -> usize {
         self.items.len()
     }
 
     /// Returns `true` if this list has no item.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::SelectView;
+    ///
+    /// let mut select_view = SelectView::new();
+    /// assert!(select_view.is_empty());
+    ///
+    /// select_view.add_item("Item 1", 1);
+    /// select_view.add_item("Item 2", 2);
+    /// assert!(!select_view.is_empty());
+    ///
+    /// select_view.clear();
+    /// assert!(select_view.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
@@ -386,8 +505,10 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Sort the current items lexicographically by their label.
+    ///
     /// Note that this does not change the current focus index, which means that the current
     /// selection will likely be changed by the sorting.
+    ///
     /// This sort is stable: items with identical label will not be reordered.
     pub fn sort_by_label(&mut self) {
         self.items
@@ -395,11 +516,15 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Sort the current items with the given comparator function.
+    ///
     /// Note that this does not change the current focus index, which means that the current
     /// selection will likely be changed by the sorting.
+    ///
     /// The given comparator function must define a total order for the items.
+    ///
     /// If the comparator function does not define a total order, then the order after the sort is
     /// unspecified.
+    ///
     /// This sort is stable: equal items will not be reordered.
     pub fn sort_by<F>(&mut self, mut compare: F)
     where
@@ -409,8 +534,10 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Sort the current items with the given key extraction function.
+    ///
     /// Note that this does not change the current focus index, which means that the current
     /// selection will likely be changed by the sorting.
+    ///
     /// This sort is stable: items with equal keys will not be reordered.
     pub fn sort_by_key<K, F>(&mut self, mut key_of: F)
     where
@@ -662,6 +789,17 @@ impl SelectView<String> {
     }
 
     /// Chainable variant of add_item_str
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::SelectView;
+    ///
+    /// let select_view = SelectView::new()
+    ///     .item_str("Paris")
+    ///     .item_str("New York")
+    ///     .item_str("Tokyo");
+    /// ```
     pub fn item_str<S: Into<String>>(self, label: S) -> Self {
         self.with(|s| s.add_item_str(label))
     }
@@ -697,6 +835,17 @@ impl SelectView<String> {
     /// Adds all strings from an iterator.
     ///
     /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::SelectView;
+    ///
+    /// let text = "..."; // Maybe read some config file
+    ///
+    /// let select_view = SelectView::new()
+    ///     .with_all_str(text.lines());
+    /// ```
     pub fn with_all_str<S, I>(self, iter: I) -> Self
     where
         S: Into<String>,
@@ -711,8 +860,10 @@ where
     T: Ord,
 {
     /// Sort the current items by their natural ordering.
+    ///
     /// Note that this does not change the current focus index, which means that the current
     /// selection will likely be changed by the sorting.
+    ///
     /// This sort is stable: items that are equal will not be reordered.
     pub fn sort(&mut self) {
         self.items.sort_by(|a, b| a.value.cmp(&b.value));

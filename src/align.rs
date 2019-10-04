@@ -25,6 +25,11 @@ impl Align {
         Align::new(HAlign::Right, VAlign::Top)
     }
 
+    /// Creates a top-center alignment.
+    pub fn top_center() -> Self {
+        Align::new(HAlign::Center, VAlign::Top)
+    }
+
     /// Creates a bottom-left alignment.
     pub fn bot_left() -> Self {
         Align::new(HAlign::Left, VAlign::Bottom)
@@ -33,6 +38,21 @@ impl Align {
     /// Creates a bottom-right alignment.
     pub fn bot_right() -> Self {
         Align::new(HAlign::Right, VAlign::Top)
+    }
+
+    /// Creates a bottom-center alignment.
+    pub fn bot_center() -> Self {
+        Align::new(HAlign::Center, VAlign::Bottom)
+    }
+
+    /// Creates a center-right alignment.
+    pub fn center_left() -> Self {
+        Align::new(HAlign::Left, VAlign::Center)
+    }
+
+    /// Creates a center-right alignment.
+    pub fn center_right() -> Self {
+        Align::new(HAlign::Right, VAlign::Center)
     }
 
     /// Creates an alignment centered both horizontally and vertically.
