@@ -323,7 +323,7 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Chainable variant of add_item
-    pub fn item<S: Into<String>>(self, label: S, value: T) -> Self {
+    pub fn item<S: Into<StyledString>>(self, label: S, value: T) -> Self {
         self.with(|s| s.add_item(label, value))
     }
 
