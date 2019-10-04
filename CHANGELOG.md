@@ -6,11 +6,22 @@
 
 - `cursive::event::AnyCb` changed from `Box<...>` to `&mut ...`, so users of
   `View::call_on_any` no longer need to box their closures.
-- Remove `BoxView::squishable`
+- Remove `BoxView::squishable`.
+
+### API updates
+
+- `SelectView::{item, with_all}` now accept `S: Into<StyledString>` for colored labels.
+
+### Improvements
+
+- Changed the default color for `TitleSecondary` from yellow to light blue.
+- Reduced dependencies (`toml` is now optional, removed `hashbrown`).
 
 ### Bugfixes
 
+- Fixed `ScrollView::show_scrollbars()`
 - Fixed layout for `BoxView` with some size constraints.
+- On Windows, do not print unix-specific character during initialization.
 
 ## 0.13.0
 
