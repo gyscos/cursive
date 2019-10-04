@@ -343,7 +343,7 @@ impl<T: 'static> SelectView<T> {
     /// Chainable variant.
     pub fn with_all<S, I>(self, iter: I) -> Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
         I: IntoIterator<Item = (S, T)>,
     {
         self.with(|s| s.add_all(iter))
