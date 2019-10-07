@@ -5,7 +5,11 @@ use std::cell::{RefCell, RefMut};
 use std::ops::DerefMut;
 use std::rc::Rc;
 
-/// Wrapper around a view to provide interior mutability.
+/// Wrapper around a view to make it identifiable.
+///
+/// This lets other views refer to this one using a string identifier.
+///
+/// See [`Identifiable`](crate::view::Identifiable) for an easy way to wrap any view with it.
 pub struct IdView<V: View> {
     view: Rc<RefCell<V>>,
     id: String,

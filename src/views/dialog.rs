@@ -108,6 +108,16 @@ impl Dialog {
     /// Sets the content for this dialog.
     ///
     /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::{Dialog, TextView};
+    ///
+    /// let dialog = Dialog::new()
+    ///         .content(TextView::new("Hello!"))
+    ///         .button("Quit", |s| s.quit());
+    /// ```
     pub fn content<V: View + 'static>(self, view: V) -> Self {
         self.with(|s| s.set_content(view))
     }
@@ -143,6 +153,15 @@ impl Dialog {
     }
 
     /// Convenient method to create a dialog with a simple text content.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::Dialog;
+    ///
+    /// let dialog = Dialog::text("Hello!")
+    ///             .button("Quit", |s| s.quit());
+    /// ```
     pub fn text<S: Into<String>>(text: S) -> Self {
         Self::around(TextView::new(text))
     }
@@ -150,6 +169,14 @@ impl Dialog {
     /// Convenient method to create an infobox.
     ///
     /// It will contain the given text and a `Ok` dismiss button.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::Dialog;
+    ///
+    /// let dialog = Dialog::info("Some very important information!");
+    /// ```
     pub fn info<S: Into<String>>(text: S) -> Self {
         Dialog::text(text).dismiss_button("Ok")
     }
@@ -217,6 +244,15 @@ impl Dialog {
     */
 
     /// Shortcut method to add a button that will dismiss the dialog.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::Dialog;
+    ///
+    /// let dialog = Dialog::text("Hello!")
+    ///         .dismiss_button("Close");
+    /// ```
     pub fn dismiss_button<S: Into<String>>(self, label: S) -> Self {
         self.button(label, |s| {
             s.pop_layer();
@@ -226,6 +262,15 @@ impl Dialog {
     /// Sets the title of the dialog.
     ///
     /// If not empty, it will be visible at the top.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::Dialog;
+    ///
+    /// let dialog = Dialog::info("Some info")
+    ///         .title("Read me!");
+    /// ```
     pub fn title<S: Into<String>>(self, label: S) -> Self {
         self.with(|s| s.set_title(label))
     }
@@ -249,6 +294,14 @@ impl Dialog {
     }
 
     /// Sets the padding in the dialog (around content and buttons).
+    ///
+    /// # Examples
+    /// ```
+    /// use cursive::views::Dialog;
+    ///
+    /// let dialog = Dialog::info("Hello!")
+    ///         .padding(((1, 1), (0, 0))); // ((Left, Right), (Top, Bottom))
+    /// ```
     pub fn padding<T: Into<Margins>>(mut self, padding: T) -> Self {
         self.padding = padding.into();
 

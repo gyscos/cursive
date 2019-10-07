@@ -3,7 +3,7 @@ use crate::Printer;
 
 /// Wrapper view that fills the background.
 ///
-/// Used as layer in the [`StackView`].
+/// This is mostly used as layer in the [`StackView`].
 ///
 /// [`StackView`]: struct.StackView.html
 #[derive(Debug)]

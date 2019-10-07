@@ -16,6 +16,12 @@ use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 
 /// Popup that shows a list of items.
+///
+/// This is mostly used indirectly when creating a [popup `SelectView`][1] or
+/// a [menubar][2].
+///
+/// [1]: crate::views::SelectView::popup()
+/// [2]: crate::Cursive::menubar()
 pub struct MenuPopup {
     menu: Rc<MenuTree>,
     focus: usize,

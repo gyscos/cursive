@@ -9,6 +9,15 @@ use crate::With;
 use std::rc::Rc;
 
 /// Checkable box.
+///
+/// # Examples
+///
+/// ```
+/// use cursive::views::Checkbox;
+/// use cursive::traits::Identifiable;
+///
+/// let checkbox = Checkbox::new().checked().with_id("check");
+/// ```
 pub struct Checkbox {
     checked: bool,
     enabled: bool,
@@ -69,6 +78,18 @@ impl Checkbox {
     }
 
     /// Returns `true` if the checkbox is checked.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::Checkbox;
+    ///
+    /// let mut checkbox = Checkbox::new().checked();
+    /// assert!(checkbox.is_checked());
+    ///
+    /// checkbox.uncheck();
+    /// assert!(!checkbox.is_checked());
+    /// ```
     pub fn is_checked(&self) -> bool {
         self.checked
     }

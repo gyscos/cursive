@@ -16,10 +16,13 @@ use crate::XY;
 /// # Examples
 ///
 /// ```
-/// # use cursive::views::{BoxView,TextView};
+/// use cursive::views::{BoxView, TextView};
+///
 /// // Creates a 20x4 BoxView with a TextView content.
 /// let view = BoxView::with_fixed_size((20,4), TextView::new("Hello!"));
 /// ```
+///
+/// See also [`Boxable`](crate::view::Boxable) for an easy way to wrap any view.
 pub struct BoxView<T: View> {
     /// Constraint on each axis
     size: XY<SizeConstraint>,

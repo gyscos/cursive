@@ -84,7 +84,7 @@ impl Deref for TextContentRef {
 
 impl TextContent {
     /// Replaces the content with the given value.
-    pub fn set_content<S>(&mut self, content: S)
+    pub fn set_content<S>(&self, content: S)
     where
         S: Into<StyledString>,
     {
@@ -94,7 +94,7 @@ impl TextContent {
     }
 
     /// Append `content` to the end of a `TextView`.
-    pub fn append<S>(&mut self, content: S)
+    pub fn append<S>(&self, content: S)
     where
         S: Into<StyledString>,
     {
@@ -113,7 +113,8 @@ impl TextContent {
         TextContentInner::get_content(&self.content)
     }
 
-    fn with_content<F, O>(&mut self, f: F) -> O
+    /// Apply the given closure to the inner content, and bust the cache afterward.
+    fn with_content<F, O>(&self, f: F) -> O
     where
         F: FnOnce(&mut TextContentInner) -> O,
     {

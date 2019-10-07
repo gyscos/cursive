@@ -268,6 +268,20 @@ impl EditView {
     /// Sets a callback to be called whenever the content is modified.
     ///
     /// Chainable variant. See [`set_on_edit`](#method.set_on_edit).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::{TextContent, TextView, EditView};
+    /// // Keep the length of the text in a separate view.
+    /// let mut content = TextContent::new("0");
+    /// let text_view = TextView::new_with_content(content.clone());
+    ///
+    /// let on_edit = EditView::new()
+    ///             .on_edit(move |_s, text, _cursor| {
+    ///                 content.set_content(format!("{}", text.len()));
+    ///             });
+    /// ```
     pub fn on_edit<F>(self, callback: F) -> Self
     where
         F: Fn(&mut Cursive, &str, usize) + 'static,
@@ -328,6 +342,17 @@ impl EditView {
     /// Sets a callback to be called when `<Enter>` is pressed.
     ///
     /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive::views::{Dialog, EditView};
+    ///
+    /// let edit_view = EditView::new()
+    ///     .on_submit(|s, text| {
+    ///         s.add_layer(Dialog::info(text));
+    ///     });
+    /// ```
     pub fn on_submit<F>(self, callback: F) -> Self
     where
         F: Fn(&mut Cursive, &str) + 'static,

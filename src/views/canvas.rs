@@ -12,6 +12,40 @@ type CallOnAny<T> = Box<dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>;
 /// A blank view that forwards calls to closures.
 ///
 /// You can use this view to easily draw your own interface.
+///
+/// # Examples
+///
+/// ```rust
+/// use cursive::views::{Canvas, Dialog};
+/// use cursive::event::{Event, EventResult, Key};
+/// use unicode_width::UnicodeWidthStr; // To get the width of some text.
+///
+/// // Build a canvas around a string.
+/// let state = String::new();
+/// let canvas = Canvas::new(state)
+///                     .with_draw(|text: &String, printer| {
+///                         // Simply print our string
+///                         printer.print((0,0), text);
+///                     })
+///                     .with_on_event(|text: &mut String, event| {
+///                         match event {
+///                             Event::Char(c) => {
+///                                 text.push(c);
+///                                 EventResult::Consumed(None)
+///                             }
+///                             Event::Key(Key::Enter) => {
+///                                 let text = text.clone();
+///                                 EventResult::with_cb(move |s| {
+///                                     s.add_layer(Dialog::info(&text));
+///                                 })
+///                             },
+///                             _ => EventResult::Ignored,
+///                         }
+///                     })
+///                     .with_required_size(|text, _constraints| {
+///                         (text.width(), 1).into()
+///                     });
+/// ```
 pub struct Canvas<T> {
     state: T,
 
@@ -46,16 +80,6 @@ impl<T: 'static + View> Canvas<T> {
 
 impl<T> Canvas<T> {
     /// Creates a new, empty Canvas.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use cursive::views::Canvas;
-    /// let canvas = Canvas::new(())
-    ///                     .with_draw(|printer, _| {
-    ///                         // Print the view
-    ///                     });
-    /// ```
     pub fn new(state: T) -> Self {
         Canvas {
             state,

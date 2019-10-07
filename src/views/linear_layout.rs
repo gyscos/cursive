@@ -11,6 +11,18 @@ use std::cmp::min;
 use std::ops::Deref;
 
 /// Arranges its children linearly according to its orientation.
+///
+/// # Examples
+///
+/// ```
+/// use cursive::views::{Button, LinearLayout, TextView, TextArea};
+/// use cursive::traits::Boxable;
+///
+/// let linear_layout = LinearLayout::horizontal()
+///     .child(TextView::new("Top of the page"))
+///     .child(TextArea::new().fixed_size((20, 5)))
+///     .child(Button::new("Ok", |s| s.quit()));
+/// ```
 pub struct LinearLayout {
     children: Vec<Child>,
     orientation: direction::Orientation,
