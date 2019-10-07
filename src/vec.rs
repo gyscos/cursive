@@ -269,6 +269,20 @@ impl<T: Ord + Add<Output = T> + Clone> XY<T> {
     }
 }
 
+impl<T: Add> XY<T> {
+    /// Returns `self.x + self.y`.
+    pub fn sum(self) -> T::Output {
+        self.fold(std::ops::Add::add)
+    }
+}
+
+impl<T: Mul> XY<T> {
+    /// Returns `self.x * self.y`
+    pub fn product(self) -> T::Output {
+        self.fold(std::ops::Mul::mul)
+    }
+}
+
 impl<T: Zero + Clone> XY<T> {
     /// Returns a vector with the X component of self, and y=0.
     ///
