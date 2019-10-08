@@ -87,6 +87,7 @@ pub mod logger;
 pub mod menu;
 pub mod theme;
 pub mod vec;
+#[macro_use]
 pub mod views;
 
 // This probably doesn't need to be public?

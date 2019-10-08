@@ -11,17 +11,7 @@ pub struct ScrollView<V> {
     core: scroll::Core,
 }
 
-impl<V> scroll::Scroller for ScrollView<V>
-where
-    V: View,
-{
-    fn get_scroller(&self) -> &scroll::Core {
-        &self.core
-    }
-    fn get_scroller_mut(&mut self) -> &mut scroll::Core {
-        &mut self.core
-    }
-}
+impl_scroller!(ScrollView<V>::core);
 
 impl<V> ScrollView<V>
 where

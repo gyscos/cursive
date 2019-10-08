@@ -34,15 +34,7 @@ pub struct MenuPopup {
 // The `scroll::Scroller` trait is used to weave the borrow phases.
 //
 // TODO: use some macro to auto-generate this.
-impl scroll::Scroller for MenuPopup {
-    fn get_scroller(&self) -> &scroll::Core {
-        &self.scroll_core
-    }
-
-    fn get_scroller_mut(&mut self) -> &mut scroll::Core {
-        &mut self.scroll_core
-    }
-}
+impl_scroller!(MenuPopup::scroll_core);
 
 impl MenuPopup {
     /// Creates a new `MenuPopup` using the given menu tree.

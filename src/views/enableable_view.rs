@@ -1,6 +1,6 @@
 use crate::event::{Event, EventResult};
 use crate::view::{View, ViewWrapper};
-use crate::{Printer, With};
+use crate::Printer;
 
 /// Wrapper around another view that can be enabled/disabled at will.
 ///

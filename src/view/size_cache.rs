@@ -23,12 +23,13 @@ impl SizeCache {
 
     /// Returns `true` if `self` is still valid for the given `request`.
     pub fn accept(self, request: usize) -> bool {
-        if request < self.value {
-            false
-        } else if request == self.value {
-            true
-        } else {
-            !self.constrained
+        match (request, self.value) {
+            // Request a smaller size than last time? Hell no!
+            (r, v) if r < v => false,
+            // Request exactly what we had last time? Sure!
+            (r, v) if r == v => true,
+            // Request more than we had last time? Maybe?
+            _ => !self.constrained,
         }
     }
 

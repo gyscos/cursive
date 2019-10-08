@@ -1,6 +1,22 @@
 //! Various views to use when creating the layout.
 
 /// A macro to help with creating toggleable views.
+///
+/// # Examples
+///
+/// ```
+/// struct MyView {
+///     enabled: bool,
+/// }
+///
+/// impl MyView {
+///     cursive::impl_enabled!(self.enabled);
+/// }
+///
+/// let view = MyView { enabled: true };
+/// assert!(view.is_enabled());
+/// ```
+#[macro_export]
 macro_rules! impl_enabled {
     (self.$x:ident) => {
 
@@ -15,6 +31,7 @@ macro_rules! impl_enabled {
         ///
         /// Chainable variant.
         pub fn disabled(self) -> Self {
+            use $crate::traits::With as _;
             self.with(Self::disable)
         }
 

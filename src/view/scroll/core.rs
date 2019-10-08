@@ -24,6 +24,36 @@ pub trait Scroller {
     fn get_scroller(&self) -> &Core;
 }
 
+/// Implements the `Scroller` trait for any type.
+#[macro_export]
+macro_rules! impl_scroller {
+    ($class:ident :: $core:ident) => {
+        impl $crate::view::scroll::Scroller for $class {
+            fn get_scroller_mut(
+                &mut self,
+            ) -> &mut $crate::view::scroll::Core {
+                &mut self.$core
+            }
+            fn get_scroller(&self) -> &$crate::view::scroll::Core {
+                &self.$core
+            }
+        }
+    };
+    ($class:ident < $($args:tt),* > :: $core:ident) => {
+        impl <$( $args ),* > $crate::view::scroll::Scroller for $class<$($args),*> {
+
+            fn get_scroller_mut(
+                &mut self,
+            ) -> &mut $crate::view::scroll::Core {
+                &mut self.$core
+            }
+            fn get_scroller(&self) -> &$crate::view::scroll::Core {
+                &self.$core
+            }
+        }
+    };
+}
+
 /// Core system for scrolling views.
 ///
 /// This is the lowest-level element handling scroll logic.

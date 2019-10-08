@@ -19,6 +19,7 @@
 //!
 //! [`ScrollView`](crate::views::ScrollView) may be an easier way to add scrolling to an existing view.
 
+#[macro_use]
 mod core;
 mod raw;
 
@@ -48,9 +49,32 @@ impl Default for ScrollStrategy {
 ///
 /// Example:
 ///
-/// ```rust,ignore
-/// fn on_event(&mut self, event: Event) -> EventResult {
-///     scroll::on_event(self, event, Self::inner_on_event, Self::inner_important_area)
+/// ```
+/// use cursive::{Printer, Vec2, Rect};
+/// use cursive::event::{Event, EventResult};
+/// use cursive::view::{View, scroll};
+///
+/// struct MyView {
+///     core: scroll::Core,
+/// }
+///
+/// cursive::impl_scroller!(MyView::core);
+///
+/// impl MyView {
+///     fn inner_on_event(&mut self, event: Event) -> EventResult {
+///         EventResult::Ignored
+///     }
+///
+///     fn inner_important_area(&self, size: Vec2) -> Rect {
+///         Rect::from_size((0,0), size)
+///     }
+/// }
+///
+/// impl View for MyView {
+/// # fn draw(&self, printer: &Printer) {}
+///     fn on_event(&mut self, event: Event) -> EventResult {
+///         scroll::on_event(self, event, Self::inner_on_event, Self::inner_important_area)
+///     }
 /// }
 /// ```
 pub fn on_event<T, OnEvent, ImportantArea>(

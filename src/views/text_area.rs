@@ -16,6 +16,19 @@ use unicode_width::UnicodeWidthStr;
 /// A `TextArea` will attempt to grow vertically and horizontally
 /// dependent on the content.  Wrap it in a `BoxView` to
 /// constrain its size.
+///
+/// # Examples
+///
+/// ```
+/// use cursive::traits::{Boxable, Identifiable};
+/// use cursive::views::TextArea;
+///
+/// let text_area = TextArea::new()
+///     .content("Write description here...")
+///     .with_id("text_area")
+///     .fixed_width(30)
+///     .min_height(5);
+/// ```
 pub struct TextArea {
     // TODO: use a smarter data structure (rope?)
     content: String,
