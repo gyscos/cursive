@@ -837,10 +837,11 @@ impl Cursive {
     /// It will wait for user input (key presses)
     /// and trigger callbacks accordingly.
     ///
-    /// Calls [`step(&mut self)`] until [`quit(&mut self)`] is called.
+    /// Internally, it calls [`step(&mut self)`] until [`quit(&mut self)`] is
+    /// called.
     ///
-    /// After this function returns, you can call
-    /// it again and it will start a new loop.
+    /// After this function returns, you can call it again and it will start a
+    /// new loop.
     ///
     /// [`step(&mut self)`]: #method.step
     /// [`quit(&mut self)`]: #method.quit
@@ -865,6 +866,27 @@ impl Cursive {
     ///
     /// [`run(&mut self)`]: #method.run
     pub fn step(&mut self) -> bool {
+        let received_something = self.process_events();
+        self.post_events(received_something);
+        received_something
+    }
+
+    /// Performs the first half of `Self::step()`.
+    ///
+    /// This is an advanced method for fine-tuned manual stepping;
+    /// you probably want [`run`][1] or [`step`][2].
+    ///
+    /// This processes any pending event or callback. After calling this,
+    /// you will want to call [`post_events`][3] with the result from this
+    /// function.
+    ///
+    /// Returns `true` if an event or callback was received,
+    /// and `false` otherwise.
+    ///
+    /// [1]: Cursive::run()
+    /// [2]: Cursive::step()
+    /// [3]: Cursive::post_events()
+    pub fn process_events(&mut self) -> bool {
         // Things are boring if nothing significant happened.
         let mut boring = true;
 
@@ -888,6 +910,21 @@ impl Cursive {
             }
         }
 
+        !boring
+    }
+
+    /// Performs the second half of `Self::step()`.
+    ///
+    /// This is an advanced method for fine-tuned manual stepping;
+    /// you probably want [`run`][1] or [`step`][2].
+    ///
+    /// You should call this after [`process_events`][3].
+    ///
+    /// [1]: Cursive::run()
+    /// [2]: Cursive::step()
+    /// [3]: Cursive::process_events()
+    pub fn post_events(&mut self, received_something: bool) {
+        let boring = !received_something;
         // How many times should we try if it's still boring?
         // Total duration will be INPUT_POLL_DELAY_MS * repeats
         // So effectively fps = 1000 / INPUT_POLL_DELAY_MS / repeats
@@ -912,8 +949,6 @@ impl Cursive {
             std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
             self.boring_frame_count += 1;
         }
-
-        !boring
     }
 
     /// Refresh the screen with the current view tree state.
