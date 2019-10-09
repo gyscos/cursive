@@ -93,6 +93,13 @@ cfg_if::cfg_if! {
                 Self::ncurses().unwrap()
             }
         }
+    } else {
+        impl Default for Cursive {
+            fn default() -> Self {
+                log::warning!("No built-it backend, falling back to Cursive::dummy().");
+                Self::dummy()
+            }
+        }
     }
 }
 
