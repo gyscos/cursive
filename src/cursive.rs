@@ -96,7 +96,7 @@ cfg_if::cfg_if! {
     } else {
         impl Default for Cursive {
             fn default() -> Self {
-                log::warning!("No built-it backend, falling back to Cursive::dummy().");
+                log::warn!("No built-it backend, falling back to Cursive::dummy().");
                 Self::dummy()
             }
         }
