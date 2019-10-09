@@ -46,8 +46,8 @@ pub struct Cursive {
 
     backend: Box<dyn backend::Backend>,
 
-    cb_source: Receiver<Box<dyn FnOnce(&mut Cursive) + Send>>,
-    cb_sink: Sender<Box<dyn FnOnce(&mut Cursive) + Send>>,
+    cb_source: Receiver<Box<dyn FnOnce(&mut Cursive) -> bool + Send>>,
+    cb_sink: Sender<Box<dyn FnOnce(&mut Cursive) -> bool + Send>>,
 
     // User-provided data.
     user_data: Box<dyn Any>,
@@ -60,7 +60,9 @@ pub struct Cursive {
 pub type ScreenId = usize;
 
 /// Convenient alias to the result of `Cursive::cb_sink`.
-pub type CbSink = Sender<Box<dyn FnOnce(&mut Cursive) + Send>>;
+///
+/// Returns boolean value, whether a redraw is needed or not.
+pub type CbSink = Sender<Box<dyn FnOnce(&mut Cursive) -> bool + Send>>;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "blt-backend")] {
@@ -880,8 +882,7 @@ impl Cursive {
 
         // Then, handle any available callback
         while let Ok(cb) = self.cb_source.try_recv() {
-            boring = false;
-            cb(self);
+            boring = boring || cb(self);
 
             if !self.running {
                 return true;
