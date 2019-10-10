@@ -36,10 +36,6 @@ pub struct Cursive {
     global_callbacks: HashMap<Event, Vec<Callback>>,
     menubar: views::Menubar,
 
-    // Last layer sizes of the stack view.
-    // If it changed, clear the screen.
-    last_sizes: Vec<Vec2>,
-
     active_screen: ScreenId,
 
     running: bool,
@@ -146,7 +142,6 @@ impl Cursive {
         backend_init().map(|backend| Cursive {
             theme,
             screens: vec![views::StackView::new()],
-            last_sizes: Vec::new(),
             global_callbacks: HashMap::default(),
             menubar: views::Menubar::new(),
             active_screen: 0,
@@ -801,11 +796,7 @@ impl Cursive {
     }
 
     fn draw(&mut self) {
-        let sizes = self.screen().layer_sizes();
-        if self.last_sizes != sizes {
-            self.clear();
-            self.last_sizes = sizes;
-        }
+        self.clear();
 
         let printer =
             Printer::new(self.screen_size(), &self.theme, &*self.backend);
@@ -816,8 +807,6 @@ impl Cursive {
         let offset = if self.menubar.autohide { 0 } else { 1 };
         let id = self.active_screen;
         let sv_printer = printer.offset((0, offset)).focused(!selected);
-
-        self.screens[id].draw_bg(&sv_printer);
 
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
