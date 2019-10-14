@@ -60,6 +60,14 @@ pub struct Cursive {
 pub type ScreenId = usize;
 
 /// Convenient alias to the result of `Cursive::cb_sink`.
+///
+/// # Notes
+///
+/// Callbacks need to be `Send`, which can be limiting in some cases.
+///
+/// In some case [`send_wrapper`] may help you work around that.
+///
+/// [`send_wrapper`]: https://crates.io/crates/send_wrapper
 pub type CbSink = Sender<Box<dyn FnOnce(&mut Cursive) + Send>>;
 
 cfg_if::cfg_if! {
