@@ -207,6 +207,24 @@ impl LinearLayout {
         self.focus
     }
 
+    /// Attemps to set the focus on the given child.
+    ///
+    /// Returns `Err(())` if `index >= self.len()`, or if the view at the
+    /// given index does not accept focus.
+    pub fn set_focus_index(&mut self, index: usize) -> Result<(), ()> {
+        if self
+            .children
+            .get_mut(index)
+            .map(|child| child.view.take_focus(direction::Direction::none()))
+            .unwrap_or(false)
+        {
+            self.focus = index;
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
     // Invalidate the view, to request a layout next time
     fn invalidate(&mut self) {
         self.cache = None;
