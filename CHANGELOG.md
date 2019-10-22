@@ -7,16 +7,23 @@
 - `cursive::event::AnyCb` changed from `Box<...>` to `&mut ...`, so users of
   `View::call_on_any` no longer need to box their closures.
 - Remove `BoxView::squishable`.
-- Update crossterm to 0.11
+- Update crossterm to 0.12.
 
 ### API updates
 
 - `SelectView::{item, with_all}` now accept `S: Into<StyledString>` for colored labels.
+- Add `ScrollView::scroll_to_important_area`.
+- Add `LinearLayout::set_focus_index`.
+- Add `XY::{sum, product}`
+- `view::scroll` is now a public module
+- Add `Cursive::process_events` and `Cursive::post_events`
+    - This gives users finer control than `Cursive::step`
 
 ### Improvements
 
 - Changed the default color for `TitleSecondary` from yellow to light blue.
 - Reduced dependencies (`toml` is now optional, removed `hashbrown`).
+- `Cursive::default()` now fallbacks do dummy backend if no other is available.
 
 ### Bugfixes
 
