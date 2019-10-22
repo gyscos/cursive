@@ -155,6 +155,12 @@ where
         self.core.scroll_to_right();
     }
 
+    /// Programmatically scroll until the child's important area is in view.
+    pub fn scroll_to_important_area(&mut self) {
+        let important_area = self.inner.important_area(self.core.last_size());
+        self.core.scroll_to_rect(important_area);
+    }
+
     /// Returns the wrapped view.
     pub fn into_inner(self) -> V {
         self.inner

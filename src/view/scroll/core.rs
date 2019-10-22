@@ -337,22 +337,7 @@ impl Core {
             other => {
                 // The view consumed the event. Maybe something changed?
 
-                // Fix offset?
-                let important = important_area;
-
-                // The furthest top-left we can go
-                let top_left = (important.bottom_right() + (1, 1))
-                    .saturating_sub(self.available_size());
-                // The furthest bottom-right we can go
-                let bottom_right = important.top_left();
-
-                // "top_left < bottom_right" is NOT guaranteed
-                // if the child is larger than the view.
-                let offset_min = Vec2::min(top_left, bottom_right);
-                let offset_max = Vec2::max(top_left, bottom_right);
-
-                self.offset =
-                    self.offset.or_max(offset_min).or_min(offset_max);
+                self.scroll_to_rect(important_area);
 
                 other
             }
@@ -552,6 +537,22 @@ impl Core {
         let (min, max) = (Vec2::min(min, max), Vec2::max(min, max));
 
         self.offset = self.offset.or_min(max).or_max(min);
+    }
+
+    /// Scrolls until the given rect is in view.
+    pub fn scroll_to_rect(&mut self, important_area: Rect) {
+        // The furthest top-left we can go
+        let top_left = (important_area.bottom_right() + (1, 1))
+            .saturating_sub(self.available_size());
+        // The furthest bottom-right we can go
+        let bottom_right = important_area.top_left();
+
+        // "top_left < bottom_right" is NOT guaranteed
+        // if the child is larger than the view.
+        let offset_min = Vec2::min(top_left, bottom_right);
+        let offset_max = Vec2::max(top_left, bottom_right);
+
+        self.offset = self.offset.or_max(offset_min).or_min(offset_max);
     }
 
     /// Scroll until the given point is visible.
