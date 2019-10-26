@@ -35,8 +35,6 @@ impl<V: View> Panel<V> {
         }
     }
 
-    inner_getters!(self.view: V);
-
     /// Sets the title of the dialog.
     ///
     /// If not empty, it will be visible at the top.
@@ -88,6 +86,8 @@ impl<V: View> Panel<V> {
     fn invalidate(&mut self) {
         self.invalidated = true;
     }
+
+    inner_getters!(self.view: V);
 }
 
 impl<V: View> ViewWrapper for Panel<V> {

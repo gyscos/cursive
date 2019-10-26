@@ -43,6 +43,7 @@ impl<V> EnableableView<V> {
     }
 
     impl_enabled!(self.enabled);
+    inner_getters!(self.view: V);
 }
 
 impl<V: View> ViewWrapper for EnableableView<V> {
