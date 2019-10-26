@@ -28,7 +28,6 @@ use std::rc::Rc;
 /// # use cursive::Cursive;
 /// # use cursive::views::{SelectView, Dialog, TextView};
 /// # use cursive::align::HAlign;
-/// # fn main() {
 /// let mut time_select = SelectView::new().h_align(HAlign::Center);
 /// time_select.add_item("Short", 1);
 /// time_select.add_item("Medium", 5);
@@ -44,8 +43,6 @@ use std::rc::Rc;
 /// let mut siv = Cursive::dummy();
 /// siv.add_layer(Dialog::around(time_select)
 ///                      .title("How long is your wait?"));
-/// # }
-///
 /// ```
 pub struct SelectView<T = String> {
     // The core of the view: we store a list of items
@@ -586,7 +583,6 @@ impl<T: 'static> SelectView<T> {
     /// ```rust
     /// # use cursive::Cursive;
     /// # use cursive::views::SelectView;
-    /// # fn main() {}
     /// fn select_up(siv: &mut Cursive, view: &mut SelectView<()>) {
     ///     let cb = view.select_up(1);
     ///     cb(siv);

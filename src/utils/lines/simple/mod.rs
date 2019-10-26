@@ -42,12 +42,10 @@ pub fn make_lines(content: &str, width: usize) -> Vec<Row> {
 /// use unicode_segmentation::UnicodeSegmentation;
 ///
 /// # use cursive::utils::lines::simple::prefix;
-/// # fn main() {
 /// let my_text = "blah...";
 /// // This returns the number of bytes for a prefix of `my_text` that
 /// // fits within 5 cells.
 /// prefix(my_text.graphemes(true), 5, "");
-/// # }
 /// ```
 pub fn prefix<'a, I>(iter: I, available_width: usize, delimiter: &str) -> Span
 where

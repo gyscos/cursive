@@ -25,6 +25,8 @@ pub struct PaddedView<V> {
 }
 
 impl<V: View> PaddedView<V> {
+    inner_getters!(self.view: V);
+
     /// Wraps `view` in a new `PaddedView` with the given margins.
     pub fn new<M: Into<Margins>>(margins: M, view: V) -> Self {
         let margins = margins.into();

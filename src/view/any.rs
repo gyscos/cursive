@@ -20,10 +20,8 @@ pub trait AnyView {
     /// ```rust
     /// # use cursive::views::TextView;
     /// # use cursive::view::View;
-    /// # fn main() {
     /// let boxed: Box<View> = Box::new(TextView::new("text"));
     /// let text: Box<TextView> = boxed.as_boxed_any().downcast().unwrap();
-    /// # }
     /// ```
     fn as_boxed_any(self: Box<Self>) -> Box<dyn Any>;
 }

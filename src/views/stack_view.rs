@@ -310,14 +310,12 @@ impl StackView {
     /// ```rust
     /// # use cursive::views::{TextView, StackView, Dialog, LayerPosition};
     /// # use cursive::view::Identifiable;
-    /// # fn main() {
     /// let mut stack = StackView::new();
     /// stack.add_layer(TextView::new("Back"));
     /// stack.add_layer(Dialog::around(TextView::new("Middle").with_id("text")));
     /// stack.add_layer(TextView::new("Front"));
     ///
     /// assert_eq!(stack.find_layer_from_id("text"), Some(LayerPosition::FromBack(1)));
-    /// # }
     /// ```
     pub fn find_layer_from_id(&mut self, id: &str) -> Option<LayerPosition> {
         let selector = Selector::Id(id);

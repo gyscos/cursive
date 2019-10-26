@@ -34,7 +34,6 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 /// # use cursive::Cursive;
 /// # use cursive::traits::*;
 /// # use cursive::views::{Dialog, EditView, TextView};
-/// # fn main() {
 /// let mut siv = Cursive::dummy();
 ///
 /// // Create a dialog with an edit text and a button.
@@ -69,8 +68,6 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 ///             .button("Quit", |s| s.quit()));
 ///     }
 /// }
-///
-/// # }
 /// ```
 pub struct EditView {
     /// Current content.

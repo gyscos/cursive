@@ -334,12 +334,10 @@ impl Cursive {
     ///
     /// ```rust
     /// # use cursive::*;
-    /// # fn main() {
     /// let mut siv = Cursive::dummy();
     ///
     /// // quit() will be called during the next event cycle
     /// siv.cb_sink().send(Box::new(|s| s.quit())).unwrap();
-    /// # }
     /// ```
     pub fn cb_sink(&self) -> &CbSink {
         &self.cb_sink
@@ -370,7 +368,6 @@ impl Cursive {
     /// # use cursive::traits::*;
     /// # use cursive::menu::*;
     /// #
-    /// # fn main() {
     /// let mut siv = Cursive::dummy();
     ///
     /// siv.menubar()
@@ -404,7 +401,6 @@ impl Cursive {
     ///                   |s| s.add_layer(Dialog::info("Cursive v0.0.0"))));
     ///
     /// siv.add_global_callback(event::Key::Esc, |s| s.select_menubar());
-    /// # }
     /// ```
     pub fn menubar(&mut self) -> &mut views::Menubar {
         &mut self.menubar
@@ -526,23 +522,18 @@ impl Cursive {
     /// ```rust
     /// # use cursive::{Cursive, views, view};
     /// # use cursive::traits::*;
-    /// # fn main() {
-    /// fn main() {
-    ///     let mut siv = Cursive::dummy();
+    /// let mut siv = Cursive::dummy();
     ///
-    ///     siv.add_layer(views::TextView::new("Text #1").with_id("text"));
+    /// siv.add_layer(views::TextView::new("Text #1").with_id("text"));
     ///
-    ///     siv.add_global_callback('p', |s| {
-    ///         s.call_on(
-    ///             &view::Selector::Id("text"),
-    ///             |view: &mut views::TextView| {
-    ///                 view.set_content("Text #2");
-    ///             },
-    ///         );
-    ///     });
-    ///
-    /// }
-    /// # }
+    /// siv.add_global_callback('p', |s| {
+    ///     s.call_on(
+    ///         &view::Selector::Id("text"),
+    ///         |view: &mut views::TextView| {
+    ///             view.set_content("Text #2");
+    ///         },
+    ///     );
+    /// });
     /// ```
     pub fn call_on<V, F, R>(
         &mut self,
@@ -565,7 +556,6 @@ impl Cursive {
     /// ```rust
     /// # use cursive::{Cursive, views};
     /// # use cursive::traits::*;
-    /// # fn main() {
     /// let mut siv = Cursive::dummy();
     ///
     /// siv.add_layer(views::TextView::new("Text #1")
@@ -576,7 +566,6 @@ impl Cursive {
     ///         view.set_content("Text #2");
     ///     });
     /// });
-    /// # }
     /// ```
     pub fn call_on_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
     where
@@ -658,11 +647,9 @@ impl Cursive {
     ///
     /// ```rust
     /// # use cursive::*;
-    /// # fn main() {
     /// let mut siv = Cursive::dummy();
     ///
     /// siv.add_global_callback('q', |s| s.quit());
-    /// # }
     /// ```
     pub fn add_global_callback<F, E: Into<Event>>(&mut self, event: E, cb: F)
     where
@@ -679,13 +666,11 @@ impl Cursive {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::*;
-    /// # fn main() {
+    /// use cursive::Cursive;
     /// let mut siv = Cursive::dummy();
     ///
     /// siv.add_global_callback('q', |s| s.quit());
     /// siv.clear_global_callbacks('q');
-    /// # }
     /// ```
     pub fn clear_global_callbacks<E>(&mut self, event: E)
     where
@@ -700,12 +685,10 @@ impl Cursive {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::*;
-    /// # fn main() {
+    /// use cursive::{Cursive, views};
     /// let mut siv = Cursive::dummy();
     ///
     /// siv.add_layer(views::TextView::new("Hello world!"));
-    /// # }
     /// ```
     pub fn add_layer<T>(&mut self, view: T)
     where
