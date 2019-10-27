@@ -251,13 +251,13 @@ impl backend::Backend for Backend {
     fn unset_effect(&self, effect: theme::Effect) {
         match effect {
             theme::Effect::Simple => (),
-            theme::Effect::Reverse => self.set_attr(Attribute::Reverse),
+            theme::Effect::Reverse => self.set_attr(Attribute::NoInverse),
             theme::Effect::Bold => self.set_attr(Attribute::NoBold),
             theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
             theme::Effect::Strikethrough => {
                 self.set_attr(Attribute::NotCrossedOut)
             }
-            theme::Effect::Underline => self.set_attr(Attribute::Underlined),
+            theme::Effect::Underline => self.set_attr(Attribute::NoUnderline),
         }
     }
 }
