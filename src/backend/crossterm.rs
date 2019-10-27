@@ -7,10 +7,10 @@
 use crate::vec::Vec2;
 use crate::{backend, theme};
 use crossterm::{
-    cursor, execute, input, queue, terminal, AlternateScreen, AsyncReader,
-    Attribute, Clear, ClearType, Color, Goto, InputEvent as CInputEvent,
+    cursor, input, queue, terminal, AlternateScreen, AsyncReader, Attribute,
+    Clear, ClearType, Color, Goto, InputEvent as CInputEvent,
     KeyEvent as CKeyEvent, MouseButton as CMouseButton,
-    MouseEvent as CMouseEvent, SetAttr, SetBg, SetFg, Show, Terminal,
+    MouseEvent as CMouseEvent, SetAttr, SetBg, SetFg, Terminal,
 };
 
 use crate::event::{Event, Key, MouseButton, MouseEvent};
@@ -173,17 +173,8 @@ impl backend::Backend for Backend {
     }
 
     fn finish(&mut self) {
-        execute!(
-            self.stdout.borrow_mut(),
-            Goto(0, 0),
-            Clear(ClearType::All),
-            SetBg(Color::Reset),
-            SetFg(Color::Reset),
-            SetAttr(Attribute::Reset),
-            Show
-        )
-        .unwrap();
         input().disable_mouse_mode().unwrap();
+        cursor().show().unwrap();
     }
 
     fn refresh(&mut self) {
