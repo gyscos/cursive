@@ -252,7 +252,7 @@ impl backend::Backend for Backend {
         match effect {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.set_attr(Attribute::NoInverse),
-            theme::Effect::Bold => self.set_attr(Attribute::NoBold),
+            theme::Effect::Bold => self.set_attr(Attribute::NormalIntensity),
             theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
             theme::Effect::Strikethrough => {
                 self.set_attr(Attribute::NotCrossedOut)
