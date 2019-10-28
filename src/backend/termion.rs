@@ -232,7 +232,7 @@ impl backend::Backend for Backend {
         match effect {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.write(tstyle::NoInvert),
-            theme::Effect::Bold => self.write(tstyle::NoBold),
+            theme::Effect::Bold => self.write(tstyle::NoFaint),
             theme::Effect::Italic => self.write(tstyle::NoItalic),
             theme::Effect::Strikethrough => self.write(tstyle::NoCrossedOut),
             theme::Effect::Underline => self.write(tstyle::NoUnderline),
