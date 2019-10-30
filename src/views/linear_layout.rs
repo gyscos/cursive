@@ -325,26 +325,29 @@ impl LinearLayout {
         }
     }
 
+    // Attempt to move the focus, coming from the given direction.
+    //
+    // Consumes the event if the focus was moved, otherwise ignores it.
     fn move_focus(&mut self, source: direction::Direction) -> EventResult {
-        let i = if let Some(i) =
-            source.relative(self.orientation).and_then(|rel| {
+        source
+            .relative(self.orientation)
+            .and_then(|rel| {
                 // The iterator starts at the focused element.
                 // We don't want that one.
                 self.iter_mut(true, rel)
                     .skip(1)
                     .filter_map(|p| try_focus(p, source))
                     .next()
-            }) {
-            i
-        } else {
-            return EventResult::Ignored;
-        };
-        self.focus = i;
-        EventResult::Consumed(None)
+            })
+            .map_or(EventResult::Ignored, |i| {
+                self.focus = i;
+                EventResult::Consumed(None)
+            })
     }
 
-    // If the event is a mouse event,
-    // move the focus to the selected view if needed.
+    // Move the focus to the selected view if needed.
+    //
+    // Does nothing if the event is not a `MouseEvent`.
     fn check_focus_grab(&mut self, event: &Event) {
         if let Event::Mouse {
             offset,

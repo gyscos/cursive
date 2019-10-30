@@ -17,7 +17,6 @@
 //! In order to determine how much space should be given each child, parents
 //! can use `View::required_size()` on them.
 //!
-//!
 //! ### Contracts
 //!
 //! When building new Views, you should respect these contracts:
@@ -34,6 +33,51 @@
 //! * The value returned by `required_size` should be an actually viable size,
 //!   no matter what the request is. This means calling `View::layout()` with
 //!   a size returned by `required_size` is **never** an error.
+//!
+//! # Focus
+//!
+//! In most layouts, a single view is active at any given time. This focus may
+//! change in response to events (for example presing the Tab key often moves
+//! to the next item).
+//!
+//! This focus system involves two mechanics:
+//! * Individual views can decide whether they can be focused or not, through
+//!   the `View::take_focus()` method. For example, unless disabled, a `Button`
+//!   would accept focus (and return `true` from `take_focus()`), but a simple
+//!   `TextView` or a divider would not (they would return `false`).
+//! * View groups like `LinearLayout` listen to events ignored by their
+//!   children, and change their focus accordingly. For example, if the `Tab`
+//!   key is pressed but the currently focused child of the `LinearLayout`
+//!   ignores this event, then the `LinearLayout` will attempt to focus the
+//!   next child. If no child accept the focus, then it will ignore the event
+//!   as well.
+//!
+//! # Scrolling
+//!
+//! Most views do not scroll by themselves; instead, they should be wrapped in
+//! a `ScrollView` to enable scrolling. The `ScrollView` will pretend that the
+//! wrapped view has been given a large enough area to fit entirely, but in
+//! reality only a part of that will be visible.
+//!
+//! The wrapped view can ignore this and just draw itself as usual: the
+//! `Printer` will transparently translate the calls, and print commands
+//! outside of the visible area will simply be ignored.
+//!
+//! In some cases however it may be interesting for the nested view to know
+//! about this, maybe to avoid computing parts of the view that are not
+//! visible. `Printer::output_size` and `Printer::content_offset` can be used
+//! to find out what part of the view should actually be printed.
+//!
+//! ## Important Area
+//!
+//! Sometimes, the wrapped view needs to communicate back to the `ScrollView`
+//! what part of the view is really important and should be kept visible.
+//!
+//! For example, imagine a vertical list of buttons. When the user selects the
+//! next button, we want to scroll down a bit so the button becomes visible if
+//! it wasn't. To achieve this, the vertical `LinearLayout` communicates its
+//! "important area" (the currently active button) to the parent `ScrollView`,
+//! and the `ScrollView` makes sure that this area stays in view.
 
 #[macro_use]
 mod view_wrapper;
