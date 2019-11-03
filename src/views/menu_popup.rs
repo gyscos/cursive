@@ -259,7 +259,9 @@ impl MenuPopup {
                 if let Some(position) = position.checked_sub(offset) {
                     // Now `position` is relative to the top-left of the content.
                     let focus = position.y;
-                    if !self.menu.children[focus].is_delimiter() {
+                    if focus < self.menu.len()
+                        && !self.menu.children[focus].is_delimiter()
+                    {
                         self.focus = focus;
                     }
                 }
