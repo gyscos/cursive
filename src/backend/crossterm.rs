@@ -101,7 +101,7 @@ impl Backend {
             },
             CInputEvent::Mouse(mouse_event) => match mouse_event {
                 CMouseEvent::Press(btn, x, y) => {
-                    let position = (x - 1, y - 1).into();
+                    let position = (x, y).into();
 
                     let event = match btn {
                         CMouseButton::Left => {
@@ -129,7 +129,7 @@ impl Backend {
                 }
                 CMouseEvent::Release(x, y) if self.last_button.is_some() => {
                     let event = MouseEvent::Release(self.last_button.unwrap());
-                    let position = (x - 1, y - 1).into();
+                    let position = (x, y).into();
 
                     Event::Mouse {
                         event,
@@ -139,7 +139,7 @@ impl Backend {
                 }
                 CMouseEvent::Hold(x, y) if self.last_button.is_some() => {
                     let event = MouseEvent::Hold(self.last_button.unwrap());
-                    let position = (x - 1, y - 1).into();
+                    let position = (x, y).into();
 
                     Event::Mouse {
                         event,
