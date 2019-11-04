@@ -2,7 +2,7 @@ use crate::direction;
 use crate::event::{AnyCb, Callback, Event, EventResult, Key};
 use crate::rect::Rect;
 use crate::vec::Vec2;
-use crate::view::{Selector, View};
+use crate::view::{IntoBoxedView, Selector, View};
 use crate::Cursive;
 use crate::Printer;
 use crate::With;
@@ -90,10 +90,14 @@ impl ListView {
     }
 
     /// Adds a view to the end of the list.
-    pub fn add_child<V: View + 'static>(&mut self, label: &str, mut view: V) {
+    pub fn add_child<V: IntoBoxedView + 'static>(
+        &mut self,
+        label: &str,
+        view: V,
+    ) {
+        let mut view = view.as_boxed_view();
         view.take_focus(direction::Direction::none());
-        self.children
-            .push(ListChild::Row(label.to_string(), Box::new(view)));
+        self.children.push(ListChild::Row(label.to_string(), view));
     }
 
     /// Removes all children from this view.
@@ -105,7 +109,11 @@ impl ListView {
     /// Adds a view to the end of the list.
     ///
     /// Chainable variant.
-    pub fn child<V: View + 'static>(self, label: &str, view: V) -> Self {
+    pub fn child<V: IntoBoxedView + 'static>(
+        self,
+        label: &str,
+        view: V,
+    ) -> Self {
         self.with(|s| s.add_child(label, view))
     }
 

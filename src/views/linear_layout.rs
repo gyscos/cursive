@@ -2,7 +2,7 @@ use crate::direction;
 use crate::event::{AnyCb, Event, EventResult, Key};
 use crate::rect::Rect;
 use crate::vec::Vec2;
-use crate::view::{Selector, SizeCache, View};
+use crate::view::{IntoBoxedView, Selector, SizeCache, View};
 use crate::Printer;
 use crate::With;
 use crate::XY;
@@ -155,14 +155,14 @@ impl LinearLayout {
     /// Adds a child to the layout.
     ///
     /// Chainable variant.
-    pub fn child<V: View + 'static>(self, view: V) -> Self {
+    pub fn child<V: IntoBoxedView + 'static>(self, view: V) -> Self {
         self.with(|s| s.add_child(view))
     }
 
     /// Adds a child to the layout.
-    pub fn add_child<V: View + 'static>(&mut self, view: V) {
+    pub fn add_child<V: IntoBoxedView + 'static>(&mut self, view: V) {
         self.children.push(Child {
-            view: Box::new(view),
+            view: view.as_boxed_view(),
             size: Vec2::zero(),
             weight: 0,
         });
@@ -174,11 +174,15 @@ impl LinearLayout {
     /// # Panics
     ///
     /// Panics if `i > self.len()`.
-    pub fn insert_child<V: View + 'static>(&mut self, i: usize, view: V) {
+    pub fn insert_child<V: IntoBoxedView + 'static>(
+        &mut self,
+        i: usize,
+        view: V,
+    ) {
         self.children.insert(
             i,
             Child {
-                view: Box::new(view),
+                view: view.as_boxed_view(),
                 size: Vec2::zero(),
                 weight: 0,
             },
