@@ -6,26 +6,20 @@
 
 use crate::vec::Vec2;
 use crate::{backend, theme};
-use crossterm::{
-    cursor, input, queue, terminal, AlternateScreen, AsyncReader, Attribute,
-    Clear, ClearType, Color, Goto, InputEvent as CInputEvent,
-    KeyEvent as CKeyEvent, MouseButton as CMouseButton,
-    MouseEvent as CMouseEvent, SetAttr, SetBg, SetFg, Terminal,
-};
+use crossterm::{Output, execute, queue, screen::AlternateScreen, terminal::{Clear, ClearType}, style::{SetAttribute, SetBackgroundColor, SetForegroundColor, Attribute, Color}, cursor::{MoveTo, Hide, Show}, event::{Event as CEvent, KeyEvent as CKeyEvent, MouseButton as CMouseButton, MouseEvent as CMouseEvent, EnableMouseCapture, DisableMouseCapture, poll, read}, terminal};
 
 use crate::event::{Event, Key, MouseButton, MouseEvent};
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, RefCell, RefMut};
 use std::io::{self, BufWriter, Stdout, Write};
+use std::time::Duration;
 
 /// Backend using crossterm
 pub struct Backend {
     current_style: Cell<theme::ColorPair>,
     last_button: Option<MouseButton>,
     // reader to read user input async.
-    async_reader: AsyncReader,
     _alternate_screen: AlternateScreen,
     stdout: RefCell<BufWriter<Stdout>>,
-    terminal: Terminal,
 }
 
 impl Backend {
@@ -36,48 +30,38 @@ impl Backend {
     {
         let _alternate_screen = AlternateScreen::to_alternate(true)?;
 
-        let input = input();
-        let async_reader = input.read_async();
-        input.enable_mouse_mode().unwrap();
-
-        cursor().hide()?;
+        execute!(io::stdout(), EnableMouseCapture, Hide)?;
 
         Ok(Box::new(Backend {
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
             last_button: None,
-            async_reader,
             _alternate_screen,
             stdout: RefCell::new(BufWriter::new(io::stdout())),
-            terminal: terminal(),
         }))
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
         with_color(colors.front, |c| {
-            queue!(self.stdout.borrow_mut(), SetFg(*c))
+            queue!(self.stdout_mut(), SetForegroundColor(*c))
         })
         .unwrap();
         with_color(colors.back, |c| {
-            queue!(self.stdout.borrow_mut(), SetBg(*c))
+            queue!(self.stdout_mut(), SetBackgroundColor(*c))
         })
         .unwrap();
     }
 
-    fn write<T>(&self, content: T)
-    where
-        T: std::fmt::Display,
-    {
-        write!(self.stdout.borrow_mut(), "{}", format!("{}", content))
-            .unwrap();
+    fn stdout_mut(&self) -> RefMut<BufWriter<Stdout>> {
+        self.stdout.borrow_mut()
     }
 
     fn set_attr(&self, attr: Attribute) {
-        queue!(self.stdout.borrow_mut(), SetAttr(attr)).unwrap();
+        queue!(self.stdout_mut(), SetAttribute(attr)).unwrap();
     }
 
-    fn map_key(&mut self, event: CInputEvent) -> Event {
+    fn map_key(&mut self, event: CEvent) -> Event {
         match event {
-            CInputEvent::Keyboard(key_event) => match key_event {
+            CEvent::Key(key_event) => match key_event {
                 CKeyEvent::Esc => Event::Key(Key::Esc),
                 CKeyEvent::Backspace => Event::Key(Key::Backspace),
                 CKeyEvent::Left => Event::Key(Key::Left),
@@ -99,7 +83,7 @@ impl Backend {
                 CKeyEvent::Alt(c) => Event::AltChar(c),
                 _ => Event::Unknown(vec![]),
             },
-            CInputEvent::Mouse(mouse_event) => match mouse_event {
+            CEvent::Mouse(mouse_event) => match mouse_event {
                 CMouseEvent::Press(btn, x, y) => {
                     let position = (x, y).into();
 
@@ -155,10 +139,6 @@ impl Backend {
                     Event::Unknown(vec![])
                 }
             },
-            _ => {
-                log::warn!("Unknown mouse event {:?}!", event);
-                Event::Unknown(vec![])
-            }
         }
     }
 }
@@ -169,16 +149,23 @@ impl backend::Backend for Backend {
     }
 
     fn poll_event(&mut self) -> Option<Event> {
-        self.async_reader.next().map(|event| self.map_key(event))
+        match poll(Some(Duration::from_millis(10))) {
+            Ok(true) => {
+                match read() {
+                    Ok(event) => Some(self.map_key(event)),
+                    Err(_) => None,
+                }
+            },
+            _ => None,
+        }
     }
 
     fn finish(&mut self) {
-        input().disable_mouse_mode().unwrap();
-        cursor().show().unwrap();
+        execute!(self.stdout_mut(), DisableMouseCapture, Show).expect("Can not disable mouse capture.");
     }
 
     fn refresh(&mut self) {
-        self.stdout.borrow_mut().flush().unwrap();
+        self.stdout_mut().flush().unwrap();
     }
 
     fn has_colors(&self) -> bool {
@@ -187,21 +174,23 @@ impl backend::Backend for Backend {
     }
 
     fn screen_size(&self) -> Vec2 {
-        let size = self.terminal.size().unwrap_or((0, 0));
+        let size = terminal::size().unwrap_or((1, 1));
         Vec2::from(size)
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        queue!(self.stdout.borrow_mut(), Goto(pos.x as u16, pos.y as u16))
-            .unwrap();
-        self.write(text);
+        queue!(
+            self.stdout_mut(),
+            MoveTo(pos.x as u16, pos.y as u16),
+            Output(text)
+        ).unwrap();
     }
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
-            let mut out = self.stdout.borrow_mut();
+            let mut out = self.stdout_mut();
 
-            queue!(out, Goto(pos.x as u16, pos.y as u16)).unwrap();
+            queue!(out, MoveTo(pos.x as u16, pos.y as u16)).unwrap();
 
             // as I (Timon) wrote this I figured out that calling `write_str` for unix was flushing the stdout.
             // Current work aground is writing bytes instead of a string to the terminal.
@@ -221,7 +210,7 @@ impl backend::Backend for Backend {
             back: color,
         });
 
-        queue!(self.stdout.borrow_mut(), Clear(ClearType::All)).unwrap();
+        queue!(self.stdout_mut(), Clear(ClearType::All)).unwrap();
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
@@ -251,7 +240,7 @@ impl backend::Backend for Backend {
     fn unset_effect(&self, effect: theme::Effect) {
         match effect {
             theme::Effect::Simple => (),
-            theme::Effect::Reverse => self.set_attr(Attribute::NoInverse),
+            theme::Effect::Reverse => self.set_attr(Attribute::NoReverse),
             theme::Effect::Bold => self.set_attr(Attribute::NormalIntensity),
             theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
             theme::Effect::Strikethrough => {
@@ -303,9 +292,7 @@ where
         }
 
         theme::Color::TerminalDefault => {
-            unimplemented!(
-                "I have to take a look at how reset has to work out"
-            );
+            f(&Color::Reset)
         }
     }
 }

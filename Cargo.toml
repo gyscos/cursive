@@ -74,7 +74,9 @@ version = "1.5.3"
 
 [dependencies.crossterm]
 optional = true
-version = "0.12"
+#version = "0.12"
+git = "https://github.com/crossterm-rs/crossterm.git"
+branch = "input_rewrite"
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.1.10"
@@ -86,7 +88,7 @@ atty = "0.2.13"
 
 [features]
 blt-backend = ["bear-lib-terminal"]
-default = ["ncurses-backend"]
+default = ["crossterm"]
 markdown = ["pulldown-cmark"]
 ncurses-backend = ["ncurses", "maplit", "term_size"]
 pancurses-backend = ["pancurses", "maplit", "term_size"]
