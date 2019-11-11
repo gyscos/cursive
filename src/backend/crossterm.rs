@@ -4,14 +4,30 @@
 
 #![cfg(feature = "crossterm")]
 
-use crate::vec::Vec2;
-use crate::{backend, theme};
-use crossterm::{Output, execute, queue, screen::AlternateScreen, terminal::{Clear, ClearType}, style::{SetAttribute, SetBackgroundColor, SetForegroundColor, Attribute, Color}, cursor::{MoveTo, Hide, Show}, event::{Event as CEvent, KeyEvent as CKeyEvent, MouseButton as CMouseButton, MouseEvent as CMouseEvent, EnableMouseCapture, DisableMouseCapture, poll, read}, terminal};
-
-use crate::event::{Event, Key, MouseButton, MouseEvent};
 use std::cell::{Cell, RefCell, RefMut};
 use std::io::{self, BufWriter, Stdout, Write};
 use std::time::Duration;
+
+use crossterm::{
+    cursor::{Hide, MoveTo, Show},
+    event::{
+        poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent,
+        KeyEvent as CKeyEvent, MouseButton as CMouseButton,
+        MouseEvent as CMouseEvent,
+    },
+    execute, queue,
+    screen::AlternateScreen,
+    style::{
+        Attribute, Color, SetAttribute, SetBackgroundColor, SetForegroundColor,
+    },
+    terminal,
+    terminal::{Clear, ClearType},
+    Output,
+};
+
+use crate::event::{Event, Key, MouseButton, MouseEvent};
+use crate::vec::Vec2;
+use crate::{backend, theme};
 
 /// Backend using crossterm
 pub struct Backend {
@@ -150,18 +166,17 @@ impl backend::Backend for Backend {
 
     fn poll_event(&mut self) -> Option<Event> {
         match poll(Some(Duration::from_millis(10))) {
-            Ok(true) => {
-                match read() {
-                    Ok(event) => Some(self.map_key(event)),
-                    Err(_) => None,
-                }
+            Ok(true) => match read() {
+                Ok(event) => Some(self.map_key(event)),
+                Err(_) => None,
             },
             _ => None,
         }
     }
 
     fn finish(&mut self) {
-        execute!(self.stdout_mut(), DisableMouseCapture, Show).expect("Can not disable mouse capture.");
+        execute!(self.stdout_mut(), DisableMouseCapture, Show)
+            .expect("Can not disable mouse capture.");
     }
 
     fn refresh(&mut self) {
@@ -183,7 +198,8 @@ impl backend::Backend for Backend {
             self.stdout_mut(),
             MoveTo(pos.x as u16, pos.y as u16),
             Output(text)
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
@@ -291,8 +307,6 @@ where
             f(&Color::AnsiValue(16 + 36 * r + 6 * g + b))
         }
 
-        theme::Color::TerminalDefault => {
-            f(&Color::Reset)
-        }
+        theme::Color::TerminalDefault => f(&Color::Reset),
     }
 }
