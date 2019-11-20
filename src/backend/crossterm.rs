@@ -4,9 +4,11 @@
 
 #![cfg(feature = "crossterm")]
 
-use std::cell::{Cell, RefCell, RefMut};
-use std::io::{self, BufWriter, Stdout, Write};
-use std::time::Duration;
+use std::{
+    cell::{Cell, RefCell, RefMut},
+    io::{self, BufWriter, Stdout, Write},
+    time::Duration,
+};
 
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
@@ -25,9 +27,12 @@ use crossterm::{
     Output,
 };
 
-use crate::event::{Event, Key, MouseButton, MouseEvent};
-use crate::vec::Vec2;
-use crate::{backend, theme};
+use crate::{
+    backend,
+    event::{Event, Key, MouseButton, MouseEvent},
+    theme,
+    vec::Vec2,
+};
 use crossterm::event::KeyCode;
 
 /// Backend using crossterm
