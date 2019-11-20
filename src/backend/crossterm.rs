@@ -12,7 +12,7 @@ use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{
         poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent,
-        KeyEvent as CKeyEvent, MouseButton as CMouseButton,
+        KeyEvent as CKeyEvent, KeyModifiers, MouseButton as CMouseButton,
         MouseEvent as CMouseEvent,
     },
     execute, queue,
@@ -28,6 +28,7 @@ use crossterm::{
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::vec::Vec2;
 use crate::{backend, theme};
+use crossterm::event::KeyCode;
 
 /// Backend using crossterm
 pub struct Backend {
@@ -36,6 +37,102 @@ pub struct Backend {
     // reader to read user input async.
     _alternate_screen: AlternateScreen,
     stdout: RefCell<BufWriter<Stdout>>,
+}
+
+impl From<CMouseButton> for MouseButton {
+    fn from(button: CMouseButton) -> Self {
+        match button {
+            CMouseButton::Left => MouseButton::Left,
+            CMouseButton::Right => MouseButton::Right,
+            CMouseButton::Middle => MouseButton::Middle,
+        }
+    }
+}
+
+impl From<KeyCode> for Key {
+    fn from(code: KeyCode) -> Self {
+        match code {
+            KeyCode::Esc => Key::Esc,
+            KeyCode::Backspace => Key::Backspace,
+            KeyCode::Left => Key::Left,
+            KeyCode::Right => Key::Right,
+            KeyCode::Up => Key::Up,
+            KeyCode::Down => Key::Down,
+            KeyCode::Home => Key::Home,
+            KeyCode::End => Key::End,
+            KeyCode::PageUp => Key::PageUp,
+            KeyCode::PageDown => Key::PageDown,
+            KeyCode::Delete => Key::Del,
+            KeyCode::Insert => Key::Ins,
+            KeyCode::Enter => Key::Enter,
+            KeyCode::Tab => Key::Tab,
+            KeyCode::F(n) => Key::from_f(n),
+            KeyCode::BackTab => Key::Tab, /* not supported */
+            KeyCode::Char(_) => Key::Tab, /* is handled at `Event` level, use tab as default */
+            KeyCode::Null => Key::Tab, /* is handled at `Event` level, use tab as default */
+        }
+    }
+}
+
+impl From<CKeyEvent> for Event {
+    fn from(event: CKeyEvent) -> Self {
+        const CTRL_ALT: KeyModifiers = KeyModifiers::from_bits_truncate(
+            KeyModifiers::CONTROL.bits() | KeyModifiers::ALT.bits(),
+        );
+        const CTRL_SHIFT: KeyModifiers = KeyModifiers::from_bits_truncate(
+            KeyModifiers::CONTROL.bits() | KeyModifiers::SHIFT.bits(),
+        );
+        const ALT_SHIFT: KeyModifiers = KeyModifiers::from_bits_truncate(
+            KeyModifiers::ALT.bits() | KeyModifiers::SHIFT.bits(),
+        );
+
+        match event {
+            CKeyEvent {
+                modifiers: KeyModifiers::CONTROL,
+                code: KeyCode::Char(c),
+            } => Event::CtrlChar(c),
+            CKeyEvent {
+                modifiers: KeyModifiers::ALT,
+                code: KeyCode::Char(c),
+            } => Event::AltChar(c),
+            CKeyEvent {
+                modifiers: _,
+                code: KeyCode::Char('c'),
+            } => Event::Exit,
+
+            CKeyEvent {
+                modifiers: CTRL_ALT,
+                code,
+            } => Event::CtrlAlt(Key::from(code)),
+            CKeyEvent {
+                modifiers: CTRL_SHIFT,
+                code,
+            } => Event::CtrlShift(Key::from(code)),
+            CKeyEvent {
+                modifiers: ALT_SHIFT,
+                code,
+            } => Event::AltShift(Key::from(code)),
+
+            CKeyEvent {
+                modifiers: KeyModifiers::CONTROL,
+                code,
+            } => Event::Ctrl(Key::from(code)),
+            CKeyEvent {
+                modifiers: KeyModifiers::ALT,
+                code,
+            } => Event::Alt(Key::from(code)),
+            CKeyEvent {
+                modifiers: KeyModifiers::SHIFT,
+                code,
+            } => Event::Shift(Key::from(code)),
+
+            CKeyEvent {
+                modifiers: _,
+                code: KeyCode::Char(c),
+            } => Event::Char(c),
+            CKeyEvent { modifiers: _, code } => Event::Key(Key::from(code)),
+        }
+    }
 }
 
 impl Backend {
@@ -77,95 +174,50 @@ impl Backend {
 
     fn map_key(&mut self, event: CEvent) -> Event {
         match event {
-            CEvent::Key(key_event) => match key_event {
-                CKeyEvent::Esc => Event::Key(Key::Esc),
-                CKeyEvent::Backspace => Event::Key(Key::Backspace),
-                CKeyEvent::Left => Event::Key(Key::Left),
-                CKeyEvent::Right => Event::Key(Key::Right),
-                CKeyEvent::Up => Event::Key(Key::Up),
-                CKeyEvent::Down => Event::Key(Key::Down),
-                CKeyEvent::Home => Event::Key(Key::Home),
-                CKeyEvent::End => Event::Key(Key::End),
-                CKeyEvent::PageUp => Event::Key(Key::PageUp),
-                CKeyEvent::PageDown => Event::Key(Key::PageDown),
-                CKeyEvent::Delete => Event::Key(Key::Del),
-                CKeyEvent::Insert => Event::Key(Key::Ins),
-                CKeyEvent::Enter => Event::Key(Key::Enter),
-                CKeyEvent::Tab => Event::Key(Key::Tab),
-                CKeyEvent::F(n) => Event::Key(Key::from_f(n)),
-                CKeyEvent::Char(c) => Event::Char(c),
-                CKeyEvent::Ctrl('c') => Event::Exit,
-                CKeyEvent::Ctrl(c) => Event::CtrlChar(c),
-                CKeyEvent::Alt(c) => Event::AltChar(c),
-                _ => Event::Unknown(vec![]),
-            },
-            CEvent::Mouse(mouse_event) => match mouse_event {
-                CMouseEvent::Press(btn, x, y) => {
-                    let position = (x, y).into();
+            CEvent::Key(key_event) => Event::from(key_event),
+            CEvent::Mouse(mouse_event) => {
+                let position;
+                let event;
 
-                    let event = match btn {
-                        CMouseButton::Left => {
-                            MouseEvent::Press(MouseButton::Left)
-                        }
-                        CMouseButton::Middle => {
-                            MouseEvent::Press(MouseButton::Middle)
-                        }
-                        CMouseButton::Right => {
-                            MouseEvent::Press(MouseButton::Right)
-                        }
-                        CMouseButton::WheelUp => MouseEvent::WheelUp,
-                        CMouseButton::WheelDown => MouseEvent::WheelDown,
-                    };
-
-                    if let MouseEvent::Press(btn) = event {
-                        self.last_button = Some(btn);
+                match mouse_event {
+                    CMouseEvent::Down(button, x, y, _) => {
+                        let button = MouseButton::from(button);
+                        self.last_button = Some(button);
+                        event = MouseEvent::Press(button);
+                        position = (x, y).into();
                     }
-
-                    Event::Mouse {
-                        event,
-                        position,
-                        offset: Vec2::zero(),
+                    CMouseEvent::Up(_, x, y, _) => {
+                        event = MouseEvent::Release(self.last_button.unwrap());
+                        position = (x, y).into();
                     }
-                }
-                CMouseEvent::Release(x, y) if self.last_button.is_some() => {
-                    let event = MouseEvent::Release(self.last_button.unwrap());
-                    let position = (x, y).into();
-
-                    Event::Mouse {
-                        event,
-                        position,
-                        offset: Vec2::zero(),
+                    CMouseEvent::Drag(_, x, y, _) => {
+                        event = MouseEvent::Hold(self.last_button.unwrap());
+                        position = (x, y).into();
                     }
-                }
-                CMouseEvent::Hold(x, y) if self.last_button.is_some() => {
-                    let event = MouseEvent::Hold(self.last_button.unwrap());
-                    let position = (x, y).into();
-
-                    Event::Mouse {
-                        event,
-                        position,
-                        offset: Vec2::zero(),
+                    CMouseEvent::ScrollDown(x, y, _) => {
+                        event = MouseEvent::WheelDown;
+                        position = (x, y).into();
                     }
+                    CMouseEvent::ScrollUp(x, y, _) => {
+                        event = MouseEvent::WheelDown;
+                        position = (x, y).into();
+                    }
+                };
+
+                Event::Mouse {
+                    event,
+                    position,
+                    offset: Vec2::zero(),
                 }
-                _ => {
-                    log::warn!(
-                        "Unknown mouse button event {:?}!",
-                        mouse_event
-                    );
-                    Event::Unknown(vec![])
-                }
-            },
+            }
+            CEvent::Resize(_, _) => Event::WindowResize,
         }
     }
 }
 
 impl backend::Backend for Backend {
-    fn name(&self) -> &str {
-        "crossterm"
-    }
-
     fn poll_event(&mut self) -> Option<Event> {
-        match poll(Some(Duration::from_millis(10))) {
+        match poll(Duration::from_millis(0)) {
             Ok(true) => match read() {
                 Ok(event) => Some(self.map_key(event)),
                 Err(_) => None,
@@ -264,6 +316,10 @@ impl backend::Backend for Backend {
             }
             theme::Effect::Underline => self.set_attr(Attribute::NoUnderline),
         }
+    }
+
+    fn name(&self) -> &str {
+        "crossterm"
     }
 }
 

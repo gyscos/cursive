@@ -76,7 +76,7 @@ version = "1.5.3"
 optional = true
 #version = "0.12"
 git = "https://github.com/crossterm-rs/crossterm.git"
-branch = "input_rewrite"
+branch = "master"
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.1.10"
