@@ -92,6 +92,11 @@ impl From<CKeyEvent> for Event {
         );
 
         match event {
+            // Handle Char + modifier.
+            CKeyEvent {
+                modifiers: KeyModifiers::CONTROL,
+                code: KeyCode::Char('c'),
+            } => Event::Exit,
             CKeyEvent {
                 modifiers: KeyModifiers::CONTROL,
                 code: KeyCode::Char(c),
@@ -101,10 +106,11 @@ impl From<CKeyEvent> for Event {
                 code: KeyCode::Char(c),
             } => Event::AltChar(c),
             CKeyEvent {
-                modifiers: _,
-                code: KeyCode::Char('c'),
-            } => Event::Exit,
+                modifiers: KeyModifiers::SHIFT,
+                code: KeyCode::Char(c),
+            } => Event::Char(c),
 
+            // Handle key + multiple modifiers
             CKeyEvent {
                 modifiers: CTRL_ALT,
                 code,
@@ -118,6 +124,7 @@ impl From<CKeyEvent> for Event {
                 code,
             } => Event::AltShift(Key::from(code)),
 
+            // Handle key + single modifier
             CKeyEvent {
                 modifiers: KeyModifiers::CONTROL,
                 code,
