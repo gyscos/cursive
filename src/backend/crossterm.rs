@@ -229,10 +229,10 @@ impl Backend {
 
 impl backend::Backend for Backend {
     fn poll_event(&mut self) -> Option<Event> {
-        match poll(Duration::from_millis(0)) {
+        match poll(Duration::from_millis(5)) {
             Ok(true) => match read() {
                 Ok(event) => Some(self.map_key(event)),
-                Err(_) => None,
+                Err(_) => panic!(),
             },
             _ => None,
         }
