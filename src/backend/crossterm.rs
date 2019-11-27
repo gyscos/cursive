@@ -141,6 +141,14 @@ impl From<CKeyEvent> for Event {
                 modifiers: _,
                 code: KeyCode::Char(c),
             } => Event::Char(c),
+
+            // Explicitly handle 'backtab' since crossterm does not sent SHIFT alongside the back tab key.
+            CKeyEvent {
+                modifiers: _,
+                code: KeyCode::BackTab,
+            } => Event::Shift(Key::Tab),
+
+            // All other keys.
             CKeyEvent { modifiers: _, code } => Event::Key(Key::from(code)),
         }
     }
