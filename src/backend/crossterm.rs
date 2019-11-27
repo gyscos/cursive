@@ -215,11 +215,7 @@ impl Backend {
     fn apply_colors(&self, colors: theme::ColorPair) {
         queue!(
             self.stdout_mut(),
-            SetForegroundColor(Color::from(colors.front))
-        )
-        .unwrap();
-        queue!(
-            self.stdout_mut(),
+            SetForegroundColor(Color::from(colors.front)),
             SetBackgroundColor(Color::from(colors.back))
         )
         .unwrap();
