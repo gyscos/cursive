@@ -14,8 +14,8 @@ use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{
         poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent,
-        KeyEvent as CKeyEvent, KeyModifiers, MouseButton as CMouseButton,
-        MouseEvent as CMouseEvent,
+        KeyCode, KeyEvent as CKeyEvent, KeyModifiers,
+        MouseButton as CMouseButton, MouseEvent as CMouseEvent,
     },
     execute, queue,
     screen::AlternateScreen,
@@ -33,7 +33,6 @@ use crate::{
     theme,
     vec::Vec2,
 };
-use crossterm::event::KeyCode;
 
 /// Backend using crossterm
 pub struct Backend {
