@@ -239,8 +239,9 @@ impl backend::Backend for Backend {
     }
 
     fn finish(&mut self) {
-        execute!(self.stdout_mut(), DisableMouseCapture, Show)
-            .expect("Can not disable mouse capture.");
+        // We have to execute the show cursor command at the `stdout`.
+        execute!(io::stdout(), DisableMouseCapture, Show)
+            .expect("Can not disable mouse capture or show cursor.");
     }
 
     fn refresh(&mut self) {
