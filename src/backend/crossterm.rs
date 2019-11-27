@@ -138,18 +138,18 @@ impl From<CKeyEvent> for Event {
             } => Event::Shift(Key::from(code)),
 
             CKeyEvent {
-                modifiers: _,
                 code: KeyCode::Char(c),
+                ..
             } => Event::Char(c),
 
             // Explicitly handle 'backtab' since crossterm does not sent SHIFT alongside the back tab key.
             CKeyEvent {
-                modifiers: _,
                 code: KeyCode::BackTab,
+                ..
             } => Event::Shift(Key::Tab),
 
             // All other keys.
-            CKeyEvent { modifiers: _, code } => Event::Key(Key::from(code)),
+            CKeyEvent { code, .. } => Event::Key(Key::from(code)),
         }
     }
 }
@@ -277,7 +277,7 @@ impl backend::Backend for Backend {
         match poll(Duration::from_millis(1)) {
             Ok(true) => match read() {
                 Ok(event) => Some(self.map_key(event)),
-                Err(_) => panic!(),
+                Err(e) => panic!("{:?}", e),
             },
             _ => None,
         }
