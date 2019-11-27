@@ -38,7 +38,7 @@ use crate::{
 pub struct Backend {
     current_style: Cell<theme::ColorPair>,
     last_button: Option<MouseButton>,
-    // reader to read user input async.
+    // stores raw screen which is disabled when dropped, therefore, keep it along.
     _alternate_screen: AlternateScreen,
     stdout: RefCell<BufWriter<Stdout>>,
 }
@@ -154,6 +154,46 @@ impl From<CKeyEvent> for Event {
     }
 }
 
+impl From<theme::Color> for Color {
+    fn from(base_color: theme::Color) -> Self {
+        match base_color {
+            theme::Color::Dark(theme::BaseColor::Black) => Color::Black,
+            theme::Color::Dark(theme::BaseColor::Red) => Color::DarkRed,
+            theme::Color::Dark(theme::BaseColor::Green) => Color::DarkGreen,
+            theme::Color::Dark(theme::BaseColor::Yellow) => Color::DarkYellow,
+            theme::Color::Dark(theme::BaseColor::Blue) => Color::DarkBlue,
+            theme::Color::Dark(theme::BaseColor::Magenta) => {
+                Color::DarkMagenta
+            }
+            theme::Color::Dark(theme::BaseColor::Cyan) => Color::DarkCyan,
+            theme::Color::Dark(theme::BaseColor::White) => Color::Grey,
+            theme::Color::Light(theme::BaseColor::Black) => Color::Grey,
+            theme::Color::Light(theme::BaseColor::Red) => Color::Red,
+            theme::Color::Light(theme::BaseColor::Green) => Color::Green,
+            theme::Color::Light(theme::BaseColor::Yellow) => Color::Yellow,
+            theme::Color::Light(theme::BaseColor::Blue) => Color::Blue,
+            theme::Color::Light(theme::BaseColor::Magenta) => Color::Magenta,
+            theme::Color::Light(theme::BaseColor::Cyan) => Color::Cyan,
+            theme::Color::Light(theme::BaseColor::White) => Color::White,
+            theme::Color::Rgb(r, g, b) => Color::Rgb { r, g, b },
+            theme::Color::RgbLowRes(r, g, b) => {
+                debug_assert!(r <= 5,
+                              "Red color fragment (r = {}) is out of bound. Make sure r ≤ 5.",
+                              r);
+                debug_assert!(g <= 5,
+                              "Green color fragment (g = {}) is out of bound. Make sure g ≤ 5.",
+                              g);
+                debug_assert!(b <= 5,
+                              "Blue color fragment (b = {}) is out of bound. Make sure b ≤ 5.",
+                              b);
+
+                Color::AnsiValue(16 + 36 * r + 6 * g + b)
+            }
+            theme::Color::TerminalDefault => Color::Reset,
+        }
+    }
+}
+
 impl Backend {
     /// Creates a new crossterm backend.
     pub fn init() -> Result<Box<dyn backend::Backend>, crossterm::ErrorKind>
@@ -173,13 +213,15 @@ impl Backend {
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
-        with_color(colors.front, |c| {
-            queue!(self.stdout_mut(), SetForegroundColor(*c))
-        })
+        queue!(
+            self.stdout_mut(),
+            SetForegroundColor(Color::from(colors.front))
+        )
         .unwrap();
-        with_color(colors.back, |c| {
-            queue!(self.stdout_mut(), SetBackgroundColor(*c))
-        })
+        queue!(
+            self.stdout_mut(),
+            SetBackgroundColor(Color::from(colors.back))
+        )
         .unwrap();
     }
 
@@ -236,7 +278,7 @@ impl Backend {
 
 impl backend::Backend for Backend {
     fn poll_event(&mut self) -> Option<Event> {
-        match poll(Duration::from_millis(5)) {
+        match poll(Duration::from_millis(1)) {
             Ok(true) => match read() {
                 Ok(event) => Some(self.map_key(event)),
                 Err(_) => panic!(),
@@ -280,8 +322,6 @@ impl backend::Backend for Backend {
 
             queue!(out, MoveTo(pos.x as u16, pos.y as u16)).unwrap();
 
-            // as I (Timon) wrote this I figured out that calling `write_str` for unix was flushing the stdout.
-            // Current work aground is writing bytes instead of a string to the terminal.
             out.write_all(text.as_bytes()).unwrap();
 
             let mut dupes_left = repetitions - 1;
@@ -340,49 +380,5 @@ impl backend::Backend for Backend {
 
     fn name(&self) -> &str {
         "crossterm"
-    }
-}
-
-fn with_color<F, R>(clr: theme::Color, f: F) -> R
-where
-    F: FnOnce(&Color) -> R,
-{
-    match clr {
-        theme::Color::Dark(theme::BaseColor::Black) => f(&Color::Black),
-        theme::Color::Dark(theme::BaseColor::Red) => f(&Color::DarkRed),
-        theme::Color::Dark(theme::BaseColor::Green) => f(&Color::DarkGreen),
-        theme::Color::Dark(theme::BaseColor::Yellow) => f(&Color::DarkYellow),
-        theme::Color::Dark(theme::BaseColor::Blue) => f(&Color::DarkBlue),
-        theme::Color::Dark(theme::BaseColor::Magenta) => {
-            f(&Color::DarkMagenta)
-        }
-        theme::Color::Dark(theme::BaseColor::Cyan) => f(&Color::DarkCyan),
-        theme::Color::Dark(theme::BaseColor::White) => f(&Color::Grey),
-
-        theme::Color::Light(theme::BaseColor::Black) => f(&Color::Grey),
-        theme::Color::Light(theme::BaseColor::Red) => f(&Color::Red),
-        theme::Color::Light(theme::BaseColor::Green) => f(&Color::Green),
-        theme::Color::Light(theme::BaseColor::Yellow) => f(&Color::Yellow),
-        theme::Color::Light(theme::BaseColor::Blue) => f(&Color::Blue),
-        theme::Color::Light(theme::BaseColor::Magenta) => f(&Color::Magenta),
-        theme::Color::Light(theme::BaseColor::Cyan) => f(&Color::Cyan),
-        theme::Color::Light(theme::BaseColor::White) => f(&Color::White),
-
-        theme::Color::Rgb(r, g, b) => f(&Color::Rgb { r, g, b }),
-        theme::Color::RgbLowRes(r, g, b) => {
-            debug_assert!(r <= 5,
-                          "Red color fragment (r = {}) is out of bound. Make sure r ≤ 5.",
-                          r);
-            debug_assert!(g <= 5,
-                          "Green color fragment (g = {}) is out of bound. Make sure g ≤ 5.",
-                          g);
-            debug_assert!(b <= 5,
-                          "Blue color fragment (b = {}) is out of bound. Make sure b ≤ 5.",
-                          b);
-
-            f(&Color::AnsiValue(16 + 36 * r + 6 * g + b))
-        }
-
-        theme::Color::TerminalDefault => f(&Color::Reset),
     }
 }
