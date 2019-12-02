@@ -143,7 +143,7 @@ impl Palette {
 /// * `View` => `Dark(White)`
 /// * `Primary` => `Dark(Black)`
 /// * `Secondary` => `Dark(Blue)`
-/// * `Tertiary` => `Dark(White)`
+/// * `Tertiary` => `Light(White)`
 /// * `TitlePrimary` => `Dark(Red)`
 /// * `TitleSecondary` => `Dark(Yellow)`
 /// * `Highlight` => `Dark(Red)`
@@ -161,7 +161,7 @@ impl Default for Palette {
                 View => Dark(White),
                 Primary => Dark(Black),
                 Secondary => Dark(Blue),
-                Tertiary => Dark(White),
+                Tertiary => Light(White),
                 TitlePrimary => Dark(Red),
                 TitleSecondary => Light(Blue),
                 Highlight => Dark(Red),
