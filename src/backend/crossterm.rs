@@ -18,13 +18,10 @@ use crossterm::{
         MouseButton as CMouseButton, MouseEvent as CMouseEvent,
     },
     execute, queue,
-    screen::AlternateScreen,
     style::{
-        Attribute, Color, SetAttribute, SetBackgroundColor, SetForegroundColor,
+        Attribute, Color, SetAttribute, SetBackgroundColor, SetForegroundColor, Print
     },
-    terminal,
-    terminal::{Clear, ClearType},
-    Output,
+    terminal::{self, Clear, ClearType, enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen},
 };
 
 use crate::{
@@ -33,13 +30,10 @@ use crate::{
     theme,
     vec::Vec2,
 };
-
 /// Backend using crossterm
 pub struct Backend {
     current_style: Cell<theme::ColorPair>,
     last_button: Option<MouseButton>,
-    // stores raw screen which is disabled when dropped, therefore, keep it along.
-    _alternate_screen: AlternateScreen,
     stdout: RefCell<BufWriter<Stdout>>,
 }
 
@@ -200,14 +194,13 @@ impl Backend {
     where
         Self: Sized,
     {
-        let _alternate_screen = AlternateScreen::to_alternate(true)?;
+        enable_raw_mode()?;
 
-        execute!(io::stdout(), EnableMouseCapture, Hide)?;
+        execute!(io::stdout(),EnterAlternateScreen, EnableMouseCapture, Hide)?;
 
         Ok(Box::new(Backend {
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
             last_button: None,
-            _alternate_screen,
             stdout: RefCell::new(BufWriter::new(io::stdout())),
         }))
     }
@@ -285,8 +278,10 @@ impl backend::Backend for Backend {
 
     fn finish(&mut self) {
         // We have to execute the show cursor command at the `stdout`.
-        execute!(io::stdout(), DisableMouseCapture, Show)
+        execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture, Show)
             .expect("Can not disable mouse capture or show cursor.");
+
+        disable_raw_mode().unwrap();
     }
 
     fn refresh(&mut self) {
@@ -307,7 +302,7 @@ impl backend::Backend for Backend {
         queue!(
             self.stdout_mut(),
             MoveTo(pos.x as u16, pos.y as u16),
-            Output(text)
+            Print(text)
         )
         .unwrap();
     }
