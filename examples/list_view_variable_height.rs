@@ -1,4 +1,3 @@
-use cursive::align::HAlign;
 use cursive::traits::*;
 use cursive::views::{
     Checkbox, Dialog, EditView, LinearLayout, ListView, SelectView, TextArea, TextView,

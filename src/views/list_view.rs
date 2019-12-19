@@ -323,7 +323,7 @@ impl View for ListView {
         let offset = self.labels_width() + 1;
 
         debug!("Offset: {}", offset);
-        let mut yOffset = 0;
+        let mut y_offset = 0;
         for (i, child) in self.children.iter().enumerate() {
             match child {
                 ListChild::Row(ref label, ref view) => {
@@ -331,7 +331,7 @@ impl View for ListView {
                     view.draw(
                         &printer.offset((offset, yOffset)).focused(i == self.focus),
                     );
-                    yOffset += view.important_area(Vec::new(0, 1)).height();
+                    yOffset += view.important_area(Vec2::new(0, 1)).height();
                 }
                 ListChild::Delimiter => {
                     yOffset += 1;
