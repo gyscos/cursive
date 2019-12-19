@@ -1,0 +1,73 @@
+use cursive::align::HAlign;
+use cursive::traits::*;
+use cursive::views::{
+    Checkbox, Dialog, EditView, LinearLayout, ListView, SelectView, TextArea, TextView,
+};
+use cursive::Cursive;
+
+// This example uses a ListView.
+//
+// ListView can be used to build forms, with a list of inputs.
+
+fn main() {
+    let mut siv = Cursive::default();
+
+    siv.add_layer(
+        Dialog::new()
+            .title("Please fill out this form")
+            .button("Ok", |s| s.quit())
+            .content(
+                ListView::new()
+                    // Each child is a single-line view with a label
+                    .child("Name", TextArea::new().with_id("text"))
+                    .child(
+                        "Receive spam?",
+                        Checkbox::new().on_change(|s, checked| {
+                            // Enable/Disable the next field depending on this checkbox
+                            for name in &["email1", "email2"] {
+                                s.call_on_id(name, |view: &mut EditView| {
+                                    view.set_enabled(checked)
+                                });
+                                if checked {
+                                    s.focus_id("email1").unwrap();
+                                }
+                            }
+                        }),
+                    )
+                    .child(
+                        "Email",
+                        // Each child must have a height of 1 line,
+                        // but we can still combine multiple views!
+                        LinearLayout::horizontal()
+                            .child(
+                                EditView::new()
+                                    .disabled()
+                                    .with_id("email1")
+                                    .fixed_width(15),
+                            )
+                            .child(TextView::new("@"))
+                            .child(
+                                EditView::new()
+                                    .disabled()
+                                    .with_id("email2")
+                                    .fixed_width(10),
+                            ),
+                    )
+                    // Delimiter currently are just a blank line
+                    .delimiter()
+                    .child(
+                        "Age",
+                        // Popup-mode SelectView are small enough to fit here
+                        SelectView::new()
+                            .popup()
+                            .item_str("0-18")
+                            .item_str("19-30")
+                            .item_str("31-40")
+                            .item_str("41+"),
+                    )
+                    .scrollable(),
+            ),
+    );
+
+    siv.run();
+}

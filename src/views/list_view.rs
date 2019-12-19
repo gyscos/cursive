@@ -45,9 +45,16 @@ pub struct ListView {
     last_size: Vec2,
 }
 
+#[derive(Debug, Clone)]
+struct ColumnSize {
+    pub max_width: usize,
+    pub sum_height: usize,
+}
+
 new_default!(ListView);
 
 impl ListView {
+
     /// Creates a new, empty `ListView`.
     pub fn new() -> Self {
         ListView {
@@ -222,6 +229,43 @@ impl ListView {
             .max()
             .unwrap_or(0)
     }
+    fn labels_size(&self) -> ColumnSize {
+        let mut labels_size = ColumnSize {max_width: 0, sum_height: 0};
+        let mut scan = self
+            .children
+            .iter()
+            .map(ListChild::label)
+            .scan(&mut labels_size, |s, label| {
+                let width = label.width();
+                if width > (**s).max_width {
+                    (**s).max_width = width;
+                }
+                (**s).sum_height += 1;
+                //println!("{:#?}", **s);
+                Some((**s).clone())
+            });
+        while scan.next().is_some() {}
+        return labels_size;
+    }
+    fn views_size(&mut self, req: Vec2) -> ColumnSize {
+        let mut views_size = ColumnSize {max_width: 0, sum_height: 0};
+        let mut scan = self
+            .children
+            .iter_mut()
+            .filter_map(ListChild::view)
+            .map(|v| v.required_size(req))
+            .scan(&mut views_size, |s, size| {
+                let width = size.x;
+                if width > (**s).max_width {
+                    (**s).max_width = width;
+                }
+                (**s).sum_height += size.y;
+                println!("view_size: {:#?}", **s);
+                Some((**s).clone())
+            });
+        while scan.next().is_some() {}
+        return views_size;
+    }
 
     fn check_focus_grab(&mut self, event: &Event) {
         if let Event::Mouse {
@@ -281,60 +325,45 @@ impl View for ListView {
         let offset = self.labels_width() + 1;
 
         debug!("Offset: {}", offset);
+        let mut yOffset = 0;
         for (i, child) in self.children.iter().enumerate() {
             match child {
                 ListChild::Row(ref label, ref view) => {
-                    printer.print((0, i), label);
+                    printer.print((0, yOffset), label);
                     view.draw(
-                        &printer.offset((offset, i)).focused(i == self.focus),
+                        &printer.offset((offset, yOffset)).focused(i == self.focus),
                     );
+                    yOffset += view.important_area(child.size).height();
                 }
-                ListChild::Delimiter => (),
+                ListChild::Delimiter => {
+                    yOffset += 1;
+                }
             }
         }
     }
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
         // We'll show 2 columns: the labels, and the views.
-        let label_width = self
-            .children
-            .iter()
-            .map(ListChild::label)
-            .map(UnicodeWidthStr::width)
-            .max()
-            .unwrap_or(0);
-
-        let view_size = self
-            .children
-            .iter_mut()
-            .filter_map(ListChild::view)
-            .map(|v| v.required_size(req).x)
-            .max()
-            .unwrap_or(0);
-
-        Vec2::new(label_width + 1 + view_size, self.children.len())
+        let labels_size = self.labels_size();
+        let views_size = self.views_size(req);
+        Vec2::new(labels_size.max_width + 1 + views_size.max_width, std::cmp::max(labels_size.sum_height, views_size.sum_height))
     }
 
     fn layout(&mut self, size: Vec2) {
         self.last_size = size;
 
         // We'll show 2 columns: the labels, and the views.
-        let label_width = self
-            .children
-            .iter()
-            .map(ListChild::label)
-            .map(UnicodeWidthStr::width)
-            .max()
-            .unwrap_or(0);
+        let labels_size = self.labels_size();
 
         let spacing = 1;
 
-        let available = size.x.saturating_sub(label_width + spacing);
+        let available = size.x.saturating_sub(labels_size.max_width + spacing);
 
         debug!("Available: {}", available);
 
         for child in self.children.iter_mut().filter_map(ListChild::view) {
-            child.layout(Vec2::new(available, 1));
+            let height = child.required_size(size).y;
+            child.layout(Vec2::new(available, height));
         }
     }
 
@@ -436,8 +465,9 @@ impl View for ListView {
 
         let area = match self.children[self.focus] {
             ListChild::Row(_, ref view) => {
+                let height = view.important_area(size).height();
                 let available =
-                    Vec2::new(size.x.saturating_sub(labels_width + 1), 1);
+                    Vec2::new(size.x.saturating_sub(labels_width + 1), height);
                 view.important_area(available) + (labels_width, 0)
             }
             ListChild::Delimiter => Rect::from_size((0, 0), (size.x, 1)),
