@@ -331,16 +331,16 @@ impl View for ListView {
         for (i, child) in self.children.iter().enumerate() {
             match child {
                 ListChild::Row(ref label, ref view) => {
-                    printer.print((0, yOffset), label);
+                    printer.print((0, y_offset), label);
                     view.draw(
                         &printer
-                            .offset((offset, yOffset))
+                            .offset((offset, y_offset))
                             .focused(i == self.focus),
                     );
-                    yOffset += view.important_area(Vec2::new(0, 1)).height();
+                    y_offset += view.important_area(Vec2::new(0, 1)).height();
                 }
                 ListChild::Delimiter => {
-                    yOffset += 1;
+                    y_offset += 1;
                 }
             }
         }
