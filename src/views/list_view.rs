@@ -241,7 +241,6 @@ impl ListView {
                     (**s).max_width = width;
                 }
                 (**s).sum_height += 1;
-                //println!("{:#?}", **s);
                 Some((**s).clone())
             });
         while scan.next().is_some() {}
@@ -260,7 +259,6 @@ impl ListView {
                     (**s).max_width = width;
                 }
                 (**s).sum_height += size.y;
-                println!("view_size: {:#?}", **s);
                 Some((**s).clone())
             });
         while scan.next().is_some() {}
@@ -333,7 +331,7 @@ impl View for ListView {
                     view.draw(
                         &printer.offset((offset, yOffset)).focused(i == self.focus),
                     );
-                    yOffset += view.important_area(child.size).height();
+                    yOffset += view.important_area(Vec::new(0, 1)).height();
                 }
                 ListChild::Delimiter => {
                     yOffset += 1;
