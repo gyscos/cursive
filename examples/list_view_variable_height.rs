@@ -1,6 +1,7 @@
 use cursive::traits::*;
 use cursive::views::{
-    Checkbox, Dialog, EditView, LinearLayout, ListView, SelectView, TextArea, TextView,
+    Checkbox, Dialog, EditView, LinearLayout, ListView, SelectView, TextArea,
+    TextView,
 };
 use cursive::Cursive;
 

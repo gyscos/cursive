@@ -54,7 +54,6 @@ struct ColumnSize {
 new_default!(ListView);
 
 impl ListView {
-
     /// Creates a new, empty `ListView`.
     pub fn new() -> Self {
         ListView {
@@ -230,24 +229,29 @@ impl ListView {
             .unwrap_or(0)
     }
     fn labels_size(&self) -> ColumnSize {
-        let mut labels_size = ColumnSize {max_width: 0, sum_height: 0};
-        let mut scan = self
-            .children
-            .iter()
-            .map(ListChild::label)
-            .scan(&mut labels_size, |s, label| {
+        let mut labels_size = ColumnSize {
+            max_width: 0,
+            sum_height: 0,
+        };
+        let mut scan = self.children.iter().map(ListChild::label).scan(
+            &mut labels_size,
+            |s, label| {
                 let width = label.width();
                 if width > (**s).max_width {
                     (**s).max_width = width;
                 }
                 (**s).sum_height += 1;
                 Some((**s).clone())
-            });
+            },
+        );
         while scan.next().is_some() {}
         return labels_size;
     }
     fn views_size(&mut self, req: Vec2) -> ColumnSize {
-        let mut views_size = ColumnSize {max_width: 0, sum_height: 0};
+        let mut views_size = ColumnSize {
+            max_width: 0,
+            sum_height: 0,
+        };
         let mut scan = self
             .children
             .iter_mut()
@@ -329,7 +333,9 @@ impl View for ListView {
                 ListChild::Row(ref label, ref view) => {
                     printer.print((0, yOffset), label);
                     view.draw(
-                        &printer.offset((offset, yOffset)).focused(i == self.focus),
+                        &printer
+                            .offset((offset, yOffset))
+                            .focused(i == self.focus),
                     );
                     yOffset += view.important_area(Vec2::new(0, 1)).height();
                 }
@@ -344,7 +350,10 @@ impl View for ListView {
         // We'll show 2 columns: the labels, and the views.
         let labels_size = self.labels_size();
         let views_size = self.views_size(req);
-        Vec2::new(labels_size.max_width + 1 + views_size.max_width, std::cmp::max(labels_size.sum_height, views_size.sum_height))
+        Vec2::new(
+            labels_size.max_width + 1 + views_size.max_width,
+            std::cmp::max(labels_size.sum_height, views_size.sum_height),
+        )
     }
 
     fn layout(&mut self, size: Vec2) {
