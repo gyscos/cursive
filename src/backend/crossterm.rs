@@ -170,8 +170,8 @@ impl From<theme::Color> for Color {
                 Color::DarkMagenta
             }
             theme::Color::Dark(theme::BaseColor::Cyan) => Color::DarkCyan,
-            theme::Color::Dark(theme::BaseColor::White) => Color::DarkGrey,
-            theme::Color::Light(theme::BaseColor::Black) => Color::Grey,
+            theme::Color::Dark(theme::BaseColor::White) => Color::Grey,
+            theme::Color::Light(theme::BaseColor::Black) => Color::DarkGrey,
             theme::Color::Light(theme::BaseColor::Red) => Color::Red,
             theme::Color::Light(theme::BaseColor::Green) => Color::Green,
             theme::Color::Light(theme::BaseColor::Yellow) => Color::Yellow,
@@ -214,7 +214,7 @@ impl Backend {
         )?;
 
         #[cfg(unix)]
-        let stdout = RefCell::new(BufWriter::new(File::create("/dev/tty")));
+        let stdout = RefCell::new(BufWriter::new(File::create("/dev/tty")?));
         #[cfg(windows)]
         let stdout = RefCell::new(BufWriter::new(io::stdout()));
 
