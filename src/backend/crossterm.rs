@@ -6,6 +6,7 @@
 
 use std::{
     cell::{Cell, RefCell, RefMut},
+    fs::File,
     io::{self, BufWriter, Stdout, Write},
     time::Duration,
 };
@@ -19,9 +20,13 @@ use crossterm::{
     },
     execute, queue,
     style::{
-        Attribute, Color, SetAttribute, SetBackgroundColor, SetForegroundColor, Print
+        Attribute, Color, Print, SetAttribute, SetBackgroundColor,
+        SetForegroundColor,
     },
-    terminal::{self, Clear, ClearType, enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen},
+    terminal::{
+        self, disable_raw_mode, enable_raw_mode, Clear, ClearType,
+        EnterAlternateScreen, LeaveAlternateScreen,
+    },
 };
 
 use crate::{
@@ -30,11 +35,16 @@ use crate::{
     theme,
     vec::Vec2,
 };
+
 /// Backend using crossterm
 pub struct Backend {
     current_style: Cell<theme::ColorPair>,
     last_button: Option<MouseButton>,
+
+    #[cfg(windows)]
     stdout: RefCell<BufWriter<Stdout>>,
+    #[cfg(unix)]
+    stdout: RefCell<BufWriter<File>>,
 }
 
 impl From<CMouseButton> for MouseButton {
@@ -160,7 +170,7 @@ impl From<theme::Color> for Color {
                 Color::DarkMagenta
             }
             theme::Color::Dark(theme::BaseColor::Cyan) => Color::DarkCyan,
-            theme::Color::Dark(theme::BaseColor::White) => Color::Grey,
+            theme::Color::Dark(theme::BaseColor::White) => Color::DarkGrey,
             theme::Color::Light(theme::BaseColor::Black) => Color::Grey,
             theme::Color::Light(theme::BaseColor::Red) => Color::Red,
             theme::Color::Light(theme::BaseColor::Green) => Color::Green,
@@ -196,12 +206,22 @@ impl Backend {
     {
         enable_raw_mode()?;
 
-        execute!(io::stdout(),EnterAlternateScreen, EnableMouseCapture, Hide)?;
+        execute!(
+            io::stdout(),
+            EnterAlternateScreen,
+            EnableMouseCapture,
+            Hide
+        )?;
+
+        #[cfg(unix)]
+        let stdout = RefCell::new(BufWriter::new(File::create("/dev/tty")));
+        #[cfg(windows)]
+        let stdout = RefCell::new(BufWriter::new(io::stdout()));
 
         Ok(Box::new(Backend {
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
             last_button: None,
-            stdout: RefCell::new(BufWriter::new(io::stdout())),
+            stdout,
         }))
     }
 
@@ -214,6 +234,12 @@ impl Backend {
         .unwrap();
     }
 
+    #[cfg(unix)]
+    fn stdout_mut(&self) -> RefMut<BufWriter<File>> {
+        self.stdout.borrow_mut()
+    }
+
+    #[cfg(windows)]
     fn stdout_mut(&self) -> RefMut<BufWriter<Stdout>> {
         self.stdout.borrow_mut()
     }
@@ -278,8 +304,13 @@ impl backend::Backend for Backend {
 
     fn finish(&mut self) {
         // We have to execute the show cursor command at the `stdout`.
-        execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture, Show)
-            .expect("Can not disable mouse capture or show cursor.");
+        execute!(
+            io::stdout(),
+            LeaveAlternateScreen,
+            DisableMouseCapture,
+            Show
+        )
+        .expect("Can not disable mouse capture or show cursor.");
 
         disable_raw_mode().unwrap();
     }
