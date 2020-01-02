@@ -4,28 +4,198 @@
 
 #![cfg(feature = "crossterm")]
 
-use crate::vec::Vec2;
-use crate::{backend, theme};
-use crossterm::{
-    cursor, input, queue, terminal, AlternateScreen, AsyncReader, Attribute,
-    Clear, ClearType, Color, Goto, InputEvent as CInputEvent,
-    KeyEvent as CKeyEvent, MouseButton as CMouseButton,
-    MouseEvent as CMouseEvent, SetAttr, SetBg, SetFg, Terminal,
+use std::{
+    cell::{Cell, RefCell, RefMut},
+    fs::File,
+    io::{self, BufWriter, Stdout, Write},
+    time::Duration,
 };
 
-use crate::event::{Event, Key, MouseButton, MouseEvent};
-use std::cell::{Cell, RefCell};
-use std::io::{self, BufWriter, Stdout, Write};
+use crossterm::{
+    cursor::{Hide, MoveTo, Show},
+    event::{
+        poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent,
+        KeyCode, KeyEvent as CKeyEvent, KeyModifiers,
+        MouseButton as CMouseButton, MouseEvent as CMouseEvent,
+    },
+    execute, queue,
+    style::{
+        Attribute, Color, Print, SetAttribute, SetBackgroundColor,
+        SetForegroundColor,
+    },
+    terminal::{
+        self, disable_raw_mode, enable_raw_mode, Clear, ClearType,
+        EnterAlternateScreen, LeaveAlternateScreen,
+    },
+};
+
+use crate::{
+    backend,
+    event::{Event, Key, MouseButton, MouseEvent},
+    theme,
+    vec::Vec2,
+};
 
 /// Backend using crossterm
 pub struct Backend {
     current_style: Cell<theme::ColorPair>,
     last_button: Option<MouseButton>,
-    // reader to read user input async.
-    async_reader: AsyncReader,
-    _alternate_screen: AlternateScreen,
+
+    #[cfg(windows)]
     stdout: RefCell<BufWriter<Stdout>>,
-    terminal: Terminal,
+    #[cfg(unix)]
+    stdout: RefCell<BufWriter<File>>,
+}
+
+impl From<CMouseButton> for MouseButton {
+    fn from(button: CMouseButton) -> Self {
+        match button {
+            CMouseButton::Left => MouseButton::Left,
+            CMouseButton::Right => MouseButton::Right,
+            CMouseButton::Middle => MouseButton::Middle,
+        }
+    }
+}
+
+impl From<KeyCode> for Key {
+    fn from(code: KeyCode) -> Self {
+        match code {
+            KeyCode::Esc => Key::Esc,
+            KeyCode::Backspace => Key::Backspace,
+            KeyCode::Left => Key::Left,
+            KeyCode::Right => Key::Right,
+            KeyCode::Up => Key::Up,
+            KeyCode::Down => Key::Down,
+            KeyCode::Home => Key::Home,
+            KeyCode::End => Key::End,
+            KeyCode::PageUp => Key::PageUp,
+            KeyCode::PageDown => Key::PageDown,
+            KeyCode::Delete => Key::Del,
+            KeyCode::Insert => Key::Ins,
+            KeyCode::Enter => Key::Enter,
+            KeyCode::Tab => Key::Tab,
+            KeyCode::F(n) => Key::from_f(n),
+            KeyCode::BackTab => Key::Tab, /* not supported */
+            KeyCode::Char(_) => Key::Tab, /* is handled at `Event` level, use tab as default */
+            KeyCode::Null => Key::Tab, /* is handled at `Event` level, use tab as default */
+        }
+    }
+}
+
+impl From<CKeyEvent> for Event {
+    fn from(event: CKeyEvent) -> Self {
+        const CTRL_ALT: KeyModifiers = KeyModifiers::from_bits_truncate(
+            KeyModifiers::CONTROL.bits() | KeyModifiers::ALT.bits(),
+        );
+        const CTRL_SHIFT: KeyModifiers = KeyModifiers::from_bits_truncate(
+            KeyModifiers::CONTROL.bits() | KeyModifiers::SHIFT.bits(),
+        );
+        const ALT_SHIFT: KeyModifiers = KeyModifiers::from_bits_truncate(
+            KeyModifiers::ALT.bits() | KeyModifiers::SHIFT.bits(),
+        );
+
+        match event {
+            // Handle Char + modifier.
+            CKeyEvent {
+                modifiers: KeyModifiers::CONTROL,
+                code: KeyCode::Char('c'),
+            } => Event::Exit,
+            CKeyEvent {
+                modifiers: KeyModifiers::CONTROL,
+                code: KeyCode::Char(c),
+            } => Event::CtrlChar(c),
+            CKeyEvent {
+                modifiers: KeyModifiers::ALT,
+                code: KeyCode::Char(c),
+            } => Event::AltChar(c),
+            CKeyEvent {
+                modifiers: KeyModifiers::SHIFT,
+                code: KeyCode::Char(c),
+            } => Event::Char(c),
+
+            // Handle key + multiple modifiers
+            CKeyEvent {
+                modifiers: CTRL_ALT,
+                code,
+            } => Event::CtrlAlt(Key::from(code)),
+            CKeyEvent {
+                modifiers: CTRL_SHIFT,
+                code,
+            } => Event::CtrlShift(Key::from(code)),
+            CKeyEvent {
+                modifiers: ALT_SHIFT,
+                code,
+            } => Event::AltShift(Key::from(code)),
+
+            // Handle key + single modifier
+            CKeyEvent {
+                modifiers: KeyModifiers::CONTROL,
+                code,
+            } => Event::Ctrl(Key::from(code)),
+            CKeyEvent {
+                modifiers: KeyModifiers::ALT,
+                code,
+            } => Event::Alt(Key::from(code)),
+            CKeyEvent {
+                modifiers: KeyModifiers::SHIFT,
+                code,
+            } => Event::Shift(Key::from(code)),
+
+            CKeyEvent {
+                code: KeyCode::Char(c),
+                ..
+            } => Event::Char(c),
+
+            // Explicitly handle 'backtab' since crossterm does not sent SHIFT alongside the back tab key.
+            CKeyEvent {
+                code: KeyCode::BackTab,
+                ..
+            } => Event::Shift(Key::Tab),
+
+            // All other keys.
+            CKeyEvent { code, .. } => Event::Key(Key::from(code)),
+        }
+    }
+}
+
+impl From<theme::Color> for Color {
+    fn from(base_color: theme::Color) -> Self {
+        match base_color {
+            theme::Color::Dark(theme::BaseColor::Black) => Color::Black,
+            theme::Color::Dark(theme::BaseColor::Red) => Color::DarkRed,
+            theme::Color::Dark(theme::BaseColor::Green) => Color::DarkGreen,
+            theme::Color::Dark(theme::BaseColor::Yellow) => Color::DarkYellow,
+            theme::Color::Dark(theme::BaseColor::Blue) => Color::DarkBlue,
+            theme::Color::Dark(theme::BaseColor::Magenta) => {
+                Color::DarkMagenta
+            }
+            theme::Color::Dark(theme::BaseColor::Cyan) => Color::DarkCyan,
+            theme::Color::Dark(theme::BaseColor::White) => Color::Grey,
+            theme::Color::Light(theme::BaseColor::Black) => Color::DarkGrey,
+            theme::Color::Light(theme::BaseColor::Red) => Color::Red,
+            theme::Color::Light(theme::BaseColor::Green) => Color::Green,
+            theme::Color::Light(theme::BaseColor::Yellow) => Color::Yellow,
+            theme::Color::Light(theme::BaseColor::Blue) => Color::Blue,
+            theme::Color::Light(theme::BaseColor::Magenta) => Color::Magenta,
+            theme::Color::Light(theme::BaseColor::Cyan) => Color::Cyan,
+            theme::Color::Light(theme::BaseColor::White) => Color::White,
+            theme::Color::Rgb(r, g, b) => Color::Rgb { r, g, b },
+            theme::Color::RgbLowRes(r, g, b) => {
+                debug_assert!(r <= 5,
+                              "Red color fragment (r = {}) is out of bound. Make sure r ≤ 5.",
+                              r);
+                debug_assert!(g <= 5,
+                              "Green color fragment (g = {}) is out of bound. Make sure g ≤ 5.",
+                              g);
+                debug_assert!(b <= 5,
+                              "Blue color fragment (b = {}) is out of bound. Make sure b ≤ 5.",
+                              b);
+
+                Color::AnsiValue(16 + 36 * r + 6 * g + b)
+            }
+            theme::Color::TerminalDefault => Color::Reset,
+        }
+    }
 }
 
 impl Backend {
@@ -34,151 +204,119 @@ impl Backend {
     where
         Self: Sized,
     {
-        let _alternate_screen = AlternateScreen::to_alternate(true)?;
+        enable_raw_mode()?;
 
-        let input = input();
-        let async_reader = input.read_async();
-        input.enable_mouse_mode().unwrap();
+        execute!(
+            io::stdout(),
+            EnterAlternateScreen,
+            EnableMouseCapture,
+            Hide
+        )?;
 
-        cursor().hide()?;
+        #[cfg(unix)]
+        let stdout = RefCell::new(BufWriter::new(File::create("/dev/tty")?));
+        #[cfg(windows)]
+        let stdout = RefCell::new(BufWriter::new(io::stdout()));
 
         Ok(Box::new(Backend {
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
             last_button: None,
-            async_reader,
-            _alternate_screen,
-            stdout: RefCell::new(BufWriter::new(io::stdout())),
-            terminal: terminal(),
+            stdout,
         }))
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
-        with_color(colors.front, |c| {
-            queue!(self.stdout.borrow_mut(), SetFg(*c))
-        })
-        .unwrap();
-        with_color(colors.back, |c| {
-            queue!(self.stdout.borrow_mut(), SetBg(*c))
-        })
+        queue!(
+            self.stdout_mut(),
+            SetForegroundColor(Color::from(colors.front)),
+            SetBackgroundColor(Color::from(colors.back))
+        )
         .unwrap();
     }
 
-    fn write<T>(&self, content: T)
-    where
-        T: std::fmt::Display,
-    {
-        write!(self.stdout.borrow_mut(), "{}", format!("{}", content))
-            .unwrap();
+    #[cfg(unix)]
+    fn stdout_mut(&self) -> RefMut<BufWriter<File>> {
+        self.stdout.borrow_mut()
+    }
+
+    #[cfg(windows)]
+    fn stdout_mut(&self) -> RefMut<BufWriter<Stdout>> {
+        self.stdout.borrow_mut()
     }
 
     fn set_attr(&self, attr: Attribute) {
-        queue!(self.stdout.borrow_mut(), SetAttr(attr)).unwrap();
+        queue!(self.stdout_mut(), SetAttribute(attr)).unwrap();
     }
 
-    fn map_key(&mut self, event: CInputEvent) -> Event {
+    fn map_key(&mut self, event: CEvent) -> Event {
         match event {
-            CInputEvent::Keyboard(key_event) => match key_event {
-                CKeyEvent::Esc => Event::Key(Key::Esc),
-                CKeyEvent::Backspace => Event::Key(Key::Backspace),
-                CKeyEvent::Left => Event::Key(Key::Left),
-                CKeyEvent::Right => Event::Key(Key::Right),
-                CKeyEvent::Up => Event::Key(Key::Up),
-                CKeyEvent::Down => Event::Key(Key::Down),
-                CKeyEvent::Home => Event::Key(Key::Home),
-                CKeyEvent::End => Event::Key(Key::End),
-                CKeyEvent::PageUp => Event::Key(Key::PageUp),
-                CKeyEvent::PageDown => Event::Key(Key::PageDown),
-                CKeyEvent::Delete => Event::Key(Key::Del),
-                CKeyEvent::Insert => Event::Key(Key::Ins),
-                CKeyEvent::Enter => Event::Key(Key::Enter),
-                CKeyEvent::Tab => Event::Key(Key::Tab),
-                CKeyEvent::F(n) => Event::Key(Key::from_f(n)),
-                CKeyEvent::Char(c) => Event::Char(c),
-                CKeyEvent::Ctrl('c') => Event::Exit,
-                CKeyEvent::Ctrl(c) => Event::CtrlChar(c),
-                CKeyEvent::Alt(c) => Event::AltChar(c),
-                _ => Event::Unknown(vec![]),
-            },
-            CInputEvent::Mouse(mouse_event) => match mouse_event {
-                CMouseEvent::Press(btn, x, y) => {
-                    let position = (x, y).into();
+            CEvent::Key(key_event) => Event::from(key_event),
+            CEvent::Mouse(mouse_event) => {
+                let position;
+                let event;
 
-                    let event = match btn {
-                        CMouseButton::Left => {
-                            MouseEvent::Press(MouseButton::Left)
-                        }
-                        CMouseButton::Middle => {
-                            MouseEvent::Press(MouseButton::Middle)
-                        }
-                        CMouseButton::Right => {
-                            MouseEvent::Press(MouseButton::Right)
-                        }
-                        CMouseButton::WheelUp => MouseEvent::WheelUp,
-                        CMouseButton::WheelDown => MouseEvent::WheelDown,
-                    };
-
-                    if let MouseEvent::Press(btn) = event {
-                        self.last_button = Some(btn);
+                match mouse_event {
+                    CMouseEvent::Down(button, x, y, _) => {
+                        let button = MouseButton::from(button);
+                        self.last_button = Some(button);
+                        event = MouseEvent::Press(button);
+                        position = (x, y).into();
                     }
-
-                    Event::Mouse {
-                        event,
-                        position,
-                        offset: Vec2::zero(),
+                    CMouseEvent::Up(_, x, y, _) => {
+                        event = MouseEvent::Release(self.last_button.unwrap());
+                        position = (x, y).into();
                     }
-                }
-                CMouseEvent::Release(x, y) if self.last_button.is_some() => {
-                    let event = MouseEvent::Release(self.last_button.unwrap());
-                    let position = (x, y).into();
-
-                    Event::Mouse {
-                        event,
-                        position,
-                        offset: Vec2::zero(),
+                    CMouseEvent::Drag(_, x, y, _) => {
+                        event = MouseEvent::Hold(self.last_button.unwrap());
+                        position = (x, y).into();
                     }
-                }
-                CMouseEvent::Hold(x, y) if self.last_button.is_some() => {
-                    let event = MouseEvent::Hold(self.last_button.unwrap());
-                    let position = (x, y).into();
-
-                    Event::Mouse {
-                        event,
-                        position,
-                        offset: Vec2::zero(),
+                    CMouseEvent::ScrollDown(x, y, _) => {
+                        event = MouseEvent::WheelDown;
+                        position = (x, y).into();
                     }
+                    CMouseEvent::ScrollUp(x, y, _) => {
+                        event = MouseEvent::WheelDown;
+                        position = (x, y).into();
+                    }
+                };
+
+                Event::Mouse {
+                    event,
+                    position,
+                    offset: Vec2::zero(),
                 }
-                _ => {
-                    log::warn!(
-                        "Unknown mouse button event {:?}!",
-                        mouse_event
-                    );
-                    Event::Unknown(vec![])
-                }
-            },
-            _ => {
-                log::warn!("Unknown mouse event {:?}!", event);
-                Event::Unknown(vec![])
             }
+            CEvent::Resize(_, _) => Event::WindowResize,
         }
     }
 }
 
 impl backend::Backend for Backend {
-    fn name(&self) -> &str {
-        "crossterm"
-    }
-
     fn poll_event(&mut self) -> Option<Event> {
-        self.async_reader.next().map(|event| self.map_key(event))
+        match poll(Duration::from_millis(1)) {
+            Ok(true) => match read() {
+                Ok(event) => Some(self.map_key(event)),
+                Err(e) => panic!("{:?}", e),
+            },
+            _ => None,
+        }
     }
 
     fn finish(&mut self) {
-        input().disable_mouse_mode().unwrap();
-        cursor().show().unwrap();
+        // We have to execute the show cursor command at the `stdout`.
+        execute!(
+            io::stdout(),
+            LeaveAlternateScreen,
+            DisableMouseCapture,
+            Show
+        )
+        .expect("Can not disable mouse capture or show cursor.");
+
+        disable_raw_mode().unwrap();
     }
 
     fn refresh(&mut self) {
-        self.stdout.borrow_mut().flush().unwrap();
+        self.stdout_mut().flush().unwrap();
     }
 
     fn has_colors(&self) -> bool {
@@ -187,24 +325,25 @@ impl backend::Backend for Backend {
     }
 
     fn screen_size(&self) -> Vec2 {
-        let size = self.terminal.size().unwrap_or((0, 0));
+        let size = terminal::size().unwrap_or((1, 1));
         Vec2::from(size)
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        queue!(self.stdout.borrow_mut(), Goto(pos.x as u16, pos.y as u16))
-            .unwrap();
-        self.write(text);
+        queue!(
+            self.stdout_mut(),
+            MoveTo(pos.x as u16, pos.y as u16),
+            Print(text)
+        )
+        .unwrap();
     }
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
-            let mut out = self.stdout.borrow_mut();
+            let mut out = self.stdout_mut();
 
-            queue!(out, Goto(pos.x as u16, pos.y as u16)).unwrap();
+            queue!(out, MoveTo(pos.x as u16, pos.y as u16)).unwrap();
 
-            // as I (Timon) wrote this I figured out that calling `write_str` for unix was flushing the stdout.
-            // Current work aground is writing bytes instead of a string to the terminal.
             out.write_all(text.as_bytes()).unwrap();
 
             let mut dupes_left = repetitions - 1;
@@ -221,7 +360,7 @@ impl backend::Backend for Backend {
             back: color,
         });
 
-        queue!(self.stdout.borrow_mut(), Clear(ClearType::All)).unwrap();
+        queue!(self.stdout_mut(), Clear(ClearType::All)).unwrap();
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
@@ -251,7 +390,7 @@ impl backend::Backend for Backend {
     fn unset_effect(&self, effect: theme::Effect) {
         match effect {
             theme::Effect::Simple => (),
-            theme::Effect::Reverse => self.set_attr(Attribute::NoInverse),
+            theme::Effect::Reverse => self.set_attr(Attribute::NoReverse),
             theme::Effect::Bold => self.set_attr(Attribute::NormalIntensity),
             theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
             theme::Effect::Strikethrough => {
@@ -260,52 +399,8 @@ impl backend::Backend for Backend {
             theme::Effect::Underline => self.set_attr(Attribute::NoUnderline),
         }
     }
-}
 
-fn with_color<F, R>(clr: theme::Color, f: F) -> R
-where
-    F: FnOnce(&Color) -> R,
-{
-    match clr {
-        theme::Color::Dark(theme::BaseColor::Black) => f(&Color::Black),
-        theme::Color::Dark(theme::BaseColor::Red) => f(&Color::DarkRed),
-        theme::Color::Dark(theme::BaseColor::Green) => f(&Color::DarkGreen),
-        theme::Color::Dark(theme::BaseColor::Yellow) => f(&Color::DarkYellow),
-        theme::Color::Dark(theme::BaseColor::Blue) => f(&Color::DarkBlue),
-        theme::Color::Dark(theme::BaseColor::Magenta) => {
-            f(&Color::DarkMagenta)
-        }
-        theme::Color::Dark(theme::BaseColor::Cyan) => f(&Color::DarkCyan),
-        theme::Color::Dark(theme::BaseColor::White) => f(&Color::Grey),
-
-        theme::Color::Light(theme::BaseColor::Black) => f(&Color::Grey),
-        theme::Color::Light(theme::BaseColor::Red) => f(&Color::Red),
-        theme::Color::Light(theme::BaseColor::Green) => f(&Color::Green),
-        theme::Color::Light(theme::BaseColor::Yellow) => f(&Color::Yellow),
-        theme::Color::Light(theme::BaseColor::Blue) => f(&Color::Blue),
-        theme::Color::Light(theme::BaseColor::Magenta) => f(&Color::Magenta),
-        theme::Color::Light(theme::BaseColor::Cyan) => f(&Color::Cyan),
-        theme::Color::Light(theme::BaseColor::White) => f(&Color::White),
-
-        theme::Color::Rgb(r, g, b) => f(&Color::Rgb { r, g, b }),
-        theme::Color::RgbLowRes(r, g, b) => {
-            debug_assert!(r <= 5,
-                          "Red color fragment (r = {}) is out of bound. Make sure r ≤ 5.",
-                          r);
-            debug_assert!(g <= 5,
-                          "Green color fragment (g = {}) is out of bound. Make sure g ≤ 5.",
-                          g);
-            debug_assert!(b <= 5,
-                          "Blue color fragment (b = {}) is out of bound. Make sure b ≤ 5.",
-                          b);
-
-            f(&Color::AnsiValue(16 + 36 * r + 6 * g + b))
-        }
-
-        theme::Color::TerminalDefault => {
-            unimplemented!(
-                "I have to take a look at how reset has to work out"
-            );
-        }
+    fn name(&self) -> &str {
+        "crossterm"
     }
 }
