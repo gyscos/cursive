@@ -275,7 +275,7 @@ impl Backend {
                         position = (x, y).into();
                     }
                     CMouseEvent::ScrollUp(x, y, _) => {
-                        event = MouseEvent::WheelDown;
+                        event = MouseEvent::WheelUp;
                         position = (x, y).into();
                     }
                 };
