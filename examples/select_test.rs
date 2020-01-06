@@ -65,7 +65,7 @@ pub mod tests {
             let input = backend.input();
             let mut siv = Cursive::new(|| backend);
 
-            // Let's add a BoxView to keep the list at a reasonable size
+            // Let's add a ResizedView to keep the list at a reasonable size
             // (it can scroll anyway).
             siv.add_layer(
                 Dialog::around(select.scrollable().fixed_size((20, 10)))

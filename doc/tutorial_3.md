@@ -95,16 +95,16 @@ Our list will start empty. If we leave it like that, it will be tiny when
 the application starts, and will grow when we add names. This is not very
 professional-looking, so we'll give it a fixed size.
 
-To do that, a [`BoxView`] can wrap any view and give it a fixed size.
+To do that, a [`ResizedView`] can wrap any view and give it a fixed size.
 We could do:
 
 ```rust,ignore
-let select = BoxView::with_fixed_size((10, 5), SelectView::<String>::new());
+let select = ResizedView::with_fixed_size((10, 5), SelectView::<String>::new());
 ```
 
-But there is another shorter way: the [`Boxable`] trait is conveniently
-implemented for any `View`, and allow to wrap in a `BoxView` with a chainable
-call. `Boxable`, and a few other useful traits, are conveniently bundled in
+But there is another shorter way: the [`Resizable`] trait is conveniently
+implemented for any `View`, and allow to wrap in a `ResizedView` with a chainable
+call. `Resizable`, and a few other useful traits, are conveniently bundled in
 the [`traits`] prelude, ready to be imported:
 
 ```rust,ignore
@@ -133,14 +133,14 @@ fn on_submit(s: &mut Cursive, name: &str) {
 ```
 
 (Be sure to call `on_submit` on the `SelectView`,
-not on the `BoxView` returned by `fixed_size`!)
+not on the `ResizedView` returned by `fixed_size`!)
 
 What we do there should be pretty familiar by now:
 replace the layer with a simple dialog.
 
 [`SelectView`]: https://docs.rs/cursive/0/cursive/views/struct.SelectView.html
-[`BoxView`]: https://docs.rs/cursive/0/cursive/views/struct.BoxView.html
-[`Boxable`]: https://docs.rs/cursive/0/cursive/view/trait.Boxable.html
+[`ResizedView`]: https://docs.rs/cursive/0/cursive/views/struct.ResizedView.html
+[`Resizable`]: https://docs.rs/cursive/0/cursive/view/trait.Resizable.html
 [`traits`]: https://docs.rs/cursive/0/cursive/traits/index.html
 [`SelectView::on_submit`]: https://docs.rs/cursive/0/cursive/views/struct.SelectView.html#method.on_submit
 
@@ -228,7 +228,7 @@ how to point to the correct view.
 Later, you can ask the Cursive root for this ID and get access to the view.
 Just what we need!
 
-Like `BoxView`, `IdView` can be used directly with [`IdView::new`], or through
+Like `ResizedView`, `IdView` can be used directly with [`IdView::new`], or through
 the [`Identifiable`] trait. [`Cursive::call_on_id`] allows you to run a closure
 on the view.
 
@@ -264,7 +264,7 @@ let select = SelectView::<String>::new()
     .fixed_size((10, 5));
 ```
 (Here again, the order is important: we want to wrap the `SelectView`, not
-the `BoxView`. But we still need to call `on_submit` before that.)
+the `ResizedView`. But we still need to call `on_submit` before that.)
 
 That way, we can update it with a new item:
 

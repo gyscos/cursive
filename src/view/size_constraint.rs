@@ -2,9 +2,9 @@ use std::cmp::min;
 
 /// Single-dimensional constraint on a view size.
 ///
-/// This describes a possible behaviour for a [`BoxView`].
+/// This describes a possible behaviour for a [`ResizedView`].
 ///
-/// [`BoxView`]: ../views/struct.BoxView.html
+/// [`ResizedView`]: ../views/struct.ResizedView.html
 #[derive(Debug, Clone, Copy)]
 pub enum SizeConstraint {
     /// No constraint imposed, the child view's response is used.
@@ -22,7 +22,7 @@ pub enum SizeConstraint {
 impl SizeConstraint {
     /// Returns the size to be given to the child.
     ///
-    /// When `available` is offered to the `BoxView`.
+    /// When `available` is offered to the `ResizedView`.
     pub fn available(self, available: usize) -> usize {
         match self {
             SizeConstraint::Free

@@ -16,7 +16,7 @@ pub trait Identifiable: View + Sized {
     /// ```rust
     /// # use cursive::Cursive;
     /// # use cursive::views::TextView;
-    /// # use cursive::view::Boxable;
+    /// # use cursive::view::Resizable;
     /// use cursive::view::Identifiable;
     ///
     /// let mut siv = Cursive::dummy();
@@ -36,10 +36,10 @@ pub trait Identifiable: View + Sized {
     ///
     /// You should call this directly on the view you want to retrieve later,
     /// before other wrappers like [`fixed_width`]. Otherwise, you would be
-    /// retrieving a [`BoxView`]!
+    /// retrieving a [`ResizedView`]!
     ///
-    /// [`fixed_width`]: trait.Boxable.html#method.fixed_width
-    /// [`BoxView`]: ../views/struct.BoxView.html
+    /// [`fixed_width`]: trait.Resizable.html#method.fixed_width
+    /// [`ResizedView`]: ../views/struct.ResizedView.html
     ///
     fn with_id<S: Into<String>>(self, id: S) -> IdView<Self> {
         IdView::new(id, self)

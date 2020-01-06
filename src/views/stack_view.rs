@@ -5,7 +5,7 @@ use crate::vec::Vec2;
 use crate::view::{
     IntoBoxedView, Offset, Position, Selector, View, ViewWrapper,
 };
-use crate::views::{CircularFocus, Layer, ShadowView, ViewBox};
+use crate::views::{BoxedView, CircularFocus, Layer, ShadowView};
 use crate::Printer;
 use crate::With;
 use std::cell;
@@ -199,7 +199,7 @@ impl<T: View> View for ChildWrapper<T> {
 }
 
 struct Child {
-    view: ChildWrapper<ViewBox>,
+    view: ChildWrapper<BoxedView>,
     size: Vec2,
     placement: Placement,
 
@@ -250,7 +250,7 @@ impl StackView {
     where
         T: IntoBoxedView,
     {
-        let boxed = ViewBox::boxed(view);
+        let boxed = BoxedView::boxed(view);
         self.layers.push(Child {
             view: ChildWrapper::Backfilled(Layer::new(
                 CircularFocus::wrap_tab(boxed),
@@ -356,7 +356,7 @@ impl StackView {
     where
         T: IntoBoxedView,
     {
-        let boxed = ViewBox::boxed(view);
+        let boxed = BoxedView::boxed(view);
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
             view: ChildWrapper::Shadow(
@@ -383,7 +383,7 @@ impl StackView {
     where
         T: IntoBoxedView,
     {
-        let boxed = ViewBox::boxed(view);
+        let boxed = BoxedView::boxed(view);
         self.layers.push(Child {
             view: ChildWrapper::Plain(CircularFocus::wrap_tab(boxed)),
             size: Vec2::new(0, 0),
@@ -419,7 +419,7 @@ impl StackView {
             .pop()
             .map(|child| child.view)
             .map(ChildWrapper::unwrap)
-            .map(ViewBox::unwrap)
+            .map(BoxedView::unwrap)
     }
 
     /// Computes the offset of the current top view.

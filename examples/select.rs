@@ -37,7 +37,7 @@ fn main() {
 
     let mut siv = Cursive::default();
 
-    // Let's add a BoxView to keep the list at a reasonable size
+    // Let's add a ResizedView to keep the list at a reasonable size
     // (it can scroll anyway).
     siv.add_layer(
         Dialog::around(select.scrollable().fixed_size((20, 10)))

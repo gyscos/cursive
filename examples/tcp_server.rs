@@ -1,3 +1,4 @@
+use cursive::traits::Boxable;
 use cursive::traits::*;
 use cursive::views;
 

@@ -19,9 +19,9 @@ fn main() {
                     .on_submit(show_popup)
                     // Give the `EditView` a name so we can refer to it later.
                     .with_id("name")
-                    // Wrap this in a `BoxView` with a fixed width.
+                    // Wrap this in a `ResizedView` with a fixed width.
                     // Do this _after_ `with_id` or the name will point to the
-                    // `BoxView` instead of `EditView`!
+                    // `ResizedView` instead of `EditView`!
                     .fixed_width(20),
             )
             .button("Ok", |s| {

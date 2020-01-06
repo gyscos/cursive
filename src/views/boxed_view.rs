@@ -4,14 +4,14 @@ use std::ops::{Deref, DerefMut};
 /// A boxed `View`.
 ///
 /// It derefs to the wrapped view.
-pub struct ViewBox {
+pub struct BoxedView {
     view: Box<dyn View>,
 }
 
-impl ViewBox {
-    /// Creates a new `ViewBox` around the given boxed view.
+impl BoxedView {
+    /// Creates a new `BoxedView` around the given boxed view.
     pub fn new(view: Box<dyn View>) -> Self {
-        ViewBox { view }
+        BoxedView { view }
     }
 
     /// Box the given view
@@ -19,7 +19,7 @@ impl ViewBox {
     where
         T: IntoBoxedView,
     {
-        ViewBox::new(view.as_boxed_view())
+        BoxedView::new(view.as_boxed_view())
     }
 
     /// Returns the inner boxed view.
@@ -28,7 +28,7 @@ impl ViewBox {
     }
 }
 
-impl Deref for ViewBox {
+impl Deref for BoxedView {
     type Target = dyn View;
 
     fn deref(&self) -> &dyn View {
@@ -36,13 +36,13 @@ impl Deref for ViewBox {
     }
 }
 
-impl DerefMut for ViewBox {
+impl DerefMut for BoxedView {
     fn deref_mut(&mut self) -> &mut dyn View {
         &mut *self.view
     }
 }
 
-impl ViewWrapper for ViewBox {
+impl ViewWrapper for BoxedView {
     type V = dyn View;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>

@@ -14,13 +14,13 @@ use unicode_width::UnicodeWidthStr;
 /// Multi-lines text editor.
 ///
 /// A `TextArea` will attempt to grow vertically and horizontally
-/// dependent on the content.  Wrap it in a `BoxView` to
+/// dependent on the content.  Wrap it in a `ResizedView` to
 /// constrain its size.
 ///
 /// # Examples
 ///
 /// ```
-/// use cursive::traits::{Boxable, Identifiable};
+/// use cursive::traits::{Resizable, Identifiable};
 /// use cursive::views::TextArea;
 ///
 /// let text_area = TextArea::new()

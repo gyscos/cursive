@@ -3,17 +3,17 @@ use crate::view::View;
 use crate::view::ViewWrapper;
 
 /// Wrapper around a view that remembers its size.
-pub struct SizedView<T> {
+pub struct LastSizeView<T> {
     /// Wrapped view.
     pub view: T,
     /// Cached size from the last layout() call.
     pub size: Vec2,
 }
 
-impl<T> SizedView<T> {
+impl<T> LastSizeView<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
-        SizedView {
+        LastSizeView {
             view,
             size: Vec2::zero(),
         }
@@ -22,7 +22,7 @@ impl<T> SizedView<T> {
     inner_getters!(self.view: T);
 }
 
-impl<T: View> ViewWrapper for SizedView<T> {
+impl<T: View> ViewWrapper for LastSizeView<T> {
     wrap_impl!(self.view: T);
 
     fn wrap_layout(&mut self, size: Vec2) {

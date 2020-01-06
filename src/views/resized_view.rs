@@ -16,14 +16,14 @@ use crate::XY;
 /// # Examples
 ///
 /// ```
-/// use cursive::views::{BoxView, TextView};
+/// use cursive::views::{ResizedView, TextView};
 ///
-/// // Creates a 20x4 BoxView with a TextView content.
-/// let view = BoxView::with_fixed_size((20,4), TextView::new("Hello!"));
+/// // Creates a 20x4 ResizedView with a TextView content.
+/// let view = ResizedView::with_fixed_size((20,4), TextView::new("Hello!"));
 /// ```
 ///
 /// See also [`Boxable`](crate::view::Boxable) for an easy way to wrap any view.
-pub struct BoxView<T: View> {
+pub struct ResizedView<T: View> {
     /// Constraint on each axis
     size: XY<SizeConstraint>,
 
@@ -34,8 +34,8 @@ pub struct BoxView<T: View> {
     view: T,
 }
 
-impl<T: View> BoxView<T> {
-    /// Creates a new `BoxView` with the given width and height requirements.
+impl<T: View> ResizedView<T> {
+    /// Creates a new `ResizedView` with the given width and height requirements.
     ///
     /// `None` values will use the wrapped view's preferences.
     pub fn new(
@@ -43,7 +43,7 @@ impl<T: View> BoxView<T> {
         height: SizeConstraint,
         view: T,
     ) -> Self {
-        BoxView {
+        ResizedView {
             size: (width, height).into(),
             invalidated: true,
             view,
@@ -76,102 +76,110 @@ impl<T: View> BoxView<T> {
         self.invalidate();
     }
 
-    /// Wraps `view` in a new `BoxView` with the given size.
+    /// Wraps `view` in a new `ResizedView` with the given size.
     pub fn with_fixed_size<S: Into<Vec2>>(size: S, view: T) -> Self {
         let size = size.into();
 
-        BoxView::new(
+        ResizedView::new(
             SizeConstraint::Fixed(size.x),
             SizeConstraint::Fixed(size.y),
             view,
         )
     }
 
-    /// Wraps `view` in a new `BoxView` with fixed width.
+    /// Wraps `view` in a new `ResizedView` with fixed width.
     pub fn with_fixed_width(width: usize, view: T) -> Self {
-        BoxView::new(SizeConstraint::Fixed(width), SizeConstraint::Free, view)
+        ResizedView::new(
+            SizeConstraint::Fixed(width),
+            SizeConstraint::Free,
+            view,
+        )
     }
 
-    /// Wraps `view` in a new `BoxView` with fixed height.
+    /// Wraps `view` in a new `ResizedView` with fixed height.
     pub fn with_fixed_height(height: usize, view: T) -> Self {
-        BoxView::new(SizeConstraint::Free, SizeConstraint::Fixed(height), view)
+        ResizedView::new(
+            SizeConstraint::Free,
+            SizeConstraint::Fixed(height),
+            view,
+        )
     }
 
-    /// Wraps `view` in a `BoxView` which will take all available space.
+    /// Wraps `view` in a `ResizedView` which will take all available space.
     pub fn with_full_screen(view: T) -> Self {
-        BoxView::new(SizeConstraint::Full, SizeConstraint::Full, view)
+        ResizedView::new(SizeConstraint::Full, SizeConstraint::Full, view)
     }
 
-    /// Wraps `view` in a `BoxView` which will take all available width.
+    /// Wraps `view` in a `ResizedView` which will take all available width.
     pub fn with_full_width(view: T) -> Self {
-        BoxView::new(SizeConstraint::Full, SizeConstraint::Free, view)
+        ResizedView::new(SizeConstraint::Full, SizeConstraint::Free, view)
     }
 
-    /// Wraps `view` in a `BoxView` which will take all available height.
+    /// Wraps `view` in a `ResizedView` which will take all available height.
     pub fn with_full_height(view: T) -> Self {
-        BoxView::new(SizeConstraint::Free, SizeConstraint::Full, view)
+        ResizedView::new(SizeConstraint::Free, SizeConstraint::Full, view)
     }
 
-    /// Wraps `view` in a `BoxView` which will never be bigger than `size`.
+    /// Wraps `view` in a `ResizedView` which will never be bigger than `size`.
     pub fn with_max_size<S: Into<Vec2>>(size: S, view: T) -> Self {
         let size = size.into();
 
-        BoxView::new(
+        ResizedView::new(
             SizeConstraint::AtMost(size.x),
             SizeConstraint::AtMost(size.y),
             view,
         )
     }
 
-    /// Wraps `view` in a `BoxView` which will enforce a maximum width.
+    /// Wraps `view` in a `ResizedView` which will enforce a maximum width.
     ///
     /// The resulting width will never be more than `max_width`.
     pub fn with_max_width(max_width: usize, view: T) -> Self {
-        BoxView::new(
+        ResizedView::new(
             SizeConstraint::AtMost(max_width),
             SizeConstraint::Free,
             view,
         )
     }
 
-    /// Wraps `view` in a `BoxView` which will enforce a maximum height.
+    /// Wraps `view` in a `ResizedView` which will enforce a maximum height.
     ///
     /// The resulting height will never be more than `max_height`.
     pub fn with_max_height(max_height: usize, view: T) -> Self {
-        BoxView::new(
+        ResizedView::new(
             SizeConstraint::Free,
             SizeConstraint::AtMost(max_height),
             view,
         )
     }
 
-    /// Wraps `view` in a `BoxView` which will never be smaller than `size`.
+    /// Wraps `view` in a `ResizedView` which will never be smaller than `size`.
     pub fn with_min_size<S: Into<Vec2>>(size: S, view: T) -> Self {
         let size = size.into();
 
-        BoxView::new(
+        ResizedView::new(
             SizeConstraint::AtLeast(size.x),
             SizeConstraint::AtLeast(size.y),
             view,
         )
     }
 
-    /// Wraps `view` in a `BoxView` which will enforce a minimum width.
+    /// Wraps `view` in a `ResizedView` which will enforce a minimum width.
     ///
     /// The resulting width will never be less than `min_width`.
     pub fn with_min_width(min_width: usize, view: T) -> Self {
-        BoxView::new(
+        ResizedView::new(
             SizeConstraint::AtLeast(min_width),
             SizeConstraint::Free,
             view,
         )
     }
 
-    /// Wraps `view` in a `BoxView` which will enforce a minimum height.
+    /// Wraps `view` in a `ResizedView` which will enforce a minimum height.
     ///
     /// The resulting height will never be less than `min_height`.
     pub fn with_min_height(min_height: usize, view: T) -> Self {
-        BoxView::new(
+        ResizedView::new(
             SizeConstraint::Free,
             SizeConstraint::AtLeast(min_height),
             view,
@@ -186,7 +194,7 @@ impl<T: View> BoxView<T> {
     inner_getters!(self.view: T);
 }
 
-impl<T: View> ViewWrapper for BoxView<T> {
+impl<T: View> ViewWrapper for ResizedView<T> {
     wrap_impl!(self.view: T);
 
     fn wrap_draw(&self, printer: &Printer) {

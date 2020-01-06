@@ -52,7 +52,7 @@ macro_rules! impl_enabled {
     }
 }
 
-mod box_view;
+mod boxed_view;
 mod button;
 mod canvas;
 mod checkbox;
@@ -64,6 +64,7 @@ mod edit_view;
 mod enableable_view;
 mod hideable_view;
 mod id_view;
+mod last_size_view;
 mod layer;
 mod linear_layout;
 mod list_view;
@@ -74,18 +75,17 @@ mod padded_view;
 mod panel;
 mod progress_bar;
 mod radio;
+mod resized_view;
 mod scroll_view;
 mod select_view;
 mod shadow_view;
-mod sized_view;
 mod slider_view;
 mod stack_view;
 mod text_area;
 mod text_view;
 mod tracked_view;
-mod view_box;
 
-pub use self::box_view::BoxView;
+pub use self::boxed_view::BoxedView;
 pub use self::button::Button;
 pub use self::canvas::Canvas;
 pub use self::checkbox::Checkbox;
@@ -97,6 +97,7 @@ pub use self::edit_view::EditView;
 pub use self::enableable_view::EnableableView;
 pub use self::hideable_view::HideableView;
 pub use self::id_view::{IdView, ViewRef};
+pub use self::last_size_view::LastSizeView;
 pub use self::layer::Layer;
 pub use self::linear_layout::LinearLayout;
 pub use self::list_view::{ListChild, ListView};
@@ -107,13 +108,24 @@ pub use self::padded_view::PaddedView;
 pub use self::panel::Panel;
 pub use self::progress_bar::ProgressBar;
 pub use self::radio::{RadioButton, RadioGroup};
+pub use self::resized_view::ResizedView;
 pub use self::scroll_view::ScrollView;
 pub use self::select_view::SelectView;
 pub use self::shadow_view::ShadowView;
-pub use self::sized_view::SizedView;
 pub use self::slider_view::SliderView;
 pub use self::stack_view::{LayerPosition, StackView};
 pub use self::text_area::TextArea;
 pub use self::text_view::{TextContent, TextContentRef, TextView};
 pub use self::tracked_view::TrackedView;
-pub use self::view_box::ViewBox;
+
+#[deprecated(note = "SizedView is being renamed to LastSizeView")]
+/// Same as [`LastSizeView`](self::LastSizeView).
+pub type SizedView<T> = LastSizeView<T>;
+
+#[deprecated(note = "BoxView is being renamed to ResizedView")]
+/// Same as [`ResizedView`](self::ResizedView).
+pub type BoxView<T> = ResizedView<T>;
+
+#[deprecated(note = "ViewBox is being renamed to BoxedView")]
+/// Same as [`BoxedView`](self::BoxedView).
+pub type ViewBox = BoxedView;

@@ -5,7 +5,7 @@ use crate::rect::Rect;
 use crate::theme::ColorStyle;
 use crate::vec::Vec2;
 use crate::view::{Margins, Selector, View};
-use crate::views::{Button, DummyView, SizedView, TextView, ViewBox};
+use crate::views::{BoxedView, Button, DummyView, LastSizeView, TextView};
 use crate::Cursive;
 use crate::Printer;
 use crate::With;
@@ -25,7 +25,7 @@ pub enum DialogFocus {
 }
 
 struct ChildButton {
-    button: SizedView<Button>,
+    button: LastSizeView<Button>,
     offset: Cell<Vec2>,
 }
 
@@ -35,7 +35,7 @@ impl ChildButton {
         F: 'static + Fn(&mut Cursive),
     {
         ChildButton {
-            button: SizedView::new(Button::new(label, cb)),
+            button: LastSizeView::new(Button::new(label, cb)),
             offset: Cell::new(Vec2::zero()),
         }
     }
@@ -58,7 +58,7 @@ pub struct Dialog {
     title_position: HAlign,
 
     // The actual inner view.
-    content: SizedView<ViewBox>,
+    content: LastSizeView<BoxedView>,
 
     // Optional list of buttons under the main view.
     // Include the top-left corner.
@@ -93,7 +93,7 @@ impl Dialog {
     /// Creates a new `Dialog` with the given content.
     pub fn around<V: View + 'static>(view: V) -> Self {
         Dialog {
-            content: SizedView::new(ViewBox::boxed(view)),
+            content: LastSizeView::new(BoxedView::boxed(view)),
             buttons: Vec::new(),
             title: String::new(),
             title_position: HAlign::Center,
@@ -148,7 +148,7 @@ impl Dialog {
     ///
     /// Previous content will be dropped.
     pub fn set_content<V: View + 'static>(&mut self, view: V) {
-        self.content = SizedView::new(ViewBox::boxed(view));
+        self.content = LastSizeView::new(BoxedView::boxed(view));
         self.invalidate();
     }
 
