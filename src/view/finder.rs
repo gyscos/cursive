@@ -7,8 +7,6 @@ use std::any::Any;
 /// This trait is mostly a wrapper around [`View::call_on_any`].
 ///
 /// It provides a nicer interface to find a view when you know its type.
-///
-/// [`View::call_on_any`]: ./trait.View.html#method.call_on_any
 pub trait Finder {
     /// Runs a callback on the view identified by `sel`.
     ///
@@ -25,23 +23,40 @@ pub trait Finder {
         V: View + Any,
         F: FnOnce(&mut V) -> R;
 
-    /// Convenient method to use `call_on` with a `view::Selector::Id`.
+    /// Convenient method to use `call_on` with a `view::Selector::Name`.
+    fn call_on_name<V, F, R>(&mut self, name: &str, callback: F) -> Option<R>
+    where
+        V: View + Any,
+        F: FnOnce(&mut V) -> R,
+    {
+        self.call_on(&Selector::Name(name), callback)
+    }
+
+    /// Same as [`call_on_name`](Finder::call_on_name).
+    #[deprecated(note = "`call_on_id` is being renamed to `call_on_name`")]
     fn call_on_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
     where
         V: View + Any,
         F: FnOnce(&mut V) -> R,
     {
-        self.call_on(&Selector::Name(id), callback)
+        self.call_on_name(id, callback)
     }
 
     /// Convenient method to find a view wrapped in an [`NamedView`].
-    ///
-    /// [`NamedView`]: views/struct.NamedView.html
+    fn find_name<V>(&mut self, name: &str) -> Option<ViewRef<V>>
+    where
+        V: View + Any,
+    {
+        self.call_on_name(name, NamedView::<V>::get_mut)
+    }
+
+    /// Same as [`find_name`](Finder::find_name()).
+    #[deprecated(note = "`find_id` is being renamed to `find_name`")]
     fn find_id<V>(&mut self, id: &str) -> Option<ViewRef<V>>
     where
         V: View + Any,
     {
-        self.call_on_id(id, NamedView::<V>::get_mut)
+        self.find_name(id)
     }
 }
 
@@ -81,7 +96,9 @@ impl<T: View> Finder for T {
 /// Selects a single view (if any) in the tree.
 pub enum Selector<'a> {
     /// Selects a view from its ID.
-    #[deprecated(note = "Id is being renamed to Name")]
+    #[deprecated(
+        note = "`Selector::Id` is being renamed to `Selector::Name`"
+    )]
     Id(&'a str),
 
     /// Selects a view from its name.

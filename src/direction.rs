@@ -2,9 +2,6 @@
 //!
 //! This module defines two main concepts: [`Orientation`] and [`Direction`].
 //!
-//! [`Orientation`]: direction::Orientation
-//! [`Direction`]: direction::Direction
-//!
 //! ### Orientation
 //!
 //! `Orientation` is a simple enum that can take two values:

@@ -14,8 +14,6 @@ use std::cmp::max;
 use unicode_width::UnicodeWidthStr;
 
 /// Identifies currently focused element in [`Dialog`].
-///
-/// [`Dialog`]: struct.Dialog.html
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DialogFocus {
     /// Content element focused

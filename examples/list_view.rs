@@ -24,11 +24,11 @@ fn main() {
                         Checkbox::new().on_change(|s, checked| {
                             // Enable/Disable the next field depending on this checkbox
                             for name in &["email1", "email2"] {
-                                s.call_on_id(name, |view: &mut EditView| {
+                                s.call_on_name(name, |view: &mut EditView| {
                                     view.set_enabled(checked)
                                 });
                                 if checked {
-                                    s.focus_id("email1").unwrap();
+                                    s.focus_name("email1").unwrap();
                                 }
                             }
                         }),
@@ -41,14 +41,14 @@ fn main() {
                             .child(
                                 EditView::new()
                                     .disabled()
-                                    .with_id("email1")
+                                    .with_name("email1")
                                     .fixed_width(15),
                             )
                             .child(TextView::new("@"))
                             .child(
                                 EditView::new()
                                     .disabled()
-                                    .with_id("email2")
+                                    .with_name("email2")
                                     .fixed_width(10),
                             ),
                     )

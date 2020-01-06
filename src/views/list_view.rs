@@ -11,8 +11,6 @@ use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 
 /// Represents a child from a [`ListView`].
-///
-/// [`ListView`]: struct.ListView.html
 pub enum ListChild {
     /// A single row, with a label and a view.
     Row(String, Box<dyn View>),

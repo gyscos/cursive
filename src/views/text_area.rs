@@ -25,7 +25,7 @@ use unicode_width::UnicodeWidthStr;
 ///
 /// let text_area = TextArea::new()
 ///     .content("Write description here...")
-///     .with_id("text_area")
+///     .with_name("text_area")
 ///     .fixed_width(30)
 ///     .min_height(5);
 /// ```

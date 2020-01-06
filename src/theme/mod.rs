@@ -5,16 +5,12 @@
 //! Characters can be printed in the terminal with a specific color.
 //! The [`Color`] enum represents the ways this can be set.
 //!
-//! [`Color`]: enum.Color.html
-//!
 //! # Palette
 //!
 //! To achieve a customizable, yet unified look, Cursive uses a configurable
 //! palette of colors to be used through the entire application.
 //!
 //! The [`PaletteColor`] enum defines possible entries in this palette.
-//!
-//! [`PaletteColor`]: enum.PaletteColor.html
 //!
 //! These entries are:
 //!
@@ -42,9 +38,6 @@
 //!
 //! A [`Palette`] then maps each of these to an actual [`Color`].
 //!
-//! [`Palette`]: type.Palette.html
-//! [`Color`]: enum.Color.html
-//!
 //! # Color Types
 //!
 //! When drawing views, color can be picked in two way:
@@ -54,8 +47,6 @@
 //!   is currently defined for this.
 //!
 //! The [`ColorType`] enum abstract over these two choices.
-//!
-//! [`ColorType`]: enum.ColorType.html
 //!
 //! # Color Styles
 //!
@@ -102,8 +93,6 @@
 //! Using one of these pairs when styling your application helps give it a
 //! coherent look.
 //!
-//! [`ColorStyle`]: struct.ColorStyle.html
-//!
 //! # Effects
 //!
 //! On top of a color style, some effects can be applied on cells: `Reverse`,
@@ -114,8 +103,6 @@
 //!
 //! Finally, a style combine a [`ColorType`] and a set of [`Effect`]s, to
 //! represent any way text should be printed on screen.
-//!
-//! [`Effect`]: enum.Effect.html
 //!
 //! # Themes
 //!

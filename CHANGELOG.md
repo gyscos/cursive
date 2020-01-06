@@ -7,21 +7,38 @@
 - `cursive::event::AnyCb` changed from `Box<...>` to `&mut ...`, so users of
   `View::call_on_any` no longer need to box their closures.
 - Remove `BoxView::squishable`.
-- Update crossterm to 0.12.
+- Update crossterm to 0.14.
+- Renamed multiple types (old names are still re-exported, but deprecated):
+    - `BoxView` -> `ResizedView`
+    - `ViewBox` -> `BoxedView`
+    - `SizedView` -> `LastSizeView`
+    - `Identifiable` -> `Nameable`
+    - `Boxable` -> `Resizable`
+    - `IdView` -> `NamedView`
+    - `Selector::Id` -> `Selector::Name`
+    - `with_id` -> `with_name`
+    - `call_on_id` -> `call_on_name`
+    - `find_id` -> `find_name`
+    - `focus_id` -> `focus_name`
 
 ### API updates
 
 - `SelectView::{item, with_all}` now accept `S: Into<StyledString>` for colored labels.
 - Add `ScrollView::scroll_to_important_area`.
 - Add `LinearLayout::set_focus_index`.
-- Add `XY::{sum, product}`
-- `view::scroll` is now a public module
-- Add `Cursive::process_events` and `Cursive::post_events`
-    - This gives users finer control than `Cursive::step`
+- Add `XY::{sum, product}`.
+- `view::scroll` is now a public module.
+- Add `Cursive::process_events` and `Cursive::post_events`.
+    - This gives users finer control than `Cursive::step`.
+- `Layer` now has a `color` option.
+- `LinearLayout` can now directly add boxed views without re-boxing.
+- Add inner getters to `EnableableView`.
+- Add `PaddedView::get_inner(_mut)`.
 
 ### Improvements
 
 - Changed the default color for `TitleSecondary` from yellow to light blue.
+- Changed the default color for `Tertiary` from grey to white.
 - Reduced dependencies (`toml` is now optional, removed `hashbrown`).
 - `Cursive::default()` now fallbacks do dummy backend if no other is available.
 
@@ -30,6 +47,7 @@
 - Fixed `ScrollView::show_scrollbars()`
 - Fixed layout for `BoxView` with some size constraints.
 - On Windows, do not print unix-specific character during initialization.
+- Fix out-of-bounds access for some mouse events in `MenuPopup`
 
 ## 0.13.0
 

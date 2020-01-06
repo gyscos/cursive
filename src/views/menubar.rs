@@ -31,7 +31,7 @@ enum State {
 /// The [`Cursive`] root already includes a menubar
 /// that you just need to configure.
 ///
-/// [`Cursive`]: ../struct.Cursive.html#method.menubar
+/// [`Cursive`]: crate::Cursive::menubar
 pub struct Menubar {
     /// Menu items in this menubar.
     root: MenuTree,

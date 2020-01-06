@@ -2,8 +2,6 @@ use crate::view::View;
 use crate::views::NamedView;
 
 /// Makes a view wrappable in an [`NamedView`].
-///
-/// [`NamedView`]: ../views/struct.NamedView.html
 pub trait Nameable: View + Sized {
     /// Wraps this view into an `NamedView` with the given id.
     ///
@@ -22,12 +20,12 @@ pub trait Nameable: View + Sized {
     /// let mut siv = Cursive::dummy();
     /// siv.add_layer(
     ///     TextView::new("foo")
-    ///         .with_id("text")
+    ///         .with_name("text")
     ///         .fixed_width(10)
     /// );
     ///
     /// // You could call this from an event callback
-    /// siv.call_on_id("text", |view: &mut TextView| {
+    /// siv.call_on_name("text", |view: &mut TextView| {
     ///     view.set_content("New content!");
     /// });
     /// ```
@@ -38,15 +36,15 @@ pub trait Nameable: View + Sized {
     /// before other wrappers like [`fixed_width`]. Otherwise, you would be
     /// retrieving a [`ResizedView`]!
     ///
-    /// [`fixed_width`]: trait.Resizable.html#method.fixed_width
-    /// [`ResizedView`]: ../views/struct.ResizedView.html
+    /// [`fixed_width`]: crate::view::Resizable::fixed_width
+    /// [`ResizedView`]: crate::views::ResizedView
     ///
     fn with_name<S: Into<String>>(self, name: S) -> NamedView<Self> {
         NamedView::new(name, self)
     }
 
-    /// Same as [`with_name`](Self::with_name())
-    #[deprecated(note = "with_id is being renamed to with_name")]
+    /// Same as [`with_name`](Nameable::with_name)
+    #[deprecated(note = "`with_id` is being renamed to `with_name`")]
     fn with_id<S: Into<String>>(self, id: S) -> NamedView<Self> {
         self.with_name(id)
     }

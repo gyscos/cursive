@@ -26,8 +26,6 @@ impl<T> SharedState<T> {
 /// A `RadioGroup` is used to create and manage [`RadioButton`]s.
 ///
 /// A `RadioGroup` can be cloned; it will keep pointing to the same group.
-///
-/// [`RadioButton`]: struct.RadioButton.html
 #[derive(Clone)]
 pub struct RadioGroup<T> {
     // Given to every child button
@@ -114,10 +112,8 @@ impl RadioGroup<String> {
 /// time.
 ///
 /// `RadioButton`s are not created directly, but through
-/// [`RadioGroup::button()`].
+/// [`RadioGroup::button`].
 ///
-/// [`RadioGroup`]: struct.RadioGroup.html
-/// [`RadioGroup::button()`]: struct.RadioGroup.html#method.button
 pub struct RadioButton<T> {
     state: Rc<RefCell<SharedState<T>>>,
     id: usize,

@@ -154,13 +154,13 @@ fn build_selector(model: Model) -> impl cursive::view::View {
         .child(
             views::EditView::new()
                 .content(format!("{}", offset))
-                .with_id("edit")
+                .with_name("edit")
                 .min_width(5),
         )
         .child(views::DummyView.fixed_width(1))
         .child(views::Button::new("Update", move |s| {
             if let Some(n) = s
-                .call_on_id("edit", |edit: &mut views::EditView| {
+                .call_on_name("edit", |edit: &mut views::EditView| {
                     edit.get_content()
                 })
                 .and_then(|content| content.parse().ok())

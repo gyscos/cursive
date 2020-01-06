@@ -14,7 +14,7 @@ use crate::XY;
 /// currently shown on the [`XY`] page.
 ///
 /// [#32077]: https://github.com/rust-lang/rust/issues/32077
-/// [`XY`]: ../struct.XY.html
+/// [`XY`]: crate::XY
 pub type Vec2 = XY<usize>;
 
 impl<T: PartialOrd> PartialOrd for XY<T> {

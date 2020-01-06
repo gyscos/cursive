@@ -16,7 +16,7 @@ use std::rc::Rc;
 /// use cursive::views::Checkbox;
 /// use cursive::traits::Identifiable;
 ///
-/// let checkbox = Checkbox::new().checked().with_id("check");
+/// let checkbox = Checkbox::new().checked().with_name("check");
 /// ```
 pub struct Checkbox {
     checked: bool,

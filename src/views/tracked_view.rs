@@ -26,8 +26,8 @@ impl<T: View> TrackedView<T> {
         }
     }
 
-    /// Same as [`with_name`](Self::with_name())
-    #[deprecated(note = "with_id is being renamed to with_name")]
+    /// Same as [`with_name`](TrackedView::with_name)
+    #[deprecated(note = "`with_id` is being renamed to `with_name`")]
     pub fn with_id(self, id: &str) -> NamedView<Self> {
         self.with_name(id)
     }

@@ -306,7 +306,8 @@ impl Cursive {
     /// siv.add_global_callback('~', Cursive::toggle_debug_console);
     /// ```
     pub fn toggle_debug_console(&mut self) {
-        if let Some(pos) = self.screen_mut().find_layer_from_id(DEBUG_VIEW_ID)
+        if let Some(pos) =
+            self.screen_mut().find_layer_from_name(DEBUG_VIEW_ID)
         {
             self.screen_mut().remove_layer(pos);
         } else {
@@ -524,7 +525,7 @@ impl Cursive {
     /// # use cursive::traits::*;
     /// let mut siv = Cursive::dummy();
     ///
-    /// siv.add_layer(views::TextView::new("Text #1").with_id("text"));
+    /// siv.add_layer(views::TextView::new("Text #1").with_name("text"));
     ///
     /// siv.add_global_callback('p', |s| {
     ///     s.call_on(
@@ -559,20 +560,34 @@ impl Cursive {
     /// let mut siv = Cursive::dummy();
     ///
     /// siv.add_layer(views::TextView::new("Text #1")
-    ///                               .with_id("text"));
+    ///                               .with_name("text"));
     ///
     /// siv.add_global_callback('p', |s| {
-    ///     s.call_on_id("text", |view: &mut views::TextView| {
+    ///     s.call_on_name("text", |view: &mut views::TextView| {
     ///         view.set_content("Text #2");
     ///     });
     /// });
     /// ```
+    pub fn call_on_name<V, F, R>(
+        &mut self,
+        name: &str,
+        callback: F,
+    ) -> Option<R>
+    where
+        V: View + Any,
+        F: FnOnce(&mut V) -> R,
+    {
+        self.call_on(&view::Selector::Name(name), callback)
+    }
+
+    /// Same as [`call_on_name`](Cursive::call_on_name).
+    #[deprecated(note = "`call_on_id` is being renamed to `call_on_name`")]
     pub fn call_on_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
     where
         V: View + Any,
         F: FnOnce(&mut V) -> R,
     {
-        self.call_on(&view::Selector::Name(id), callback)
+        self.call_on_name(id, callback)
     }
 
     /// Convenient method to find a view wrapped in [`NamedView`].
@@ -589,10 +604,10 @@ impl Cursive {
     /// # let mut siv = Cursive::dummy();
     /// use cursive::traits::Identifiable;
     ///
-    /// siv.add_layer(TextView::new("foo").with_id("id"));
+    /// siv.add_layer(TextView::new("foo").with_name("id"));
     ///
     /// // Could be called in a callback
-    /// let mut view: ViewRef<TextView> = siv.find_id("id").unwrap();
+    /// let mut view: ViewRef<TextView> = siv.find_name("id").unwrap();
     /// view.set_content("bar");
     /// ```
     ///
@@ -606,30 +621,45 @@ impl Cursive {
     /// use cursive::traits::Identifiable;
     ///
     /// let select = SelectView::new().item("zero", 0u32).item("one", 1u32);
-    /// siv.add_layer(select.with_id("select"));
+    /// siv.add_layer(select.with_name("select"));
     ///
     /// // Specifying a wrong type will not return anything.
-    /// assert!(siv.find_id::<SelectView<String>>("select").is_none());
+    /// assert!(siv.find_name::<SelectView<String>>("select").is_none());
     ///
     /// // Omitting the type will use the default type, in this case `String`.
-    /// assert!(siv.find_id::<SelectView>("select").is_none());
+    /// assert!(siv.find_name::<SelectView>("select").is_none());
     ///
     /// // But with the correct type, it works fine.
-    /// assert!(siv.find_id::<SelectView<u32>>("select").is_some());
+    /// assert!(siv.find_name::<SelectView<u32>>("select").is_some());
     /// ```
     ///
-    /// [`NamedView`]: views/struct.NamedView.html
-    /// [`ViewRef`]: views/type.ViewRef.html
+    /// [`NamedView`]: views::NamedView
+    /// [`ViewRef`]: views::ViewRef
+    pub fn find_name<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
+    where
+        V: View + Any,
+    {
+        self.call_on_name(id, views::NamedView::<V>::get_mut)
+    }
+
+    /// Same as [`find_name`](Cursive::find_name).
+    #[deprecated(note = "`find_id` is being renamed to `find_name`")]
     pub fn find_id<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
     where
         V: View + Any,
     {
-        self.call_on_id(id, views::NamedView::<V>::get_mut)
+        self.find_name(id)
     }
 
-    /// Moves the focus to the view identified by `id`.
+    /// Moves the focus to the view identified by `name`.
     ///
-    /// Convenient method to call `focus` with a `view::Selector::Id`.
+    /// Convenient method to call `focus` with a [`view::Selector::Name`].
+    pub fn focus_name(&mut self, name: &str) -> Result<(), ()> {
+        self.focus(&view::Selector::Name(name))
+    }
+
+    /// Same as [`focus_name`](Cursive::focus_name).
+    #[deprecated(note = "`focus_id` is being renamed to `focus_name`")]
     pub fn focus_id(&mut self, id: &str) -> Result<(), ()> {
         self.focus(&view::Selector::Name(id))
     }

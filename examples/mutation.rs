@@ -17,7 +17,7 @@ fn main() {
     // We add the P callback on the textview only (and not globally),
     // so that we can't call it when the popup is already visible.
     siv.add_layer(
-        OnEventView::new(TextView::new(content).with_id("text"))
+        OnEventView::new(TextView::new(content).with_name("text"))
             .on_event('p', |s| show_popup(s)),
     );
 
@@ -33,7 +33,7 @@ fn show_popup(siv: &mut Cursive) {
             .button("Change", |s| {
                 // Look for a view tagged "text".
                 // We _know_ it's there, so unwrap it.
-                s.call_on_id("text", |view: &mut TextView| {
+                s.call_on_name("text", |view: &mut TextView| {
                     let content = reverse(view.get_content().source());
                     view.set_content(content);
                 });

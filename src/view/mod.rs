@@ -119,8 +119,8 @@ pub use self::view_path::ViewPath;
 pub use self::view_trait::View;
 pub use self::view_wrapper::ViewWrapper;
 
-#[deprecated(note = "Boxable is being renamed to Resizable")]
+#[deprecated(note = "`Boxable` is being renamed to `Resizable`")]
 pub use self::resizable::Resizable as Boxable;
 
-#[deprecated(note = "Identifiable is being renamed to Nameable")]
+#[deprecated(note = "`Identifiable` is being renamed to `Nameable`")]
 pub use self::nameable::Nameable as Identifiable;

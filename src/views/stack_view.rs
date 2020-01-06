@@ -312,12 +312,12 @@ impl StackView {
     /// # use cursive::view::Identifiable;
     /// let mut stack = StackView::new();
     /// stack.add_layer(TextView::new("Back"));
-    /// stack.add_layer(Dialog::around(TextView::new("Middle").with_id("text")));
+    /// stack.add_layer(Dialog::around(TextView::new("Middle").with_name("text")));
     /// stack.add_layer(TextView::new("Front"));
     ///
-    /// assert_eq!(stack.find_layer_from_id("text"), Some(LayerPosition::FromBack(1)));
+    /// assert_eq!(stack.find_layer_from_name("text"), Some(LayerPosition::FromBack(1)));
     /// ```
-    pub fn find_layer_from_id(&mut self, id: &str) -> Option<LayerPosition> {
+    pub fn find_layer_from_name(&mut self, id: &str) -> Option<LayerPosition> {
         let selector = Selector::Name(id);
 
         for (i, child) in self.layers.iter_mut().enumerate() {
@@ -329,6 +329,14 @@ impl StackView {
         }
 
         None
+    }
+
+    /// Same as [`find_layer_from_name`](StackView::find_layer_from_name).
+    #[deprecated(
+        note = "`find_layer_from_id` is being renamed to `find_layer_from_name`"
+    )]
+    pub fn find_layer_from_id(&mut self, id: &str) -> Option<LayerPosition> {
+        self.find_layer_from_name(id)
     }
 
     /// Adds a new full-screen layer on top of the stack.

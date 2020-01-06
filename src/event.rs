@@ -1,17 +1,16 @@
 //! User-input events and their effects.
 //!
-//! * Every user input the application receives is converted to an
-//!   [`Event`](./enum.Event.html).
+//! * Every user input the application receives is converted to an [`Event`].
 //! * Each event is then given to the root, and descends the view tree down to
-//!   the view currently in focus, through the
-//!   [`on_event`](../view/trait.View.html#method.on_event) method.
+//!   the view currently in focus, through the [`on_event`] method.
 //!     * If the view consumes the event, it may return a callback to be
 //!       executed.
 //!     * Otherwise, it ignores the event, and the view parent can in turn
 //!       choose to consume it or not.
-//! * If no view consumes the event, the
-//!   [global callback](../struct.Cursive.html#method.add_global_callback)
-//!   table is checked.
+//! * If no view consumes the event, the [global callback] table is checked.
+//!
+//! [`on_event`]: crate::View::on_event
+//! [global callback]: crate::Cursive::add_global_callback
 
 use crate::vec::Vec2;
 use crate::Cursive;

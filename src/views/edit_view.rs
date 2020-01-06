@@ -46,11 +46,11 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 ///         .content(
 ///             EditView::new()
 ///                 .on_submit(show_popup)
-///                 .with_id("name")
+///                 .with_name("name")
 ///                 .fixed_width(20),
 ///         )
 ///         .button("Ok", |s| {
-///             let name = s.call_on_id(
+///             let name = s.call_on_name(
 ///                 "name",
 ///                 |view: &mut EditView| view.get_content(),
 ///             ).unwrap();

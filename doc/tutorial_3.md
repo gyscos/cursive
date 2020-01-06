@@ -19,7 +19,7 @@ fn main() {
 
     let select = SelectView::<String>::new()
         .on_submit(on_submit)
-        .with_id("select")
+        .with_name("select")
         .fixed_size((10, 5));
     let buttons = LinearLayout::vertical()
         .child(Button::new("Add new", add_name))
@@ -38,7 +38,7 @@ fn main() {
 
 fn add_name(s: &mut Cursive) {
     fn ok(s: &mut Cursive, name: &str) {
-        s.call_on_id("select", |view: &mut SelectView<String>| {
+        s.call_on_name("select", |view: &mut SelectView<String>| {
             view.add_item_str(name)
         });
         s.pop_layer();
@@ -46,12 +46,12 @@ fn add_name(s: &mut Cursive) {
 
     s.add_layer(Dialog::around(EditView::new()
             .on_submit(ok)
-            .with_id("name")
+            .with_name("name")
             .fixed_width(10))
         .title("Enter a new name")
         .button("Ok", |s| {
             let name =
-                s.call_on_id("name", |view: &mut EditView| {
+                s.call_on_name("name", |view: &mut EditView| {
                     view.get_content()
                 }).unwrap();
             ok(s, &name);
@@ -62,7 +62,7 @@ fn add_name(s: &mut Cursive) {
 }
 
 fn delete_name(s: &mut Cursive) {
-    let mut select = s.find_id::<SelectView<String>>("select").unwrap();
+    let mut select = s.find_name::<SelectView<String>>("select").unwrap();
     match select.selected_id() {
         None => s.add_layer(Dialog::info("No name to remove")),
         Some(focus) => {
@@ -193,7 +193,7 @@ this list with names!
 [`LinearLayout`]: https://docs.rs/cursive/0/cursive/views/struct.LinearLayout.html
 [`DummyView`]: https://docs.rs/cursive/0/cursive/views/struct.DummyView.html
 
-## IDs
+## Identifying views
 
 When the user presses the `<Add new>` button, we want to show a popup where he
 can enter a new name:
@@ -224,12 +224,12 @@ The closure has access to the `&mut Cursive`, which in turn has access to all
 the views, so _in theory_, we could ask it to borrow the view, if only we knew
 how to point to the correct view.
 
-[`IdView`] is meant exactly for this: it wraps a view and gives it an ID.
-Later, you can ask the Cursive root for this ID and get access to the view.
+[`IdView`] is meant exactly for this: it wraps a view and gives it a name.
+Later, you can ask the Cursive root for this name and get access to the view.
 Just what we need!
 
 Like `ResizedView`, `IdView` can be used directly with [`IdView::new`], or through
-the [`Identifiable`] trait. [`Cursive::call_on_id`] allows you to run a closure
+the [`Identifiable`] trait. [`Cursive::call_on_name`] allows you to run a closure
 on the view.
 
 Here's what it looks like in action:
@@ -237,11 +237,11 @@ Here's what it looks like in action:
 ```rust,ignore
 fn add_name(s: &mut Cursive) {
     s.add_layer(Dialog::around(EditView::new()
-            .with_id("name")
+            .with_name("name")
             .fixed_width(10))
         .title("Enter a new name")
         .button("Ok", |s| {
-            let name = s.call_on_id("name", |view: &mut EditView| {
+            let name = s.call_on_name("name", |view: &mut EditView| {
                 view.get_content()
             }).unwrap();
         })
@@ -252,15 +252,15 @@ fn add_name(s: &mut Cursive) {
 ```
 
 We create the `EditView` with the id `"name"`, and we use `"name"` again when
-calling `call_on_id`.
+calling `call_on_name`.
 
 Now we just need to do something with this name: add it to the list!
-Remember the `SelectView` we created? Let's give it an ID too:
+Remember the `SelectView` we created? Let's give it a name too:
 
 ```rust,ignore
 let select = SelectView::<String>::new()
     .on_submit(on_submit)
-    .with_id("select")
+    .with_name("select")
     .fixed_size((10, 5));
 ```
 (Here again, the order is important: we want to wrap the `SelectView`, not
@@ -271,7 +271,7 @@ That way, we can update it with a new item:
 ```rust,ignore
 fn add_name(s: &mut Cursive) {
     fn ok(s: &mut Cursive, name: &str) {
-        s.call_on_id("select", |view: &mut SelectView<String>| {
+        s.call_on_name("select", |view: &mut SelectView<String>| {
             view.add_item_str(name);
         });
         s.pop_layer();
@@ -279,11 +279,11 @@ fn add_name(s: &mut Cursive) {
 
     s.add_layer(Dialog::around(EditView::new()
             .on_submit(ok)
-            .with_id("name")
+            .with_name("name")
             .fixed_width(10))
         .title("Enter a new name")
         .button("Ok", |s| {
-            let name = s.call_on_id("name", |v: &mut EditView| {
+            let name = s.call_on_name("name", |v: &mut EditView| {
                 v.get_content()
             }).unwrap();
             ok(s, &name);
@@ -299,7 +299,7 @@ complicated:
 
 ```rust,ignore
 fn delete_name(s: &mut Cursive) {
-    let mut select = s.find_id::<SelectView<String>>("select").unwrap();
+    let mut select = s.find_name::<SelectView<String>>("select").unwrap();
     match select.selected_id() {
         None => s.add_layer(Dialog::info("No name to remove")),
         Some(focus) => {
@@ -312,7 +312,7 @@ fn delete_name(s: &mut Cursive) {
 We use [`SelectView::selected_id`] and [`SelectView::remove_item`] to remove
 the item currently selected, nothing too surprising.
 
-But this time, instead of using `call_on_id`, we use [`Cursive::find_id`]:
+But this time, instead of using `call_on_name`, we use [`Cursive::find_name`]:
 this method returns a handle, through which we can mutate the view.
 It uses `Rc` and `RefCell` under the hood to provide mutable access to the
 view without borrowing the `Cursive` root, leaving us free to pop layers.
@@ -321,8 +321,8 @@ view without borrowing the `Cursive` root, leaving us free to pop layers.
 [`IdView`]: https://docs.rs/cursive/0/cursive/views/struct.IdView.html
 [`IdView::new`]: https://docs.rs/cursive/0/cursive/prelude/struct.IdView.html#method.around
 [`Identifiable`]: https://docs.rs/cursive/0/cursive/view/trait.Identifiable.html
-[`Cursive::find_id`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.find_id
-[`Cursive::call_on_id`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.call_on_id
+[`Cursive::find_name`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.find_name
+[`Cursive::call_on_name`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.call_on_name
 [`SelectView::selected_id`]: https://docs.rs/cursive/0/cursive/views/struct.SelectView.html#method.selected_id
 [`SelectView::remove_item`]: https://docs.rs/cursive/0/cursive/views/struct.SelectView.html#method.remove_item
 
@@ -334,5 +334,5 @@ don't hesitate to read the documentation.
 You've now seen:
 * How to wrap views to control their size
 * How to assemble views together in a linear layout
-* How to give an ID to views and use them later
+* How to give names to views and use them later
 * How to use `SelectView`, `EditView`, `Button`s...

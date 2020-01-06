@@ -2,7 +2,7 @@
 //!
 //! Menus are a way to arrange many actions in groups of more manageable size.
 //!
-//! A menu can be seen as a `MenuTree`. It has a list of children:
+//! A menu can be seen as a [`MenuTree`]. It has a list of children:
 //!
 //! * Leaf nodes are made of a label and a callback
 //! * Sub-trees are made of a label, and another `MenuTree`.
@@ -10,7 +10,7 @@
 //!
 //! The [menubar] is the main way to show menus.
 //!
-//! [menubar]: ../struct.Cursive.html#method.menubar
+//! [menubar]: crate::Cursive::menubar
 
 use crate::event::Callback;
 use crate::Cursive;

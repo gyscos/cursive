@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 /// Atomic counter used by [`ProgressBar`].
 ///
-/// [`ProgressBar`]: ../views/struct.ProgressBar.html
+/// [`ProgressBar`]: crate::views::ProgressBar
 #[derive(Clone, Debug)]
 pub struct Counter(pub Arc<AtomicUsize>);
 

@@ -18,7 +18,7 @@ fn main() {
                 .value(7)
                 .on_change(|s, v| {
                     let title = format!("[ {} ]", v);
-                    s.call_on_id("dialog", |view: &mut Dialog| {
+                    s.call_on_name("dialog", |view: &mut Dialog| {
                         view.set_title(title)
                     });
                 })
@@ -31,7 +31,7 @@ fn main() {
                 }),
         )
         .title("[ 7 ]")
-        .with_id("dialog"),
+        .with_name("dialog"),
     );
 
     siv.run();

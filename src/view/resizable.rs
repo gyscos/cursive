@@ -3,11 +3,9 @@ use crate::view::{SizeConstraint, View};
 use crate::views::ResizedView;
 
 /// Makes a view wrappable in a [`ResizedView`].
-///
-/// [`ResizedView`]: ../views/struct.ResizedView.html
 pub trait Resizable: View + Sized {
-    /// Same as [`resized`](Self::resized())
-    #[deprecated(note = "Use resized() instead.")]
+    /// Same as [`resized`](Resizable::resized)
+    #[deprecated(note = "Use `Resizable::resized()` instead.")]
     fn boxed(
         self,
         width: SizeConstraint,

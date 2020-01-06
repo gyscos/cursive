@@ -8,19 +8,18 @@
 //!
 //! ## Getting started
 //!
-//! * Every application should start with a [`Cursive`](struct.Cursive.html)
-//!   object. It is the main entry-point to the library.
+//! * Every application should start with a [`Cursive`] object. It is the main
+//!   entry-point to the library.
 //! * A declarative phase then describes the structure of the UI by adding
 //!   views and configuring their behaviours.
-//! * Finally, the event loop is started by calling
-//!   [`Cursive::run(&mut self)`](struct.Cursive.html#method.run).
+//! * Finally, the event loop is started by calling [`Cursive::run`].
 //!
 //! ## Views
 //!
 //! Views are the main components of a cursive interface.
-//! The [`views`](./views/index.html) module contains many views to use in your
+//! The [`views`] module contains many views to use in your
 //! application; if you don't find what you need, you may also implement the
-//! [`View`](view/trait.View.html) trait and build your own.
+//! [`View`] trait and build your own.
 //!
 //! ## Callbacks
 //!
@@ -104,5 +103,6 @@ pub use self::cursive::{CbSink, Cursive, ScreenId};
 pub use self::printer::Printer;
 pub use self::rect::Rect;
 pub use self::vec::Vec2;
+pub use self::view::View;
 pub use self::with::With;
 pub use self::xy::XY;

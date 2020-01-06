@@ -76,7 +76,7 @@ pub trait View: Any + AnyView {
     /// See [`Finder::call_on`] for a nicer interface, implemented for all
     /// views.
     ///
-    /// [`Finder::call_on`]: trait.Finder.html#method.call_on
+    /// [`Finder::call_on`]: crate::view::Finder::call_on
     ///
     /// If the selector doesn't find a match, the closure will not be run.
     ///

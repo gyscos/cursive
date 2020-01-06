@@ -17,8 +17,6 @@ use crate::Printer;
 /// You can also override any of the `wrap_*` methods for more specific
 /// behaviors (the default implementations simply forwards the calls to the
 /// child view).
-///
-/// [`wrap_impl!`]: ../macro.wrap_impl.html
 pub trait ViewWrapper: 'static {
     /// Type that this view wraps.
     type V: View + ?Sized;
@@ -151,7 +149,7 @@ impl<T: ViewWrapper> View for T {
 /// It defines the `with_view` and `with_view_mut` implementations,
 /// as well as the `type V` declaration.
 ///
-/// [`ViewWrapper`]: view/trait.ViewWrapper.html
+/// [`ViewWrapper`]: crate::view::ViewWrapper
 ///
 /// # Examples
 ///
@@ -194,8 +192,8 @@ macro_rules! wrap_impl {
 ///
 /// It defines the `get_inner` and `get_inner_mut` implementations.
 ///
-/// [`ViewWrapper`]: view/trait.ViewWrapper.html
-/// [`View`]: view/trait.View.html
+/// [`ViewWrapper`]: crate::view::ViewWrapper
+/// [`View`]: crate::View
 ///
 /// # Examples
 ///

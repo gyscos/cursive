@@ -18,9 +18,9 @@ fn main() {
                     // Call `show_popup` when the user presses `Enter`
                     .on_submit(show_popup)
                     // Give the `EditView` a name so we can refer to it later.
-                    .with_id("name")
+                    .with_name("name")
                     // Wrap this in a `ResizedView` with a fixed width.
-                    // Do this _after_ `with_id` or the name will point to the
+                    // Do this _after_ `with_name` or the name will point to the
                     // `ResizedView` instead of `EditView`!
                     .fixed_width(20),
             )
@@ -28,7 +28,7 @@ fn main() {
                 // This will run the given closure, *ONLY* if a view with the
                 // correct type and the given ID is found.
                 let name = s
-                    .call_on_id("name", |view: &mut EditView| {
+                    .call_on_name("name", |view: &mut EditView| {
                         // We can return content from the closure!
                         view.get_content()
                     })

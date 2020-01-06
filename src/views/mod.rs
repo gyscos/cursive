@@ -119,17 +119,17 @@ pub use self::text_view::{TextContent, TextContentRef, TextView};
 pub use self::tracked_view::TrackedView;
 
 /// Same as [`LastSizeView`](self::LastSizeView).
-#[deprecated(note = "SizedView is being renamed to LastSizeView")]
+#[deprecated(note = "`SizedView` is being renamed to `LastSizeView`")]
 pub type SizedView<T> = LastSizeView<T>;
 
 /// Same as [`ResizedView`](self::ResizedView).
-#[deprecated(note = "BoxView is being renamed to ResizedView")]
+#[deprecated(note = "`BoxView` is being renamed to `ResizedView`")]
 pub type BoxView<T> = ResizedView<T>;
 
 /// Same as [`BoxedView`](self::BoxedView).
-#[deprecated(note = "ViewBox is being renamed to BoxedView")]
+#[deprecated(note = "`ViewBox` is being renamed to `BoxedView`")]
 pub type ViewBox = BoxedView;
 
 /// Same as [`NamedView`](self::NamedView).
-#[deprecated(note = "IdView is being renamed to NamedView")]
+#[deprecated(note = "`IdView` is being renamed to `NamedView`")]
 pub type IdView<T> = NamedView<T>;

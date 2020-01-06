@@ -6,7 +6,7 @@ use crate::Printer;
 ///
 /// This is mostly used as layer in the [`StackView`].
 ///
-/// [`StackView`]: struct.StackView.html
+/// [`StackView`]: crate::views::StackView
 #[derive(Debug)]
 pub struct Layer<T: View> {
     view: T,

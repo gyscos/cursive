@@ -178,7 +178,7 @@ impl<T: 'static> SelectView<T> {
     /// use cursive::traits::Identifiable;
     /// use cursive::views::{TextView, SelectView};
     ///
-    /// let text_view = TextView::new("").with_id("text");
+    /// let text_view = TextView::new("").with_name("text");
     ///
     /// let select_view = SelectView::new()
     ///     .item("One", 1)
@@ -191,7 +191,7 @@ impl<T: 'static> SelectView<T> {
     ///         };
     ///
     ///         // Update the textview with the currently selected item.
-    ///         s.call_on_id("text", |v: &mut TextView| {
+    ///         s.call_on_name("text", |v: &mut TextView| {
     ///             v.set_content(content);
     ///         }).unwrap();
     ///     });

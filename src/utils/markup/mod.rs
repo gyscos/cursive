@@ -15,8 +15,6 @@ use crate::utils::span::{IndexedSpan, Span, SpannedString};
 ///
 /// **Note**: due to limitations in rustdoc, you will need to read the
 /// documentation from the [`SpannedString`] page.
-///
-/// [`SpannedString`]: ../span/struct.SpannedString.html
 pub type StyledString = SpannedString<Style>;
 
 /// Indexes a span into a source string.

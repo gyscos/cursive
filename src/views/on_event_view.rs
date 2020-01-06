@@ -24,10 +24,10 @@ use std::rc::Rc;
 /// "Simple" callbacks ([`on_event`] and [`on_pre_event`]) skip this first
 /// phase and are only called with a `&mut Cursive`.
 ///
-/// [`on_event`]: struct.OnEventView.html#method.on_event
-/// [`on_pre_event`]: struct.OnEventView.html#method.on_pre_event
-/// [`on_event_inner`]: struct.OnEventView.html#method.on_event_inner
-/// [`on_pre_event_inner`]: struct.OnEventView.html#method.on_pre_event_inner
+/// [`on_event`]: OnEventView::on_event
+/// [`on_pre_event`]: OnEventView::on_pre_event
+/// [`on_event_inner`]: OnEventView::on_event_inner
+/// [`on_pre_event_inner`]: OnEventView::on_pre_event_inner
 ///
 /// # Examples
 ///

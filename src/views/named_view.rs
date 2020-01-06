@@ -19,7 +19,7 @@ pub struct NamedView<V: View> {
 ///
 /// This behaves like a [`RefMut`], but without being tied to a lifetime.
 ///
-/// [`RefMut`]: https://doc.rust-lang.org/std/cell/struct.RefMut.html
+/// [`RefMut`]: std::cell::RefMut
 pub type ViewRef<V> = OwningHandle<RcRef<RefCell<V>>, RefMut<'static, V>>;
 
 impl<V: View> NamedView<V> {

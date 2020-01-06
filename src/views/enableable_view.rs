@@ -16,9 +16,9 @@ use crate::Printer;
 /// let mut siv = Cursive::dummy();
 ///
 /// siv.add_layer(LinearLayout::vertical()
-///     .child(EnableableView::new(Checkbox::new()).with_id("my_view"))
+///     .child(EnableableView::new(Checkbox::new()).with_name("my_view"))
 ///     .child(Button::new("Toggle", |s| {
-///         s.call_on_id("my_view", |v: &mut EnableableView<Checkbox>| {
+///         s.call_on_name("my_view", |v: &mut EnableableView<Checkbox>| {
 ///             // This will disable (or re-enable) the checkbox, preventing the user from
 ///             // interacting with it.
 ///             v.set_enabled(!v.is_enabled());

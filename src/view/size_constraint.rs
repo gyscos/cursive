@@ -4,7 +4,7 @@ use std::cmp::min;
 ///
 /// This describes a possible behaviour for a [`ResizedView`].
 ///
-/// [`ResizedView`]: ../views/struct.ResizedView.html
+/// [`ResizedView`]: crate::views::ResizedView
 #[derive(Debug, Clone, Copy)]
 pub enum SizeConstraint {
     /// No constraint imposed, the child view's response is used.
