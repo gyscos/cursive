@@ -4,12 +4,12 @@ use crate::event::{
 };
 use crate::menu::{MenuItem, MenuTree};
 use crate::rect::Rect;
-use crate::vec::Vec2;
 use crate::view::scroll;
 use crate::view::{Position, View};
 use crate::views::OnEventView;
 use crate::Cursive;
 use crate::Printer;
+use crate::Vec2;
 use crate::With;
 use std::cmp::min;
 use std::rc::Rc;

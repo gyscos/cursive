@@ -1,6 +1,6 @@
 use crate::printer::Printer;
-use crate::vec::Vec2;
 use crate::view::{SizeConstraint, View, ViewWrapper};
+use crate::Vec2;
 use crate::XY;
 
 /// Wrapper around another view, with a controlled size.
@@ -230,9 +230,9 @@ impl<T: View> ViewWrapper for ResizedView<T> {
 #[cfg(test)]
 mod tests {
 
-    use crate::vec::Vec2;
     use crate::view::{Boxable, View};
     use crate::views::DummyView;
+    use crate::Vec2;
 
     // No need to test `draw()` method as it's directly forwarded.
 

@@ -1,12 +1,12 @@
 use crate::direction::Direction;
 use crate::event::{AnyCb, Event, EventResult};
 use crate::theme::ColorStyle;
-use crate::vec::Vec2;
 use crate::view::{
     IntoBoxedView, Offset, Position, Selector, View, ViewWrapper,
 };
 use crate::views::{BoxedView, CircularFocus, Layer, ShadowView};
 use crate::Printer;
+use crate::Vec2;
 use crate::With;
 use std::cell;
 use std::ops::Deref;

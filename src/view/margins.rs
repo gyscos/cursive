@@ -1,4 +1,4 @@
-use crate::vec::Vec2;
+use crate::Vec2;
 use std::ops::{Add, Div, Mul, Sub};
 
 /// Four values representing each direction.

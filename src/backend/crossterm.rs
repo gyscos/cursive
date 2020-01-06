@@ -32,8 +32,7 @@ use crossterm::{
 use crate::{
     backend,
     event::{Event, Key, MouseButton, MouseEvent},
-    theme,
-    vec::Vec2,
+    theme, Vec2,
 };
 
 #[cfg(windows)]

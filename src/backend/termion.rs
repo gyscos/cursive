@@ -19,7 +19,7 @@ use crossbeam_channel::{self, select, Receiver};
 use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme;
-use crate::vec::Vec2;
+use crate::Vec2;
 
 use std::cell::{Cell, RefCell};
 use std::fs::File;

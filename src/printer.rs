@@ -6,8 +6,8 @@ use crate::theme::{
     BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme,
 };
 use crate::utils::lines::simple::{prefix, suffix};
-use crate::vec::Vec2;
 use crate::with::With;
+use crate::Vec2;
 use enumset::EnumSet;
 use std::cmp::min;
 use unicode_segmentation::UnicodeSegmentation;

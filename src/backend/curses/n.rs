@@ -14,7 +14,7 @@ use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{Color, ColorPair, Effect};
 use crate::utf8;
-use crate::vec::Vec2;
+use crate::Vec2;
 
 use self::super::split_i32;
 use self::ncurses::mmask_t;

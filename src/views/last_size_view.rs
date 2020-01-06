@@ -1,6 +1,6 @@
-use crate::vec::Vec2;
 use crate::view::View;
 use crate::view::ViewWrapper;
+use crate::Vec2;
 
 /// Wrapper around a view that remembers its size.
 pub struct LastSizeView<T> {

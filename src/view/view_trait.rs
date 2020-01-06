@@ -1,9 +1,9 @@
 use crate::direction::Direction;
 use crate::event::{AnyCb, Event, EventResult};
 use crate::rect::Rect;
-use crate::vec::Vec2;
 use crate::view::{AnyView, Selector};
 use crate::Printer;
+use crate::Vec2;
 use std::any::Any;
 
 /// Main trait defining a view behaviour.

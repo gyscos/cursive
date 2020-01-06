@@ -2,9 +2,9 @@ use crate::align::*;
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
 use crate::theme::ColorStyle;
-use crate::vec::Vec2;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
+use crate::Vec2;
 use crate::With;
 use unicode_width::UnicodeWidthStr;
 

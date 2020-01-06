@@ -3,8 +3,8 @@ use crate::direction::Direction;
 use crate::event::*;
 use crate::rect::Rect;
 use crate::theme::ColorStyle;
-use crate::vec::Vec2;
 use crate::view::View;
+use crate::Vec2;
 use crate::{Cursive, Printer, With};
 use unicode_width::UnicodeWidthStr;
 

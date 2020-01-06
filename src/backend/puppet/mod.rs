@@ -7,7 +7,7 @@ use crate::backend::puppet::observed::ObservedScreen;
 use crate::backend::puppet::observed::ObservedStyle;
 use crate::event::Event;
 use crate::theme;
-use crate::vec::Vec2;
+use crate::Vec2;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use unicode_segmentation::UnicodeSegmentation;

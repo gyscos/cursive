@@ -1,7 +1,7 @@
 use crate::event::{Event, EventResult};
-use crate::vec::Vec2;
 use crate::view::{Margins, View, ViewWrapper};
 use crate::Printer;
+use crate::Vec2;
 
 /// Adds padding to another view.
 ///

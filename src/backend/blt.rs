@@ -14,7 +14,7 @@ use self::bear_lib_terminal::Color as BltColor;
 use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{BaseColor, Color, ColorPair, Effect};
-use crate::vec::Vec2;
+use crate::Vec2;
 
 // Use AHash instead of the slower SipHash
 type HashSet<K> = std::collections::HashSet<K, ahash::ABuildHasher>;

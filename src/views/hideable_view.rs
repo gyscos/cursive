@@ -1,6 +1,6 @@
 use crate::event::AnyCb;
-use crate::vec::Vec2;
 use crate::view::{Selector, View, ViewWrapper};
+use crate::Vec2;
 use crate::With;
 
 /// Wrapper around another view that can be hidden at will.

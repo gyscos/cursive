@@ -12,8 +12,8 @@
 //! [`on_event`]: crate::View::on_event
 //! [global callback]: crate::Cursive::add_global_callback
 
-use crate::vec::Vec2;
 use crate::Cursive;
+use crate::Vec2;
 use std::any::Any;
 use std::cell::RefCell;
 use std::ops::Deref;

@@ -1,5 +1,5 @@
 //! Rectangles on the 2D character grid.
-use crate::vec::Vec2;
+use crate::Vec2;
 use std::ops::Add;
 
 /// A non-empty rectangle on the 2D grid.

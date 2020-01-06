@@ -1,5 +1,5 @@
 use cursive::traits::*;
-use cursive::vec::Vec2;
+use cursive::Vec2;
 use cursive::{Cursive, Printer};
 use std::collections::VecDeque;
 use std::sync::mpsc;

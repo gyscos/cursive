@@ -3,7 +3,7 @@
 use crate::backend;
 use crate::event::Event;
 use crate::theme;
-use crate::vec::Vec2;
+use crate::Vec2;
 
 /// Dummy backend that does nothing and immediately exits.
 ///

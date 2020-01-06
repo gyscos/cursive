@@ -38,7 +38,7 @@ impl XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// assert!(Vec2::new(9999, 9999) < Vec2::max_value());
     /// ```
     pub fn max_value() -> Self {
@@ -52,7 +52,7 @@ impl XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let u = Vec2::new(1, 2);
     /// let v = Vec2::new(2, 1);
     /// assert_eq!(u.saturating_sub(v), Vec2::new(0, 1));
@@ -69,7 +69,7 @@ impl XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// # use cursive::XY;
     /// let u = Vec2::new(1, 2);
     /// let v = XY::<isize>::new(-2, 1);
@@ -92,7 +92,7 @@ impl XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let u = Vec2::new(1, 6);
     /// let v = Vec2::new(2, 3);
     /// assert_eq!(u.div_up(v), Vec2::new(1, 2));
@@ -113,7 +113,7 @@ impl XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let xy = Vec2::new(1, 2);
     /// assert_eq!(xy.checked_sub((1, 1)), Some(Vec2::new(0, 1)));
     /// assert_eq!(xy.checked_sub((2, 2)), None);
@@ -132,7 +132,7 @@ impl XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// # use cursive::XY;
     /// let v: XY<isize> = Vec2::new(1, 2).signed().map(|i| i - 5);
     /// assert_eq!(v, XY::new(-4, -3));
@@ -155,7 +155,7 @@ impl<T: Ord> XY<T> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let v = Vec2::new(1, 2);
     /// assert!(v.fits_in((1, 2)));
     /// assert!(v.fits_in((3, 3)));
@@ -175,7 +175,7 @@ impl<T: Ord> XY<T> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let v = Vec2::new(1, 2);
     /// assert!(v.fits((1, 2)));
     /// assert!(v.fits((0, 0)));
@@ -203,7 +203,7 @@ impl<T: Ord> XY<T> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// assert_eq!(Vec2::max((1, 2), (3, 1)), Vec2::new(3, 2));
     /// ```
     pub fn max<A: Into<XY<T>>, B: Into<XY<T>>>(a: A, b: B) -> Self {
@@ -217,7 +217,7 @@ impl<T: Ord> XY<T> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// assert_eq!(Vec2::min((1, 2), (3, 1)), Vec2::new(1, 1));
     /// ```
     pub fn min<A: Into<XY<T>>, B: Into<XY<T>>>(a: A, b: B) -> Self {
@@ -315,7 +315,7 @@ impl<T: Zero + Clone> XY<T> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// assert_eq!(Vec2::zero(), Vec2::new(0, 0));
     /// ```
     pub fn zero() -> Self {
@@ -350,7 +350,7 @@ where
     ///
     /// ```rust
     /// # use cursive::XY;
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let u = Vec2::new(1, 2);
     /// let v: XY<isize> = XY::from(u);
     /// assert_eq!(v, XY::new(1, 2));
@@ -378,7 +378,7 @@ impl From<(u32, u32)> for XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let v = Vec2::from((1u32, 2u32));
     /// assert_eq!(v, Vec2::new(1, 2));
     /// ```
@@ -391,7 +391,7 @@ impl From<(u8, u8)> for XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let v = Vec2::from((1u8, 2u8));
     /// assert_eq!(v, Vec2::new(1, 2));
     /// ```
@@ -404,7 +404,7 @@ impl From<(u16, u16)> for XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let v = Vec2::from((1u16, 2u16));
     /// assert_eq!(v, Vec2::new(1, 2));
     /// ```
@@ -473,7 +473,7 @@ impl Mul<usize> for XY<usize> {
     /// # Examples
     ///
     /// ```rust
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let v = Vec2::new(1, 2);
     /// assert_eq!(v * 2, Vec2::new(2, 4));
     /// ```

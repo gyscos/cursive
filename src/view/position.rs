@@ -1,4 +1,4 @@
-use crate::vec::Vec2;
+use crate::Vec2;
 use crate::XY;
 use std::cmp::min;
 
@@ -91,7 +91,7 @@ impl Offset {
 mod tests {
 
     use super::Position;
-    use crate::vec::Vec2;
+    use crate::Vec2;
 
     #[test]
     fn test_center() {

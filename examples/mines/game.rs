@@ -1,4 +1,4 @@
-use cursive::vec::Vec2;
+use cursive::Vec2;
 use rand::{thread_rng, Rng};
 // use std::cmp::max;
 

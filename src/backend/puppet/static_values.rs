@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 
 use crate::theme::ColorPair;
 use crate::theme::{Color, Effect};
-use crate::vec::Vec2;
+use crate::Vec2;
 use crate::XY;
 use enumset::EnumSet;
 

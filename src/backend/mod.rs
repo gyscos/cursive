@@ -9,7 +9,7 @@
 
 use crate::event::Event;
 use crate::theme;
-use crate::vec::Vec2;
+use crate::Vec2;
 use unicode_width::UnicodeWidthStr;
 
 #[cfg(unix)]

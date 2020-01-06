@@ -3,11 +3,11 @@ use crate::event::*;
 use crate::menu::{MenuItem, MenuTree};
 use crate::rect::Rect;
 use crate::theme::ColorStyle;
-use crate::vec::Vec2;
 use crate::view::{Position, View};
 use crate::views::{MenuPopup, OnEventView};
 use crate::Cursive;
 use crate::Printer;
+use crate::Vec2;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 

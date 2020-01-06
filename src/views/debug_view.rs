@@ -1,8 +1,8 @@
 use crate::logger;
 use crate::theme;
-use crate::vec::Vec2;
 use crate::view::View;
 use crate::Printer;
+use crate::Vec2;
 
 use unicode_width::UnicodeWidthStr;
 

@@ -3,8 +3,8 @@ use crate::event::{
     Callback, Event, EventResult, Key, MouseButton, MouseEvent,
 };
 use crate::theme::ColorStyle;
-use crate::vec::Vec2;
 use crate::view::View;
+use crate::Vec2;
 use crate::With;
 use crate::{Cursive, Printer};
 use std::rc::Rc;

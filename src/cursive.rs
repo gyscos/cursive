@@ -11,9 +11,9 @@ use crate::direction;
 use crate::event::{Callback, Event, EventResult};
 use crate::printer::Printer;
 use crate::theme;
-use crate::vec::Vec2;
 use crate::view::{self, Finder, IntoBoxedView, Position, View};
 use crate::views::{self, LayerPosition};
+use crate::Vec2;
 
 static DEBUG_VIEW_NAME: &str = "_cursive_debug_view";
 

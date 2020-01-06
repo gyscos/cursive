@@ -5,9 +5,9 @@ use crate::event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
 use crate::printer::Printer;
 use crate::rect::Rect;
 use crate::theme::ColorStyle;
-use crate::vec::Vec2;
 use crate::view::{ScrollStrategy, Selector, SizeCache};
 use crate::with::With;
+use crate::Vec2;
 use crate::XY;
 
 /// Describes an item with a scroll core.

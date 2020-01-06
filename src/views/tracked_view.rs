@@ -1,7 +1,7 @@
-use crate::vec::Vec2;
 use crate::view::{View, ViewWrapper};
 use crate::views::NamedView;
 use crate::Printer;
+use crate::Vec2;
 use std::cell::Cell;
 
 /// Wrapper around a view that remembers its position.

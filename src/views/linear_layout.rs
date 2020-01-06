@@ -1,9 +1,9 @@
 use crate::direction;
 use crate::event::{AnyCb, Event, EventResult, Key};
 use crate::rect::Rect;
-use crate::vec::Vec2;
 use crate::view::{IntoBoxedView, Selector, SizeCache, View};
 use crate::Printer;
+use crate::Vec2;
 use crate::With;
 use crate::XY;
 use log::debug;

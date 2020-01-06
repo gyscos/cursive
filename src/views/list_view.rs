@@ -1,10 +1,10 @@
 use crate::direction;
 use crate::event::{AnyCb, Callback, Event, EventResult, Key};
 use crate::rect::Rect;
-use crate::vec::Vec2;
 use crate::view::{IntoBoxedView, Selector, View};
 use crate::Cursive;
 use crate::Printer;
+use crate::Vec2;
 use crate::With;
 use log::debug;
 use std::rc::Rc;

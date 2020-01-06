@@ -1,10 +1,10 @@
 use crate::direction::Direction;
 use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
 use crate::theme::ColorStyle;
-use crate::vec::Vec2;
 use crate::view::View;
 use crate::Cursive;
 use crate::Printer;
+use crate::Vec2;
 use crate::With;
 use std::rc::Rc;
 

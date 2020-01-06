@@ -1,6 +1,6 @@
-use crate::vec::Vec2;
 use crate::view::{SizeConstraint, View};
 use crate::views::ResizedView;
+use crate::Vec2;
 
 /// Makes a view wrappable in a [`ResizedView`].
 pub trait Resizable: View + Sized {
