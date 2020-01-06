@@ -15,7 +15,7 @@ use crate::vec::Vec2;
 use crate::view::{self, Finder, IntoBoxedView, Position, View};
 use crate::views::{self, LayerPosition};
 
-static DEBUG_VIEW_ID: &str = "_cursive_debug_view";
+static DEBUG_VIEW_NAME: &str = "_cursive_debug_view";
 
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;
@@ -287,7 +287,7 @@ impl Cursive {
         self.add_layer(
             views::Dialog::around(
                 views::ScrollView::new(views::NamedView::new(
-                    DEBUG_VIEW_ID,
+                    DEBUG_VIEW_NAME,
                     views::DebugView::new(),
                 ))
                 .scroll_x(true),
@@ -307,7 +307,7 @@ impl Cursive {
     /// ```
     pub fn toggle_debug_console(&mut self) {
         if let Some(pos) =
-            self.screen_mut().find_layer_from_name(DEBUG_VIEW_ID)
+            self.screen_mut().find_layer_from_name(DEBUG_VIEW_NAME)
         {
             self.screen_mut().remove_layer(pos);
         } else {
@@ -592,7 +592,7 @@ impl Cursive {
 
     /// Convenient method to find a view wrapped in [`NamedView`].
     ///
-    /// This looks for a `NamedView<V>` with the given ID, and return
+    /// This looks for a `NamedView<V>` with the given name, and return
     /// a [`ViewRef`] to the wrapped view. The `ViewRef` implements
     /// `DerefMut<Target=T>`, so you can treat it just like a `&mut T`.
     ///

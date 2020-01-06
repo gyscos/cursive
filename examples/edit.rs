@@ -26,7 +26,7 @@ fn main() {
             )
             .button("Ok", |s| {
                 // This will run the given closure, *ONLY* if a view with the
-                // correct type and the given ID is found.
+                // correct type and the given name is found.
                 let name = s
                     .call_on_name("name", |view: &mut EditView| {
                         // We can return content from the closure!

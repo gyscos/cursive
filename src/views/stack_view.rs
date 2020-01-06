@@ -295,12 +295,12 @@ impl StackView {
         })
     }
 
-    /// Looks for the layer containing a view with the given ID.
+    /// Looks for the layer containing a view with the given name.
     ///
-    /// Returns `Some(pos)` if `self.get(pos)` has the given ID,
-    /// or is a parent of a view with this ID.
+    /// Returns `Some(pos)` if `self.get(pos)` has the given name,
+    /// or is a parent of a view with this name.
     ///
-    /// Returns `None` if the given ID is not found.
+    /// Returns `None` if the given name is not found.
     ///
     /// Note that the returned position may be invalidated if some layers are
     /// removed from the view.

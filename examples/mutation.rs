@@ -13,7 +13,7 @@ fn main() {
 
     siv.add_global_callback('q', |s| s.quit());
 
-    // Let's wrap the view to give it a recognizable ID, so we can look for it.
+    // Let's wrap the view to give it a recognizable name, so we can look for it.
     // We add the P callback on the textview only (and not globally),
     // so that we can't call it when the popup is already visible.
     siv.add_layer(

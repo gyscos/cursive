@@ -95,7 +95,7 @@ impl<T: View> Finder for T {
 
 /// Selects a single view (if any) in the tree.
 pub enum Selector<'a> {
-    /// Selects a view from its ID.
+    /// Same as [`Selector::Name`].
     #[deprecated(
         note = "`Selector::Id` is being renamed to `Selector::Name`"
     )]

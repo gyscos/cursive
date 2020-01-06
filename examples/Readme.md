@@ -23,7 +23,7 @@ includes greek and japanese characters to show non-ascii support.
 ## [`edit`](edit.rs)
 
 Here we have an `EditView` to get input from the user, and use that input in
-the next view. It shows how to identify a view with an ID and refer to it
+the next view. It shows how to identify a view with an name and refer to it
 later.
 
 ## [`mutation`](mutation.rs)
@@ -83,7 +83,7 @@ This example draws a colorful square to show off true color support.
 
 ## [`refcell_view`](refcell_view.rs)
 
-Here we show how to access multiple views concurently through their IDs.
+Here we show how to access multiple views concurently through their name.
 
 ## [`progress`](progress.rs)
 
