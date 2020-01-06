@@ -318,7 +318,7 @@ impl StackView {
     /// assert_eq!(stack.find_layer_from_id("text"), Some(LayerPosition::FromBack(1)));
     /// ```
     pub fn find_layer_from_id(&mut self, id: &str) -> Option<LayerPosition> {
-        let selector = Selector::Id(id);
+        let selector = Selector::Name(id);
 
         for (i, child) in self.layers.iter_mut().enumerate() {
             let mut found = false;

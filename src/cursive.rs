@@ -286,7 +286,7 @@ impl Cursive {
     pub fn show_debug_console(&mut self) {
         self.add_layer(
             views::Dialog::around(
-                views::ScrollView::new(views::IdView::new(
+                views::ScrollView::new(views::NamedView::new(
                     DEBUG_VIEW_ID,
                     views::DebugView::new(),
                 ))
@@ -572,12 +572,12 @@ impl Cursive {
         V: View + Any,
         F: FnOnce(&mut V) -> R,
     {
-        self.call_on(&view::Selector::Id(id), callback)
+        self.call_on(&view::Selector::Name(id), callback)
     }
 
-    /// Convenient method to find a view wrapped in [`IdView`].
+    /// Convenient method to find a view wrapped in [`NamedView`].
     ///
-    /// This looks for a `IdView<V>` with the given ID, and return
+    /// This looks for a `NamedView<V>` with the given ID, and return
     /// a [`ViewRef`] to the wrapped view. The `ViewRef` implements
     /// `DerefMut<Target=T>`, so you can treat it just like a `&mut T`.
     ///
@@ -618,20 +618,20 @@ impl Cursive {
     /// assert!(siv.find_id::<SelectView<u32>>("select").is_some());
     /// ```
     ///
-    /// [`IdView`]: views/struct.IdView.html
+    /// [`NamedView`]: views/struct.NamedView.html
     /// [`ViewRef`]: views/type.ViewRef.html
     pub fn find_id<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
     where
         V: View + Any,
     {
-        self.call_on_id(id, views::IdView::<V>::get_mut)
+        self.call_on_id(id, views::NamedView::<V>::get_mut)
     }
 
     /// Moves the focus to the view identified by `id`.
     ///
     /// Convenient method to call `focus` with a `view::Selector::Id`.
     pub fn focus_id(&mut self, id: &str) -> Result<(), ()> {
-        self.focus(&view::Selector::Id(id))
+        self.focus(&view::Selector::Name(id))
     }
 
     /// Moves the focus to the view identified by `sel`.

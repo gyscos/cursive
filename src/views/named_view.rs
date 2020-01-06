@@ -10,7 +10,7 @@ use std::rc::Rc;
 /// This lets other views refer to this one using a string identifier.
 ///
 /// See [`Identifiable`](crate::view::Identifiable) for an easy way to wrap any view with it.
-pub struct IdView<V: View> {
+pub struct NamedView<V: View> {
     view: Rc<RefCell<V>>,
     id: String,
 }
@@ -22,10 +22,10 @@ pub struct IdView<V: View> {
 /// [`RefMut`]: https://doc.rust-lang.org/std/cell/struct.RefMut.html
 pub type ViewRef<V> = OwningHandle<RcRef<RefCell<V>>, RefMut<'static, V>>;
 
-impl<V: View> IdView<V> {
-    /// Wraps `view` in a new `IdView`.
+impl<V: View> NamedView<V> {
+    /// Wraps `view` in a new `NamedView`.
     pub fn new<S: Into<String>>(id: S, view: V) -> Self {
-        IdView {
+        NamedView {
             view: Rc::new(RefCell::new(view)),
             id: id.into(),
         }
@@ -45,7 +45,7 @@ impl<V: View> IdView<V> {
     }
 }
 
-impl<T: View + 'static> ViewWrapper for IdView<T> {
+impl<T: View + 'static> ViewWrapper for NamedView<T> {
     type V = T;
 
     fn with_view<F, R>(&self, f: F) -> Option<R>
@@ -83,7 +83,10 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
         callback: AnyCb<'a>,
     ) {
         match selector {
-            &Selector::Id(id) if id == self.id => callback(self),
+            #[allow(deprecated)]
+            &Selector::Name(id) | &Selector::Id(id) if id == self.id => {
+                callback(self)
+            }
             s => {
                 if let Ok(mut v) = self.view.try_borrow_mut() {
                     v.deref_mut().call_on_any(s, callback);
@@ -94,7 +97,8 @@ impl<T: View + 'static> ViewWrapper for IdView<T> {
 
     fn wrap_focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         match selector {
-            &Selector::Id(id) if id == self.id => Ok(()),
+            #[allow(deprecated)]
+            &Selector::Name(id) | &Selector::Id(id) if id == self.id => Ok(()),
             s => self
                 .view
                 .try_borrow_mut()

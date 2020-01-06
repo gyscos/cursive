@@ -63,13 +63,13 @@ mod dummy;
 mod edit_view;
 mod enableable_view;
 mod hideable_view;
-mod id_view;
 mod last_size_view;
 mod layer;
 mod linear_layout;
 mod list_view;
 mod menu_popup;
 mod menubar;
+mod named_view;
 mod on_event_view;
 mod padded_view;
 mod panel;
@@ -96,13 +96,13 @@ pub use self::dummy::DummyView;
 pub use self::edit_view::EditView;
 pub use self::enableable_view::EnableableView;
 pub use self::hideable_view::HideableView;
-pub use self::id_view::{IdView, ViewRef};
 pub use self::last_size_view::LastSizeView;
 pub use self::layer::Layer;
 pub use self::linear_layout::LinearLayout;
 pub use self::list_view::{ListChild, ListView};
 pub use self::menu_popup::MenuPopup;
 pub use self::menubar::Menubar;
+pub use self::named_view::{NamedView, ViewRef};
 pub use self::on_event_view::OnEventView;
 pub use self::padded_view::PaddedView;
 pub use self::panel::Panel;
@@ -118,14 +118,18 @@ pub use self::text_area::TextArea;
 pub use self::text_view::{TextContent, TextContentRef, TextView};
 pub use self::tracked_view::TrackedView;
 
-#[deprecated(note = "SizedView is being renamed to LastSizeView")]
 /// Same as [`LastSizeView`](self::LastSizeView).
+#[deprecated(note = "SizedView is being renamed to LastSizeView")]
 pub type SizedView<T> = LastSizeView<T>;
 
-#[deprecated(note = "BoxView is being renamed to ResizedView")]
 /// Same as [`ResizedView`](self::ResizedView).
+#[deprecated(note = "BoxView is being renamed to ResizedView")]
 pub type BoxView<T> = ResizedView<T>;
 
-#[deprecated(note = "ViewBox is being renamed to BoxedView")]
 /// Same as [`BoxedView`](self::BoxedView).
+#[deprecated(note = "ViewBox is being renamed to BoxedView")]
 pub type ViewBox = BoxedView;
+
+/// Same as [`NamedView`](self::NamedView).
+#[deprecated(note = "IdView is being renamed to NamedView")]
+pub type IdView<T> = NamedView<T>;

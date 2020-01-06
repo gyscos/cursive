@@ -93,7 +93,7 @@ mod view_path;
 mod view_trait;
 
 // Helper bases
-mod identifiable;
+mod nameable;
 mod resizable;
 #[macro_use]
 pub mod scroll;
@@ -105,9 +105,9 @@ mod into_boxed_view;
 
 pub use self::any::AnyView;
 pub use self::finder::{Finder, Selector};
-pub use self::identifiable::Identifiable;
 pub use self::into_boxed_view::IntoBoxedView;
 pub use self::margins::Margins;
+pub use self::nameable::Nameable;
 pub use self::position::{Offset, Position};
 pub use self::resizable::Resizable;
 pub use self::scroll::ScrollStrategy;
@@ -121,3 +121,6 @@ pub use self::view_wrapper::ViewWrapper;
 
 #[deprecated(note = "Boxable is being renamed to Resizable")]
 pub use self::resizable::Resizable as Boxable;
+
+#[deprecated(note = "Identifiable is being renamed to Nameable")]
+pub use self::nameable::Nameable as Identifiable;

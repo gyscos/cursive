@@ -11,7 +11,7 @@
 #[doc(no_inline)]
 #[allow(deprecated)]
 pub use crate::view::{
-    Boxable, Finder, Identifiable, Resizable, Scrollable, View,
+    Boxable, Finder, Identifiable, Nameable, Resizable, Scrollable, View,
 };
 
 #[doc(no_inline)]

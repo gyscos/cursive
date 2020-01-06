@@ -1,13 +1,13 @@
 use crate::view::View;
-use crate::views::IdView;
+use crate::views::NamedView;
 
-/// Makes a view wrappable in an [`IdView`].
+/// Makes a view wrappable in an [`NamedView`].
 ///
-/// [`IdView`]: ../views/struct.IdView.html
-pub trait Identifiable: View + Sized {
-    /// Wraps this view into an `IdView` with the given id.
+/// [`NamedView`]: ../views/struct.NamedView.html
+pub trait Nameable: View + Sized {
+    /// Wraps this view into an `NamedView` with the given id.
     ///
-    /// This is just a shortcut for `IdView::new(id, self)`
+    /// This is just a shortcut for `NamedView::new(id, self)`
     ///
     /// You can use the given id to find the view in the layout tree.
     ///
@@ -17,7 +17,7 @@ pub trait Identifiable: View + Sized {
     /// # use cursive::Cursive;
     /// # use cursive::views::TextView;
     /// # use cursive::view::Resizable;
-    /// use cursive::view::Identifiable;
+    /// use cursive::view::Nameable;
     ///
     /// let mut siv = Cursive::dummy();
     /// siv.add_layer(
@@ -41,10 +41,16 @@ pub trait Identifiable: View + Sized {
     /// [`fixed_width`]: trait.Resizable.html#method.fixed_width
     /// [`ResizedView`]: ../views/struct.ResizedView.html
     ///
-    fn with_id<S: Into<String>>(self, id: S) -> IdView<Self> {
-        IdView::new(id, self)
+    fn with_name<S: Into<String>>(self, name: S) -> NamedView<Self> {
+        NamedView::new(name, self)
+    }
+
+    /// Same as [`with_name`](Self::with_name())
+    #[deprecated(note = "with_id is being renamed to with_name")]
+    fn with_id<S: Into<String>>(self, id: S) -> NamedView<Self> {
+        self.with_name(id)
     }
 }
 
 /// Any `View` implements this trait.
-impl<T: View> Identifiable for T {}
+impl<T: View> Nameable for T {}
