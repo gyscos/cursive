@@ -7,7 +7,7 @@
 use std::{
     cell::{Cell, RefCell, RefMut},
     fs::File,
-    io::{self, BufWriter, Stdout, Write},
+    io::{self, BufWriter, Write},
     time::Duration,
 };
 
@@ -36,15 +36,18 @@ use crate::{
     vec::Vec2,
 };
 
+#[cfg(windows)]
+type Stdout = io::Stdout;
+
+#[cfg(unix)]
+type Stdout = File;
+
 /// Backend using crossterm
 pub struct Backend {
     current_style: Cell<theme::ColorPair>,
     last_button: Option<MouseButton>,
 
-    #[cfg(windows)]
     stdout: RefCell<BufWriter<Stdout>>,
-    #[cfg(unix)]
-    stdout: RefCell<BufWriter<File>>,
 }
 
 impl From<CMouseButton> for MouseButton {
@@ -234,12 +237,6 @@ impl Backend {
         .unwrap();
     }
 
-    #[cfg(unix)]
-    fn stdout_mut(&self) -> RefMut<BufWriter<File>> {
-        self.stdout.borrow_mut()
-    }
-
-    #[cfg(windows)]
     fn stdout_mut(&self) -> RefMut<BufWriter<Stdout>> {
         self.stdout.borrow_mut()
     }
