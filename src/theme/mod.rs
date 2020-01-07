@@ -122,26 +122,26 @@
 //!
 //! # Here we define the color palette.
 //! [colors]
-//! 	background = "black"
-//! 	# If the value is an array, the first valid color will be used.
-//! 	# If the terminal doesn't support custom color,
-//! 	# non-base colors will be skipped.
-//! 	shadow     = ["#000000", "black"]
-//! 	view       = "#d3d7cf"
+//!     background = "black"
+//!     # If the value is an array, the first valid color will be used.
+//!     # If the terminal doesn't support custom color,
+//!     # non-base colors will be skipped.
+//!     shadow     = ["#000000", "black"]
+//!     view       = "#d3d7cf"
 //!
-//! 	# Array and simple values have the same effect.
-//! 	primary   = ["#111111"]
-//! 	secondary = "#EEEEEE"
-//! 	tertiary  = "#444444"
+//!     # Array and simple values have the same effect.
+//!     primary   = ["#111111"]
+//!     secondary = "#EEEEEE"
+//!     tertiary  = "#444444"
 //!
-//! 	# Hex values can use lower or uppercase.
-//! 	# (base color MUST be lowercase)
-//! 	title_primary   = "#ff5555"
-//! 	title_secondary = "#ffff55"
+//!     # Hex values can use lower or uppercase.
+//!     # (base color MUST be lowercase)
+//!     title_primary   = "#ff5555"
+//!     title_secondary = "#ffff55"
 //!
-//! 	# Lower precision values can use only 3 digits.
-//! 	highlight          = "#F00"
-//! 	highlight_inactive = "#5555FF"
+//!     # Lower precision values can use only 3 digits.
+//!     highlight          = "#F00"
+//!     highlight_inactive = "#5555FF"
 //! ```
 mod border_style;
 mod color;

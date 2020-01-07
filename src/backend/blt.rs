@@ -371,337 +371,103 @@ fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
     BltColor::from_rgb(r, g, b)
 }
 
+#[allow(clippy::cognitive_complexity)]
 fn blt_keycode_to_char(kc: KeyCode, shift: bool) -> char {
     match kc {
-        KeyCode::A => {
-            if shift {
-                'A'
-            } else {
-                'a'
-            }
-        }
-        KeyCode::B => {
-            if shift {
-                'B'
-            } else {
-                'b'
-            }
-        }
-        KeyCode::C => {
-            if shift {
-                'C'
-            } else {
-                'c'
-            }
-        }
-        KeyCode::D => {
-            if shift {
-                'D'
-            } else {
-                'd'
-            }
-        }
-        KeyCode::E => {
-            if shift {
-                'E'
-            } else {
-                'e'
-            }
-        }
-        KeyCode::F => {
-            if shift {
-                'F'
-            } else {
-                'f'
-            }
-        }
-        KeyCode::G => {
-            if shift {
-                'G'
-            } else {
-                'g'
-            }
-        }
-        KeyCode::H => {
-            if shift {
-                'H'
-            } else {
-                'h'
-            }
-        }
-        KeyCode::I => {
-            if shift {
-                'I'
-            } else {
-                'i'
-            }
-        }
-        KeyCode::J => {
-            if shift {
-                'J'
-            } else {
-                'j'
-            }
-        }
-        KeyCode::K => {
-            if shift {
-                'K'
-            } else {
-                'k'
-            }
-        }
-        KeyCode::L => {
-            if shift {
-                'L'
-            } else {
-                'l'
-            }
-        }
-        KeyCode::M => {
-            if shift {
-                'M'
-            } else {
-                'm'
-            }
-        }
-        KeyCode::N => {
-            if shift {
-                'N'
-            } else {
-                'n'
-            }
-        }
-        KeyCode::O => {
-            if shift {
-                'O'
-            } else {
-                'o'
-            }
-        }
-        KeyCode::P => {
-            if shift {
-                'P'
-            } else {
-                'p'
-            }
-        }
-        KeyCode::Q => {
-            if shift {
-                'Q'
-            } else {
-                'q'
-            }
-        }
-        KeyCode::R => {
-            if shift {
-                'R'
-            } else {
-                'r'
-            }
-        }
-        KeyCode::S => {
-            if shift {
-                'S'
-            } else {
-                's'
-            }
-        }
-        KeyCode::T => {
-            if shift {
-                'T'
-            } else {
-                't'
-            }
-        }
-        KeyCode::U => {
-            if shift {
-                'U'
-            } else {
-                'u'
-            }
-        }
-        KeyCode::V => {
-            if shift {
-                'V'
-            } else {
-                'v'
-            }
-        }
-        KeyCode::W => {
-            if shift {
-                'W'
-            } else {
-                'w'
-            }
-        }
-        KeyCode::X => {
-            if shift {
-                'X'
-            } else {
-                'x'
-            }
-        }
-        KeyCode::Y => {
-            if shift {
-                'Y'
-            } else {
-                'y'
-            }
-        }
-        KeyCode::Z => {
-            if shift {
-                'Z'
-            } else {
-                'z'
-            }
-        }
-        KeyCode::Row1 => {
-            if shift {
-                '!'
-            } else {
-                '1'
-            }
-        }
-        KeyCode::Row2 => {
-            if shift {
-                '@'
-            } else {
-                '2'
-            }
-        }
-        KeyCode::Row3 => {
-            if shift {
-                '#'
-            } else {
-                '3'
-            }
-        }
-        KeyCode::Row4 => {
-            if shift {
-                '$'
-            } else {
-                '4'
-            }
-        }
-        KeyCode::Row5 => {
-            if shift {
-                '%'
-            } else {
-                '5'
-            }
-        }
-        KeyCode::Row6 => {
-            if shift {
-                '^'
-            } else {
-                '6'
-            }
-        }
-        KeyCode::Row7 => {
-            if shift {
-                '&'
-            } else {
-                '7'
-            }
-        }
-        KeyCode::Row8 => {
-            if shift {
-                '*'
-            } else {
-                '8'
-            }
-        }
-        KeyCode::Row9 => {
-            if shift {
-                '('
-            } else {
-                '9'
-            }
-        }
-        KeyCode::Row0 => {
-            if shift {
-                ')'
-            } else {
-                '0'
-            }
-        }
-        KeyCode::Grave => {
-            if shift {
-                '~'
-            } else {
-                '`'
-            }
-        }
-        KeyCode::Minus => {
-            if shift {
-                '_'
-            } else {
-                '-'
-            }
-        }
-        KeyCode::Equals => {
-            if shift {
-                '+'
-            } else {
-                '='
-            }
-        }
-        KeyCode::LeftBracket => {
-            if shift {
-                '{'
-            } else {
-                '['
-            }
-        }
-        KeyCode::RightBracket => {
-            if shift {
-                '}'
-            } else {
-                ']'
-            }
-        }
-        KeyCode::Backslash => {
-            if shift {
-                '|'
-            } else {
-                '\\'
-            }
-        }
-        KeyCode::Semicolon => {
-            if shift {
-                ':'
-            } else {
-                ';'
-            }
-        }
-        KeyCode::Apostrophe => {
-            if shift {
-                '"'
-            } else {
-                '\''
-            }
-        }
-        KeyCode::Comma => {
-            if shift {
-                '<'
-            } else {
-                ','
-            }
-        }
-        KeyCode::Period => {
-            if shift {
-                '>'
-            } else {
-                '.'
-            }
-        }
-        KeyCode::Slash => {
-            if shift {
-                '?'
-            } else {
-                '/'
-            }
-        }
+        KeyCode::A if shift => 'A',
+        KeyCode::A => 'a',
+        KeyCode::B if shift => 'B',
+        KeyCode::B => 'b',
+        KeyCode::C if shift => 'C',
+        KeyCode::C => 'c',
+        KeyCode::D if shift => 'D',
+        KeyCode::D => 'd',
+        KeyCode::E if shift => 'E',
+        KeyCode::E => 'e',
+        KeyCode::F if shift => 'F',
+        KeyCode::F => 'f',
+        KeyCode::G if shift => 'G',
+        KeyCode::G => 'g',
+        KeyCode::H if shift => 'H',
+        KeyCode::H => 'h',
+        KeyCode::I if shift => 'I',
+        KeyCode::I => 'i',
+        KeyCode::J if shift => 'J',
+        KeyCode::J => 'j',
+        KeyCode::K if shift => 'K',
+        KeyCode::K => 'k',
+        KeyCode::L if shift => 'L',
+        KeyCode::L => 'l',
+        KeyCode::M if shift => 'M',
+        KeyCode::M => 'm',
+        KeyCode::N if shift => 'N',
+        KeyCode::N => 'n',
+        KeyCode::O if shift => 'O',
+        KeyCode::O => 'o',
+        KeyCode::P if shift => 'P',
+        KeyCode::P => 'p',
+        KeyCode::Q if shift => 'Q',
+        KeyCode::Q => 'q',
+        KeyCode::R if shift => 'R',
+        KeyCode::R => 'r',
+        KeyCode::S if shift => 'S',
+        KeyCode::S => 's',
+        KeyCode::T if shift => 'T',
+        KeyCode::T => 't',
+        KeyCode::U if shift => 'U',
+        KeyCode::U => 'u',
+        KeyCode::V if shift => 'V',
+        KeyCode::V => 'v',
+        KeyCode::W if shift => 'W',
+        KeyCode::W => 'w',
+        KeyCode::X if shift => 'X',
+        KeyCode::X => 'x',
+        KeyCode::Y if shift => 'Y',
+        KeyCode::Y => 'y',
+        KeyCode::Z if shift => 'Z',
+        KeyCode::Z => 'z',
+        KeyCode::Row1 if shift => '!',
+        KeyCode::Row1 => '1',
+        KeyCode::Row2 if shift => '@',
+        KeyCode::Row2 => '2',
+        KeyCode::Row3 if shift => '#',
+        KeyCode::Row3 => '3',
+        KeyCode::Row4 if shift => '$',
+        KeyCode::Row4 => '4',
+        KeyCode::Row5 if shift => '%',
+        KeyCode::Row5 => '5',
+        KeyCode::Row6 if shift => '^',
+        KeyCode::Row6 => '6',
+        KeyCode::Row7 if shift => '&',
+        KeyCode::Row7 => '7',
+        KeyCode::Row8 if shift => '*',
+        KeyCode::Row8 => '8',
+        KeyCode::Row9 if shift => '(',
+        KeyCode::Row9 => '9',
+        KeyCode::Row0 if shift => ')',
+        KeyCode::Row0 => '0',
+        KeyCode::Grave if shift => '~',
+        KeyCode::Grave => '`',
+        KeyCode::Minus if shift => '_',
+        KeyCode::Minus => '-',
+        KeyCode::Equals if shift => '+',
+        KeyCode::Equals => '=',
+        KeyCode::LeftBracket if shift => '{',
+        KeyCode::LeftBracket => '[',
+        KeyCode::RightBracket if shift => '}',
+        KeyCode::RightBracket => ']',
+        KeyCode::Backslash if shift => '|',
+        KeyCode::Backspace => '\\',
+        KeyCode::Semicolon if shift => ':',
+        KeyCode::Semicolon => ';',
+        KeyCode::Apostrophe if shift => '"',
+        KeyCode::Apostrophe => '\'',
+        KeyCode::Comma if shift => '<',
+        KeyCode::Comma => ',',
+        KeyCode::Period if shift => '>',
+        KeyCode::Period => '.',
+        KeyCode::Slash if shift => '?',
+        KeyCode::Slash => '/',
         KeyCode::Space => ' ',
         KeyCode::NumDivide => '/',
         KeyCode::NumMultiply => '*',
