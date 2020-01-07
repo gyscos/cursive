@@ -100,7 +100,7 @@ impl Orientation {
     ///
     /// ```rust
     /// # use cursive::direction::Orientation;
-    /// # use cursive::vec::Vec2;
+    /// # use cursive::Vec2;
     /// let o = Orientation::Horizontal;
     /// let vec = o.make_vec(1, 2);
     ///
