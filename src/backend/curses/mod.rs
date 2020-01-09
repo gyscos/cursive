@@ -16,6 +16,7 @@ pub mod pan;
 // Use AHash instead of the slower SipHash
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
 
+/// Split a i32 into individual bytes, little endian (least significant byte first).
 fn split_i32(code: i32) -> Vec<u8> {
     (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()
 }
@@ -71,6 +72,10 @@ fn find_closest_pair(pair: ColorPair, max_colors: i16) -> (i16, i16) {
     )
 }
 
+/// Finds the closest index in the 256-color palette.
+///
+/// If `max_colors` is less than 256 (like 8 or 16), the color will be
+/// downgraded to the closest one available.
 fn find_closest(color: Color, max_colors: i16) -> i16 {
     match color {
         Color::TerminalDefault => -1,
@@ -92,11 +97,18 @@ fn find_closest(color: Color, max_colors: i16) -> i16 {
         Color::Light(BaseColor::White) => 15 % max_colors,
         Color::Rgb(r, g, b) if max_colors >= 256 => {
             // If r = g = b, it may be a grayscale value!
-            if r == g && g == b && r != 0 && r < 250 {
-                // Grayscale
+            // Grayscale colors have a bit higher resolution than the rest of
+            // the palette, so if we can use it we should!
+            //
+            // r=g=b < 8 should go to pure black instead.
+            // r=g=b >= 247 should go to pure white.
+
+            // TODO: project almost-gray colors as well?
+            if r == g && g == b && r >= 8 && r < 247 {
+                // The grayscale palette says the colors 232+n are:
                 // (r = g = b) = 8 + 10 * n
+                // With 0 <= n <= 23. This gives:
                 // (r - 8) / 10 = n
-                //
                 let n = (r - 8) / 10;
                 i16::from(232 + n)
             } else {
@@ -108,6 +120,7 @@ fn find_closest(color: Color, max_colors: i16) -> i16 {
             }
         }
         Color::Rgb(r, g, b) => {
+            // Have to hack it down to 8 colors.
             let r = if r > 127 { 1 } else { 0 };
             let g = if g > 127 { 1 } else { 0 };
             let b = if b > 127 { 1 } else { 0 };

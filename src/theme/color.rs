@@ -71,22 +71,30 @@ pub enum Color {
 
     /// One of the 8 base colors.
     ///
+    /// These colors should work on any terminal.
+    ///
     /// Note: the actual color used depends on the terminal configuration.
     Dark(BaseColor),
 
     /// Lighter version of a base color.
     ///
+    /// The native linux TTY usually doesn't support these colors, but almost
+    /// all terminal emulators should.
+    ///
     /// Note: the actual color used depends on the terminal configuration.
     Light(BaseColor),
 
     /// True-color, 24-bit.
+    ///
+    /// On terminals that don't support this, the color will be "downgraded"
+    /// to the closest one available.
     Rgb(u8, u8, u8),
 
-    /// Low-resolution
+    /// Low-resolution color.
     ///
     /// Each value should be `<= 5` (you'll get panics otherwise).
     ///
-    /// These 216 possible colors are part of the default color palette.
+    /// These 216 possible colors are part of the default color palette (256 colors).
     RgbLowRes(u8, u8, u8),
 }
 
@@ -123,6 +131,18 @@ impl Color {
             assert!(b < 6);
 
             Color::RgbLowRes(r, g, b)
+        }
+    }
+
+    /// Creates a `Color::RgbLowRes` from the given values for red, green and
+    /// blue.
+    ///
+    /// Returns `None` if any of the values exceeds 5.
+    pub fn low_res(r: u8, g: u8, b: u8) -> Option<Self> {
+        if r <= 5 && g <= 5 && b <= 5 {
+            Some(Color::RgbLowRes(r, g, b))
+        } else {
+            None
         }
     }
 
