@@ -11,7 +11,7 @@ fn main() {
     siv.add_layer(
         Dialog::new()
             .title("Describe your issue")
-            .padding((1, 1, 1, 0))
+            .padding_lrtb(1, 1, 1, 0)
             .content(TextArea::new().with_name("text"))
             .button("Ok", Cursive::quit),
     );

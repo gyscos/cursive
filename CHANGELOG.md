@@ -8,6 +8,8 @@
   `View::call_on_any` no longer need to box their closures.
 - Remove `BoxView::squishable`.
 - Update crossterm to 0.14.
+- Removed `From` implementations for `Margins`. Use `Margins::lrtb` and the like instead.
+    - Or `Dialog::padding_lrtb`.
 - Renamed multiple types (old names are still re-exported, but deprecated):
     - `BoxView` -> `ResizedView`
     - `ViewBox` -> `BoxedView`
@@ -34,6 +36,10 @@
 - `LinearLayout` can now directly add boxed views without re-boxing.
 - Add inner getters to `EnableableView`.
 - Add `PaddedView::get_inner(_mut)`.
+- Add a bunch of constructors for `Margins`.
+- Add `Dialog::padding_lrtb`
+- Add `Dialog::set_padding*`
+- Add `PaddedView::lrtb`
 
 ### Improvements
 

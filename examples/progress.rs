@@ -20,7 +20,7 @@ fn main() {
     siv.add_layer(
         Dialog::new()
             .title("Progress bar example")
-            .padding((0, 0, 1, 1))
+            .padding_lrtb(0, 0, 1, 1)
             .content(Button::new("Start", phase_1)),
     );
 

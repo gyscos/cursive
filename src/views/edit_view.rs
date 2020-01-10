@@ -42,7 +42,7 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 /// siv.add_layer(
 ///     Dialog::new()
 ///         .title("Enter your name")
-///         .padding((1, 1, 1, 0))
+///         .padding_lrtb(1, 1, 1, 0)
 ///         .content(
 ///             EditView::new()
 ///                 .on_submit(show_popup)

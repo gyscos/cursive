@@ -16,13 +16,45 @@ pub struct Margins {
 
 impl Margins {
     /// Creates a new Margins.
+    #[deprecated(
+        note = "`Margins::new()` is ambiguous. Use `Margins::lrtb()` instead."
+    )]
     pub fn new(left: usize, right: usize, top: usize, bottom: usize) -> Self {
+        Self::lrtb(left, right, top, bottom)
+    }
+
+    /// Creates a new `Margins` object from the Left, Right, Top, Bottom fields.
+    pub fn lrtb(left: usize, right: usize, top: usize, bottom: usize) -> Self {
         Margins {
             left,
             right,
             top,
             bottom,
         }
+    }
+
+    /// Creates a new `Margins` object from the Left, Top, Right, Bottom fields.
+    pub fn ltrb(left_top: Vec2, right_bottom: Vec2) -> Self {
+        Self::lrtb(left_top.x, right_bottom.x, left_top.y, right_bottom.y)
+    }
+
+    /// Creates a new `Margins` object from the Top, Right, Bottom, Left fields.
+    pub fn trbl(top: usize, right: usize, bottom: usize, left: usize) -> Self {
+        Self::lrtb(left, right, top, bottom)
+    }
+
+    /// Creates a new `Margins` object from the Left and Right fields.
+    ///
+    /// Top and Bottom will be 0.
+    pub fn lr(left: usize, right: usize) -> Self {
+        Self::lrtb(left, right, 0, 0)
+    }
+
+    /// Creates a new `Margins` object from the Top and Bottom fields.
+    ///
+    /// Left and Right will be 0.
+    pub fn tb(top: usize, bottom: usize) -> Self {
+        Self::lrtb(0, 0, top, bottom)
     }
 
     /// Returns left + right.
@@ -51,61 +83,28 @@ impl Margins {
     }
 }
 
-impl From<(usize, usize, usize, usize)> for Margins {
-    fn from(
-        (left, right, top, bottom): (usize, usize, usize, usize),
-    ) -> Margins {
-        Margins::new(left, right, top, bottom)
-    }
-}
-
-impl From<(i32, i32, i32, i32)> for Margins {
-    fn from((left, right, top, bottom): (i32, i32, i32, i32)) -> Margins {
-        (left as usize, right as usize, top as usize, bottom as usize).into()
-    }
-}
-
-impl From<((i32, i32), (i32, i32))> for Margins {
-    fn from(
-        ((left, right), (top, bottom)): ((i32, i32), (i32, i32)),
-    ) -> Margins {
-        (left, right, top, bottom).into()
-    }
-}
-impl From<((usize, usize), (usize, usize))> for Margins {
-    fn from(
-        ((left, right), (top, bottom)): ((usize, usize), (usize, usize)),
-    ) -> Margins {
-        (left, right, top, bottom).into()
-    }
-}
-
-impl<T: Into<Margins>> Add<T> for Margins {
+impl Add<Margins> for Margins {
     type Output = Margins;
 
-    fn add(self, other: T) -> Margins {
-        let ov = other.into();
-
+    fn add(self, other: Margins) -> Margins {
         Margins {
-            left: self.left + ov.left,
-            right: self.right + ov.right,
-            top: self.top + ov.top,
-            bottom: self.bottom + ov.bottom,
+            left: self.left + other.left,
+            right: self.right + other.right,
+            top: self.top + other.top,
+            bottom: self.bottom + other.bottom,
         }
     }
 }
 
-impl<T: Into<Margins>> Sub<T> for Margins {
+impl Sub<Margins> for Margins {
     type Output = Margins;
 
-    fn sub(self, other: T) -> Margins {
-        let ov = other.into();
-
+    fn sub(self, other: Margins) -> Margins {
         Margins {
-            left: self.left - ov.left,
-            right: self.right - ov.right,
-            top: self.top - ov.top,
-            bottom: self.bottom - ov.bottom,
+            left: self.left - other.left,
+            right: self.right - other.right,
+            top: self.top - other.top,
+            bottom: self.bottom - other.bottom,
         }
     }
 }

@@ -14,7 +14,7 @@ fn main() {
     siv.add_layer(
         Dialog::new()
             .title("Minesweeper")
-            .padding((2, 2, 1, 1))
+            .padding_lrtb(2, 2, 1, 1)
             .content(
                 LinearLayout::vertical()
                     .child(Button::new_raw("  New game   ", show_options))

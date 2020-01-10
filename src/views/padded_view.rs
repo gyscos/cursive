@@ -14,8 +14,8 @@ use crate::Vec2;
 /// ```rust
 /// # use cursive::views::{TextView, PaddedView};
 /// // Adds 2 columns of padding to the left and to the right.
-/// let view = PaddedView::new(
-///     ((2,2), (0,0)), // ((left, right), (top, bottom))
+/// let view = PaddedView::lrtb(
+///     2,2,0,0, // Left, Right, Top, Bottom
 ///     TextView::new("Padded text")
 /// );
 /// ```
@@ -26,15 +26,25 @@ pub struct PaddedView<V> {
 
 impl<V: View> PaddedView<V> {
     /// Wraps `view` in a new `PaddedView` with the given margins.
-    pub fn new<M: Into<Margins>>(margins: M, view: V) -> Self {
-        let margins = margins.into();
+    pub fn new(margins: Margins, view: V) -> Self {
         PaddedView { view, margins }
     }
 
+    /// Wraps `view` in a new `PaddedView` with the given margins.
+    pub fn lrtb(
+        left: usize,
+        right: usize,
+        top: usize,
+        bottom: usize,
+        view: V,
+    ) -> Self {
+        Self::new(Margins::lrtb(left, right, top, bottom), view)
+    }
+
     /// Sets the margins for this view.
-    pub fn set_margins<M: Into<Margins>>(&mut self, margins: M) {
+    pub fn set_margins(&mut self, margins: Margins) {
         // TODO: invalidate?
-        self.margins = margins.into();
+        self.margins = margins;
     }
 
     inner_getters!(self.view: V);

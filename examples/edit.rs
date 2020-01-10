@@ -12,7 +12,7 @@ fn main() {
         Dialog::new()
             .title("Enter your name")
             // Padding is (left, right, top, bottom)
-            .padding((1, 1, 1, 0))
+            .padding_lrtb(1, 1, 1, 0)
             .content(
                 EditView::new()
                     // Call `show_popup` when the user presses `Enter`

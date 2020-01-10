@@ -96,8 +96,8 @@ impl Dialog {
             title: String::new(),
             title_position: HAlign::Center,
             focus: DialogFocus::Content,
-            padding: Margins::new(1, 1, 0, 0),
-            borders: Margins::new(1, 1, 1, 1),
+            padding: Margins::lr(1, 1),
+            borders: Margins::lrtb(1, 1, 1, 1),
             align: Align::top_right(),
             invalidated: true,
         }
@@ -296,38 +296,73 @@ impl Dialog {
     /// # Examples
     /// ```
     /// use cursive::views::Dialog;
+    /// use cursive::view::Margins;
     ///
     /// let dialog = Dialog::info("Hello!")
-    ///         .padding(((1, 1), (0, 0))); // ((Left, Right), (Top, Bottom))
+    ///         .padding(Margins::lrtb(1, 1, 0, 0)); // (Left, Right, Top, Bottom)
     /// ```
-    pub fn padding<T: Into<Margins>>(mut self, padding: T) -> Self {
-        self.padding = padding.into();
+    pub fn padding(self, padding: Margins) -> Self {
+        self.with(|s| s.set_padding(padding))
+    }
 
-        self
+    /// Sets the padding in the dialog.
+    ///
+    /// Takes Left, Right, Top, Bottom fields.
+    pub fn padding_lrtb(
+        self,
+        left: usize,
+        right: usize,
+        top: usize,
+        bottom: usize,
+    ) -> Self {
+        self.padding(Margins::lrtb(left, right, top, bottom))
+    }
+
+    /// Sets the padding in the dialog (around content and buttons).
+    ///
+    /// Chainable variant.
+    pub fn set_padding(&mut self, padding: Margins) {
+        self.padding = padding;
     }
 
     /// Sets the top padding in the dialog (under the title).
-    pub fn padding_top(mut self, padding: usize) -> Self {
+    pub fn padding_top(self, padding: usize) -> Self {
+        self.with(|s| s.set_padding_top(padding))
+    }
+
+    /// Sets the top padding in the dialog (under the title).
+    pub fn set_padding_top(&mut self, padding: usize) {
         self.padding.top = padding;
-        self
     }
 
     /// Sets the bottom padding in the dialog (under buttons).
-    pub fn padding_bottom(mut self, padding: usize) -> Self {
+    pub fn padding_bottom(self, padding: usize) -> Self {
+        self.with(|s| s.set_padding_bottom(padding))
+    }
+
+    /// Sets the bottom padding in the dialog (under buttons).
+    pub fn set_padding_bottom(&mut self, padding: usize) {
         self.padding.bottom = padding;
-        self
     }
 
     /// Sets the left padding in the dialog.
-    pub fn padding_left(mut self, padding: usize) -> Self {
+    pub fn padding_left(self, padding: usize) -> Self {
+        self.with(|s| s.set_padding_left(padding))
+    }
+
+    /// Sets the left padding in the dialog.
+    pub fn set_padding_left(&mut self, padding: usize) {
         self.padding.left = padding;
-        self
     }
 
     /// Sets the right padding in the dialog.
-    pub fn padding_right(mut self, padding: usize) -> Self {
+    pub fn padding_right(self, padding: usize) -> Self {
+        self.with(|s| s.set_padding_right(padding))
+    }
+
+    /// Sets the right padding in the dialog.
+    pub fn set_padding_right(&mut self, padding: usize) {
         self.padding.right = padding;
-        self
     }
 
     /// Returns an iterator on this buttons for this dialog.
