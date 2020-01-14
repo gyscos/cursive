@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.14.0 (Next version)
+## 0.14.0
 
 ### Breaking changes
 
@@ -50,7 +50,8 @@
 
 ### Bugfixes
 
-- Fixed `ScrollView::show_scrollbars()`
+- Fixed `ScrollView::show_scrollbars()`.
+- Correctly update the offset for `ScrollView` after focus change.
 - Fixed layout for `BoxView` with some size constraints.
 - On Windows, do not print unix-specific character during initialization.
 - Fix out-of-bounds access for some mouse events in `MenuPopup`
