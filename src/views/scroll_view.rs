@@ -210,15 +210,25 @@ where
     }
 
     fn call_on_any<'a>(&mut self, selector: &Selector<'_>, cb: AnyCb<'a>) {
+        // TODO: should we scroll_to_important_area here?
+        // The callback may change the focus or some other thing.
         self.inner.call_on_any(selector, cb)
     }
 
     fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
-        self.inner.focus_view(selector)
+        self.inner.focus_view(selector).map(|()| {
+            self.scroll_to_important_area();
+        })
     }
 
     fn take_focus(&mut self, source: Direction) -> bool {
-        self.inner.take_focus(source) || self.core.is_scrolling().any()
+        // If the inner view takes focus, re-align the important area.
+        if self.inner.take_focus(source) {
+            self.scroll_to_important_area();
+            true
+        } else {
+            self.core.is_scrolling().any()
+        }
     }
 
     fn important_area(&self, size: Vec2) -> Rect {
