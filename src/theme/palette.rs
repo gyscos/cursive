@@ -4,6 +4,7 @@ use enum_map::{enum_map, Enum, EnumMap};
 use log::warn;
 
 use std::ops::{Index, IndexMut};
+use std::str::FromStr;
 
 // Use AHash instead of the slower SipHash
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
@@ -14,18 +15,25 @@ type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
 ///
 /// It implements `Index` and `IndexMut` to access and modify this mapping:
 ///
+/// It also implements [`Extend`] to update a batch of colors at
+/// once.
+///
 /// # Example
 ///
 /// ```rust
 /// # use cursive::theme::Palette;
-/// use cursive::theme::PaletteColor::*;
-/// use cursive::theme::Color::*;
-/// use cursive::theme::BaseColor::*;
+/// use cursive::theme::{BaseColor::*, Color::*, PaletteColor::*};
 ///
 /// let mut palette = Palette::default();
 ///
 /// assert_eq!(palette[Background], Dark(Blue));
 /// palette[Shadow] = Light(Red);
+/// assert_eq!(palette[Shadow], Light(Red));
+///
+/// let colors = vec![(Shadow, Dark(Green)), (Primary, Light(Blue))];
+/// palette.extend(colors);
+/// assert_eq!(palette[Shadow], Dark(Green));
+/// assert_eq!(palette[Primary], Light(Blue));
 /// ```
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Palette {
@@ -105,24 +113,21 @@ impl Palette {
     ///
     /// This will update either the basic palette or the custom values.
     pub fn set_color(&mut self, key: &str, color: Color) {
-        use crate::theme::PaletteColor::*;
-
-        match key {
-            "background" => self.basic[Background] = color,
-            "shadow" => self.basic[Shadow] = color,
-            "view" => self.basic[View] = color,
-            "primary" => self.basic[Primary] = color,
-            "secondary" => self.basic[Secondary] = color,
-            "tertiary" => self.basic[Tertiary] = color,
-            "title_primary" => self.basic[TitlePrimary] = color,
-            "title_secondary" => self.basic[TitleSecondary] = color,
-            "highlight" => self.basic[Highlight] = color,
-            "highlight_inactive" => self.basic[HighlightInactive] = color,
-            other => {
-                self.custom
-                    .insert(other.to_string(), PaletteNode::Color(color));
-            }
+        if self.set_basic_color(key, color).is_err() {
+            self.custom
+                .insert(key.to_string(), PaletteNode::Color(color));
         }
+    }
+
+    /// Sets a basic color from its name.
+    ///
+    /// Returns `Err(())` if `key` is not a known `PaletteColor`.
+    pub fn set_basic_color(
+        &mut self,
+        key: &str,
+        color: Color,
+    ) -> Result<(), ()> {
+        PaletteColor::from_str(key).map(|c| self.basic[c] = color)
     }
 
     /// Adds a color namespace to this palette.
@@ -133,6 +138,17 @@ impl Palette {
     ) {
         self.custom
             .insert(key.to_string(), PaletteNode::Namespace(namespace));
+    }
+}
+
+impl Extend<(PaletteColor, Color)> for Palette {
+    fn extend<T>(&mut self, iter: T)
+    where
+        T: IntoIterator<Item = (PaletteColor, Color)>,
+    {
+        for (k, v) in iter {
+            (*self)[k] = v;
+        }
     }
 }
 
@@ -261,5 +277,27 @@ impl PaletteColor {
     /// Given a palette, resolve `self` to a concrete color.
     pub fn resolve(self, palette: &Palette) -> Color {
         palette[self]
+    }
+}
+
+impl FromStr for PaletteColor {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, ()> {
+        use PaletteColor::*;
+
+        Ok(match s {
+            "Background" | "background" => Background,
+            "Shadow" | "shadow" => Shadow,
+            "View" | "view" => View,
+            "Primary" | "primary" => Primary,
+            "Secondary" | "secondary" => Secondary,
+            "Tertiary" | "tertiary" => Tertiary,
+            "TitlePrimary" | "title_primary" => TitlePrimary,
+            "TitleSecondary" | "title_secondary" => TitleSecondary,
+            "Highlight" | "highlight" => Highlight,
+            "HighlightInactive" | "highlight_inactive" => HighlightInactive,
+            _ => return Err(()),
+        })
     }
 }

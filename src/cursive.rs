@@ -418,6 +418,16 @@ impl Cursive {
         self.clear();
     }
 
+    /// Updates the current theme.
+    pub fn update_theme(&mut self, f: impl FnOnce(&mut theme::Theme)) {
+        // We don't just expose a `current_theme_mut` because we may want to
+        // run some logic _after_ setting the theme.
+        // Though right now, it's only clearing the screen, so...
+        let mut theme = self.theme.clone();
+        f(&mut theme);
+        self.set_theme(theme);
+    }
+
     /// Clears the screen.
     ///
     /// Users rarely have to call this directly.
