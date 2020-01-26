@@ -150,7 +150,8 @@ impl Cursive {
 
         let (cb_sink, cb_source) = crossbeam_channel::unbounded();
 
-        backend_init().map(|backend| Cursive {
+        let backend = backend_init()?;
+        let mut cursive = Cursive {
             theme,
             root: views::OnEventView::new(views::ScreensView::single_screen(
                 views::StackView::new(),
@@ -164,7 +165,10 @@ impl Cursive {
             fps: None,
             boring_frame_count: 0,
             user_data: Box::new(()),
-        })
+        };
+        cursive.reset_default_callbacks();
+
+        Ok(cursive)
     }
 
     /// Creates a new Cursive root using a ncurses backend.

@@ -100,10 +100,6 @@ impl From<CKeyEvent> for Event {
             // Handle Char + modifier.
             CKeyEvent {
                 modifiers: KeyModifiers::CONTROL,
-                code: KeyCode::Char('c'),
-            } => Event::Exit,
-            CKeyEvent {
-                modifiers: KeyModifiers::CONTROL,
                 code: KeyCode::Char(c),
             } => Event::CtrlChar(c),
             CKeyEvent {

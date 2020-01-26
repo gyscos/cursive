@@ -509,7 +509,6 @@ fn initialize_keymap() -> HashMap<i32, Event> {
         let event = match c {
             // This is Ctrl+C
             // TODO: Don't exit here, but add this as a default callback
-            3 => Event::Exit,
             9 => Event::Key(Key::Tab),
             10 => Event::Key(Key::Enter),
             other => Event::CtrlChar((b'a' - 1 + other as u8) as char),

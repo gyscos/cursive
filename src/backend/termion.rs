@@ -120,7 +120,6 @@ impl Backend {
             TEvent::Key(TKey::Char('\n')) => Event::Key(Key::Enter),
             TEvent::Key(TKey::Char('\t')) => Event::Key(Key::Tab),
             TEvent::Key(TKey::Char(c)) => Event::Char(c),
-            TEvent::Key(TKey::Ctrl('c')) => Event::Exit,
             TEvent::Key(TKey::Ctrl(c)) => Event::CtrlChar(c),
             TEvent::Key(TKey::Alt(c)) => Event::AltChar(c),
             TEvent::Mouse(TMouseEvent::Press(btn, x, y)) => {
