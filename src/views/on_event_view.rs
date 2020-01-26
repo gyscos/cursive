@@ -74,6 +74,16 @@ impl<T: View> OnEventView<T> {
         }
     }
 
+    /// Remove all callbacks associated with the given event.
+    pub fn clear_event<E>(&mut self, event: E)
+    where
+        E: Into<Event>,
+    {
+        let event = event.into();
+        self.callbacks
+            .retain(move |&(ref trigger, _)| !trigger.has_tag(&event));
+    }
+
     /// Registers a callback when the given event is ignored by the child.
     ///
     /// Chainable variant.

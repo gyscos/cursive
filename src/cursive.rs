@@ -8,7 +8,7 @@ use crossbeam_channel::{self, Receiver, Sender};
 
 use crate::backend;
 use crate::direction;
-use crate::event::{Callback, Event, EventResult};
+use crate::event::{Event, EventResult};
 use crate::printer::Printer;
 use crate::theme;
 use crate::view::{self, Finder, IntoBoxedView, Position, View};
@@ -20,9 +20,6 @@ static DEBUG_VIEW_NAME: &str = "_cursive_debug_view";
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;
 
-// Use AHash instead of the slower SipHash
-type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
-
 /// Central part of the cursive library.
 ///
 /// It initializes ncurses on creation and cleans up on drop.
@@ -32,26 +29,28 @@ type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
 /// It uses a list of screen, with one screen active at a time.
 pub struct Cursive {
     theme: theme::Theme,
-    screens: Vec<views::StackView>,
-    global_callbacks: HashMap<Event, Vec<Callback>>,
+
+    // The main view
+    root: views::OnEventView<views::ScreensView<views::StackView>>,
+
     menubar: views::Menubar,
 
     // Last layer sizes of the stack view.
     // If it changed, clear the screen.
     last_sizes: Vec<Vec2>,
 
-    active_screen: ScreenId,
-
     running: bool,
 
     backend: Box<dyn backend::Backend>,
 
+    // Handle asynchronous callbacks
     cb_source: Receiver<Box<dyn FnOnce(&mut Cursive) + Send>>,
     cb_sink: Sender<Box<dyn FnOnce(&mut Cursive) + Send>>,
 
     // User-provided data.
     user_data: Box<dyn Any>,
 
+    // Handle auto-refresh when no event is received.
     fps: Option<NonZeroU32>,
     boring_frame_count: u32,
 }
@@ -153,11 +152,11 @@ impl Cursive {
 
         backend_init().map(|backend| Cursive {
             theme,
-            screens: vec![views::StackView::new()],
+            root: views::OnEventView::new(views::ScreensView::single_screen(
+                views::StackView::new(),
+            )),
             last_sizes: Vec::new(),
-            global_callbacks: HashMap::default(),
             menubar: views::Menubar::new(),
-            active_screen: 0,
             running: true,
             cb_source,
             cb_sink,
@@ -436,12 +435,12 @@ impl Cursive {
             .clear(self.theme.palette[theme::PaletteColor::Background]);
     }
 
-    #[cfg(feature = "toml")]
     /// Loads a theme from the given file.
     ///
     /// `filename` must point to a valid toml file.
     ///
     /// Must have the `toml` feature enabled.
+    #[cfg(feature = "toml")]
     pub fn load_theme_file<P: AsRef<Path>>(
         &mut self,
         filename: P,
@@ -449,12 +448,12 @@ impl Cursive {
         theme::load_theme_file(filename).map(|theme| self.set_theme(theme))
     }
 
-    #[cfg(feature = "toml")]
     /// Loads a theme from the given string content.
     ///
     /// Content must be valid toml.
     ///
     /// Must have the `toml` feature enabled.
+    #[cfg(feature = "toml")]
     pub fn load_toml(&mut self, content: &str) -> Result<(), theme::Error> {
         theme::load_toml(content).map(|theme| self.set_theme(theme))
     }
@@ -478,26 +477,24 @@ impl Cursive {
 
     /// Returns a reference to the currently active screen.
     pub fn screen(&self) -> &views::StackView {
-        let id = self.active_screen;
-        &self.screens[id]
+        self.root.get_inner().screen().unwrap()
     }
 
     /// Returns a mutable reference to the currently active screen.
     pub fn screen_mut(&mut self) -> &mut views::StackView {
-        let id = self.active_screen;
-        &mut self.screens[id]
+        self.root.get_inner_mut().screen_mut().unwrap()
     }
 
     /// Returns the id of the currently active screen.
     pub fn active_screen(&self) -> ScreenId {
-        self.active_screen
+        self.root.get_inner().active_screen()
     }
 
     /// Adds a new screen, and returns its ID.
     pub fn add_screen(&mut self) -> ScreenId {
-        let res = self.screens.len();
-        self.screens.push(views::StackView::new());
-        res
+        self.root
+            .get_inner_mut()
+            .add_screen(views::StackView::new())
     }
 
     /// Convenient method to create a new screen, and set it as active.
@@ -509,15 +506,7 @@ impl Cursive {
 
     /// Sets the active screen. Panics if no such screen exist.
     pub fn set_screen(&mut self, screen_id: ScreenId) {
-        if screen_id >= self.screens.len() {
-            panic!(
-                "Tried to set an invalid screen ID: {}, but only {} \
-                 screens present.",
-                screen_id,
-                self.screens.len()
-            );
-        }
-        self.active_screen = screen_id;
+        self.root.get_inner_mut().set_active_screen(screen_id);
     }
 
     /// Tries to find the view pointed to by the given selector.
@@ -555,7 +544,7 @@ impl Cursive {
         V: View + Any,
         F: FnOnce(&mut V) -> R,
     {
-        self.screen_mut().call_on(sel, callback)
+        self.root.call_on(sel, callback)
     }
 
     /// Tries to find the view identified by the given id.
@@ -676,7 +665,7 @@ impl Cursive {
 
     /// Moves the focus to the view identified by `sel`.
     pub fn focus(&mut self, sel: &view::Selector<'_>) -> Result<(), ()> {
-        self.screen_mut().focus_view(sel)
+        self.root.focus_view(sel)
     }
 
     /// Adds a global callback.
@@ -695,10 +684,44 @@ impl Cursive {
     where
         F: FnMut(&mut Cursive) + 'static,
     {
-        self.global_callbacks
-            .entry(event.into())
-            .or_insert_with(Vec::new)
-            .push(Callback::from_fn_mut(cb));
+        self.set_on_post_event(event.into(), cb);
+    }
+
+    /// Registers a callback for ignored events.
+    ///
+    /// This is the same as `add_global_callback`, but can register any `EventTrigger`.
+    pub fn set_on_post_event<F, E>(&mut self, trigger: E, cb: F)
+    where
+        F: FnMut(&mut Cursive) + 'static,
+        E: Into<crate::event::EventTrigger>,
+    {
+        self.root.set_on_event(trigger, crate::immut1!(cb));
+    }
+
+    /// Registers a priotity callback.
+    ///
+    /// If an event matches the given trigger, it will not be sent to the view
+    /// tree and will go to the given callback instead.
+    pub fn set_on_pre_event<F, E>(&mut self, trigger: E, cb: F)
+    where
+        F: FnMut(&mut Cursive) + 'static,
+        E: Into<crate::event::EventTrigger>,
+    {
+        self.root.set_on_pre_event(trigger, crate::immut1!(cb));
+    }
+
+    /// Sets the only global callback for the given event.
+    ///
+    /// Any other callback for this event will be removed.
+    ///
+    /// See also [`Cursive::add_global_callback`].
+    pub fn set_global_callback<F, E: Into<Event>>(&mut self, event: E, cb: F)
+    where
+        F: FnMut(&mut Cursive) + 'static,
+    {
+        let event = event.into();
+        self.clear_global_callbacks(event.clone());
+        self.add_global_callback(event, cb);
     }
 
     /// Removes any callback tied to the given event.
@@ -717,7 +740,17 @@ impl Cursive {
         E: Into<Event>,
     {
         let event = event.into();
-        self.global_callbacks.remove(&event);
+        self.root.clear_event(event);
+    }
+
+    /// This resets the default callbacks.
+    ///
+    /// Currently this mostly includes exiting on Ctrl-C.
+    pub fn reset_default_callbacks(&mut self) {
+        self.set_on_pre_event(Event::CtrlChar('c'), |s| s.quit());
+        self.set_on_pre_event(Event::Exit, |s| s.quit());
+
+        self.set_on_pre_event(Event::WindowResize, |s| s.clear());
     }
 
     /// Add a layer to the current screen.
@@ -761,32 +794,12 @@ impl Cursive {
         self.screen_mut().reposition_layer(layer, position);
     }
 
-    // Handles a key event when it was ignored by the current view
-    fn on_ignored_event(&mut self, event: Event) {
-        let cb_list = match self.global_callbacks.get(&event) {
-            None => return,
-            Some(cb_list) => cb_list.clone(),
-        };
-        // Not from a view, so no viewpath here
-        for cb in cb_list {
-            cb(self);
-        }
-    }
-
     /// Processes an event.
     ///
     /// * If the menubar is active, it will be handled the event.
     /// * The view tree will be handled the event.
     /// * If ignored, global_callbacks will be checked for this event.
     pub fn on_event(&mut self, event: Event) {
-        if event == Event::Exit {
-            self.quit();
-        }
-
-        if event == Event::WindowResize {
-            self.clear();
-        }
-
         if let Event::Mouse {
             event, position, ..
         } = event
@@ -800,21 +813,16 @@ impl Cursive {
             }
         }
 
-        // Event dispatch order:
-        // * Focused element:
-        //     * Menubar (if active)
-        //     * Current screen (top layer)
-        // * Global callbacks
         if self.menubar.receive_events() {
             self.menubar.on_event(event).process(self);
         } else {
             let offset = if self.menubar.autohide { 0 } else { 1 };
-            match self.screen_mut().on_event(event.relativized((0, offset))) {
-                // If the event was ignored,
-                // it is our turn to play with it.
-                EventResult::Ignored => self.on_ignored_event(event),
-                EventResult::Consumed(None) => (),
-                EventResult::Consumed(Some(cb)) => cb(self),
+
+            let result =
+                View::on_event(&mut self.root, event.relativized((0, offset)));
+
+            if let EventResult::Consumed(Some(cb)) = result {
+                cb(self);
             }
         }
     }
@@ -828,12 +836,15 @@ impl Cursive {
         let size = self.screen_size();
         let offset = if self.menubar.autohide { 0 } else { 1 };
         let size = size.saturating_sub((0, offset));
-        self.screen_mut().layout(size);
+        self.root.layout(size);
     }
 
     fn draw(&mut self) {
+        // TODO: do not allocate in the default, fast path?
         let sizes = self.screen().layer_sizes();
         if self.last_sizes != sizes {
+            // TODO: Maybe we only need to clear if the _max_ size differs?
+            // Or if the positions change?
             self.clear();
             self.last_sizes = sizes;
         }
@@ -845,10 +856,11 @@ impl Cursive {
 
         // Print the stackview background before the menubar
         let offset = if self.menubar.autohide { 0 } else { 1 };
-        let id = self.active_screen;
-        let sv_printer = printer.offset((0, offset)).focused(!selected);
 
-        self.screens[id].draw_bg(&sv_printer);
+        let sv_printer = printer.offset((0, offset)).focused(!selected);
+        self.root.draw(&sv_printer);
+
+        self.root.get_inner().draw_bg(&sv_printer);
 
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
@@ -860,7 +872,7 @@ impl Cursive {
 
         // finally draw stackview layers
         // using variables from above
-        self.screens[id].draw_fg(&sv_printer);
+        self.root.get_inner().draw_fg(&sv_printer);
     }
 
     /// Returns `true` until [`quit(&mut self)`] is called.

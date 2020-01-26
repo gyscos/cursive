@@ -60,6 +60,13 @@
 // It's not how windows work, so no need to use that.
 
 macro_rules! new_default(
+    ($c:ident<$t:ident>) => {
+        impl<$t> Default for $c<$t> {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
+    };
     ($c:ty) => {
         impl Default for $c {
             fn default() -> Self {

@@ -15,7 +15,6 @@
 use crate::Cursive;
 use crate::Vec2;
 use std::any::Any;
-use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -35,7 +34,13 @@ pub type AnyCb<'a> = &'a mut dyn FnMut(&mut dyn Any);
 /// A trigger that only selects some types of events.
 ///
 /// It is meant to be stored in views.
-pub struct EventTrigger(Box<dyn Fn(&Event) -> bool>);
+pub struct EventTrigger {
+    trigger: Box<dyn Fn(&Event) -> bool>,
+    tag: Box<dyn AnyTag>,
+}
+
+trait AnyTag: Any + std::fmt::Debug {}
+impl<T> AnyTag for T where T: Any + std::fmt::Debug {}
 
 impl EventTrigger {
     /// Create a new `EventTrigger` using the given function as filter.
@@ -43,43 +48,66 @@ impl EventTrigger {
     where
         F: 'static + Fn(&Event) -> bool,
     {
-        EventTrigger(Box::new(f))
+        EventTrigger::from_fn_and_tag(f, "free function")
+    }
+
+    /// Create a new `EventTrigger`.
+    pub fn from_fn_and_tag<F, T>(f: F, tag: T) -> Self
+    where
+        F: 'static + Fn(&Event) -> bool,
+        T: Any + std::fmt::Debug,
+    {
+        EventTrigger {
+            trigger: Box::new(f),
+            tag: Box::new(tag),
+        }
+    }
+
+    /// Check if this trigger has the given tag.
+    pub fn has_tag<T: PartialEq + 'static>(&self, tag: &T) -> bool {
+        Any::downcast_ref::<T>(&self.tag).map_or(false, |t| tag == t)
     }
 
     /// Checks if this trigger applies to the given `Event`.
     pub fn apply(&self, event: &Event) -> bool {
-        (self.0)(event)
+        (self.trigger)(event)
     }
 
     /// Returns an `EventTrigger` that only accepts arrow keys.
     ///
     /// Only bare arrow keys without modifiers (Shift, Ctrl, Alt) will be accepted.
     pub fn arrows() -> Self {
-        Self::from_fn(|e| match e {
-            Event::Key(Key::Left)
-            | Event::Key(Key::Down)
-            | Event::Key(Key::Up)
-            | Event::Key(Key::Right) => true,
-            _ => false,
-        })
+        Self::from_fn_and_tag(
+            |e| match e {
+                Event::Key(Key::Left)
+                | Event::Key(Key::Down)
+                | Event::Key(Key::Up)
+                | Event::Key(Key::Right) => true,
+                _ => false,
+            },
+            "arrows",
+        )
     }
 
     /// Returns an `EventTrigger` that only accepts mouse events.
     pub fn mouse() -> Self {
-        Self::from_fn(|e| match e {
-            Event::Mouse { .. } => true,
-            _ => false,
-        })
+        Self::from_fn_and_tag(
+            |e| match e {
+                Event::Mouse { .. } => true,
+                _ => false,
+            },
+            "mouse",
+        )
     }
 
     /// Returns an `EventTrigger` that accepts any event.
     pub fn any() -> Self {
-        Self::from_fn(|_| true)
+        Self::from_fn_and_tag(|_| true, "any")
     }
 
     /// Returns an `EventTrigger` that doesn't accept any event.
     pub fn none() -> Self {
-        Self::from_fn(|_| false)
+        Self::from_fn_and_tag(|_| false, "none")
     }
 
     /// Returns an `EventTrigger` that applies if either `self` or `other` applies.
@@ -88,13 +116,22 @@ impl EventTrigger {
         O: Into<EventTrigger>,
     {
         let other = other.into();
-        Self::from_fn(move |e| self.apply(e) || other.apply(e))
+
+        let self_trigger = self.trigger;
+        let other_trigger = other.trigger;
+        let tag = (self.tag, "or", other.tag);
+
+        Self::from_fn_and_tag(
+            move |e| self_trigger(e) || other_trigger(e),
+            tag,
+        )
     }
 }
 
 impl From<Event> for EventTrigger {
     fn from(event: Event) -> Self {
-        Self::from_fn(move |e| *e == event)
+        let tag = event.clone();
+        Self::from_fn_and_tag(move |e| *e == event, tag)
     }
 }
 
@@ -137,13 +174,7 @@ impl Callback {
     where
         F: 'static + FnMut(&mut Cursive),
     {
-        let cb = RefCell::new(f);
-
-        Self::from_fn(move |s| {
-            if let Ok(mut cb) = cb.try_borrow_mut() {
-                (&mut *cb)(s);
-            }
-        })
+        Self::from_fn(crate::immut1!(f))
     }
 
     /// Returns a dummy callback that doesn't run anything.
