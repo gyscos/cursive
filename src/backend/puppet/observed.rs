@@ -84,12 +84,61 @@ impl ObservedCell {
 /// Puppet backend output
 ///
 /// Represents single frame.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ObservedScreen {
     /// Size
     size: Vec2,
     /// Contents. Each cell can be set or empty.
     contents: Vec<Option<ObservedCell>>,
+}
+
+use std::{fmt, fmt::Display, fmt::Formatter};
+
+impl Display for ObservedScreen {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "captured piece:\n")?;
+
+        write!(f, "x")?;
+        for x in 0..self.size().x {
+            write!(f, "{}", x % 10)?;
+        }
+        write!(f, "x\n")?;
+
+        for y in 0..self.size().y {
+            write!(f, "{}", y % 10)?;
+
+            for x in 0..self.size().x {
+                let pos = Vec2::new(x, y);
+                let cell_op: &Option<ObservedCell> = &self[pos];
+                if cell_op.is_some() {
+                    let cell = cell_op.as_ref().unwrap();
+
+                    if cell.letter.is_continuation() {
+                        write!(f, "c")?;
+                        continue;
+                    } else {
+                        let letter = cell.letter.unwrap();
+                        if letter == " " {
+                            write!(f, " ")?;
+                        } else {
+                            write!(f, "{}", letter)?;
+                        }
+                    }
+                } else {
+                    write!(f, ".")?;
+                }
+            }
+            write!(f, "|")?;
+            write!(f, "\n")?;
+        }
+
+        write!(f, "x")?;
+        for _x in 0..self.size().x {
+            write!(f, "-")?;
+        }
+        write!(f, "x\n")?;
+        Ok(())
+    }
 }
 
 impl ObservedScreen {
@@ -136,47 +185,7 @@ impl ObservedScreen {
 
     /// Prints the piece to stdout.
     pub fn print_stdout(&self) {
-        println!("captured piece:");
-
-        print!("x");
-        for x in 0..self.size().x {
-            print!("{}", x % 10);
-        }
-        println!("x");
-
-        for y in 0..self.size().y {
-            print!("{}", y % 10);
-
-            for x in 0..self.size().x {
-                let pos = Vec2::new(x, y);
-                let cell_op: &Option<ObservedCell> = &self[pos];
-                if cell_op.is_some() {
-                    let cell = cell_op.as_ref().unwrap();
-
-                    if cell.letter.is_continuation() {
-                        print!("c");
-                        continue;
-                    } else {
-                        let letter = cell.letter.unwrap();
-                        if letter == " " {
-                            print!(" ");
-                        } else {
-                            print!("{}", letter);
-                        }
-                    }
-                } else {
-                    print!(".");
-                }
-            }
-            print!("|");
-            println!();
-        }
-
-        print!("x");
-        for _x in 0..self.size().x {
-            print!("-");
-        }
-        println!("x");
+        println!("{}", self)
     }
 
     /// Returns occurences of given string pattern
