@@ -7,6 +7,7 @@ use std::ops::Index;
 use std::ops::IndexMut;
 use std::rc::Rc;
 use std::string::ToString;
+use std::{fmt, fmt::Display, fmt::Formatter};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
@@ -91,8 +92,6 @@ pub struct ObservedScreen {
     /// Contents. Each cell can be set or empty.
     contents: Vec<Option<ObservedCell>>,
 }
-
-use std::{fmt, fmt::Display, fmt::Formatter};
 
 impl Display for ObservedScreen {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
