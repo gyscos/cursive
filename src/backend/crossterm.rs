@@ -44,7 +44,6 @@ type Stdout = File;
 /// Backend using crossterm
 pub struct Backend {
     current_style: Cell<theme::ColorPair>,
-    last_button: Option<MouseButton>,
 
     stdout: RefCell<BufWriter<Stdout>>,
 }
@@ -218,7 +217,6 @@ impl Backend {
 
         Ok(Box::new(Backend {
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
-            last_button: None,
             stdout,
         }))
     }
@@ -250,16 +248,17 @@ impl Backend {
                 match mouse_event {
                     CMouseEvent::Down(button, x, y, _) => {
                         let button = MouseButton::from(button);
-                        self.last_button = Some(button);
                         event = MouseEvent::Press(button);
                         position = (x, y).into();
                     }
-                    CMouseEvent::Up(_, x, y, _) => {
-                        event = MouseEvent::Release(self.last_button.unwrap());
+                    CMouseEvent::Up(button, x, y, _) => {
+                        let button = MouseButton::from(button);
+                        event = MouseEvent::Release(button);
                         position = (x, y).into();
                     }
-                    CMouseEvent::Drag(_, x, y, _) => {
-                        event = MouseEvent::Hold(self.last_button.unwrap());
+                    CMouseEvent::Drag(button, x, y, _) => {
+                        let button = MouseButton::from(button);
+                        event = MouseEvent::Hold(button);
                         position = (x, y).into();
                     }
                     CMouseEvent::ScrollDown(x, y, _) => {
