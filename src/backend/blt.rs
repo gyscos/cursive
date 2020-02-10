@@ -17,7 +17,7 @@ use crate::theme::{BaseColor, Color, ColorPair, Effect};
 use crate::Vec2;
 
 // Use AHash instead of the slower SipHash
-type HashSet<K> = std::collections::HashSet<K, ahash::ABuildHasher>;
+type HashSet<K> = std::collections::HashSet<K, ahash::RandomState>;
 
 enum ColorRole {
     Foreground,

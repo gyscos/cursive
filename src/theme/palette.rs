@@ -7,7 +7,7 @@ use std::ops::{Index, IndexMut};
 use std::str::FromStr;
 
 // Use AHash instead of the slower SipHash
-type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
 /// Color configuration for the application.
 ///

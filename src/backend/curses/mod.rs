@@ -14,7 +14,7 @@ pub mod n;
 pub mod pan;
 
 // Use AHash instead of the slower SipHash
-type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
 /// Split a i32 into individual bytes, little endian (least significant byte first).
 fn split_i32(code: i32) -> Vec<u8> {

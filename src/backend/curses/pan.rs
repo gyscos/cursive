@@ -14,7 +14,7 @@ use self::pancurses::mmask_t;
 use super::split_i32;
 
 // Use AHash instead of the slower SipHash
-type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
 /// Backend using pancurses.
 pub struct Backend {

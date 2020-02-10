@@ -20,7 +20,7 @@ use self::super::split_i32;
 use self::ncurses::mmask_t;
 
 // Use AHash instead of the slower SipHash
-type HashMap<K, V> = std::collections::HashMap<K, V, ahash::ABuildHasher>;
+type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
 /// Backend using ncurses.
 pub struct Backend {
