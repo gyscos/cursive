@@ -54,6 +54,14 @@
 //! and log to it instead of stdout.
 //!
 //! Or you can use gdb as usual.
+//!
+//! ## Themes
+//!
+//! Cursive supports configuring the feels and looks of your application with
+//! custom themes and colors. For details see documentation of the
+//! [`cursive::theme`] module.
+//!
+//! [`cursive::theme`]: ./theme/index.html
 #![deny(missing_docs)]
 
 pub use cursive_core::*;
