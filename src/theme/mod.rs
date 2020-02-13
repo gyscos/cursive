@@ -109,9 +109,10 @@
 //! A theme defines the color palette an application will use, as well as
 //! various options to style views.
 //!
-//! Themes are described in toml configuration files. All fields are optional.
+//! Themes are described in toml configuration files, so it requires 
+//! the "toml" feature to be enabled.
 //!
-//! Here are the possible entries:
+//! Here are the possible entries (all fields are optional):
 //!
 //! ```toml
 //! # Every field in a theme file is optional.
@@ -142,6 +143,20 @@
 //!     # Lower precision values can use only 3 digits.
 //!     highlight          = "#F00"
 //!     highlight_inactive = "#5555FF"
+//! ```
+//!
+//! To use a custom theme in your project, enable the "toml" feature:
+//!
+//! ```toml
+//! [dependencies]
+//! cursive = { version = "0.14", features = ["toml"] }
+//! ```
+//!
+//! Then create a theme file somewhere in your project (example of the
+//! file contents are above). Use your theme from the code:
+//! ```rust
+//! let siv = Cursive::default();
+//! siv.load_toml(include_str!("<path_to_theme_file>.toml")).unwrap();
 //! ```
 mod border_style;
 mod color;

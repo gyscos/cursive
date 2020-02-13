@@ -54,6 +54,11 @@
 //! and log to it instead of stdout.
 //!
 //! Or you can use gdb as usual.
+//! 
+//! ## Themes
+//!
+//! Cursive supports configuring the feels and looks of your application with
+//! custom themes and colors. For details see [`Cursive::theme`].
 #![deny(missing_docs)]
 
 // We use chan_signal to detect SIGWINCH.
