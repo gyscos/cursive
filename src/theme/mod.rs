@@ -106,11 +106,34 @@
 //!
 //! # Themes
 //!
-//! A theme defines the color palette an application will use, as well as
-//! various options to style views.
+//! A theme is a [`Theme`] object that defines the color palette an 
+//! application will use, as well as various options to style views.
 //!
-//! Themes are described in toml configuration files, so it requires 
-//! the "toml" feature to be enabled.
+//! There are several ways to set a theme for the application:
+//!
+//! * Construct a [`Theme`] object by setting every field individually.
+//! * Get the current theme with [`Cursive::current_theme`] method and
+//!   changing the required fields (for example see [theme_manual example]).
+//! * Using a toml file as a theme configuration (for example see
+//!   [theme example]).
+//!
+//! ## Configuring theme with toml
+//!
+//! This requires `toml` feature to be enabled. 
+//!
+//! ```toml
+//! [dependencies]
+//! cursive = { version = "0.14", features = ["toml"] }
+//! ```
+//!
+//! To use the theme in our application, load it with [`Cursive::load_toml`]
+//! method (or use [`theme::load_theme_file`] to aquire the
+//! theme object).
+//!
+//! ```rust
+//! let siv = Cursive::default();
+//! siv.load_toml(include_str!("<path_to_theme_file>.toml")).unwrap();
+//! ```
 //!
 //! Here are the possible entries (all fields are optional):
 //!
@@ -144,20 +167,19 @@
 //!     highlight          = "#F00"
 //!     highlight_inactive = "#5555FF"
 //! ```
-//!
-//! To use a custom theme in your project, enable the "toml" feature:
-//!
-//! ```toml
-//! [dependencies]
-//! cursive = { version = "0.14", features = ["toml"] }
-//! ```
-//!
-//! Then create a theme file somewhere in your project (example of the
-//! file contents are above). Use your theme from the code:
-//! ```rust
-//! let siv = Cursive::default();
-//! siv.load_toml(include_str!("<path_to_theme_file>.toml")).unwrap();
-//! ```
+//! 
+//! [`Color`]: ./enum.Color.html
+//! [`PaletteColor`]: ./enum.PaletteColor.html
+//! [`Palette`]: ./struct.Palette.html
+//! [`ColorType`]: ./enum.ColorType.html
+//! [`ColorStyle`]: ./struct.ColorStyle.html
+//! [`Effect`]: ./enum.Effect.html
+//! [`Theme`]: ./struct.Theme.html
+//! [`Cursive::current_theme`]: ../struct.Cursive.html#method.current_theme
+//! [theme_manual example]: https://github.com/gyscos/cursive/blob/master/examples/theme_manual.rs
+//! [theme example]: https://github.com/gyscos/cursive/blob/master/examples/theme.rs
+//! [`Cursive::load_toml`]: ../struct.Cursive.html#method.load_toml
+//! [`theme::load_theme_file`]: ./fn.load_theme_file.html
 mod border_style;
 mod color;
 mod color_pair;
@@ -245,7 +267,7 @@ impl From<toml::de::Error> for Error {
 }
 
 #[cfg(feature = "toml")]
-/// Loads a theme from file and sets it as active.
+/// Loads a theme from file.
 ///
 /// Must have the `toml` feature enabled.
 pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {

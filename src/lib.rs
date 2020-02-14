@@ -58,7 +58,10 @@
 //! ## Themes
 //!
 //! Cursive supports configuring the feels and looks of your application with
-//! custom themes and colors. For details see [`Cursive::theme`].
+//! custom themes and colors. For details see documentation of the
+//! [`cursive::theme`] module.
+//!
+//! [`cursive::theme`]: ./theme/index.html
 #![deny(missing_docs)]
 
 // We use chan_signal to detect SIGWINCH.
