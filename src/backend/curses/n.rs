@@ -505,7 +505,7 @@ fn initialize_keymap() -> HashMap<i32, Event> {
 
     // Then add some dynamic ones
 
-    for c in 1..26 {
+    for c in 1..=26 {
         let event = match c {
             // This is Ctrl+C
             // TODO: Don't exit here, but add this as a default callback
