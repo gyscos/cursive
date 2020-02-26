@@ -892,12 +892,15 @@ impl<T: 'static> View for SelectView<T> {
                 printer.print((0, 0), "<");
                 printer.print((x, 0), ">");
 
-                let label = &self.items[self.focus()].label;
+                if let Some(label) =
+                    self.items.get(self.focus()).map(|item| &item.label)
+                {
+                    // And center the text?
+                    let offset =
+                        HAlign::Center.get_offset(label.width(), x + 1);
 
-                // And center the text?
-                let offset = HAlign::Center.get_offset(label.width(), x + 1);
-
-                printer.print_styled((offset, 0), label.into());
+                    printer.print_styled((offset, 0), label.into());
+                }
             });
         } else {
             // Non-popup mode: we always print the entire list.
