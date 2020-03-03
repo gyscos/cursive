@@ -76,7 +76,6 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
         }
     }
 
-    // Some for<'b> weirdness here to please the borrow checker gods...
     fn wrap_call_on_any<'a>(
         &mut self,
         selector: &Selector<'_>,

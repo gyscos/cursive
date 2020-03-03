@@ -545,7 +545,7 @@ impl Cursive {
         callback: F,
     ) -> Option<R>
     where
-        V: View + Any,
+        V: View,
         F: FnOnce(&mut V) -> R,
     {
         self.root.call_on(sel, callback)
@@ -577,7 +577,7 @@ impl Cursive {
         callback: F,
     ) -> Option<R>
     where
-        V: View + Any,
+        V: View,
         F: FnOnce(&mut V) -> R,
     {
         self.call_on(&view::Selector::Name(name), callback)
@@ -587,7 +587,7 @@ impl Cursive {
     #[deprecated(note = "`call_on_id` is being renamed to `call_on_name`")]
     pub fn call_on_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
     where
-        V: View + Any,
+        V: View,
         F: FnOnce(&mut V) -> R,
     {
         self.call_on_name(id, callback)
@@ -640,7 +640,7 @@ impl Cursive {
     /// [`ViewRef`]: views::ViewRef
     pub fn find_name<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
     where
-        V: View + Any,
+        V: View,
     {
         self.call_on_name(id, views::NamedView::<V>::get_mut)
     }
@@ -649,7 +649,7 @@ impl Cursive {
     #[deprecated(note = "`find_id` is being renamed to `find_name`")]
     pub fn find_id<V>(&mut self, id: &str) -> Option<views::ViewRef<V>>
     where
-        V: View + Any,
+        V: View,
     {
         self.find_name(id)
     }
@@ -706,12 +706,43 @@ impl Cursive {
     ///
     /// If an event matches the given trigger, it will not be sent to the view
     /// tree and will go to the given callback instead.
+    ///
+    /// Note that regular "post-event" callbacks will also be skipped for
+    /// these events.
     pub fn set_on_pre_event<F, E>(&mut self, trigger: E, cb: F)
     where
         F: FnMut(&mut Cursive) + 'static,
         E: Into<crate::event::EventTrigger>,
     {
         self.root.set_on_pre_event(trigger, crate::immut1!(cb));
+    }
+
+    /// Registers an inner priority callback.
+    ///
+    /// See [`OnEventView`] for more information.
+    ///
+    /// [`OnEventView`]: crate::views::OnEventView::set_on_pre_event_inner()
+    pub fn set_on_pre_event_inner<E, F>(&mut self, trigger: E, cb: F)
+    where
+        E: Into<crate::event::EventTrigger>,
+        F: Fn(&Event) -> Option<EventResult> + 'static,
+    {
+        self.root
+            .set_on_pre_event_inner(trigger, move |_, event| cb(event));
+    }
+
+    /// Registers an inner callback.
+    ///
+    /// See [`OnEventView`] for more information.
+    ///
+    /// [`OnEventView`]: crate::views::OnEventView::set_on_event_inner()
+    pub fn set_on_event_inner<E, F>(&mut self, trigger: E, cb: F)
+    where
+        E: Into<crate::event::EventTrigger>,
+        F: Fn(&Event) -> Option<EventResult> + 'static,
+    {
+        self.root
+            .set_on_event_inner(trigger, move |_, event| cb(event));
     }
 
     /// Sets the only global callback for the given event.
@@ -726,6 +757,17 @@ impl Cursive {
         let event = event.into();
         self.clear_global_callbacks(event.clone());
         self.add_global_callback(event, cb);
+    }
+
+    /// Fetches the type name of a view in the tree.
+    pub fn debug_name(&mut self, name: &str) -> Option<&'static str> {
+        let mut result = None;
+
+        self.root.call_on_any(
+            &view::Selector::Name(name),
+            &mut |v: &mut dyn crate::View| result = Some(v.type_name()),
+        );
+        result
     }
 
     /// Removes any callback tied to the given event.

@@ -769,22 +769,18 @@ mod tests {
         assert!(stack
             .get(LayerPosition::FromFront(0))
             .unwrap()
-            .as_any()
             .is::<TextView>());
         assert!(stack
             .get(LayerPosition::FromBack(0))
             .unwrap()
-            .as_any()
             .is::<TextView>());
         assert!(stack
             .get_mut(LayerPosition::FromFront(0))
             .unwrap()
-            .as_any_mut()
             .is::<TextView>());
         assert!(stack
             .get_mut(LayerPosition::FromBack(0))
             .unwrap()
-            .as_any_mut()
             .is::<TextView>());
     }
 }

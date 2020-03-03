@@ -1,6 +1,5 @@
 use crate::view::{View, ViewPath, ViewWrapper};
 use crate::views::{NamedView, ViewRef};
-use std::any::Any;
 
 /// Provides `call_on<V: View>` to views.
 ///
@@ -20,13 +19,13 @@ pub trait Finder {
         callback: F,
     ) -> Option<R>
     where
-        V: View + Any,
+        V: View,
         F: FnOnce(&mut V) -> R;
 
     /// Convenient method to use `call_on` with a `view::Selector::Name`.
     fn call_on_name<V, F, R>(&mut self, name: &str, callback: F) -> Option<R>
     where
-        V: View + Any,
+        V: View,
         F: FnOnce(&mut V) -> R,
     {
         self.call_on(&Selector::Name(name), callback)
@@ -36,7 +35,7 @@ pub trait Finder {
     #[deprecated(note = "`call_on_id` is being renamed to `call_on_name`")]
     fn call_on_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
     where
-        V: View + Any,
+        V: View,
         F: FnOnce(&mut V) -> R,
     {
         self.call_on_name(id, callback)
@@ -45,7 +44,7 @@ pub trait Finder {
     /// Convenient method to find a view wrapped in an [`NamedView`].
     fn find_name<V>(&mut self, name: &str) -> Option<ViewRef<V>>
     where
-        V: View + Any,
+        V: View,
     {
         self.call_on_name(name, NamedView::<V>::get_mut)
     }
@@ -54,7 +53,7 @@ pub trait Finder {
     #[deprecated(note = "`find_id` is being renamed to `find_name`")]
     fn find_id<V>(&mut self, id: &str) -> Option<ViewRef<V>>
     where
-        V: View + Any,
+        V: View,
     {
         self.find_name(id)
     }
@@ -67,7 +66,7 @@ impl<T: View> Finder for T {
         callback: F,
     ) -> Option<R>
     where
-        V: View + Any,
+        V: View,
         F: FnOnce(&mut V) -> R,
     {
         let mut result = None;
@@ -75,12 +74,13 @@ impl<T: View> Finder for T {
             let result_ref = &mut result;
 
             let mut callback = Some(callback);
-            let mut callback = |v: &mut dyn Any| {
+            let mut callback = |v: &mut dyn View| {
                 if let Some(callback) = callback.take() {
                     if v.is::<V>() {
                         *result_ref =
                             v.downcast_mut::<V>().map(|v| callback(v));
                     } else if v.is::<NamedView<V>>() {
+                        // Special case
                         *result_ref = v
                             .downcast_mut::<NamedView<V>>()
                             .and_then(|v| v.with_view_mut(callback));

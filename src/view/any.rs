@@ -63,4 +63,9 @@ impl dyn AnyView {
             Err(self)
         }
     }
+
+    /// Checks if this view is of type `T`.
+    pub fn is<T: Any>(&mut self) -> bool {
+        self.as_any().is::<T>()
+    }
 }

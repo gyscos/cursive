@@ -118,4 +118,39 @@ pub trait View: Any + AnyView {
     fn important_area(&self, view_size: Vec2) -> Rect {
         Rect::from_size((0, 0), view_size)
     }
+
+    /// Returns the type of this view.
+    ///
+    /// Useful when you have a `&dyn View`.
+    fn type_name(&self) -> &'static str {
+        std::any::type_name::<Self>()
+    }
+}
+
+impl dyn View {
+    /// Attempts to downcast `self` to a concrete type.
+    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
+        self.as_any().downcast_ref()
+    }
+
+    /// Attempts to downcast `self` to a concrete type.
+    pub fn downcast_mut<T: Any>(&mut self) -> Option<&mut T> {
+        self.as_any_mut().downcast_mut()
+    }
+
+    /// Attempts to downcast `Box<Self>` to a concrete type.
+    pub fn downcast<T: Any>(self: Box<Self>) -> Result<Box<T>, Box<Self>> {
+        // Do the check here + unwrap, so the error
+        // value is `Self` and not `dyn Any`.
+        if self.as_any().is::<T>() {
+            Ok(self.as_boxed_any().downcast().unwrap())
+        } else {
+            Err(self)
+        }
+    }
+
+    /// Checks if this view is of type `T`.
+    pub fn is<T: Any>(&self) -> bool {
+        self.as_any().is::<T>()
+    }
 }

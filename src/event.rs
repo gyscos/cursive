@@ -26,10 +26,10 @@ use std::rc::Rc;
 pub struct Callback(Rc<Box<dyn Fn(&mut Cursive)>>);
 // TODO: remove the Box when Box<T: Sized> -> Rc<T> is possible
 
-/// A callback that can be run on `&mut Any`.
+/// A callback that can be run on `&mut dyn View`.
 ///
 /// It is meant to be used as parameter in `View::call_on_any`, and not much else.
-pub type AnyCb<'a> = &'a mut dyn FnMut(&mut dyn Any);
+pub type AnyCb<'a> = &'a mut dyn FnMut(&mut dyn crate::view::View);
 
 /// A trigger that only selects some types of events.
 ///

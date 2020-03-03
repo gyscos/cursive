@@ -201,7 +201,7 @@ impl TextView {
         Self::new_with_content(TextContent::new(content))
     }
 
-    /// Creates a new TextView using the given `Arc<Mutex<String>>`.
+    /// Creates a new TextView using the given `TextContent`.
     ///
     /// If you kept a clone of the given content, you'll be able to update it
     /// remotely.
