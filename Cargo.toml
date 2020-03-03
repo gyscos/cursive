@@ -74,7 +74,7 @@ version = "1.5.3"
 
 [dependencies.crossterm]
 optional = true
-version = "0.14"
+version = "0.16"
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.1.10"
