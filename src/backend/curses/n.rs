@@ -103,7 +103,6 @@ impl Backend {
         // Don't echo user input, we'll take care of that
         ncurses::noecho();
         // This disables buffering and some input processing.
-        // TODO: use ncurses::raw() ?
         ncurses::raw();
         // This enables color support.
         ncurses::start_color();
@@ -507,8 +506,8 @@ fn initialize_keymap() -> HashMap<i32, Event> {
 
     for c in 1..=26 {
         let event = match c {
-            // This is Ctrl+C
-            // TODO: Don't exit here, but add this as a default callback
+            // Ctrl-i and Ctrl-j are special, they use the same codes as Tab
+            // and Enter respecively. There's just no way to detect them. :(
             9 => Event::Key(Key::Tab),
             10 => Event::Key(Key::Enter),
             other => Event::CtrlChar((b'a' - 1 + other as u8) as char),
