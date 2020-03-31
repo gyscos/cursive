@@ -164,6 +164,7 @@ impl Extend<(PaletteColor, Color)> for Palette {
 /// * `TitleSecondary` => `Dark(Yellow)`
 /// * `Highlight` => `Dark(Red)`
 /// * `HighlightInactive` => `Dark(Blue)`
+/// * `HighlightText` => `Dark(White)`
 impl Default for Palette {
     fn default() -> Palette {
         use self::PaletteColor::*;
@@ -182,6 +183,7 @@ impl Default for Palette {
                 TitleSecondary => Light(Blue),
                 Highlight => Dark(Red),
                 HighlightInactive => Dark(Blue),
+                HighlightText => Dark(White),
             },
             custom: HashMap::default(),
         }
@@ -271,6 +273,8 @@ pub enum PaletteColor {
     Highlight,
     /// Color used for highlighting inactive text.
     HighlightInactive,
+    /// Color used for highlighted text
+    HighlightText,
 }
 
 impl PaletteColor {
@@ -297,6 +301,7 @@ impl FromStr for PaletteColor {
             "TitleSecondary" | "title_secondary" => TitleSecondary,
             "Highlight" | "highlight" => Highlight,
             "HighlightInactive" | "highlight_inactive" => HighlightInactive,
+            "HighlightText" | "highlight_text" => HighlightText,
             _ => return Err(()),
         })
     }

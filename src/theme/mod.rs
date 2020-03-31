@@ -35,6 +35,8 @@
 //!   Defaults to **red**.
 //! * **`HighlightInactive`**: used to highlight selected but inactive items.
 //!   Defaults to **blue**.
+//! * **`HighlightText`**: used to print primary text when highlighted
+//!   Defaults to **white**.
 //!
 //! A [`Palette`] then maps each of these to an actual [`Color`].
 //!
@@ -84,11 +86,11 @@
 //!     * Its *foreground* color is `TitleSecondary`.
 //! * **`ColorStyle::highlight()`**: style used to print selected items.
 //!     * Its *background* color is `Highlight`.
-//!     * Its *foreground* color is `View`.
+//!     * Its *foreground* color is `HighlightText`.
 //! * **`ColorStyle::highlight_inactive()`**: style used to print selected,
 //!   but inactive items.
 //!     * Its *background* color is `HighlightInactive`.
-//!     * Its *foreground* color is `View`.
+//!     * Its *foreground* color is `HighlightText`.
 //!
 //! Using one of these pairs when styling your application helps give it a
 //! coherent look.
