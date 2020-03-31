@@ -68,12 +68,12 @@ impl ColorStyle {
 
     /// Alternate text with highlight background.
     pub fn highlight() -> Self {
-        Self::new(PaletteColor::View, PaletteColor::Highlight)
+        Self::new(PaletteColor::HighlightText, PaletteColor::Highlight)
     }
 
     /// Highlight color for inactive views (not in focus).
     pub fn highlight_inactive() -> Self {
-        Self::new(PaletteColor::View, PaletteColor::HighlightInactive)
+        Self::new(PaletteColor::HighlightText, PaletteColor::HighlightInactive)
     }
 
     /// Return the color pair that this style represents.
