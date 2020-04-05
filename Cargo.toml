@@ -74,8 +74,7 @@ version = "1.5.3"
 
 [dependencies.crossterm]
 optional = true
-git = "https://github.com/crossterm-rs/crossterm"
-commit = "33b90c85c96e1452deb6e978ce06d9cb6f6da1a9"
+version = "0.17"
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.1"
