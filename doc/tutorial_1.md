@@ -6,11 +6,10 @@ In this first tutorial, we'll learn the basics of cursive,
 and write a very basic first application:
 
 ```rust,no_run
-use cursive::Cursive;
 use cursive::views::TextView;
 
 fn main() {
-	let mut siv = Cursive::default();
+	let mut siv = cursive::default();
 
 	siv.add_global_callback('q', |s| s.quit());
 
@@ -61,7 +60,7 @@ The cursive library is configured through a main [`Cursive`] root.
 A typical cursive application will consist of three phases,
 all centered around this object:
 
-1. Create a `Cursive` object
+1. Create a `Cursive` object (we will use the [`cursive::default()`] method for that)
 2. Configure the `Cursive` object
 3. Run the `Cursive` object
 
@@ -71,10 +70,8 @@ so let's skip it for now.
 In its simplest form, a cursive application is therefore:
 
 ```rust,no_run
-use cursive::Cursive;
-
 fn main() {
-	let mut siv = Cursive::default();
+	let mut siv = cursive::default();
 
 	siv.run();
 }
@@ -85,6 +82,7 @@ It's rather easy to identify the two steps involved.
 If you run this, you'll get an empty blue terminal, with no way of properly
 leaving the application (you'll have to press <kbd>Ctrl</kbd>+<kbd>C</kbd> to kill it).
 
+[`cursive::default()`]: https://docs.rs/cursive/0/cursive/fn.default.html
 [`Cursive`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html
 
 ## Interactivity
@@ -106,10 +104,8 @@ This method takes 2 arguments: a trigger, and a callback.
 In the end, we have:
 
 ```rust,no_run
-use cursive::Cursive;
-
 fn main() {
-	let mut siv = Cursive::default();
+	let mut siv = cursive::default();
 
 	siv.add_global_callback('q', |s| s.quit());
 
@@ -145,11 +141,10 @@ exactly that.
 Once we've added this line, our first application is complete:
 
 ```rust,no_run
-use cursive::Cursive;
 use cursive::views::TextView;
 
 fn main() {
-	let mut siv = Cursive::default();
+	let mut siv = cursive::default();
 
 	siv.add_global_callback('q', |s| s.quit());
 

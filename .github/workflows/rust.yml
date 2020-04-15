@@ -10,6 +10,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Build
-      run: cargo build --no-default-features --verbose
+      run: cd cursive && cargo build --no-default-features --verbose
     - name: Run tests
-      run: cargo test --no-default-features --verbose
+      run: cd cursive && cargo test --no-default-features --verbose

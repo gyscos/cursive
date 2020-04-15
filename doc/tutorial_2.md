@@ -10,7 +10,7 @@ use cursive::Cursive;
 use cursive::views::Dialog;
 
 fn main() {
-    let mut siv = Cursive::default();
+    let mut siv = cursive::default();
 
     siv.add_layer(Dialog::text("This is a survey!\nPress <Next> when you're ready.")
         .title("Important survey")
@@ -44,10 +44,8 @@ This time you're not a beginner anymore, so we'll skip the introduction!
 Let's start from a basic cursive application:
 
 ```rust,no_run
-use cursive::Cursive;
-
 fn main() {
-    let mut siv = Cursive::default();
+    let mut siv = cursive::default();
 
     siv.run();
 }
@@ -63,12 +61,11 @@ and/or buttons.
 `TextView`:
 
 ```rust,no_run
-use cursive::Cursive;
 use cursive::views::Dialog;
 use cursive::views::TextView;
 
 fn main() {
-    let mut siv = Cursive::default();
+    let mut siv = cursive::default();
 
     siv.add_layer(Dialog::around(TextView::new("...")));
 
@@ -127,7 +124,7 @@ use cursive::Cursive;
 use cursive::views::Dialog;
 
 fn main() {
-    let mut siv = Cursive::default();
+    let mut siv = cursive::default();
 
     siv.add_layer(Dialog::text("This is a survey!\nPress <Next> when you're ready.")
         .title("Important survey")

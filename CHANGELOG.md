@@ -1,5 +1,33 @@
 # Changelog
 
+## Next version (0.15.0)
+
+### Breaking changes
+
+- Split library into a backend-agnostic `cursive-core` and a user-facing `cursive`.
+- `Cursive::default` now needs the `cursive::CursiveExt` trait to be in scope.
+- Update dependencies:
+    - crossterm to 0.17.
+    - enumset to 1.0
+    - ahash to 0.3
+    - pulldown-cmark to 0.7
+- Add `PaletteColor::HighlightText`
+- `AnyCb` now takes a `&mut dyn View` rather than a `&mut dyn Any`.
+
+### API updates
+
+- Added `cursive::{default,ncurses,pancurses,termion,crossterm,blt,dummy}` functions.
+- Add `Cursive::debug_name`
+- Add `ScreensView` to move some code away from the `Cursive` root
+    - Reworked global callbacks configuration
+    - Ctrl-C can be rewired to no longer exit the application
+
+### Bugfixes
+
+- Fix Ctrl-Z binding for ncurses
+- Fix potential crash with empty `SelectView`
+- Add `toml` and `markdown` features to docs.rs
+
 ## 0.14.0
 
 ### Breaking changes

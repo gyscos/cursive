@@ -15,7 +15,7 @@ use cursive::views::{Button, Dialog, DummyView, EditView,
 use cursive::traits::*;
 
 fn main() {
-    let mut siv = Cursive::default();
+    let mut siv = cursive::default();
 
     let select = SelectView::<String>::new()
         .on_submit(on_submit)
