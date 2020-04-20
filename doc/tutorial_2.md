@@ -157,7 +157,7 @@ fn show_next(s: &mut Cursive) {
         .title("Question 1")
         .button("Yes!", |s| ()) //< Do something interesting here...
         .button("No!", |s| ())  //< And here as well...
-        .button("Uh?", |s| ()); //< And finally here too.
+        .button("Uh?", |s| ())); //< And finally here too.
 }
 ```
 
