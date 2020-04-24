@@ -3,7 +3,6 @@ authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
 categories = ["command-line-interface", "gui"]
 description = "A TUI (Text User Interface) library focused on ease-of-use."
 documentation = "https://docs.rs/cursive"
-exclude = ["doc/**", "assets/**", "examples/**"]
 keywords = ["ncurses", "TUI", "UI"]
 license = "MIT"
 name = "cursive"

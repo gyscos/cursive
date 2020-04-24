@@ -18,7 +18,7 @@ fn main() {
 
     // Read the list of cities from separate file, and fill the view with it.
     // (We include the file at compile-time to avoid runtime read errors.)
-    let content = include_str!("../assets/cities.txt");
+    let content = include_str!("../../assets/cities.txt");
     select.add_all_str(content.lines());
 
     // Sets the callback for when "Enter" is pressed.

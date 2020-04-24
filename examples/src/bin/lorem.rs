@@ -4,7 +4,7 @@ use cursive::views::{Dialog, Panel, TextView};
 
 fn main() {
     // Read some long text from a file.
-    let content = include_str!("../assets/lorem.txt");
+    let content = include_str!("../../assets/lorem.txt");
 
     let mut siv = cursive::default();
 

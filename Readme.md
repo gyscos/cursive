@@ -46,17 +46,17 @@ fn main() {
 }
 ```
 
-[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/master/doc/cursive_example.png)](examples/dialog.rs)
+[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/master/doc/cursive_example.png)](examples/src/bin/dialog.rs)
 
 Check out the other [examples](https://github.com/gyscos/cursive/tree/master/examples) to get these results, and more:
 
 <div>
-<a href="examples/edit.rs"><img src="https://imgur.com/CQgSwly.png" alt="edit.rs example", width="48%" /></a>
-<a href="examples/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
-<a href="examples/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
-<a href="examples/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
-<a href="examples/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
-<a href="examples/theme.rs"><img src="https://i.imgur.com/3Yleozc.png" alt="theme.rs example", width="48%" /></a>
+<a href="examples/src/bin/edit.rs"><img src="https://imgur.com/CQgSwly.png" alt="edit.rs example", width="48%" /></a>
+<a href="examples/src/bin/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
+<a href="examples/src/bin/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
+<a href="examples/src/bin/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
+<a href="examples/src/bin/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
+<a href="examples/src/bin/theme.rs"><img src="https://i.imgur.com/3Yleozc.png" alt="theme.rs example", width="48%" /></a>
 </div>
 
 _(Colors may depend on your terminal configuration.)_
@@ -117,8 +117,7 @@ There is initial support for [wide characters](https://en.wikipedia.org/wiki/CJK
 * Keep in mind that if the terminal has shortcuts registered, they probably won't be transmitted to the app.
 * UTF-8 input should work fine in a unicode-enabled terminal emulator, but raw linux TTY may be more capricious.
 
-## [Contributing](CONTRIBUTING.md)
-
+## [Contributing](CONTRIBUTING.md) 
 ## Alternatives
 
 See also [tui-rs](https://github.com/fdehau/tui-rs) - and a small [comparison page](https://github.com/gyscos/cursive/wiki/Cursive-vs-tui%E2%80%90rs).

@@ -644,8 +644,9 @@ impl View for StackView {
 
             // We need to call `layout()` on the view before giving it focus
             // for the first time. Otherwise it will not be properly set up.
-            // Ex: examples/lorem.rs: the text view takes focus because it's
-            // scrolling, but it only knows that after a call to `layout()`.
+            // Ex: `examples/src/bin/lorem.rs`
+            // The text view takes focus because it's scrolling, but it only
+            // knows that after a call to `layout()`.
             if layer.virgin {
                 layer.view.take_focus(Direction::none());
                 layer.virgin = false;
