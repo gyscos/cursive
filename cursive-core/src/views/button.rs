@@ -5,7 +5,7 @@ use crate::rect::Rect;
 use crate::theme::ColorStyle;
 use crate::view::View;
 use crate::Vec2;
-use crate::{Cursive, Printer, With};
+use crate::{Cursive, Printer};
 use unicode_width::UnicodeWidthStr;
 
 /// Simple text label with a callback when <Enter> is pressed.
@@ -29,6 +29,8 @@ pub struct Button {
 }
 
 impl Button {
+    impl_enabled!(self.enabled);
+
     /// Creates a new button with the given content and callback.
     pub fn new<F, S>(label: S, cb: F) -> Self
     where
@@ -69,35 +71,6 @@ impl Button {
         F: Fn(&mut Cursive) + 'static,
     {
         self.callback = Callback::from_fn(cb);
-    }
-
-    /// Disables this view.
-    ///
-    /// A disabled view cannot be selected.
-    pub fn disable(&mut self) {
-        self.enabled = false;
-    }
-
-    /// Disables this view.
-    ///
-    /// Chainable variant.
-    pub fn disabled(self) -> Self {
-        self.with(Self::disable)
-    }
-
-    /// Re-enables this view.
-    pub fn enable(&mut self) {
-        self.enabled = true;
-    }
-
-    /// Enable or disable this view.
-    pub fn set_enabled(&mut self, enabled: bool) {
-        self.enabled = enabled;
-    }
-
-    /// Returns `true` if this view is enabled.
-    pub fn is_enabled(&self) -> bool {
-        self.enabled
     }
 
     /// Returns the label for this button.

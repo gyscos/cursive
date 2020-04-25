@@ -85,6 +85,8 @@ impl<T: 'static> Default for SelectView<T> {
 }
 
 impl<T: 'static> SelectView<T> {
+    impl_enabled!(self.enabled);
+
     /// Creates a new empty SelectView.
     pub fn new() -> Self {
         SelectView {
@@ -129,35 +131,6 @@ impl<T: 'static> SelectView<T> {
     /// Turns `self` into a popup select view.
     pub fn set_popup(&mut self, popup: bool) {
         self.popup = popup;
-    }
-
-    /// Disables this view.
-    ///
-    /// A disabled view cannot be selected.
-    pub fn disable(&mut self) {
-        self.enabled = false;
-    }
-
-    /// Disables this view.
-    ///
-    /// Chainable variant.
-    pub fn disabled(self) -> Self {
-        self.with(Self::disable)
-    }
-
-    /// Re-enables this view.
-    pub fn enable(&mut self) {
-        self.enabled = true;
-    }
-
-    /// Enable or disable this view.
-    pub fn set_enabled(&mut self, enabled: bool) {
-        self.enabled = enabled;
-    }
-
-    /// Returns `true` if this view is enabled.
-    pub fn is_enabled(&self) -> bool {
-        self.enabled
     }
 
     /// Sets a callback to be used when an item is selected.
