@@ -119,6 +119,15 @@ impl Checkbox {
         }
     }
 
+    /// Set the checkbox state.
+    ///
+    /// Chainable variant.
+    pub fn with_checked(self, is_checked: bool) -> Self {
+        self.with(|s| {
+            s.set_checked(is_checked);
+        })
+    }
+
     fn draw_internal(&self, printer: &Printer<'_, '_>) {
         printer.print((0, 0), "[ ]");
         if self.checked {
