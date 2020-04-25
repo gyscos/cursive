@@ -44,6 +44,14 @@ macro_rules! impl_enabled {
             self.$x = enabled;
         }
 
+        /// Enable or disable this view.
+        ///
+        /// Chainable variant.
+        pub fn with_enabled(mut self, is_enabled: bool) -> Self {
+            self.set_enabled(is_enabled);
+            self
+        }
+
         /// Returns `true` if this view is enabled.
         pub fn is_enabled(&self) -> bool {
             self.$x
