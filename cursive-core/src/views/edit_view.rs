@@ -111,6 +111,8 @@ pub struct EditView {
 new_default!(EditView);
 
 impl EditView {
+    impl_enabled!(self.enabled);
+
     /// Creates a new, empty edit view.
     pub fn new() -> Self {
         EditView {
@@ -179,25 +181,6 @@ impl EditView {
     /// ```
     pub fn filler<S: Into<String>>(self, filler: S) -> Self {
         self.with(|s| s.set_filler(filler))
-    }
-
-    /// Disables this view.
-    ///
-    /// A disabled view cannot be selected.
-    pub fn disable(&mut self) {
-        self.enabled = false;
-    }
-
-    /// Disables this view.
-    ///
-    /// Chainable variant.
-    pub fn disabled(self) -> Self {
-        self.with(Self::disable)
-    }
-
-    /// Re-enables this view.
-    pub fn enable(&mut self) {
-        self.enabled = true;
     }
 
     /// Sets the style used for this view.
@@ -355,16 +338,6 @@ impl EditView {
         F: Fn(&mut Cursive, &str) + 'static,
     {
         self.with(|v| v.set_on_submit(callback))
-    }
-
-    /// Enable or disable this view.
-    pub fn set_enabled(&mut self, enabled: bool) {
-        self.enabled = enabled;
-    }
-
-    /// Returns `true` if this view is enabled.
-    pub fn is_enabled(&self) -> bool {
-        self.enabled
     }
 
     /// Replace the entire content of the view with the given one.
