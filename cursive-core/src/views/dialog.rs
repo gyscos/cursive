@@ -8,7 +8,7 @@ use crate::views::{BoxedView, Button, DummyView, LastSizeView, TextView};
 use crate::Cursive;
 use crate::Printer;
 use crate::Vec2;
-use crate::With;
+use crate::{utils::markup::StyledString, With};
 use std::cell::Cell;
 use std::cmp::max;
 use unicode_width::UnicodeWidthStr;
@@ -159,7 +159,7 @@ impl Dialog {
     /// let dialog = Dialog::text("Hello!")
     ///             .button("Quit", |s| s.quit());
     /// ```
-    pub fn text<S: Into<String>>(text: S) -> Self {
+    pub fn text<S: Into<StyledString>>(text: S) -> Self {
         Self::around(TextView::new(text))
     }
 
@@ -174,7 +174,7 @@ impl Dialog {
     ///
     /// let dialog = Dialog::info("Some very important information!");
     /// ```
-    pub fn info<S: Into<String>>(text: S) -> Self {
+    pub fn info<S: Into<StyledString>>(text: S) -> Self {
         Dialog::text(text).dismiss_button("Ok")
     }
 
