@@ -20,3 +20,6 @@ cursive = { path = "../cursive", default-features=false }
 [features]
 default = ["cursive/default"]
 
+[[bin]]
+name = "theme"
+required-features = ["cursive/toml"]
