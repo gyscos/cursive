@@ -61,6 +61,7 @@ termion-backend = ["termion"]
 crossterm-backend = ["crossterm"]
 markdown = ["cursive_core/markdown"]
 unstable_scroll = ["cursive_core/unstable_scroll"]
+toml = ["cursive_core/toml"]
 
 [lib]
 name = "cursive"
