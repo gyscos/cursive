@@ -326,6 +326,39 @@ impl<T: 'static> SelectView<T> {
         }
     }
 
+    /// Iterate mutably on the items in this view.
+    ///
+    /// Returns an iterator with each item and their labels.
+    ///
+    /// In some cases some items will need to be cloned (for example if a
+    /// `Rc<T>` is still alive after calling `SelectView::selection()`).
+    ///
+    /// If `T` does not implement `Clone`, check `SelectView::try_iter_mut()`.
+    pub fn iter_mut(
+        &mut self,
+    ) -> impl Iterator<Item = (&mut StyledString, &mut T)>
+    where
+        T: Clone,
+    {
+        self.items
+            .iter_mut()
+            .map(|item| (&mut item.label, Rc::make_mut(&mut item.value)))
+    }
+
+    /// Try to iterate mutably on the items in this view.
+    ///
+    /// Returns an iterator with each item and their labels.
+    ///
+    /// Some items may not be returned mutably, for example if a `Rc<T>` is
+    /// still alive after calling `SelectView::selection()`.
+    pub fn try_iter_mut(
+        &mut self,
+    ) -> impl Iterator<Item = (&mut StyledString, Option<&mut T>)> {
+        self.items
+            .iter_mut()
+            .map(|item| (&mut item.label, Rc::get_mut(&mut item.value)))
+    }
+
     /// Iterate on the items in this view.
     ///
     /// Returns an iterator with each item and their labels.
