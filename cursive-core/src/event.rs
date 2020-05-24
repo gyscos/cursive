@@ -39,8 +39,18 @@ pub struct EventTrigger {
     tag: Box<dyn AnyTag>,
 }
 
-trait AnyTag: Any + std::fmt::Debug {}
-impl<T> AnyTag for T where T: Any + std::fmt::Debug {}
+trait AnyTag: Any + std::fmt::Debug {
+    fn as_any(&self) -> &dyn Any;
+}
+
+impl<T> AnyTag for T
+where
+    T: Any + std::fmt::Debug,
+{
+    fn as_any(&self) -> &dyn Any {
+        &*self
+    }
+}
 
 impl EventTrigger {
     /// Create a new `EventTrigger` using the given function as filter.
@@ -57,15 +67,29 @@ impl EventTrigger {
         F: 'static + Fn(&Event) -> bool,
         T: Any + std::fmt::Debug,
     {
+        let tag = Box::new(tag);
         EventTrigger {
             trigger: Box::new(f),
-            tag: Box::new(tag),
+            tag: tag,
         }
     }
 
     /// Check if this trigger has the given tag.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use cursive_core::event::{Event, EventTrigger};
+    ///
+    /// let event = Event::CtrlChar('c');
+    /// let trigger: EventTrigger = event.clone().into();
+    /// assert!(trigger.has_tag(&event), "Trigger does not recognize its own tag.");
+    /// ```
     pub fn has_tag<T: PartialEq + 'static>(&self, tag: &T) -> bool {
-        Any::downcast_ref::<T>(&self.tag).map_or(false, |t| tag == t)
+        (*self.tag)
+            .as_any()
+            .downcast_ref::<T>()
+            .map_or(false, |t| tag == t)
     }
 
     /// Checks if this trigger applies to the given `Event`.
