@@ -1,6 +1,6 @@
 # Changelog
 
-## Next version (0.15.0)
+## 0.15.0
 
 ### Breaking changes
 
@@ -21,6 +21,9 @@
 - Add `ScreensView` to move some code away from the `Cursive` root
     - Reworked global callbacks configuration
     - Ctrl-C can be rewired to no longer exit the application
+- Add `SelectView::(try_)iter_mut()`
+- `Dialog::{test, info}` now accept `StyledString` as input
+- Add missing functions to Checkbox re: enabled state
 
 ### Bugfixes
 
