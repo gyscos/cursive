@@ -3,18 +3,16 @@
 //! Requires the `termion-backend` feature.
 #![cfg(feature = "termion")]
 
-use termion;
-
-use self::termion::color as tcolor;
-use self::termion::event::Event as TEvent;
-use self::termion::event::Key as TKey;
-use self::termion::event::MouseButton as TMouseButton;
-use self::termion::event::MouseEvent as TMouseEvent;
-use self::termion::input::{MouseTerminal, TermRead};
-use self::termion::raw::{IntoRawMode, RawTerminal};
-use self::termion::screen::AlternateScreen;
-use self::termion::style as tstyle;
 use crossbeam_channel::{self, select, Receiver};
+use termion::color as tcolor;
+use termion::event::Event as TEvent;
+use termion::event::Key as TKey;
+use termion::event::MouseButton as TMouseButton;
+use termion::event::MouseEvent as TMouseEvent;
+use termion::input::{MouseTerminal, TermRead};
+use termion::raw::{IntoRawMode, RawTerminal};
+use termion::screen::AlternateScreen;
+use termion::style as tstyle;
 
 use crate::backend;
 use crate::backends;

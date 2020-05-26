@@ -69,10 +69,8 @@ impl EventTrigger {
         T: Any + std::fmt::Debug,
     {
         let tag = Box::new(tag);
-        EventTrigger {
-            trigger: Box::new(f),
-            tag: tag,
-        }
+        let trigger = Box::new(f);
+        EventTrigger { trigger, tag }
     }
 
     /// Check if this trigger has the given tag.

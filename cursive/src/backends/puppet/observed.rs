@@ -95,13 +95,13 @@ pub struct ObservedScreen {
 
 impl Display for ObservedScreen {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "captured piece:\n")?;
+        writeln!(f, "captured piece:")?;
 
         write!(f, "x")?;
         for x in 0..self.size().x {
             write!(f, "{}", x % 10)?;
         }
-        write!(f, "x\n")?;
+        writeln!(f, "x")?;
 
         for y in 0..self.size().y {
             write!(f, "{}", y % 10)?;
@@ -127,15 +127,14 @@ impl Display for ObservedScreen {
                     write!(f, ".")?;
                 }
             }
-            write!(f, "|")?;
-            write!(f, "\n")?;
+            writeln!(f, "|")?;
         }
 
         write!(f, "x")?;
         for _x in 0..self.size().x {
             write!(f, "-")?;
         }
-        write!(f, "x\n")?;
+        writeln!(f, "x")?;
         Ok(())
     }
 }

@@ -1,6 +1,5 @@
 //! Pancuses-specific backend.
 use log::{debug, warn};
-use pancurses;
 
 use std::cell::{Cell, RefCell};
 use std::io::{stdout, Write};
@@ -10,8 +9,8 @@ use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{Color, ColorPair, Effect};
 use crate::Vec2;
 
-use self::pancurses::mmask_t;
 use super::split_i32;
+use pancurses::mmask_t;
 
 // Use AHash instead of the slower SipHash
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;

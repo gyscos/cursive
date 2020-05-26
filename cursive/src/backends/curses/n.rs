@@ -1,14 +1,12 @@
 //! Ncurses-specific backend.
 use log::{debug, warn};
-use ncurses;
+use ncurses::mmask_t;
 
 use std::cell::{Cell, RefCell};
 use std::ffi::CString;
 use std::fs::File;
 use std::io;
 use std::io::Write;
-
-use libc;
 
 use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
@@ -17,7 +15,6 @@ use crate::utf8;
 use crate::Vec2;
 
 use self::super::split_i32;
-use self::ncurses::mmask_t;
 
 // Use AHash instead of the slower SipHash
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
