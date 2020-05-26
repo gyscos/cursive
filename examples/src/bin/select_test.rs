@@ -4,18 +4,17 @@
 // cargo test --example select_test -- --nocapture
 
 fn main() {
-    print!("To run this example call:\n$ cargo test --example select_test -- --nocapture\n");
+    print!(
+        "To run this example call:\n$ cargo test --bin select_test -- --nocapture\n"
+    );
 }
 
 #[cfg(test)]
 pub mod tests {
     extern crate cursive;
 
-    use self::cursive::backend::puppet::observed::{
-        ObservedCell, ObservedPieceInterface,
-    };
     use cursive::align::HAlign;
-    use cursive::backend::puppet::observed::ObservedScreen;
+    use cursive::backends::puppet::observed::ObservedScreen;
     use cursive::event::Event;
     use cursive::event::EventResult;
     use cursive::event::Key;
@@ -23,7 +22,6 @@ pub mod tests {
     use cursive::views::*;
     use cursive::*;
     use std::cell::RefCell;
-    use std::time::Duration;
 
     pub struct BasicSetup {
         siv: Cursive,
@@ -42,7 +40,7 @@ pub mod tests {
 
             // Read the list of cities from separate file, and fill the view with it.
             // (We include the file at compile-time to avoid runtime read errors.)
-            let content = include_str!("../assets/cities.txt");
+            let content = include_str!("../../assets/cities.txt");
             select.add_all_str(content.lines());
 
             // Sets the callback for when "Enter" is pressed.
@@ -60,7 +58,7 @@ pub mod tests {
                 });
 
             let size = Vec2::new(80, 16);
-            let backend = backend::puppet::Backend::init(Some(size));
+            let backend = backends::puppet::Backend::init(Some(size));
             let sink = backend.stream();
             let input = backend.input();
             let mut siv = Cursive::new(|| backend);
@@ -113,8 +111,8 @@ pub mod tests {
 
     #[test]
     fn displays() {
-        let mut s = BasicSetup::new();
-        let mut screen = s.last_screen().unwrap();
+        let s = BasicSetup::new();
+        let screen = s.last_screen().unwrap();
         s.dump_debug();
         assert_eq!(screen.find_occurences("Where are you from").len(), 1);
         assert_eq!(screen.find_occurences("Some random string").len(), 0);
@@ -126,7 +124,7 @@ pub mod tests {
         s.hit_keystroke(Key::Down);
         s.hit_keystroke(Key::Enter);
 
-        let mut screen = s.last_screen().unwrap();
+        let screen = s.last_screen().unwrap();
         s.dump_debug();
         assert_eq!(
             screen.find_occurences("Abu Dhabi is a great city!").len(),

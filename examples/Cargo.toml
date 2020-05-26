@@ -16,6 +16,7 @@ log = "0.4.8"
 pretty-bytes = "0.2.2"
 rand = "0.7.3"
 cursive = { path = "../cursive", default-features=false }
+crossbeam-channel = "0.4.2"
 
 [features]
 default = ["cursive/default"]
