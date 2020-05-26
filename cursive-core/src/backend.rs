@@ -3,9 +3,11 @@
 //! Cursive doesn't print anything by itself: it delegates this job to a
 //! backend library, which handles all actual input and output.
 //!
-//! This module defines the `Backend` trait, as well as a few implementations
+//! This module defines the [`Backend`] trait, as well as a few implementations
 //! using some common libraries. Each of those included backends needs a
 //! corresonding feature to be enabled.
+//!
+//! [`Backend`]: trait.Backend.html
 
 use crate::event::Event;
 use crate::theme;
@@ -21,11 +23,14 @@ use unicode_width::UnicodeWidthStr;
 /// or termion, or it can entirely simulate a terminal and show it as a
 /// graphical window (`BearLibTerminal`).
 ///
-/// When creating a new cursive tree with `Cursive::new()`, you will need to
+/// When creating a new cursive tree with [`Cursive::new()`][1], you will need to
 /// provide a backend initializer - usually their `init()` function.
 ///
-/// Backends are responsible for handling input and converting it to `Event`. Input must be
-/// non-blocking, it will be polled regularly.
+/// Backends are responsible for handling input and converting it to [`Event`].
+/// Input must be non-blocking, it will be polled regularly.
+///
+/// [1]: ../struct.Cursive.html#method.new
+/// [`Event`]: ../event/enum.Event.html
 pub trait Backend {
     /// Polls the backend for any input.
     ///

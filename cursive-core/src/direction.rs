@@ -2,6 +2,9 @@
 //!
 //! This module defines two main concepts: [`Orientation`] and [`Direction`].
 //!
+//! [`Orientation`]: enum.Orientation.html
+//! [`Direction`]: enum.Direction.html
+//!
 //! ### Orientation
 //!
 //! `Orientation` is a simple enum that can take two values:

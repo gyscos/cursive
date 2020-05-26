@@ -4,7 +4,9 @@
 //!
 //! The main purpose of `cursive-core` is to write third-party libraries to work with Cursive.
 //!
-//! If you are building an end-user application, then `cursive` is probably what you want.
+//! If you are building an end-user application, then [`cursive`] is probably what you want.
+//!
+//! [`cursive`]: https://docs.rs/cursive
 #![deny(missing_docs)]
 
 macro_rules! new_default(

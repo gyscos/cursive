@@ -22,7 +22,9 @@ pub struct Record {
 }
 
 lazy_static! {
-    /// Circular buffer for logs. Use it to implement `DebugView`.
+    /// Circular buffer for logs. Use it to implement [`DebugView`].
+    ///
+    /// [`DebugView`]: ../views/struct.DebugView.html
     pub static ref LOGS: Mutex<VecDeque<Record>> =
         Mutex::new(VecDeque::new());
 }

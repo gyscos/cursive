@@ -9,8 +9,9 @@
 //!       choose to consume it or not.
 //! * If no view consumes the event, the [global callback] table is checked.
 //!
-//! [`on_event`]: crate::View::on_event
-//! [global callback]: crate::Cursive::add_global_callback
+//! [`Event`]: enum.Event.html
+//! [`on_event`]: ../trait.View.html#method.on_event
+//! [global callback]: ../struct.Cursive.html#method.add_global_callback
 
 use crate::Cursive;
 use crate::Vec2;

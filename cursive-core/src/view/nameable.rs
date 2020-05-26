@@ -2,6 +2,8 @@ use crate::view::View;
 use crate::views::NamedView;
 
 /// Makes a view wrappable in an [`NamedView`].
+///
+/// [`NamedView`]: ../views/struct.NamedView.html
 pub trait Nameable: View + Sized {
     /// Wraps this view into an `NamedView` with the given id.
     ///

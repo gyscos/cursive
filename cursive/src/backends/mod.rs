@@ -3,9 +3,11 @@
 //! Cursive doesn't print anything by itself: it delegates this job to a
 //! backend library, which handles all actual input and output.
 //!
-//! This module defines the `Backend` trait, as well as a few implementations
+//! This module defines the [`Backend`] trait, as well as a few implementations
 //! using some common libraries. Each of those included backends needs a
 //! corresonding feature to be enabled.
+//!
+//! [`Backend`]: ../backend/trait.Backend.html
 #[cfg(unix)]
 mod resize;
 

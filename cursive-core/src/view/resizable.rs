@@ -3,6 +3,8 @@ use crate::views::ResizedView;
 use crate::Vec2;
 
 /// Makes a view wrappable in a [`ResizedView`].
+///
+/// [`ResizedView`]: ../views/struct.ResizedView.html
 pub trait Resizable: View + Sized {
     /// Same as [`resized`](Resizable::resized)
     #[deprecated(note = "Use `Resizable::resized()` instead.")]

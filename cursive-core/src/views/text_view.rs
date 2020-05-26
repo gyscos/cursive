@@ -17,6 +17,8 @@ type InnerContentType = Arc<StyledString>;
 
 /// Provides access to the content of a [`TextView`].
 ///
+/// [`TextView`]: struct.TextView.html
+///
 /// Cloning this object will still point to the same content.
 ///
 /// # Examples
@@ -58,6 +60,8 @@ impl TextContent {
 /// A reference to the text content.
 ///
 /// This can be deref'ed into a [`StyledString`].
+///
+/// [`StyledString`]: ../utils/markup/type.StyledString.html
 ///
 /// This keeps the content locked. Do not store this!
 pub struct TextContentRef {

@@ -10,7 +10,8 @@
 //!
 //! The [menubar] is the main way to show menus.
 //!
-//! [menubar]: crate::Cursive::menubar
+//! [`MenuTree`]: struct.MenuTree.html
+//! [menubar]: ../struct.Cursive.html#method.menubar
 
 use crate::event::Callback;
 use crate::Cursive;
