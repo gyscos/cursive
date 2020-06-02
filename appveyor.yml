@@ -33,4 +33,4 @@ build: false
 # Equivalent to Travis' `script` phase
 # TODO modify this phase as you see fit
 test_script:
-  - cd cursive && cargo test --verbose --all --no-default-features --features markdown,pancurses-backend,crossterm-backend
+  - cd cursive && cargo test --verbose --all --no-default-features --features markdown,crossterm-backend
