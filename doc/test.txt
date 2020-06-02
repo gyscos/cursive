@@ -1,0 +1,7 @@
+
+ ┌──┤ Cursive ├──┐
+ │ Hello Dialog! │
+ │               │
+ │  <Foo> <Quit> │
+ └───────────────┘
+
