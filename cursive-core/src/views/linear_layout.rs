@@ -33,17 +33,26 @@ pub struct LinearLayout {
 
 struct Child {
     view: Box<dyn View>,
+
     // The last result from the child's required_size
     // Doesn't have to be what the child actually gets.
-    size: Vec2,
+    required_size: Vec2,
+
+    last_size: Vec2,
+
     weight: usize,
 }
 
 impl Child {
     // Compute and caches the required size.
     fn required_size(&mut self, req: Vec2) -> Vec2 {
-        self.size = self.view.required_size(req);
-        self.size
+        self.required_size = self.view.required_size(req);
+        self.required_size
+    }
+
+    fn layout(&mut self, size: Vec2) {
+        self.last_size = size;
+        self.view.layout(size);
     }
 
     fn as_view(&self) -> &dyn View {
@@ -95,8 +104,10 @@ impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
 
             // debug!("Available: {}", self.available);
 
-            let length =
-                min(self.available, *child.size.get(self.orientation));
+            let length = min(
+                self.available,
+                *child.required_size.get(self.orientation),
+            );
 
             // Allocated width
             self.available = self.available.saturating_sub(length);
@@ -163,7 +174,8 @@ impl LinearLayout {
     pub fn add_child<V: IntoBoxedView + 'static>(&mut self, view: V) {
         self.children.push(Child {
             view: view.as_boxed_view(),
-            size: Vec2::zero(),
+            required_size: Vec2::zero(),
+            last_size: Vec2::zero(),
             weight: 0,
         });
         self.invalidate();
@@ -183,7 +195,8 @@ impl LinearLayout {
             i,
             Child {
                 view: view.as_boxed_view(),
-                size: Vec2::zero(),
+                required_size: Vec2::zero(),
+                last_size: Vec2::zero(),
                 weight: 0,
             },
         );
@@ -384,7 +397,7 @@ impl LinearLayout {
             {
                 // Get the child size:
                 // this will give us the allowed window for a click.
-                let child_size = item.child.size.get(self.orientation);
+                let child_size = item.child.last_size.get(self.orientation);
 
                 if item.offset + child_size > position {
                     if item.child.view.take_focus(direction::Direction::none())
@@ -421,11 +434,11 @@ impl View for LinearLayout {
         .enumerate()
         {
             // debug!("Printer size: {:?}", printer.size);
-            // debug!("Child size: {:?}", item.child.size);
+            // debug!("Child size: {:?}", item.child.required_size);
             // debug!("Offset: {:?}", item.offset);
             let printer = &printer
                 .offset(self.orientation.make_vec(item.offset, 0))
-                .cropped(item.child.size)
+                .cropped(item.child.last_size)
                 .focused(i == self.focus);
             item.child.view.draw(printer);
         }
@@ -440,9 +453,8 @@ impl View for LinearLayout {
     }
 
     fn layout(&mut self, size: Vec2) {
-        // If we can get away without breaking a sweat, you can bet we will.
-        // debug!("Laying out with {:?}", size);
         if self.get_cache(size).is_none() {
+            // Build the cache if needed.
             self.required_size(size);
         }
 
@@ -453,9 +465,9 @@ impl View for LinearLayout {
             ChildIterator::new(self.children.iter_mut(), o, *size.get(o))
         {
             // Every item has the same size orthogonal to the layout
-            item.child.size.set_axis_from(o.swap(), &size);
+            let size = size.with_axis(o, item.length);
 
-            item.child.view.layout(size.with_axis(o, item.length));
+            item.child.layout(size);
         }
     }
 
@@ -509,7 +521,7 @@ impl View for LinearLayout {
             cap(
                 self.children
                     .iter_mut()
-                    .map(|c| c.size.get_mut(orientation)),
+                    .map(|c| c.required_size.get_mut(orientation)),
                 *req.get(self.orientation),
             );
 
@@ -595,21 +607,21 @@ impl View for LinearLayout {
         // In what order will we iterate on the children?
         let rel = source.relative(self.orientation);
         // We activate from_focus only if coming from the "sides".
-        let i = if let Some(i) = self
-            .iter_mut(rel.is_none(), rel.unwrap_or(direction::Relative::Front))
+        let mut get_next_focus = || {
+            self.iter_mut(
+                rel.is_none(),
+                rel.unwrap_or(direction::Relative::Front),
+            )
             .filter_map(|p| try_focus(p, source))
             .next()
-        {
-            // ... we can't update `self.focus` here,
-            // because rustc thinks we still borrow `self`.
-            // :(
-            i
-        } else {
-            return false;
         };
 
-        self.focus = i;
-        true
+        if let Some(i) = get_next_focus() {
+            self.focus = i;
+            true
+        } else {
+            false
+        }
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
@@ -714,7 +726,7 @@ impl View for LinearLayout {
         let offset = self.orientation.make_vec(item.offset, 0);
 
         // And ask the child its own area.
-        let rect = item.child.view.important_area(item.child.size);
+        let rect = item.child.view.important_area(item.child.last_size);
 
         // Add `offset` to the rect.
         rect + offset

@@ -186,6 +186,8 @@ pub struct TextView {
     rows: Vec<Row>,
 
     align: Align,
+
+    // TODO: remove now that we have styled text?
     effect: Effect,
 
     // True if we can wrap long lines.

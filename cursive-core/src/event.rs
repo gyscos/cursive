@@ -447,6 +447,11 @@ impl MouseEvent {
     /// Returns `true` if `self` is an event that can grab focus.
     ///
     /// This includes `Press`, `WheelUp` and `WheelDown`.
+    ///
+    /// It does _not_ include `Release` or `Hold`.
+    ///
+    /// It means you should be able to grab a scroll bar, and move the mouse
+    /// away from the view, without actually changing the focus.
     pub fn grabs_focus(self) -> bool {
         match self {
             MouseEvent::Press(_)
