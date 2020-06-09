@@ -169,25 +169,25 @@ macro_rules! wrap_impl {
     (self.$v:ident: $t:ty) => {
         type V = $t;
 
-        fn with_view<F, R>(&self, f: F) -> std::option::Option<R>
+        fn with_view<F, R>(&self, f: F) -> ::std::option::Option<R>
         where
-            F: std::ops::FnOnce(&Self::V) -> R,
+            F: ::std::ops::FnOnce(&Self::V) -> R,
         {
-            std::option::Option::Some(f(&self.$v))
+            ::std::option::Option::Some(f(&self.$v))
         }
 
-        fn with_view_mut<F, R>(&mut self, f: F) -> std::option::Option<R>
+        fn with_view_mut<F, R>(&mut self, f: F) -> ::std::option::Option<R>
         where
-            F: std::ops::FnOnce(&mut Self::V) -> R,
+            F: ::std::ops::FnOnce(&mut Self::V) -> R,
         {
-            std::option::Option::Some(f(&mut self.$v))
+            ::std::option::Option::Some(f(&mut self.$v))
         }
 
-        fn into_inner(self) -> std::result::Result<Self::V, Self>
+        fn into_inner(self) -> ::std::result::Result<Self::V, Self>
         where
-            Self::V: Sized,
+            Self::V: ::std::marker::Sized,
         {
-            std::result::Result::Ok(self.$v)
+            ::std::result::Result::Ok(self.$v)
         }
     };
 }
