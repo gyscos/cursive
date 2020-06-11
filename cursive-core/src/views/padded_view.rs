@@ -1,4 +1,5 @@
 use crate::event::{Event, EventResult};
+use crate::rect::Rect;
 use crate::view::{Margins, View, ViewWrapper};
 use crate::Printer;
 use crate::Vec2;
@@ -43,7 +44,7 @@ impl<V: View> PaddedView<V> {
 
     /// Sets the margins for this view.
     pub fn set_margins(&mut self, margins: Margins) {
-        // TODO: invalidate?
+        // TODO: invalidate? wrap_needs_relayout?
         self.margins = margins;
     }
 
@@ -73,5 +74,10 @@ impl<V: View> ViewWrapper for PaddedView<V> {
         let bot_right = self.margins.bot_right();
         let printer = &printer.offset(top_left).shrinked(bot_right);
         self.view.draw(printer);
+    }
+
+    fn wrap_important_area(&self, view_size: Vec2) -> Rect {
+        let inner_size = view_size.saturating_sub(self.margins.combined());
+        self.view.important_area(inner_size) + self.margins.top_left()
     }
 }

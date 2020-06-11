@@ -1,5 +1,13 @@
 # Changelog
 
+## (Next version) cursive-core=0.1.1
+
+### Bugfixes
+
+- More hygienic `wrap_impl!` macro using fully-qualified paths.
+- Fixed `LinearLayout` giving children incorrect sizes.
+- More accurate "important area" for `ShadowView` and `PaddedView`.
+
 ## 0.15.0
 
 ### Breaking changes

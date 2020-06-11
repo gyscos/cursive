@@ -754,6 +754,8 @@ impl View for Dialog {
     }
 
     fn important_area(&self, _: Vec2) -> Rect {
+        // Only the content is important.
+        // TODO: if a button is focused, return the button position instead.
         self.content.important_area(self.content.size)
             + self.borders.top_left()
             + self.padding.top_left()

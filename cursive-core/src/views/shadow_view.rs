@@ -1,4 +1,5 @@
 use crate::event::{Event, EventResult};
+use crate::rect::Rect;
 use crate::theme::ColorStyle;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
@@ -11,7 +12,7 @@ pub struct ShadowView<T: View> {
     view: T,
     top_padding: bool,
     left_padding: bool,
-    // TODO: invalidate if we change the padding?
+    // TODO: invalidate if we change the padding? wrap_needs_relayout?
 }
 
 impl<T: View> ShadowView<T> {
@@ -24,7 +25,9 @@ impl<T: View> ShadowView<T> {
         }
     }
 
+    /// Return the total padding for this view (include both sides)
     fn padding(&self) -> Vec2 {
+        // We always need (1, 1) for the shadow.
         self.top_left_padding() + (1, 1)
     }
 
@@ -99,5 +102,11 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         // Draw the view background
         let printer = printer.shrinked((1, 1));
         self.view.draw(&printer);
+    }
+
+    fn wrap_important_area(&self, view_size: Vec2) -> Rect {
+        self.view
+            .important_area(view_size.saturating_sub(self.padding()))
+            + self.top_left_padding()
     }
 }
