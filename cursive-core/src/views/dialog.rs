@@ -3,7 +3,7 @@ use crate::direction::{Absolute, Direction, Relative};
 use crate::event::{AnyCb, Event, EventResult, Key};
 use crate::rect::Rect;
 use crate::theme::ColorStyle;
-use crate::view::{Margins, Selector, View};
+use crate::view::{IntoBoxedView, Margins, Selector, View};
 use crate::views::{BoxedView, Button, DummyView, LastSizeView, TextView};
 use crate::Cursive;
 use crate::Printer;
@@ -89,7 +89,7 @@ impl Dialog {
     }
 
     /// Creates a new `Dialog` with the given content.
-    pub fn around<V: View + 'static>(view: V) -> Self {
+    pub fn around<V: IntoBoxedView>(view: V) -> Self {
         Dialog {
             content: LastSizeView::new(BoxedView::boxed(view)),
             buttons: Vec::new(),
@@ -116,7 +116,7 @@ impl Dialog {
     ///         .content(TextView::new("Hello!"))
     ///         .button("Quit", |s| s.quit());
     /// ```
-    pub fn content<V: View + 'static>(self, view: V) -> Self {
+    pub fn content<V: IntoBoxedView>(self, view: V) -> Self {
         self.with(|s| s.set_content(view))
     }
 
@@ -141,10 +141,30 @@ impl Dialog {
         &mut *self.content.view
     }
 
+    /// Consumes `self` and returns the boxed content view.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive_core::views::{Dialog, TextView};
+    /// use cursive_core::view::View;
+    ///
+    /// let dialog = Dialog::around(TextView::new("abc"));
+    ///
+    /// let content: Box<dyn View> = dialog.into_content();
+    /// assert!(content.is::<TextView>());
+    ///
+    /// let content: Box<TextView> = content.downcast().ok().unwrap();
+    /// assert_eq!(content.get_content().source(), "abc");
+    /// ```
+    pub fn into_content(self) -> Box<dyn View> {
+        self.content.view.unwrap()
+    }
+
     /// Sets the content for this dialog.
     ///
     /// Previous content will be dropped.
-    pub fn set_content<V: View + 'static>(&mut self, view: V) {
+    pub fn set_content<V: IntoBoxedView>(&mut self, view: V) {
         self.content = LastSizeView::new(BoxedView::boxed(view));
         self.invalidate();
     }
