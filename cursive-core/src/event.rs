@@ -200,6 +200,16 @@ impl Callback {
         Self::from_fn(crate::immut1!(f))
     }
 
+    /// Wrap a `FnOnce` into a `Callback` object.
+    ///
+    /// After being called once, the callback will become a no-op.
+    pub fn from_fn_once<F>(f: F) -> Self
+    where
+        F: 'static + FnOnce(&mut Cursive),
+    {
+        Self::from_fn_mut(crate::once1!(f))
+    }
+
     /// Returns a dummy callback that doesn't run anything.
     pub fn dummy() -> Self {
         Callback::from_fn(|_| ())

@@ -71,8 +71,33 @@ macro_rules! immut1 {
     ($f:expr) => {{
         let callback = ::std::cell::RefCell::new($f);
         move |s| {
-            if let Ok(mut f) = callback.try_borrow_mut() {
-                (&mut *f)(s)
+            if let ::std::result::Result::Ok(mut f) = callback.try_borrow_mut()
+            {
+                (&mut *f)(s);
+            }
+        }
+    }};
+}
+
+/// Macro to wrap a `FnOnce` with 1 argument into a `FnMut`.
+///
+/// This can wrap any `FnOnce` with a single argument (for example `&mut Cursive`).
+///
+/// # Note
+///
+/// If the resulting function is called multiple times, only the first call will trigger the
+/// wrapped `FnOnce`. All subsequent calls will be no-ops.
+///
+/// In addition, due to weird interaction between Higher-rank trait bounds and
+/// closures, you should use the result from the macro directly, and not
+/// assign it to a variable.
+#[macro_export]
+macro_rules! once1 {
+    ($f:expr) => {{
+        let mut callback = ::std::option::Option::Some($f);
+        move |s| {
+            if let ::std::option::Option::Some(f) = callback.take() {
+                f(s);
             }
         }
     }};
