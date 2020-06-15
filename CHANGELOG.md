@@ -2,6 +2,10 @@
 
 ## (Next version) cursive-core=0.1.1
 
+### API updates
+
+- Add `Dialog::into_content`
+
 ### Bugfixes
 
 - More hygienic `wrap_impl!` macro using fully-qualified paths.
