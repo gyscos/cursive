@@ -63,7 +63,7 @@ new_default!(TextArea);
 impl TextArea {
     /// Creates a new, empty TextArea.
     pub fn new() -> Self {
-        TextArea {
+        let mut area = TextArea {
             content: String::new(),
             rows: Vec::new(),
             enabled: true,
@@ -71,7 +71,12 @@ impl TextArea {
             size_cache: None,
             last_size: Vec2::zero(),
             cursor: 0,
-        }
+        };
+
+        // Make sure we have valid rows, even for empty text.
+        area.compute_rows(Vec2::new(1, 1));
+
+        area
     }
 
     /// Retrieves the content of the view.
@@ -382,6 +387,9 @@ impl TextArea {
     /// Fix a damage located at the cursor.
     ///
     /// The only damages are assumed to have occured around the cursor.
+    ///
+    /// This is an optimization to not re-compute the entire rows when an
+    /// insert happened.
     fn fix_damages(&mut self) {
         if self.size_cache.is_none() {
             // If we don't know our size, we'll get a layout command soon.
