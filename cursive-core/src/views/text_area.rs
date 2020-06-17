@@ -63,7 +63,7 @@ new_default!(TextArea);
 impl TextArea {
     /// Creates a new, empty TextArea.
     pub fn new() -> Self {
-        let mut area = TextArea {
+        TextArea {
             content: String::new(),
             rows: Vec::new(),
             enabled: true,
@@ -71,12 +71,9 @@ impl TextArea {
             size_cache: None,
             last_size: Vec2::zero(),
             cursor: 0,
-        };
-
+        }
+        .with(|area| area.compute_rows(Vec2::new(1, 1)))
         // Make sure we have valid rows, even for empty text.
-        area.compute_rows(Vec2::new(1, 1));
-
-        area
     }
 
     /// Retrieves the content of the view.
@@ -84,11 +81,14 @@ impl TextArea {
         &self.content
     }
 
+    /// Ensures next layout call re-computes the rows.
     fn invalidate(&mut self) {
         self.size_cache = None;
     }
 
     /// Returns the position of the cursor in the content string.
+    ///
+    /// This is a byte index.
     pub fn cursor(&self) -> usize {
         self.cursor
     }
@@ -164,26 +164,26 @@ impl TextArea {
     }
 
     /// Finds the row containing the grapheme at the given offset
-    fn row_at(&self, offset: usize) -> usize {
-        debug!("Offset: {}", offset);
+    fn row_at(&self, byte_offset: usize) -> usize {
+        debug!("Offset: {}", byte_offset);
 
         assert!(!self.rows.is_empty());
-        assert!(offset >= self.rows[0].start);
+        assert!(byte_offset >= self.rows[0].start);
 
         self.rows
             .iter()
             .enumerate()
-            .take_while(|&(_, row)| row.start <= offset)
+            .take_while(|&(_, row)| row.start <= byte_offset)
             .map(|(i, _)| i)
             .last()
             .unwrap()
     }
 
-    fn col_at(&self, offset: usize) -> usize {
-        let row_id = self.row_at(offset);
+    fn col_at(&self, byte_offset: usize) -> usize {
+        let row_id = self.row_at(byte_offset);
         let row = self.rows[row_id];
         // Number of cells to the left of the cursor
-        self.content[row.start..offset].width()
+        self.content[row.start..byte_offset].width()
     }
 
     /// Finds the row containing the cursor
