@@ -4,13 +4,15 @@
 
 ### API updates
 
-- Add `Dialog::into_content`
+- Add `Dialog::into_content`.
+- Add `Callback::from_fn_once` and `once1!` macro to wrap a `FnOnce` in a `FnMut`.
 
 ### Bugfixes
 
 - More hygienic `wrap_impl!` macro using fully-qualified paths.
 - Fixed `LinearLayout` giving children incorrect sizes.
 - More accurate "important area" for `ShadowView` and `PaddedView`.
+- Fix potential panic when calling `TextArea::set_cursor` before its first layout phase.
 
 ## 0.15.0
 
