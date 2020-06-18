@@ -158,6 +158,9 @@ impl View for Checkbox {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        if !self.enabled {
+            return EventResult::Ignored;
+        }
         match event {
             Event::Key(Key::Enter) | Event::Char(' ') => self.toggle(),
             Event::Mouse {

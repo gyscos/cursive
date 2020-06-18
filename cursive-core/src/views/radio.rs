@@ -209,6 +209,10 @@ impl<T: 'static> View for RadioButton<T> {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        if !self.enabled() {
+            return EventResult::Ignored;
+        }
+
         match event {
             Event::Key(Key::Enter) | Event::Char(' ') => self.select(),
             Event::Mouse {

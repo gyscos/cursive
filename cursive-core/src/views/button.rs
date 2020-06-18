@@ -160,6 +160,10 @@ impl View for Button {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        if !self.enabled {
+            return EventResult::Ignored;
+        }
+
         // eprintln!("{:?}", event);
         // eprintln!("{:?}", self.req_size());
         let width = self.label.width();

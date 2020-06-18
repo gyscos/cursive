@@ -527,6 +527,10 @@ impl View for TextArea {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        if !self.enabled {
+            return EventResult::Ignored;
+        }
+
         let mut fix_scroll = true;
         match event {
             Event::Char(ch) => self.insert(ch),

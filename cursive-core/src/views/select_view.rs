@@ -954,6 +954,10 @@ impl<T: 'static> View for SelectView<T> {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        if !self.enabled {
+            return EventResult::Ignored;
+        }
+
         if self.popup {
             self.on_event_popup(event)
         } else {

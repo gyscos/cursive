@@ -598,6 +598,9 @@ impl View for EditView {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        if !self.enabled {
+            return EventResult::Ignored;
+        }
         match event {
             Event::Char(ch) => {
                 return EventResult::Consumed(Some(self.insert(ch)));
