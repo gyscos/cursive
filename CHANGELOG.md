@@ -13,6 +13,7 @@
 - Fixed `LinearLayout` giving children incorrect sizes.
 - More accurate "important area" for `ShadowView` and `PaddedView`.
 - Fix potential panic when calling `TextArea::set_cursor` before its first layout phase.
+- Disabled views no longer accept input if they are still in focus.
 
 ## 0.15.0
 

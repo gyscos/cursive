@@ -209,7 +209,7 @@ impl<T: 'static> View for RadioButton<T> {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        if !self.enabled() {
+        if !self.enabled {
             return EventResult::Ignored;
         }
 
