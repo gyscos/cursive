@@ -102,6 +102,9 @@ pub trait View: Any + AnyView {
     /// When the source is unclear, `Front` is usually used.
     ///
     /// Default implementation always return `false`.
+    ///
+    /// If the source is `Direction::Abs(Absolute::None)`, it is _recommended_
+    /// not to change the current focus selection.
     fn take_focus(&mut self, source: Direction) -> bool {
         let _ = source;
         false
