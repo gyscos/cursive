@@ -522,6 +522,8 @@ pub enum Event {
 
     // Having a doc-hidden event prevents people from having exhaustive
     // matches, allowing us to add events in the future.
+    //
+    // In addition we may not want people to listen to the exit event?
     #[doc(hidden)]
     /// The application is about to exit.
     Exit,

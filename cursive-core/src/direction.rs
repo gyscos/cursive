@@ -154,6 +154,14 @@ impl Direction {
         }
     }
 
+    /// Returns the direction opposite `self`.
+    pub fn opposite(self) -> Self {
+        match self {
+            Direction::Abs(abs) => Direction::Abs(abs.opposite()),
+            Direction::Rel(rel) => Direction::Rel(rel.swap()),
+        }
+    }
+
     /// Shortcut to create `Direction::Rel(Relative::Back)`
     pub fn back() -> Self {
         Direction::Rel(Relative::Back)
@@ -191,7 +199,7 @@ impl Direction {
 }
 
 /// Direction relative to an orientation.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Relative {
     // TODO: handle right-to-left? (Arabic, ...)
     /// Front relative direction.
@@ -215,6 +223,39 @@ impl Relative {
             (Orientation::Horizontal, Relative::Back) => Absolute::Right,
             (Orientation::Vertical, Relative::Front) => Absolute::Up,
             (Orientation::Vertical, Relative::Back) => Absolute::Down,
+        }
+    }
+
+    /// Picks one of the two values in a tuple.
+    ///
+    /// First one is `self` is `Front`, second one if `self` is `Back`.
+    pub fn pick<T>(self, (front, back): (T, T)) -> T {
+        match self {
+            Relative::Front => front,
+            Relative::Back => back,
+        }
+    }
+
+    /// Returns the other relative direction.
+    pub fn swap(self) -> Self {
+        match self {
+            Relative::Front => Relative::Back,
+            Relative::Back => Relative::Front,
+        }
+    }
+
+    /// Returns the relative position of `a` to `b`.
+    ///
+    /// If `a < b`, it would be `Front`.
+    /// If `a > b`, it would be `Back`.
+    /// If `a == b`, returns `None`.
+    pub fn a_to_b(a: usize, b: usize) -> Option<Self> {
+        use std::cmp::Ordering;
+
+        match a.cmp(&b) {
+            Ordering::Less => Some(Relative::Front),
+            Ordering::Greater => Some(Relative::Back),
+            Ordering::Equal => None,
         }
     }
 }
@@ -249,6 +290,31 @@ impl Absolute {
             (Orientation::Horizontal, Absolute::Right)
             | (Orientation::Vertical, Absolute::Down) => Some(Relative::Back),
             _ => None,
+        }
+    }
+
+    /// Returns the direction opposite `self`.
+    pub fn opposite(self) -> Self {
+        match self {
+            Absolute::Left => Absolute::Right,
+            Absolute::Right => Absolute::Left,
+            Absolute::Up => Absolute::Down,
+            Absolute::Down => Absolute::Up,
+            Absolute::None => Absolute::None,
+        }
+    }
+
+    /// Splits this absolute direction into an orientation and relative direction.
+    ///
+    /// For example, `Right` will give `(Horizontal, Back)`.
+    pub fn split(self) -> (Orientation, Relative) {
+        match self {
+            Absolute::Left => (Orientation::Horizontal, Relative::Front),
+            Absolute::Right => (Orientation::Horizontal, Relative::Back),
+            Absolute::Up => (Orientation::Vertical, Relative::Front),
+            Absolute::Down => (Orientation::Vertical, Relative::Back),
+            // TODO: Remove `Absolute::None`
+            Absolute::None => panic!("None direction not supported here"),
         }
     }
 }

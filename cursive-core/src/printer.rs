@@ -2,12 +2,14 @@
 
 use crate::backend::Backend;
 use crate::direction::Orientation;
+use crate::rect::Rect;
 use crate::theme::{
     BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme,
 };
 use crate::utils::lines::simple::{prefix, suffix};
 use crate::with::With;
 use crate::Vec2;
+
 use enumset::EnumSet;
 use std::cmp::min;
 use unicode_segmentation::UnicodeSegmentation;
@@ -541,6 +543,13 @@ impl<'a, 'b> Printer<'a, 'b> {
         self.clone().with(|s| s.enabled &= enabled)
     }
 
+    /// Returns a new sub-printer for the given viewport.
+    ///
+    /// This is a combination of offset + cropped.
+    pub fn windowed(&self, viewport: Rect) -> Self {
+        self.offset(viewport.top_left()).cropped(viewport.size())
+    }
+
     /// Returns a new sub-printer with a cropped area.
     ///
     /// The new printer size will be the minimum of `size` and its current size.
@@ -601,6 +610,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     }
 
     /// Returns a new sub-printer with a content offset.
+    ///
+    /// This is useful for parent views that only show a subset of their
+    /// child, like `ScrollView`.
     pub fn content_offset<S>(&self, offset: S) -> Self
     where
         S: Into<Vec2>,

@@ -87,6 +87,21 @@ impl XY<usize> {
         })
     }
 
+    /// Checked addition with a signed vec.
+    ///
+    /// Will return `None` if any coordinates exceeds bounds.
+    pub fn checked_add<O: Into<XY<isize>>>(&self, other: O) -> Option<Self> {
+        let other = other.into();
+        self.zip_map(other, |s, o| {
+            if o > 0 {
+                s.checked_add(o as usize)
+            } else {
+                s.checked_sub((-o) as usize)
+            }
+        })
+        .both()
+    }
+
     /// Term-by-term integer division that rounds up.
     ///
     /// # Examples

@@ -437,6 +437,25 @@ impl<T> XY<Option<T>> {
     pub fn unwrap_or(self, other: XY<T>) -> XY<T> {
         self.zip_map(other, Option::unwrap_or)
     }
+
+    /// Returns a new `XY` if both components are present in `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive_core::XY;
+    /// assert_eq!(XY::new(Some(1), None).both(), None);
+    /// assert_eq!(XY::new(Some(1), Some(2)).both(), Some(XY::new(1, 2)));
+    /// ```
+    pub fn both(self) -> Option<XY<T>> {
+        match self {
+            XY {
+                x: Some(x),
+                y: Some(y),
+            } => Some(XY::new(x, y)),
+            _ => None,
+        }
+    }
 }
 
 impl XY<bool> {

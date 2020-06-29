@@ -1,5 +1,7 @@
 //! Rectangles on the 2D character grid.
+use crate::direction::{Absolute, Orientation};
 use crate::Vec2;
+
 use std::ops::Add;
 
 /// A non-empty rectangle on the 2D grid.
@@ -7,6 +9,7 @@ use std::ops::Add;
 pub struct Rect {
     /// Top-left corner, inclusive
     top_left: Vec2,
+
     /// Bottom-right corner, inclusive
     bottom_right: Vec2,
 }
@@ -88,6 +91,30 @@ impl Rect {
     {
         self.expand_to(other);
         self
+    }
+
+    /// Returns the start and end coordinate of one side of this rectangle.
+    ///
+    /// Both start and end are inclusive.
+    pub fn side(self, orientation: Orientation) -> (usize, usize) {
+        match orientation {
+            Orientation::Vertical => (self.top(), self.bottom()),
+            Orientation::Horizontal => (self.left(), self.right()),
+        }
+    }
+
+    /// Returns the coordinate of the given edge.
+    ///
+    /// All edges are inclusive.
+    pub fn edge(self, side: Absolute) -> usize {
+        match side {
+            Absolute::Left => self.left(),
+            Absolute::Right => self.right(),
+            Absolute::Up => self.top(),
+            Absolute::Down => self.bottom(),
+            // TODO: Remove `None` from `Absolute` enum
+            Absolute::None => panic!("None is not a valid edge."),
+        }
     }
 
     /// Adds the given offset to this rectangle.

@@ -83,9 +83,7 @@ pub trait View: Any + AnyView {
     /// View groups should implement this to forward the call to each children.
     ///
     /// Default implementation is a no-op.
-    fn call_on_any<'a>(&mut self, _: &Selector<'_>, _: AnyCb<'a>) {
-        // TODO: FnMut -> FnOnce once it works
-    }
+    fn call_on_any<'a>(&mut self, _: &Selector<'_>, _: AnyCb<'a>) {}
 
     /// Moves the focus to the view identified by the given selector.
     ///
@@ -99,12 +97,10 @@ pub trait View: Any + AnyView {
     /// This view is offered focus. Will it take it?
     ///
     /// `source` indicates where the focus comes from.
-    /// When the source is unclear, `Front` is usually used.
+    /// When the source is unclear (for example mouse events),
+    /// `Direction::none()` can be used.
     ///
     /// Default implementation always return `false`.
-    ///
-    /// If the source is `Direction::Abs(Absolute::None)`, it is _recommended_
-    /// not to change the current focus selection.
     fn take_focus(&mut self, source: Direction) -> bool {
         let _ = source;
         false
@@ -125,6 +121,8 @@ pub trait View: Any + AnyView {
     /// Returns the type of this view.
     ///
     /// Useful when you have a `&dyn View`.
+    ///
+    /// View implementation don't usually have to override this.
     fn type_name(&self) -> &'static str {
         std::any::type_name::<Self>()
     }

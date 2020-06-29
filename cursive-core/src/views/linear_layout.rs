@@ -319,7 +319,7 @@ impl LinearLayout {
             .any(View::needs_relayout)
     }
 
-    /// Returns a cyclic mutable iterator starting with the child in focus
+    /// Returns a mutable iterator starting with the child in focus
     fn iter_mut<'a>(
         &'a mut self,
         from_focus: bool,
