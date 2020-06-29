@@ -6,6 +6,8 @@
 
 - Add `Dialog::into_content`.
 - Add `Callback::from_fn_once` and `once1!` macro to wrap a `FnOnce` in a `FnMut`.
+- Add `FixedLayoutView` with manual placement of child views.
+- Add `OnLayoutView` to override `View::Layout`
 
 ### Bugfixes
 
