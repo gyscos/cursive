@@ -140,6 +140,21 @@ impl FixedLayout {
         }
     }
 
+    fn circular_mut<'a>(
+        start: usize,
+        children: &'a mut [Child],
+    ) -> impl Iterator<Item = (usize, &mut Child)> + 'a {
+        let (head, tail) = children.split_at_mut(start);
+
+        let head = head.iter_mut().enumerate();
+        let tail = tail
+            .iter_mut()
+            .enumerate()
+            .map(move |(i, c)| (i + start, c));
+
+        tail.chain(head)
+    }
+
     fn move_focus_rel(&mut self, target: Relative) -> EventResult {
         let source = Direction::Rel(target.swap());
         for (i, c) in
@@ -229,7 +244,6 @@ impl View for FixedLayout {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        eprintln!("Self focus: {:?}", self.focus);
         if self.is_empty() {
             return EventResult::Ignored;
         }
@@ -275,13 +289,17 @@ impl View for FixedLayout {
     }
 
     fn take_focus(&mut self, source: Direction) -> bool {
-        // TODO: what if source = None?
-        eprintln!("Self focus: {:?}", self.focus);
         match source {
             Direction::Abs(Absolute::None) => {
-                // For now, take focus if any view is focusable.
-                for child in &mut self.children {
-                    if child.view.take_focus(source) {
+                // We want to guarantee:
+                // * If the current focus _is_ focusable, keep it
+                // * If it isn't, find _any_ focusable view, and focus it
+                // * Otherwise, we can't take focus.
+                for (i, c) in
+                    Self::circular_mut(self.focus, &mut self.children)
+                {
+                    if c.view.take_focus(source) {
+                        self.focus = i;
                         return true;
                     }
                 }

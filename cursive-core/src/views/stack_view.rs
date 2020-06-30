@@ -648,7 +648,7 @@ impl View for StackView {
             // The text view takes focus because it's scrolling, but it only
             // knows that after a call to `layout()`.
             if layer.virgin {
-                layer.view.take_focus(Direction::front());
+                layer.view.take_focus(Direction::none());
                 layer.virgin = false;
             }
         }
