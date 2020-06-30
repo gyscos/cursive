@@ -284,7 +284,7 @@ impl View for FixedLayout {
     fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
         self.children
             .iter()
-            .map(|c| c.position.bottom_left() + (1, 1))
+            .map(|c| c.position.bottom_right() + (1, 1))
             .fold(Vec2::zero(), Vec2::max)
     }
 
