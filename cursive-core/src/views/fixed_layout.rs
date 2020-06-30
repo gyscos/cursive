@@ -7,11 +7,28 @@ use crate::{Printer, Vec2, View, With};
 /// Arranges its children in a fixed layout.
 ///
 /// Usually meant to use an external layout engine.
+///
+/// # Examples
+///
+/// ```rust
+/// use cursive_core::{
+///     views::{FixedLayout, TextView, Button},
+///     Rect,
+/// };
+///
+/// let layout = FixedLayout::new()
+///     .child(Rect::from_size((0,0), (1,1)), TextView::new("/"))
+///     .child(Rect::from_size((14,0), (1,1)), TextView::new(r"\"))
+///     .child(Rect::from_size((0,2), (1,1)), TextView::new(r"\"))
+///     .child(Rect::from_size((14,2), (1,1)), TextView::new("/"))
+///     .child(Rect::from_size((3,1), (11,1)), Button::new("Clickme", |s| s.quit()));
+/// ````
 pub struct FixedLayout {
     children: Vec<Child>,
     focus: usize,
 }
 
+/// Represents a child view inside the FixedLayout.
 struct Child {
     view: Box<dyn View>,
     position: Rect,
@@ -123,7 +140,21 @@ impl FixedLayout {
         }
     }
 
-    fn move_focus(&mut self, target: Absolute) -> EventResult {
+    fn move_focus_rel(&mut self, target: Relative) -> EventResult {
+        let source = Direction::Rel(target.swap());
+        for (i, c) in
+            Self::iter_mut(source, &mut self.children).skip(self.focus + 1)
+        {
+            if c.view.take_focus(source) {
+                self.focus = i;
+                return EventResult::Consumed(None);
+            }
+        }
+
+        EventResult::Ignored
+    }
+
+    fn move_focus_abs(&mut self, target: Absolute) -> EventResult {
         let source = Direction::Abs(target.opposite());
         let (orientation, rel) = target.split();
 
@@ -198,6 +229,7 @@ impl View for FixedLayout {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
+        eprintln!("Self focus: {:?}", self.focus);
         if self.is_empty() {
             return EventResult::Ignored;
         }
@@ -212,11 +244,12 @@ impl View for FixedLayout {
 
         match result {
             EventResult::Ignored => match event {
-                Event::Key(Key::Tab) => unimplemented!(),
-                Event::Key(Key::Left) => self.move_focus(Absolute::Left),
-                Event::Key(Key::Right) => self.move_focus(Absolute::Right),
-                Event::Key(Key::Up) => self.move_focus(Absolute::Up),
-                Event::Key(Key::Down) => self.move_focus(Absolute::Down),
+                Event::Shift(Key::Tab) => self.move_focus_rel(Relative::Front),
+                Event::Key(Key::Tab) => self.move_focus_rel(Relative::Back),
+                Event::Key(Key::Left) => self.move_focus_abs(Absolute::Left),
+                Event::Key(Key::Right) => self.move_focus_abs(Absolute::Right),
+                Event::Key(Key::Up) => self.move_focus_abs(Absolute::Up),
+                Event::Key(Key::Down) => self.move_focus_abs(Absolute::Down),
                 _ => EventResult::Ignored,
             },
             res => res,
@@ -243,6 +276,7 @@ impl View for FixedLayout {
 
     fn take_focus(&mut self, source: Direction) -> bool {
         // TODO: what if source = None?
+        eprintln!("Self focus: {:?}", self.focus);
         match source {
             Direction::Abs(Absolute::None) => {
                 // For now, take focus if any view is focusable.
