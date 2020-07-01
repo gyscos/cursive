@@ -1,7 +1,11 @@
-use crate::direction::Direction;
-use crate::event::{AnyCb, Event, EventResult};
-use crate::view::{scroll, ScrollStrategy, Selector, View};
-use crate::{Printer, Rect, Vec2, With};
+use crate::{
+    direction::Direction,
+    event::{AnyCb, Event, EventResult},
+    view::{scroll, ScrollStrategy, Selector, View},
+    Cursive, Printer, Rect, Vec2, With,
+};
+
+use std::rc::Rc;
 
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {
@@ -9,6 +13,8 @@ pub struct ScrollView<V> {
     inner: V,
 
     core: scroll::Core,
+
+    on_scroll: Rc<dyn Fn(&mut Self, Rect) -> EventResult>,
 }
 
 impl_scroller!(ScrollView<V>::core);
@@ -22,6 +28,7 @@ where
         ScrollView {
             inner,
             core: scroll::Core::new(),
+            on_scroll: Rc::new(|_, _| EventResult::Ignored),
         }
     }
 
@@ -70,15 +77,23 @@ where
     ///
     /// It is reset to `ScrollStrategy::KeepRow` whenever the user scrolls
     /// manually.
-    pub fn set_scroll_strategy(&mut self, strategy: ScrollStrategy) {
+    pub fn set_scroll_strategy(
+        &mut self,
+        strategy: ScrollStrategy,
+    ) -> EventResult {
         self.core.set_scroll_strategy(strategy);
+
+        // Scrolling may have happened.
+        self.on_scroll_callback()
     }
 
     /// Defines the way scrolling is adjusted on content or size change.
     ///
     /// Chainable variant.
     pub fn scroll_strategy(self, strategy: ScrollStrategy) -> Self {
-        self.with(|s| s.set_scroll_strategy(strategy))
+        self.with(|s| {
+            s.set_scroll_strategy(strategy);
+        })
     }
 
     /// Control whether scroll bars are visibile.
@@ -96,25 +111,31 @@ where
     }
 
     /// Sets the scroll offset to the given value
-    pub fn set_offset<S>(&mut self, offset: S)
+    pub fn set_offset<S>(&mut self, offset: S) -> EventResult
     where
         S: Into<Vec2>,
     {
         self.core.set_offset(offset);
+
+        self.on_scroll_callback()
     }
 
     /// Controls whether this view can scroll vertically.
     ///
     /// Defaults to `true`.
-    pub fn set_scroll_y(&mut self, enabled: bool) {
+    pub fn set_scroll_y(&mut self, enabled: bool) -> EventResult {
         self.core.set_scroll_y(enabled);
+
+        self.on_scroll_callback()
     }
 
     /// Controls whether this view can scroll horizontally.
     ///
     /// Defaults to `false`.
-    pub fn set_scroll_x(&mut self, enabled: bool) {
+    pub fn set_scroll_x(&mut self, enabled: bool) -> EventResult {
         self.core.set_scroll_x(enabled);
+
+        self.on_scroll_callback()
     }
 
     /// Controls whether this view can scroll vertically.
@@ -123,7 +144,9 @@ where
     ///
     /// Chainable variant.
     pub fn scroll_y(self, enabled: bool) -> Self {
-        self.with(|s| s.set_scroll_y(enabled))
+        self.with(|s| {
+            s.set_scroll_y(enabled);
+        })
     }
 
     /// Controls whether this view can scroll horizontally.
@@ -132,38 +155,152 @@ where
     ///
     /// Chainable variant.
     pub fn scroll_x(self, enabled: bool) -> Self {
-        self.with(|s| s.set_scroll_x(enabled))
+        self.with(|s| {
+            s.set_scroll_x(enabled);
+        })
     }
 
     /// Programmatically scroll to the top of the view.
-    pub fn scroll_to_top(&mut self) {
+    pub fn scroll_to_top(&mut self) -> EventResult {
         self.core.scroll_to_top();
+
+        self.on_scroll_callback()
     }
 
     /// Programmatically scroll to the bottom of the view.
-    pub fn scroll_to_bottom(&mut self) {
+    pub fn scroll_to_bottom(&mut self) -> EventResult {
         self.core.scroll_to_bottom();
+
+        self.on_scroll_callback()
     }
 
     /// Programmatically scroll to the leftmost side of the view.
-    pub fn scroll_to_left(&mut self) {
+    pub fn scroll_to_left(&mut self) -> EventResult {
         self.core.scroll_to_left();
+
+        self.on_scroll_callback()
     }
 
     /// Programmatically scroll to the rightmost side of the view.
-    pub fn scroll_to_right(&mut self) {
+    pub fn scroll_to_right(&mut self) -> EventResult {
         self.core.scroll_to_right();
+
+        self.on_scroll_callback()
     }
 
     /// Programmatically scroll until the child's important area is in view.
-    pub fn scroll_to_important_area(&mut self) {
+    pub fn scroll_to_important_area(&mut self) -> EventResult {
         let important_area = self.inner.important_area(self.core.last_size());
         self.core.scroll_to_rect(important_area);
+
+        self.on_scroll_callback()
     }
 
     /// Returns the wrapped view.
     pub fn into_inner(self) -> V {
         self.inner
+    }
+
+    /// Sets a callback to be run whenever scrolling happens.
+    ///
+    /// This lets the callback access the `ScrollView` itself (and its child)
+    /// if necessary.
+    ///
+    /// If you just need to run a callback on `&mut Cursive`, consider
+    /// `set_on_scroll`.
+    pub fn set_on_scroll_inner<F>(&mut self, on_scroll: F)
+    where
+        F: FnMut(&mut Self, Rect) -> EventResult + 'static,
+    {
+        self.on_scroll =
+            Rc::new(immut2!(on_scroll; else EventResult::Ignored));
+    }
+
+    /// Sets a callback to be run whenever scrolling happens.
+    pub fn set_on_scroll<F>(&mut self, on_scroll: F)
+    where
+        F: FnMut(&mut Cursive, Rect) + 'static,
+    {
+        let on_scroll: Rc<dyn Fn(&mut Cursive, Rect)> =
+            std::rc::Rc::new(immut2!(on_scroll));
+
+        self.set_on_scroll_inner(move |_, rect| {
+            let on_scroll = std::rc::Rc::clone(&on_scroll);
+            EventResult::with_cb(move |siv| on_scroll(siv, rect))
+        })
+    }
+
+    /// Wrap a function and only calls it if the second parameter changed.
+    ///
+    /// Not 100% generic, only works for our use-case here.
+    fn skip_unchanged<F, T, R, I>(
+        mut f: F,
+        mut if_skipped: I,
+    ) -> impl for<'a> FnMut(&'a mut T, Rect) -> R
+    where
+        F: for<'a> FnMut(&'a mut T, Rect) -> R + 'static,
+        I: FnMut() -> R + 'static,
+    {
+        let mut previous = Rect::from_size((0, 0), (0, 0));
+        move |t, r| {
+            if r != previous {
+                previous = r;
+                f(t, r)
+            } else {
+                if_skipped()
+            }
+        }
+    }
+
+    /// Sets a callback to be run whenever the scroll offset changes.
+    pub fn set_on_scroll_change_inner<F>(&mut self, on_scroll: F)
+    where
+        F: FnMut(&mut Self, Rect) -> EventResult + 'static,
+    {
+        self.set_on_scroll_inner(Self::skip_unchanged(on_scroll, || {
+            EventResult::Ignored
+        }));
+    }
+
+    /// Sets a callback to be run whenever the scroll offset changes.
+    pub fn set_on_scroll_change<F>(&mut self, on_scroll: F)
+    where
+        F: FnMut(&mut Cursive, Rect) + 'static,
+    {
+        self.set_on_scroll(Self::skip_unchanged(on_scroll, || ()));
+    }
+
+    /// Sets a callback to be run whenever scrolling happens.
+    ///
+    /// This lets the callback access the `ScrollView` itself (and its child)
+    /// if necessary.
+    ///
+    /// If you just need to run a callback on `&mut Cursive`, consider
+    /// `set_on_scroll`.
+    ///
+    /// Chainable variant.
+    pub fn on_scroll_inner<F>(self, on_scroll: F) -> Self
+    where
+        F: Fn(&mut Self, Rect) -> EventResult + 'static,
+    {
+        self.with(|s| s.set_on_scroll_inner(on_scroll))
+    }
+
+    /// Sets a callback to be run whenever scrolling happens.
+    ///
+    /// Chainable variant.
+    pub fn on_scroll<F>(self, on_scroll: F) -> Self
+    where
+        F: FnMut(&mut crate::Cursive, Rect) + 'static,
+    {
+        self.with(|s| s.set_on_scroll(on_scroll))
+    }
+
+    /// Run any callback after scrolling.
+    fn on_scroll_callback(&mut self) -> EventResult {
+        let viewport = self.content_viewport();
+        let on_scroll = Rc::clone(&self.on_scroll);
+        (on_scroll)(self, viewport)
     }
 
     inner_getters!(self.inner: V);
@@ -178,12 +315,16 @@ where
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        scroll::on_event(
+        match scroll::on_event(
             self,
             event,
             |s, e| s.inner.on_event(e),
             |s, si| s.inner.important_area(si),
-        )
+        ) {
+            EventResult::Ignored => EventResult::Ignored,
+            // If the event was consumed, then we may have scrolled.
+            other => other.and(self.on_scroll_callback()),
+        }
     }
 
     fn layout(&mut self, size: Vec2) {
@@ -225,6 +366,9 @@ where
         // If the inner view takes focus, re-align the important area.
         if self.inner.take_focus(source) {
             self.scroll_to_important_area();
+
+            // Note: we can't really return an `EventResult` here :(
+            self.on_scroll_callback();
             true
         } else {
             self.core.is_scrolling().any()

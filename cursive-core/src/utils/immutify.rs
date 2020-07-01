@@ -68,6 +68,17 @@ pub fn immutify<F: FnMut(&mut Cursive)>(
 /// ```
 #[macro_export]
 macro_rules! immut1 {
+    ($f:expr ; else $else:expr) => {{
+        let callback = ::std::cell::RefCell::new($f);
+        move |s| {
+            if let ::std::result::Result::Ok(mut f) = callback.try_borrow_mut()
+            {
+                (&mut *f)(s)
+            } else {
+                $else
+            }
+        }
+    }};
     ($f:expr) => {{
         let callback = ::std::cell::RefCell::new($f);
         move |s| {
@@ -120,11 +131,22 @@ macro_rules! once1 {
 /// assign it to a variable.
 #[macro_export]
 macro_rules! immut2 {
+    ($f:expr ; else $else:expr) => {{
+        let callback = ::std::cell::RefCell::new($f);
+        move |s, t| {
+            if let ::std::result::Result::Ok(mut f) = callback.try_borrow_mut()
+            {
+                (&mut *f)(s, t)
+            } else {
+                $else
+            }
+        }
+    }};
     ($f:expr) => {{
         let callback = ::std::cell::RefCell::new($f);
         move |s, t| {
             if let Ok(mut f) = callback.try_borrow_mut() {
-                (&mut *f)(s, t)
+                (&mut *f)(s, t);
             }
         }
     }};
@@ -147,11 +169,22 @@ macro_rules! immut2 {
 /// assign it to a variable.
 #[macro_export]
 macro_rules! immut3 {
+    ($f:expr ; else $else:expr) => {{
+        let callback = ::std::cell::RefCell::new($f);
+        move |s, t, t| {
+            if let ::std::result::Result::Ok(mut f) = callback.try_borrow_mut()
+            {
+                (&mut *f)(s, t, u)
+            } else {
+                $else
+            }
+        }
+    }};
     ($f:expr) => {{
         let callback = ::std::cell::RefCell::new($f);
         move |s, t, u| {
             if let Ok(mut f) = callback.try_borrow_mut() {
-                (&mut *f)(s, t, u)
+                (&mut *f)(s, t, u);
             }
         }
     }};
