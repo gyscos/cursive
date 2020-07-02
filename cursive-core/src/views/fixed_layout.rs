@@ -1,8 +1,10 @@
-use crate::direction::{Absolute, Direction, Relative};
-use crate::event::{Event, EventResult, Key};
-use crate::rect::Rect;
-use crate::view::IntoBoxedView;
-use crate::{Printer, Vec2, View, With};
+use crate::{
+    direction::{Absolute, Direction, Relative},
+    event::{AnyCb, Event, EventResult, Key},
+    rect::Rect,
+    view::{IntoBoxedView, Selector},
+    {Printer, Vec2, View, With},
+};
 
 /// Arranges its children in a fixed layout.
 ///
@@ -317,5 +319,26 @@ impl View for FixedLayout {
                 false
             }
         }
+    }
+
+    fn call_on_any<'a>(
+        &mut self,
+        selector: &Selector<'_>,
+        callback: AnyCb<'a>,
+    ) {
+        for child in &mut self.children {
+            child.view.call_on_any(selector, callback);
+        }
+    }
+
+    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+        for (i, child) in self.children.iter_mut().enumerate() {
+            if child.view.focus_view(selector).is_ok() {
+                self.focus = i;
+                return Ok(());
+            }
+        }
+
+        Err(())
     }
 }
