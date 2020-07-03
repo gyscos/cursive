@@ -125,38 +125,6 @@ impl Cursive {
         Ok(cursive)
     }
 
-    /*
-    /// Creates a new Cursive root using a ncurses backend.
-    #[cfg(feature = "ncurses-backend")]
-    pub fn ncurses() -> std::io::Result<Self> {
-        Self::try_new(backend::curses::n::Backend::init)
-    }
-
-    /// Creates a new Cursive root using a pancurses backend.
-    #[cfg(feature = "pancurses-backend")]
-    pub fn pancurses() -> std::io::Result<Self> {
-        Self::try_new(backend::curses::pan::Backend::init)
-    }
-
-    /// Creates a new Cursive root using a termion backend.
-    #[cfg(feature = "termion-backend")]
-    pub fn termion() -> std::io::Result<Self> {
-        Self::try_new(backend::termion::Backend::init)
-    }
-
-    /// Creates a new Cursive root using a crossterm backend.
-    #[cfg(feature = "crossterm-backend")]
-    pub fn crossterm() -> Result<Self, crossterm::ErrorKind> {
-        Self::try_new(backend::crossterm::Backend::init)
-    }
-
-    /// Creates a new Cursive root using a bear-lib-terminal backend.
-    #[cfg(feature = "blt-backend")]
-    pub fn blt() -> Self {
-        Self::new(backend::blt::Backend::init)
-    }
-    */
-
     /// Creates a new Cursive root using a [dummy backend].
     ///
     /// Nothing will be output. This is mostly here for tests.
@@ -1039,22 +1007,26 @@ impl Cursive {
 
     /// Dump the current state of the Cursive root.
     ///
-    /// This will stop the backend and clean up the terminal.
-    ///
-    /// It will save everything, including:
+    /// *It will clear out this `Cursive` instance* and save everything, including:
     /// * The view tree
     /// * Callbacks
     /// * Menubar
     /// * User data
     /// * Callback sink
-    pub fn dump(mut self) -> crate::Dump {
+    ///
+    /// After calling this, the cursive object will be as if newly created.
+    pub fn dump(&mut self) -> crate::Dump {
+        let (cb_sink, cb_source) = crossbeam_channel::unbounded();
+        let root = views::OnEventView::new(views::ScreensView::single_screen(
+            views::StackView::new(),
+        ));
         Dump {
-            cb_sink: self.cb_sink.clone(),
-            cb_source: self.cb_source.clone(),
-            fps: self.fps,
+            cb_sink: std::mem::replace(&mut self.cb_sink, cb_sink),
+            cb_source: std::mem::replace(&mut self.cb_source, cb_source),
+            fps: self.fps.take(),
             menubar: std::mem::take(&mut self.menubar),
-            root_view: std::mem::take(&mut self.root),
-            theme: self.theme.clone(),
+            root_view: std::mem::replace(&mut self.root, root),
+            theme: std::mem::take(&mut self.theme),
             user_data: std::mem::replace(&mut self.user_data, Box::new(())),
         }
     }
