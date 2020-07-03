@@ -1,18 +1,19 @@
 use crate::view::{View, ViewWrapper};
-use crate::views::NamedView;
 use crate::Printer;
 use crate::Vec2;
 use std::cell::Cell;
 
 /// Wrapper around a view that remembers its position.
-pub struct TrackedView<T: View> {
+pub struct TrackedView<T> {
     /// Wrapped view.
     pub view: T,
     /// Last position the view was located.
     offset: Cell<Vec2>,
 }
 
-impl<T: View> TrackedView<T> {
+new_default!(TrackedView<T: Default>);
+
+impl<T> TrackedView<T> {
     /// Return the last offset at which the view was drawn.
     pub fn offset(&self) -> Vec2 {
         self.offset.get()
@@ -24,17 +25,6 @@ impl<T: View> TrackedView<T> {
             view,
             offset: Cell::new(Vec2::zero()),
         }
-    }
-
-    /// Same as [`with_name`](TrackedView::with_name)
-    #[deprecated(note = "`with_id` is being renamed to `with_name`")]
-    pub fn with_id(self, id: &str) -> NamedView<Self> {
-        self.with_name(id)
-    }
-
-    /// Wraps itself in a `NamedView` for easy retrieval.
-    pub fn with_name(self, name: &str) -> NamedView<Self> {
-        NamedView::new(name, self)
     }
 
     inner_getters!(self.view: T);

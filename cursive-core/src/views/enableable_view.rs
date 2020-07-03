@@ -31,6 +31,8 @@ pub struct EnableableView<V> {
     enabled: bool,
 }
 
+new_default!(EnableableView<V: Default>);
+
 impl<V> EnableableView<V> {
     /// Creates a new `EnableableView` around `view`.
     ///

@@ -17,12 +17,11 @@ pub struct ScrollView<V> {
     on_scroll: Rc<dyn Fn(&mut Self, Rect) -> EventResult>,
 }
 
+new_default!(ScrollView<V: Default>);
+
 impl_scroller!(ScrollView<V>::core);
 
-impl<V> ScrollView<V>
-where
-    V: View,
-{
+impl<V> ScrollView<V> {
     /// Creates a new ScrollView around `view`.
     pub fn new(inner: V) -> Self {
         ScrollView {
@@ -189,7 +188,10 @@ where
     }
 
     /// Programmatically scroll until the child's important area is in view.
-    pub fn scroll_to_important_area(&mut self) -> EventResult {
+    pub fn scroll_to_important_area(&mut self) -> EventResult
+    where
+        V: View,
+    {
         let important_area = self.inner.important_area(self.core.last_size());
         self.core.scroll_to_rect(important_area);
 
@@ -256,6 +258,7 @@ where
     pub fn set_on_scroll_change_inner<F>(&mut self, on_scroll: F)
     where
         F: FnMut(&mut Self, Rect) -> EventResult + 'static,
+        V: 'static,
     {
         self.set_on_scroll_inner(Self::skip_unchanged(on_scroll, || {
             EventResult::Ignored
@@ -266,6 +269,7 @@ where
     pub fn set_on_scroll_change<F>(&mut self, on_scroll: F)
     where
         F: FnMut(&mut Cursive, Rect) + 'static,
+        V: 'static,
     {
         self.set_on_scroll(Self::skip_unchanged(on_scroll, || ()));
     }

@@ -25,7 +25,7 @@ pub struct PaddedView<V> {
     margins: Margins,
 }
 
-impl<V: View> PaddedView<V> {
+impl<V> PaddedView<V> {
     /// Wraps `view` in a new `PaddedView` with the given margins.
     pub fn new(margins: Margins, view: V) -> Self {
         PaddedView { view, margins }

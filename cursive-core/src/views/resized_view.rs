@@ -23,7 +23,7 @@ use crate::XY;
 /// ```
 ///
 /// See also [`Boxable`](crate::view::Boxable) for an easy way to wrap any view.
-pub struct ResizedView<T: View> {
+pub struct ResizedView<T> {
     /// Constraint on each axis
     size: XY<SizeConstraint>,
 
@@ -34,7 +34,7 @@ pub struct ResizedView<T: View> {
     view: T,
 }
 
-impl<T: View> ResizedView<T> {
+impl<T> ResizedView<T> {
     /// Creates a new `ResizedView` with the given width and height requirements.
     ///
     /// `None` values will use the wrapped view's preferences.

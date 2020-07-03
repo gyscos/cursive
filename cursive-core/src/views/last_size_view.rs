@@ -10,6 +10,8 @@ pub struct LastSizeView<T> {
     pub size: Vec2,
 }
 
+new_default!(LastSizeView<V: Default>);
+
 impl<T> LastSizeView<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {

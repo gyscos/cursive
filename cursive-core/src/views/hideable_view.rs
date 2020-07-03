@@ -17,6 +17,8 @@ pub struct HideableView<V> {
     invalidated: bool,
 }
 
+new_default!(HideableView<V: Default>);
+
 impl<V> HideableView<V> {
     /// Creates a new HideableView around `view`.
     ///

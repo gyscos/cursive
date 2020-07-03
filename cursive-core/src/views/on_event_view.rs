@@ -38,10 +38,12 @@ use std::rc::Rc;
 ///                         .on_event('q', |s| s.quit())
 ///                         .on_event(event::Key::Esc, |s| s.quit());
 /// ```
-pub struct OnEventView<T: View> {
+pub struct OnEventView<T> {
     view: T,
     callbacks: Vec<(EventTrigger, Action<T>)>,
 }
+
+new_default!(OnEventView<T: Default>);
 
 type InnerCallback<T> = Rc<Box<dyn Fn(&mut T, &Event) -> Option<EventResult>>>;
 
@@ -65,7 +67,7 @@ enum TriggerPhase {
     AfterChild,
 }
 
-impl<T: View> OnEventView<T> {
+impl<T> OnEventView<T> {
     /// Wraps the given view in a new OnEventView.
     pub fn new(view: T) -> Self {
         OnEventView {
@@ -83,7 +85,6 @@ impl<T: View> OnEventView<T> {
         self.callbacks
             .retain(move |&(ref trigger, _)| !trigger.has_tag(&event));
     }
-
     /// Registers a callback when the given event is ignored by the child.
     ///
     /// Chainable variant.

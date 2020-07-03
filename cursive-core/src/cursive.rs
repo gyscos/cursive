@@ -6,14 +6,15 @@ use std::time::Duration;
 
 use crossbeam_channel::{self, Receiver, Sender};
 
-use crate::backend;
-use crate::direction;
-use crate::event::{Event, EventResult};
-use crate::printer::Printer;
-use crate::theme;
-use crate::view::{self, Finder, IntoBoxedView, Position, View};
-use crate::views::{self, LayerPosition};
-use crate::Vec2;
+use crate::{
+    backend, direction,
+    event::{Event, EventResult},
+    printer::Printer,
+    theme,
+    view::{self, Finder, IntoBoxedView, Position, View},
+    views::{self, LayerPosition},
+    Dump, Vec2,
+};
 
 static DEBUG_VIEW_NAME: &str = "_cursive_debug_view";
 
@@ -1034,6 +1035,49 @@ impl Cursive {
     /// Mostly used for debugging.
     pub fn backend_name(&self) -> &str {
         self.backend.name()
+    }
+
+    /// Dump the current state of the Cursive root.
+    ///
+    /// This will stop the backend and clean up the terminal.
+    ///
+    /// It will save everything, including:
+    /// * The view tree
+    /// * Callbacks
+    /// * Menubar
+    /// * User data
+    /// * Callback sink
+    pub fn dump(mut self) -> crate::Dump {
+        Dump {
+            cb_sink: self.cb_sink.clone(),
+            cb_source: self.cb_source.clone(),
+            fps: self.fps,
+            menubar: std::mem::take(&mut self.menubar),
+            root_view: std::mem::take(&mut self.root),
+            theme: self.theme.clone(),
+            user_data: std::mem::replace(&mut self.user_data, Box::new(())),
+        }
+    }
+
+    /// Restores the state from a previous dump.
+    ///
+    /// This will discard everything from this `Cursive` instance.
+    /// In particular:
+    /// * All current views will be dropped, replaced by the dump.
+    /// * All callbacks will be replaced.
+    /// * Menubar will be replaced.
+    /// * User Data will be replaced.
+    /// * The callback channel will be replaced - any previous call to
+    ///   `cb_sink` on this instance will be disconnected.
+    pub fn restore(&mut self, dump: Dump) {
+        self.cb_sink = dump.cb_sink;
+        self.cb_source = dump.cb_source;
+        self.fps = dump.fps;
+        self.menubar = dump.menubar;
+        self.root = dump.root_view;
+        self.theme = dump.theme;
+        self.user_data = dump.user_data;
+        self.clear();
     }
 }
 

@@ -8,12 +8,14 @@ use crate::Printer;
 ///
 /// [`StackView`]: crate::views::StackView
 #[derive(Debug)]
-pub struct Layer<T: View> {
+pub struct Layer<T> {
     view: T,
     color: ColorStyle,
 }
 
-impl<T: View> Layer<T> {
+new_default!(Layer<T: Default>);
+
+impl<T> Layer<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
         Self::with_color(view, ColorStyle::primary())

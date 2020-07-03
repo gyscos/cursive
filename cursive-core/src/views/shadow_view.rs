@@ -8,14 +8,16 @@ use crate::Vec2;
 /// Wrapper view that adds a shadow.
 ///
 /// It reserves a 1 pixel border on each side.
-pub struct ShadowView<T: View> {
+pub struct ShadowView<T> {
     view: T,
     top_padding: bool,
     left_padding: bool,
     // TODO: invalidate if we change the padding? wrap_needs_relayout?
 }
 
-impl<T: View> ShadowView<T> {
+new_default!(ShadowView<T: Default>);
+
+impl<T> ShadowView<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
         ShadowView {

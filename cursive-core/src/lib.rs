@@ -17,13 +17,21 @@ macro_rules! new_default(
             }
         }
     };
-    ($c:ty) => {
+    ($c:ident) => {
         impl Default for $c {
             fn default() -> Self {
                 Self::new()
             }
         }
-    }
+    };
+    ($c:ident<$t:ident: Default>) => {
+        impl <$t> Default for $c<$t>
+        where $t: Default {
+            fn default() -> Self {
+                Self::new($t::default())
+            }
+        }
+    };
 );
 
 #[macro_use]
@@ -44,6 +52,7 @@ pub mod traits;
 pub mod vec;
 
 mod cursive;
+mod dump;
 mod printer;
 mod rect;
 mod with;
@@ -52,6 +61,7 @@ mod xy;
 mod div;
 
 pub use self::cursive::{CbSink, Cursive, ScreenId};
+pub use self::dump::Dump;
 pub use self::printer::Printer;
 pub use self::rect::Rect;
 pub use self::vec::Vec2;

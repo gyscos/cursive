@@ -10,7 +10,7 @@ use unicode_width::UnicodeWidthStr;
 
 /// Draws a border around a wrapped view.
 #[derive(Debug)]
-pub struct Panel<V: View> {
+pub struct Panel<V> {
     // Inner view
     view: V,
 
@@ -24,7 +24,9 @@ pub struct Panel<V: View> {
     invalidated: bool,
 }
 
-impl<V: View> Panel<V> {
+new_default!(Panel<V: Default>);
+
+impl<V> Panel<V> {
     /// Creates a new panel around the given view.
     pub fn new(view: V) -> Self {
         Panel {
