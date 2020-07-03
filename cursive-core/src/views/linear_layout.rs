@@ -292,6 +292,24 @@ impl LinearLayout {
         }
     }
 
+    /// Looks for the child containing a view with the given name.
+    ///
+    /// Returns `Some(i)` if `self.get_child(i)` has the given name, or
+    /// contains a view with the given name.
+    ///
+    /// Returns `None` if the given name was not found.
+    pub fn find_child_from_name(&mut self, name: &str) -> Option<usize> {
+        let selector = Selector::Name(name);
+        for (i, c) in self.children.iter_mut().enumerate() {
+            let mut found = false;
+            c.view.call_on_any(&selector, &mut |_| found = true);
+            if found {
+                return Some(i);
+            }
+        }
+        None
+    }
+
     // If the cache can be used, return the cached size.
     // Otherwise, return None.
     fn get_cache(&self, req: Vec2) -> Option<Vec2> {

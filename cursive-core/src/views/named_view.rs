@@ -12,7 +12,7 @@ use std::rc::Rc;
 /// See [`Identifiable`](crate::view::Identifiable) for an easy way to wrap any view with it.
 pub struct NamedView<V> {
     view: Rc<RefCell<V>>,
-    id: String,
+    name: String,
 }
 
 /// Mutable reference to a view.
@@ -24,10 +24,10 @@ pub type ViewRef<V> = OwningHandle<RcRef<RefCell<V>>, RefMut<'static, V>>;
 
 impl<V> NamedView<V> {
     /// Wraps `view` in a new `NamedView`.
-    pub fn new<S: Into<String>>(id: S, view: V) -> Self {
+    pub fn new<S: Into<String>>(name: S, view: V) -> Self {
         NamedView {
             view: Rc::new(RefCell::new(view)),
-            id: id.into(),
+            name: name.into(),
         }
     }
 
@@ -42,6 +42,16 @@ impl<V> NamedView<V> {
         let cell_ref = RcRef::new(Rc::clone(&self.view));
 
         OwningHandle::new_mut(cell_ref)
+    }
+
+    /// Returns the name attached to this view.
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Changes the name attached to this view.
+    pub fn set_name<S: Into<String>>(&mut self, name: S) {
+        self.name = name.into();
     }
 }
 
@@ -83,7 +93,9 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
     ) {
         match selector {
             #[allow(deprecated)]
-            &Selector::Name(id) | &Selector::Id(id) if id == self.id => {
+            &Selector::Name(name) | &Selector::Id(name)
+                if name == self.name =>
+            {
                 callback(self)
             }
             s => {
@@ -97,7 +109,11 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
     fn wrap_focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
         match selector {
             #[allow(deprecated)]
-            &Selector::Name(id) | &Selector::Id(id) if id == self.id => Ok(()),
+            &Selector::Name(name) | &Selector::Id(name)
+                if name == self.name =>
+            {
+                Ok(())
+            }
             s => self
                 .view
                 .try_borrow_mut()

@@ -24,7 +24,7 @@ use crate::{
 ///     .child(Rect::from_size((0,2), (1,1)), TextView::new(r"\"))
 ///     .child(Rect::from_size((14,2), (1,1)), TextView::new("/"))
 ///     .child(Rect::from_size((3,1), (11,1)), Button::new("Clickme", |s| s.quit()));
-/// ````
+/// ```
 pub struct FixedLayout {
     children: Vec<Child>,
     focus: usize,
@@ -123,6 +123,24 @@ impl FixedLayout {
         }
 
         Some(self.children.remove(i).view)
+    }
+
+    /// Looks for the child containing a view with the given name.
+    ///
+    /// Returns `Some(i)` if `self.get_child(i)` has the given name, or
+    /// contains a view with the given name.
+    ///
+    /// Returns `None` if the given name was not found.
+    pub fn find_child_from_name(&mut self, name: &str) -> Option<usize> {
+        let selector = Selector::Name(name);
+        for (i, c) in self.children.iter_mut().enumerate() {
+            let mut found = false;
+            c.view.call_on_any(&selector, &mut |_| found = true);
+            if found {
+                return Some(i);
+            }
+        }
+        None
     }
 
     fn iter_mut<'a>(
