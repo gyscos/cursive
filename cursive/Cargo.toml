@@ -16,21 +16,21 @@ features = ["unstable_scroll", "markdown", "toml"]
 
 [dependencies]
 cursive_core = { path = "../cursive-core", version="0.1.1-alpha.0" }
-crossbeam-channel = "0.4.0"
-cfg-if = "0.1.9"
-enumset = "1.0.0"
-unicode-segmentation = "1.3.0"
-unicode-width = "0.1.5"
+crossbeam-channel = "0.4"
+cfg-if = "0.1"
+enumset = "1"
+unicode-segmentation = "1"
+unicode-width = "0.1"
 lazy_static = "1"
-libc = "0.2.60"
+libc = "0.2"
 term_size = { version = "0.3", optional = true }
 maplit = { version = "1.0", optional = true }
-log = "0.4.8"
+log = "0.4"
 ahash = "0.4"
 
 [dependencies.bear-lib-terminal]
 optional = true
-version = "2.0.0"
+version = "2"
 
 [dependencies.ncurses]
 features = ["wide"]
@@ -40,20 +40,20 @@ version = "5.99.0"
 [dependencies.pancurses]
 features = ["wide"]
 optional = true
-version = "0.16.1"
+version = "0.16"
 
 [dependencies.termion]
 optional = true
-version = "1.5.3"
+version = "1"
 
 [dependencies.crossterm]
 optional = true
 version = "0.17"
 
 [dev-dependencies]
-rand = "0.7.0"
-pretty-bytes = "0.2.2"
-atty = "0.2.13"
+rand = "0.7"
+pretty-bytes = "0.2"
+atty = "0.2"
 
 [features]
 blt-backend = ["bear-lib-terminal"]
