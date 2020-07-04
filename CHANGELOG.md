@@ -8,6 +8,12 @@
 - Add `Callback::from_fn_once` and `once1!` macro to wrap a `FnOnce` in a `FnMut`.
 - Add `FixedLayoutView` with manual placement of child views.
 - Add `OnLayoutView` to override `View::Layout`
+- Add `Cursive::{dump, restore}` to save and load the global state.
+- Add `NamedView::{name, set_name}` to retrieve or replace the given name.
+- Add `LinearLayout::find_child_with_name`.
+- Add `ScrollView::on_scroll` callback.
+- Add `once1!` macro to turn a `FnOnce` into `FnMut`.
+- Implement `Default` for some wrapper views where the child is `Default`.
 
 ### Bugfixes
 
