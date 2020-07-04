@@ -498,7 +498,7 @@ impl Dialog {
         }
     }
 
-    fn draw_buttons(&self, printer: &Printer<'_, '_>) -> Option<usize> {
+    fn draw_buttons(&self, printer: &Printer) -> Option<usize> {
         let mut buttons_height = 0;
         // Current horizontal position of the next button we'll draw.
 
@@ -546,7 +546,7 @@ impl Dialog {
         Some(buttons_height)
     }
 
-    fn draw_content(&self, printer: &Printer<'_, '_>, buttons_height: usize) {
+    fn draw_content(&self, printer: &Printer, buttons_height: usize) {
         // What do we have left?
         let taken = Vec2::new(0, buttons_height)
             + self.borders.combined()
@@ -565,7 +565,7 @@ impl Dialog {
         );
     }
 
-    fn draw_title(&self, printer: &Printer<'_, '_>) {
+    fn draw_title(&self, printer: &Printer) {
         if !self.title.is_empty() {
             let len = self.title.width();
             let spacing = 3; //minimum distance to borders
@@ -629,7 +629,7 @@ impl Dialog {
 }
 
 impl View for Dialog {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         // This will be the buttons_height used by the buttons.
         let buttons_height = match self.draw_buttons(printer) {
             Some(height) => height,

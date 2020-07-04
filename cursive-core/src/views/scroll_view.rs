@@ -314,7 +314,7 @@ impl<V> View for ScrollView<V>
 where
     V: View,
 {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         scroll::draw(self, printer, |s, p| s.inner.draw(p));
     }
 

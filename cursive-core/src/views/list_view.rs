@@ -271,7 +271,7 @@ fn try_focus(
 }
 
 impl View for ListView {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         if self.children.is_empty() {
             return;
         }

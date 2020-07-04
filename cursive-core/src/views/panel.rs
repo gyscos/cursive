@@ -62,7 +62,7 @@ impl<V> Panel<V> {
         self.title_position = align;
     }
 
-    fn draw_title(&self, printer: &Printer<'_, '_>) {
+    fn draw_title(&self, printer: &Printer) {
         if !self.title.is_empty() {
             let len = self.title.width();
             let spacing = 3; //minimum distance to borders
@@ -106,7 +106,7 @@ impl<V: View> ViewWrapper for Panel<V> {
         self.view.required_size(req) + (2, 2)
     }
 
-    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
+    fn wrap_draw(&self, printer: &Printer) {
         printer.print_box((0, 0), printer.size, true);
         self.draw_title(&printer);
 

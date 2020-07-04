@@ -442,7 +442,7 @@ impl<T: 'static> SelectView<T> {
         self.with(|s| s.add_all(iter))
     }
 
-    fn draw_item(&self, printer: &Printer<'_, '_>, i: usize) {
+    fn draw_item(&self, printer: &Printer, i: usize) {
         let l = self.items[i].label.width();
         let x = self.align.h.get_offset(l, printer.size.x);
         printer.print_hline((0, 0), x, " ");
@@ -873,7 +873,7 @@ where
 }
 
 impl<T: 'static> View for SelectView<T> {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         self.last_offset.set(printer.offset);
 
         if self.popup {

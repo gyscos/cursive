@@ -33,7 +33,7 @@ impl<T> TrackedView<T> {
 impl<T: View> ViewWrapper for TrackedView<T> {
     wrap_impl!(self.view: T);
 
-    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
+    fn wrap_draw(&self, printer: &Printer) {
         self.offset.set(printer.offset);
         self.view.draw(printer);
     }

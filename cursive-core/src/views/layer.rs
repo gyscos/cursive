@@ -42,7 +42,7 @@ impl<T> Layer<T> {
 impl<T: View> ViewWrapper for Layer<T> {
     wrap_impl!(self.view: T);
 
-    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
+    fn wrap_draw(&self, printer: &Printer) {
         printer.with_color(self.color, |printer| {
             for y in 0..printer.size.y {
                 printer.print_hline((0, y), printer.size.x, " ");

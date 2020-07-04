@@ -227,7 +227,7 @@ fn sub_block(extra: usize) -> &'static str {
 }
 
 impl View for ProgressBar {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         // Now, the bar itself...
         let available = printer.size.x;
 

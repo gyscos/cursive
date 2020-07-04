@@ -47,7 +47,7 @@ pub trait ViewWrapper: 'static {
     }
 
     /// Wraps the `draw` method.
-    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
+    fn wrap_draw(&self, printer: &Printer) {
         self.with_view(|v| v.draw(printer));
     }
 
@@ -103,7 +103,7 @@ pub trait ViewWrapper: 'static {
 
 // The main point of implementing ViewWrapper is to have View for free.
 impl<T: ViewWrapper> View for T {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         self.wrap_draw(printer);
     }
 

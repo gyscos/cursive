@@ -141,7 +141,7 @@ impl SliderView {
 }
 
 impl View for SliderView {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         match self.orientation {
             Orientation::Vertical => {
                 printer.print_vline((0, 0), self.max_value, "|")

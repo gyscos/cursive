@@ -59,7 +59,7 @@ impl<V: View> ViewWrapper for EnableableView<V> {
         }
     }
 
-    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
+    fn wrap_draw(&self, printer: &Printer) {
         self.view.draw(&printer.enabled(self.enabled));
     }
 }

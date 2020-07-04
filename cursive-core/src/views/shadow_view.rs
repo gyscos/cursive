@@ -75,7 +75,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         self.view.on_event(event.relativized(padding))
     }
 
-    fn wrap_draw(&self, printer: &Printer<'_, '_>) {
+    fn wrap_draw(&self, printer: &Printer) {
         if printer.size.y <= self.top_padding as usize
             || printer.size.x <= self.left_padding as usize
         {

@@ -128,7 +128,7 @@ impl Checkbox {
         })
     }
 
-    fn draw_internal(&self, printer: &Printer<'_, '_>) {
+    fn draw_internal(&self, printer: &Printer) {
         printer.print((0, 0), "[ ]");
         if self.checked {
             printer.print((1, 0), "X");
@@ -145,7 +145,7 @@ impl View for Checkbox {
         self.enabled
     }
 
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         if self.enabled && printer.enabled {
             printer.with_selection(printer.focused, |printer| {
                 self.draw_internal(printer)

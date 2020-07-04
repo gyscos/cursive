@@ -128,7 +128,7 @@ impl Button {
 }
 
 impl View for Button {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         if printer.size.x == 0 {
             return;
         }

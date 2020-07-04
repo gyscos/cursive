@@ -165,7 +165,7 @@ impl<T: 'static> RadioButton<T> {
         })
     }
 
-    fn draw_internal(&self, printer: &Printer<'_, '_>) {
+    fn draw_internal(&self, printer: &Printer) {
         printer.print((0, 0), "( )");
         if self.is_selected() {
             printer.print((1, 0), "X");
@@ -196,7 +196,7 @@ impl<T: 'static> View for RadioButton<T> {
         self.enabled
     }
 
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         if self.enabled && printer.enabled {
             printer.with_selection(printer.focused, |printer| {
                 self.draw_internal(printer)

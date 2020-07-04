@@ -13,7 +13,7 @@ pub trait View: Any + AnyView {
     /// Draws the view with the given printer (includes bounds) and focus.
     ///
     /// This is the only *required* method to implement.
-    fn draw(&self, printer: &Printer<'_, '_>);
+    fn draw(&self, printer: &Printer);
 
     /// Called once the size for this view has been decided.
     ///

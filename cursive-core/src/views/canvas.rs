@@ -105,7 +105,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `draw(&Printer)`.
     pub fn set_draw<F>(&mut self, f: F)
     where
-        F: 'static + Fn(&T, &Printer<'_, '_>),
+        F: 'static + Fn(&T, &Printer),
     {
         self.draw = Box::new(f);
     }
@@ -115,7 +115,7 @@ impl<T> Canvas<T> {
     /// Chainable variant.
     pub fn with_draw<F>(self, f: F) -> Self
     where
-        F: 'static + Fn(&T, &Printer<'_, '_>),
+        F: 'static + Fn(&T, &Printer),
     {
         self.with(|s| s.set_draw(f))
     }
@@ -266,7 +266,7 @@ impl<T> Canvas<T> {
 }
 
 impl<T: 'static> View for Canvas<T> {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         (self.draw)(&self.state, printer);
     }
 

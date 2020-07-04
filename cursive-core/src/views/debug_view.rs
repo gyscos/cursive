@@ -25,7 +25,7 @@ impl Default for DebugView {
 }
 
 impl View for DebugView {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         let logs = logger::LOGS.lock().unwrap();
         // Only print the last logs, so skip what doesn't fit
         let skipped = logs.len().saturating_sub(printer.size.y);

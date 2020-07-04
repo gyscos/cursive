@@ -131,7 +131,7 @@ impl<T: View> ChildWrapper<T> {
 
 // TODO: use macros to make this less ugly?
 impl<T: View> View for ChildWrapper<T> {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         match *self {
             ChildWrapper::Shadow(ref v) => v.draw(printer),
             ChildWrapper::Backfilled(ref v) => v.draw(printer),
@@ -520,7 +520,7 @@ impl StackView {
     /// ease inserting layers under the stackview but above its background.
     ///
     /// you probably just want to call draw()
-    pub fn draw_bg(&self, printer: &Printer<'_, '_>) {
+    pub fn draw_bg(&self, printer: &Printer) {
         // If the background is dirty draw a new background
         if self.bg_dirty.get() {
             for y in 0..printer.size.y {
@@ -540,7 +540,7 @@ impl StackView {
     /// ease inserting layers under the stackview but above its background.
     ///
     /// You probably just want to call draw()
-    pub fn draw_fg(&self, printer: &Printer<'_, '_>) {
+    pub fn draw_fg(&self, printer: &Printer) {
         let last = self.layers.len();
         printer.with_color(ColorStyle::primary(), |printer| {
             for (i, (v, offset)) in
@@ -605,7 +605,7 @@ where
 }
 
 impl View for StackView {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         // This function is included for compat with the view trait,
         // it should behave the same as calling them seperately, but does
         // not pause to let you insert in between the layers.

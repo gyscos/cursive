@@ -441,7 +441,7 @@ fn try_focus(
 }
 
 impl View for LinearLayout {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         // Use pre-computed sizes
         // debug!("Pre loop!");
         for (i, item) in ChildIterator::new(

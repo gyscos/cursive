@@ -304,7 +304,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// ```
     pub fn with_color<F>(&self, c: ColorStyle, f: F)
     where
-        F: FnOnce(&Printer<'_, '_>),
+        F: FnOnce(&Printer),
     {
         let old = self.backend.set_color(c.resolve(&self.theme.palette));
         f(self);
@@ -315,7 +315,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given style on prints.
     pub fn with_style<F, T>(&self, style: T, f: F)
     where
-        F: FnOnce(&Printer<'_, '_>),
+        F: FnOnce(&Printer),
         T: Into<Style>,
     {
         let style = style.into();
@@ -336,7 +336,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given effect on prints.
     pub fn with_effect<F>(&self, effect: Effect, f: F)
     where
-        F: FnOnce(&Printer<'_, '_>),
+        F: FnOnce(&Printer),
     {
         self.backend.set_effect(effect);
         f(self);
@@ -347,7 +347,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given theme on prints.
     pub fn with_theme<F>(&self, theme: &Theme, f: F)
     where
-        F: FnOnce(&Printer<'_, '_>),
+        F: FnOnce(&Printer),
     {
         f(&self.theme(theme));
     }
@@ -367,7 +367,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply each given effect on prints.
     pub fn with_effects<F>(&self, effects: EnumSet<Effect>, f: F)
     where
-        F: FnOnce(&Printer<'_, '_>),
+        F: FnOnce(&Printer),
     {
         match effects.iter().next() {
             None => f(self),
@@ -433,7 +433,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// * Otherwise, use `ColorStyle::Primary`.
     pub fn with_high_border<F>(&self, invert: bool, f: F)
     where
-        F: FnOnce(&Printer<'_, '_>),
+        F: FnOnce(&Printer),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
@@ -452,7 +452,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// * Otherwise, use `ColorStyle::primary()`.
     pub fn with_low_border<F>(&self, invert: bool, f: F)
     where
-        F: FnOnce(&Printer<'_, '_>),
+        F: FnOnce(&Printer),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
@@ -470,11 +470,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///     * If the printer currently has the focus,
     ///       uses `ColorStyle::highlight()`.
     ///     * Otherwise, uses `ColorStyle::highlight_inactive()`.
-    pub fn with_selection<F: FnOnce(&Printer<'_, '_>)>(
-        &self,
-        selection: bool,
-        f: F,
-    ) {
+    pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
         self.with_color(
             if selection {
                 if self.focused {

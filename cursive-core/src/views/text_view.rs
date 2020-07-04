@@ -362,7 +362,7 @@ impl TextView {
 }
 
 impl View for TextView {
-    fn draw(&self, printer: &Printer<'_, '_>) {
+    fn draw(&self, printer: &Printer) {
         let h = self.rows.len();
         // If the content is smaller than the view, align it somewhere.
         let offset = self.align.v.get_offset(h, printer.size.y);
