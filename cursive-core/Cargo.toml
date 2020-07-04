@@ -32,7 +32,7 @@ libc = "0.2.60"
 crossbeam-channel = "0.4.0"
 lazy_static = "1"
 chrono = "0.4.7"
-ahash = "0.3"
+ahash = "0.4"
 
 [dependencies.toml]
 optional = true
@@ -40,7 +40,7 @@ version = "0.5.1"
 
 [dependencies.num]
 default-features = false
-version = "0.2.0"
+version = "0.3.0"
 
 [dependencies.pulldown-cmark]
 default-features = false

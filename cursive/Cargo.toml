@@ -26,7 +26,7 @@ libc = "0.2.60"
 term_size = { version = "0.3", optional = true }
 maplit = { version = "1.0", optional = true }
 log = "0.4.8"
-ahash = "0.3.2"
+ahash = "0.4"
 
 [dependencies.bear-lib-terminal]
 optional = true
