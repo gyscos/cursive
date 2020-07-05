@@ -69,12 +69,15 @@ where
         size
     };
 
+    // Re-define `available` using the new, actual size.
+    let available = size.saturating_sub(scrollbar_size);
+
     // On non-scrolling axis, give inner_size the available space instead.
     let inner_size = get_scroller(model)
         .is_enabled()
-        .select_or(inner_size, size.saturating_sub(scrollbar_size));
+        .select_or(inner_size, available);
 
-    let new_scrolling = inner_size.zip_map(size, |i, s| i > s);
+    let new_scrolling = inner_size.zip_map(available, |i, s| i > s);
 
     (inner_size, size, new_scrolling)
 }
