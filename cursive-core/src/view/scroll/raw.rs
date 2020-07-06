@@ -92,7 +92,7 @@ fn sizes<Model, GetScroller, RequiredSize>(
     model: &mut Model,
     get_scroller: &mut GetScroller,
     required_size: &mut RequiredSize,
-) -> (Vec2, Vec2)
+) -> (Vec2, Vec2, XY<bool>)
 where
     Model: ?Sized,
     GetScroller: FnMut(&mut Model) -> &mut scroll::Core,
@@ -128,7 +128,7 @@ where
         );
         if scrolling == new_scrolling {
             // Yup, scrolling did it. We're good to go now.
-            (inner_size, size)
+            (inner_size, size, scrolling)
         } else {
             // Again? We're now scrolling in a new direction?
             // There is no end to this!
@@ -143,12 +143,12 @@ where
 
             // That's enough. If the inner view changed again, ignore it!
             // That'll teach it.
-            (inner_size, size)
+            (inner_size, size, new_scrolling)
         }
     } else {
         // We're not showing any scrollbar, either because we don't scroll
         // or because scrollbars are hidden.
-        (inner_size, size)
+        (inner_size, size, scrolling)
     }
 }
 
@@ -166,10 +166,8 @@ pub fn layout<Model, GetScroller, RequiredSize, Layout>(
     RequiredSize: FnMut(&mut Model, Vec2) -> Vec2,
     Layout: FnMut(&mut Model, Vec2),
 {
-    get_scroller(model).set_last_size(size);
-
     // This is what we'd like
-    let (inner_size, self_size) = sizes(
+    let (inner_size, self_size, scrolling) = sizes(
         size,
         true,
         needs_relayout,
@@ -177,9 +175,9 @@ pub fn layout<Model, GetScroller, RequiredSize, Layout>(
         &mut get_scroller,
         &mut required_size,
     );
-
+    get_scroller(model).set_last_size(self_size, scrolling);
     get_scroller(model).set_inner_size(inner_size);
-    get_scroller(model).build_cache(self_size, size);
+    get_scroller(model).build_cache(self_size, size, scrolling);
 
     layout(model, inner_size);
 
@@ -199,7 +197,7 @@ where
     GetScroller: FnMut(&mut Model) -> &mut scroll::Core,
     RequiredSize: FnMut(&mut Model, Vec2) -> Vec2,
 {
-    let (_, size) = sizes(
+    let (_, size, _) = sizes(
         constraint,
         false,
         needs_relayout,

@@ -71,10 +71,10 @@ pub struct Core {
     /// Our `(0,0)` will be inner's `offset`
     offset: Vec2,
 
-    /// What was our own size last time we checked.
+    /// What was the size available to print the child last time?
     ///
-    /// This includes scrollbars, if any.
-    last_size: Vec2,
+    /// Excludes any potential scrollbar.
+    last_available: Vec2,
 
     /// Are we scrollable in each direction?
     enabled: XY<bool>,
@@ -97,7 +97,7 @@ pub struct Core {
     thumb_grab: Option<(Orientation, usize)>,
 
     /// We keep the cache here so it can be busted when we change the content.
-    size_cache: Option<XY<SizeCache>>,
+    size_cache: Option<XY<SizeCache<bool>>>,
 
     /// Defines how to update the offset when the view size changes.
     scroll_strategy: ScrollStrategy,
@@ -115,7 +115,7 @@ impl Core {
         Core {
             inner_size: Vec2::zero(),
             offset: Vec2::zero(),
-            last_size: Vec2::zero(),
+            last_available: Vec2::zero(),
             enabled: XY::new(false, true),
             show_scrollbars: true,
             scrollbar_padding: Vec2::new(1, 0),
@@ -345,13 +345,16 @@ impl Core {
     }
 
     /// Specifies the size given in a layout phase.
-    pub(crate) fn set_last_size(&mut self, last_size: Vec2) {
-        self.last_size = last_size;
-    }
-
-    /// Returns the size last given in `set_last_size()`.
-    pub fn last_size(&self) -> Vec2 {
-        self.last_size
+    pub(crate) fn set_last_size(
+        &mut self,
+        last_size: Vec2,
+        scrolling: XY<bool>,
+    ) {
+        self.last_available = last_size.saturating_sub(
+            scrolling
+                .swap()
+                .select_or(self.scrollbar_padding + (1, 1), Vec2::zero()),
+        );
     }
 
     /// Specifies the size allocated to the content.
@@ -360,8 +363,14 @@ impl Core {
     }
 
     /// Rebuild the cache with the given parameters.
-    pub(crate) fn build_cache(&mut self, self_size: Vec2, last_size: Vec2) {
-        self.size_cache = Some(SizeCache::build(self_size, last_size));
+    pub(crate) fn build_cache(
+        &mut self,
+        self_size: Vec2,
+        last_size: Vec2,
+        scrolling: XY<bool>,
+    ) {
+        self.size_cache =
+            Some(SizeCache::build_extra(self_size, last_size, scrolling));
     }
 
     /// Makes sure the viewport is within the content.
@@ -532,7 +541,7 @@ impl Core {
 
     /// Try to keep the given `rect` in view.
     pub fn keep_in_view(&mut self, rect: Rect) {
-        let min = rect.bottom_right().saturating_sub(self.last_size);
+        let min = rect.bottom_right().saturating_sub(self.available_size());
         let max = rect.top_left();
         let (min, max) = (Vec2::min(min, max), Vec2::max(min, max));
 
@@ -558,7 +567,7 @@ impl Core {
     /// Scroll until the given point is visible.
     pub fn scroll_to(&mut self, pos: Vec2) {
         // The furthest top-left we can go
-        let min = pos.saturating_sub(self.last_size);
+        let min = pos.saturating_sub(self.available_size());
         // How far to the bottom-right we can go
         let max = pos;
 
@@ -567,8 +576,8 @@ impl Core {
 
     /// Scroll until the given column is visible.
     pub fn scroll_to_x(&mut self, x: usize) {
-        if x >= self.offset.x + self.last_size.x {
-            self.offset.x = 1 + x - self.last_size.x;
+        if x >= self.offset.x + self.available_size().x {
+            self.offset.x = 1 + x - self.available_size().x;
         } else if x < self.offset.x {
             self.offset.x = x;
         }
@@ -576,8 +585,8 @@ impl Core {
 
     /// Scroll until the given row is visible.
     pub fn scroll_to_y(&mut self, y: usize) {
-        if y >= self.offset.y + self.last_size.y {
-            self.offset.y = 1 + y - self.last_size.y;
+        if y >= self.offset.y + self.available_size().y {
+            self.offset.y = 1 + y - self.available_size().y;
         } else if y < self.offset.y {
             self.offset.y = y;
         }
@@ -616,7 +625,7 @@ impl Core {
 
     /// Returns for each axis if we are scrolling.
     pub fn is_scrolling(&self) -> XY<bool> {
-        self.inner_size.zip_map(self.last_size, |i, s| i > s)
+        self.inner_size.zip_map(self.available_size(), |i, s| i > s)
     }
 
     /// Stops grabbing the scrollbar.
@@ -637,11 +646,12 @@ impl Core {
 
     /// Returns the size available for the child view.
     fn available_size(&self) -> Vec2 {
-        if self.show_scrollbars {
-            self.last_size.saturating_sub(self.scrollbar_size())
-        } else {
-            self.last_size
-        }
+        self.last_available
+    }
+
+    /// Returns the last size given by `layout`.
+    pub fn last_outer_size(&self) -> Vec2 {
+        self.available_size() + self.scrollbar_size()
     }
 
     /// Starts scrolling from the cursor position.
@@ -649,7 +659,7 @@ impl Core {
     /// Returns `true` if the event was consumed.
     fn start_drag(&mut self, position: Vec2) -> bool {
         // For each scrollbar, how far it is.
-        let scrollbar_pos = self.last_size.saturating_sub((1, 1));
+        let scrollbar_pos = self.last_outer_size().saturating_sub((1, 1));
         let lengths = self.scrollbar_thumb_lengths();
         let offsets = self.scrollbar_thumb_offsets(lengths);
         let available = self.available_size();
@@ -725,10 +735,17 @@ impl Core {
     /// Tries to apply the cache to the current constraint.
     ///
     /// Returns the cached value if it works, or `None`.
-    pub(crate) fn try_cache(&self, constraint: Vec2) -> Option<(Vec2, Vec2)> {
+    pub(crate) fn try_cache(
+        &self,
+        constraint: Vec2,
+    ) -> Option<(Vec2, Vec2, XY<bool>)> {
         self.size_cache.and_then(|cache| {
             if cache.zip_map(constraint, SizeCache::accept).both() {
-                Some((self.inner_size, cache.map(|c| c.value)))
+                Some((
+                    self.inner_size,
+                    cache.map(|c| c.value),
+                    cache.map(|c| c.extra),
+                ))
             } else {
                 None
             }

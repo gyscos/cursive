@@ -397,7 +397,7 @@ impl View for MenuPopup {
                     // Mouse clicks outside of the popup should dismiss it.
                     if !position.fits_in_rect(
                         offset,
-                        self.scroll_core.last_size() + (2, 2),
+                        self.scroll_core.last_outer_size() + (2, 2),
                     ) {
                         let dismiss_cb = self.on_dismiss.clone();
                         return EventResult::with_cb(move |s| {

@@ -192,7 +192,8 @@ impl<V> ScrollView<V> {
     where
         V: View,
     {
-        let important_area = self.inner.important_area(self.core.last_size());
+        let important_area =
+            self.inner.important_area(self.core.last_outer_size());
         self.core.scroll_to_rect(important_area);
 
         self.on_scroll_callback()
