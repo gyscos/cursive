@@ -1,6 +1,12 @@
 # Changelog
 
-## (Next version) cursive-core=0.1.1
+## Next version (cursive-core 0.1.2)
+
+### Bugfixes
+
+- Fix scroll module when inner view size is close to available size.
+
+## cursive-core 0.1.1
 
 ### API updates
 
