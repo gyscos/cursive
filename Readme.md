@@ -1,8 +1,8 @@
 # Cursive
 
 [![crates.io](https://meritbadge.herokuapp.com/cursive)](https://crates.io/crates/cursive)
-[![Build Status (travis)](https://travis-ci.org/gyscos/cursive.svg?branch=master)](https://travis-ci.org/gyscos/cursive)
-[![Build status (appveyor)](https://ci.appveyor.com/api/projects/status/uk5pww718jsp5x2l/branch/master?svg=true)](https://ci.appveyor.com/project/gyscos/cursive/branch/master)
+[![Build Status (travis)](https://travis-ci.org/gyscos/cursive.svg?branch=main)](https://travis-ci.org/gyscos/cursive)
+[![Build status (appveyor)](https://ci.appveyor.com/api/projects/status/uk5pww718jsp5x2l/branch/main?svg=true)](https://ci.appveyor.com/project/gyscos/cursive/branch/main)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Gitter chat](https://badges.gitter.im/gyscos/cursive.png)](https://gitter.im/cursive-rs/cursive)
 
@@ -46,9 +46,9 @@ fn main() {
 }
 ```
 
-[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/master/doc/cursive_example.png)](examples/src/bin/dialog.rs)
+[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/main/doc/cursive_example.png)](examples/src/bin/dialog.rs)
 
-Check out the other [examples](https://github.com/gyscos/cursive/tree/master/examples) to get these results, and more:
+Check out the other [examples](https://github.com/gyscos/cursive/tree/main/examples) to get these results, and more:
 
 <div>
 <a href="examples/src/bin/edit.rs"><img src="https://imgur.com/CQgSwly.png" alt="edit.rs example", width="48%" /></a>
@@ -65,9 +65,9 @@ _(Colors may depend on your terminal configuration.)_
 
 These tutorials may help you get started with cursive:
 
-* [Starting with cursive: (1/3)](https://github.com/gyscos/cursive/tree/master/doc/tutorial_1.md)
-* [Starting with cursive: (2/3)](https://github.com/gyscos/cursive/tree/master/doc/tutorial_2.md)
-* [Starting with cursive: (3/3)](https://github.com/gyscos/cursive/tree/master/doc/tutorial_3.md)
+* [Starting with cursive: (1/3)](https://github.com/gyscos/cursive/tree/main/doc/tutorial_1.md)
+* [Starting with cursive: (2/3)](https://github.com/gyscos/cursive/tree/main/doc/tutorial_2.md)
+* [Starting with cursive: (3/3)](https://github.com/gyscos/cursive/tree/main/doc/tutorial_3.md)
 
 ## Third-party views
 
