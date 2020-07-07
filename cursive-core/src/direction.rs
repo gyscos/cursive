@@ -85,13 +85,13 @@ impl Orientation {
     ///
     /// * For an horizontal view, returns `(Sum(x), Max(y))`.
     /// * For a vertical view, returns `(Max(x), Sum(y))`.
-    pub fn stack<'a, T: Iterator<Item = &'a Vec2>>(self, iter: T) -> Vec2 {
+    pub fn stack<'a, T: Iterator<Item = Vec2>>(self, iter: T) -> Vec2 {
         match self {
             Orientation::Horizontal => {
-                iter.fold(Vec2::zero(), |a, b| a.stack_horizontal(b))
+                iter.fold(Vec2::zero(), |a, b| a.stack_horizontal(&b))
             }
             Orientation::Vertical => {
-                iter.fold(Vec2::zero(), |a, b| a.stack_vertical(b))
+                iter.fold(Vec2::zero(), |a, b| a.stack_vertical(&b))
             }
         }
     }

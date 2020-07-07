@@ -1,6 +1,9 @@
-use cursive::traits::*;
-use cursive::views::{
-    Checkbox, Dialog, EditView, LinearLayout, ListView, SelectView, TextView,
+use cursive::{
+    traits::*,
+    views::{
+        Checkbox, Dialog, EditView, LinearLayout, ListView, SelectView,
+        TextArea, TextView,
+    },
 };
 
 // This example uses a ListView.
@@ -18,6 +21,7 @@ fn main() {
                 ListView::new()
                     // Each child is a single-line view with a label
                     .child("Name", EditView::new().fixed_width(10))
+                    .child("Presentation", TextArea::new().min_height(4))
                     .child(
                         "Receive spam?",
                         Checkbox::new().on_change(|s, checked| {

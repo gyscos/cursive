@@ -503,7 +503,7 @@ impl View for LinearLayout {
             .map(|c| c.required_size(req))
             .collect();
         debug!("Ideal sizes: {:?}", ideal_sizes);
-        let ideal = self.orientation.stack(ideal_sizes.iter());
+        let ideal = self.orientation.stack(ideal_sizes.iter().copied());
         debug!("Ideal result: {:?}", ideal);
 
         // Does it fit?
@@ -527,7 +527,7 @@ impl View for LinearLayout {
             .iter_mut()
             .map(|c| c.required_size(budget_req))
             .collect();
-        let desperate = self.orientation.stack(min_sizes.iter());
+        let desperate = self.orientation.stack(min_sizes.iter().copied());
         debug!("Min sizes: {:?}", min_sizes);
         debug!("Desperate: {:?}", desperate);
 
@@ -613,7 +613,7 @@ impl View for LinearLayout {
         debug!("Final sizes2: {:?}", final_sizes);
 
         // Let's stack everything to see what it looks like.
-        let compromise = self.orientation.stack(final_sizes.iter());
+        let compromise = self.orientation.stack(final_sizes.iter().copied());
 
         // Phew, that was a lot of work! I'm not doing it again.
         self.cache = Some(SizeCache::build(compromise, req));

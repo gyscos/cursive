@@ -37,6 +37,7 @@ impl ListChild {
 /// Displays a list of elements.
 pub struct ListView {
     children: Vec<ListChild>,
+    children_heights: Vec<usize>,
     focus: usize,
     // This callback is called when the selection is changed.
     on_select: Option<Rc<dyn Fn(&mut Cursive, &String)>>,
@@ -50,6 +51,7 @@ impl ListView {
     pub fn new() -> Self {
         ListView {
             children: Vec::new(),
+            children_heights: Vec::new(),
             focus: 0,
             on_select: None,
             last_size: Vec2::zero(),
@@ -96,11 +98,13 @@ impl ListView {
         let mut view = view.as_boxed_view();
         view.take_focus(direction::Direction::none());
         self.children.push(ListChild::Row(label.to_string(), view));
+        self.children_heights.push(0);
     }
 
     /// Removes all children from this view.
     pub fn clear(&mut self) {
         self.children.clear();
+        self.children_heights.clear();
         self.focus = 0;
     }
 
@@ -118,6 +122,7 @@ impl ListView {
     /// Adds a delimiter to the end of the list.
     pub fn add_delimiter(&mut self) {
         self.children.push(ListChild::Delimiter);
+        self.children_heights.push(0);
     }
 
     /// Adds a delimiter to the end of the list.
@@ -133,6 +138,7 @@ impl ListView {
     ///
     /// If `index >= self.len()`.
     pub fn remove_child(&mut self, index: usize) -> ListChild {
+        self.children_heights.remove(index);
         self.children.remove(index)
     }
 
@@ -232,7 +238,7 @@ impl ListView {
                 return;
             }
 
-            let position = match position.checked_sub(offset) {
+            let mut position = match position.checked_sub(offset) {
                 None => return,
                 Some(pos) => pos,
             };
@@ -240,14 +246,21 @@ impl ListView {
             // eprintln!("Rel pos: {:?}", position);
 
             // Now that we have a relative position, checks for buttons?
-            let focus = position.y;
-            if focus >= self.children.len() {
-                return;
-            }
-
-            if let ListChild::Row(_, ref mut view) = self.children[focus] {
-                if view.take_focus(direction::Direction::none()) {
-                    self.focus = focus;
+            for (i, (child, height)) in self
+                .children
+                .iter_mut()
+                .zip(&self.children_heights)
+                .enumerate()
+            {
+                if position.y < *height {
+                    if let ListChild::Row(_, ref mut view) = child {
+                        if view.take_focus(direction::Direction::none()) {
+                            self.focus = i;
+                        }
+                    }
+                    break;
+                } else {
+                    position.y -= height;
                 }
             }
         }
@@ -277,18 +290,25 @@ impl View for ListView {
         }
 
         let offset = self.labels_width() + 1;
+        let mut y = 0;
 
         debug!("Offset: {}", offset);
-        for (i, child) in self.children.iter().enumerate() {
+        for (i, (child, &height)) in
+            self.children.iter().zip(&self.children_heights).enumerate()
+        {
             match child {
                 ListChild::Row(ref label, ref view) => {
-                    printer.print((0, i), label);
+                    printer.print((0, y), label);
                     view.draw(
-                        &printer.offset((offset, i)).focused(i == self.focus),
+                        &printer
+                            .offset((offset, y))
+                            .cropped((printer.size.x, height))
+                            .focused(i == self.focus),
                     );
                 }
-                ListChild::Delimiter => (),
+                ListChild::Delimiter => (), // TODO: draw delimiters?
             }
+            y += height;
         }
     }
 
@@ -302,15 +322,14 @@ impl View for ListView {
             .max()
             .unwrap_or(0);
 
-        let view_size = self
-            .children
-            .iter_mut()
-            .filter_map(ListChild::view)
-            .map(|v| v.required_size(req).x)
-            .max()
-            .unwrap_or(0);
+        let view_size = direction::Orientation::Vertical.stack(
+            self.children.iter_mut().map(|c| match c {
+                ListChild::Delimiter => Vec2::new(0, 1),
+                ListChild::Row(_, ref mut view) => view.required_size(req),
+            }),
+        );
 
-        Vec2::new(label_width + 1 + view_size, self.children.len())
+        view_size + (1 + label_width, 0)
     }
 
     fn layout(&mut self, size: Vec2) {
@@ -331,8 +350,16 @@ impl View for ListView {
 
         debug!("Available: {}", available);
 
-        for child in self.children.iter_mut().filter_map(ListChild::view) {
-            child.layout(Vec2::new(available, 1));
+        self.children_heights.resize(self.children.len(), 0);
+        for (child, height) in self
+            .children
+            .iter_mut()
+            .filter_map(ListChild::view)
+            .zip(&mut self.children_heights)
+        {
+            // TODO: Find the child height?
+            *height = child.required_size(size).y;
+            child.layout(Vec2::new(available, *height));
         }
     }
 
@@ -346,9 +373,8 @@ impl View for ListView {
         // Send the event to the focused child.
         let labels_width = self.labels_width();
         if let ListChild::Row(_, ref mut view) = self.children[self.focus] {
-            // If self.focus < self.scrollbase.start_line, it means the focus is not
-            // in view. Something's fishy, so don't send the event.
-            let offset = (labels_width + 1, self.focus);
+            let y = self.children_heights[..self.focus].iter().sum();
+            let offset = (labels_width + 1, y);
             let result = view.on_event(event.relativized(offset));
             if result.is_consumed() {
                 return result;
