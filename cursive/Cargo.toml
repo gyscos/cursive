@@ -65,6 +65,7 @@ crossterm-backend = ["crossterm"]
 markdown = ["cursive_core/markdown"]
 unstable_scroll = ["cursive_core/unstable_scroll"]
 toml = ["cursive_core/toml"]
+configurable-logger = ["cursive_core/configurable-logger"]
 
 [lib]
 name = "cursive"

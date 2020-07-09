@@ -7,9 +7,40 @@ use std::sync::Mutex;
 /// Saves all log records in a global deque.
 ///
 /// Uses a `DebugView` to access it.
+#[cfg(not(feature = "configurable-logger"))]
 pub struct CursiveLogger;
 
+/// Saves all log records in a global deque.
+///
+/// Uses a `DebugView` to access it.
+#[cfg(feature = "configurable-logger")]
+pub struct CursiveLogger {
+    level: log::Level,
+}
+
+#[cfg(not(feature = "configurable-logger"))]
+impl Default for CursiveLogger {
+    fn default() -> CursiveLogger {
+        CursiveLogger
+    }
+}
+
+#[cfg(feature = "configurable-logger")]
+impl Default for CursiveLogger {
+    fn default() -> CursiveLogger {
+        CursiveLogger {
+            level: log::Level::Debug,
+        }
+    }
+}
+
+#[cfg(not(feature = "configurable-logger"))]
 static LOGGER: CursiveLogger = CursiveLogger;
+
+#[cfg(feature = "configurable-logger")]
+static LOGGER: CursiveLogger = CursiveLogger {
+    level: log::Level::Debug,
+};
 
 /// A log record.
 pub struct Record {
@@ -43,9 +74,23 @@ pub fn log(record: &log::Record<'_>) {
     });
 }
 
+#[cfg(not(feature = "configurable-logger"))]
 impl log::Log for CursiveLogger {
     fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
         true
+    }
+
+    fn log(&self, record: &log::Record<'_>) {
+        log(record);
+    }
+
+    fn flush(&self) {}
+}
+
+#[cfg(feature = "configurable-logger")]
+impl log::Log for CursiveLogger {
+    fn enabled(&self, metadata: &log::Metadata<'_>) -> bool {
+        metadata.level() <= self.level
     }
 
     fn log(&self, record: &log::Record<'_>) {
@@ -72,6 +117,39 @@ pub fn init() {
     log::set_max_level(log::LevelFilter::Trace);
 }
 
+/// Builder helper type for building a logger
+///
+/// Use Builder::default() to build a default-configured Builder object, which
+///
+/// * Logs with "debug" level
+#[cfg(feature = "configurable-logger")]
+pub struct Builder {
+    level: log::Level,
+}
+
+#[cfg(feature = "configurable-logger")]
+impl Default for Builder {
+    fn default() -> Builder {
+        Builder {
+            level: log::Level::Debug,
+        }
+    }
+}
+
+#[cfg(feature = "configurable-logger")]
+impl Builder {
+    /// initialize the logger
+    pub fn init(self) {
+        unimplemented!()
+    }
+
+    /// Set the level to log with
+    pub fn level(mut self, level: log::Level) -> Self {
+        self.level = level;
+        self
+    }
+}
+
 /// Return a logger that stores records in cursive's log queue.
 ///
 /// These logs can then be read by a [`DebugView`](crate::views::DebugView).
@@ -79,7 +157,7 @@ pub fn init() {
 /// An easier alternative might be to use [`init()`].
 pub fn get_logger() -> CursiveLogger {
     reserve_logs(1_000);
-    CursiveLogger
+    CursiveLogger::default()
 }
 
 /// Adds `n` more entries to cursive's log queue.
