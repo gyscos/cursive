@@ -87,6 +87,7 @@ Here are a few crates implementing new views for you to use:
 
 Here are some cool applications using cursive:
 
+* [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [RustyChat](https://github.com/SambaDialloB/RustyChat): Chat client made using Rust and Cursive.
 * [fui](https://github.com/xliiv/fui): Add CLI & form interface to your program.
 * [grin-tui](https://github.com/mimblewimble/grin): Minimal implementation of the MimbleWimble protocol.
