@@ -2,7 +2,7 @@ use super::Segment;
 use crate::utils::span::{IndexedCow, Span, SpannedStr};
 
 /// A list of segments representing a row of text
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Row {
     /// List of segments
     pub segments: Vec<Segment>,

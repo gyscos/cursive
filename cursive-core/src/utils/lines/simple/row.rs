@@ -4,7 +4,7 @@ use crate::With;
 ///
 /// A row is made of offsets into a parent `String`.
 /// The corresponding substring should take `width` cells when printed.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Row {
     /// Beginning of the row in the parent `String`.
     pub start: usize,

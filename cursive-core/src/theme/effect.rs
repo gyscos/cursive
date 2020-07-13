@@ -1,7 +1,7 @@
 use enumset::EnumSetType;
 
 /// Text effect
-#[derive(EnumSetType, Debug)]
+#[derive(EnumSetType, Debug, Hash)]
 pub enum Effect {
     /// No effect
     Simple,

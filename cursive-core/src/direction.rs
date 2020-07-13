@@ -30,7 +30,7 @@ use crate::Vec2;
 use crate::XY;
 
 /// Describes a vertical or horizontal orientation for a view.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Orientation {
     /// Horizontal orientation
     Horizontal,
@@ -126,7 +126,7 @@ impl Orientation {
 ///
 /// * Absolute directions are Up, Down, Left, and Right.
 /// * Relative directions are Front and Back.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction {
     /// An absolute direction.
     Abs(Absolute),
@@ -199,7 +199,7 @@ impl Direction {
 }
 
 /// Direction relative to an orientation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Relative {
     // TODO: handle right-to-left? (Arabic, ...)
     /// Front relative direction.
@@ -261,7 +261,7 @@ impl Relative {
 }
 
 /// Absolute direction (up, down, left, right).
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Absolute {
     /// Left
     Left,

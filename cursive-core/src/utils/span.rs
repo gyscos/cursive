@@ -8,14 +8,14 @@ use unicode_width::UnicodeWidthStr;
 /// A string with associated spans.
 ///
 /// Each span has an associated attribute `T`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SpannedString<T> {
     source: String,
     spans: Vec<IndexedSpan<T>>,
 }
 
 /// The immutable, borrowed equivalent of `SpannedString`.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct SpannedStr<'a, T> {
     source: &'a str,
     spans: &'a [IndexedSpan<T>],
@@ -261,7 +261,7 @@ impl<'a, T> From<&'a SpannedString<T>> for SpannedStr<'a, T> {
 }
 
 /// An indexed span with an associated attribute.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct IndexedSpan<T> {
     /// Content of the span.
     pub content: IndexedCow,
@@ -280,7 +280,7 @@ impl<T> AsRef<IndexedCow> for IndexedSpan<T> {
 }
 
 /// A resolved span borrowing its source string.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Span<'a, T> {
     /// Content of this span.
     pub content: &'a str,
@@ -334,7 +334,7 @@ impl<T> IndexedSpan<T> {
 }
 
 /// A span of text that can be either owned, or indexed in another String.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum IndexedCow {
     /// Indexes content in a separate string.
     Borrowed {

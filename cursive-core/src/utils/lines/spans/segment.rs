@@ -1,7 +1,7 @@
 use crate::utils::span::{IndexedCow, Span, SpannedStr, SpannedText};
 
 /// Refers to a part of a span
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Segment {
     /// ID of the span this segment refers to
     pub span_id: usize,

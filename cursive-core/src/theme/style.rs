@@ -4,7 +4,7 @@ use enumset::{enum_set, EnumSet};
 /// Combine a color and an effect.
 ///
 /// Represents any transformation that can be applied to text.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Style {
     /// Effect to apply.
     ///

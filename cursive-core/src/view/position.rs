@@ -52,7 +52,7 @@ impl Position {
 }
 
 /// Single-dimensional offset policy.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
 pub enum Offset {
     /// In the center of the screen
     Center,

@@ -2,7 +2,7 @@ use crate::Vec2;
 use std::ops::{Add, Div, Mul, Sub};
 
 /// Four values representing each direction.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Margins {
     /// Left margin
     pub left: usize,

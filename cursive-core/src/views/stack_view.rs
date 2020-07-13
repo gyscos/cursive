@@ -32,7 +32,7 @@ enum Placement {
 }
 
 /// Identifies a layer in a `StackView`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum LayerPosition {
     /// Starts from the back (bottom) of the stack.
     FromBack(usize),

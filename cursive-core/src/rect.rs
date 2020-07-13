@@ -5,7 +5,7 @@ use crate::Vec2;
 use std::ops::Add;
 
 /// A non-empty rectangle on the 2D grid.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Rect {
     /// Top-left corner, inclusive
     top_left: Vec2,

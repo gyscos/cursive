@@ -3,7 +3,7 @@ use super::segment::Segment;
 /// Non-splittable piece of text.
 ///
 /// It is made of a list of segments of text.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Chunk {
     /// Total width of this chunk.
     pub width: usize,
@@ -81,7 +81,7 @@ impl Chunk {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 /// Describes a part of a chunk.
 ///
 /// Includes both length and width to ease some computations.
