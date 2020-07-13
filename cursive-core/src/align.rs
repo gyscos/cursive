@@ -1,7 +1,7 @@
 //! Tools to control view alignment.
 
 /// Specifies the alignment along both horizontal and vertical directions.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Align {
     /// Horizontal alignment policy
     pub h: HAlign,
@@ -62,7 +62,7 @@ impl Align {
 }
 
 /// Horizontal alignment
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum HAlign {
     /// Place the element to the left of available space
     Left,
@@ -73,7 +73,7 @@ pub enum HAlign {
 }
 
 /// Vertical alignment
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum VAlign {
     /// Place the element at the top of available space
     Top,
