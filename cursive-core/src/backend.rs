@@ -1,11 +1,10 @@
-//! Define backends using common libraries.
+//! Define the backend trait for actual terminal interaction.
 //!
 //! Cursive doesn't print anything by itself: it delegates this job to a
 //! backend library, which handles all actual input and output.
 //!
-//! This module defines the [`Backend`] trait, as well as a few implementations
-//! using some common libraries. Each of those included backends needs a
-//! corresonding feature to be enabled.
+//! This module defines the [`Backend`] trait, to be implemented by actual
+//! types, usually using third-party libraries.
 //!
 //! [`Backend`]: trait.Backend.html
 
