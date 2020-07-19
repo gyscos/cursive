@@ -147,6 +147,11 @@ where
             }
         }
 
+        // We can know text was wrapped if the stop was optional,
+        // and there's more coming.
+        let is_wrapped = !chunks.last().map(|c| c.hard_stop).unwrap_or(true)
+            && self.iter.peek().is_some();
+
         let width = chunks.iter().map(|c| c.width).sum();
 
         assert!(width <= self.width);
@@ -159,6 +164,10 @@ where
 
         // TODO: merge consecutive segments of the same span
 
-        Some(Row { segments, width })
+        Some(Row {
+            segments,
+            width,
+            is_wrapped,
+        })
     }
 }
