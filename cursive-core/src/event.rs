@@ -241,7 +241,7 @@ impl From<Box<dyn Fn(&mut Cursive)>> for Callback {
 pub enum EventResult {
     /// The event was ignored. The parent can keep handling it.
     Ignored,
-    /// The event was consumed. An optionnal callback to run is attached.
+    /// The event was consumed. An optional callback to run is attached.
     Consumed(Option<Callback>), // TODO: make this a FnOnce?
 }
 
