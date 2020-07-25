@@ -10,8 +10,12 @@ pub struct Row {
     pub start: usize,
     /// End of the row (excluded)
     pub end: usize,
+
     /// Width of the row, in cells.
     pub width: usize,
+
+    /// Whether or not this text was wrapped onto the next line
+    pub is_wrapped: bool,
 }
 
 impl Row {

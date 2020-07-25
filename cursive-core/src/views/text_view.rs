@@ -357,7 +357,12 @@ impl TextView {
             LinesIterator::new(content.get_cache().as_ref(), size.x).collect();
 
         // Desired width
-        self.width = self.rows.iter().map(|row| row.width).max();
+        self.width = if self.rows.iter().any(|row| row.is_wrapped) {
+            // If any rows are wrapped, then require the full width.
+            Some(size.x)
+        } else {
+            self.rows.iter().map(|row| row.width).max()
+        }
     }
 }
 

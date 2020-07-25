@@ -67,8 +67,15 @@ impl<'a> Iterator for LinesIterator<'a> {
         let start = row.segments.first()?.start;
         let end = row.segments.last()?.end;
 
-        let width = row.width;
+        let spans::Row {
+            width, is_wrapped, ..
+        } = row;
 
-        Some(Row { start, end, width })
+        Some(Row {
+            start,
+            end,
+            width,
+            is_wrapped,
+        })
     }
 }

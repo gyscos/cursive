@@ -287,6 +287,7 @@ impl TextArea {
                 start: self.content.len(),
                 end: self.content.len(),
                 width: 0,
+                is_wrapped: false,
             });
         }
     }
@@ -471,12 +472,15 @@ impl View for TextArea {
         // And y = number of rows
         debug!("{:?}", self.rows);
         let scroll_width = if self.rows.len() > constraint.y { 1 } else { 0 };
-        Vec2::new(
-            scroll_width
-                + 1
-                + self.rows.iter().map(|r| r.width).max().unwrap_or(1),
-            self.rows.len(),
-        )
+
+        let content_width = if self.rows.iter().any(|row| row.is_wrapped) {
+            // If any row has been wrapped, we want to take the full width.
+            constraint.x.saturating_sub(1 + scroll_width)
+        } else {
+            self.rows.iter().map(|r| r.width).max().unwrap_or(1)
+        };
+
+        Vec2::new(scroll_width + 1 + content_width, self.rows.len())
     }
 
     fn draw(&self, printer: &Printer) {
