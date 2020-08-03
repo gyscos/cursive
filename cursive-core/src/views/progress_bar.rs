@@ -98,9 +98,8 @@ impl ProgressBar {
     ///
     /// Use this to manually control the progress to display
     /// by directly modifying the value pointed to by `value`.
-    pub fn with_value(mut self, value: Counter) -> Self {
-        self.value = value;
-        self
+    pub fn with_value(self, value: Counter) -> Self {
+        self.with(|s| s.set_counter(value))
     }
 
     /// Starts a function in a separate thread, and monitor the progress.
@@ -121,11 +120,10 @@ impl ProgressBar {
     ///
     /// Chainable variant.
     pub fn with_task<F: FnOnce(Counter) + Send + 'static>(
-        mut self,
+        self,
         task: F,
     ) -> Self {
-        self.start(task);
-        self
+        self.with(|s| s.start(task))
     }
 
     /// Sets the label generator.
@@ -142,11 +140,21 @@ impl ProgressBar {
     /// }
     /// ```
     pub fn with_label<F: Fn(usize, (usize, usize)) -> String + 'static>(
-        mut self,
+        self,
         label_maker: F,
     ) -> Self {
+        self.with(|s| s.set_label(label_maker))
+    }
+
+    /// Sets the label generator.
+    ///
+    /// The given function will be called with `(value, (min, max))`.
+    /// Its output will be used as the label to print inside the progress bar.
+    pub fn set_label<F: Fn(usize, (usize, usize)) -> String + 'static>(
+        &mut self,
+        label_maker: F,
+    ) {
         self.label_maker = Box::new(label_maker);
-        self
     }
 
     /// Sets the minimum value.
@@ -154,11 +162,20 @@ impl ProgressBar {
     /// When `value` equals `min`, the bar is at the minimum level.
     ///
     /// If `self.min > max`, `self.min` is set to `max`.
-    pub fn min(mut self, min: usize) -> Self {
+    ///
+    /// Chainable variant.
+    pub fn min(self, min: usize) -> Self {
+        self.with(|s| s.set_min(min))
+    }
+
+    /// Sets the minimum value.
+    ///
+    /// When `value` equals `min`, the bar is at the minimum level.
+    ///
+    /// If `self.min > max`, `self.min` is set to `max`.
+    pub fn set_min(&mut self, min: usize) {
         self.min = min;
         self.max = cmp::max(self.max, self.min);
-
-        self
     }
 
     /// Sets the maximum value.
@@ -166,21 +183,41 @@ impl ProgressBar {
     /// When `value` equals `max`, the bar is at the maximum level.
     ///
     /// If `min > self.max`, `self.max` is set to `min`.
-    pub fn max(mut self, max: usize) -> Self {
+    ///
+    /// Chainable variant.
+    pub fn max(self, max: usize) -> Self {
+        self.with(|s| s.set_max(max))
+    }
+
+    /// Sets the maximum value.
+    ///
+    /// When `value` equals `max`, the bar is at the maximum level.
+    ///
+    /// If `min > self.max`, `self.max` is set to `min`.
+    pub fn set_max(&mut self, max: usize) {
         self.max = max;
         self.min = cmp::min(self.min, self.max);
-
-        self
     }
 
     /// Sets the `min` and `max` range for the value.
     ///
     /// If `min > max`, swap the two values.
+    ///
+    /// Chainable variant.
     pub fn range(self, min: usize, max: usize) -> Self {
+        self.with(|s| s.set_range(min, max))
+    }
+
+    /// Sets the `min` and `max` range for the value.
+    ///
+    /// If `min > max`, swap the two values.
+    pub fn set_range(&mut self, min: usize, max: usize) {
         if min > max {
-            self.min(max).max(min)
+            self.set_min(max);
+            self.set_max(min);
         } else {
-            self.min(min).max(max)
+            self.set_min(min);
+            self.set_max(max);
         }
     }
 
@@ -189,6 +226,14 @@ impl ProgressBar {
     /// Value is clamped between `min` and `max`.
     pub fn set_value(&mut self, value: usize) {
         self.value.set(value);
+    }
+
+    /// Sets the value to follow.
+    ///
+    /// Use this to manually control the progress to display
+    /// by directly modifying the value pointed to by `value`.
+    pub fn set_counter(&mut self, value: Counter) {
+        self.value = value;
     }
 
     /// Sets the color style.
