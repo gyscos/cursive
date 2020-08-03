@@ -2,9 +2,23 @@
 
 ## Next version (cursive-core 0.1.2)
 
+### API updates
+
+- Add `ProgressBar::set_{min,max,range,counter,label}` for non-chained API.
+- Derive Clone, Copy, Debug, PartialEq, Hash for more types.
+
+### Improvements
+
+- `ListView` now supports children taller than 1 row.
+
 ### Bugfixes
 
 - Fix scroll module when inner view size is close to available size.
+- Fix text alignment for wrapped lines.
+
+### Doc
+
+- Improve documentation for themes.
 
 ## cursive-core 0.1.1
 
