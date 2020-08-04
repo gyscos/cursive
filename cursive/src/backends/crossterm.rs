@@ -193,6 +193,7 @@ impl Backend {
     {
         enable_raw_mode()?;
 
+        // TODO: Use the stdout we define down there
         execute!(
             io::stdout(),
             EnterAlternateScreen,

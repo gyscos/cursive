@@ -56,7 +56,24 @@ fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
 
 impl Backend {
     /// Creates a new ncurses-based backend.
+    ///
+    /// Uses `/dev/tty` for input/output.
     pub fn init() -> io::Result<Box<dyn backend::Backend>> {
+        Self::init_with_files("/dev/tty", "/dev/tty")
+    }
+
+    /// Creates a new ncurses-based backend.
+    ///
+    /// Uses stdin/stdout for input/output.
+    pub fn init_stdio() -> io::Result<Box<dyn backend::Backend>> {
+        Self::init_with_files("/dev/stdin", "/dev/stdout")
+    }
+
+    /// Creates a new ncurses-based backend using the given files for input/output.
+    pub fn init_with_files(
+        input_path: &str,
+        output_path: &str,
+    ) -> io::Result<Box<dyn backend::Backend>> {
         // Check the $TERM variable.
         if std::env::var("TERM")
             .map(|var| var.is_empty())
@@ -79,10 +96,17 @@ impl Backend {
 
         // Don't output to standard IO, directly feed into /dev/tty
         // This leaves stdin and stdout usable for other purposes.
-        let tty_path = CString::new("/dev/tty").unwrap();
-        let mode = CString::new("r+").unwrap();
-        let tty = unsafe { libc::fopen(tty_path.as_ptr(), mode.as_ptr()) };
-        ncurses::newterm(None, tty, tty);
+        let input = {
+            let mode = CString::new("r").unwrap();
+            let path = CString::new(input_path).unwrap();
+            unsafe { libc::fopen(path.as_ptr(), mode.as_ptr()) }
+        };
+        let output = {
+            let mode = CString::new("w").unwrap();
+            let path = CString::new(output_path).unwrap();
+            unsafe { libc::fopen(path.as_ptr(), mode.as_ptr()) }
+        };
+        ncurses::newterm(None, output, input);
         // Enable keypad (like arrows)
         ncurses::keypad(ncurses::stdscr(), true);
 

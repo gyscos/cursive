@@ -29,6 +29,7 @@ use std::thread;
 
 /// Backend using termion
 pub struct Backend {
+    // Do we want to make this generic on the writer?
     terminal:
         RefCell<AlternateScreen<MouseTerminal<RawTerminal<BufWriter<File>>>>>,
     current_style: Cell<theme::ColorPair>,
@@ -42,12 +43,35 @@ pub struct Backend {
 
 impl Backend {
     /// Creates a new termion-based backend.
+    ///
+    /// Uses `/dev/tty` for input and output.
     pub fn init() -> std::io::Result<Box<dyn backend::Backend>> {
+        Self::init_with_files(
+            File::open("/dev/tty")?,
+            File::create("/dev/tty")?,
+        )
+    }
+
+    /// Creates a new termion-based backend.
+    ///
+    /// Uses `stdin` and `stdout` for input/output.
+    pub fn init_stdio() -> std::io::Result<Box<dyn backend::Backend>> {
+        Self::init_with_files(
+            File::open("/dev/stdin")?,
+            File::create("/dev/stdout")?,
+        )
+    }
+
+    /// Creates a new termion-based backend using the given input and output files.
+    pub fn init_with_files(
+        input: File,
+        output: File,
+    ) -> std::io::Result<Box<dyn backend::Backend>> {
         // Use a ~8MB buffer
         // Should be enough for a single screen most of the time.
         let terminal =
             RefCell::new(AlternateScreen::from(MouseTerminal::from(
-                BufWriter::with_capacity(8_000_000, File::create("/dev/tty")?)
+                BufWriter::with_capacity(8_000_000, output_file?)
                     .into_raw_mode()?,
             )));
 
@@ -67,7 +91,7 @@ impl Backend {
         // We want nonblocking input, but termion is blocking by default
         // Read input from a separate thread
         thread::spawn(move || {
-            let input = std::fs::File::open("/dev/tty").unwrap();
+            let input = input_file.unwrap();
             let mut events = input.events();
 
             // Take all the events we can
@@ -244,7 +268,7 @@ impl backend::Backend for Backend {
 
     fn screen_size(&self) -> Vec2 {
         // TODO: termion::terminal_size currently requires stdout.
-        // When available, we should try to use /dev/tty instead.
+        // When available, we should try to use self.terminal or something instead.
         let (x, y) = termion::terminal_size().unwrap_or((1, 1));
         (x, y).into()
     }

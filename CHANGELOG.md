@@ -1,11 +1,12 @@
 # Changelog
 
-## Next version (cursive-core 0.1.2)
+## Next version (cursive-core 0.1.2, cursive 0.15.1)
 
 ### API updates
 
 - Add `ProgressBar::set_{min,max,range,counter,label}` for non-chained API.
 - Derive Clone, Copy, Debug, PartialEq, Hash for more types.
+- Add backend initializers using other files than /dev/tty for ncurses and termion.
 
 ### Improvements
 
