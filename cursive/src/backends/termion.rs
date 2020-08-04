@@ -64,14 +64,14 @@ impl Backend {
 
     /// Creates a new termion-based backend using the given input and output files.
     pub fn init_with_files(
-        input: File,
-        output: File,
+        input_file: File,
+        output_file: File,
     ) -> std::io::Result<Box<dyn backend::Backend>> {
         // Use a ~8MB buffer
         // Should be enough for a single screen most of the time.
         let terminal =
             RefCell::new(AlternateScreen::from(MouseTerminal::from(
-                BufWriter::with_capacity(8_000_000, output_file?)
+                BufWriter::with_capacity(8_000_000, output_file)
                     .into_raw_mode()?,
             )));
 
@@ -91,8 +91,7 @@ impl Backend {
         // We want nonblocking input, but termion is blocking by default
         // Read input from a separate thread
         thread::spawn(move || {
-            let input = input_file.unwrap();
-            let mut events = input.events();
+            let mut events = input_file.events();
 
             // Take all the events we can
             while let Some(Ok(event)) = events.next() {
