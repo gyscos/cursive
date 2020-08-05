@@ -11,8 +11,6 @@
 #[cfg(unix)]
 mod resize;
 
-pub mod dummy;
-
 pub mod blt;
 pub mod crossterm;
 pub mod curses;

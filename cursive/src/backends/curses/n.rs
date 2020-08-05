@@ -14,7 +14,7 @@ use crate::theme::{Color, ColorPair, Effect};
 use crate::utf8;
 use crate::Vec2;
 
-use self::super::split_i32;
+use super::split_i32;
 
 // Use AHash instead of the slower SipHash
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
@@ -321,6 +321,13 @@ impl Backend {
     }
 }
 
+impl Drop for Backend {
+    fn drop(&mut self) {
+        write_to_tty(b"\x1B[?1002l").unwrap();
+        ncurses::endwin();
+    }
+}
+
 impl backend::Backend for Backend {
     fn name(&self) -> &str {
         "ncurses"
@@ -339,11 +346,6 @@ impl backend::Backend for Backend {
 
     fn poll_event(&mut self) -> Option<Event> {
         self.parse_next()
-    }
-
-    fn finish(&mut self) {
-        write_to_tty(b"\x1B[?1002l").unwrap();
-        ncurses::endwin();
     }
 
     fn set_color(&self, colors: ColorPair) -> ColorPair {

@@ -84,8 +84,6 @@ impl backend::Backend for Backend {
         }
     }
 
-    fn finish(&mut self) {}
-
     fn refresh(&mut self) {
         let size = self.size.get();
         let current_frame =

@@ -273,18 +273,8 @@ impl Backend {
     }
 }
 
-impl backend::Backend for Backend {
-    fn poll_event(&mut self) -> Option<Event> {
-        match poll(Duration::from_millis(1)) {
-            Ok(true) => match read() {
-                Ok(event) => Some(self.map_key(event)),
-                Err(e) => panic!("{:?}", e),
-            },
-            _ => None,
-        }
-    }
-
-    fn finish(&mut self) {
+impl Drop for Backend {
+    fn drop(&mut self) {
         // We have to execute the show cursor command at the `stdout`.
         execute!(
             io::stdout(),
@@ -295,6 +285,18 @@ impl backend::Backend for Backend {
         .expect("Can not disable mouse capture or show cursor.");
 
         disable_raw_mode().unwrap();
+    }
+}
+
+impl backend::Backend for Backend {
+    fn poll_event(&mut self) -> Option<Event> {
+        match poll(Duration::from_millis(1)) {
+            Ok(true) => match read() {
+                Ok(event) => Some(self.map_key(event)),
+                Err(e) => panic!("{:?}", e),
+            },
+            _ => None,
+        }
     }
 
     fn refresh(&mut self) {

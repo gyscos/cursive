@@ -176,7 +176,7 @@ impl TextContentInner {
 /// ```rust
 /// # use cursive_core::Cursive;
 /// # use cursive_core::views::TextView;
-/// let mut siv = Cursive::dummy();
+/// let mut siv = Cursive::new();
 ///
 /// siv.add_layer(TextView::new("Hello world!"));
 /// ```

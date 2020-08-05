@@ -34,7 +34,7 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 /// # use cursive_core::Cursive;
 /// # use cursive_core::traits::*;
 /// # use cursive_core::views::{Dialog, EditView, TextView};
-/// let mut siv = Cursive::dummy();
+/// let mut siv = Cursive::new();
 ///
 /// // Create a dialog with an edit text and a button.
 /// // The user can either hit the <Ok> button,

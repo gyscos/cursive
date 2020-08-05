@@ -14,6 +14,21 @@
 //!   views and configuring their behaviours.
 //! * Finally, the event loop is started by calling [`Cursive::run`].
 //!
+//! ## Examples
+//!
+//! ```rust,no_run
+//! use cursive::{Cursive, CursiveExt};
+//! use cursive::views::TextView;
+//!
+//! let mut siv = Cursive::new();
+//!
+//! siv.add_layer(TextView::new("Hello World!\nPress q to quit."));
+//!
+//! siv.add_global_callback('q', |s| s.quit());
+//!
+//! siv.run();
+//! ```
+//!
 //! ## Views
 //!
 //! Views are the main components of a cursive interface.
@@ -28,21 +43,6 @@
 //! During the declarative phase, callbacks are set to trigger on specific
 //! events. These functions usually take an `&mut Cursive` argument, allowing
 //! them to modify the view tree at will.
-//!
-//! ## Examples
-//!
-//! ```rust
-//! use cursive::Cursive;
-//! use cursive::views::TextView;
-//!
-//! let mut siv = Cursive::dummy();
-//!
-//! siv.add_layer(TextView::new("Hello World!\nPress q to quit."));
-//!
-//! siv.add_global_callback('q', |s| s.quit());
-//!
-//! siv.run();
-//! ```
 //!
 //! ## Debugging
 //!
@@ -71,7 +71,10 @@ mod utf8;
 pub mod backends;
 
 mod cursive_ext;
+mod cursive_runnable;
+
 pub use cursive_ext::CursiveExt;
+pub use cursive_runnable::CursiveRunnable;
 
 /// Creates a new Cursive root using one of the enabled backends.
 ///
@@ -87,43 +90,43 @@ pub use cursive_ext::CursiveExt;
 /// # Panics
 ///
 /// If the backend initialization fails.
-pub fn default() -> Cursive {
-    Cursive::default()
+pub fn default() -> CursiveRunnable {
+    CursiveRunnable::default()
 }
 
 /// Creates a new Cursive root using a ncurses backend.
 #[cfg(feature = "ncurses-backend")]
-pub fn ncurses() -> std::io::Result<Cursive> {
-    Cursive::ncurses()
+pub fn ncurses() -> CursiveRunnable {
+    CursiveRunnable::ncurses()
 }
 
 /// Creates a new Cursive root using a pancurses backend.
 #[cfg(feature = "pancurses-backend")]
-pub fn pancurses() -> std::io::Result<Cursive> {
-    Cursive::pancurses()
+pub fn pancurses() -> CursiveRunnable {
+    CursiveRunnable::pancurses()
 }
 
 /// Creates a new Cursive root using a termion backend.
 #[cfg(feature = "termion-backend")]
-pub fn termion() -> std::io::Result<Cursive> {
-    Cursive::termion()
+pub fn termion() -> CursiveRunnable {
+    CursiveRunnable::termion()
 }
 
 /// Creates a new Cursive root using a crossterm backend.
 #[cfg(feature = "crossterm-backend")]
-pub fn crossterm() -> Result<Cursive, crossterm::ErrorKind> {
-    Cursive::crossterm()
+pub fn crossterm() -> CursiveRunnable {
+    CursiveRunnable::crossterm()
 }
 
 /// Creates a new Cursive root using a bear-lib-terminal backend.
 #[cfg(feature = "blt-backend")]
-pub fn blt() -> Cursive {
-    Cursive::blt()
+pub fn blt() -> CursiveRunnable {
+    CursiveRunnable::blt()
 }
 
 /// Creates a new Cursive root using a dummy backend.
 ///
 /// Nothing will be output. This is mostly here for tests.
-pub fn dummy() -> Cursive {
-    Cursive::dummy()
+pub fn dummy() -> CursiveRunnable {
+    CursiveRunnable::dummy()
 }

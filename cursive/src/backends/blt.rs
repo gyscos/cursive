@@ -236,13 +236,15 @@ impl Backend {
     }
 }
 
+impl Drop for Backend {
+    fn drop(&mut self) {
+        terminal::close();
+    }
+}
+
 impl backend::Backend for Backend {
     fn name(&self) -> &str {
         "bear-lib-terminal"
-    }
-
-    fn finish(&mut self) {
-        terminal::close();
     }
 
     fn set_color(&self, color: ColorPair) -> ColorPair {

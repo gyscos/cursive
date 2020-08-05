@@ -38,14 +38,6 @@ pub trait Backend {
     /// * `Some(event)` for each event to process.
     fn poll_event(&mut self) -> Option<Event>;
 
-    // TODO: take `self` by value?
-    // Or implement Drop?
-    // Will change when implementing resumable backends
-    /// Prepares to close the backend.
-    ///
-    /// This should clear any state in the terminal.
-    fn finish(&mut self);
-
     /// Refresh the screen.
     ///
     /// This will be called each frame after drawing has been done.
@@ -129,8 +121,6 @@ impl Backend for Dummy {
     fn name(&self) -> &str {
         "dummy"
     }
-
-    fn finish(&mut self) {}
 
     fn refresh(&mut self) {}
 

@@ -19,7 +19,7 @@ pub trait Nameable: View + Sized {
     /// # use cursive_core::view::Resizable;
     /// use cursive_core::view::Nameable;
     ///
-    /// let mut siv = Cursive::dummy();
+    /// let mut siv = Cursive::new();
     /// siv.add_layer(
     ///     TextView::new("foo")
     ///         .with_name("text")

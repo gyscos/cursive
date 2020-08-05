@@ -2,12 +2,13 @@ use std::any::Any;
 use std::num::NonZeroU32;
 #[cfg(feature = "toml")]
 use std::path::Path;
-use std::time::Duration;
 
 use crossbeam_channel::{self, Receiver, Sender};
 
 use crate::{
-    backend, direction,
+    backend,
+    cursive_run::CursiveRunner,
+    direction,
     event::{Event, EventResult},
     printer::Printer,
     theme,
@@ -17,9 +18,6 @@ use crate::{
 };
 
 static DEBUG_VIEW_NAME: &str = "_cursive_debug_view";
-
-// How long we wait between two empty input polls
-const INPUT_POLL_DELAY_MS: u64 = 30;
 
 /// Central part of the cursive library.
 ///
@@ -36,13 +34,9 @@ pub struct Cursive {
 
     menubar: views::Menubar,
 
-    // Last layer sizes of the stack view.
-    // If it changed, clear the screen.
-    last_sizes: Vec<Vec2>,
+    pub(crate) needs_clear: bool,
 
     running: bool,
-
-    backend: Box<dyn backend::Backend>,
 
     // Handle asynchronous callbacks
     cb_source: Receiver<Box<dyn FnOnce(&mut Cursive) + Send>>,
@@ -53,7 +47,6 @@ pub struct Cursive {
 
     // Handle auto-refresh when no event is received.
     fps: Option<NonZeroU32>,
-    boring_frame_count: u32,
 }
 
 /// Identifies a screen in the cursive root.
@@ -71,24 +64,6 @@ pub type ScreenId = usize;
 pub type CbSink = Sender<Box<dyn FnOnce(&mut Cursive) + Send>>;
 
 impl Cursive {
-    /// Shortcut for `Cursive::try_new` with non-failible init function.
-    ///
-    /// You probably don't want to use this function directly, unless you're
-    /// using a non-standard backend. Built-in backends have dedicated functions.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// # use cursive_core::{Cursive, backend};
-    /// let siv = Cursive::new(backend::Dummy::init);
-    /// ```
-    pub fn new<F>(backend_init: F) -> Self
-    where
-        F: FnOnce() -> Box<dyn backend::Backend>,
-    {
-        Self::try_new::<_, ()>(|| Ok(backend_init())).unwrap()
-    }
-
     /// Creates a new Cursive root, and initialize the back-end.
     ///
     /// You probably don't want to use this function directly, unless you're
@@ -96,42 +71,60 @@ impl Cursive {
     /// [`CursiveExt`] trait.
     ///
     /// [`CursiveExt`]: https://docs.rs/cursive/0/cursive/trait.CursiveExt.html
-    pub fn try_new<F, E>(backend_init: F) -> Result<Self, E>
-    where
-        F: FnOnce() -> Result<Box<dyn backend::Backend>, E>,
-    {
+    pub fn new() -> Self {
         let theme = theme::load_default();
 
         let (cb_sink, cb_source) = crossbeam_channel::unbounded();
 
-        let backend = backend_init()?;
         let mut cursive = Cursive {
             theme,
             root: views::OnEventView::new(views::ScreensView::single_screen(
                 views::StackView::new(),
             )),
-            last_sizes: Vec::new(),
             menubar: views::Menubar::new(),
+            needs_clear: true,
             running: true,
             cb_source,
             cb_sink,
-            backend,
             fps: None,
-            boring_frame_count: 0,
             user_data: Box::new(()),
         };
         cursive.reset_default_callbacks();
 
-        Ok(cursive)
+        cursive
     }
 
-    /// Creates a new Cursive root using a [dummy backend].
-    ///
-    /// Nothing will be output. This is mostly here for tests.
-    ///
-    /// [dummy backend]: backend::Dummy
-    pub fn dummy() -> Self {
-        Self::new(backend::Dummy::init)
+    pub(crate) fn layout(&mut self, size: Vec2) {
+        let offset = if self.menubar.autohide { 0 } else { 1 };
+        let size = size.saturating_sub((0, offset));
+        self.root.layout(size);
+    }
+
+    pub(crate) fn draw(&mut self, size: Vec2, backend: &dyn backend::Backend) {
+        let printer = Printer::new(size, &self.theme, backend);
+
+        let selected = self.menubar.receive_events();
+
+        // Print the stackview background before the menubar
+        let offset = if self.menubar.autohide { 0 } else { 1 };
+
+        // The printer for the stackview
+        let sv_printer = printer.offset((0, offset)).focused(!selected);
+        self.root.draw(&sv_printer);
+
+        self.root.get_inner().draw_bg(&sv_printer);
+
+        // Draw the currently active screen
+        // If the menubar is active, nothing else can be.
+        // Draw the menubar?
+        if self.menubar.visible() {
+            let printer = printer.focused(self.menubar.receive_events());
+            self.menubar.draw(&printer);
+        }
+
+        // finally draw stackview layers
+        // using variables from above
+        self.root.get_inner().draw_fg(&sv_printer);
     }
 
     /// Sets some data to be stored in Cursive.
@@ -162,7 +155,7 @@ impl Cursive {
     /// # Examples
     ///
     /// ```rust
-    /// let mut siv = cursive_core::Cursive::dummy();
+    /// let mut siv = cursive_core::Cursive::new();
     ///
     /// // Start with a simple `Vec<i32>` as user data.
     /// siv.set_user_data(vec![1i32, 2, 3]);
@@ -231,7 +224,7 @@ impl Cursive {
     ///
     /// ```rust
     /// # use cursive_core::Cursive;
-    /// # let mut siv = Cursive::dummy();
+    /// # let mut siv = Cursive::new();
     /// siv.add_global_callback('~', Cursive::toggle_debug_console);
     /// ```
     pub fn toggle_debug_console(&mut self) {
@@ -264,7 +257,7 @@ impl Cursive {
     ///
     /// ```rust
     /// # use cursive_core::*;
-    /// let mut siv = Cursive::dummy();
+    /// let mut siv = Cursive::new();
     ///
     /// // quit() will be called during the next event cycle
     /// siv.cb_sink().send(Box::new(|s| s.quit())).unwrap();
@@ -298,7 +291,7 @@ impl Cursive {
     /// # use cursive_core::traits::*;
     /// # use cursive_core::menu::*;
     /// #
-    /// let mut siv = Cursive::dummy();
+    /// let mut siv = Cursive::new();
     ///
     /// siv.menubar()
     ///    .add_subtree("File",
@@ -361,8 +354,7 @@ impl Cursive {
     ///
     /// Users rarely have to call this directly.
     pub fn clear(&mut self) {
-        self.backend
-            .clear(self.theme.palette[theme::PaletteColor::Background]);
+        self.needs_clear = true;
     }
 
     /// Loads a theme from the given file.
@@ -403,6 +395,14 @@ impl Cursive {
     /// `autorefresh`.
     pub fn set_autorefresh(&mut self, autorefresh: bool) {
         self.set_fps(if autorefresh { 30 } else { 0 });
+    }
+
+    /// Returns the current refresh rate, if any.
+    ///
+    /// Returns `None` if no auto-refresh is set. Otherwise, returns the rate
+    /// in frames per second.
+    pub fn fps(&self) -> Option<NonZeroU32> {
+        self.fps
     }
 
     /// Returns a reference to the currently active screen.
@@ -452,13 +452,13 @@ impl Cursive {
     /// ```rust
     /// # use cursive_core::{Cursive, views, view};
     /// # use cursive_core::traits::*;
-    /// let mut siv = Cursive::dummy();
+    /// let mut siv = Cursive::new();
     ///
     /// siv.add_layer(views::TextView::new("Text #1").with_name("text"));
     ///
     /// siv.add_global_callback('p', |s| {
     ///     s.call_on(
-    ///         &view::Selector::Id("text"),
+    ///         &view::Selector::Name("text"),
     ///         |view: &mut views::TextView| {
     ///             view.set_content("Text #2");
     ///         },
@@ -486,7 +486,7 @@ impl Cursive {
     /// ```rust
     /// # use cursive_core::{Cursive, views};
     /// # use cursive_core::traits::*;
-    /// let mut siv = Cursive::dummy();
+    /// let mut siv = Cursive::new();
     ///
     /// siv.add_layer(views::TextView::new("Text #1")
     ///                               .with_name("text"));
@@ -530,7 +530,7 @@ impl Cursive {
     /// ```rust
     /// # use cursive_core::Cursive;
     /// # use cursive_core::views::{TextView, ViewRef};
-    /// # let mut siv = Cursive::dummy();
+    /// # let mut siv = Cursive::new();
     /// use cursive_core::traits::Identifiable;
     ///
     /// siv.add_layer(TextView::new("foo").with_name("id"));
@@ -546,7 +546,7 @@ impl Cursive {
     /// ```rust
     /// # use cursive_core::Cursive;
     /// # use cursive_core::views::{SelectView};
-    /// # let mut siv = Cursive::dummy();
+    /// # let mut siv = Cursive::new();
     /// use cursive_core::traits::Identifiable;
     ///
     /// let select = SelectView::new().item("zero", 0u32).item("one", 1u32);
@@ -606,7 +606,7 @@ impl Cursive {
     ///
     /// ```rust
     /// # use cursive_core::*;
-    /// let mut siv = Cursive::dummy();
+    /// let mut siv = Cursive::new();
     ///
     /// siv.add_global_callback('q', |s| s.quit());
     /// ```
@@ -702,7 +702,7 @@ impl Cursive {
     ///
     /// ```rust
     /// use cursive_core::Cursive;
-    /// let mut siv = Cursive::dummy();
+    /// let mut siv = Cursive::new();
     ///
     /// siv.add_global_callback('q', |s| s.quit());
     /// siv.clear_global_callbacks('q');
@@ -731,7 +731,7 @@ impl Cursive {
     ///
     /// ```rust
     /// use cursive_core::{Cursive, views};
-    /// let mut siv = Cursive::dummy();
+    /// let mut siv = Cursive::new();
     ///
     /// siv.add_layer(views::TextView::new("Hello world!"));
     /// ```
@@ -799,52 +799,18 @@ impl Cursive {
         }
     }
 
-    /// Returns the size of the screen, in characters.
-    pub fn screen_size(&self) -> Vec2 {
-        self.backend.screen_size()
-    }
-
-    fn layout(&mut self) {
-        let size = self.screen_size();
-        let offset = if self.menubar.autohide { 0 } else { 1 };
-        let size = size.saturating_sub((0, offset));
-        self.root.layout(size);
-    }
-
-    fn draw(&mut self) {
-        // TODO: do not allocate in the default, fast path?
-        let sizes = self.screen().layer_sizes();
-        if self.last_sizes != sizes {
-            // TODO: Maybe we only need to clear if the _max_ size differs?
-            // Or if the positions change?
-            self.clear();
-            self.last_sizes = sizes;
+    /// Try to process a single callback.
+    ///
+    /// Returns `true` if a callback was processed, `false` if there was
+    /// nothing to process.
+    pub(crate) fn process_callback(&mut self) -> bool {
+        match self.cb_source.try_recv() {
+            Ok(cb) => {
+                cb(self);
+                true
+            }
+            _ => false,
         }
-
-        let printer =
-            Printer::new(self.screen_size(), &self.theme, &*self.backend);
-
-        let selected = self.menubar.receive_events();
-
-        // Print the stackview background before the menubar
-        let offset = if self.menubar.autohide { 0 } else { 1 };
-
-        let sv_printer = printer.offset((0, offset)).focused(!selected);
-        self.root.draw(&sv_printer);
-
-        self.root.get_inner().draw_bg(&sv_printer);
-
-        // Draw the currently active screen
-        // If the menubar is active, nothing else can be.
-        // Draw the menubar?
-        if self.menubar.visible() {
-            let printer = printer.focused(self.menubar.receive_events());
-            self.menubar.draw(&printer);
-        }
-
-        // finally draw stackview layers
-        // using variables from above
-        self.root.get_inner().draw_fg(&sv_printer);
     }
 
     /// Returns `true` until [`quit(&mut self)`] is called.
@@ -854,138 +820,65 @@ impl Cursive {
         self.running
     }
 
-    /// Runs the event loop.
+    /// Runs a dummy event loop.
     ///
-    /// It will wait for user input (key presses)
-    /// and trigger callbacks accordingly.
+    /// Initializes a dummy backend for the event loop.
+    pub fn run_dummy(&mut self) {
+        self.run_with(|| backend::Dummy::init())
+    }
+
+    /// Returns a new runner on the given backend.
     ///
-    /// Internally, it calls [`step(&mut self)`] until [`quit(&mut self)`] is
-    /// called.
+    /// Used to manually control the event loop. In most cases, running
+    /// `Cursive::run_with` will be easier.
     ///
-    /// After this function returns, you can call it again and it will start a
-    /// new loop.
+    /// The runner will borrow `self`; when dropped, it will clear out the
+    /// terminal, and the cursive instance will be ready for another run if
+    /// needed.
+    pub fn runner(
+        &mut self,
+        backend: Box<dyn backend::Backend>,
+    ) -> CursiveRunner<&mut Self> {
+        CursiveRunner::new(self, backend)
+    }
+
+    /// Returns a new runner on the given backend.
     ///
-    /// [`step(&mut self)`]: #method.step
-    /// [`quit(&mut self)`]: #method.quit
-    pub fn run(&mut self) {
+    /// Used to manually control the event loop. In most cases, running
+    /// `Cursive::run_with` will be easier.
+    ///
+    /// The runner will embed `self`; when dropped, it will clear out the
+    /// terminal, and the cursive instance will be dropped as well.
+    pub fn into_runner(
+        self,
+        backend: Box<dyn backend::Backend>,
+    ) -> CursiveRunner<Self> {
+        CursiveRunner::new(self, backend)
+    }
+
+    /// Initialize the backend and runs the event loop.
+    ///
+    /// Used for infallible backend initializers.
+    pub fn run_with<F>(&mut self, backend_init: F)
+    where
+        F: FnOnce() -> Box<dyn backend::Backend>,
+    {
+        self.try_run_with::<(), _>(|| Ok(backend_init())).unwrap();
+    }
+
+    /// Initialize the backend and runs the event loop.
+    ///
+    /// Returns an error if initializing the backend fails.
+    pub fn try_run_with<E, F>(&mut self, backend_init: F) -> Result<(), E>
+    where
+        F: FnOnce() -> Result<Box<dyn backend::Backend>, E>,
+    {
         self.running = true;
+        let mut runner = self.runner(backend_init()?);
 
-        self.refresh();
+        runner.run();
 
-        // And the big event loop begins!
-        while self.running {
-            self.step();
-        }
-    }
-
-    /// Performs a single step from the event loop.
-    ///
-    /// Useful if you need tighter control on the event loop.
-    /// Otherwise, [`run(&mut self)`] might be more convenient.
-    ///
-    /// Returns `true` if an input event or callback was received
-    /// during this step, and `false` otherwise.
-    ///
-    /// [`run(&mut self)`]: #method.run
-    pub fn step(&mut self) -> bool {
-        let received_something = self.process_events();
-        self.post_events(received_something);
-        received_something
-    }
-
-    /// Performs the first half of `Self::step()`.
-    ///
-    /// This is an advanced method for fine-tuned manual stepping;
-    /// you probably want [`run`][1] or [`step`][2].
-    ///
-    /// This processes any pending event or callback. After calling this,
-    /// you will want to call [`post_events`][3] with the result from this
-    /// function.
-    ///
-    /// Returns `true` if an event or callback was received,
-    /// and `false` otherwise.
-    ///
-    /// [1]: Cursive::run()
-    /// [2]: Cursive::step()
-    /// [3]: Cursive::post_events()
-    pub fn process_events(&mut self) -> bool {
-        // Things are boring if nothing significant happened.
-        let mut boring = true;
-
-        // First, handle all available input
-        while let Some(event) = self.backend.poll_event() {
-            boring = false;
-            self.on_event(event);
-
-            if !self.running {
-                return true;
-            }
-        }
-
-        // Then, handle any available callback
-        while let Ok(cb) = self.cb_source.try_recv() {
-            boring = false;
-            cb(self);
-
-            if !self.running {
-                return true;
-            }
-        }
-
-        !boring
-    }
-
-    /// Performs the second half of `Self::step()`.
-    ///
-    /// This is an advanced method for fine-tuned manual stepping;
-    /// you probably want [`run`][1] or [`step`][2].
-    ///
-    /// You should call this after [`process_events`][3].
-    ///
-    /// [1]: Cursive::run()
-    /// [2]: Cursive::step()
-    /// [3]: Cursive::process_events()
-    pub fn post_events(&mut self, received_something: bool) {
-        let boring = !received_something;
-        // How many times should we try if it's still boring?
-        // Total duration will be INPUT_POLL_DELAY_MS * repeats
-        // So effectively fps = 1000 / INPUT_POLL_DELAY_MS / repeats
-        if !boring
-            || self
-                .fps
-                .map(|fps| 1000 / INPUT_POLL_DELAY_MS as u32 / fps.get())
-                .map(|repeats| self.boring_frame_count >= repeats)
-                .unwrap_or(false)
-        {
-            // We deserve to draw something!
-
-            if boring {
-                // We're only here because of a timeout.
-                self.on_event(Event::Refresh);
-            }
-
-            self.refresh();
-        }
-
-        if boring {
-            std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
-            self.boring_frame_count += 1;
-        }
-    }
-
-    /// Refresh the screen with the current view tree state.
-    pub fn refresh(&mut self) {
-        self.boring_frame_count = 0;
-
-        // Do we need to redraw everytime?
-        // Probably, actually.
-        // TODO: Do we need to re-layout everytime?
-        self.layout();
-
-        // TODO: Do we need to redraw every view every time?
-        // (Is this getting repetitive? :p)
-        self.draw();
-        self.backend.refresh();
+        Ok(())
     }
 
     /// Stops the event loop.
@@ -996,13 +889,6 @@ impl Cursive {
     /// Does not do anything.
     pub fn noop(&mut self) {
         // foo
-    }
-
-    /// Return the name of the backend used.
-    ///
-    /// Mostly used for debugging.
-    pub fn backend_name(&self) -> &str {
-        self.backend.name()
     }
 
     /// Dump the current state of the Cursive root.
@@ -1050,11 +936,5 @@ impl Cursive {
         self.theme = dump.theme;
         self.user_data = dump.user_data;
         self.clear();
-    }
-}
-
-impl Drop for Cursive {
-    fn drop(&mut self) {
-        self.backend.finish();
     }
 }

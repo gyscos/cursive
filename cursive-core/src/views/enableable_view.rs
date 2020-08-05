@@ -13,7 +13,7 @@ use crate::Printer;
 /// use cursive_core::views::{Button, EnableableView, Checkbox, LinearLayout};
 /// use cursive_core::traits::Identifiable;
 ///
-/// let mut siv = Cursive::dummy();
+/// let mut siv = Cursive::new();
 ///
 /// siv.add_layer(LinearLayout::vertical()
 ///     .child(EnableableView::new(Checkbox::new()).with_name("my_view"))

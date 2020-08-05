@@ -203,12 +203,8 @@ impl Backend {
     }
 }
 
-impl backend::Backend for Backend {
-    fn name(&self) -> &str {
-        "termion"
-    }
-
-    fn finish(&mut self) {
+impl Drop for Backend {
+    fn drop(&mut self) {
         write!(
             self.terminal.get_mut(),
             "{}{}",
@@ -225,6 +221,12 @@ impl backend::Backend for Backend {
             termion::clear::All
         )
         .unwrap();
+    }
+}
+
+impl backend::Backend for Backend {
+    fn name(&self) -> &str {
+        "termion"
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {

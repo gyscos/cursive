@@ -54,7 +54,7 @@ pub fn immutify<F: FnMut(&mut Cursive)>(
 /// ```rust
 /// # use cursive_core::{Cursive, immut1};
 /// # fn main() {
-/// # let mut siv = Cursive::dummy();
+/// # let mut siv = Cursive::new();
 /// let mut i = 0;
 /// // `Cursive::add_global_callback` takes a `Fn(&mut Cursive)`
 /// siv.add_global_callback('q', immut1!(move |s: &mut Cursive| {

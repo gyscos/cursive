@@ -24,7 +24,7 @@ pub mod tests {
     use std::cell::RefCell;
 
     pub struct BasicSetup {
-        siv: Cursive,
+        siv: CursiveRunner<Cursive>,
         screen_stream: crossbeam_channel::Receiver<ObservedScreen>,
         input: crossbeam_channel::Sender<Option<Event>>,
         last_screen: RefCell<Option<ObservedScreen>>,
@@ -61,7 +61,7 @@ pub mod tests {
             let backend = backends::puppet::Backend::init(Some(size));
             let sink = backend.stream();
             let input = backend.input();
-            let mut siv = Cursive::new(|| backend);
+            let mut siv = Cursive::new().into_runner(backend);
 
             // Let's add a ResizedView to keep the list at a reasonable size
             // (it can scroll anyway).

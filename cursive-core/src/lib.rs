@@ -52,6 +52,7 @@ pub mod traits;
 pub mod vec;
 
 mod cursive;
+mod cursive_run;
 mod dump;
 mod printer;
 mod rect;
@@ -61,6 +62,7 @@ mod xy;
 mod div;
 
 pub use self::cursive::{CbSink, Cursive, ScreenId};
+pub use self::cursive_run::CursiveRunner;
 pub use self::dump::Dump;
 pub use self::printer::Printer;
 pub use self::rect::Rect;

@@ -144,7 +144,7 @@
 //! method (or use [`theme::load_theme_file`] to aquire the theme object).
 //!
 //! ```rust,ignore
-//! let mut siv = Cursive::dummy();
+//! let mut siv = Cursive::new();
 //! // Embed the theme with the binary.
 //! siv.load_toml(include_str!("<path_to_theme_file>.toml")).unwrap();
 //! ```

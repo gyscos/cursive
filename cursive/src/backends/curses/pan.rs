@@ -353,6 +353,14 @@ impl Backend {
     }
 }
 
+impl Drop for Backend {
+    fn drop(&mut self) {
+        print!("\x1B[?1002l");
+        stdout().flush().expect("could not flush stdout");
+        pancurses::endwin();
+    }
+}
+
 impl backend::Backend for Backend {
     fn name(&self) -> &str {
         "pancurses"
@@ -366,12 +374,6 @@ impl backend::Backend for Backend {
 
     fn has_colors(&self) -> bool {
         pancurses::has_colors()
-    }
-
-    fn finish(&mut self) {
-        print!("\x1B[?1002l");
-        stdout().flush().expect("could not flush stdout");
-        pancurses::endwin();
     }
 
     fn set_color(&self, colors: ColorPair) -> ColorPair {

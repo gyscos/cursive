@@ -40,7 +40,7 @@ use std::rc::Rc;
 ///                     .button("Quit", |s| s.quit()));
 /// });
 ///
-/// let mut siv = Cursive::dummy();
+/// let mut siv = Cursive::new();
 /// siv.add_layer(Dialog::around(time_select)
 ///                      .title("How long is your wait?"));
 /// ```
