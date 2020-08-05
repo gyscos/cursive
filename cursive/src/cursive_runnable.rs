@@ -110,7 +110,9 @@ impl CursiveRunnable {
     /// _Requires the `blt-backend` feature._
     #[cfg(feature = "blt-backend")]
     pub fn blt() -> Self {
-        Self::new(|| Ok(backends::blt::Backend::init()))
+        Self::new::<std::convert::Infallible, _>(|| {
+            Ok(backends::blt::Backend::init())
+        })
     }
 
     /// Creates a new Cursive wrapper using one of the available backends.
