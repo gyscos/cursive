@@ -4,7 +4,7 @@ use crate::direction::Orientation;
 use crate::event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
 use crate::printer::Printer;
 use crate::rect::Rect;
-use crate::theme::ColorStyle;
+use crate::theme::{ColorStyle, PaletteColor};
 use crate::view::{ScrollStrategy, Selector, SizeCache};
 use crate::with::With;
 use crate::Vec2;
@@ -141,18 +141,18 @@ impl Core {
             let lengths = self.scrollbar_thumb_lengths();
             let offsets = self.scrollbar_thumb_offsets(lengths);
 
-            let line_c = XY::new("-", "|");
+            let line_c = XY::new(("_", "▄"), ("|", "█"));
 
             let color = if printer.focused {
-                ColorStyle::highlight()
+                ColorStyle::new(PaletteColor::Highlight, PaletteColor::View)
             } else {
-                ColorStyle::highlight_inactive()
+                ColorStyle::new(PaletteColor::HighlightInactive, PaletteColor::View)
             };
 
             XY::zip5(lengths, offsets, size, line_c, Orientation::pair())
                 .run_if(
                     scrolling,
-                    |(length, offset, size, c, orientation)| {
+                    |(length, offset, size, (c, thumb_c), orientation)| {
                         let start = printer
                             .size
                             .saturating_sub((1, 1))
@@ -160,16 +160,6 @@ impl Core {
                         let offset = orientation.make_vec(offset, 0);
 
                         printer.print_line(orientation, start, size, c);
-
-                        let thumb_c = if self
-                            .thumb_grab
-                            .map(|(o, _)| o == orientation)
-                            .unwrap_or(false)
-                        {
-                            " "
-                        } else {
-                            "▒"
-                        };
                         printer.with_color(color, |printer| {
                             printer.print_line(
                                 orientation,
@@ -183,7 +173,9 @@ impl Core {
 
             // Draw the X between the two scrollbars.
             if scrolling.both() {
-                printer.print(printer.size.saturating_sub((1, 1)), "╳");
+                printer.with_color(color, |printer| {
+                    printer.print(printer.size.saturating_sub((2, 1)), "▄█");
+                })
             }
         }
 
