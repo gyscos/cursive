@@ -370,10 +370,13 @@ where
     fn take_focus(&mut self, source: Direction) -> bool {
         // If the inner view takes focus, re-align the important area.
         if self.inner.take_focus(source) {
-            self.scroll_to_important_area();
+            // Don't do anything if we come from `None`
+            if source != Direction::none() {
+                self.scroll_to_important_area();
 
-            // Note: we can't really return an `EventResult` here :(
-            self.on_scroll_callback();
+                // Note: we can't really return an `EventResult` here :(
+                self.on_scroll_callback();
+            }
             true
         } else {
             self.core.is_scrolling().any()
