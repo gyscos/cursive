@@ -57,7 +57,7 @@ atty = "0.2"
 
 [features]
 blt-backend = ["bear-lib-terminal"]
-default = ["ncurses-backend"]
+default = ["pancurses-backend"]
 ncurses-backend = ["ncurses", "maplit", "term_size"]
 pancurses-backend = ["pancurses", "maplit", "term_size"]
 termion-backend = ["termion"]

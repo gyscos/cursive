@@ -308,7 +308,7 @@ impl Backend {
 
         let make_event = |event| Event::Mouse {
             offset: Vec2::zero(),
-            position: Vec2::new(mevent.x as usize, mevent.y as usize),
+            position: Vec2::new(mevent.x.max(0) as usize, mevent.y.max(0) as usize),
             event,
         };
 
