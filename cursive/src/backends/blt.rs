@@ -455,7 +455,7 @@ fn blt_keycode_to_char(kc: KeyCode, shift: bool) -> char {
         KeyCode::RightBracket if shift => '}',
         KeyCode::RightBracket => ']',
         KeyCode::Backslash if shift => '|',
-        KeyCode::Backspace => '\\',
+        KeyCode::Backslash => '\\',
         KeyCode::Semicolon if shift => ':',
         KeyCode::Semicolon => ';',
         KeyCode::Apostrophe if shift => '"',
