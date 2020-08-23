@@ -1,3 +1,5 @@
+use crate::event::AnyCb;
+use crate::view::Selector;
 use crate::views::BoxedView;
 use crate::View;
 
@@ -117,5 +119,24 @@ where
         self.screen_mut().map(f)
     }
 
-    // TODO: Should `focus_view` work cross-screens? Should `call_on_id`? Answer: yes.
+    fn wrap_call_on_any<'a>(
+        &mut self,
+        selector: &Selector<'_>,
+        callback: AnyCb<'a>,
+    ) {
+        for screen in &mut self.screens {
+            screen.call_on_any(selector, callback);
+        }
+    }
+
+    fn wrap_focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+        for (i, child) in self.screens.iter_mut().enumerate() {
+            if child.focus_view(selector).is_ok() {
+                self.active_screen = i;
+                return Ok(());
+            }
+        }
+
+        Err(())
+    }
 }
