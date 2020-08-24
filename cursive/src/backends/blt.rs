@@ -369,8 +369,17 @@ fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
     BltColor::from_rgb(r, g, b)
 }
 
-#[allow(clippy::cognitive_complexity)]
 fn blt_keycode_to_char(kc: KeyCode, shift: bool) -> char {
+    let bltchar = bear_lib_terminal::terminal::state::char();
+    if bltchar == '\u{0}' {
+        return blt_keycode_to_char_impl(kc, shift);
+    } else {
+        return bltchar;
+    }
+}
+
+#[allow(clippy::cognitive_complexity)]
+fn blt_keycode_to_char_impl(kc: KeyCode, shift: bool) -> char {
     match kc {
         KeyCode::A if shift => 'A',
         KeyCode::A => 'a',
