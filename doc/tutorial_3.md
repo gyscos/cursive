@@ -245,7 +245,7 @@ fn add_name(s: &mut Cursive) {
                 view.get_content()
             }).unwrap();
         })
-        .button("Cancel", |s|
+        .button("Cancel", |s| {
             s.pop_layer();
         }));
 }
