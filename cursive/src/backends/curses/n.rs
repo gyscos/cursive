@@ -87,7 +87,8 @@ impl Backend {
 
         // Change the locale.
         // For some reasons it's mandatory to get some UTF-8 support.
-        ncurses::setlocale(ncurses::LcCategory::all, "");
+        let buf = CString::new("").unwrap();
+        unsafe { libc::setlocale(libc::LC_ALL, buf.as_ptr()) };
 
         // The delay is the time ncurses wait after pressing ESC
         // to see if it's an escape sequence.
