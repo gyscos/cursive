@@ -96,8 +96,8 @@ where
 
                 // We need to check if the last segment ended with a space.
                 // TODO: skip empty spans when going back
-                let prev_span =
-                    self.source.spans()[self.current_span - 1].as_ref();
+                let prev_span_id = segments.last().unwrap().span_id;
+                let prev_span = self.source.spans()[prev_span_id].as_ref();
                 let prev_text = prev_span.resolve(self.source.source());
 
                 if hard_stop {
