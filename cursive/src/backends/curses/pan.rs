@@ -52,6 +52,11 @@ impl Backend {
 
         ::std::env::set_var("ESCDELAY", "25");
 
+        if cfg!(unix) {
+            let buf = CString::new("").unwrap();
+            unsafe { libc::setlocale(libc::LC_ALL, buf.as_ptr()) };
+        }
+
         // TODO: use pancurses::newterm()
         let window = pancurses::initscr();
 
