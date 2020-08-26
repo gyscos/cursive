@@ -2,7 +2,8 @@ use super::chunk::Chunk;
 use super::segment::Segment;
 use crate::utils::span::SpannedText;
 use std::rc::Rc;
-use unicode_width::UnicodeWidthStr;
+use unicode_segmentation::UnicodeSegmentation as _;
+use unicode_width::UnicodeWidthStr as _;
 use xi_unicode::LineBreakLeafIter;
 
 /// Iterator that returns non-breakable chunks of text.
@@ -59,7 +60,7 @@ where
         let mut total_width = 0;
 
         // We'll accumulate segments from spans.
-        let mut segments = Vec::new();
+        let mut segments: Vec<Segment> = Vec::new();
 
         // We'll use an iterator from xi-unicode to detect possible breaks.
         let mut iter = LineBreakLeafIter::new(span_text, self.offset);
@@ -86,10 +87,36 @@ where
             // can end the current chunk.
 
             let (width, ends_with_space) = if pos == 0 {
-                // If pos = 0, we had a span before.
+                // If pos = 0, we had a span before, and we just learned it
+                // was a possible break.
+                assert!(
+                    self.current_span > 0,
+                    "Cannot receive pos == 0 for the first span."
+                );
+
+                // We need to check if the last segment ended with a space.
+                // TODO: skip empty spans when going back
                 let prev_span =
                     self.source.spans()[self.current_span - 1].as_ref();
                 let prev_text = prev_span.resolve(self.source.source());
+
+                if hard_stop {
+                    // So the previous chunk had a line-break or something?
+                    assert!(
+                        !segments.is_empty(),
+                        "Cannot receive pos == 0 in the first segment."
+                    );
+
+                    // We didn't know it was a hard-stop at the time.
+                    // But now we do, so let's omit the last character from
+                    // that segment.
+                    if let Some(to_remove) =
+                        prev_text.graphemes(true).next_back().map(|g| g.len())
+                    {
+                        segments.last_mut().unwrap().end -= to_remove;
+                    }
+                }
+
                 (0, prev_text.ends_with(' '))
             } else {
                 // We actually got something.
@@ -106,15 +133,30 @@ where
             if pos != 0 {
                 // If pos != 0, we got an actual segment of a span.
                 total_width += width;
+                let to_remove = if hard_stop {
+                    let text = &span_text[self.offset..pos];
+                    text.graphemes(true)
+                        .next_back()
+                        .map(|g| g.len())
+                        .unwrap_or(0)
+                } else {
+                    0
+                };
                 segments.push(Segment {
                     span_id: self.current_span,
                     start: self.offset,
-                    end: pos,
+                    end: pos - to_remove,
                     width,
                 });
             }
 
             if pos == span_text.len() {
+                assert!(
+                    !hard_stop,
+                    "Cannot have hard-break at the end of a span."
+                );
+                // ... or can we?
+
                 // If we reached the end of the slice,
                 // we need to look at the next span first.
                 self.current_span += 1;

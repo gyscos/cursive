@@ -68,8 +68,8 @@ impl Chunk {
         // If yes, just drop it.
         let last_empty = {
             let last = self.segments.last_mut().unwrap();
-            last.end -= 1;
             if self.ends_with_space {
+                last.end -= 1;
                 last.width -= 1;
             }
             last.start == last.end
