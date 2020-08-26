@@ -8,8 +8,8 @@ fn input() -> StyledString {
     text.append(StyledString::styled("didn't", Effect::Bold));
     text.append(StyledString::plain(" say "));
     text.append(StyledString::styled("half", Effect::Italic));
-    text.append(StyledString::plain(" the things people say I did."));
-    text.append(StyledString::plain("\n"));
+    text.append(StyledString::plain(" the things people say I did.\n"));
+    text.append(StyledString::plain(""));
     text.append(StyledString::plain("\n"));
     text.append(StyledString::plain("    - A. Einstein"));
 
@@ -18,6 +18,7 @@ fn input() -> StyledString {
 
 #[test]
 fn test_next_line_char() {
+    // From https://github.com/gyscos/cursive/issues/489
     let d: Vec<u8> = vec![194, 133, 45, 127, 29, 127, 127];
     let text = std::str::from_utf8(&d).unwrap();
     let string = StyledString::plain(text);
