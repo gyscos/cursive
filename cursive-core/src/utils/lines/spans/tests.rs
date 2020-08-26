@@ -17,6 +17,26 @@ fn input() -> StyledString {
 }
 
 #[test]
+fn test_next_line_char() {
+    let d: Vec<u8> = vec![194, 133, 45, 127, 29, 127, 127];
+    let text = std::str::from_utf8(&d).unwrap();
+    let string = StyledString::plain(text);
+    let iter = LinesIterator::new(&string, 20);
+    let rows: Vec<_> = iter.map(|row| row.resolve(&string)).collect();
+    assert_eq!(
+        &rows[..],
+        &[
+            vec![],
+            vec![Span {
+                content: "-\u{7f}\u{1d}\u{7f}\u{7f}",
+                attr: &Style::none(),
+                width: 1,
+            }],
+        ],
+    );
+}
+
+#[test]
 fn test_line_breaks() {
     let input = input();
 
