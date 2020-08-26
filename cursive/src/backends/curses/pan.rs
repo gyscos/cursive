@@ -53,7 +53,7 @@ impl Backend {
         ::std::env::set_var("ESCDELAY", "25");
 
         if cfg!(unix) {
-            let buf = CString::new("").unwrap();
+            let buf = std::ffi::CString::new("").unwrap();
             unsafe { libc::setlocale(libc::LC_ALL, buf.as_ptr()) };
         }
 
