@@ -5,6 +5,7 @@ fn main() {
     let timer = Timer::TimerView::new();
     siv.add_layer(
         timer
+            .with_laps(8)
             .on_stop(|s: &mut Cursive, elapsed| {
                 s.add_layer(Dialog::info(format!(
                     "Elapsed time: {}",
@@ -37,14 +38,17 @@ mod Timer {
     ///          pause           pause            pause(end)
     /// ```
     pub struct TimerView {
+        // data useful to the user
         pub elapsed: Duration,
         pub lap_elapsed: Duration,
-        paused: bool,
         pub pause_moments: Vec<DateTime<Local>>,
         pub start_moments: Vec<DateTime<Local>>,
         pub lap_moments: Vec<DateTime<Local>>,
         pub laps: Vec<Duration>,
+        // data not directly useful to the user
+        paused: bool,
         on_stop: Option<Rc<dyn Fn(&mut Cursive, Duration)>>,
+        show_laps: usize,
     }
 
     impl TimerView {
@@ -58,18 +62,21 @@ mod Timer {
                 lap_moments: Vec::new(),
                 laps: Vec::new(),
                 paused: true,
+                show_laps: 0,
             }
         }
-        pub fn last_start(&self) -> DateTime<Local> {
+
+        pub fn with_laps(mut self, n: usize) -> Self {
+            self.show_laps = n;
+            self
+        }
+        fn last_start(&self) -> DateTime<Local> {
             self.start_moments[self.start_moments.len() - 1]
         }
-        pub fn last_pause(&self) -> DateTime<Local> {
-            self.pause_moments[self.pause_moments.len() - 1]
-        }
-        pub fn last_lap(&self) -> DateTime<Local> {
+        fn last_lap(&self) -> DateTime<Local> {
             self.lap_moments[self.lap_moments.len() - 1]
         }
-        pub fn pause(&mut self) {
+        fn pause(&mut self) {
             assert!(self.paused == false, "Already paused!");
             let moment = Local::now();
             self.pause_moments.push(moment);
@@ -77,19 +84,19 @@ mod Timer {
             self.lap_elapsed = self.read_lap_elapsed(moment);
             self.paused = true;
         }
-        pub fn resume(&mut self) {
+        fn resume(&mut self) {
             assert!(self.paused == true, "Already running!");
             self.start_moments.push(Local::now());
             self.paused = false;
         }
-        pub fn pause_or_resume(&mut self) {
+        fn pause_or_resume(&mut self) {
             if self.paused {
                 self.resume();
             } else {
                 self.pause();
             }
         }
-        pub fn lap(&mut self) -> Option<Duration> {
+        fn lap(&mut self) -> Option<Duration> {
             // assert!(!self.paused, "Paused!");
             if self.paused {
                 None
@@ -102,7 +109,7 @@ mod Timer {
                 Some(lap)
             }
         }
-        pub fn read(&self) -> Duration {
+        fn read(&self) -> Duration {
             if self.paused {
                 self.elapsed
             } else {
@@ -162,7 +169,7 @@ mod Timer {
         fn draw(&self, printer: &Printer) {
             printer.print((4, 0), &self.read().pretty());
             let len = self.laps.len();
-            for i in 1..=len {
+            for i in 1..=std::cmp::min(len, self.show_laps) {
                 printer.print(
                     (0, i),
                     &[
@@ -174,9 +181,9 @@ mod Timer {
             }
         }
 
-        fn required_size(&mut self, constraint: Vec2) -> Vec2 {
-            let _ = constraint;
-            Vec2::new(20, 8)
+        fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
+            // columns, rows (width, height)
+            Vec2::new(20, self.show_laps + 1)
         }
 
         fn on_event(&mut self, event: Event) -> EventResult {
