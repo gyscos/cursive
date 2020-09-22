@@ -3,11 +3,11 @@ use cursive::traits::*;
 fn main() {
     let mut siv = cursive::default();
     let timer = Timer::TimerView::new();
-    siv.add_layer(timer.fixed_width(8).with_name("timer"));
+    siv.add_layer(timer.with_name("timer"));
     siv.add_layer(cursive::views::Dialog::info(
         "Press 'Space' to start/pause/resume the timer!",
     ));
-    siv.set_fps(5);
+    siv.set_fps(15);
     siv.run();
 }
 
@@ -146,7 +146,7 @@ mod Timer {
 
         fn required_size(&mut self, constraint: Vec2) -> Vec2 {
             let _ = constraint;
-            Vec2::new(8, 8)
+            Vec2::new(12, 8)
         }
 
         fn on_event(&mut self, event: Event) -> EventResult {
@@ -169,8 +169,9 @@ mod Timer {
     /// pretty-prints a `chrono::Duration` in the form "HH:MM:SS"
     fn pretty(duration: Duration) -> String {
         let s = duration.num_seconds();
+        let ms = duration.num_milliseconds() - 1000 * s;
         let (h, s) = (s / 3600, s % 3600);
         let (m, s) = (s / 60, s % 60);
-        format!("{:02}:{:02}:{:02}", h, m, s)
+        format!("{:02}:{:02}:{:02}.{:03}", h, m, s, ms)
     }
 }
