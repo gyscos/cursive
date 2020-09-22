@@ -31,13 +31,7 @@ mod Timer {
     };
     use std::rc::Rc;
 
-    /// ```ignore
-    ///                  lap    lap          lap
-    /// start       start |      |     start  |
-    ///   o--------x   o-----------x      o-----------x
-    ///          pause           pause            pause(end)
-    /// ```
-    pub struct TimerView {
+    pub struct Timer {
         // data useful to the user
         pub elapsed: Duration,
         pub lap_elapsed: Duration,
@@ -45,31 +39,22 @@ mod Timer {
         pub start_moments: Vec<DateTime<Local>>,
         pub lap_moments: Vec<DateTime<Local>>,
         pub laps: Vec<Duration>,
-        // data not directly useful to the user
         paused: bool,
-        on_stop: Option<Rc<dyn Fn(&mut Cursive, Duration)>>,
-        show_laps: usize,
     }
 
-    impl TimerView {
+    impl Timer {
         pub fn new() -> Self {
             Self {
                 elapsed: Duration::zero(),
                 lap_elapsed: Duration::zero(),
-                on_stop: None,
                 start_moments: Vec::new(),
                 pause_moments: Vec::new(),
                 lap_moments: Vec::new(),
                 laps: Vec::new(),
                 paused: true,
-                show_laps: 0,
             }
         }
 
-        pub fn with_laps(mut self, n: usize) -> Self {
-            self.show_laps = n;
-            self
-        }
         fn last_start(&self) -> DateTime<Local> {
             self.start_moments[self.start_moments.len() - 1]
         }
@@ -126,6 +111,35 @@ mod Timer {
                     moment - self.last_start()
                 }
         }
+    }
+
+    /// A stopwatch that mimics iOS's stopwatch
+    ///
+    /// ```ignore
+    ///                  lap    lap          lap
+    /// start       start |      |     start  |
+    ///   o--------x   o-----------x      o-----------x
+    ///          pause           pause            pause(end)
+    /// ```
+    pub struct TimerView {
+        timer: Timer,
+        on_stop: Option<Rc<dyn Fn(&mut Cursive, Duration)>>,
+        show_laps: usize,
+    }
+
+    impl TimerView {
+        pub fn new() -> Self {
+            Self {
+                timer: Timer::new(),
+                on_stop: None,
+                show_laps: 0,
+            }
+        }
+
+        pub fn with_laps(mut self, n: usize) -> Self {
+            self.show_laps = n;
+            self
+        }
 
         /// Sets a callback to be used when `<Enter>` is pressed.
         ///
@@ -151,30 +165,35 @@ mod Timer {
         }
 
         fn stop(&mut self) -> EventResult {
-            if !self.paused {
-                self.pause();
+            let timer = &mut self.timer;
+            if !timer.paused {
+                timer.pause();
             }
-            if self.on_stop.is_some() {
+            let result = if self.on_stop.is_some() {
                 let cb = self.on_stop.clone().unwrap();
-                let elapsed = self.elapsed;
+                let elapsed = timer.elapsed;
                 EventResult::Consumed(Some(Callback::from_fn(move |s| {
                     cb(s, elapsed)
                 })))
             } else {
                 EventResult::Consumed(None)
-            }
+            };
+            // reset
+            self.timer = Timer::new();
+            // return result
+            result
         }
     }
     impl View for TimerView {
         fn draw(&self, printer: &Printer) {
-            printer.print((4, 0), &self.read().pretty());
-            let len = self.laps.len();
+            printer.print((4, 0), &self.timer.read().pretty());
+            let len = self.timer.laps.len();
             for i in 1..=std::cmp::min(len, self.show_laps) {
                 printer.print(
                     (0, i),
                     &[
                         format!("Lap {:02}: ", len - i + 1),
-                        self.laps[len - i].pretty(),
+                        self.timer.laps[len - i].pretty(),
                     ]
                     .concat(),
                 );
@@ -190,13 +209,13 @@ mod Timer {
             match event {
                 // pause/resume the timer when pressing "Space"
                 Event::Char(' ') => {
-                    self.pause_or_resume();
+                    self.timer.pause_or_resume();
                 }
                 Event::Key(Key::Enter) => {
                     return self.stop();
                 }
                 Event::Char('l') => {
-                    self.lap();
+                    self.timer.lap();
                 }
                 _ => return EventResult::Ignored,
             }
