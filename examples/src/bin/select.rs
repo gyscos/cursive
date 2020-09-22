@@ -27,12 +27,12 @@ fn main() {
     // Let's override the `j` and `k` keys for navigation
     let select = OnEventView::new(select)
         .on_pre_event_inner('k', |s, _| {
-            s.select_up(1);
-            Some(EventResult::Consumed(None))
+            let cb = s.select_up(1);
+            Some(EventResult::Consumed(Some(cb)))
         })
         .on_pre_event_inner('j', |s, _| {
-            s.select_down(1);
-            Some(EventResult::Consumed(None))
+            let cb = s.select_down(1);
+            Some(EventResult::Consumed(Some(cb)))
         });
 
     let mut siv = cursive::default();
