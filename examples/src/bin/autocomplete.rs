@@ -22,7 +22,12 @@ fn main() {
         Dialog::around(
             LinearLayout::vertical()
                 // the input is on the top
-                .child(EditView::new().on_edit(on_edit).with_name("query"))
+                .child(
+                    EditView::new()
+                        .on_edit(on_edit)
+                        .on_submit(on_submit)
+                        .with_name("query"),
+                )
                 // search results below the input
                 .child(
                     SelectView::new()
@@ -46,14 +51,23 @@ fn main() {
 fn on_edit(siv: &mut Cursive, _content: &str, _cursor: usize) {
     // Get the query
     let query = siv.find_name::<EditView>("query").unwrap().get_content();
-    // Filter cities with names that starts with the query string
-    let matches = CITIES
-        .lines()
-        .filter(|&city| query.chars().zip(city.chars()).all(|(c, d)| c == d));
+    // Filter cities with names containing query string
+    let matches = CITIES.lines().filter(|&city| {
+        let city = city.to_owned().to_lowercase();
+        let query = query.to_owned().to_lowercase();
+        city.contains(&query)
+    });
     // Update the results with the filtered array of cities
     siv.call_on_name("matches", |v: &mut SelectView| {
         v.clear();
         v.add_all_str(matches);
+    });
+}
+
+fn on_submit(siv: &mut Cursive, _content: &str) {
+    siv.call_on_name("matches", |v: &mut SelectView| {
+        // wont' work; private associated function
+        // v.submit();
     });
 }
 
