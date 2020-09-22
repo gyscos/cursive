@@ -37,7 +37,9 @@ fn main() {
                         .on_submit(show_next_window)
                         // Center the text horizontally
                         .h_align(HAlign::Center)
-                        .with_name("matches"),
+                        .with_name("matches")
+                        .scrollable()
+                        .fixed_size((20, 10)),
                 )
                 .fixed_width(25),
         )
@@ -57,7 +59,7 @@ fn on_edit(siv: &mut Cursive, _content: &str, _cursor: usize) {
         let query = query.to_owned().to_lowercase();
         city.contains(&query)
     });
-    // Update the results with the filtered array of cities
+    // Update the `matches` view with the filtered array of cities
     siv.call_on_name("matches", |v: &mut SelectView| {
         v.clear();
         v.add_all_str(matches);
