@@ -67,8 +67,8 @@ fn search_fn<'a, 'b, T: std::iter::IntoIterator<Item = &'a str>>(
     items
         .into_iter()
         .filter(|&item| {
-            let item = item.to_owned().to_lowercase();
-            let query = query.to_owned().to_lowercase();
+            let item = item.to_lowercase();
+            let query = query.to_lowercase();
             item.contains(&query)
         })
         .collect()
