@@ -147,25 +147,36 @@ mod Timer {
             if !self.paused {
                 self.pause();
             }
-            let cb = self.on_stop.clone().unwrap();
-            let elapsed = self.elapsed;
-            // We return a Callback Rc<|s| cb(s, &*v)>
-            EventResult::Consumed(Some(Callback::from_fn(move |s| {
-                cb(s, elapsed)
-            })))
+            if self.on_stop.is_some() {
+                let cb = self.on_stop.clone().unwrap();
+                let elapsed = self.elapsed;
+                EventResult::Consumed(Some(Callback::from_fn(move |s| {
+                    cb(s, elapsed)
+                })))
+            } else {
+                EventResult::Consumed(None)
+            }
         }
     }
     impl View for TimerView {
         fn draw(&self, printer: &Printer) {
-            printer.print((0, 0), &self.read().pretty());
-            for i in 0..self.laps.len() {
-                printer.print((0, i + 1), &self.laps[i].pretty());
+            printer.print((4, 0), &self.read().pretty());
+            let len = self.laps.len();
+            for i in 1..=len {
+                printer.print(
+                    (0, i),
+                    &[
+                        format!("Lap {:02}: ", len - i + 1),
+                        self.laps[len - i].pretty(),
+                    ]
+                    .concat(),
+                );
             }
         }
 
         fn required_size(&mut self, constraint: Vec2) -> Vec2 {
             let _ = constraint;
-            Vec2::new(12, 8)
+            Vec2::new(20, 8)
         }
 
         fn on_event(&mut self, event: Event) -> EventResult {
@@ -174,7 +185,7 @@ mod Timer {
                 Event::Char(' ') => {
                     self.pause_or_resume();
                 }
-                Event::Key(Key::Enter) if self.on_stop.is_some() => {
+                Event::Key(Key::Enter) => {
                     return self.stop();
                 }
                 Event::Char('l') => {
