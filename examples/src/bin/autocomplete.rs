@@ -51,17 +51,27 @@ fn main() {
 
 // Update results according to the query
 fn on_edit(siv: &mut Cursive, query: &str, _cursor: usize) {
-    // Filter cities with names containing query string
-    let matches = CITIES.lines().filter(|&city| {
-        let city = city.to_owned().to_lowercase();
-        let query = query.to_owned().to_lowercase();
-        city.contains(&query)
-    });
+    let matches = search_fn(CITIES.lines(), query);
     // Update the `matches` view with the filtered array of cities
     siv.call_on_name("matches", |v: &mut SelectView| {
         v.clear();
         v.add_all_str(matches);
     });
+}
+
+// Filter cities with names containing query string. You can implement your own logic here!
+fn search_fn<'a, 'b, T: std::iter::IntoIterator<Item = &'a str>>(
+    items: T,
+    query: &'b str,
+) -> Vec<&'a str> {
+    items
+        .into_iter()
+        .filter(|&item| {
+            let item = item.to_owned().to_lowercase();
+            let query = query.to_owned().to_lowercase();
+            item.contains(&query)
+        })
+        .collect()
 }
 
 fn on_submit(siv: &mut Cursive, query: &str) {
