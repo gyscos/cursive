@@ -37,10 +37,9 @@ fn main() {
                         // Center the text horizontally
                         .h_align(HAlign::Center)
                         .with_name("matches")
-                        .scrollable()
-                        .fixed_size((20, 10)),
+                        .scrollable(),
                 )
-                .fixed_width(25),
+                .fixed_height(10),
         )
         .button("Quit", Cursive::quit)
         .title("Where are you from?"),
