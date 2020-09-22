@@ -1,22 +1,32 @@
-use cursive::traits::*;
+use cursive::{traits::*, views::Dialog, Cursive};
 
 fn main() {
     let mut siv = cursive::default();
     let timer = Timer::TimerView::new();
-    siv.add_layer(timer.with_name("timer"));
-    siv.add_layer(cursive::views::Dialog::info(
-        "Press 'Space' to start/pause/resume the timer!",
+    siv.add_layer(
+        timer
+            .on_stop(|s: &mut Cursive, elapsed| {
+                s.add_layer(Dialog::info(format!(
+                    "Elapsed time: {}",
+                    elapsed.pretty()
+                )))
+            })
+            .with_name("timer"),
+    );
+    siv.add_layer(Dialog::info(
+        "Press 'Space' to start/pause/resume the timer\nPress 'l' to record lap time\nPress 'Enter' to stop",
     ));
     siv.set_fps(15);
     siv.run();
 }
 
 mod Timer {
+    use super::PrettyDuration;
     use chrono::{DateTime, Duration, Local};
     use cursive::{
         event::{Callback, Event, EventResult, Key},
         view::View,
-        Cursive, Printer, Vec2,
+        Cursive, Printer, Vec2, With,
     };
     use std::rc::Rc;
 
@@ -116,31 +126,40 @@ mod Timer {
         ///
         /// The elapsed time will be given to the callback.
         ///
-        /// See also cursive::views::select_view::SelectView::on_submit
-        pub fn on_stop<F, R>(&mut self, cb: F)
+        /// See also cursive::views::select_view::SelectView::set_on_submit
+        pub fn set_on_stop<F, R>(&mut self, cb: F)
         where
             F: 'static + Fn(&mut Cursive, Duration) -> R,
         {
             self.on_stop = Some(Rc::new(move |s, t| {
                 cb(s, t);
             }));
-            unimplemented!();
         }
 
-        // fn stop(&mut self) -> EventResult {
-        //     self.pause();
-        //     let cb = self.on_stop.clone().unwrap();
-        //     // We return a Callback Rc<|s| cb(s, &*v)>
-        //     EventResult::Consumed(Some(Callback::from_fn(move |s| {
-        //         cb(s, self.elapsed)
-        //     })))
-        // }
+        pub fn on_stop<F, R>(self, cb: F) -> Self
+        where
+            F: 'static + Fn(&mut Cursive, Duration) -> R,
+        {
+            self.with(|s| s.set_on_stop(cb))
+        }
+
+        fn stop(&mut self) -> EventResult {
+            if !self.paused {
+                self.pause();
+            }
+            let cb = self.on_stop.clone().unwrap();
+            let elapsed = self.elapsed;
+            // We return a Callback Rc<|s| cb(s, &*v)>
+            EventResult::Consumed(Some(Callback::from_fn(move |s| {
+                cb(s, elapsed)
+            })))
+        }
     }
     impl View for TimerView {
         fn draw(&self, printer: &Printer) {
-            printer.print((0, 0), &pretty(self.read()));
+            printer.print((0, 0), &self.read().pretty());
             for i in 0..self.laps.len() {
-                printer.print((0, i + 1), &pretty(self.laps[i]));
+                printer.print((0, i + 1), &self.laps[i].pretty());
             }
         }
 
@@ -155,9 +174,9 @@ mod Timer {
                 Event::Char(' ') => {
                     self.pause_or_resume();
                 }
-                // Event::Key(Key::Enter) if self.on_stop.is_some() => {
-                //     return self.stop();
-                // }
+                Event::Key(Key::Enter) if self.on_stop.is_some() => {
+                    return self.stop();
+                }
                 Event::Char('l') => {
                     self.lap();
                 }
@@ -166,10 +185,15 @@ mod Timer {
             EventResult::Consumed(None)
         }
     }
-    /// pretty-prints a `chrono::Duration` in the form "HH:MM:SS"
-    fn pretty(duration: Duration) -> String {
-        let s = duration.num_seconds();
-        let ms = duration.num_milliseconds() - 1000 * s;
+}
+
+pub trait PrettyDuration {
+    fn pretty(&self) -> String;
+}
+impl PrettyDuration for chrono::Duration {
+    fn pretty(&self) -> String {
+        let s = self.num_seconds();
+        let ms = self.num_milliseconds() - 1000 * s;
         let (h, s) = (s / 3600, s % 3600);
         let (m, s) = (s / 60, s % 60);
         format!("{:02}:{:02}:{:02}.{:03}", h, m, s, ms)
