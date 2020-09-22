@@ -9,7 +9,7 @@ use cursive::Cursive;
 use lazy_static::lazy_static;
 
 // This example shows a way to implement a (Google-like) autocomplete search box.
-// Try entering "Tok"!
+// Try entering "tok"!
 
 lazy_static! {
     static ref CITIES: &'static str = include_str!("../../assets/cities.txt");
@@ -21,10 +21,12 @@ fn main() {
     siv.add_layer(
         Dialog::around(
             LinearLayout::vertical()
-                // the input is on the top
+                // the query box is on the top
                 .child(
                     EditView::new()
+                        // update results every time the query changes
                         .on_edit(on_edit)
+                        // submit the focused (first) item of the matches
                         .on_submit(on_submit)
                         .with_name("query"),
                 )
@@ -43,16 +45,15 @@ fn main() {
                 )
                 .fixed_width(25),
         )
-        .button("Quit", Cursive::quit),
+        .button("Quit", Cursive::quit)
+        .title("Where are you from?"),
     );
 
     siv.run();
 }
 
 // Update results according to the query
-fn on_edit(siv: &mut Cursive, _content: &str, _cursor: usize) {
-    // Get the query
-    let query = siv.find_name::<EditView>("query").unwrap().get_content();
+fn on_edit(siv: &mut Cursive, query: &str, _cursor: usize) {
     // Filter cities with names containing query string
     let matches = CITIES.lines().filter(|&city| {
         let city = city.to_owned().to_lowercase();
@@ -66,11 +67,16 @@ fn on_edit(siv: &mut Cursive, _content: &str, _cursor: usize) {
     });
 }
 
-fn on_submit(siv: &mut Cursive, _content: &str) {
-    siv.call_on_name("matches", |v: &mut SelectView| {
-        // wont' work; private associated function
-        // v.submit();
-    });
+fn on_submit(siv: &mut Cursive, query: &str) {
+    let matches = siv.find_name::<SelectView>("matches").unwrap();
+    if matches.is_empty() {
+        // not all people live in big cities. If none of the cities in the list matches, use the value of the query.
+        show_next_window(siv, query);
+    } else {
+        // pressing "Enter" without moving the focus into the `matches` view will submit the first match result
+        let city = &*matches.selection().unwrap();
+        show_next_window(siv, city);
+    };
 }
 
 fn show_next_window(siv: &mut Cursive, city: &str) {
