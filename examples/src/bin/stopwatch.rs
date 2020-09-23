@@ -14,7 +14,7 @@ fn main() {
         stopwatch
             // On stop, get all data and summarize them in an info box.
             .on_stop(|s: &mut Cursive, stopwatch| {
-                s.add_layer(Dialog::info(summarize(stopwatch)))
+                s.add_layer(Dialog::info(summarize(&stopwatch)))
             }),
     );
     siv.add_layer(Dialog::info(
@@ -139,7 +139,7 @@ mod stopwatch {
         /// See also cursive::views::select_view::SelectView::set_on_submit
         pub fn set_on_stop<F, R>(&mut self, cb: F)
         where
-            F: 'static + Fn(&mut Cursive, &StopWatch) -> R,
+            F: 'static + Fn(&mut Cursive, StopWatch) -> R,
         {
             self.on_stop = Some(Rc::new(move |s, t| {
                 cb(s, t);
@@ -148,7 +148,7 @@ mod stopwatch {
 
         pub fn on_stop<F, R>(self, cb: F) -> Self
         where
-            F: 'static + Fn(&mut Cursive, &StopWatch) -> R,
+            F: 'static + Fn(&mut Cursive, StopWatch) -> R,
         {
             self.with(|s| s.set_on_stop(cb))
         }
@@ -162,7 +162,7 @@ mod stopwatch {
                 std::mem::replace(&mut self.stopwatch, StopWatch::new());
             let result = if self.on_stop.is_some() {
                 let cb = self.on_stop.clone().unwrap();
-                EventResult::with_cb(move |s| cb(s, &stopwatch))
+                EventResult::with_cb(move |s| cb(s, stopwatch))
             } else {
                 EventResult::Consumed(None)
             };
