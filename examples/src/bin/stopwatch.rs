@@ -6,7 +6,6 @@ fn main() {
     let stopwatch = StopWatch::StopWatchView::new();
     siv.add_layer(
         stopwatch
-            .with_laps(8)
             .on_stop(|s: &mut Cursive, stopwatch| {
                 s.add_layer(Dialog::info(summarize(stopwatch)))
             })
@@ -21,15 +20,14 @@ fn main() {
 
 fn summarize(stopwatch: &StopWatch::StopWatch) -> String {
     let elapsed = stopwatch.elapsed;
-    let average = stopwatch.elapsed / stopwatch.laps.len() as i32;
-    let max = stopwatch.laps.iter().max().unwrap();
-    let min = stopwatch.laps.iter().min().unwrap();
+    let n = stopwatch.pause_moments.len();
+    let total_elapsed =
+        stopwatch.pause_moments[n - 1] - stopwatch.start_moments[0];
     format!(
-        "Elapsed time: {}\nAverage: {}\nMax: {}\nMin: {}",
+        "Elapsed time: {}\nTotal elapsed: {}\nPaused {} times",
         elapsed.pretty(),
-        average.pretty(),
-        max.pretty(),
-        min.pretty()
+        total_elapsed.pretty(),
+        n - 1,
     )
 }
 
@@ -57,23 +55,12 @@ mod StopWatch {
     };
     use std::rc::Rc;
 
-    /// A stopwatch that mimics iOS's stopwatch
-    ///
-    /// ```ignore
-    ///                  lap    lap          lap
-    /// start       start |      |     start  |
-    ///   o--------x   o-----------x      o-----------x
-    ///          pause           pause            pause(end)
-    /// ```
     #[derive(Clone, Debug)]
     pub struct StopWatch {
         // These data might be useful to the user
-        pub elapsed: Duration,     // total elapsed time
-        pub lap_elapsed: Duration, // elapsed time of the current lap
+        pub elapsed: Duration, // total elapsed time
         pub pause_moments: Vec<DateTime<Local>>, // moments at which the stopwatch is paused
         pub start_moments: Vec<DateTime<Local>>, // moments at which the stopwatch resumes
-        pub lap_moments: Vec<DateTime<Local>>, // moments at which a lap time is read
-        pub laps: Vec<Duration>,               // lap times
         paused: bool,
     }
 
@@ -82,11 +69,8 @@ mod StopWatch {
         pub fn new() -> Self {
             Self {
                 elapsed: Duration::zero(),
-                lap_elapsed: Duration::zero(),
                 start_moments: Vec::new(),
                 pause_moments: Vec::new(),
-                lap_moments: Vec::new(),
-                laps: Vec::new(),
                 paused: true, // stopped by default; start by explicitly calling `.resume()`
             }
         }
@@ -94,15 +78,11 @@ mod StopWatch {
         fn last_start(&self) -> DateTime<Local> {
             self.start_moments[self.start_moments.len() - 1]
         }
-        fn last_lap(&self) -> DateTime<Local> {
-            self.lap_moments[self.lap_moments.len() - 1]
-        }
         fn pause(&mut self) {
             assert!(self.paused == false, "Already paused!");
             let moment = Local::now();
             self.pause_moments.push(moment);
             self.elapsed = self.elapsed + (moment - self.last_start());
-            self.lap_elapsed = self.read_lap_elapsed(moment);
             self.paused = true;
         }
         fn resume(&mut self) {
@@ -117,19 +97,6 @@ mod StopWatch {
                 self.pause();
             }
         }
-        fn lap(&mut self) -> Option<Duration> {
-            // assert!(!self.paused, "Paused!");
-            if self.paused {
-                None
-            } else {
-                let moment = Local::now();
-                let lap = self.read_lap_elapsed(moment);
-                self.lap_moments.push(moment);
-                self.laps.push(lap);
-                self.lap_elapsed = Duration::zero();
-                Some(lap)
-            }
-        }
         /// Read the total time elapsed
         fn read(&self) -> Duration {
             if self.paused {
@@ -137,17 +104,6 @@ mod StopWatch {
             } else {
                 self.elapsed + (Local::now() - self.last_start())
             }
-        }
-        /// Read the time elapsed in the current lap
-        fn read_lap_elapsed(&self, moment: DateTime<Local>) -> Duration {
-            self.lap_elapsed
-                + if self.lap_elapsed == Duration::zero()
-                    && !self.lap_moments.is_empty()
-                {
-                    moment - self.last_lap()
-                } else {
-                    moment - self.last_start()
-                }
         }
     }
 
@@ -164,11 +120,6 @@ mod StopWatch {
                 on_stop: None,
                 show_laps: 0,
             }
-        }
-
-        pub fn with_laps(mut self, n: usize) -> Self {
-            self.show_laps = n;
-            self
         }
 
         /// Sets a callback to be used when `<Enter>` is pressed.
@@ -194,11 +145,9 @@ mod StopWatch {
 
         fn stop(&mut self) -> EventResult {
             let stopwatch = &mut self.stopwatch;
-            if stopwatch.paused {
-                stopwatch.resume(); // to record the last lap
+            if !stopwatch.paused {
+                stopwatch.pause();
             }
-            stopwatch.lap();
-            stopwatch.pause();
             let result = if self.on_stop.is_some() {
                 let cb = self.on_stop.clone().unwrap();
                 let stopwatch_data = self.stopwatch.clone(); // TODO: remove clone
@@ -214,23 +163,11 @@ mod StopWatch {
     }
     impl View for StopWatchView {
         fn draw(&self, printer: &Printer) {
-            printer.print((4, 0), &self.stopwatch.read().pretty());
-            let len = self.stopwatch.laps.len();
-            for i in 1..=std::cmp::min(len, self.show_laps) {
-                printer.print(
-                    (0, i),
-                    &[
-                        format!("Lap {:02}: ", len - i + 1),
-                        self.stopwatch.laps[len - i].pretty(),
-                    ]
-                    .concat(),
-                );
-            }
+            printer.print((0, 0), &self.stopwatch.read().pretty());
         }
 
         fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
-            // the required size depends on how many lap times the user want to diaplay
-            Vec2::new(20, self.show_laps + 1) // columns, rows (width, height)
+            Vec2::new(12, 1) // columns, rows (width, height)
         }
 
         fn on_event(&mut self, event: Event) -> EventResult {
@@ -241,9 +178,6 @@ mod StopWatch {
                 }
                 Event::Key(Key::Enter) => {
                     return self.stop();
-                }
-                Event::Char('l') => {
-                    self.stopwatch.lap();
                 }
                 _ => return EventResult::Ignored,
             }
