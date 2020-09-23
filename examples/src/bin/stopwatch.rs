@@ -6,6 +6,9 @@ use stopwatch::{StopWatch, StopWatchView};
 // Press "Space" to start/pause/resume the stopwatch. Press "Enter" to stop and
 // get all data: moments at which the stopwatch is started/resumed, moments at which
 // the stopwatch is paused/stopped; elapsed time.
+// You may also want to explore the crate `clock-cli` (https://github.com/TianyiShi2001/clock-cli-rs),
+// which aims to implement a fully-fledged clock with stopwatch, countdown
+// timer, and possibly more functionalities.
 
 fn main() {
     let mut siv = cursive::default();
