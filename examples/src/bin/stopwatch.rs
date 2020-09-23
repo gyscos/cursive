@@ -154,14 +154,15 @@ mod stopwatch {
         }
 
         fn stop(&mut self) -> EventResult {
-            let stopwatch = &mut self.stopwatch;
-            if !stopwatch.paused {
-                stopwatch.pause();
+            if !self.stopwatch.paused {
+                self.stopwatch.pause();
             }
+            // get the ownership of the fresh data from self.stopwatch, and replace self.stopwatch with a new one (i.e. reset to zero)
+            let stopwatch =
+                std::mem::replace(&mut self.stopwatch, StopWatch::new());
             let result = if self.on_stop.is_some() {
                 let cb = self.on_stop.clone().unwrap();
-                let stopwatch_data = self.stopwatch.clone(); // TODO: remove clone
-                EventResult::with_cb(move |s| cb(s, &stopwatch_data))
+                EventResult::with_cb(move |s| cb(s, &stopwatch))
             } else {
                 EventResult::Consumed(None)
             };
