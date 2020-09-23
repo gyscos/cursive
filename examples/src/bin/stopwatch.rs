@@ -1,24 +1,31 @@
 use chrono::Duration;
 use cursive::{traits::*, views::Dialog, Cursive};
+use stopwatch::{StopWatch, StopWatchView};
+
+// A simple stopwatch without 'lap time' function is implemented in this example.
+// Press "Space" to start/pause/resume the stopwatch. Press "Enter" to stop and
+// get all data: moments at which the stopwatch is started/resumed, moments at which
+// the stopwatch is paused/stopped; elapsed time.
 
 fn main() {
     let mut siv = cursive::default();
-    let stopwatch = StopWatch::StopWatchView::new();
+    let stopwatch = StopWatchView::new();
     siv.add_layer(
         stopwatch
+            // On stop, get all data and summarize them in an info box.
             .on_stop(|s: &mut Cursive, stopwatch| {
                 s.add_layer(Dialog::info(summarize(stopwatch)))
-            })
-            .with_name("stopwatch"),
+            }),
     );
     siv.add_layer(Dialog::info(
-        "Press 'Space' to start/pause/resume the stopwatch\nPress 'l' to record lap time\nPress 'Enter' to stop",
+        "Press 'Space' to start/pause/resume the stopwatch\nPress 'Enter' to stop",
     ));
+    // the stopwatch is redrawn 15 times per second
     siv.set_fps(15);
     siv.run();
 }
 
-fn summarize(stopwatch: &StopWatch::StopWatch) -> String {
+fn summarize(stopwatch: &StopWatch) -> String {
     let elapsed = stopwatch.elapsed;
     let n = stopwatch.pause_moments.len();
     let total_elapsed =
@@ -36,6 +43,8 @@ pub trait PrettyDuration {
 }
 impl PrettyDuration for Duration {
     /// Pretty-prints a chrono::Duration in the form `HH:MM:SS.xxx`
+    /// A custom trait is used because `std::fmt::Diaplay` cannot be implemented
+    /// for a struct coming from another external crate, due to the orphan rule
     fn pretty(&self) -> String {
         let s = self.num_seconds();
         let ms = self.num_milliseconds() - 1000 * s;
@@ -45,11 +54,11 @@ impl PrettyDuration for Duration {
     }
 }
 
-mod StopWatch {
+mod stopwatch {
     use super::PrettyDuration;
     use chrono::{DateTime, Duration, Local};
     use cursive::{
-        event::{Callback, Event, EventResult, Key},
+        event::{Event, EventResult, Key},
         view::View,
         Cursive, Printer, Vec2, With,
     };
@@ -65,7 +74,7 @@ mod StopWatch {
     }
 
     impl StopWatch {
-        /// Returns stopwatch reset to zero
+        /// Returns a stopwatch that is reset to zero
         pub fn new() -> Self {
             Self {
                 elapsed: Duration::zero(),
@@ -107,10 +116,12 @@ mod StopWatch {
         }
     }
 
+    /// Separating the `StopWatch` 'core' and the `StopWatchView` improves reusability
+    /// and flexibility. The user may implement their own `View`s, i.e. layouts, based
+    /// on the same `StopWatch` logic.
     pub struct StopWatchView {
         stopwatch: StopWatch,
         on_stop: Option<Rc<dyn Fn(&mut Cursive, &StopWatch)>>,
-        show_laps: usize,
     }
 
     impl StopWatchView {
@@ -118,7 +129,6 @@ mod StopWatch {
             Self {
                 stopwatch: StopWatch::new(),
                 on_stop: None,
-                show_laps: 0,
             }
         }
 
@@ -176,6 +186,7 @@ mod StopWatch {
                 Event::Char(' ') => {
                     self.stopwatch.pause_or_resume();
                 }
+                // stop (reset) the stopwatch when pressing "Enter"
                 Event::Key(Key::Enter) => {
                     return self.stop();
                 }
