@@ -1,3 +1,4 @@
+use chrono::Duration;
 use cursive::{traits::*, views::Dialog, Cursive};
 
 fn main() {
@@ -6,11 +7,8 @@ fn main() {
     siv.add_layer(
         stopwatch
             .with_laps(8)
-            .on_stop(|s: &mut Cursive, elapsed| {
-                s.add_layer(Dialog::info(format!(
-                    "Elapsed time: {}",
-                    elapsed.pretty()
-                )))
+            .on_stop(|s: &mut Cursive, stopwatch| {
+                s.add_layer(Dialog::info(summarize(stopwatch)))
             })
             .with_name("stopwatch"),
     );
@@ -19,6 +17,34 @@ fn main() {
     ));
     siv.set_fps(15);
     siv.run();
+}
+
+fn summarize(stopwatch: &StopWatch::StopWatch) -> String {
+    let elapsed = stopwatch.elapsed;
+    let average = stopwatch.elapsed / stopwatch.laps.len() as i32;
+    let max = stopwatch.laps.iter().max().unwrap();
+    let min = stopwatch.laps.iter().min().unwrap();
+    format!(
+        "Elapsed time: {}\nAverage: {}\nMax: {}\nMin: {}",
+        elapsed.pretty(),
+        average.pretty(),
+        max.pretty(),
+        min.pretty()
+    )
+}
+
+pub trait PrettyDuration {
+    fn pretty(&self) -> String;
+}
+impl PrettyDuration for Duration {
+    /// Pretty-prints a chrono::Duration in the form `HH:MM:SS.xxx`
+    fn pretty(&self) -> String {
+        let s = self.num_seconds();
+        let ms = self.num_milliseconds() - 1000 * s;
+        let (h, s) = (s / 3600, s % 3600);
+        let (m, s) = (s / 60, s % 60);
+        format!("{:02}:{:02}:{:02}.{:03}", h, m, s, ms)
+    }
 }
 
 mod StopWatch {
@@ -39,8 +65,9 @@ mod StopWatch {
     ///   o--------x   o-----------x      o-----------x
     ///          pause           pause            pause(end)
     /// ```
+    #[derive(Clone, Debug)]
     pub struct StopWatch {
-        // These data *might* be useful to the user
+        // These data might be useful to the user
         pub elapsed: Duration,     // total elapsed time
         pub lap_elapsed: Duration, // elapsed time of the current lap
         pub pause_moments: Vec<DateTime<Local>>, // moments at which the stopwatch is paused
@@ -126,7 +153,7 @@ mod StopWatch {
 
     pub struct StopWatchView {
         stopwatch: StopWatch,
-        on_stop: Option<Rc<dyn Fn(&mut Cursive, Duration)>>,
+        on_stop: Option<Rc<dyn Fn(&mut Cursive, &StopWatch)>>,
         show_laps: usize,
     }
 
@@ -151,7 +178,7 @@ mod StopWatch {
         /// See also cursive::views::select_view::SelectView::set_on_submit
         pub fn set_on_stop<F, R>(&mut self, cb: F)
         where
-            F: 'static + Fn(&mut Cursive, Duration) -> R,
+            F: 'static + Fn(&mut Cursive, &StopWatch) -> R,
         {
             self.on_stop = Some(Rc::new(move |s, t| {
                 cb(s, t);
@@ -160,20 +187,22 @@ mod StopWatch {
 
         pub fn on_stop<F, R>(self, cb: F) -> Self
         where
-            F: 'static + Fn(&mut Cursive, Duration) -> R,
+            F: 'static + Fn(&mut Cursive, &StopWatch) -> R,
         {
             self.with(|s| s.set_on_stop(cb))
         }
 
         fn stop(&mut self) -> EventResult {
             let stopwatch = &mut self.stopwatch;
-            if !stopwatch.paused {
-                stopwatch.pause();
+            if stopwatch.paused {
+                stopwatch.resume(); // to record the last lap
             }
+            stopwatch.lap();
+            stopwatch.pause();
             let result = if self.on_stop.is_some() {
                 let cb = self.on_stop.clone().unwrap();
-                let elapsed = stopwatch.elapsed;
-                EventResult::with_cb(move |s| cb(s, elapsed))
+                let stopwatch_data = self.stopwatch.clone(); // TODO: remove clone
+                EventResult::with_cb(move |s| cb(s, &stopwatch_data))
             } else {
                 EventResult::Consumed(None)
             };
@@ -220,19 +249,5 @@ mod StopWatch {
             }
             EventResult::Consumed(None)
         }
-    }
-}
-
-pub trait PrettyDuration {
-    fn pretty(&self) -> String;
-}
-impl PrettyDuration for chrono::Duration {
-    /// Pretty-prints a chrono::Duration in the form `HH:MM:SS.xxx`
-    fn pretty(&self) -> String {
-        let s = self.num_seconds();
-        let ms = self.num_milliseconds() - 1000 * s;
-        let (h, s) = (s / 3600, s % 3600);
-        let (m, s) = (s / 60, s % 60);
-        format!("{:02}:{:02}:{:02}.{:03}", h, m, s, ms)
     }
 }
