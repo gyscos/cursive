@@ -58,7 +58,7 @@ mod stopwatch {
     use super::PrettyDuration;
     use chrono::{DateTime, Duration, Local};
     use cursive::{
-        event::{Event, EventResult, Key},
+        event::{Callback, Event, EventResult, Key},
         view::View,
         Cursive, Printer, Vec2, With,
     };
@@ -121,7 +121,7 @@ mod stopwatch {
     /// on the same `StopWatch` logic.
     pub struct StopWatchView {
         stopwatch: StopWatch,
-        on_stop: Option<Rc<dyn Fn(&mut Cursive, &StopWatch)>>,
+        on_stop: Option<Rc<dyn Fn(&mut Cursive, StopWatch)>>,
     }
 
     impl StopWatchView {
@@ -162,7 +162,9 @@ mod stopwatch {
                 std::mem::replace(&mut self.stopwatch, StopWatch::new());
             let result = if self.on_stop.is_some() {
                 let cb = self.on_stop.clone().unwrap();
-                EventResult::with_cb(move |s| cb(s, stopwatch))
+                EventResult::Consumed(Some(Callback::from_fn_once(move |s| {
+                    cb(s, stopwatch)
+                })))
             } else {
                 EventResult::Consumed(None)
             };
