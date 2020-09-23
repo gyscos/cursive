@@ -160,18 +160,14 @@ mod stopwatch {
             // get the ownership of the fresh data from self.stopwatch, and replace self.stopwatch with a new one (i.e. reset to zero)
             let stopwatch =
                 std::mem::replace(&mut self.stopwatch, StopWatch::new());
-            let result = if self.on_stop.is_some() {
+            if self.on_stop.is_some() {
                 let cb = self.on_stop.clone().unwrap();
                 EventResult::Consumed(Some(Callback::from_fn_once(move |s| {
                     cb(s, stopwatch)
                 })))
             } else {
                 EventResult::Consumed(None)
-            };
-            // reset the stopwatch data, but not other configurations related to the `View`
-            self.stopwatch = StopWatch::new();
-            // return result
-            result
+            }
         }
     }
     impl View for StopWatchView {
