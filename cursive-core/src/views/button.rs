@@ -169,7 +169,6 @@ impl View for Button {
         let width = self.label.width();
         let self_offset = HAlign::Center.get_offset(width, self.last_size.x);
         match event {
-            // 10 is the ascii code for '\n', that is the return key
             Event::Key(Key::Enter) => {
                 EventResult::Consumed(Some(self.callback.clone()))
             }
