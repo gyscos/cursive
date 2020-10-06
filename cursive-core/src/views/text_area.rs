@@ -3,6 +3,7 @@ use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
 use crate::rect::Rect;
 use crate::theme::{ColorStyle, Effect};
 use crate::utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row};
+#[allow(deprecated)]
 use crate::view::{ScrollBase, SizeCache, View};
 use crate::Vec2;
 use crate::{Printer, With, XY};
@@ -42,6 +43,7 @@ pub struct TextArea {
     enabled: bool,
 
     /// Base for scrolling features
+    #[allow(deprecated)]
     scrollbase: ScrollBase,
 
     /// Cache to avoid re-computing layout on no-op events
@@ -63,6 +65,7 @@ new_default!(TextArea);
 impl TextArea {
     /// Creates a new, empty TextArea.
     pub fn new() -> Self {
+        #[allow(deprecated)]
         TextArea {
             content: String::new(),
             rows: Vec::new(),
@@ -614,6 +617,7 @@ impl View for TextArea {
                 && position.fits_in_rect(offset, self.last_size) =>
             {
                 if let Some(position) = position.checked_sub(offset) {
+                    #[allow(deprecated)]
                     let y = position.y + self.scrollbase.start_line;
                     let y = min(y, self.rows.len() - 1);
                     let x = position.x;

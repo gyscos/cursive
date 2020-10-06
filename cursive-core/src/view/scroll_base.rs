@@ -6,9 +6,15 @@ use std::cmp::{max, min};
 
 /// Provide scrolling functionalities to a view.
 ///
-/// You're not supposed to use this directly,
-/// but it can be helpful if you create your own Views.
+/// This is a legacy helper utility to define scrollable views.
+///
+/// The [`scroll`] module is the preferred way to achieve that.
+///
+/// [`scroll`]: ./scroll/index.html
 #[derive(Default, Debug)]
+#[deprecated(
+    note = "`ScrollBase` is being deprecated in favor of the view::scroll module."
+)]
 pub struct ScrollBase {
     /// First line visible
     pub start_line: usize,
@@ -35,6 +41,7 @@ pub struct ScrollBase {
     pub thumb_grab: Option<usize>,
 }
 
+#[allow(deprecated)]
 impl ScrollBase {
     /// Creates a new, uninitialized scrollbar.
     pub fn new() -> Self {

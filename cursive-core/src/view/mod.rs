@@ -111,6 +111,7 @@ pub use self::nameable::Nameable;
 pub use self::position::{Offset, Position};
 pub use self::resizable::Resizable;
 pub use self::scroll::ScrollStrategy;
+#[allow(deprecated)]
 pub use self::scroll_base::ScrollBase;
 pub use self::scrollable::Scrollable;
 pub use self::size_cache::SizeCache;
