@@ -94,6 +94,7 @@ Here are some cool applications using cursive:
 * [fui](https://github.com/xliiv/fui): Add CLI & form interface to your program.
 * [grin-tui](https://github.com/mimblewimble/grin): Minimal implementation of the MimbleWimble protocol.
 * [ripasso](https://github.com/cortex/ripasso): A simple password manager written in Rust.
+* [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
 
 ## Goals
 
