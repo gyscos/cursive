@@ -17,6 +17,7 @@ pretty-bytes = "0.2.2"
 rand = "0.7.3"
 cursive = { path = "../cursive", default-features=false }
 crossbeam-channel = "0.4.2"
+chrono = "0.4.15"
 lazy_static = "1.4"
 
 [features]
