@@ -96,6 +96,7 @@ Here are some cool applications using cursive:
 * [ripasso](https://github.com/cortex/ripasso): A simple password manager written in Rust.
 * [clock-cli](https://github.com/TianyiShi2001/clock-cli-rs): A clock with stopwatch and countdown timer functionalities
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
+* [rusty-man](https://sr.ht/~ireas/rusty-man): Browse rustdoc documentation
 
 ## Goals
 
