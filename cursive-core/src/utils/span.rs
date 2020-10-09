@@ -3,6 +3,7 @@
 //! This module defines various structs describing a span of text from a
 //! larger string.
 use std::borrow::Cow;
+use std::iter::FromIterator;
 use unicode_width::UnicodeWidthStr;
 
 /// A string with associated spans.
@@ -251,6 +252,22 @@ impl<T> SpannedString<T> {
     /// This is the sum of the width of each span.
     pub fn width(&self) -> usize {
         self.spans().map(|s| s.width).sum()
+    }
+}
+
+impl<T> FromIterator<SpannedString<T>> for SpannedString<T> {
+    fn from_iter<I: IntoIterator<Item = SpannedString<T>>>(
+        iter: I,
+    ) -> SpannedString<T> {
+        let mut iter = iter.into_iter();
+        if let Some(first) = iter.next() {
+            iter.fold(first, |mut acc, s| {
+                acc.append(s);
+                acc
+            })
+        } else {
+            SpannedString::new()
+        }
     }
 }
 

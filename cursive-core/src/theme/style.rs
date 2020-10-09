@@ -1,3 +1,5 @@
+use std::iter::FromIterator;
+
 use super::{Color, ColorStyle, ColorType, Effect, PaletteColor};
 use enumset::{enum_set, EnumSet};
 
@@ -36,18 +38,7 @@ impl Style {
     ///
     /// Will use the last non-`None` color, and will combine all effects.
     pub fn merge(styles: &[Style]) -> Self {
-        let mut color = None;
-        let mut effects = EnumSet::new();
-
-        for style in styles {
-            if style.color.is_some() {
-                color = style.color;
-            }
-
-            effects.insert_all(style.effects);
-        }
-
-        Style { color, effects }
+        styles.iter().collect()
     }
 
     /// Returns a combination of `self` and `other`.
@@ -92,5 +83,34 @@ impl From<PaletteColor> for Style {
 impl From<ColorType> for Style {
     fn from(color: ColorType) -> Self {
         ColorStyle::from(color).into()
+    }
+}
+
+/// Creates a new `Style` by merging all given styles.
+///
+/// Will use the last non-`None` color, and will combine all effects.
+impl<'a> FromIterator<&'a Style> for Style {
+    fn from_iter<I: IntoIterator<Item = &'a Style>>(iter: I) -> Style {
+        let mut color = None;
+        let mut effects = EnumSet::new();
+
+        for style in iter {
+            if style.color.is_some() {
+                color = style.color;
+            }
+
+            effects.insert_all(style.effects);
+        }
+
+        Style { color, effects }
+    }
+}
+
+/// Creates a new `Style` by merging all given styles.
+///
+/// Will use the last non-`None` color, and will combine all effects.
+impl<T: Into<Style>> FromIterator<T> for Style {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Style {
+        iter.into_iter().map(Into::into).collect()
     }
 }

@@ -258,6 +258,7 @@ impl<T: Ord> XY<T> {
 
 impl<T: Ord + Add<Output = T> + Clone> XY<T> {
     /// Returns (max(self.x,other.x), self.y+other.y)
+    #[must_use]
     pub fn stack_vertical(&self, other: &Self) -> Self {
         Self::new(
             max(self.x.clone(), other.x.clone()),
@@ -266,6 +267,7 @@ impl<T: Ord + Add<Output = T> + Clone> XY<T> {
     }
 
     /// Returns (self.x+other.x, max(self.y,other.y))
+    #[must_use]
     pub fn stack_horizontal(&self, other: &Self) -> Self {
         Self::new(
             self.x.clone() + other.x.clone(),
