@@ -101,9 +101,9 @@ where
     /// Returns `true` if an event or callback was received,
     /// and `false` otherwise.
     ///
-    /// [1]: CursiveRun::run()
-    /// [2]: CursiveRun::step()
-    /// [3]: CursiveRun::post_events()
+    /// [1]: CursiveRunner::run()
+    /// [2]: CursiveRunner::step()
+    /// [3]: CursiveRunner::post_events()
     pub fn process_events(&mut self) -> bool {
         // Things are boring if nothing significant happened.
         let mut boring = true;
@@ -137,9 +137,9 @@ where
     ///
     /// You should call this after [`process_events`][3].
     ///
-    /// [1]: Cursive::run()
-    /// [2]: Cursive::step()
-    /// [3]: Cursive::process_events()
+    /// [1]: CursiveRunner::run()
+    /// [2]: CursiveRunner::step()
+    /// [3]: CursiveRunner::process_events()
     pub fn post_events(&mut self, received_something: bool) {
         let boring = !received_something;
         // How many times should we try if it's still boring?

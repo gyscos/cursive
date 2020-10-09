@@ -222,8 +222,10 @@ use std::path::Path;
 pub struct Theme {
     /// Whether views in a StackView should have shadows.
     pub shadow: bool,
+
     /// How view borders should be drawn.
     pub borders: BorderStyle,
+
     /// What colors should be used through the application?
     pub palette: Palette,
 }
