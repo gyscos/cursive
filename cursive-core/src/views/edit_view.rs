@@ -71,6 +71,7 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 /// ```
 pub struct EditView {
     /// Current content.
+    #[allow(clippy::rc_buffer)] // Rc::make_mut is what we want here.
     content: Rc<String>,
 
     /// Cursor position in the content, in bytes.
@@ -357,6 +358,7 @@ impl EditView {
     }
 
     /// Get the current text.
+    #[allow(clippy::rc_buffer)]
     pub fn get_content(&self) -> Rc<String> {
         Rc::clone(&self.content)
     }

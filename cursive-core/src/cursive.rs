@@ -63,6 +63,8 @@ pub type ScreenId = usize;
 /// [`send_wrapper`]: https://crates.io/crates/send_wrapper
 pub type CbSink = Sender<Box<dyn FnOnce(&mut Cursive) + Send>>;
 
+new_default!(Cursive);
+
 impl Cursive {
     /// Creates a new Cursive root, and initialize the back-end.
     ///

@@ -1,5 +1,9 @@
 use crate::{backend, backends, Cursive};
 
+type Initializer =
+    dyn FnMut()
+        -> Result<Box<dyn backend::Backend>, Box<dyn std::error::Error>>;
+
 /// A runnable wrapper around `Cursive`, bundling the backend initializer.
 ///
 /// This struct embeds both `Cursive` and a backend-initializer
@@ -12,12 +16,7 @@ use crate::{backend, backends, Cursive};
 /// regular `Cursive` object.
 pub struct CursiveRunnable {
     siv: Cursive,
-    backend_init: Box<
-        dyn FnMut() -> Result<
-            Box<dyn backend::Backend>,
-            Box<dyn std::error::Error>,
-        >,
-    >,
+    backend_init: Box<Initializer>,
 }
 
 impl std::ops::Deref for CursiveRunnable {

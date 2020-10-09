@@ -32,10 +32,7 @@ pub enum GraphemePart {
 impl GraphemePart {
     /// Returns true iff GraphemePart is Continuation
     pub fn is_continuation(&self) -> bool {
-        match *self {
-            GraphemePart::Continuation => true,
-            _ => false,
-        }
+        matches!(*self, GraphemePart::Continuation)
     }
 
     /// Returns Some(String) if GraphemePart is Begin(String), else None.

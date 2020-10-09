@@ -51,26 +51,17 @@ impl MenuItem {
 
     /// Returns `true` if `self` is a delimiter.
     pub fn is_delimiter(&self) -> bool {
-        match *self {
-            MenuItem::Delimiter => true,
-            _ => false,
-        }
+        matches!(*self, MenuItem::Delimiter)
     }
 
     /// Returns `true` if `self` is a leaf node.
     pub fn is_leaf(&self) -> bool {
-        match *self {
-            MenuItem::Leaf(_, _) => true,
-            _ => false,
-        }
+        matches!(*self, MenuItem::Leaf(_, _))
     }
 
     /// Returns `true` if `self` is a subtree.
     pub fn is_subtree(&self) -> bool {
-        match *self {
-            MenuItem::Subtree(_, _) => true,
-            _ => false,
-        }
+        matches!(*self, MenuItem::Subtree(_, _))
     }
 
     /// Return a mutable reference to the subtree, if applicable.

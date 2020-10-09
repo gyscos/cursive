@@ -101,12 +101,14 @@ impl EventTrigger {
     /// Only bare arrow keys without modifiers (Shift, Ctrl, Alt) will be accepted.
     pub fn arrows() -> Self {
         Self::from_fn_and_tag(
-            |e| match e {
-                Event::Key(Key::Left)
-                | Event::Key(Key::Down)
-                | Event::Key(Key::Up)
-                | Event::Key(Key::Right) => true,
-                _ => false,
+            |e| {
+                matches!(
+                    e,
+                    Event::Key(Key::Left)
+                        | Event::Key(Key::Down)
+                        | Event::Key(Key::Up)
+                        | Event::Key(Key::Right)
+                )
             },
             "arrows",
         )
@@ -115,9 +117,9 @@ impl EventTrigger {
     /// Returns an `EventTrigger` that only accepts mouse events.
     pub fn mouse() -> Self {
         Self::from_fn_and_tag(
-            |e| match e {
-                Event::Mouse { .. } => true,
-                _ => false,
+            |e| {
+                matches!(e,
+                Event::Mouse { .. })
             },
             "mouse",
         )
@@ -256,18 +258,12 @@ impl EventResult {
 
     /// Returns `true` if `self` is `EventResult::Consumed`.
     pub fn is_consumed(&self) -> bool {
-        match *self {
-            EventResult::Consumed(_) => true,
-            _ => false,
-        }
+        matches!(*self, EventResult::Consumed(_))
     }
 
     /// Returns `true` if `self` contains a callback.
     pub fn has_callback(&self) -> bool {
-        match *self {
-            EventResult::Consumed(Some(_)) => true,
-            _ => false,
-        }
+        matches!(*self, EventResult::Consumed(Some(_)))
     }
 
     /// Process this result if it is a callback.
@@ -463,12 +459,10 @@ impl MouseEvent {
     /// It means you should be able to grab a scroll bar, and move the mouse
     /// away from the view, without actually changing the focus.
     pub fn grabs_focus(self) -> bool {
-        match self {
+        matches!(self,
             MouseEvent::Press(_)
             | MouseEvent::WheelUp
-            | MouseEvent::WheelDown => true,
-            _ => false,
-        }
+            | MouseEvent::WheelDown)
     }
 }
 

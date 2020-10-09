@@ -183,10 +183,10 @@ impl Color {
 }
 
 fn parse_special(value: &str) -> Option<Color> {
-    if value.starts_with('#') {
-        parse_hex(&value[1..])
-    } else if value.starts_with("0x") {
-        parse_hex(&value[2..])
+    if let Some(value) = value.strip_prefix('#') {
+        parse_hex(value)
+    } else if let Some(value) = value.strip_prefix("0x") {
+        parse_hex(value)
     } else if value.len() == 6 {
         parse_hex(value)
     } else if value.len() == 3 {
