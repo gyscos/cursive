@@ -187,6 +187,59 @@ impl<T> SpannedString<T> {
         SpannedString { source, spans }
     }
 
+    /// Compacts the source to only include the spans content.
+    pub fn compact(&mut self) {
+        // Prepare the new source
+        let mut source = String::new();
+
+        for span in &mut self.spans {
+            // Only include what we need.
+            let start = source.len();
+            source.push_str(span.content.resolve(&self.source));
+            let end = source.len();
+
+            // All spans now borrow the source.
+            span.content = IndexedCow::Borrowed { start, end };
+        }
+
+        self.source = source;
+    }
+
+    /// Shrink the source to discard any unused suffix.
+    pub fn trim_end(&mut self) {
+        if let Some(max) = self
+            .spans
+            .iter()
+            .filter_map(|s| s.content.as_borrowed())
+            .map(|(_start, end)| end)
+            .max()
+        {
+            self.source.truncate(max);
+        }
+    }
+
+    /// Shrink the source to discard any unused prefix.
+    pub fn trim_start(&mut self) {
+        if let Some(min) = self
+            .spans
+            .iter()
+            .filter_map(|s| s.content.as_borrowed())
+            .map(|(start, _end)| start)
+            .min()
+        {
+            self.source.drain(..min);
+            for span in &mut self.spans {
+                span.content.rev_offset(min);
+            }
+        }
+    }
+
+    /// Shrink the source to discard any unused prefix or suffix.
+    pub fn shrink_to_fit(&mut self) {
+        self.trim_end();
+        self.trim_start();
+    }
+
     /// Returns a new SpannedString with a single span.
     pub fn single_span<S>(source: S, attr: T) -> Self
     where
@@ -222,6 +275,17 @@ impl<T> SpannedString<T> {
 
         self.source.push_str(source);
         self.spans.append(&mut spans);
+    }
+
+    /// Remove the given range of spans from the styled string.
+    ///
+    /// You may want to follow this with either `compact()`,
+    /// `trim_start()` or `trim_end()`.
+    pub fn remove_spans<R>(&mut self, range: R)
+    where
+        R: std::ops::RangeBounds<usize>,
+    {
+        self.spans.drain(range);
     }
 
     /// Gives access to the parsed styled spans.
@@ -375,6 +439,24 @@ impl IndexedCow {
         }
     }
 
+    /// Return the `(start, end)` indexes if `self` is `IndexedCow::Borrowed`.
+    pub fn as_borrowed(&self) -> Option<(usize, usize)> {
+        if let IndexedCow::Borrowed { start, end } = *self {
+            Some((start, end))
+        } else {
+            None
+        }
+    }
+
+    /// Returns the embedded text content if `self` is `IndexedCow::Owned`.
+    pub fn as_owned(&self) -> Option<&str> {
+        if let &IndexedCow::Owned(ref content) = self {
+            Some(content)
+        } else {
+            None
+        }
+    }
+
     /// Returns an indexed view of the given item.
     ///
     /// **Note**: it is assumed `cow`, if borrowed, is a substring of `source`.
@@ -406,7 +488,8 @@ impl IndexedCow {
 
     /// If `self` is borrowed, offset its indices by the given value.
     ///
-    /// Useful to update spans when concatenating sources.
+    /// Useful to update spans when concatenating sources. This span will now
+    /// point to text `offset` further in the source.
     pub fn offset(&mut self, offset: usize) {
         if let IndexedCow::Borrowed {
             ref mut start,
@@ -415,6 +498,23 @@ impl IndexedCow {
         {
             *start += offset;
             *end += offset;
+        }
+    }
+
+    /// If `self` is borrowed, offset its indices back by the given value.
+    ///
+    /// Useful to update spans when removing a prefix from the source.
+    /// This span will now point to text `offset` closer to the start of the source.
+    ///
+    /// This span may become empty as a result.
+    pub fn rev_offset(&mut self, offset: usize) {
+        if let IndexedCow::Borrowed {
+            ref mut start,
+            ref mut end,
+        } = *self
+        {
+            *start = start.saturating_sub(offset);
+            *end = end.saturating_sub(offset);
         }
     }
 }
