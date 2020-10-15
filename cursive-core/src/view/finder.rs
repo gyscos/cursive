@@ -20,7 +20,25 @@ pub trait Finder {
     ) -> Option<R>
     where
         V: View,
-        F: FnOnce(&mut V) -> R;
+        F: FnOnce(&mut V) -> R,
+    {
+        let mut callback = Some(callback);
+        let mut result = None;
+        self.call_on_all(sel, |v: &mut V| {
+            if let Some(callback) = callback.take() {
+                result = Some(callback(v));
+            }
+        });
+        result
+    }
+
+    /// Runs a callback on all views identified by `sel`.
+    ///
+    /// Useful if you have multiple views of the same type with the same name.
+    fn call_on_all<V, F>(&mut self, sel: &Selector<'_>, callback: F)
+    where
+        V: View,
+        F: FnMut(&mut V);
 
     /// Convenient method to use `call_on` with a `view::Selector::Name`.
     fn call_on_name<V, F, R>(&mut self, name: &str, callback: F) -> Option<R>
@@ -60,36 +78,18 @@ pub trait Finder {
 }
 
 impl<T: View> Finder for T {
-    fn call_on<V, F, R>(
-        &mut self,
-        sel: &Selector<'_>,
-        callback: F,
-    ) -> Option<R>
+    fn call_on_all<V, F>(&mut self, sel: &Selector<'_>, mut callback: F)
     where
         V: View,
-        F: FnOnce(&mut V) -> R,
+        F: FnMut(&mut V),
     {
-        let mut result = None;
-        {
-            let result_ref = &mut result;
-
-            let mut callback = Some(callback);
-            let mut callback = |v: &mut dyn View| {
-                if let Some(callback) = callback.take() {
-                    if v.is::<V>() {
-                        *result_ref =
-                            v.downcast_mut::<V>().map(|v| callback(v));
-                    } else if v.is::<NamedView<V>>() {
-                        // Special case
-                        *result_ref = v
-                            .downcast_mut::<NamedView<V>>()
-                            .and_then(|v| v.with_view_mut(callback));
-                    }
-                }
-            };
-            self.call_on_any(sel, &mut callback);
-        }
-        result
+        self.call_on_any(sel, &mut |v: &mut dyn View| {
+            if let Some(v) = v.downcast_mut::<V>() {
+                callback(v);
+            } else if let Some(v) = v.downcast_mut::<NamedView<V>>() {
+                v.with_view_mut(&mut callback);
+            }
+        });
     }
 }
 

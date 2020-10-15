@@ -511,6 +511,15 @@ impl Cursive {
         self.call_on(&view::Selector::Name(name), callback)
     }
 
+    /// Call the given closure on all views with the given name and the correct type.
+    pub fn call_on_all_named<V, F>(&mut self, name: &str, callback: F)
+    where
+        V: View,
+        F: FnMut(&mut V),
+    {
+        self.root.call_on_all(&view::Selector::Name(name), callback);
+    }
+
     /// Same as [`call_on_name`](Cursive::call_on_name).
     #[deprecated(note = "`call_on_id` is being renamed to `call_on_name`")]
     pub fn call_on_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
