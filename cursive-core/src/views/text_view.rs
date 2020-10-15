@@ -89,7 +89,7 @@ impl TextContent {
         S: Into<StyledString>,
     {
         self.with_content(|c| {
-            *Arc::make_mut(&mut c.content_value) = content.into();
+            *c = content.into();
         });
     }
 
@@ -101,7 +101,7 @@ impl TextContent {
         self.with_content(|c| {
             // This will only clone content if content_cached and content_value
             // are sharing the same underlying Rc.
-            Arc::make_mut(&mut c.content_value).append(content);
+            c.append(content);
         })
     }
 
@@ -114,7 +114,15 @@ impl TextContent {
     }
 
     /// Apply the given closure to the inner content, and bust the cache afterward.
-    fn with_content<F, O>(&self, f: F) -> O
+    pub fn with_content<F, O>(&self, f: F) -> O
+    where
+        F: FnOnce(&mut StyledString) -> O,
+    {
+        self.with_content_inner(|c| f(Arc::make_mut(&mut c.content_value)))
+    }
+
+    /// Apply the given closure to the inner content, and bust the cache afterward.
+    fn with_content_inner<F, O>(&self, f: F) -> O
     where
         F: FnOnce(&mut TextContentInner) -> O,
     {
