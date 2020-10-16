@@ -288,15 +288,32 @@ impl<T> SpannedString<T> {
         self.spans.drain(range);
     }
 
-    /// Gives access to the parsed styled spans.
+    /// Iterates on the resolved spans.
     pub fn spans(&self) -> impl Iterator<Item = Span<'_, T>> {
         let source = &self.source;
         self.spans.iter().map(move |span| span.resolve(source))
     }
 
+    /// Iterates on the resolved spans, with mutable access to the attributes.
+    pub fn spans_attr_mut(&mut self) -> impl Iterator<Item = SpanMut<'_, T>> {
+        let source = &self.source;
+        self.spans
+            .iter_mut()
+            .map(move |span| span.resolve_mut(source))
+    }
+
     /// Returns a reference to the indexed spans.
     pub fn spans_raw(&self) -> &[IndexedSpan<T>] {
         &self.spans
+    }
+
+    /// Returns a mutable iterator on the spans of this string.
+    ///
+    /// This can be used to modify the style of each span.
+    pub fn spans_raw_attr_mut(
+        &mut self,
+    ) -> impl Iterator<Item = IndexedSpanRefMut<'_, T>> {
+        self.spans.iter_mut().map(IndexedSpan::as_ref_mut)
     }
 
     /// Returns a reference to the source string.
@@ -341,6 +358,19 @@ impl<'a, T> From<&'a SpannedString<T>> for SpannedStr<'a, T> {
     }
 }
 
+/// A reference to an IndexedSpan allowing modification of the attribute.
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct IndexedSpanRefMut<'a, T> {
+    /// Points to the content of the span.
+    pub content: &'a IndexedCow,
+
+    /// Mutable reference to the attribute of the span.
+    pub attr: &'a mut T,
+
+    /// Width of the span.
+    pub width: usize,
+}
+
 /// An indexed span with an associated attribute.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct IndexedSpan<T> {
@@ -358,6 +388,20 @@ impl<T> AsRef<IndexedCow> for IndexedSpan<T> {
     fn as_ref(&self) -> &IndexedCow {
         &self.content
     }
+}
+
+/// A resolved span borrowing its source string, with mutable access to the
+/// attribute.
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct SpanMut<'a, T> {
+    /// Content of this span.
+    pub content: &'a str,
+
+    /// Attribute associated to this span.
+    pub attr: &'a mut T,
+
+    /// Width of the text for this span.
+    pub width: usize,
 }
 
 /// A resolved span borrowing its source string.
@@ -382,6 +426,27 @@ impl<T> IndexedSpan<T> {
         Span {
             content: self.content.resolve(source),
             attr: &self.attr,
+            width: self.width,
+        }
+    }
+
+    /// Resolve the span to a string slice and a mutable attribute.
+    pub fn resolve_mut<'a>(&'a mut self, source: &'a str) -> SpanMut<'a, T>
+    where
+        T: 'a,
+    {
+        SpanMut {
+            content: self.content.resolve(source),
+            attr: &mut self.attr,
+            width: self.width,
+        }
+    }
+
+    /// Returns a reference struct to only access mutation of the attribute.
+    pub fn as_ref_mut(&mut self) -> IndexedSpanRefMut<'_, T> {
+        IndexedSpanRefMut {
+            content: &self.content,
+            attr: &mut self.attr,
             width: self.width,
         }
     }
@@ -470,6 +535,7 @@ impl IndexedCow {
                 // Make sure `value` is indeed a substring of `source`
                 assert!(value_pos >= source_pos);
                 assert!(value_pos + value.len() <= source_pos + source.len());
+
                 let start = value_pos - source_pos;
                 let end = start + value.len();
 
