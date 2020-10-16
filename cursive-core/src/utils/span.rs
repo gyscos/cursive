@@ -235,7 +235,7 @@ impl<T> SpannedString<T> {
     }
 
     /// Shrink the source to discard any unused prefix or suffix.
-    pub fn shrink_to_fit(&mut self) {
+    pub fn trim(&mut self) {
         self.trim_end();
         self.trim_start();
     }
