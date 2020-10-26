@@ -9,6 +9,8 @@ const INPUT_POLL_DELAY_MS: u64 = 30;
 ///
 /// You can get one from `Cursive::runner`, then either call `.run()`, or
 /// manually `.step()`.
+///
+/// The `C` type is usually either `Cursive` or `&mut Cursive`.
 pub struct CursiveRunner<C> {
     siv: C,
     backend: Box<dyn backend::Backend>,

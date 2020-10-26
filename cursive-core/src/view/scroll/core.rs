@@ -305,6 +305,7 @@ impl Core {
                             && (self.offset.y + self.available_size().y
                                 < self.inner_size.y) =>
                     {
+                        // No `min` check here - we allow going over the edge.
                         self.offset.y += 5;
                     }
                     Event::Ctrl(Key::Down) | Event::Key(Key::Down)

@@ -19,6 +19,8 @@ use crate::{
 
 static DEBUG_VIEW_NAME: &str = "_cursive_debug_view";
 
+type RootView = views::OnEventView<views::ScreensView<views::StackView>>;
+
 /// Central part of the cursive library.
 ///
 /// It initializes ncurses on creation and cleans up on drop.
@@ -30,7 +32,7 @@ pub struct Cursive {
     theme: theme::Theme,
 
     // The main view
-    root: views::OnEventView<views::ScreensView<views::StackView>>,
+    root: RootView,
 
     menubar: views::Menubar,
 
@@ -41,6 +43,8 @@ pub struct Cursive {
     // Handle asynchronous callbacks
     cb_source: Receiver<Box<dyn FnOnce(&mut Cursive) + Send>>,
     cb_sink: Sender<Box<dyn FnOnce(&mut Cursive) + Send>>,
+
+    last_size: Vec2,
 
     // User-provided data.
     user_data: Box<dyn Any>,
@@ -84,6 +88,7 @@ impl Cursive {
                 views::StackView::new(),
             )),
             menubar: views::Menubar::new(),
+            last_size: Vec2::zero(),
             needs_clear: true,
             running: true,
             cb_source,
@@ -96,7 +101,15 @@ impl Cursive {
         cursive
     }
 
+    /// Returns the screen size given in the last layout phase.
+    ///
+    /// Note: this will return `(0, 0)` before the first layout phase.
+    pub fn screen_size(&self) -> Vec2 {
+        self.last_size
+    }
+
     pub(crate) fn layout(&mut self, size: Vec2) {
+        self.last_size = size;
         let offset = if self.menubar.autohide { 0 } else { 1 };
         let size = size.saturating_sub((0, offset));
         self.root.layout(size);

@@ -210,19 +210,13 @@ where
 }
 
 /// Implements `View::on_event` on the given model.
-pub fn on_event<Model, GetScroller, OnEvent, ImportantArea>(
+pub fn on_event<Model: ?Sized>(
     event: Event,
     model: &mut Model,
-    mut get_scroller: GetScroller,
-    mut on_event: OnEvent,
-    mut important_area: ImportantArea,
-) -> EventResult
-where
-    Model: ?Sized,
-    GetScroller: FnMut(&mut Model) -> &mut scroll::Core,
-    OnEvent: FnMut(&mut Model, Event) -> EventResult,
-    ImportantArea: FnMut(&Model, Vec2) -> Rect,
-{
+    mut get_scroller: impl FnMut(&mut Model) -> &mut scroll::Core,
+    mut on_event: impl FnMut(&mut Model, Event) -> EventResult,
+    mut important_area: impl FnMut(&Model, Vec2) -> Rect,
+) -> EventResult {
     let mut relative_event = event.clone();
     let inside = get_scroller(model).is_event_inside(&mut relative_event);
     let result = if inside {
