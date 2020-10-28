@@ -123,7 +123,7 @@ close the application.
 
 ## Views
 
-[`View`s] are the main components of the user interface in a cursive
+[`Views`] are the main components of the user interface in a cursive
 application.  At their core, they define what to draw in a rectangle of the
 terminal. For instance, a view can print a line of text, or a checkbox, etc.
 
