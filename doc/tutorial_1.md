@@ -154,7 +154,7 @@ fn main() {
 }
 ```
 
-[`View`s]: https://docs.rs/cursive/0/cursive/view/trait.View.html
+[`Views`]: https://docs.rs/cursive/0/cursive/view/trait.View.html
 [`TextView`]: https://docs.rs/cursive/0/cursive/views/struct.TextView.html
 [`StackView`]: https://docs.rs/cursive/0/cursive/views/struct.StackView.html
 [`Cursive::add_layer`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.add_layer
