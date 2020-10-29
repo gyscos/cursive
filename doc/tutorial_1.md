@@ -123,7 +123,7 @@ close the application.
 
 ## Views
 
-[`View`s] are the main components of the user interface in a cursive
+[`Views`] are the main components of the user interface in a cursive
 application.  At their core, they define what to draw in a rectangle of the
 terminal. For instance, a view can print a line of text, or a checkbox, etc.
 
@@ -154,7 +154,7 @@ fn main() {
 }
 ```
 
-[`View`s]: https://docs.rs/cursive/0/cursive/view/trait.View.html
+[`Views`]: https://docs.rs/cursive/0/cursive/view/trait.View.html
 [`TextView`]: https://docs.rs/cursive/0/cursive/views/struct.TextView.html
 [`StackView`]: https://docs.rs/cursive/0/cursive/views/struct.StackView.html
 [`Cursive::add_layer`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.add_layer
