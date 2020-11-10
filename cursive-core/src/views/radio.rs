@@ -26,10 +26,17 @@ impl<T> SharedState<T> {
 /// A `RadioGroup` is used to create and manage [`RadioButton`]s.
 ///
 /// A `RadioGroup` can be cloned; it will keep pointing to the same group.
-#[derive(Clone)]
 pub struct RadioGroup<T> {
     // Given to every child button
     state: Rc<RefCell<SharedState<T>>>,
+}
+
+impl<T> Clone for RadioGroup<T> {
+    fn clone(&self) -> Self {
+        Self {
+            state: Rc::clone(&self.state),
+        }
+    }
 }
 
 impl<T: 'static> Default for RadioGroup<T> {
