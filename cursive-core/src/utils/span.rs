@@ -115,7 +115,11 @@ where
     }
 
     /// Gives access to the parsed styled spans.
-    pub fn spans<'b>(&'b self) -> impl Iterator<Item = Span<'a, T>> + 'b
+    pub fn spans<'b>(
+        &'b self,
+    ) -> impl DoubleEndedIterator<Item = Span<'a, T>>
+           + ExactSizeIterator<Item = Span<'a, T>>
+           + 'b
     where
         'a: 'b,
     {
@@ -289,7 +293,10 @@ impl<T> SpannedString<T> {
     }
 
     /// Iterates on the resolved spans.
-    pub fn spans(&self) -> impl Iterator<Item = Span<'_, T>> {
+    pub fn spans(
+        &self,
+    ) -> impl DoubleEndedIterator<Item = Span<'_, T>>
+           + ExactSizeIterator<Item = Span<'_, T>> {
         let source = &self.source;
         self.spans.iter().map(move |span| span.resolve(source))
     }
@@ -312,7 +319,8 @@ impl<T> SpannedString<T> {
     /// This can be used to modify the style of each span.
     pub fn spans_raw_attr_mut(
         &mut self,
-    ) -> impl Iterator<Item = IndexedSpanRefMut<'_, T>> {
+    ) -> impl DoubleEndedIterator<Item = IndexedSpanRefMut<'_, T>>
+           + ExactSizeIterator<Item = IndexedSpanRefMut<'_, T>> {
         self.spans.iter_mut().map(IndexedSpan::as_ref_mut)
     }
 
