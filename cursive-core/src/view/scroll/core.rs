@@ -132,7 +132,7 @@ impl Core {
     ) -> Printer<'a, 'b> {
         // Draw scrollbar?
 
-        let size = self.available_size();
+        let size = self.last_available_size();
 
         // Draw the scrollbars
         if self.get_show_scrollbars() {
@@ -207,7 +207,7 @@ impl Core {
             // For mouse events, check if it falls inside the available area
             let inside = position
                 .checked_sub(offset)
-                .map(|p| p.fits_in(self.available_size()))
+                .map(|p| p.fits_in(self.last_available_size()))
                 .unwrap_or(false);
             *position = *position + self.offset;
             inside
@@ -243,13 +243,13 @@ impl Core {
                         event: MouseEvent::WheelDown,
                         ..
                     } if self.enabled.y
-                        && (self.offset.y + self.available_size().y
+                        && (self.offset.y + self.last_available_size().y
                             < self.inner_size.y) =>
                     {
                         self.offset.y = min(
                             self.inner_size
                                 .y
-                                .saturating_sub(self.available_size().y),
+                                .saturating_sub(self.last_available_size().y),
                             self.offset.y + 3,
                         );
                     }
@@ -286,7 +286,7 @@ impl Core {
                     Event::Key(Key::End) if self.enabled.any() => {
                         let max_offset = self
                             .inner_size
-                            .saturating_sub(self.available_size());
+                            .saturating_sub(self.last_available_size());
                         self.offset =
                             self.enabled.select_or(max_offset, self.offset);
                     }
@@ -302,7 +302,8 @@ impl Core {
                     }
                     Event::Key(Key::PageDown)
                         if self.enabled.y
-                            && (self.offset.y + self.available_size().y
+                            && (self.offset.y
+                                + self.last_available_size().y
                                 < self.inner_size.y) =>
                     {
                         // No `min` check here - we allow going over the edge.
@@ -310,7 +311,8 @@ impl Core {
                     }
                     Event::Ctrl(Key::Down) | Event::Key(Key::Down)
                         if self.enabled.y
-                            && (self.offset.y + self.available_size().y
+                            && (self.offset.y
+                                + self.last_available_size().y
                                 < self.inner_size.y) =>
                     {
                         self.offset.y += 1;
@@ -322,7 +324,8 @@ impl Core {
                     }
                     Event::Ctrl(Key::Right) | Event::Key(Key::Right)
                         if self.enabled.x
-                            && (self.offset.x + self.available_size().x
+                            && (self.offset.x
+                                + self.last_available_size().x
                                 < self.inner_size.x) =>
                     {
                         self.offset.x += 1;
@@ -377,9 +380,9 @@ impl Core {
     /// Makes sure the viewport is within the content.
     pub(crate) fn update_offset(&mut self) {
         // Keep the offset in the valid range.
-        self.offset = self
-            .offset
-            .or_min(self.inner_size.saturating_sub(self.available_size()));
+        self.offset = self.offset.or_min(
+            self.inner_size.saturating_sub(self.last_available_size()),
+        );
 
         // Possibly update the offset if we're following a specific strategy.
         self.adjust_scroll();
@@ -418,7 +421,7 @@ impl Core {
 
     /// Returns the viewport in the inner content.
     pub fn content_viewport(&self) -> Rect {
-        Rect::from_size(self.offset, self.available_size())
+        Rect::from_size(self.offset, self.last_available_size())
     }
 
     /// Defines the way scrolling is adjusted on content or size change.
@@ -502,7 +505,8 @@ impl Core {
     where
         S: Into<Vec2>,
     {
-        let max_offset = self.inner_size.saturating_sub(self.available_size());
+        let max_offset =
+            self.inner_size.saturating_sub(self.last_available_size());
         self.offset = offset.into().or_min(max_offset);
     }
 
@@ -542,7 +546,9 @@ impl Core {
 
     /// Try to keep the given `rect` in view.
     pub fn keep_in_view(&mut self, rect: Rect) {
-        let min = rect.bottom_right().saturating_sub(self.available_size());
+        let min = rect
+            .bottom_right()
+            .saturating_sub(self.last_available_size());
         let max = rect.top_left();
         let (min, max) = (Vec2::min(min, max), Vec2::max(min, max));
 
@@ -553,7 +559,7 @@ impl Core {
     pub fn scroll_to_rect(&mut self, important_area: Rect) {
         // The furthest top-left we can go
         let top_left = (important_area.bottom_right() + (1, 1))
-            .saturating_sub(self.available_size());
+            .saturating_sub(self.last_available_size());
         // The furthest bottom-right we can go
         let bottom_right = important_area.top_left();
 
@@ -568,7 +574,7 @@ impl Core {
     /// Scroll until the given point is visible.
     pub fn scroll_to(&mut self, pos: Vec2) {
         // The furthest top-left we can go
-        let min = pos.saturating_sub(self.available_size());
+        let min = pos.saturating_sub(self.last_available_size());
         // How far to the bottom-right we can go
         let max = pos;
 
@@ -577,8 +583,8 @@ impl Core {
 
     /// Scroll until the given column is visible.
     pub fn scroll_to_x(&mut self, x: usize) {
-        if x >= self.offset.x + self.available_size().x {
-            self.offset.x = 1 + x - self.available_size().x;
+        if x >= self.offset.x + self.last_available_size().x {
+            self.offset.x = 1 + x - self.last_available_size().x;
         } else if x < self.offset.x {
             self.offset.x = x;
         }
@@ -586,8 +592,8 @@ impl Core {
 
     /// Scroll until the given row is visible.
     pub fn scroll_to_y(&mut self, y: usize) {
-        if y >= self.offset.y + self.available_size().y {
-            self.offset.y = 1 + y - self.available_size().y;
+        if y >= self.offset.y + self.last_available_size().y {
+            self.offset.y = 1 + y - self.last_available_size().y;
         } else if y < self.offset.y {
             self.offset.y = y;
         }
@@ -601,7 +607,8 @@ impl Core {
 
     /// Programmatically scroll to the bottom of the view.
     pub fn scroll_to_bottom(&mut self) {
-        let max_y = self.inner_size.saturating_sub(self.available_size()).y;
+        let max_y =
+            self.inner_size.saturating_sub(self.last_available_size()).y;
         let curr_x = self.offset.x;
         self.set_offset((curr_x, max_y));
     }
@@ -614,7 +621,8 @@ impl Core {
 
     /// Programmatically scroll to the rightmost side of the view.
     pub fn scroll_to_right(&mut self) {
-        let max_x = self.inner_size.saturating_sub(self.available_size()).x;
+        let max_x =
+            self.inner_size.saturating_sub(self.last_available_size()).x;
         let curr_y = self.offset.y;
         self.set_offset((max_x, curr_y));
     }
@@ -626,7 +634,8 @@ impl Core {
 
     /// Returns for each axis if we are scrolling.
     pub fn is_scrolling(&self) -> XY<bool> {
-        self.inner_size.zip_map(self.available_size(), |i, s| i > s)
+        self.inner_size
+            .zip_map(self.last_available_size(), |i, s| i > s)
     }
 
     /// Stops grabbing the scrollbar.
@@ -645,14 +654,14 @@ impl Core {
             .select_or(self.scrollbar_padding + (1, 1), Vec2::zero())
     }
 
-    /// Returns the size available for the child view.
-    fn available_size(&self) -> Vec2 {
+    /// Returns the last size available for the child view.
+    pub fn last_available_size(&self) -> Vec2 {
         self.last_available
     }
 
     /// Returns the last size given by `layout`.
     pub fn last_outer_size(&self) -> Vec2 {
-        self.available_size() + self.scrollbar_size()
+        self.last_available_size() + self.scrollbar_size()
     }
 
     /// Starts scrolling from the cursor position.
@@ -663,7 +672,7 @@ impl Core {
         let scrollbar_pos = self.last_outer_size().saturating_sub((1, 1));
         let lengths = self.scrollbar_thumb_lengths();
         let offsets = self.scrollbar_thumb_offsets(lengths);
-        let available = self.available_size();
+        let available = self.last_available_size();
 
         // This is true for Y if we grabbed the vertical scrollbar
         // More specifically, we need both (for instance for the vertical bar):
@@ -711,7 +720,7 @@ impl Core {
 
     fn scroll_to_thumb(&mut self, orientation: Orientation, thumb_pos: usize) {
         let lengths = self.scrollbar_thumb_lengths();
-        let available = self.available_size();
+        let available = self.last_available_size();
 
         // We want self.scrollbar_thumb_offsets() to be thumb_pos
         // steps * self.o / (self.inner + 1 - available) = thumb_pos
@@ -728,7 +737,8 @@ impl Core {
         let new_offset =
             ((self.inner_size + (1, 1)).saturating_sub(available) * thumb_pos)
                 .div_up(extra);
-        let max_offset = self.inner_size.saturating_sub(self.available_size());
+        let max_offset =
+            self.inner_size.saturating_sub(self.last_available_size());
         self.offset
             .set_axis_from(orientation, &new_offset.or_min(max_offset));
     }
@@ -754,14 +764,14 @@ impl Core {
     }
 
     fn scrollbar_thumb_lengths(&self) -> Vec2 {
-        let available = self.available_size();
+        let available = self.last_available_size();
         // The length should be (visible / total) * visible
 
         (available * available / self.inner_size.or_max((1, 1))).or_max((1, 1))
     }
 
     fn scrollbar_thumb_offsets(&self, lengths: Vec2) -> Vec2 {
-        let available = self.available_size();
+        let available = self.last_available_size();
         // The number of steps is 1 + the "extra space"
         let steps = (available + (1, 1)).saturating_sub(lengths);
         let max_offset = self.inner_size.saturating_sub(available) + (1, 1);
