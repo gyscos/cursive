@@ -7,7 +7,8 @@ fn main() {
     siv.load_theme_file("assets/style.toml").unwrap();
 
     // Or you can directly load it from a string for easy deployment.
-    siv.load_toml(include_str!("../../assets/style.toml")).unwrap();
+    siv.load_toml(include_str!("../../assets/style.toml"))
+        .unwrap();
 
     siv.add_layer(
         Dialog::around(TextView::new(

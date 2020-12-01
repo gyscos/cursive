@@ -523,7 +523,7 @@ impl IndexedCow {
 
     /// Returns the embedded text content if `self` is `IndexedCow::Owned`.
     pub fn as_owned(&self) -> Option<&str> {
-        if let &IndexedCow::Owned(ref content) = self {
+        if let IndexedCow::Owned(ref content) = *self {
             Some(content)
         } else {
             None
