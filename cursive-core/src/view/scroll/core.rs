@@ -2,7 +2,7 @@ use std::cmp::min;
 
 use crate::{
     direction::Orientation,
-    event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent},
+    event::{AnyCb, Event},
     printer::Printer,
     rect::Rect,
     theme::ColorStyle,
