@@ -17,6 +17,8 @@ pub struct Chunk {
     /// If a chunk of text ends in a space, it can be compressed a bit.
     ///
     /// (We can omit the space if it would result in a perfect fit.)
+    ///
+    /// This only matches literally the ' ' byte.
     pub ends_with_space: bool,
 }
 

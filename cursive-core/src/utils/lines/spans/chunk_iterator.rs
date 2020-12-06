@@ -173,7 +173,11 @@ where
                 if self.current_span >= self.source.spans().len() {
                     // If this was the last chunk, return as is!
                     // Well, make sure we don't end with a newline...
-                    let hard_stop = hard_stop || span_text.ends_with('\n');
+                    if span_text.ends_with('\n') {
+                        // This is basically a hard-stop here.
+                        // Easy, just remove 1 byte.
+                        segments.last_mut().unwrap().end -= 1;
+                    }
 
                     return Some(Chunk {
                         width: total_width,
