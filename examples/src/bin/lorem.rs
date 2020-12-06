@@ -1,8 +1,10 @@
-use cursive::event::{EventResult, Key};
-use cursive::traits::With;
-use cursive::view::{scroll::Scroller, Scrollable};
-use cursive::views::{Dialog, Panel, TextView};
-use cursive::{align::HAlign, views::OnEventView};
+use cursive::{
+    align::HAlign,
+    event::{EventResult, Key},
+    traits::With,
+    view::{scroll::Scroller, Scrollable},
+    views::{Dialog, OnEventView, Panel, TextView},
+};
 
 fn main() {
     // Read some long text from a file.
