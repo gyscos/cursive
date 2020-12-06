@@ -1,6 +1,8 @@
-use cursive::align::HAlign;
-use cursive::view::Scrollable;
+use cursive::event::{EventResult, Key};
+use cursive::traits::With;
+use cursive::view::{scroll::Scroller, Scrollable};
 use cursive::views::{Dialog, Panel, TextView};
+use cursive::{align::HAlign, views::OnEventView};
 
 fn main() {
     // Read some long text from a file.
@@ -14,11 +16,33 @@ fn main() {
     // The text is too long to fit on a line, so the view will wrap lines,
     // and will adapt to the terminal size.
     siv.add_fullscreen_layer(
-        Dialog::around(Panel::new(TextView::new(content).scrollable()))
-            .title("Unicode and wide-character support")
-            // This is the alignment for the button
-            .h_align(HAlign::Center)
-            .button("Quit", |s| s.quit()),
+        Dialog::around(Panel::new(
+            TextView::new(content)
+                .scrollable()
+                .wrap_with(OnEventView::new)
+                .on_pre_event_inner(Key::PageUp, |v, _| {
+                    let scroller = v.get_scroller_mut();
+                    if scroller.can_scroll_up() {
+                        scroller.scroll_up(
+                            scroller.last_outer_size().y.saturating_sub(1),
+                        );
+                    }
+                    Some(EventResult::Consumed(None))
+                })
+                .on_pre_event_inner(Key::PageDown, |v, _| {
+                    let scroller = v.get_scroller_mut();
+                    if scroller.can_scroll_down() {
+                        scroller.scroll_down(
+                            scroller.last_outer_size().y.saturating_sub(1),
+                        );
+                    }
+                    Some(EventResult::Consumed(None))
+                }),
+        ))
+        .title("Unicode and wide-character support")
+        // This is the alignment for the button
+        .h_align(HAlign::Center)
+        .button("Quit", |s| s.quit()),
     );
     // Show a popup on top of the view.
     siv.add_layer(Dialog::info(

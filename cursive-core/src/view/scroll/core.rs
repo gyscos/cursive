@@ -1,14 +1,15 @@
 use std::cmp::min;
 
-use crate::direction::Orientation;
-use crate::event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent};
-use crate::printer::Printer;
-use crate::rect::Rect;
-use crate::theme::ColorStyle;
-use crate::view::{ScrollStrategy, Selector, SizeCache};
-use crate::with::With;
-use crate::Vec2;
-use crate::XY;
+use crate::{
+    direction::Orientation,
+    event::{AnyCb, Event, EventResult, Key, MouseButton, MouseEvent},
+    printer::Printer,
+    rect::Rect,
+    theme::ColorStyle,
+    view::{ScrollStrategy, Selector, SizeCache},
+    with::With,
+    Vec2, XY,
+};
 
 /// Describes an item with a scroll core.
 ///
@@ -217,137 +218,6 @@ impl Core {
         }
     }
 
-    /// Handle an event after processing by the content.
-    pub fn on_inner_event(
-        &mut self,
-        event: Event,
-        inner_result: EventResult,
-        important_area: Rect,
-    ) -> EventResult {
-        match inner_result {
-            EventResult::Ignored => {
-                // The view ignored the event, so we're free to use it.
-
-                // If it's an arrow, try to scroll in the given direction.
-                // If it's a mouse scroll, try to scroll as well.
-                // Also allow Ctrl+arrow to move the view,
-                // without affecting the selection.
-                match event {
-                    Event::Mouse {
-                        event: MouseEvent::WheelUp,
-                        ..
-                    } if self.enabled.y && self.offset.y > 0 => {
-                        self.offset.y = self.offset.y.saturating_sub(3);
-                    }
-                    Event::Mouse {
-                        event: MouseEvent::WheelDown,
-                        ..
-                    } if self.enabled.y
-                        && (self.offset.y + self.last_available_size().y
-                            < self.inner_size.y) =>
-                    {
-                        self.offset.y = min(
-                            self.inner_size
-                                .y
-                                .saturating_sub(self.last_available_size().y),
-                            self.offset.y + 3,
-                        );
-                    }
-                    Event::Mouse {
-                        event: MouseEvent::Press(MouseButton::Left),
-                        position,
-                        offset,
-                    } if self.show_scrollbars
-                        && position
-                            .checked_sub(offset)
-                            .map(|position| self.start_drag(position))
-                            .unwrap_or(false) =>
-                    {
-                        // Just consume the event.
-                    }
-                    Event::Mouse {
-                        event: MouseEvent::Hold(MouseButton::Left),
-                        position,
-                        offset,
-                    } if self.show_scrollbars => {
-                        let position = position.saturating_sub(offset);
-                        self.drag(position);
-                    }
-                    Event::Mouse {
-                        event: MouseEvent::Release(MouseButton::Left),
-                        ..
-                    } => {
-                        self.release_grab();
-                    }
-                    Event::Key(Key::Home) if self.enabled.any() => {
-                        self.offset =
-                            self.enabled.select_or(Vec2::zero(), self.offset);
-                    }
-                    Event::Key(Key::End) if self.enabled.any() => {
-                        let max_offset = self
-                            .inner_size
-                            .saturating_sub(self.last_available_size());
-                        self.offset =
-                            self.enabled.select_or(max_offset, self.offset);
-                    }
-                    Event::Ctrl(Key::Up) | Event::Key(Key::Up)
-                        if self.enabled.y && self.offset.y > 0 =>
-                    {
-                        self.offset.y -= 1;
-                    }
-                    Event::Key(Key::PageUp)
-                        if self.enabled.y && self.offset.y > 0 =>
-                    {
-                        self.offset.y = self.offset.y.saturating_sub(5);
-                    }
-                    Event::Key(Key::PageDown)
-                        if self.enabled.y
-                            && (self.offset.y
-                                + self.last_available_size().y
-                                < self.inner_size.y) =>
-                    {
-                        // No `min` check here - we allow going over the edge.
-                        self.offset.y += 5;
-                    }
-                    Event::Ctrl(Key::Down) | Event::Key(Key::Down)
-                        if self.enabled.y
-                            && (self.offset.y
-                                + self.last_available_size().y
-                                < self.inner_size.y) =>
-                    {
-                        self.offset.y += 1;
-                    }
-                    Event::Ctrl(Key::Left) | Event::Key(Key::Left)
-                        if self.enabled.x && self.offset.x > 0 =>
-                    {
-                        self.offset.x -= 1;
-                    }
-                    Event::Ctrl(Key::Right) | Event::Key(Key::Right)
-                        if self.enabled.x
-                            && (self.offset.x
-                                + self.last_available_size().x
-                                < self.inner_size.x) =>
-                    {
-                        self.offset.x += 1;
-                    }
-                    _ => return EventResult::Ignored,
-                };
-
-                // We just scrolled manually, so reset the scroll strategy.
-                self.scroll_strategy = ScrollStrategy::KeepRow;
-                // TODO: return callback on_scroll?
-                EventResult::Consumed(None)
-            }
-            other => {
-                // The view consumed the event. Maybe something changed?
-
-                self.scroll_to_rect(important_area);
-
-                other
-            }
-        }
-    }
-
     /// Specifies the size given in a layout phase.
     pub(crate) fn set_last_size(
         &mut self,
@@ -507,6 +377,7 @@ impl Core {
     {
         let max_offset =
             self.inner_size.saturating_sub(self.last_available_size());
+
         self.offset = offset.into().or_min(max_offset);
     }
 
@@ -599,32 +470,56 @@ impl Core {
         }
     }
 
+    /// Scroll by `n` cells to the left.
+    pub fn scroll_left(&mut self, n: usize) {
+        // Goal: never repeat .x (to prevent typo/confusion)
+        // TODO: further reduce code duplication.
+        let offset = self.offset.as_ref_mut().x;
+        *offset = offset.saturating_sub(n);
+    }
+
+    /// Scroll by `n` cells to the top.
+    pub fn scroll_up(&mut self, n: usize) {
+        let offset = self.offset.as_ref_mut().y;
+        *offset = offset.saturating_sub(n);
+    }
+
+    /// Scroll by `n` cells to the bottom.
+    pub fn scroll_down(&mut self, n: usize) {
+        let max_offset = self.max_offset();
+        let (offset, max) = XY::zip(self.offset.as_ref_mut(), max_offset).y;
+        *offset = min(max, *offset + n);
+    }
+
+    /// Scroll by `n` cells to the right.
+    pub fn scroll_right(&mut self, n: usize) {
+        let max_offset = self.max_offset();
+        let (offset, max) = XY::zip(self.offset.as_ref_mut(), max_offset).x;
+        *offset = min(max, *offset + n);
+    }
+
     /// Programmatically scroll to the top of the view.
     pub fn scroll_to_top(&mut self) {
-        let curr_x = self.offset.x;
-        self.set_offset((curr_x, 0));
+        self.offset.y = 0;
     }
 
     /// Programmatically scroll to the bottom of the view.
     pub fn scroll_to_bottom(&mut self) {
-        let max_y =
-            self.inner_size.saturating_sub(self.last_available_size()).y;
-        let curr_x = self.offset.x;
-        self.set_offset((curr_x, max_y));
+        self.offset.y = self.max_offset().y;
     }
 
     /// Programmatically scroll to the leftmost side of the view.
     pub fn scroll_to_left(&mut self) {
-        let curr_y = self.offset.y;
-        self.set_offset((0, curr_y));
+        self.offset.x = 0;
     }
 
     /// Programmatically scroll to the rightmost side of the view.
     pub fn scroll_to_right(&mut self) {
-        let max_x =
-            self.inner_size.saturating_sub(self.last_available_size()).x;
-        let curr_y = self.offset.y;
-        self.set_offset((max_x, curr_y));
+        self.offset.x = self.max_offset().x;
+    }
+
+    fn max_offset(&self) -> Vec2 {
+        self.inner_size.saturating_sub(self.last_available_size())
     }
 
     /// Clears the cache.
@@ -639,7 +534,7 @@ impl Core {
     }
 
     /// Stops grabbing the scrollbar.
-    fn release_grab(&mut self) {
+    pub fn release_grab(&mut self) {
         self.thumb_grab = None;
     }
 
@@ -664,10 +559,45 @@ impl Core {
         self.last_available_size() + self.scrollbar_size()
     }
 
+    /// Checks if we can scroll up.
+    ///
+    /// Returns `true` if vertical scrolling is enabled, and if we are not at
+    /// the top already.
+    pub fn can_scroll_up(&self) -> bool {
+        self.enabled.y && self.offset.y > 0
+    }
+
+    /// Checks if we can scroll to the left.
+    ///
+    /// Returns `true` if horizontal scrolling is enabled, and if we are not at
+    /// the left edge already.
+    pub fn can_scroll_left(&self) -> bool {
+        self.enabled.x && self.offset.x > 0
+    }
+
+    /// Checks if we can scroll down.
+    ///
+    /// Returns `true` if vertical scrolling is enabled, and if we are not at
+    /// the bottom already.
+    pub fn can_scroll_down(&self) -> bool {
+        self.enabled.y
+            && (self.offset.y + self.last_available_size().y
+                < self.inner_size.y)
+    }
+
+    /// Checks if we can scroll to the right.
+    ///
+    /// Returns `true` if horizontal scrolling is enabled, and if we are not at
+    /// the right edge already.
+    pub fn can_scroll_right(&self) -> bool {
+        self.enabled.x
+            && (self.offset.x + self.last_available_size().x
+                < self.inner_size.x)
+    }
     /// Starts scrolling from the cursor position.
     ///
     /// Returns `true` if the event was consumed.
-    fn start_drag(&mut self, position: Vec2) -> bool {
+    pub fn start_drag(&mut self, position: Vec2) -> bool {
         // For each scrollbar, how far it is.
         let scrollbar_pos = self.last_outer_size().saturating_sub((1, 1));
         let lengths = self.scrollbar_thumb_lengths();
@@ -708,7 +638,7 @@ impl Core {
     }
 
     /// Called when a mouse drag is detected.
-    fn drag(&mut self, position: Vec2) {
+    pub fn drag(&mut self, position: Vec2) {
         // Only do something if we grabbed something before.
         if let Some((orientation, grab)) = self.thumb_grab {
             self.scroll_to_thumb(

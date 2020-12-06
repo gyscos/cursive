@@ -2,12 +2,14 @@
 //!
 //! Most functions take a generic `Model` class, and various closures to get
 //! the required things from this model.
-use crate::event::{Event, EventResult};
-use crate::rect::Rect;
-use crate::view::scroll;
-use crate::xy::XY;
-use crate::Printer;
-use crate::Vec2;
+//!
+use crate::{
+    event::{Event, EventResult, Key, MouseButton, MouseEvent},
+    rect::Rect,
+    view::scroll,
+    xy::XY,
+    Printer, Vec2,
+};
 
 /// Implements `View::draw` over the `model`.
 pub fn draw<Model, GetScroller, Draw>(
@@ -224,7 +226,124 @@ pub fn on_event<Model: ?Sized>(
     } else {
         EventResult::Ignored
     };
-    let inner_size = get_scroller(model).inner_size();
-    let important = important_area(model, inner_size);
-    get_scroller(model).on_inner_event(event, result, important)
+
+    match result {
+        EventResult::Ignored => {
+            // The view ignored the event, so we're free to use it.
+
+            // If it's an arrow, try to scroll in the given direction.
+            // If it's a mouse scroll, try to scroll as well.
+            // Also allow Ctrl+arrow to move the view,
+            // without affecting the selection.
+            match event {
+                Event::Mouse {
+                    event: MouseEvent::WheelUp,
+                    ..
+                } if get_scroller(model).can_scroll_up() => {
+                    get_scroller(model).scroll_up(3);
+                }
+                Event::Mouse {
+                    event: MouseEvent::WheelDown,
+                    ..
+                } if get_scroller(model).can_scroll_down() => {
+                    get_scroller(model).scroll_down(3);
+                }
+                Event::Mouse {
+                    event: MouseEvent::Press(MouseButton::Left),
+                    position,
+                    offset,
+                } if get_scroller(model).get_show_scrollbars()
+                    && position
+                        .checked_sub(offset)
+                        .map(|position| {
+                            get_scroller(model).start_drag(position)
+                        })
+                        .unwrap_or(false) =>
+                {
+                    // Just consume the event.
+                }
+                Event::Mouse {
+                    event: MouseEvent::Hold(MouseButton::Left),
+                    position,
+                    offset,
+                } if get_scroller(model).get_show_scrollbars() => {
+                    let position = position.saturating_sub(offset);
+                    get_scroller(model).drag(position);
+                }
+                Event::Mouse {
+                    event: MouseEvent::Release(MouseButton::Left),
+                    ..
+                } => {
+                    get_scroller(model).release_grab();
+                }
+                Event::Key(Key::Home)
+                    if get_scroller(model).is_enabled().any() =>
+                {
+                    let actions: XY<fn(&mut scroll::Core)> = XY::new(
+                        scroll::Core::scroll_to_left,
+                        scroll::Core::scroll_to_top,
+                    );
+                    let scroller = get_scroller(model);
+                    actions.run_if(scroller.is_enabled(), |a| a(scroller));
+                }
+                Event::Key(Key::End)
+                    if get_scroller(model).is_enabled().any() =>
+                {
+                    let actions: XY<fn(&mut scroll::Core)> = XY::new(
+                        scroll::Core::scroll_to_right,
+                        scroll::Core::scroll_to_bottom,
+                    );
+                    let scroller = get_scroller(model);
+                    actions.run_if(scroller.is_enabled(), |a| a(scroller));
+                }
+                Event::Ctrl(Key::Up) | Event::Key(Key::Up)
+                    if get_scroller(model).can_scroll_up() =>
+                {
+                    get_scroller(model).scroll_up(1);
+                }
+                Event::Key(Key::PageUp)
+                    if get_scroller(model).can_scroll_up() =>
+                {
+                    get_scroller(model).scroll_up(5);
+                }
+                Event::Key(Key::PageDown)
+                    if get_scroller(model).can_scroll_down() =>
+                {
+                    // No `min` check here - we allow going over the edge.
+                    get_scroller(model).scroll_down(5);
+                }
+                Event::Ctrl(Key::Down) | Event::Key(Key::Down)
+                    if get_scroller(model).can_scroll_down() =>
+                {
+                    get_scroller(model).scroll_down(1);
+                }
+                Event::Ctrl(Key::Left) | Event::Key(Key::Left)
+                    if get_scroller(model).can_scroll_left() =>
+                {
+                    get_scroller(model).scroll_left(1);
+                }
+                Event::Ctrl(Key::Right) | Event::Key(Key::Right)
+                    if get_scroller(model).can_scroll_right() =>
+                {
+                    get_scroller(model).scroll_right(1);
+                }
+                _ => return EventResult::Ignored,
+            };
+
+            // We just scrolled manually, so reset the scroll strategy.
+            get_scroller(model)
+                .set_scroll_strategy(scroll::ScrollStrategy::KeepRow);
+
+            // TODO: return callback on_scroll?
+            EventResult::Consumed(None)
+        }
+        other => {
+            // The view consumed the event. Maybe something changed?
+            let inner_size = get_scroller(model).inner_size();
+            let important = important_area(model, inner_size);
+            get_scroller(model).scroll_to_rect(important);
+
+            other
+        }
+    }
 }

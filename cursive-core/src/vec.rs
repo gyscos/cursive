@@ -17,6 +17,11 @@ use crate::XY;
 /// [`XY`]: crate::XY
 pub type Vec2 = XY<usize>;
 
+/// A signed 2D quantity, in cells.
+///
+/// Usually represents an offset.
+pub type Vec2i = XY<isize>;
+
 impl<T: PartialOrd> PartialOrd for XY<T> {
     /// `a < b` <=> `a.x < b.x && a.y < b.y`
     fn partial_cmp(&self, other: &XY<T>) -> Option<Ordering> {

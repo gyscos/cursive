@@ -110,9 +110,9 @@ impl<T> XY<T> {
     ///
     /// assert_eq!(xy.run_if(cond, |v| v * 3), XY::new(Some(3), None));
     /// ```
-    pub fn run_if<F, U>(self, condition: XY<bool>, f: F) -> XY<Option<U>>
+    pub fn run_if<F, U>(self, condition: XY<bool>, mut f: F) -> XY<Option<U>>
     where
-        F: Fn(T) -> U,
+        F: FnMut(T) -> U,
     {
         self.zip_map(condition, |v, c| if c { Some(f(v)) } else { None })
     }
@@ -163,7 +163,7 @@ impl<T> XY<T> {
         (self.x, self.y)
     }
 
-    /// Return a `XY` with references to this one's values.
+    /// Returns a `XY` with references to this one's values.
     ///
     /// # Examples
     ///
@@ -182,6 +182,11 @@ impl<T> XY<T> {
     /// ```
     pub fn as_ref(&self) -> XY<&T> {
         XY::new(&self.x, &self.y)
+    }
+
+    /// Returns a `XY` with mutable references to this one's values.
+    pub fn as_ref_mut(&mut self) -> XY<&mut T> {
+        XY::new(&mut self.x, &mut self.y)
     }
 
     /// Creates an iterator that returns references to `x`, then `y`.
@@ -331,9 +336,9 @@ impl<T> XY<T> {
     /// let xy = a.zip_map(b, |(a1, a2), b| if b { a1 } else { a2 });
     /// assert_eq!(xy, XY::new(1, 20));
     /// ```
-    pub fn zip_map<U, V, F>(self, other: XY<U>, f: F) -> XY<V>
+    pub fn zip_map<U, V, F>(self, other: XY<U>, mut f: F) -> XY<V>
     where
-        F: Fn(T, U) -> V,
+        F: FnMut(T, U) -> V,
     {
         XY::new(f(self.x, other.x), f(self.y, other.y))
     }

@@ -1,5 +1,12 @@
 /// Generic trait to enable chainable API
 pub trait With: Sized {
+    /// Calls the given closure and return the result.
+    ///
+    /// Used to chainify wrapper constructors.
+    fn wrap_with<U, F: FnOnce(Self) -> U>(self, f: F) -> U {
+        f(self)
+    }
+
     /// Calls the given closure on `self`.
     fn with<F: FnOnce(&mut Self)>(mut self, f: F) -> Self {
         f(&mut self);
