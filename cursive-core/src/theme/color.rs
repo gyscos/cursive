@@ -96,6 +96,9 @@ pub enum Color {
     ///
     /// These 216 possible colors are part of the default color palette (256 colors).
     RgbLowRes(u8, u8, u8),
+
+    /// Unset
+    None,
 }
 
 impl Color {

@@ -253,8 +253,16 @@ impl backend::Backend for Backend {
             back: blt_colour_to_colour(state::background()),
         };
 
-        let fg = colour_to_blt_colour(color.front, ColorRole::Foreground);
-        let bg = colour_to_blt_colour(color.back, ColorRole::Background);
+        let fg = colour_to_blt_colour(
+            color.front,
+            ColorRole::Foreground,
+            current.front,
+        );
+        let bg = colour_to_blt_colour(
+            color.back,
+            ColorRole::Background,
+            current.back,
+        );
 
         terminal::set_colors(fg, bg);
 
@@ -307,6 +315,7 @@ impl backend::Backend for Backend {
         terminal::set_background(colour_to_blt_colour(
             color,
             ColorRole::Background,
+            Color::Dark(BaseColor::Black),
         ));
         terminal::clear(None);
     }
@@ -328,7 +337,15 @@ fn blt_colour_to_colour(c: BltColor) -> Color {
     Color::Rgb(c.red, c.green, c.blue)
 }
 
-fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
+fn colour_to_blt_colour(
+    clr: Color,
+    role: ColorRole,
+    curr_clr: Color,
+) -> BltColor {
+    let clr = match clr {
+        Color::None => curr_clr,
+        _ => clr,
+    };
     let (r, g, b) = match clr {
         Color::TerminalDefault => {
             let clr = match role {
@@ -365,6 +382,7 @@ fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
             (f32::from(g) / 5.0 * 255.0) as u8,
             (f32::from(b) / 5.0 * 255.0) as u8,
         ),
+        Color::None => (0, 0, 0),
     };
     BltColor::from_rgb(r, g, b)
 }

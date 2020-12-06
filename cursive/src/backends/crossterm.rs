@@ -149,7 +149,10 @@ fn translate_event(event: CKeyEvent) -> Event {
     }
 }
 
-fn translate_color(base_color: theme::Color) -> Color {
+fn translate_color(
+    base_color: theme::Color,
+    curr_color: theme::Color,
+) -> Color {
     match base_color {
         theme::Color::Dark(theme::BaseColor::Black) => Color::Black,
         theme::Color::Dark(theme::BaseColor::Red) => Color::DarkRed,
@@ -182,6 +185,9 @@ fn translate_color(base_color: theme::Color) -> Color {
             Color::AnsiValue(16 + 36 * r + 6 * g + b)
         }
         theme::Color::TerminalDefault => Color::Reset,
+        theme::Color::None => {
+            translate_color(curr_color, theme::Color::TerminalDefault)
+        }
     }
 }
 
@@ -215,8 +221,14 @@ impl Backend {
     fn apply_colors(&self, colors: theme::ColorPair) {
         queue!(
             self.stdout_mut(),
-            SetForegroundColor(translate_color(colors.front)),
-            SetBackgroundColor(translate_color(colors.back))
+            SetForegroundColor(translate_color(
+                colors.front,
+                self.current_style.get().front
+            )),
+            SetBackgroundColor(translate_color(
+                colors.back,
+                self.current_style.get().back
+            ))
         )
         .unwrap();
     }
@@ -347,8 +359,15 @@ impl backend::Backend for Backend {
         queue!(self.stdout_mut(), Clear(ClearType::All)).unwrap();
     }
 
-    fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
+    fn set_color(&self, mut color: theme::ColorPair) -> theme::ColorPair {
         let current_style = self.current_style.get();
+
+        if color.back == theme::Color::None {
+            color.back = current_style.back;
+        }
+        if color.front == theme::Color::None {
+            color.front = current_style.front;
+        }
 
         if current_style != color {
             self.apply_colors(color);

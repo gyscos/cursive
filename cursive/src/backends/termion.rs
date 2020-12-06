@@ -229,8 +229,15 @@ impl backend::Backend for Backend {
         "termion"
     }
 
-    fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
+    fn set_color(&self, mut color: theme::ColorPair) -> theme::ColorPair {
         let current_style = self.current_style.get();
+
+        if color.front == theme::Color::None {
+            color.front = current_style.front;
+        }
+        if color.back == theme::Color::None {
+            color.back = current_style.back;
+        }
 
         if current_style != color {
             self.apply_colors(color);
@@ -331,6 +338,7 @@ where
     F: FnOnce(&dyn tcolor::Color) -> R,
 {
     match clr {
+        theme::Color::None => f(&tcolor::Reset),
         theme::Color::TerminalDefault => f(&tcolor::Reset),
         theme::Color::Dark(theme::BaseColor::Black) => f(&tcolor::Black),
         theme::Color::Dark(theme::BaseColor::Red) => f(&tcolor::Red),

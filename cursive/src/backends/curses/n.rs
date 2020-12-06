@@ -173,8 +173,15 @@ impl Backend {
     }
 
     /// Checks the pair in the cache, or re-define a color if needed.
-    fn get_or_create(&self, pair: ColorPair) -> i16 {
+    fn get_or_create(&self, mut pair: ColorPair) -> i16 {
         let mut pairs = self.pairs.borrow_mut();
+        let current_style = self.current_style.get();
+        if pair.back == Color::None {
+            pair.back = current_style.back;
+        }
+        if pair.front == Color::None {
+            pair.front = current_style.front;
+        }
 
         // Find if we have this color in stock
         let result = find_closest_pair(pair);

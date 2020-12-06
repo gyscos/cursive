@@ -78,6 +78,7 @@ fn find_closest_pair(pair: ColorPair, max_colors: i16) -> (i16, i16) {
 /// downgraded to the closest one available.
 fn find_closest(color: Color, max_colors: i16) -> i16 {
     match color {
+        Color::None => -1,
         Color::TerminalDefault => -1,
         Color::Dark(BaseColor::Black) => 0,
         Color::Dark(BaseColor::Red) => 1,
