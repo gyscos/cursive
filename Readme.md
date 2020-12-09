@@ -97,6 +97,7 @@ Here are some cool applications using cursive:
 * [clock-cli](https://github.com/TianyiShi2001/clock-cli-rs): A clock with stopwatch and countdown timer functionalities
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
 * [rusty-man](https://sr.ht/~ireas/rusty-man): Browse rustdoc documentation
+* [mythra](https://github.com/deven96/mythra): CLI to search for music
 
 ## Goals
 
