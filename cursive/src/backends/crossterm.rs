@@ -185,7 +185,7 @@ fn translate_color(
             Color::AnsiValue(16 + 36 * r + 6 * g + b)
         }
         theme::Color::TerminalDefault => Color::Reset,
-        theme::Color::None => {
+        theme::Color::InheritParent => {
             translate_color(curr_color, theme::Color::TerminalDefault)
         }
     }
@@ -362,10 +362,10 @@ impl backend::Backend for Backend {
     fn set_color(&self, mut color: theme::ColorPair) -> theme::ColorPair {
         let current_style = self.current_style.get();
 
-        if color.back == theme::Color::None {
+        if color.back == theme::Color::InheritParent {
             color.back = current_style.back;
         }
-        if color.front == theme::Color::None {
+        if color.front == theme::Color::InheritParent {
             color.front = current_style.front;
         }
 

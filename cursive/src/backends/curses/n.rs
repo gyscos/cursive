@@ -176,10 +176,10 @@ impl Backend {
     fn get_or_create(&self, mut pair: ColorPair) -> i16 {
         let mut pairs = self.pairs.borrow_mut();
         let current_style = self.current_style.get();
-        if pair.back == Color::None {
+        if pair.back == Color::InheritParent {
             pair.back = current_style.back;
         }
-        if pair.front == Color::None {
+        if pair.front == Color::InheritParent {
             pair.front = current_style.front;
         }
 

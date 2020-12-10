@@ -232,10 +232,10 @@ impl backend::Backend for Backend {
     fn set_color(&self, mut color: theme::ColorPair) -> theme::ColorPair {
         let current_style = self.current_style.get();
 
-        if color.front == theme::Color::None {
+        if color.front == theme::Color::InheritParent {
             color.front = current_style.front;
         }
-        if color.back == theme::Color::None {
+        if color.back == theme::Color::InheritParent {
             color.back = current_style.back;
         }
 
@@ -338,7 +338,7 @@ where
     F: FnOnce(&dyn tcolor::Color) -> R,
 {
     match clr {
-        theme::Color::None => f(&tcolor::Reset),
+        theme::Color::InheritParent => f(&tcolor::Reset),
         theme::Color::TerminalDefault => f(&tcolor::Reset),
         theme::Color::Dark(theme::BaseColor::Black) => f(&tcolor::Black),
         theme::Color::Dark(theme::BaseColor::Red) => f(&tcolor::Red),

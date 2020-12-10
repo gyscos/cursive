@@ -343,7 +343,7 @@ fn colour_to_blt_colour(
     curr_clr: Color,
 ) -> BltColor {
     let clr = match clr {
-        Color::None => curr_clr,
+        Color::InheritParent => curr_clr,
         _ => clr,
     };
     let (r, g, b) = match clr {
@@ -382,7 +382,7 @@ fn colour_to_blt_colour(
             (f32::from(g) / 5.0 * 255.0) as u8,
             (f32::from(b) / 5.0 * 255.0) as u8,
         ),
-        Color::None => (0, 0, 0),
+        Color::InheritParent => (0, 0, 0),
     };
     BltColor::from_rgb(r, g, b)
 }
