@@ -363,6 +363,7 @@ impl backend::Backend for Backend {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.set_attr(Attribute::Reverse),
             theme::Effect::Bold => self.set_attr(Attribute::Bold),
+            theme::Effect::Blink => self.set_attr(Attribute::SlowBlink),
             theme::Effect::Italic => self.set_attr(Attribute::Italic),
             theme::Effect::Strikethrough => {
                 self.set_attr(Attribute::CrossedOut)
@@ -376,6 +377,7 @@ impl backend::Backend for Backend {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.set_attr(Attribute::NoReverse),
             theme::Effect::Bold => self.set_attr(Attribute::NormalIntensity),
+            theme::Effect::Blink => self.set_attr(Attribute::NoBlink),
             theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
             theme::Effect::Strikethrough => {
                 self.set_attr(Attribute::NotCrossedOut)

@@ -16,4 +16,6 @@ pub enum Effect {
     Strikethrough,
     /// Prints foreground with underline
     Underline,
+    /// Foreground text blinks (background color is static).
+    Blink,
 }

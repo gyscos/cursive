@@ -268,6 +268,7 @@ impl backend::Backend for Backend {
             | Effect::Italic
             | Effect::Underline
             | Effect::Strikethrough
+            | Effect::Blink
             | Effect::Simple => {}
             // TODO: how to do this correctly?`
             //       BLT itself doesn't do this kind of thing,
@@ -286,6 +287,7 @@ impl backend::Backend for Backend {
             | Effect::Italic
             | Effect::Underline
             | Effect::Strikethrough
+            | Effect::Blink
             | Effect::Simple => {}
             // The process of reversing is the same as unreversing
             Effect::Reverse => {
