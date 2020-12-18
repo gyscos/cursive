@@ -23,6 +23,11 @@ impl Margins {
         Self::lrtb(left, right, top, bottom)
     }
 
+    /// Creates a new `Margins` object with zero margins.
+    pub fn zeroes() -> Self {
+        Self::lrtb(0, 0, 0, 0)
+    }
+
     /// Creates a new `Margins` object from the Left, Right, Top, Bottom fields.
     pub fn lrtb(left: usize, right: usize, top: usize, bottom: usize) -> Self {
         Margins {
