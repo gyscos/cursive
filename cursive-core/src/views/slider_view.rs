@@ -17,8 +17,10 @@ use std::rc::Rc;
 /// use cursive_core::views::{Dialog, SliderView};
 ///
 /// let slider_view = SliderView::horizontal(10)
-///     .on_change(|s, n| if n == 5 {
-///         s.add_layer(Dialog::info("5! Pick 5!"));
+///     .on_change(|s, n| {
+///         if n == 5 {
+///             s.add_layer(Dialog::info("5! Pick 5!"));
+///         }
 ///     })
 ///     .on_enter(|s, n| match n {
 ///         5 => s.add_layer(Dialog::info("You did it!")),

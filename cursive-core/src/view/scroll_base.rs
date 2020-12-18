@@ -224,7 +224,7 @@ impl ScrollBase {
     /// # let printer = &printer;
     /// let lines = ["Line 1", "Line number 2"];
     /// scrollbase.draw(printer, |printer, i| {
-    ///     printer.print((0,0), lines[i]);
+    ///     printer.print((0, 0), lines[i]);
     /// });
     /// ```
     pub fn draw<F>(&self, printer: &Printer, line_drawer: F)

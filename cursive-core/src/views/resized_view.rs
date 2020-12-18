@@ -19,7 +19,7 @@ use crate::XY;
 /// use cursive_core::views::{ResizedView, TextView};
 ///
 /// // Creates a 20x4 ResizedView with a TextView content.
-/// let view = ResizedView::with_fixed_size((20,4), TextView::new("Hello!"));
+/// let view = ResizedView::with_fixed_size((20, 4), TextView::new("Hello!"));
 /// ```
 ///
 /// See also [`Boxable`](crate::view::Boxable) for an easy way to wrap any view.

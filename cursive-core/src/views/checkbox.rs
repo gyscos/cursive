@@ -13,8 +13,8 @@ use std::rc::Rc;
 /// # Examples
 ///
 /// ```
-/// use cursive_core::views::Checkbox;
 /// use cursive_core::traits::Identifiable;
+/// use cursive_core::views::Checkbox;
 ///
 /// let checkbox = Checkbox::new().checked().with_name("check");
 /// ```

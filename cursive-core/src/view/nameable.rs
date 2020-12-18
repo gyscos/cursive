@@ -20,11 +20,7 @@ pub trait Nameable: View + Sized {
     /// use cursive_core::view::Nameable;
     ///
     /// let mut siv = Cursive::new();
-    /// siv.add_layer(
-    ///     TextView::new("foo")
-    ///         .with_name("text")
-    ///         .fixed_width(10)
-    /// );
+    /// siv.add_layer(TextView::new("foo").with_name("text").fixed_width(10));
     ///
     /// // You could call this from an event callback
     /// siv.call_on_name("text", |view: &mut TextView| {
@@ -40,7 +36,6 @@ pub trait Nameable: View + Sized {
     ///
     /// [`fixed_width`]: crate::view::Resizable::fixed_width
     /// [`ResizedView`]: crate::views::ResizedView
-    ///
     fn with_name<S: Into<String>>(self, name: S) -> NamedView<Self> {
         NamedView::new(name, self)
     }

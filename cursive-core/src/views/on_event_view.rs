@@ -35,8 +35,8 @@ use std::rc::Rc;
 /// # use cursive_core::event;;
 /// # use cursive_core::views::{OnEventView, TextView};
 /// let view = OnEventView::new(TextView::new("This view has an event!"))
-///                         .on_event('q', |s| s.quit())
-///                         .on_event(event::Key::Esc, |s| s.quit());
+///     .on_event('q', |s| s.quit())
+///     .on_event(event::Key::Esc, |s| s.quit());
 /// ```
 pub struct OnEventView<T> {
     view: T,

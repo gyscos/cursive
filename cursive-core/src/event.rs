@@ -82,7 +82,10 @@ impl EventTrigger {
     ///
     /// let event = Event::CtrlChar('c');
     /// let trigger: EventTrigger = event.clone().into();
-    /// assert!(trigger.has_tag(&event), "Trigger does not recognize its own tag.");
+    /// assert!(
+    ///     trigger.has_tag(&event),
+    ///     "Trigger does not recognize its own tag."
+    /// );
     /// ```
     pub fn has_tag<T: PartialEq + 'static>(&self, tag: &T) -> bool {
         (*self.tag)
@@ -116,13 +119,7 @@ impl EventTrigger {
 
     /// Returns an `EventTrigger` that only accepts mouse events.
     pub fn mouse() -> Self {
-        Self::from_fn_and_tag(
-            |e| {
-                matches!(e,
-                Event::Mouse { .. })
-            },
-            "mouse",
-        )
+        Self::from_fn_and_tag(|e| matches!(e, Event::Mouse { .. }), "mouse")
     }
 
     /// Returns an `EventTrigger` that accepts any event.
@@ -459,10 +456,10 @@ impl MouseEvent {
     /// It means you should be able to grab a scroll bar, and move the mouse
     /// away from the view, without actually changing the focus.
     pub fn grabs_focus(self) -> bool {
-        matches!(self,
-            MouseEvent::Press(_)
-            | MouseEvent::WheelUp
-            | MouseEvent::WheelDown)
+        matches!(
+            self,
+            MouseEvent::Press(_) | MouseEvent::WheelUp | MouseEvent::WheelDown
+        )
     }
 }
 

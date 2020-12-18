@@ -45,8 +45,8 @@ impl ChildButton {
 ///
 /// ```
 /// # use cursive_core::views::{Dialog,TextView};
-/// let dialog = Dialog::around(TextView::new("Hello!"))
-///                     .button("Ok", |s| s.quit());
+/// let dialog =
+///     Dialog::around(TextView::new("Hello!")).button("Ok", |s| s.quit());
 /// ```
 pub struct Dialog {
     // Possibly empty title.
@@ -113,8 +113,8 @@ impl Dialog {
     /// use cursive_core::views::{Dialog, TextView};
     ///
     /// let dialog = Dialog::new()
-    ///         .content(TextView::new("Hello!"))
-    ///         .button("Quit", |s| s.quit());
+    ///     .content(TextView::new("Hello!"))
+    ///     .button("Quit", |s| s.quit());
     /// ```
     pub fn content<V: IntoBoxedView>(self, view: V) -> Self {
         self.with(|s| s.set_content(view))
@@ -125,10 +125,8 @@ impl Dialog {
     /// ```
     /// use cursive_core::views::{Dialog, TextView};
     /// let dialog = Dialog::around(TextView::new("Hello!"));
-    /// let text_view: &TextView = dialog
-    ///     .get_content()
-    ///     .downcast_ref::<TextView>()
-    ///     .unwrap();
+    /// let text_view: &TextView =
+    ///     dialog.get_content().downcast_ref::<TextView>().unwrap();
     /// assert_eq!(text_view.get_content().source(), "Hello!");
     /// ```
     pub fn get_content(&self) -> &dyn View {
@@ -146,8 +144,8 @@ impl Dialog {
     /// # Examples
     ///
     /// ```
-    /// use cursive_core::views::{Dialog, TextView};
     /// use cursive_core::view::View;
+    /// use cursive_core::views::{Dialog, TextView};
     ///
     /// let dialog = Dialog::around(TextView::new("abc"));
     ///
@@ -176,8 +174,7 @@ impl Dialog {
     /// ```
     /// use cursive_core::views::Dialog;
     ///
-    /// let dialog = Dialog::text("Hello!")
-    ///             .button("Quit", |s| s.quit());
+    /// let dialog = Dialog::text("Hello!").button("Quit", |s| s.quit());
     /// ```
     pub fn text<S: Into<StyledString>>(text: S) -> Self {
         Self::around(TextView::new(text))
@@ -267,8 +264,7 @@ impl Dialog {
     /// ```
     /// use cursive_core::views::Dialog;
     ///
-    /// let dialog = Dialog::text("Hello!")
-    ///         .dismiss_button("Close");
+    /// let dialog = Dialog::text("Hello!").dismiss_button("Close");
     /// ```
     pub fn dismiss_button<S: Into<String>>(self, label: S) -> Self {
         self.button(label, |s| {
@@ -285,8 +281,7 @@ impl Dialog {
     /// ```
     /// use cursive_core::views::Dialog;
     ///
-    /// let dialog = Dialog::info("Some info")
-    ///         .title("Read me!");
+    /// let dialog = Dialog::info("Some info").title("Read me!");
     /// ```
     pub fn title<S: Into<String>>(self, label: S) -> Self {
         self.with(|s| s.set_title(label))

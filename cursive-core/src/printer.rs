@@ -299,7 +299,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((6,4), &t, &*b);
     /// printer.with_color(theme::ColorStyle::highlight(), |printer| {
-    ///     printer.print((0,0), "This text is highlighted!");
+    ///     printer.print((0, 0), "This text is highlighted!");
     /// });
     /// ```
     pub fn with_color<F>(&self, c: ColorStyle, f: F)
@@ -394,7 +394,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// # let b = backend::Dummy::init();
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((6,4), &t, &*b);
-    /// printer.print_box((0,0), (6,4), false);
+    /// printer.print_box((0, 0), (6, 4), false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
         &self,

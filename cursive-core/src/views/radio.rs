@@ -120,7 +120,6 @@ impl RadioGroup<String> {
 ///
 /// `RadioButton`s are not created directly, but through
 /// [`RadioGroup::button`].
-///
 pub struct RadioButton<T> {
     state: Rc<RefCell<SharedState<T>>>,
     id: usize,

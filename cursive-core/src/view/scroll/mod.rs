@@ -50,9 +50,9 @@ impl Default for ScrollStrategy {
 /// Example:
 ///
 /// ```
-/// use cursive_core::{Printer, Vec2, Rect};
 /// use cursive_core::event::{Event, EventResult};
-/// use cursive_core::view::{View, scroll};
+/// use cursive_core::view::{scroll, View};
+/// use cursive_core::{Printer, Rect, Vec2};
 ///
 /// struct MyView {
 ///     core: scroll::Core,
@@ -66,14 +66,19 @@ impl Default for ScrollStrategy {
 ///     }
 ///
 ///     fn inner_important_area(&self, size: Vec2) -> Rect {
-///         Rect::from_size((0,0), size)
+///         Rect::from_size((0, 0), size)
 ///     }
 /// }
 ///
 /// impl View for MyView {
 /// # fn draw(&self, printer: &Printer) {}
 ///     fn on_event(&mut self, event: Event) -> EventResult {
-///         scroll::on_event(self, event, Self::inner_on_event, Self::inner_important_area)
+///         scroll::on_event(
+///             self,
+///             event,
+///             Self::inner_on_event,
+///             Self::inner_important_area,
+///         )
 ///     }
 /// }
 /// ```

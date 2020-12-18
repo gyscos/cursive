@@ -2,7 +2,6 @@
 //!
 //! Most functions take a generic `Model` class, and various closures to get
 //! the required things from this model.
-//!
 use crate::{
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     rect::Rect,

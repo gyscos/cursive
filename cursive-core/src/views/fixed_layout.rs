@@ -14,16 +14,19 @@ use crate::{
 ///
 /// ```rust
 /// use cursive_core::{
-///     views::{FixedLayout, TextView, Button},
+///     views::{Button, FixedLayout, TextView},
 ///     Rect,
 /// };
 ///
 /// let layout = FixedLayout::new()
-///     .child(Rect::from_size((0,0), (1,1)), TextView::new("/"))
-///     .child(Rect::from_size((14,0), (1,1)), TextView::new(r"\"))
-///     .child(Rect::from_size((0,2), (1,1)), TextView::new(r"\"))
-///     .child(Rect::from_size((14,2), (1,1)), TextView::new("/"))
-///     .child(Rect::from_size((3,1), (11,1)), Button::new("Clickme", |s| s.quit()));
+///     .child(Rect::from_size((0, 0), (1, 1)), TextView::new("/"))
+///     .child(Rect::from_size((14, 0), (1, 1)), TextView::new(r"\"))
+///     .child(Rect::from_size((0, 2), (1, 1)), TextView::new(r"\"))
+///     .child(Rect::from_size((14, 2), (1, 1)), TextView::new("/"))
+///     .child(
+///         Rect::from_size((3, 1), (11, 1)),
+///         Button::new("Clickme", |s| s.quit()),
+///     );
 /// ```
 pub struct FixedLayout {
     children: Vec<Child>,

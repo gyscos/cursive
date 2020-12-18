@@ -36,13 +36,13 @@ use std::rc::Rc;
 /// time_select.set_on_submit(|s, time| {
 ///     s.pop_layer();
 ///     let text = format!("You will wait for {} minutes...", time);
-///     s.add_layer(Dialog::around(TextView::new(text))
-///                     .button("Quit", |s| s.quit()));
+///     s.add_layer(
+///         Dialog::around(TextView::new(text)).button("Quit", |s| s.quit()),
+///     );
 /// });
 ///
 /// let mut siv = Cursive::new();
-/// siv.add_layer(Dialog::around(time_select)
-///                      .title("How long is your wait?"));
+/// siv.add_layer(Dialog::around(time_select).title("How long is your wait?"));
 /// ```
 pub struct SelectView<T = String> {
     // The core of the view: we store a list of items
@@ -149,7 +149,7 @@ impl<T: 'static> SelectView<T> {
     ///
     /// ```
     /// use cursive_core::traits::Identifiable;
-    /// use cursive_core::views::{TextView, SelectView};
+    /// use cursive_core::views::{SelectView, TextView};
     ///
     /// let text_view = TextView::new("").with_name("text");
     ///
@@ -166,7 +166,8 @@ impl<T: 'static> SelectView<T> {
     ///         // Update the textview with the currently selected item.
     ///         s.call_on_name("text", |v: &mut TextView| {
     ///             v.set_content(content);
-    ///         }).unwrap();
+    ///         })
+    ///         .unwrap();
     ///     });
     /// ```
     pub fn on_select<F>(self, cb: F) -> Self
@@ -298,10 +299,9 @@ impl<T: 'static> SelectView<T> {
     /// Gets an item at given idx or None.
     ///
     /// ```
-    /// use cursive_core::Cursive;
     /// use cursive_core::views::{SelectView, TextView};
-    /// let select = SelectView::new()
-    ///     .item("Short", 1);
+    /// use cursive_core::Cursive;
+    /// let select = SelectView::new().item("Short", 1);
     /// assert_eq!(select.get_item(0), Some(("Short", &1)));
     /// ```
     pub fn get_item(&self, i: usize) -> Option<(&str, &T)> {
@@ -430,9 +430,7 @@ impl<T: 'static> SelectView<T> {
     ///
     /// // Create a SelectView with 100 items
     /// let select_view = SelectView::new()
-    ///     .with_all((1u8..100).into_iter().map(|i| {
-    ///         (format!("Item {}", i), i)
-    ///     }));
+    ///     .with_all((1u8..100).into_iter().map(|i| (format!("Item {}", i), i)));
     /// ```
     pub fn with_all<S, I>(self, iter: I) -> Self
     where
@@ -845,8 +843,7 @@ impl SelectView<String> {
     ///
     /// let text = "..."; // Maybe read some config file
     ///
-    /// let select_view = SelectView::new()
-    ///     .with_all_str(text.lines());
+    /// let select_view = SelectView::new().with_all_str(text.lines());
     /// ```
     pub fn with_all_str<S, I>(self, iter: I) -> Self
     where

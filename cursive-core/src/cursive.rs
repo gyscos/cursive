@@ -309,14 +309,18 @@ impl Cursive {
     /// let mut siv = Cursive::new();
     ///
     /// siv.menubar()
-    ///    .add_subtree("File",
+    ///     .add_subtree(
+    ///         "File",
     ///         MenuTree::new()
     ///             .leaf("New", |s| s.add_layer(Dialog::info("New file!")))
-    ///             .subtree("Recent", MenuTree::new().with(|tree| {
-    ///                 for i in 1..100 {
-    ///                     tree.add_leaf(format!("Item {}", i), |_| ())
-    ///                 }
-    ///             }))
+    ///             .subtree(
+    ///                 "Recent",
+    ///                 MenuTree::new().with(|tree| {
+    ///                     for i in 1..100 {
+    ///                         tree.add_leaf(format!("Item {}", i), |_| ())
+    ///                     }
+    ///                 }),
+    ///             )
     ///             .delimiter()
     ///             .with(|tree| {
     ///                 for i in 1..10 {
@@ -324,19 +328,25 @@ impl Cursive {
     ///                 }
     ///             })
     ///             .delimiter()
-    ///             .leaf("Quit", |s| s.quit()))
-    ///    .add_subtree("Help",
+    ///             .leaf("Quit", |s| s.quit()),
+    ///     )
+    ///     .add_subtree(
+    ///         "Help",
     ///         MenuTree::new()
-    ///             .subtree("Help",
-    ///                      MenuTree::new()
-    ///                          .leaf("General", |s| {
-    ///                              s.add_layer(Dialog::info("Help message!"))
-    ///                          })
-    ///                          .leaf("Online", |s| {
-    ///                              s.add_layer(Dialog::info("Online help?"))
-    ///                          }))
-    ///             .leaf("About",
-    ///                   |s| s.add_layer(Dialog::info("Cursive v0.0.0"))));
+    ///             .subtree(
+    ///                 "Help",
+    ///                 MenuTree::new()
+    ///                     .leaf("General", |s| {
+    ///                         s.add_layer(Dialog::info("Help message!"))
+    ///                     })
+    ///                     .leaf("Online", |s| {
+    ///                         s.add_layer(Dialog::info("Online help?"))
+    ///                     }),
+    ///             )
+    ///             .leaf("About", |s| {
+    ///                 s.add_layer(Dialog::info("Cursive v0.0.0"))
+    ///             }),
+    ///     );
     ///
     /// siv.add_global_callback(event::Key::Esc, |s| s.select_menubar());
     /// ```
@@ -503,8 +513,7 @@ impl Cursive {
     /// # use cursive_core::traits::*;
     /// let mut siv = Cursive::new();
     ///
-    /// siv.add_layer(views::TextView::new("Text #1")
-    ///                               .with_name("text"));
+    /// siv.add_layer(views::TextView::new("Text #1").with_name("text"));
     ///
     /// siv.add_global_callback('p', |s| {
     ///     s.call_on_name("text", |view: &mut views::TextView| {
@@ -754,7 +763,7 @@ impl Cursive {
     /// # Examples
     ///
     /// ```rust
-    /// use cursive_core::{Cursive, views};
+    /// use cursive_core::{views, Cursive};
     /// let mut siv = Cursive::new();
     ///
     /// siv.add_layer(views::TextView::new("Hello world!"));

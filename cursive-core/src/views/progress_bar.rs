@@ -24,15 +24,14 @@ use std::thread;
 ///
 /// ```
 /// # use cursive_core::views::ProgressBar;
-/// let bar = ProgressBar::new()
-///                       .with_task(|counter| {
-///                           // This closure is called in parallel.
-///                           for _ in 0..100 {
-///                               // Here we can communicate some
-///                               // advancement back to the bar.
-///                               counter.tick(1);
-///                           }
-///                       });
+/// let bar = ProgressBar::new().with_task(|counter| {
+///     // This closure is called in parallel.
+///     for _ in 0..100 {
+///         // Here we can communicate some
+///         // advancement back to the bar.
+///         counter.tick(1);
+///     }
+/// });
 /// ```
 pub struct ProgressBar {
     min: usize,

@@ -16,35 +16,31 @@ type CallOnAny<T> = Box<dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>;
 /// # Examples
 ///
 /// ```rust
-/// use cursive_core::views::{Canvas, Dialog};
 /// use cursive_core::event::{Event, EventResult, Key};
+/// use cursive_core::views::{Canvas, Dialog};
 /// use unicode_width::UnicodeWidthStr; // To get the width of some text.
 ///
 /// // Build a canvas around a string.
 /// let state = String::new();
 /// let canvas = Canvas::new(state)
-///                     .with_draw(|text: &String, printer| {
-///                         // Simply print our string
-///                         printer.print((0,0), text);
-///                     })
-///                     .with_on_event(|text: &mut String, event| {
-///                         match event {
-///                             Event::Char(c) => {
-///                                 text.push(c);
-///                                 EventResult::Consumed(None)
-///                             }
-///                             Event::Key(Key::Enter) => {
-///                                 let text = text.clone();
-///                                 EventResult::with_cb(move |s| {
-///                                     s.add_layer(Dialog::info(&text));
-///                                 })
-///                             },
-///                             _ => EventResult::Ignored,
-///                         }
-///                     })
-///                     .with_required_size(|text, _constraints| {
-///                         (text.width(), 1).into()
-///                     });
+///     .with_draw(|text: &String, printer| {
+///         // Simply print our string
+///         printer.print((0, 0), text);
+///     })
+///     .with_on_event(|text: &mut String, event| match event {
+///         Event::Char(c) => {
+///             text.push(c);
+///             EventResult::Consumed(None)
+///         }
+///         Event::Key(Key::Enter) => {
+///             let text = text.clone();
+///             EventResult::with_cb(move |s| {
+///                 s.add_layer(Dialog::info(&text));
+///             })
+///         }
+///         _ => EventResult::Ignored,
+///     })
+///     .with_required_size(|text, _constraints| (text.width(), 1).into());
 /// ```
 pub struct Canvas<T> {
     state: T,

@@ -12,7 +12,10 @@ impl<V> OnLayoutView<V> {
     /// Will run the given closure for layout _instead_ of the one from `view`.
     ///
     /// ```rust
-    /// use cursive_core::{View, views::{TextView, OnLayoutView}};
+    /// use cursive_core::{
+    ///     views::{OnLayoutView, TextView},
+    ///     View,
+    /// };
     ///
     /// let view = TextView::new("foo");
     ///

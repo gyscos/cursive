@@ -88,7 +88,6 @@ impl<T> XY<T> {
     /// let cond = XY::new(true, false);
     ///
     /// assert_eq!(xy.map_if(cond, |v| v * 3), XY::new(3, 2));
-    ///
     /// ```
     pub fn map_if<F>(self, condition: XY<bool>, f: F) -> Self
     where
@@ -305,8 +304,8 @@ impl<T> XY<T> {
     /// let d = XY::new(vec![1], vec![2, 3, 4]);
     /// let e = XY::new('a', 'b');
     ///
-    /// let xy: XY<Option<char>> = XY::zip5(a, b, c, d, e)
-    ///     .map(|(a, b, c, d, e)| {
+    /// let xy: XY<Option<char>> =
+    ///     XY::zip5(a, b, c, d, e).map(|(a, b, c, d, e)| {
     ///         if b && d.contains(&a) {
     ///             Some(e)
     ///         } else {

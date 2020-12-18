@@ -57,13 +57,16 @@ pub fn immutify<F: FnMut(&mut Cursive)>(
 /// # let mut siv = Cursive::new();
 /// let mut i = 0;
 /// // `Cursive::add_global_callback` takes a `Fn(&mut Cursive)`
-/// siv.add_global_callback('q', immut1!(move |s: &mut Cursive| {
-///     // But here we mutate the environment! Crazy!
-///     i += 1;
-///     if i == 5 {
-///         s.quit();
-///     }
-/// }));
+/// siv.add_global_callback(
+///     'q',
+///     immut1!(move |s: &mut Cursive| {
+///         // But here we mutate the environment! Crazy!
+///         i += 1;
+///         if i == 5 {
+///             s.quit();
+///         }
+///     }),
+/// );
 /// # }
 /// ```
 #[macro_export]

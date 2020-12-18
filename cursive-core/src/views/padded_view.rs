@@ -15,10 +15,9 @@ use crate::Vec2;
 /// ```rust
 /// # use cursive_core::views::{TextView, PaddedView};
 /// // Adds 2 columns of padding to the left and to the right.
-/// let view = PaddedView::lrtb(
-///     2,2,0,0, // Left, Right, Top, Bottom
-///     TextView::new("Padded text")
-/// );
+///
+/// // lrtb = Left, Right, Top, Bottom
+/// let view = PaddedView::lrtb(2, 2, 0, 0, TextView::new("Padded text"));
 /// ```
 pub struct PaddedView<V> {
     view: V,

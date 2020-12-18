@@ -159,7 +159,7 @@ impl<T: ViewWrapper> View for T {
 ///     view: T,
 /// }
 ///
-/// impl <T: View> ViewWrapper for FooView<T> {
+/// impl<T: View> ViewWrapper for FooView<T> {
 ///     cursive_core::wrap_impl!(self.view: T);
 /// }
 /// # fn main() { }
@@ -212,7 +212,7 @@ macro_rules! wrap_impl {
 ///     cursive_core::inner_getters!(self.view: T);
 /// }
 ///
-/// impl <T: View> ViewWrapper for FooView<T> {
+/// impl<T: View> ViewWrapper for FooView<T> {
 ///     cursive_core::wrap_impl!(self.view: T);
 /// }
 /// # fn main() { }

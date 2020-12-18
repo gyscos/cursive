@@ -15,8 +15,8 @@ use std::ops::Deref;
 /// # Examples
 ///
 /// ```
-/// use cursive_core::views::{Button, LinearLayout, TextView, TextArea};
 /// use cursive_core::traits::Boxable;
+/// use cursive_core::views::{Button, LinearLayout, TextArea, TextView};
 ///
 /// let linear_layout = LinearLayout::horizontal()
 ///     .child(TextView::new("Top of the page"))

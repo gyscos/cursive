@@ -50,10 +50,11 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 ///                 .fixed_width(20),
 ///         )
 ///         .button("Ok", |s| {
-///             let name = s.call_on_name(
-///                 "name",
-///                 |view: &mut EditView| view.get_content(),
-///             ).unwrap();
+///             let name = s
+///                 .call_on_name("name", |view: &mut EditView| {
+///                     view.get_content()
+///                 })
+///                 .unwrap();
 ///             show_popup(s, &name);
 ///         }),
 /// );
@@ -64,8 +65,10 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 ///     } else {
 ///         let content = format!("Hello {}!", name);
 ///         s.pop_layer();
-///         s.add_layer(Dialog::around(TextView::new(content))
-///             .button("Quit", |s| s.quit()));
+///         s.add_layer(
+///             Dialog::around(TextView::new(content))
+///                 .button("Quit", |s| s.quit()),
+///         );
 ///     }
 /// }
 /// ```
@@ -253,15 +256,14 @@ impl EditView {
     /// # Examples
     ///
     /// ```
-    /// use cursive_core::views::{TextContent, TextView, EditView};
+    /// use cursive_core::views::{EditView, TextContent, TextView};
     /// // Keep the length of the text in a separate view.
     /// let mut content = TextContent::new("0");
     /// let text_view = TextView::new_with_content(content.clone());
     ///
-    /// let on_edit = EditView::new()
-    ///             .on_edit(move |_s, text, _cursor| {
-    ///                 content.set_content(format!("{}", text.len()));
-    ///             });
+    /// let on_edit = EditView::new().on_edit(move |_s, text, _cursor| {
+    ///     content.set_content(format!("{}", text.len()));
+    /// });
     /// ```
     pub fn on_edit<F>(self, callback: F) -> Self
     where
@@ -329,10 +331,9 @@ impl EditView {
     /// ```
     /// use cursive_core::views::{Dialog, EditView};
     ///
-    /// let edit_view = EditView::new()
-    ///     .on_submit(|s, text| {
-    ///         s.add_layer(Dialog::info(text));
-    ///     });
+    /// let edit_view = EditView::new().on_submit(|s, text| {
+    ///     s.add_layer(Dialog::info(text));
+    /// });
     /// ```
     pub fn on_submit<F>(self, callback: F) -> Self
     where
