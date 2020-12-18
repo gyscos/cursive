@@ -26,6 +26,22 @@ impl ColorStyle {
         Self { front, back }
     }
 
+    /// Uses the given color as front, inherits the parent background color.
+    pub fn front<F>(front: F) -> Self
+    where
+        F: Into<ColorType>,
+    {
+        Self::new(front, ColorType::InheritParent)
+    }
+
+    /// Uses the given color as background, inherits the parent front color.
+    pub fn back<B>(back: B) -> Self
+    where
+        B: Into<ColorType>,
+    {
+        Self::new(ColorType::InheritParent, back)
+    }
+
     /// Style set by terminal before entering a Cursive program.
     pub fn terminal_default() -> Self {
         Self::new(Color::TerminalDefault, Color::TerminalDefault)
