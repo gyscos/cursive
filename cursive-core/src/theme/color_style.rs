@@ -77,10 +77,14 @@ impl ColorStyle {
     }
 
     /// Return the color pair that this style represents.
-    pub fn resolve(&self, palette: &Palette) -> ColorPair {
+    pub fn resolve(
+        &self,
+        palette: &Palette,
+        previous: ColorPair,
+    ) -> ColorPair {
         ColorPair {
-            front: self.front.resolve(palette),
-            back: self.back.resolve(palette),
+            front: self.front.resolve(palette, previous.front),
+            back: self.back.resolve(palette, previous.back),
         }
     }
 }
@@ -127,14 +131,18 @@ pub enum ColorType {
 
     /// Uses a direct color, independent of the current palette.
     Color(Color),
+
+    /// Re-use the color from the parent.
+    InheritParent,
 }
 
 impl ColorType {
     /// Given a palette, resolve `self` to a concrete color.
-    pub fn resolve(self, palette: &Palette) -> Color {
+    pub fn resolve(self, palette: &Palette, previous: Color) -> Color {
         match self {
             ColorType::Color(color) => color,
             ColorType::Palette(color) => color.resolve(palette),
+            ColorType::InheritParent => previous,
         }
     }
 }

@@ -4,13 +4,14 @@ use crate::backend::Backend;
 use crate::direction::Orientation;
 use crate::rect::Rect;
 use crate::theme::{
-    BorderStyle, ColorStyle, Effect, PaletteColor, Style, Theme,
+    BorderStyle, ColorPair, ColorStyle, Effect, PaletteColor, Style, Theme,
 };
 use crate::utils::lines::simple::{prefix, suffix};
 use crate::with::With;
 use crate::Vec2;
 
 use enumset::EnumSet;
+use std::cell::Cell;
 use std::cmp::min;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -59,6 +60,9 @@ pub struct Printer<'a, 'b> {
     /// Currently used theme
     pub theme: &'a Theme,
 
+    /// Current color pair used by the parent view.
+    current_color: Cell<ColorPair>,
+
     /// Backend used to actually draw things
     backend: &'b dyn Backend,
 }
@@ -83,6 +87,7 @@ impl<'a, 'b> Printer<'a, 'b> {
             enabled: true,
             theme,
             backend,
+            current_color: Cell::new(ColorPair::from_256colors(0, 0)),
         }
     }
 
@@ -286,6 +291,11 @@ impl<'a, 'b> Printer<'a, 'b> {
         self.backend.print_at_rep(start, repetitions, c);
     }
 
+    /// Returns the color currently used by the parent view.
+    pub fn current_color(&self) -> ColorPair {
+        self.current_color.get()
+    }
+
     /// Call the given closure with a colored printer,
     /// that will apply the given color on prints.
     ///
@@ -306,9 +316,16 @@ impl<'a, 'b> Printer<'a, 'b> {
     where
         F: FnOnce(&Printer),
     {
-        let old = self.backend.set_color(c.resolve(&self.theme.palette));
+        let old = self.current_color.get();
+        let new = c.resolve(&self.theme.palette, old);
+
+        self.current_color.set(new);
+        self.backend.set_color(new);
+
         f(self);
+
         self.backend.set_color(old);
+        self.current_color.set(old)
     }
 
     /// Call the given closure with a styled printer,
