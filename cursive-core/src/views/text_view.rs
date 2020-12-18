@@ -6,7 +6,7 @@ use owning_ref::{ArcRef, OwningHandle};
 use unicode_width::UnicodeWidthStr;
 
 use crate::align::*;
-use crate::theme::Effect;
+use crate::theme::{Effect, Style};
 use crate::utils::lines::spans::{LinesIterator, Row};
 use crate::utils::markup::StyledString;
 use crate::view::{SizeCache, View};
@@ -195,8 +195,7 @@ pub struct TextView {
 
     align: Align,
 
-    // TODO: remove now that we have styled text?
-    effect: Effect,
+    style: Style,
 
     // True if we can wrap long lines.
     wrap: bool,
@@ -234,7 +233,7 @@ impl TextView {
     pub fn new_with_content(content: TextContent) -> Self {
         TextView {
             content,
-            effect: Effect::Simple,
+            style: Style::default(),
             rows: Vec::new(),
             wrap: true,
             align: Align::top_left(),
@@ -249,15 +248,29 @@ impl TextView {
     }
 
     /// Sets the effect for the entire content.
+    #[deprecated = "Use `set_style()` instead."]
     pub fn set_effect(&mut self, effect: Effect) {
-        self.effect = effect;
+        self.set_style(effect);
+    }
+
+    /// Sets the style for the content.
+    pub fn set_style<S: Into<Style>>(&mut self, style: S) {
+        self.style = style.into();
     }
 
     /// Sets the effect for the entire content.
     ///
     /// Chainable variant.
+    #[deprecated = "Use `style()` instead."]
     pub fn effect(self, effect: Effect) -> Self {
-        self.with(|s| s.set_effect(effect))
+        self.style(effect)
+    }
+
+    /// Sets the style for the entire content.
+    ///
+    /// Chainable variant.
+    pub fn style<S: Into<Style>>(self, style: S) -> Self {
+        self.with(|s| s.set_style(style))
     }
 
     /// Disables content wrap for this view.
@@ -383,7 +396,7 @@ impl View for TextView {
 
         let content = self.content.content.lock().unwrap();
 
-        printer.with_effect(self.effect, |printer| {
+        printer.with_style(self.style, |printer| {
             for (y, row) in self.rows.iter().enumerate() {
                 let l = row.width;
                 let mut x = self.align.h.get_offset(l, printer.size.x);
