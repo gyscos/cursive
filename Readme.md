@@ -1,7 +1,7 @@
 # Cursive
 
 [![crates.io](https://meritbadge.herokuapp.com/cursive)](https://crates.io/crates/cursive)
-[![Build Status (travis)](https://travis-ci.org/gyscos/cursive.svg?branch=main)](https://travis-ci.org/gyscos/cursive)
+[![Build Status (travis)](https://travis-ci.com/gyscos/cursive.svg?branch=main)](https://travis-ci.com/gyscos/cursive)
 [![Build status (appveyor)](https://ci.appveyor.com/api/projects/status/uk5pww718jsp5x2l/branch/main?svg=true)](https://ci.appveyor.com/project/gyscos/cursive/branch/main)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Gitter chat](https://badges.gitter.im/gyscos/cursive.png)](https://gitter.im/cursive-rs/cursive)
