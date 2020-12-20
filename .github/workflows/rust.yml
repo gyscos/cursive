@@ -12,6 +12,6 @@ jobs:
     - name: Check
       run: cd cursive && cargo check --all-features
     - name: Build
-      run: cd cursive && cargo build --features "markdown pancurses-backend termion-backend crossterm-backend" --no-default-features --verbose
+      run: cd cursive && cargo build --features "toml markdown termion-backend crossterm-backend" --no-default-features --verbose
     - name: Run tests
-      run: cd cursive && cargo test --features "markdown pancurses-backend termion-backend crossterm-backend" --no-default-features --verbose
+      run: cd cursive && cargo test --features "toml markdown termion-backend crossterm-backend" --no-default-features --verbose
