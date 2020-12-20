@@ -1,7 +1,8 @@
-use crate::event::AnyCb;
-use crate::view::Selector;
-use crate::views::BoxedView;
-use crate::View;
+use crate::{
+    event::AnyCb,
+    view::{Selector, View, ViewNotFound},
+    views::BoxedView,
+};
 
 /// Identifies a screen in the cursive root.
 pub type ScreenId = usize;
@@ -129,7 +130,10 @@ where
         }
     }
 
-    fn wrap_focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn wrap_focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         for (i, child) in self.screens.iter_mut().enumerate() {
             if child.focus_view(selector).is_ok() {
                 self.active_screen = i;
@@ -137,6 +141,6 @@ where
             }
         }
 
-        Err(())
+        Err(ViewNotFound)
     }
 }

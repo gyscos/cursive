@@ -1,7 +1,7 @@
 use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
-    view::{scroll, ScrollStrategy, Selector, View},
+    view::{scroll, ScrollStrategy, Selector, View, ViewNotFound},
     Cursive, Printer, Rect, Vec2, With,
 };
 
@@ -361,7 +361,10 @@ where
         self.inner.call_on_any(selector, cb)
     }
 
-    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         self.inner.focus_view(selector).map(|()| {
             self.scroll_to_important_area();
         })

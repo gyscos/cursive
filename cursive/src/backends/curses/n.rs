@@ -203,7 +203,7 @@ impl Backend {
         }
 
         // Is it a UTF-8 starting point?
-        let event = if 32 <= ch && ch <= 255 && ch != 127 {
+        let event = if (32..=255).contains(&ch) && ch != 127 {
             utf8::read_char(ch as u8, || Some(ncurses::getch() as u8))
                 .map(Event::Char)
                 .unwrap_or_else(|e| {

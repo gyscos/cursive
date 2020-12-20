@@ -1,13 +1,14 @@
-use crate::direction::Direction;
-use crate::event::{AnyCb, Event, EventResult};
-use crate::theme::ColorStyle;
-use crate::view::{
-    IntoBoxedView, Offset, Position, Selector, View, ViewWrapper,
+use crate::{
+    direction::Direction,
+    event::{AnyCb, Event, EventResult},
+    theme::ColorStyle,
+    view::{
+        IntoBoxedView, Offset, Position, Selector, View, ViewNotFound,
+        ViewWrapper,
+    },
+    views::{BoxedView, CircularFocus, Layer, ShadowView},
+    Printer, Vec2, With,
 };
-use crate::views::{BoxedView, CircularFocus, Layer, ShadowView};
-use crate::Printer;
-use crate::Vec2;
-use crate::With;
 use std::cell;
 use std::ops::Deref;
 
@@ -189,7 +190,10 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.focus_view(selector),
             ChildWrapper::Backfilled(ref mut v) => v.focus_view(selector),
@@ -680,14 +684,17 @@ impl View for StackView {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         for layer in &mut self.layers {
             if layer.view.focus_view(selector).is_ok() {
                 return Ok(());
             }
         }
 
-        Err(())
+        Err(ViewNotFound)
     }
 }
 

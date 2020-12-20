@@ -1,11 +1,10 @@
-use crate::direction;
-use crate::event::{AnyCb, Event, EventResult, Key};
-use crate::rect::Rect;
-use crate::view::{IntoBoxedView, Selector, SizeCache, View};
-use crate::Printer;
-use crate::Vec2;
-use crate::With;
-use crate::XY;
+use crate::{
+    direction,
+    event::{AnyCb, Event, EventResult, Key},
+    rect::Rect,
+    view::{IntoBoxedView, Selector, SizeCache, View, ViewNotFound},
+    Printer, Vec2, With, XY,
+};
 use log::debug;
 use std::cmp::min;
 use std::ops::Deref;
@@ -228,7 +227,10 @@ impl LinearLayout {
     ///
     /// Returns `Err(())` if `index >= self.len()`, or if the view at the
     /// given index does not accept focus.
-    pub fn set_focus_index(&mut self, index: usize) -> Result<(), ()> {
+    pub fn set_focus_index(
+        &mut self,
+        index: usize,
+    ) -> Result<(), ViewNotFound> {
         if self
             .children
             .get_mut(index)
@@ -238,7 +240,7 @@ impl LinearLayout {
             self.focus = index;
             Ok(())
         } else {
-            Err(())
+            Err(ViewNotFound)
         }
     }
 
@@ -713,7 +715,10 @@ impl View for LinearLayout {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         for (i, child) in self.children.iter_mut().enumerate() {
             if child.view.focus_view(selector).is_ok() {
                 self.focus = i;
@@ -721,7 +726,7 @@ impl View for LinearLayout {
             }
         }
 
-        Err(())
+        Err(ViewNotFound)
     }
 
     fn important_area(&self, _: Vec2) -> Rect {

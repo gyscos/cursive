@@ -6,6 +6,18 @@ use crate::Printer;
 use crate::Vec2;
 use std::any::Any;
 
+/// Error indicating a view was not found.
+#[derive(Debug)]
+pub struct ViewNotFound;
+
+impl std::fmt::Display for ViewNotFound {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "View could not be found")
+    }
+}
+
+impl std::error::Error for ViewNotFound {}
+
 /// Main trait defining a view behaviour.
 ///
 /// This is what you should implement to define a custom View.
@@ -90,8 +102,8 @@ pub trait View: Any + AnyView {
     /// Returns `Ok(())` if the view was found and selected.
     ///
     /// Default implementation simply returns `Err(())`.
-    fn focus_view(&mut self, _: &Selector<'_>) -> Result<(), ()> {
-        Err(())
+    fn focus_view(&mut self, _: &Selector<'_>) -> Result<(), ViewNotFound> {
+        Err(ViewNotFound)
     }
 
     /// This view is offered focus. Will it take it?

@@ -1,14 +1,14 @@
-use crate::align::*;
-use crate::direction::{Absolute, Direction, Relative};
-use crate::event::{AnyCb, Event, EventResult, Key};
-use crate::rect::Rect;
-use crate::theme::ColorStyle;
-use crate::view::{IntoBoxedView, Margins, Selector, View};
-use crate::views::{BoxedView, Button, DummyView, LastSizeView, TextView};
-use crate::Cursive;
-use crate::Printer;
-use crate::Vec2;
-use crate::{utils::markup::StyledString, With};
+use crate::{
+    align::*,
+    direction::{Absolute, Direction, Relative},
+    event::{AnyCb, Event, EventResult, Key},
+    rect::Rect,
+    theme::ColorStyle,
+    utils::markup::StyledString,
+    view::{IntoBoxedView, Margins, Selector, View, ViewNotFound},
+    views::{BoxedView, Button, DummyView, LastSizeView, TextView},
+    Cursive, Printer, Vec2, With,
+};
 use std::cell::Cell;
 use std::cmp::max;
 use unicode_width::UnicodeWidthStr;
@@ -764,7 +764,10 @@ impl View for Dialog {
         self.content.call_on_any(selector, callback);
     }
 
-    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         self.content.focus_view(selector)
     }
 

@@ -1,9 +1,10 @@
-use crate::direction::Direction;
-use crate::event::{AnyCb, Event, EventResult};
-use crate::rect::Rect;
-use crate::view::{Selector, View};
-use crate::Printer;
-use crate::Vec2;
+use crate::{
+    direction::Direction,
+    event::{AnyCb, Event, EventResult},
+    rect::Rect,
+    view::{Selector, View, ViewNotFound},
+    Printer, Vec2,
+};
 
 /// Generic wrapper around a view.
 ///
@@ -84,9 +85,12 @@ pub trait ViewWrapper: 'static {
     }
 
     /// Wraps the `focus_view` method.
-    fn wrap_focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn wrap_focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         self.with_view_mut(|v| v.focus_view(selector))
-            .unwrap_or(Err(()))
+            .unwrap_or(Err(ViewNotFound))
     }
 
     /// Wraps the `needs_relayout` method.
@@ -135,7 +139,10 @@ impl<T: ViewWrapper> View for T {
         self.wrap_needs_relayout()
     }
 
-    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         self.wrap_focus_view(selector)
     }
 

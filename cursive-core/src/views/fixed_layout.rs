@@ -2,7 +2,7 @@ use crate::{
     direction::{Absolute, Direction, Relative},
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
-    view::{IntoBoxedView, Selector},
+    view::{IntoBoxedView, Selector, ViewNotFound},
     {Printer, Vec2, View, With},
 };
 
@@ -72,7 +72,10 @@ impl FixedLayout {
     ///
     /// Returns `Err(())` if `index >= self.len()`, or if the view at the
     /// given index does not accept focus.
-    pub fn set_focus_index(&mut self, index: usize) -> Result<(), ()> {
+    pub fn set_focus_index(
+        &mut self,
+        index: usize,
+    ) -> Result<(), ViewNotFound> {
         if self
             .children
             .get_mut(index)
@@ -82,7 +85,7 @@ impl FixedLayout {
             self.focus = index;
             Ok(())
         } else {
-            Err(())
+            Err(ViewNotFound)
         }
     }
 
@@ -352,7 +355,10 @@ impl View for FixedLayout {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         for (i, child) in self.children.iter_mut().enumerate() {
             if child.view.focus_view(selector).is_ok() {
                 self.focus = i;
@@ -360,6 +366,6 @@ impl View for FixedLayout {
             }
         }
 
-        Err(())
+        Err(ViewNotFound)
     }
 }

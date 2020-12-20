@@ -1,11 +1,10 @@
-use crate::direction;
-use crate::event::{AnyCb, Callback, Event, EventResult, Key};
-use crate::rect::Rect;
-use crate::view::{IntoBoxedView, Selector, View};
-use crate::Cursive;
-use crate::Printer;
-use crate::Vec2;
-use crate::With;
+use crate::{
+    direction,
+    event::{AnyCb, Callback, Event, EventResult, Key},
+    rect::Rect,
+    view::{IntoBoxedView, Selector, View, ViewNotFound},
+    Cursive, Printer, Vec2, With,
+};
 use log::debug;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
@@ -435,7 +434,10 @@ impl View for ListView {
         }
     }
 
-    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         if let Some(i) = self
             .children
             .iter_mut()
@@ -447,7 +449,7 @@ impl View for ListView {
             self.focus = i;
             Ok(())
         } else {
-            Err(())
+            Err(ViewNotFound)
         }
     }
 

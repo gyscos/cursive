@@ -12,7 +12,7 @@ use crate::{
     event::{Event, EventResult},
     printer::Printer,
     theme,
-    view::{self, Finder, IntoBoxedView, Position, View},
+    view::{self, Finder, IntoBoxedView, Position, View, ViewNotFound},
     views::{self, LayerPosition},
     Dump, Vec2,
 };
@@ -616,18 +616,21 @@ impl Cursive {
     /// Moves the focus to the view identified by `name`.
     ///
     /// Convenient method to call `focus` with a [`view::Selector::Name`].
-    pub fn focus_name(&mut self, name: &str) -> Result<(), ()> {
+    pub fn focus_name(&mut self, name: &str) -> Result<(), ViewNotFound> {
         self.focus(&view::Selector::Name(name))
     }
 
     /// Same as [`focus_name`](Cursive::focus_name).
     #[deprecated(note = "`focus_id` is being renamed to `focus_name`")]
-    pub fn focus_id(&mut self, id: &str) -> Result<(), ()> {
+    pub fn focus_id(&mut self, id: &str) -> Result<(), ViewNotFound> {
         self.focus(&view::Selector::Name(id))
     }
 
     /// Moves the focus to the view identified by `sel`.
-    pub fn focus(&mut self, sel: &view::Selector<'_>) -> Result<(), ()> {
+    pub fn focus(
+        &mut self,
+        sel: &view::Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         self.root.focus_view(sel)
     }
 

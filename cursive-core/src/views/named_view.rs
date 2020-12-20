@@ -1,5 +1,7 @@
-use crate::event::AnyCb;
-use crate::view::{Selector, View, ViewWrapper};
+use crate::{
+    event::AnyCb,
+    view::{Selector, View, ViewNotFound, ViewWrapper},
+};
 use owning_ref::{OwningHandle, RcRef};
 use std::cell::{RefCell, RefMut};
 use std::ops::DerefMut;
@@ -106,7 +108,10 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
         }
     }
 
-    fn wrap_focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn wrap_focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         match selector {
             #[allow(deprecated)]
             &Selector::Name(name) | &Selector::Id(name)
@@ -117,7 +122,7 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
             s => self
                 .view
                 .try_borrow_mut()
-                .map_err(|_| ())
+                .map_err(|_| ViewNotFound)
                 .and_then(|mut v| v.deref_mut().focus_view(s)),
         }
     }

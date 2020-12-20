@@ -1,10 +1,10 @@
-use crate::direction::Direction;
-use crate::event::{AnyCb, Event, EventResult};
-use crate::rect::Rect;
-use crate::view::{Selector, View};
-use crate::Printer;
-use crate::Vec2;
-use crate::With;
+use crate::{
+    direction::Direction,
+    event::{AnyCb, Event, EventResult},
+    rect::Rect,
+    view::{Selector, View, ViewNotFound},
+    Printer, Vec2, With,
+};
 
 // Define this type separately to appease the Clippy god
 type CallOnAny<T> = Box<dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>;
@@ -51,7 +51,7 @@ pub struct Canvas<T> {
     layout: Box<dyn FnMut(&mut T, Vec2)>,
     take_focus: Box<dyn FnMut(&mut T, Direction) -> bool>,
     needs_relayout: Box<dyn Fn(&T) -> bool>,
-    focus_view: Box<dyn FnMut(&mut T, &Selector) -> Result<(), ()>>,
+    focus_view: Box<dyn FnMut(&mut T, &Selector) -> Result<(), ViewNotFound>>,
     call_on_any: CallOnAny<T>,
     important_area: Box<dyn Fn(&T, Vec2) -> Rect>,
 }
@@ -85,7 +85,7 @@ impl<T> Canvas<T> {
             layout: Box::new(|_, _| ()),
             take_focus: Box::new(|_, _| false),
             needs_relayout: Box::new(|_| true),
-            focus_view: Box::new(|_, _| Err(())),
+            focus_view: Box::new(|_, _| Err(ViewNotFound)),
             call_on_any: Box::new(|_, _, _| ()),
             important_area: Box::new(|_, size| {
                 Rect::from_corners((0, 0), size)
@@ -245,7 +245,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `focus_view()`.
     pub fn set_focus_view<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, &Selector<'_>) -> Result<(), ()>,
+        F: 'static + FnMut(&mut T, &Selector<'_>) -> Result<(), ViewNotFound>,
     {
         self.focus_view = Box::new(f);
     }
@@ -255,7 +255,7 @@ impl<T> Canvas<T> {
     /// Chainable variant.
     pub fn with_focus_view<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, &Selector<'_>) -> Result<(), ()>,
+        F: 'static + FnMut(&mut T, &Selector<'_>) -> Result<(), ViewNotFound>,
     {
         self.with(|s| s.set_focus_view(f))
     }
@@ -286,7 +286,10 @@ impl<T: 'static> View for Canvas<T> {
         (self.needs_relayout)(&self.state)
     }
 
-    fn focus_view(&mut self, selector: &Selector<'_>) -> Result<(), ()> {
+    fn focus_view(
+        &mut self,
+        selector: &Selector<'_>,
+    ) -> Result<(), ViewNotFound> {
         (self.focus_view)(&mut self.state, selector)
     }
 

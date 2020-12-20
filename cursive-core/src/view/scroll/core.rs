@@ -6,7 +6,7 @@ use crate::{
     printer::Printer,
     rect::Rect,
     theme::ColorStyle,
-    view::{ScrollStrategy, Selector, SizeCache},
+    view::{ScrollStrategy, Selector, SizeCache, ViewNotFound},
     with::With,
     Vec2, XY,
 };
@@ -282,9 +282,9 @@ impl Core {
         &mut self,
         selector: &Selector<'_>,
         inner_focus_view: F,
-    ) -> Result<(), ()>
+    ) -> Result<(), ViewNotFound>
     where
-        F: FnOnce(&Selector) -> Result<(), ()>,
+        F: FnOnce(&Selector) -> Result<(), ViewNotFound>,
     {
         inner_focus_view(selector)
     }
