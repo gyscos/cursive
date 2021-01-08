@@ -9,7 +9,7 @@ use std::str::FromStr;
 // Use AHash instead of the slower SipHash
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
-/// Error
+/// Error parsing a color.
 #[derive(Debug)]
 pub struct NoSuchColor;
 
