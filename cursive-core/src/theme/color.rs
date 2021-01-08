@@ -196,7 +196,7 @@ fn parse_special(value: &str) -> Option<Color> {
             value.chars().map(|c| c as i16 - '0' as i16).collect();
 
         assert_eq!(rgb.len(), 3);
-        if rgb.iter().all(|&i| i >= 0 && i < 6) {
+        if rgb.iter().all(|i| (0..6).contains(i)) {
             Some(Color::RgbLowRes(rgb[0] as u8, rgb[1] as u8, rgb[2] as u8))
         } else {
             None

@@ -25,14 +25,15 @@ enum-map = "0.6"
 enumset = "1"
 log = "0.4"
 owning_ref = "0.4"
+syn = "=1.0.57"  # Pin syn to 1.0.57 since enumset currently incompatible with 1.0.58
 unicode-segmentation = "1"
 unicode-width = "0.1"
-xi-unicode = "0.2"
+xi-unicode = "0.3"
 libc = "0.2"
-crossbeam-channel = "0.4"
+crossbeam-channel = "0.5"
 lazy_static = "1"
 chrono = "0.4"
-ahash = "0.4"
+ahash = "0.6"
 
 [dependencies.toml]
 optional = true
@@ -45,15 +46,7 @@ version = "0.3"
 [dependencies.pulldown-cmark]
 default-features = false
 optional = true
-version = "0.7"
-
-[target.'cfg(unix)'.dependencies]
-signal-hook = "0.1"
-
-[dev-dependencies]
-rand = "0.7"
-pretty-bytes = "0.2"
-atty = "0.2"
+version = "0.8"
 
 [features]
 markdown = ["pulldown-cmark"]

@@ -172,7 +172,7 @@ impl LinearLayout {
     /// Adds a child to the layout.
     pub fn add_child<V: IntoBoxedView + 'static>(&mut self, view: V) {
         self.children.push(Child {
-            view: view.as_boxed_view(),
+            view: view.into_boxed_view(),
             required_size: Vec2::zero(),
             last_size: Vec2::zero(),
             weight: 0,
@@ -193,7 +193,7 @@ impl LinearLayout {
         self.children.insert(
             i,
             Child {
-                view: view.as_boxed_view(),
+                view: view.into_boxed_view(),
                 required_size: Vec2::zero(),
                 last_size: Vec2::zero(),
                 weight: 0,

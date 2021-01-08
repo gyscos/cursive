@@ -94,7 +94,7 @@ impl ListView {
         label: &str,
         view: V,
     ) {
-        let mut view = view.as_boxed_view();
+        let mut view = view.into_boxed_view();
         view.take_focus(direction::Direction::none());
         self.children.push(ListChild::Row(label.to_string(), view));
         self.children_heights.push(0);

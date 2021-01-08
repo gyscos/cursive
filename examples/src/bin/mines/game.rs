@@ -39,7 +39,7 @@ impl Board {
         for _ in 0..options.mines {
             // Find a free cell to put a bomb
             let i = loop {
-                let i = thread_rng().gen_range(0, n_cells);
+                let i = thread_rng().gen_range(0..n_cells);
 
                 if let Cell::Bomb = board.cells[i] {
                     continue;

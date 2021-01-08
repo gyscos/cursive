@@ -19,7 +19,7 @@ impl BoxedView {
     where
         T: IntoBoxedView,
     {
-        BoxedView::new(view.as_boxed_view())
+        BoxedView::new(view.into_boxed_view())
     }
 
     /// Returns the inner boxed view.

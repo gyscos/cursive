@@ -372,11 +372,9 @@ fn colour_to_blt_colour(clr: Color, role: ColorRole) -> BltColor {
 }
 
 fn blt_keycode_to_char(kc: KeyCode, shift: bool) -> char {
-    let bltchar = bear_lib_terminal::terminal::state::char();
-    if bltchar == '\u{0}' {
-        return blt_keycode_to_char_impl(kc, shift);
-    } else {
-        return bltchar;
+    match bear_lib_terminal::terminal::state::char() {
+        '\u{0}' => blt_keycode_to_char_impl(kc, shift),
+        c => c,
     }
 }
 

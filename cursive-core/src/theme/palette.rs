@@ -9,6 +9,18 @@ use std::str::FromStr;
 // Use AHash instead of the slower SipHash
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 
+/// Error
+#[derive(Debug)]
+pub struct NoSuchColor;
+
+impl std::fmt::Display for NoSuchColor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Could not parse the given color")
+    }
+}
+
+impl std::error::Error for NoSuchColor {}
+
 /// Color configuration for the application.
 ///
 /// Assign each color role an actual color.
@@ -126,7 +138,7 @@ impl Palette {
         &mut self,
         key: &str,
         color: Color,
-    ) -> Result<(), ()> {
+    ) -> Result<(), NoSuchColor> {
         PaletteColor::from_str(key).map(|c| self.basic[c] = color)
     }
 
@@ -192,9 +204,9 @@ impl Default for Palette {
 
 // Iterate over a toml
 #[cfg(feature = "toml")]
-fn iterate_toml<'a>(
-    table: &'a toml::value::Table,
-) -> impl Iterator<Item = (&'a str, PaletteNode)> + 'a {
+fn iterate_toml(
+    table: &toml::value::Table,
+) -> impl Iterator<Item = (&str, PaletteNode)> {
     table.iter().flat_map(|(key, value)| {
         let node = match value {
             toml::Value::Table(table) => {
@@ -285,9 +297,9 @@ impl PaletteColor {
 }
 
 impl FromStr for PaletteColor {
-    type Err = ();
+    type Err = NoSuchColor;
 
-    fn from_str(s: &str) -> Result<Self, ()> {
+    fn from_str(s: &str) -> Result<Self, NoSuchColor> {
         use PaletteColor::*;
 
         Ok(match s {
@@ -302,7 +314,7 @@ impl FromStr for PaletteColor {
             "Highlight" | "highlight" => Highlight,
             "HighlightInactive" | "highlight_inactive" => HighlightInactive,
             "HighlightText" | "highlight_text" => HighlightText,
-            _ => return Err(()),
+            _ => return Err(NoSuchColor),
         })
     }
 }

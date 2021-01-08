@@ -1,4 +1,4 @@
-use crate::view::{View, ViewPath, ViewWrapper};
+use crate::view::{View, ViewWrapper};
 use crate::views::{NamedView, ViewRef};
 
 /// Provides `call_on<V: View>` to views.
@@ -94,6 +94,7 @@ impl<T: View> Finder for T {
 }
 
 /// Selects a single view (if any) in the tree.
+#[non_exhaustive]
 pub enum Selector<'a> {
     /// Same as [`Selector::Name`].
     #[deprecated(
@@ -103,7 +104,4 @@ pub enum Selector<'a> {
 
     /// Selects a view from its name.
     Name(&'a str),
-
-    /// Selects a view from its path.
-    Path(&'a ViewPath),
 }

@@ -58,7 +58,7 @@ impl FixedLayout {
     /// Adds a child.
     pub fn add_child<V: IntoBoxedView>(&mut self, position: Rect, view: V) {
         self.children.push(Child {
-            view: view.as_boxed_view(),
+            view: view.into_boxed_view(),
             position,
         });
     }

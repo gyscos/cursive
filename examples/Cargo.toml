@@ -14,9 +14,9 @@ version = "0.1.1-alpha.0"
 atty = "0.2.14"
 log = "0.4.8"
 pretty-bytes = "0.2.2"
-rand = "0.7.3"
+rand = "0.8"
 cursive = { path = "../cursive", default-features=false }
-crossbeam-channel = "0.4.2"
+crossbeam-channel = "0.5"
 lazy_static = "1.4"
 
 [features]

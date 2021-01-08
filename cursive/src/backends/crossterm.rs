@@ -17,6 +17,7 @@ use crossterm::{
         poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent,
         KeyCode, KeyEvent as CKeyEvent, KeyModifiers,
         MouseButton as CMouseButton, MouseEvent as CMouseEvent,
+        MouseEventKind,
     },
     execute, queue,
     style::{
@@ -232,34 +233,28 @@ impl Backend {
     fn map_key(&mut self, event: CEvent) -> Event {
         match event {
             CEvent::Key(key_event) => translate_event(key_event),
-            CEvent::Mouse(mouse_event) => {
-                let position;
-                let event;
-
-                match mouse_event {
-                    CMouseEvent::Down(button, x, y, _) => {
-                        let button = translate_button(button);
-                        event = MouseEvent::Press(button);
-                        position = (x, y).into();
+            CEvent::Mouse(CMouseEvent {
+                kind,
+                column,
+                row,
+                modifiers: _,
+            }) => {
+                let position = (column, row).into();
+                let event = match kind {
+                    MouseEventKind::Down(button) => {
+                        MouseEvent::Press(translate_button(button))
                     }
-                    CMouseEvent::Up(button, x, y, _) => {
-                        let button = translate_button(button);
-                        event = MouseEvent::Release(button);
-                        position = (x, y).into();
+                    MouseEventKind::Up(button) => {
+                        MouseEvent::Release(translate_button(button))
                     }
-                    CMouseEvent::Drag(button, x, y, _) => {
-                        let button = translate_button(button);
-                        event = MouseEvent::Hold(button);
-                        position = (x, y).into();
+                    MouseEventKind::Drag(button) => {
+                        MouseEvent::Hold(translate_button(button))
                     }
-                    CMouseEvent::ScrollDown(x, y, _) => {
-                        event = MouseEvent::WheelDown;
-                        position = (x, y).into();
+                    MouseEventKind::Moved => {
+                        unreachable!("Not tracking mouse move.");
                     }
-                    CMouseEvent::ScrollUp(x, y, _) => {
-                        event = MouseEvent::WheelUp;
-                        position = (x, y).into();
-                    }
+                    MouseEventKind::ScrollDown => MouseEvent::WheelDown,
+                    MouseEventKind::ScrollUp => MouseEvent::WheelUp,
                 };
 
                 Event::Mouse {
