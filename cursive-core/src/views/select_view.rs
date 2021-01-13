@@ -5,7 +5,7 @@ use crate::event::{
 };
 use crate::menu::MenuTree;
 use crate::rect::Rect;
-use crate::theme::ColorStyle;
+use crate::theme::{ColorStyle, PaletteColor};
 use crate::utils::markup::StyledString;
 use crate::view::{Position, View};
 use crate::views::MenuPopup;
@@ -446,7 +446,35 @@ impl<T: 'static> SelectView<T> {
         let l = self.items[i].label.width();
         let x = self.align.h.get_offset(l, printer.size.x);
         printer.print_hline((0, 0), x, " ");
-        printer.print_styled((x, 0), (&self.items[i].label).into());
+
+        // Overwrite the focused item's background color so that it matches the highlighting
+        // color. This prevents the focused text from having inconsistent highlighting color.
+        if i == self.focus() {
+            let styled_string = StyledString::with_spans(
+                self.items[i].label.source(),
+                self.items[i]
+                    .label
+                    .spans_raw()
+                    .iter()
+                    .map(|span| {
+                        let mut new_span = span.clone();
+                        if let Some(style) = span.attr.color {
+                            new_span.attr.color = Some(ColorStyle::new(
+                                style.front,
+                                PaletteColor::Highlight,
+                            ));
+                        }
+
+                        new_span
+                    })
+                    .collect(),
+            );
+
+            printer.print_styled((x, 0), (&styled_string).into());
+        } else {
+            printer.print_styled((x, 0), (&self.items[i].label).into());
+        }
+
         if l < printer.size.x {
             assert!((l + x) <= printer.size.x);
             printer.print_hline((x + l, 0), printer.size.x - (l + x), " ");
