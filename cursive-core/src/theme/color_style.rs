@@ -5,7 +5,9 @@ use super::{BaseColor, Color, ColorPair, Palette, PaletteColor};
 /// Represents a color pair role to use when printing something.
 ///
 /// The current theme will assign each role a foreground and background color.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+///
+/// The `Default` value is to inherit the parent's colors.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub struct ColorStyle {
     /// Color used for the foreground (the text itself).
     pub front: ColorType,
@@ -40,6 +42,11 @@ impl ColorStyle {
         B: Into<ColorType>,
     {
         Self::new(ColorType::InheritParent, back)
+    }
+
+    /// Uses `ColorType::InheritParent` for both front and background.
+    pub fn inherit_parent() -> Self {
+        Self::new(ColorType::InheritParent, ColorType::InheritParent)
     }
 
     /// Style set by terminal before entering a Cursive program.
@@ -92,6 +99,16 @@ impl ColorStyle {
         Self::new(PaletteColor::HighlightText, PaletteColor::HighlightInactive)
     }
 
+    /// Merge the style `b` over style `a`.
+    ///
+    /// This merges the front and back color types of `a` and `b`.
+    pub fn merge(a: Self, b: Self) -> Self {
+        ColorStyle {
+            front: ColorType::merge(a.front, b.front),
+            back: ColorType::merge(a.back, b.back),
+        }
+    }
+
     /// Return the color pair that this style represents.
     pub fn resolve(
         &self,
@@ -107,25 +124,25 @@ impl ColorStyle {
 
 impl From<Color> for ColorStyle {
     fn from(color: Color) -> Self {
-        Self::new(color, PaletteColor::View)
+        Self::front(color)
     }
 }
 
 impl From<BaseColor> for ColorStyle {
     fn from(color: BaseColor) -> Self {
-        Self::new(Color::Dark(color), PaletteColor::View)
+        Self::front(Color::Dark(color))
     }
 }
 
 impl From<PaletteColor> for ColorStyle {
     fn from(color: PaletteColor) -> Self {
-        Self::new(color, PaletteColor::View)
+        Self::front(color)
     }
 }
 
 impl From<ColorType> for ColorStyle {
     fn from(color: ColorType) -> Self {
-        Self::new(color, PaletteColor::View)
+        Self::front(color)
     }
 }
 
@@ -140,6 +157,8 @@ where
 }
 
 /// Either a color from the palette, or a direct color.
+///
+/// The `Default` implementation returns `InheritParent`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ColorType {
     /// Uses a color from the application palette.
@@ -152,6 +171,12 @@ pub enum ColorType {
     InheritParent,
 }
 
+impl Default for ColorType {
+    fn default() -> Self {
+        ColorType::InheritParent
+    }
+}
+
 impl ColorType {
     /// Given a palette, resolve `self` to a concrete color.
     pub fn resolve(self, palette: &Palette, previous: Color) -> Color {
@@ -159,6 +184,17 @@ impl ColorType {
             ColorType::Color(color) => color,
             ColorType::Palette(color) => color.resolve(palette),
             ColorType::InheritParent => previous,
+        }
+    }
+
+    /// Merge the color type `b` over the color type `a`.
+    ///
+    /// This returns `b`, unless `b = ColorType::InheritParent`,
+    /// in which case it returns `a`.
+    pub fn merge(a: ColorType, b: ColorType) -> ColorType {
+        match b {
+            ColorType::InheritParent => a,
+            b => b,
         }
     }
 }

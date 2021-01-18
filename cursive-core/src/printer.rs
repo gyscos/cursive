@@ -340,13 +340,9 @@ impl<'a, 'b> Printer<'a, 'b> {
         let color = style.color;
         let effects = style.effects;
 
-        if let Some(color) = color {
-            self.with_color(color, |printer| {
-                printer.with_effects(effects, f);
-            });
-        } else {
-            self.with_effects(effects, f);
-        }
+        self.with_color(color, |printer| {
+            printer.with_effects(effects, f);
+        });
     }
 
     /// Call the given closure with a modified printer
@@ -496,7 +492,7 @@ impl<'a, 'b> Printer<'a, 'b> {
                     ColorStyle::highlight_inactive()
                 }
             } else {
-                ColorStyle::primary()
+                ColorStyle::inherit_parent()
             },
             f,
         );

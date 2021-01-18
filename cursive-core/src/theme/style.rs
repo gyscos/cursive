@@ -16,7 +16,7 @@ pub struct Style {
     /// Color style to apply.
     ///
     /// `None` to keep using the previous colors.
-    pub color: Option<ColorStyle>,
+    pub color: ColorStyle,
 }
 
 impl Default for Style {
@@ -30,7 +30,7 @@ impl Style {
     pub fn none() -> Self {
         Style {
             effects: EnumSet::new(),
-            color: None,
+            color: ColorStyle::inherit_parent(),
         }
     }
 
@@ -54,7 +54,7 @@ impl From<Effect> for Style {
     fn from(effect: Effect) -> Self {
         Style {
             effects: enum_set!(effect),
-            color: None,
+            color: ColorStyle::inherit_parent(),
         }
     }
 }
@@ -63,7 +63,7 @@ impl From<ColorStyle> for Style {
     fn from(color: ColorStyle) -> Self {
         Style {
             effects: EnumSet::new(),
-            color: Some(color),
+            color,
         }
     }
 }
@@ -91,14 +91,11 @@ impl From<ColorType> for Style {
 /// Will use the last non-`None` color, and will combine all effects.
 impl<'a> FromIterator<&'a Style> for Style {
     fn from_iter<I: IntoIterator<Item = &'a Style>>(iter: I) -> Style {
-        let mut color = None;
+        let mut color = ColorStyle::inherit_parent();
         let mut effects = EnumSet::new();
 
         for style in iter {
-            if style.color.is_some() {
-                color = style.color;
-            }
-
+            color = ColorStyle::merge(color, style.color);
             effects.insert_all(style.effects);
         }
 
