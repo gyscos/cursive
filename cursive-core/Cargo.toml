@@ -22,10 +22,10 @@ repository = "gyscos/cursive"
 
 [dependencies]
 enum-map = "0.6"
-enumset = "1"
+wasmer_enumset = "1"
 log = "0.4"
 owning_ref = "0.4"
-syn = "=1.0.57"  # Pin syn to 1.0.57 since enumset currently incompatible with 1.0.58
+syn = "1.0"
 unicode-segmentation = "1"
 unicode-width = "0.1"
 xi-unicode = "0.3"

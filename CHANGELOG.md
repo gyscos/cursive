@@ -6,6 +6,8 @@
 
 - Backends are now initialized when starting the event loop rather than when creating Cursive.
     - As a result initialization and runner functions have changed.
+- `ColorStyle::color` is no longer an optional. Use `ColorType::InheritParent` if needed.
+- Replaced `()` error types with some custom zero-sized types.
 
 ### API updates
 
@@ -25,12 +27,18 @@
 - Add `SpannedString::trim(_{start, end})` to remove the unused prefix, suffix or both of the source.
 - Add `SpannedString::spans(_raw)_attr_mut` to give mutable access to the attribute of the spans.
 - Add `TextContent::with_content` to give mutable access to the `StyledString` of a `TextView`.
+- Add `ColotyType::InheritParent` to carry over the front or back color from the parent.
+- Add `Effect::Blink`.
+- Add `Margins::zeros()`.
+- Add `TextView::set_style`.
+- Add `SpannedString`-shrinking methods.
 
 ### Improvements
 
 - `ListView` now supports children taller than 1 row.
 - Added an `autocomplete` example.
 - Added a `stopwatch` example.
+- `SpannedString` iterators are now double-ended and exact-sized.
 
 ### Bugfixes
 
@@ -41,7 +49,6 @@
 - Dispatch `call_on_*` methods to all screens.
 - Fix potential issue with `setlocale` in ncurses backend on BSD.
 - Fix handling of multi-bytes newlines characters.
-- Fix 
 
 ### Doc
 

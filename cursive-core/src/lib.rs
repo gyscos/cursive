@@ -9,6 +9,8 @@
 //! [`cursive`]: https://docs.rs/cursive
 #![deny(missing_docs)]
 
+extern crate wasmer_enumset as enumset;
+
 macro_rules! new_default(
     ($c:ident<$t:ident>) => {
         impl<$t> Default for $c<$t> {
