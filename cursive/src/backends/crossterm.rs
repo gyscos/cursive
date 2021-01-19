@@ -230,8 +230,8 @@ impl Backend {
         queue!(self.stdout_mut(), SetAttribute(attr)).unwrap();
     }
 
-    fn map_key(&mut self, event: CEvent) -> Event {
-        match event {
+    fn map_key(&mut self, event: CEvent) -> Option<Event> {
+        Some(match event {
             CEvent::Key(key_event) => translate_event(key_event),
             CEvent::Mouse(CMouseEvent {
                 kind,
@@ -251,7 +251,7 @@ impl Backend {
                         MouseEvent::Hold(translate_button(button))
                     }
                     MouseEventKind::Moved => {
-                        unreachable!("Not tracking mouse move.");
+                        return None;
                     }
                     MouseEventKind::ScrollDown => MouseEvent::WheelDown,
                     MouseEventKind::ScrollUp => MouseEvent::WheelUp,
@@ -264,7 +264,7 @@ impl Backend {
                 }
             }
             CEvent::Resize(_, _) => Event::WindowResize,
-        }
+        })
     }
 }
 
@@ -287,7 +287,10 @@ impl backend::Backend for Backend {
     fn poll_event(&mut self) -> Option<Event> {
         match poll(Duration::from_millis(1)) {
             Ok(true) => match read() {
-                Ok(event) => Some(self.map_key(event)),
+                Ok(event) => match self.map_key(event) {
+                    Some(event) => Some(event),
+                    None => return self.poll_event(),
+                },
                 Err(e) => panic!("{:?}", e),
             },
             _ => None,
