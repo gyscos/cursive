@@ -41,7 +41,8 @@ where
 }
 
 impl<C> CursiveRunner<C> {
-    pub(crate) fn new(siv: C, backend: Box<dyn backend::Backend>) -> Self {
+    /// Creates a new cursive runner wrapper.
+    pub fn new(siv: C, backend: Box<dyn backend::Backend>) -> Self {
         CursiveRunner {
             siv,
             backend,

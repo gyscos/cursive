@@ -1,5 +1,17 @@
 # Changelog
 
+## cursive-core 0.2.2, cursive 0.16.2
+
+### API updates
+
+- Add methods to turn a CursiveRunnable into a CursiveRunner.
+
+## cursive 0.16.1
+
+### Bugfixes
+
+- Fix mouse input with crossterm backend.
+
 ## cursive-core 0.2.1
 
 ### Bugfixes
