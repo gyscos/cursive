@@ -8,14 +8,14 @@ license = "MIT"
 name = "cursive"
 readme = "../Readme.md"
 repository = "https://github.com/gyscos/cursive"
-version = "0.16.2-alpha"
+version = "0.16.2"
 edition = "2018"
 
 [package.metadata.docs.rs]
 features = ["unstable_scroll", "markdown", "toml"]
 
 [dependencies]
-cursive_core = { path = "../cursive-core", version= "0.2.2-alpha"}
+cursive_core = { path = "../cursive-core", version= "0.2.2"}
 crossbeam-channel = "0.5"
 cfg-if = "1"
 wasmer_enumset = "1"
