@@ -134,7 +134,9 @@ impl Cursive {
         // Draw the menubar?
         if self.menubar.visible() {
             let printer = printer.focused(self.menubar.receive_events());
-            self.menubar.draw(&printer);
+            printer.with_color(theme::ColorStyle::primary(), |printer| {
+                self.menubar.draw(&printer)
+            });
         }
 
         // finally draw stackview layers

@@ -1,6 +1,12 @@
 # Changelog
 
-## Next version (cursive-core 0.2.0, cursive 0.16)
+## cursive-core 0.2.1
+
+### Bugfixes
+
+- Fix colors in menubar.
+
+## cursive-core 0.2.0, cursive 0.16
 
 ### Breaking Changes
 
