@@ -33,6 +33,18 @@ impl std::ops::DerefMut for CursiveRunnable {
     }
 }
 
+impl std::borrow::Borrow<Cursive> for CursiveRunnable {
+    fn borrow(&self) -> &Cursive {
+        &*self
+    }
+}
+
+impl std::borrow::BorrowMut<Cursive> for CursiveRunnable {
+    fn borrow_mut(&mut self) -> &mut Cursive {
+        &mut *self
+    }
+}
+
 fn boxed(e: impl std::error::Error + 'static) -> Box<dyn std::error::Error> {
     Box::new(e)
 }
