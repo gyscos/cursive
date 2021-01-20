@@ -17,7 +17,7 @@ It is designed to be safe and easy to use:
 
 ```toml
 [dependencies]
-cursive = "0.15"
+cursive = "0.16"
 ```
 
 Or to use the latest git version:
