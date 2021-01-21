@@ -8,7 +8,7 @@ license = "MIT"
 name = "cursive_core"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/cursive"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2018"
 
 [package.metadata.docs.rs]
@@ -23,6 +23,7 @@ repository = "gyscos/cursive"
 [dependencies]
 enum-map = "0.6"
 enumset = "1"
+syn = "=1.0.57"
 log = "0.4"
 owning_ref = "0.4"
 unicode-segmentation = "1"
