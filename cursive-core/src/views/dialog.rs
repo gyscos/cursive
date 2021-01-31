@@ -441,6 +441,28 @@ impl Dialog {
         self.focus
     }
 
+    /// Change the current focus of the dialog.
+    ///
+    /// Please be considerate of the context from which focus is being stolen
+    /// when programmatically moving focus. For example, moving focus to a
+    /// button when a user is typing something into an `EditView` would cause
+    /// them to accidentally activate the button.
+    ///
+    /// The given dialog focus will be clamped to a valid range. For example,
+    /// attempting to focus a button that no longer exists will instead focus
+    /// one that does (or the content, if no buttons exist).
+    pub fn set_focus(&mut self, new_focus: DialogFocus) {
+        self.focus = match new_focus {
+            DialogFocus::Content => DialogFocus::Content,
+            DialogFocus::Button(_) if self.buttons.is_empty() => {
+                DialogFocus::Content
+            }
+            DialogFocus::Button(c) => {
+                DialogFocus::Button(max(c, self.buttons.len()))
+            }
+        }
+    }
+
     // Private methods
 
     // An event is received while the content is in focus
