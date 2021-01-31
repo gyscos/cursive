@@ -11,6 +11,7 @@ use crate::{
 };
 use std::cell::Cell;
 use std::cmp::max;
+use std::mem::replace;
 use unicode_width::UnicodeWidthStr;
 
 /// Identifies currently focused element in [`Dialog`].
@@ -165,6 +166,19 @@ impl Dialog {
     pub fn set_content<V: IntoBoxedView>(&mut self, view: V) {
         self.content = LastSizeView::new(BoxedView::boxed(view));
         self.invalidate();
+    }
+
+    /// Replace the content for this dialog.
+    ///
+    /// Previous content will be returned as a `BoxedView`.
+    pub fn replace_content<V: IntoBoxedView>(&mut self, view: V) -> BoxedView {
+        let old_content = replace(
+            &mut self.content,
+            LastSizeView::new(BoxedView::boxed(view)),
+        );
+        self.invalidate();
+
+        old_content.view
     }
 
     /// Convenient method to create a dialog with a simple text content.
