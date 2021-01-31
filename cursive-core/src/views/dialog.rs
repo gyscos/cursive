@@ -324,6 +324,11 @@ impl Dialog {
         self.title_position = align;
     }
 
+    /// Gets the alignment of the title
+    pub fn get_title_position(&self) -> HAlign {
+        self.title_position
+    }
+
     /// Sets the padding in the dialog (around content and buttons).
     ///
     /// # Examples
