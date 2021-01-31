@@ -258,6 +258,11 @@ impl Dialog {
         self
     }
 
+    /// Gets the horizontal alignment for the buttons.
+    pub fn get_h_align(&self) -> HAlign {
+        self.align.h
+    }
+
     /*
      * Commented out because currently un-implemented.
      *
