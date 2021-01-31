@@ -307,6 +307,11 @@ impl Dialog {
         self.invalidate();
     }
 
+    /// Get the title of the dialog.
+    pub fn get_title(&self) -> &str {
+        &self.title
+    }
+
     /// Sets the horizontal position of the title in the dialog.
     /// The default position is `HAlign::Center`
     pub fn title_position(self, align: HAlign) -> Self {
