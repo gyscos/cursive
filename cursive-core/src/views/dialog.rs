@@ -440,6 +440,11 @@ impl Dialog {
         self.padding.right
     }
 
+    /// Iterate the buttons of this dialog.
+    pub fn iter_buttons(&self) -> impl Iterator<Item = &Button> {
+        self.buttons.iter().map(|b| &b.button.view)
+    }
+
     /// Returns an iterator on this buttons for this dialog.
     pub fn buttons_mut(&mut self) -> impl Iterator<Item = &mut Button> {
         self.invalidate();
