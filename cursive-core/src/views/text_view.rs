@@ -201,7 +201,6 @@ pub struct TextView {
     wrap: bool,
 
     // ScrollBase make many scrolling-related things easier
-    last_size: Vec2,
     width: Option<usize>,
 }
 
@@ -237,7 +236,6 @@ impl TextView {
             rows: Vec::new(),
             wrap: true,
             align: Align::top_left(),
-            last_size: Vec2::zero(),
             width: None,
         }
     }
@@ -424,7 +422,6 @@ impl View for TextView {
 
     fn layout(&mut self, size: Vec2) {
         // Compute the text rows.
-        self.last_size = size;
         self.compute_rows(size);
 
         // The entire "virtual" size (includes all rows)

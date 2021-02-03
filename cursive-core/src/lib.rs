@@ -9,7 +9,7 @@
 //! [`cursive`]: https://docs.rs/cursive
 #![deny(missing_docs)]
 
-extern crate wasmer_enumset as enumset;
+pub use enumset;
 
 macro_rules! new_default(
     ($c:ident<$t:ident>) => {

@@ -1,4 +1,4 @@
-use enumset::EnumSetType;
+use enumset::{EnumSet, EnumSetType};
 
 /// Text effect
 #[allow(clippy::derive_hash_xor_eq)] // We do derive it through EnumSetType

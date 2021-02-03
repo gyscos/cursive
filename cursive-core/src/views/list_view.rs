@@ -40,7 +40,6 @@ pub struct ListView {
     focus: usize,
     // This callback is called when the selection is changed.
     on_select: Option<Rc<dyn Fn(&mut Cursive, &String)>>,
-    last_size: Vec2,
 }
 
 new_default!(ListView);
@@ -53,7 +52,6 @@ impl ListView {
             children_heights: Vec::new(),
             focus: 0,
             on_select: None,
-            last_size: Vec2::zero(),
         }
     }
 
@@ -332,8 +330,6 @@ impl View for ListView {
     }
 
     fn layout(&mut self, size: Vec2) {
-        self.last_size = size;
-
         // We'll show 2 columns: the labels, and the views.
         let label_width = self
             .children

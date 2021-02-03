@@ -64,7 +64,7 @@
 //! [`cursive::theme`]: ./theme/index.html
 #![deny(missing_docs)]
 
-extern crate wasmer_enumset as enumset;
+pub use enumset;
 
 pub use cursive_core::*;
 

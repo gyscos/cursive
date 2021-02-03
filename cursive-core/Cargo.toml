@@ -22,7 +22,7 @@ repository = "gyscos/cursive"
 
 [dependencies]
 enum-map = "0.6"
-wasmer_enumset = "1"
+enumset = "1.0.3"
 log = "0.4"
 owning_ref = "0.4"
 syn = "1.0"
@@ -33,7 +33,7 @@ libc = "0.2"
 crossbeam-channel = "0.5"
 lazy_static = "1"
 chrono = "0.4"
-ahash = "0.6"
+ahash = "0.7"
 
 [dependencies.toml]
 optional = true

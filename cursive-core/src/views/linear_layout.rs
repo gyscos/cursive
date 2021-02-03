@@ -39,7 +39,7 @@ struct Child {
 
     last_size: Vec2,
 
-    weight: usize,
+    _weight: usize,
 }
 
 impl Child {
@@ -150,14 +150,14 @@ impl LinearLayout {
     ///
     /// Panics if `i >= self.len()`.
     pub fn set_weight(&mut self, i: usize, weight: usize) {
-        self.children[i].weight = weight;
+        self.children[i]._weight = weight;
     }
 
     /// Modifies the weight of the last child added.
     ///
     /// It is an error to call this before adding a child (and it will panic).
     pub fn weight(mut self, weight: usize) -> Self {
-        self.children.last_mut().unwrap().weight = weight;
+        self.children.last_mut().unwrap()._weight = weight;
 
         self
     }
@@ -175,7 +175,7 @@ impl LinearLayout {
             view: view.into_boxed_view(),
             required_size: Vec2::zero(),
             last_size: Vec2::zero(),
-            weight: 0,
+            _weight: 0,
         });
         self.invalidate();
     }
@@ -196,7 +196,7 @@ impl LinearLayout {
                 view: view.into_boxed_view(),
                 required_size: Vec2::zero(),
                 last_size: Vec2::zero(),
-                weight: 0,
+                _weight: 0,
             },
         );
         self.invalidate();
