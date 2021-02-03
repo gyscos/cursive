@@ -1,7 +1,7 @@
 use std::iter::FromIterator;
 
 use super::{Color, ColorStyle, ColorType, Effect, PaletteColor};
-use enumset::{enum_set, EnumSet};
+use enumset::EnumSet;
 
 /// Combine a color and an effect.
 ///
@@ -53,7 +53,7 @@ impl Style {
 impl From<Effect> for Style {
     fn from(effect: Effect) -> Self {
         Style {
-            effects: enum_set!(effect),
+            effects: EnumSet::only(effect),
             color: ColorStyle::inherit_parent(),
         }
     }
