@@ -357,18 +357,6 @@ impl Dialog {
         self.padding(Margins::lrtb(left, right, top, bottom))
     }
 
-    /// Gets the padding in the dialog.
-    ///
-    /// Returns Left, Right, Tob, Bottom fields as a tuple.
-    pub fn get_padding_lrtb(&self) -> (usize, usize, usize, usize) {
-        (
-            self.padding.left,
-            self.padding.right,
-            self.padding.top,
-            self.padding.bottom,
-        )
-    }
-
     /// Sets the padding in the dialog (around content and buttons).
     ///
     /// Chainable variant.
@@ -386,11 +374,6 @@ impl Dialog {
         self.padding.top = padding;
     }
 
-    /// Gets the top padding in the dialog (under the title).
-    pub fn get_padding_top(&mut self) -> usize {
-        self.padding.top
-    }
-
     /// Sets the bottom padding in the dialog (under buttons).
     pub fn padding_bottom(self, padding: usize) -> Self {
         self.with(|s| s.set_padding_bottom(padding))
@@ -399,11 +382,6 @@ impl Dialog {
     /// Sets the bottom padding in the dialog (under buttons).
     pub fn set_padding_bottom(&mut self, padding: usize) {
         self.padding.bottom = padding;
-    }
-
-    /// Gets the bottom padding in the dialog (under buttons).
-    pub fn get_padding_bottom(&mut self) -> usize {
-        self.padding.bottom
     }
 
     /// Sets the left padding in the dialog.
@@ -416,11 +394,6 @@ impl Dialog {
         self.padding.left = padding;
     }
 
-    /// Gets the left padding in the dialog.
-    pub fn get_padding_left(&mut self) -> usize {
-        self.padding.left
-    }
-
     /// Sets the right padding in the dialog.
     pub fn padding_right(self, padding: usize) -> Self {
         self.with(|s| s.set_padding_right(padding))
@@ -429,11 +402,6 @@ impl Dialog {
     /// Sets the right padding in the dialog.
     pub fn set_padding_right(&mut self, padding: usize) {
         self.padding.right = padding;
-    }
-
-    /// Gets the left padding in the dialog.
-    pub fn get_padding_right(&mut self) -> usize {
-        self.padding.right
     }
 
     /// Iterate the buttons of this dialog.
