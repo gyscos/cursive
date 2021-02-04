@@ -437,23 +437,14 @@ impl Dialog {
     }
 
     /// Iterate the buttons of this dialog.
-    pub fn iter_buttons(&self) -> impl Iterator<Item = &Button> {
+    pub fn buttons(&self) -> impl Iterator<Item = &Button> {
         self.buttons.iter().map(|b| &b.button.view)
     }
 
     /// Mutably iterate the buttons of this dialog.
-    pub fn iter_buttons_mut(&mut self) -> impl Iterator<Item = &mut Button> {
+    pub fn buttons_mut(&mut self) -> impl Iterator<Item = &mut Button> {
         self.invalidate();
         self.buttons.iter_mut().map(|b| &mut b.button.view)
-    }
-
-    /// Mutably iterate the buttons of this dialog.
-    #[deprecated(
-        since = "0.2.2",
-        note = "Please use iter_buttons_mut instead"
-    )]
-    pub fn buttons_mut(&mut self) -> impl Iterator<Item = &mut Button> {
-        self.iter_buttons_mut()
     }
 
     /// Returns currently focused element
