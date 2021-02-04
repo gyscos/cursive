@@ -118,7 +118,9 @@ impl Dialog {
     ///     .button("Quit", |s| s.quit());
     /// ```
     pub fn content<V: IntoBoxedView>(self, view: V) -> Self {
-        self.with(|s| s.set_content(view))
+        self.with(|s| {
+            s.set_content(view);
+        })
     }
 
     /// Gets the content of this dialog.
@@ -162,23 +164,12 @@ impl Dialog {
 
     /// Sets the content for this dialog.
     ///
-    /// Previous content will be dropped.
-    pub fn set_content<V: IntoBoxedView>(&mut self, view: V) {
-        self.content = LastSizeView::new(BoxedView::boxed(view));
+    /// Previous content will be returned.
+    pub fn set_content<V: IntoBoxedView>(&mut self, view: V) -> Box<dyn View> {
         self.invalidate();
-    }
-
-    /// Replace the content for this dialog.
-    ///
-    /// Previous content will be returned as a `BoxedView`.
-    pub fn replace_content<V: IntoBoxedView>(&mut self, view: V) -> BoxedView {
-        let old_content = replace(
-            &mut self.content,
-            LastSizeView::new(BoxedView::boxed(view)),
-        );
-        self.invalidate();
-
-        old_content.view
+        replace(&mut self.content, LastSizeView::new(BoxedView::boxed(view)))
+            .view
+            .unwrap()
     }
 
     /// Convenient method to create a dialog with a simple text content.
