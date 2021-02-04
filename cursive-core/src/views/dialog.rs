@@ -10,7 +10,7 @@ use crate::{
     Cursive, Printer, Vec2, With,
 };
 use std::cell::Cell;
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::mem::replace;
 use unicode_width::UnicodeWidthStr;
 
@@ -478,7 +478,7 @@ impl Dialog {
                 DialogFocus::Content
             }
             DialogFocus::Button(c) => {
-                DialogFocus::Button(max(c, self.buttons.len()))
+                DialogFocus::Button(min(c, self.buttons.len()))
             }
         }
     }
