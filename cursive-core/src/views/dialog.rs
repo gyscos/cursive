@@ -10,7 +10,7 @@ use crate::{
     Cursive, Printer, Vec2, With,
 };
 use std::cell::Cell;
-use std::cmp::max;
+use std::cmp::{max, min};
 use unicode_width::UnicodeWidthStr;
 
 /// Identifies currently focused element in [`Dialog`].
@@ -117,7 +117,9 @@ impl Dialog {
     ///     .button("Quit", |s| s.quit());
     /// ```
     pub fn content<V: IntoBoxedView>(self, view: V) -> Self {
-        self.with(|s| s.set_content(view))
+        self.with(|s| {
+            s.set_content(view);
+        })
     }
 
     /// Gets the content of this dialog.
@@ -161,10 +163,15 @@ impl Dialog {
 
     /// Sets the content for this dialog.
     ///
-    /// Previous content will be dropped.
-    pub fn set_content<V: IntoBoxedView>(&mut self, view: V) {
-        self.content = LastSizeView::new(BoxedView::boxed(view));
+    /// Previous content will be returned.
+    pub fn set_content<V: IntoBoxedView>(&mut self, view: V) -> Box<dyn View> {
         self.invalidate();
+        std::mem::replace(
+            &mut self.content,
+            LastSizeView::new(BoxedView::boxed(view)),
+        )
+        .view
+        .unwrap()
     }
 
     /// Convenient method to create a dialog with a simple text content.
@@ -244,6 +251,11 @@ impl Dialog {
         self
     }
 
+    /// Gets the horizontal alignment for the buttons.
+    pub fn get_h_align(&self) -> HAlign {
+        self.align.h
+    }
+
     /*
      * Commented out because currently un-implemented.
      *
@@ -293,6 +305,11 @@ impl Dialog {
         self.invalidate();
     }
 
+    /// Get the title of the dialog.
+    pub fn get_title(&self) -> &str {
+        &self.title
+    }
+
     /// Sets the horizontal position of the title in the dialog.
     /// The default position is `HAlign::Center`
     pub fn title_position(self, align: HAlign) -> Self {
@@ -303,6 +320,11 @@ impl Dialog {
     /// The default position is `HAlign::Center`
     pub fn set_title_position(&mut self, align: HAlign) {
         self.title_position = align;
+    }
+
+    /// Gets the alignment of the title
+    pub fn get_title_position(&self) -> HAlign {
+        self.title_position
     }
 
     /// Sets the padding in the dialog (around content and buttons).
@@ -317,6 +339,11 @@ impl Dialog {
     /// ```
     pub fn padding(self, padding: Margins) -> Self {
         self.with(|s| s.set_padding(padding))
+    }
+
+    /// Gets the padding in the dialog (around content and buttons).
+    pub fn get_padding(&self) -> Margins {
+        self.padding
     }
 
     /// Sets the padding in the dialog.
@@ -379,7 +406,12 @@ impl Dialog {
         self.padding.right = padding;
     }
 
-    /// Returns an iterator on this buttons for this dialog.
+    /// Iterate the buttons of this dialog.
+    pub fn buttons(&self) -> impl Iterator<Item = &Button> {
+        self.buttons.iter().map(|b| &b.button.view)
+    }
+
+    /// Mutably iterate the buttons of this dialog.
     pub fn buttons_mut(&mut self) -> impl Iterator<Item = &mut Button> {
         self.invalidate();
         self.buttons.iter_mut().map(|b| &mut b.button.view)
@@ -388,6 +420,28 @@ impl Dialog {
     /// Returns currently focused element
     pub fn focus(&self) -> DialogFocus {
         self.focus
+    }
+
+    /// Change the current focus of the dialog.
+    ///
+    /// Please be considerate of the context from which focus is being stolen
+    /// when programmatically moving focus. For example, moving focus to a
+    /// button when a user is typing something into an `EditView` would cause
+    /// them to accidentally activate the button.
+    ///
+    /// The given dialog focus will be clamped to a valid range. For example,
+    /// attempting to focus a button that no longer exists will instead focus
+    /// one that does (or the content, if no buttons exist).
+    pub fn set_focus(&mut self, new_focus: DialogFocus) {
+        self.focus = match new_focus {
+            DialogFocus::Content => DialogFocus::Content,
+            DialogFocus::Button(_) if self.buttons.is_empty() => {
+                DialogFocus::Content
+            }
+            DialogFocus::Button(c) => {
+                DialogFocus::Button(min(c, self.buttons.len()))
+            }
+        }
     }
 
     // Private methods
