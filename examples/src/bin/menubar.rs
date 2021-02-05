@@ -1,7 +1,4 @@
-use cursive::event::Key;
-use cursive::menu::MenuTree;
-use cursive::traits::*;
-use cursive::views::Dialog;
+use cursive::{event::Key, menu, traits::*, views::Dialog};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 // This examples shows how to configure and use a menubar at the top of the
@@ -18,7 +15,7 @@ fn main() {
         // We add a new "File" tree
         .add_subtree(
             "File",
-            MenuTree::new()
+            menu::Tree::new()
                 // Trees are made of leaves, with are directly actionable...
                 .leaf("New", move |s| {
                     // Here we use the counter to add an entry
@@ -39,11 +36,13 @@ fn main() {
                     "Recent",
                     // The `.with()` method can help when running loops
                     // within builder patterns.
-                    MenuTree::new().with(|tree| {
+                    menu::Tree::new().with(|tree| {
                         for i in 1..100 {
                             // We don't actually do anything here,
                             // but you could!
-                            tree.add_leaf(format!("Item {}", i), |_| ())
+                            tree.add_item(menu::Item::leaf(format!("Item {}", i), |_| ()).with(|s| {
+                                if i % 5 == 0 { s.disable(); }
+                            }))
                         }
                     }),
                 )
@@ -58,10 +57,10 @@ fn main() {
         )
         .add_subtree(
             "Help",
-            MenuTree::new()
+            menu::Tree::new()
                 .subtree(
                     "Help",
-                    MenuTree::new()
+                    menu::Tree::new()
                         .leaf("General", |s| {
                             s.add_layer(Dialog::info("Help message!"))
                         })

@@ -1,6 +1,6 @@
 use crate::direction;
 use crate::event::*;
-use crate::menu::{MenuItem, MenuTree};
+use crate::menu;
 use crate::rect::Rect;
 use crate::theme::ColorStyle;
 use crate::view::{Position, View};
@@ -34,7 +34,7 @@ enum State {
 /// [`Cursive`]: crate::Cursive::menubar
 pub struct Menubar {
     /// Menu items in this menubar.
-    root: MenuTree,
+    root: menu::Tree,
 
     /// TODO: move this out of this view.
     pub autohide: bool,
@@ -50,7 +50,7 @@ impl Menubar {
     /// Creates a new, empty menubar.
     pub fn new() -> Self {
         Menubar {
-            root: MenuTree::new(),
+            root: menu::Tree::new(),
             autohide: true,
             state: State::Inactive,
             focus: 0,
@@ -78,10 +78,22 @@ impl Menubar {
     }
 
     /// Adds a new item to the menubar.
+    pub fn insert(&mut self, i: usize, item: menu::Item) -> &mut Self {
+        self.root.insert(i, item);
+        self
+    }
+
+    /// Adds a new item to the menubar.
+    pub fn item(&mut self, item: menu::Item) -> &mut Self {
+        let i = self.root.len();
+        self.insert(i, item)
+    }
+
+    /// Adds a new item to the menubar.
     ///
     /// The item will use the given title, and on selection, will open a
     /// popup-menu with the given menu tree.
-    pub fn add_subtree<S>(&mut self, title: S, menu: MenuTree) -> &mut Self
+    pub fn add_subtree<S>(&mut self, title: S, menu: menu::Tree) -> &mut Self
     where
         S: Into<String>,
     {
@@ -110,7 +122,7 @@ impl Menubar {
         &mut self,
         i: usize,
         title: S,
-        menu: MenuTree,
+        menu: menu::Tree,
     ) -> &mut Self
     where
         S: Into<String>,
@@ -158,12 +170,12 @@ impl Menubar {
     /// Returns the item at the given position.
     ///
     /// Returns `None` if `i > self.len()`
-    pub fn get_subtree(&mut self, i: usize) -> Option<&mut MenuTree> {
+    pub fn get_subtree(&mut self, i: usize) -> Option<&mut menu::Tree> {
         self.root.get_subtree(i)
     }
 
     /// Looks for an item with the given label.
-    pub fn find_subtree(&mut self, label: &str) -> Option<&mut MenuTree> {
+    pub fn find_subtree(&mut self, label: &str) -> Option<&mut menu::Tree> {
         self.root.find_subtree(label)
     }
 
@@ -197,12 +209,12 @@ impl Menubar {
 
     fn select_child(&mut self, open_only: bool) -> EventResult {
         match self.root.children[self.focus] {
-            MenuItem::Leaf(_, ref cb) if !open_only => {
+            menu::Item::Leaf { ref cb, .. } if !open_only => {
                 // Go inactive after an action.
                 self.state = State::Inactive;
                 EventResult::Consumed(Some(cb.clone()))
             }
-            MenuItem::Subtree(_, ref tree) => {
+            menu::Item::Subtree { ref tree, .. } => {
                 // First, we need a new Rc to send the callback,
                 // since we don't know when it will be called.
                 let menu = Rc::clone(tree);
@@ -226,7 +238,7 @@ impl Menubar {
     }
 }
 
-fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<MenuTree>) {
+fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<menu::Tree>) {
     // Adds a new layer located near the item title with the menu popup.
     // Also adds two key callbacks on this new view, to handle `left` and
     // `right` key presses.
@@ -275,16 +287,30 @@ impl View for Menubar {
         // TODO: draw the rest
         let mut offset = 1;
         for (i, item) in self.root.children.iter().enumerate() {
-            let title = item.label();
+            let label = item.label();
+
+            // We print disabled items differently, except delimiters,
+            // which are still white.
+            let enabled =
+                printer.enabled && (item.is_enabled() || item.is_delimiter());
 
             // We don't want to show HighlightInactive when we're not selected,
             // because it's ugly on the menubar.
             let selected =
                 (self.state != State::Inactive) && (i == self.focus);
-            printer.with_selection(selected, |printer| {
-                printer.print((offset, 0), &format!(" {} ", title));
+
+            let color = if !enabled {
+                ColorStyle::secondary()
+            } else if selected {
+                ColorStyle::highlight()
+            } else {
+                ColorStyle::primary()
+            };
+
+            printer.with_style(color, |printer| {
+                printer.print((offset, 0), &format!(" {} ", label));
             });
-            offset += title.width() + 2;
+            offset += label.width() + 2;
         }
     }
 
@@ -295,12 +321,13 @@ impl View for Menubar {
                 return EventResult::with_cb(Cursive::clear);
             }
             Event::Key(Key::Left) => loop {
+                // TODO: fix endless loop if nothing is enabled?
                 if self.focus > 0 {
                     self.focus -= 1;
                 } else {
                     self.focus = self.root.len() - 1;
                 }
-                if !self.root.children[self.focus].is_delimiter() {
+                if self.root.children[self.focus].is_enabled() {
                     break;
                 }
             },
@@ -310,7 +337,7 @@ impl View for Menubar {
                 } else {
                     self.focus = 0;
                 }
-                if !self.root.children[self.focus].is_delimiter() {
+                if self.root.children[self.focus].is_enabled() {
                     break;
                 }
             },
@@ -329,7 +356,7 @@ impl View for Menubar {
                     .checked_sub(offset)
                     .and_then(|pos| self.child_at(pos.x))
                 {
-                    if !self.root.children[child].is_delimiter() {
+                    if self.root.children[child].is_enabled() {
                         self.focus = child;
                         if btn == MouseButton::Left {
                             return self.select_child(true);

@@ -1,16 +1,14 @@
-use crate::align::Align;
-use crate::event::{
-    Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+use crate::{
+    align::Align,
+    event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
+    menu,
+    rect::Rect,
+    theme::ColorStyle,
+    view::scroll,
+    view::{Position, View},
+    views::OnEventView,
+    Cursive, Printer, Vec2, With,
 };
-use crate::menu::{MenuItem, MenuTree};
-use crate::rect::Rect;
-use crate::view::scroll;
-use crate::view::{Position, View};
-use crate::views::OnEventView;
-use crate::Cursive;
-use crate::Printer;
-use crate::Vec2;
-use crate::With;
 use std::cmp::min;
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
@@ -23,7 +21,7 @@ use unicode_width::UnicodeWidthStr;
 /// [1]: crate::views::SelectView::popup()
 /// [2]: crate::Cursive::menubar()
 pub struct MenuPopup {
-    menu: Rc<MenuTree>,
+    menu: Rc<menu::Tree>,
     focus: usize,
     scroll_core: scroll::Core,
     align: Align,
@@ -38,7 +36,7 @@ impl_scroller!(MenuPopup::scroll_core);
 
 impl MenuPopup {
     /// Creates a new `MenuPopup` using the given menu tree.
-    pub fn new(menu: Rc<MenuTree>) -> Self {
+    pub fn new(menu: Rc<menu::Tree>) -> Self {
         MenuPopup {
             menu,
             focus: 0,
@@ -66,11 +64,11 @@ impl MenuPopup {
         self.focus
     }
 
-    fn item_width(item: &MenuItem) -> usize {
+    fn item_width(item: &menu::Item) -> usize {
         match *item {
-            MenuItem::Delimiter => 1,
-            MenuItem::Leaf(ref title, _) => title.width(),
-            MenuItem::Subtree(ref title, _) => title.width() + 3,
+            menu::Item::Delimiter => 1,
+            menu::Item::Leaf { ref label, .. } => label.width(),
+            menu::Item::Subtree { ref label, .. } => label.width() + 3,
         }
     }
 
@@ -132,7 +130,7 @@ impl MenuPopup {
                 break;
             }
 
-            if !self.menu.children[self.focus].is_delimiter() {
+            if self.menu.children[self.focus].is_enabled() {
                 n -= 1;
             }
         }
@@ -149,7 +147,7 @@ impl MenuPopup {
                 break;
             }
 
-            if !self.menu.children[self.focus].is_delimiter() {
+            if self.menu.children[self.focus].is_enabled() {
                 n -= 1;
             }
         }
@@ -157,7 +155,7 @@ impl MenuPopup {
 
     fn submit(&mut self) -> EventResult {
         match self.menu.children[self.focus] {
-            MenuItem::Leaf(_, ref cb) => {
+            menu::Item::Leaf { ref cb, .. } => {
                 let cb = cb.clone();
                 let action_cb = self.on_action.clone();
                 EventResult::with_cb(move |s| {
@@ -171,7 +169,7 @@ impl MenuPopup {
                     cb.clone()(s);
                 })
             }
-            MenuItem::Subtree(_, ref tree) => self.make_subtree_cb(tree),
+            menu::Item::Subtree { ref tree, .. } => self.make_subtree_cb(tree),
             _ => unreachable!("Delimiters cannot be submitted."),
         }
     }
@@ -186,7 +184,7 @@ impl MenuPopup {
         })
     }
 
-    fn make_subtree_cb(&self, tree: &Rc<MenuTree>) -> EventResult {
+    fn make_subtree_cb(&self, tree: &Rc<menu::Tree>) -> EventResult {
         let tree = Rc::clone(tree);
         let max_width = 4 + self
             .menu
@@ -239,14 +237,14 @@ impl MenuPopup {
                 if self.menu.children[self.focus].is_subtree() =>
             {
                 return match self.menu.children[self.focus] {
-                    MenuItem::Subtree(_, ref tree) => {
+                    menu::Item::Subtree { ref tree, .. } => {
                         self.make_subtree_cb(tree)
                     }
                     _ => unreachable!("Child is a subtree"),
                 };
             }
             Event::Key(Key::Enter)
-                if !self.menu.children[self.focus].is_delimiter() =>
+                if self.menu.children[self.focus].is_enabled() =>
             {
                 return self.submit();
             }
@@ -260,7 +258,7 @@ impl MenuPopup {
                     // Now `position` is relative to the top-left of the content.
                     let focus = position.y;
                     if focus < self.menu.len()
-                        && !self.menu.children[focus].is_delimiter()
+                        && self.menu.children[focus].is_enabled()
                     {
                         self.focus = focus;
                     }
@@ -270,7 +268,7 @@ impl MenuPopup {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if !self.menu.children[self.focus].is_delimiter()
+            } if self.menu.children[self.focus].is_enabled()
                 && position
                     .checked_sub(offset)
                     .map(|position| position.y == self.focus)
@@ -335,14 +333,23 @@ impl View for MenuPopup {
         let printer = printer.shrinked_centered((2, 2));
 
         scroll::draw_lines(self, &printer, |s, printer, i| {
-            printer.with_selection(i == s.focus, |printer| {
-                let item = &s.menu.children[i];
+            let item = &s.menu.children[i];
+            let enabled =
+                printer.enabled && (item.is_enabled() || item.is_delimiter());
+            let color = if !enabled {
+                ColorStyle::secondary()
+            } else if i == s.focus {
+                ColorStyle::highlight()
+            } else {
+                ColorStyle::primary()
+            };
+            printer.with_style(color, |printer| {
                 match *item {
-                    MenuItem::Delimiter => {
+                    menu::Item::Delimiter => {
                         // printer.print_hdelim((0, 0), printer.size.x)
                         printer.print_hline((0, 0), printer.size.x, "─");
                     }
-                    MenuItem::Subtree(ref label, _) => {
+                    menu::Item::Subtree { ref label, .. } => {
                         if printer.size.x < 4 {
                             return;
                         }
@@ -351,7 +358,7 @@ impl View for MenuPopup {
                         let x = printer.size.x.saturating_sub(3);
                         printer.print((x, 0), ">>");
                     }
-                    MenuItem::Leaf(ref label, _) => {
+                    menu::Item::Leaf { ref label, .. } => {
                         if printer.size.x < 2 {
                             return;
                         }
