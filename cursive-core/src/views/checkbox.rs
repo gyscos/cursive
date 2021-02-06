@@ -35,7 +35,7 @@ impl Checkbox {
         Checkbox {
             checked: false,
             enabled: true,
-            label: String::from(""),
+            label: String::from("A_lable"),
             on_change: None,
         }
     }
@@ -138,7 +138,7 @@ impl Checkbox {
     }
 
     fn draw_internal(&self, printer: &Printer) {
-        let check_with_label = format!("[ ]{}", self.label);
+        let check_with_label = format!("[ ] {}", self.label);
         printer.print((0, 0), &check_with_label);
         if self.checked {
             printer.print((1, 0), "X");
