@@ -21,7 +21,7 @@ use std::rc::Rc;
 pub struct Checkbox {
     checked: bool,
     enabled: bool,
-
+    label: String,
     on_change: Option<Rc<dyn Fn(&mut Cursive, bool)>>,
 }
 
@@ -35,10 +35,19 @@ impl Checkbox {
         Checkbox {
             checked: false,
             enabled: true,
+            label: String::from(""),
             on_change: None,
         }
     }
-
+    ///Creates a new, unchecked checkbox with a label
+    pub fn new_with_label(a_label: &str) -> Self {
+        Checkbox {
+            checked: false,
+            enabled: true,
+            label: String::from(a_label),
+            on_change: None,
+        }
+    }
     /// Sets a callback to be used when the state changes.
     pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(
         &mut self,
@@ -129,7 +138,8 @@ impl Checkbox {
     }
 
     fn draw_internal(&self, printer: &Printer) {
-        printer.print((0, 0), "[ ]");
+        let check_with_label = format!("[ ]{}", self.label);
+        printer.print((0, 0), &check_with_label);
         if self.checked {
             printer.print((1, 0), "X");
         }
