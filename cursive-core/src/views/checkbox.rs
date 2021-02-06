@@ -7,7 +7,7 @@ use crate::Printer;
 use crate::Vec2;
 use crate::With;
 use std::rc::Rc;
-
+use unicode_width::UnicodeWidthStr;
 /// Checkable box.
 ///
 /// # Examples
@@ -148,7 +148,7 @@ impl Checkbox {
 
 impl View for Checkbox {
     fn required_size(&mut self, _: Vec2) -> Vec2 {
-        Vec2::new(3, 1)
+        Vec2::new(3/*[ ]*/ + 1/* */ + self.label.width(), 1)
     }
 
     fn take_focus(&mut self, _: Direction) -> bool {
