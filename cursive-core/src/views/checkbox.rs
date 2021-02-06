@@ -35,7 +35,7 @@ impl Checkbox {
         Checkbox {
             checked: false,
             enabled: true,
-            label: String::from("A_lable"),
+            label: String::from(""),
             on_change: None,
         }
     }
