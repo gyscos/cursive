@@ -230,6 +230,7 @@ impl Dialog {
     pub fn clear_buttons(&mut self) {
         self.buttons.clear();
         self.invalidate();
+        // Fix focus?
     }
 
     /// Removes a button from this dialog.
@@ -240,6 +241,7 @@ impl Dialog {
     pub fn remove_button(&mut self, i: usize) {
         self.buttons.remove(i);
         self.invalidate();
+        // Fix focus?
     }
 
     /// Sets the horizontal alignment for the buttons, if any.
@@ -439,9 +441,9 @@ impl Dialog {
                 DialogFocus::Content
             }
             DialogFocus::Button(c) => {
-                DialogFocus::Button(min(c, self.buttons.len()))
+                DialogFocus::Button(min(c, self.buttons.len() - 1))
             }
-        }
+        };
     }
 
     // Private methods
@@ -778,8 +780,26 @@ impl View for Dialog {
         // TODO: This may depend on button position relative to the content?
         //
         match source {
-            Direction::Abs(Absolute::None)
-            | Direction::Rel(Relative::Front)
+            Direction::Abs(Absolute::None) => {
+                // Only reject focus if no buttons and no focus-taking content.
+                // Also fix focus if we're focusing the wrong thing.
+                match (
+                    self.focus,
+                    self.content.take_focus(source),
+                    !self.buttons.is_empty(),
+                ) {
+                    (DialogFocus::Content, false, true) => {
+                        self.focus = DialogFocus::Button(0);
+                        true
+                    }
+                    (DialogFocus::Button(_), true, false) => {
+                        self.focus = DialogFocus::Content;
+                        true
+                    }
+                    (_, content, buttons) => content || buttons,
+                }
+            }
+            Direction::Rel(Relative::Front)
             | Direction::Abs(Absolute::Left)
             | Direction::Abs(Absolute::Up) => {
                 // Forward focus: content, then buttons
