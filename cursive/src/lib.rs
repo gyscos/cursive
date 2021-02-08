@@ -64,7 +64,7 @@
 //! [`cursive::theme`]: ./theme/index.html
 #![deny(missing_docs)]
 
-pub use enumset;
+pub use cursive_core::enumset;
 
 pub use cursive_core::*;
 
