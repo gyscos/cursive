@@ -1,4 +1,7 @@
 //! Ncurses-specific backend.
+#![cfg(feature = "ncurses-backend")]
+pub use ncurses;
+
 use log::{debug, warn};
 use ncurses::mmask_t;
 

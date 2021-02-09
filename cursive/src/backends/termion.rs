@@ -3,6 +3,8 @@
 //! Requires the `termion-backend` feature.
 #![cfg(feature = "termion")]
 
+pub use termion;
+
 use crossbeam_channel::{self, select, Receiver};
 use termion::color as tcolor;
 use termion::event::Event as TEvent;

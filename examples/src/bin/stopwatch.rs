@@ -1,5 +1,5 @@
 //! A simple stopwatch implementation.
-//! Also check out `clock-cli` (https://github.com/TianyiShi2001/cl!ock-cli-rs),
+//! Also check out [`clock-cli`](https://github.com/TianyiShi2001/cl!ock-cli-rs),
 //! which aims to implement a fully-fledged clock with stopwatch, countdown
 //! timer, and possibly more functionalities.
 

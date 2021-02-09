@@ -64,8 +64,6 @@
 //! [`cursive::theme`]: ./theme/index.html
 #![deny(missing_docs)]
 
-pub use cursive_core::enumset;
-
 pub use cursive_core::*;
 
 mod utf8;

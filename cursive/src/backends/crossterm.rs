@@ -11,6 +11,8 @@ use std::{
     time::Duration,
 };
 
+pub use crossterm;
+
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{

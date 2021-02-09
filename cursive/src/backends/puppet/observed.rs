@@ -1,5 +1,5 @@
 //! Structs representing output of puppet backend
-use crate::enumset::EnumSet;
+use crate::reexports::enumset::EnumSet;
 use crate::theme::ColorPair;
 use crate::theme::Effect;
 use crate::Vec2;
