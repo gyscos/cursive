@@ -88,16 +88,17 @@ Here are a few crates implementing new views for you to use:
 
 Here are some cool applications using cursive:
 
-* [ncspot](https://github.com/hrkfdn/ncspot): Cross-platform ncurses Spotify client.
-* [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [RustyChat](https://github.com/SambaDialloB/RustyChat): Chat client made using Rust and Cursive.
+* [clock-cli](https://github.com/TianyiShi2001/clock-cli-rs): A clock with stopwatch and countdown timer functionalities.
 * [fui](https://github.com/xliiv/fui): Add CLI & form interface to your program.
 * [grin-tui](https://github.com/mimblewimble/grin): Minimal implementation of the MimbleWimble protocol.
+* [kakikun](https://github.com/file-acomplaint/kakikun): A paint and ASCII art application for the terminal.
+* [mythra](https://github.com/deven96/mythra): CLI to search for music.
+* [ncspot](https://github.com/hrkfdn/ncspot): Cross-platform ncurses Spotify client.
 * [ripasso](https://github.com/cortex/ripasso): A simple password manager written in Rust.
-* [clock-cli](https://github.com/TianyiShi2001/clock-cli-rs): A clock with stopwatch and countdown timer functionalities
+* [rusty-man](https://sr.ht/~ireas/rusty-man): Browse rustdoc documentation.
+* [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
-* [rusty-man](https://sr.ht/~ireas/rusty-man): Browse rustdoc documentation
-* [mythra](https://github.com/deven96/mythra): CLI to search for music
 
 ## Goals
 
