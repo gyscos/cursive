@@ -80,7 +80,7 @@ impl backend::Backend for Backend {
         match self.inner_receiver.try_recv() {
             Ok(event) => event,
             Err(TryRecvError::Empty) => None,
-            Err(e) => panic!(e),
+            Err(e) => panic!("{}", e),
         }
     }
 
