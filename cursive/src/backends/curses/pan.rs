@@ -1,4 +1,8 @@
 //! Pancuses-specific backend.
+#![cfg(feature = "pancurses-backend")]
+
+pub use pancurses;
+
 use log::{debug, warn};
 
 use std::cell::{Cell, RefCell};

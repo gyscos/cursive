@@ -93,43 +93,47 @@ mod slider_view;
 mod stack_view;
 mod text_area;
 mod text_view;
+mod themed_view;
 mod tracked_view;
 
-pub use self::boxed_view::BoxedView;
-pub use self::button::Button;
-pub use self::canvas::Canvas;
-pub use self::checkbox::Checkbox;
-pub use self::circular_focus::CircularFocus;
-pub use self::debug_view::DebugView;
-pub use self::dialog::{Dialog, DialogFocus};
-pub use self::dummy::DummyView;
-pub use self::edit_view::EditView;
-pub use self::enableable_view::EnableableView;
-pub use self::fixed_layout::FixedLayout;
-pub use self::hideable_view::HideableView;
-pub use self::last_size_view::LastSizeView;
-pub use self::layer::Layer;
-pub use self::linear_layout::LinearLayout;
-pub use self::list_view::{ListChild, ListView};
-pub use self::menu_popup::MenuPopup;
-pub use self::menubar::Menubar;
-pub use self::named_view::{NamedView, ViewRef};
-pub use self::on_event_view::OnEventView;
-pub use self::on_layout_view::OnLayoutView;
-pub use self::padded_view::PaddedView;
-pub use self::panel::Panel;
-pub use self::progress_bar::ProgressBar;
-pub use self::radio::{RadioButton, RadioGroup};
-pub use self::resized_view::ResizedView;
-pub use self::screens_view::ScreensView;
-pub use self::scroll_view::ScrollView;
-pub use self::select_view::SelectView;
-pub use self::shadow_view::ShadowView;
-pub use self::slider_view::SliderView;
-pub use self::stack_view::{LayerPosition, StackView};
-pub use self::text_area::TextArea;
-pub use self::text_view::{TextContent, TextContentRef, TextView};
-pub use self::tracked_view::TrackedView;
+pub use self::{
+    boxed_view::BoxedView,
+    button::Button,
+    canvas::Canvas,
+    checkbox::Checkbox,
+    circular_focus::CircularFocus,
+    debug_view::DebugView,
+    dialog::{Dialog, DialogFocus},
+    dummy::DummyView,
+    edit_view::EditView,
+    enableable_view::EnableableView,
+    fixed_layout::FixedLayout,
+    hideable_view::HideableView,
+    last_size_view::LastSizeView,
+    layer::Layer,
+    linear_layout::LinearLayout,
+    list_view::{ListChild, ListView},
+    menu_popup::MenuPopup,
+    menubar::Menubar,
+    named_view::{NamedView, ViewRef},
+    on_event_view::OnEventView,
+    on_layout_view::OnLayoutView,
+    padded_view::PaddedView,
+    panel::Panel,
+    progress_bar::ProgressBar,
+    radio::{RadioButton, RadioGroup},
+    resized_view::ResizedView,
+    screens_view::ScreensView,
+    scroll_view::ScrollView,
+    select_view::SelectView,
+    shadow_view::ShadowView,
+    slider_view::SliderView,
+    stack_view::{LayerPosition, StackView},
+    text_area::TextArea,
+    text_view::{TextContent, TextContentRef, TextView},
+    themed_view::ThemedView,
+    tracked_view::TrackedView,
+};
 
 /// Same as [`LastSizeView`](self::LastSizeView).
 #[deprecated(note = "`SizedView` is being renamed to `LastSizeView`")]

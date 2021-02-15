@@ -1,11 +1,11 @@
 /// Some default values to Puppet backend.
 use lazy_static::lazy_static;
 
+use crate::reexports::enumset::EnumSet;
 use crate::theme::ColorPair;
 use crate::theme::{Color, Effect};
 use crate::Vec2;
 use crate::XY;
-use enumset::EnumSet;
 
 use crate::backends::puppet::observed::*;
 

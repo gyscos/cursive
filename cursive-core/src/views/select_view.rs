@@ -3,7 +3,7 @@ use crate::direction::Direction;
 use crate::event::{
     Callback, Event, EventResult, Key, MouseButton, MouseEvent,
 };
-use crate::menu::MenuTree;
+use crate::menu;
 use crate::rect::Rect;
 use crate::theme::ColorStyle;
 use crate::utils::markup::StyledString;
@@ -713,7 +713,7 @@ impl<T: 'static> SelectView<T> {
     fn open_popup(&mut self) -> EventResult {
         // Build a shallow menu tree to mimick the items array.
         // TODO: cache it?
-        let mut tree = MenuTree::new();
+        let mut tree = menu::Tree::new();
         for (i, item) in self.items.iter().enumerate() {
             let focus = Rc::clone(&self.focus);
             let on_submit = self.on_submit.as_ref().cloned();

@@ -8,9 +8,6 @@
 //!
 //! [`cursive`]: https://docs.rs/cursive
 #![deny(missing_docs)]
-
-pub use enumset;
-
 macro_rules! new_default(
     ($c:ident<$t:ident>) => {
         impl<$t> Default for $c<$t> {
@@ -35,6 +32,18 @@ macro_rules! new_default(
         }
     };
 );
+
+/// Re-export crates used in the public API
+pub mod reexports {
+    pub use ahash;
+    pub use chrono;
+    pub use crossbeam_channel;
+    pub use enumset;
+    pub use log;
+
+    #[cfg(feature = "toml")]
+    pub use toml;
+}
 
 #[macro_use]
 pub mod utils;

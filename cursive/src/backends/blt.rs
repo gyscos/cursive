@@ -3,6 +3,8 @@
 //! Requires the `blt-backend` feature.
 #![cfg(feature = "bear-lib-terminal")]
 
+pub use bear_lib_terminal;
+
 use bear_lib_terminal::geometry::Size;
 use bear_lib_terminal::terminal::{self, state, Event as BltEvent, KeyCode};
 use bear_lib_terminal::Color as BltColor;

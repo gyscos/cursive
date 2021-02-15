@@ -18,7 +18,6 @@ features = ["unstable_scroll", "markdown", "toml"]
 cursive_core = { path = "../cursive-core", version= "0.2.2"}
 crossbeam-channel = "0.5"
 cfg-if = "1"
-enumset = "1.0.3"
 unicode-segmentation = "1"
 unicode-width = "0.1"
 lazy_static = "1"
