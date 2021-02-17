@@ -53,19 +53,12 @@ impl<V> HideableView<V> {
     pub fn hidden(self) -> Self {
         self.with(Self::hide)
     }
-    
+
     /// Sets the visibility for this view to flag value.
     /// Useful when creating views needs to be decided at runtime.
     /// Chainable variant.
-    pub fn hidden_with_flag(self,flag:bool) -> Self {
-        if flag
-        {
-            self.with(Self::hide)
-        }
-        else
-        {
-            self
-        }
+    pub fn visible(self, flag: bool) -> Self {
+        self.with(|s| s.set_visible(flag))
     }
 
     /// Returns `true` if the wrapped view is going to be visible.
