@@ -618,7 +618,7 @@ impl Core {
             XY::zip4(Orientation::pair(), position, lengths, offsets)
                 .keep(grabbed.and(self.enabled))
                 .into_iter()
-                .filter_map(|x| x)
+                .flatten()
                 .next()
         {
             if pos >= offset && pos < offset + length {

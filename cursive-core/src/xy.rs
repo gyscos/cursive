@@ -3,6 +3,7 @@ use std::iter;
 
 /// A generic structure with a value for each axis.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct XY<T> {
     /// X-axis value
     pub x: T,
