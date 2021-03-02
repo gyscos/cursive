@@ -408,8 +408,7 @@ impl View for ListView {
         let rel = source.relative(direction::Orientation::Vertical);
         let i = if let Some(i) = self
             .iter_mut(rel.is_none(), rel.unwrap_or(direction::Relative::Front))
-            .filter_map(|p| try_focus(p, source))
-            .next()
+            .find_map(|p| try_focus(p, source))
         {
             i
         } else {
@@ -434,13 +433,13 @@ impl View for ListView {
         &mut self,
         selector: &Selector<'_>,
     ) -> Result<(), ViewNotFound> {
+        // Try to focus each view. Skip over delimiters.
         if let Some(i) = self
             .children
             .iter_mut()
             .enumerate()
             .filter_map(|(i, v)| v.view().map(|v| (i, v)))
-            .filter_map(|(i, v)| v.focus_view(selector).ok().map(|_| i))
-            .next()
+            .find_map(|(i, v)| v.focus_view(selector).ok().map(|_| i))
         {
             self.focus = i;
             Ok(())
@@ -456,6 +455,7 @@ impl View for ListView {
 
         let labels_width = self.labels_width();
 
+        // This is the size of the focused view
         let area = match self.children[self.focus] {
             ListChild::Row(_, ref view) => {
                 let available =
@@ -465,6 +465,11 @@ impl View for ListView {
             ListChild::Delimiter => Rect::from_size((0, 0), (size.x, 1)),
         };
 
-        area + (0, self.focus)
+        // This is how far down the focused view is.
+        // (The size of everything above.)
+        let y_offset: usize =
+            self.children_heights[..self.focus].iter().copied().sum();
+
+        area + (0, y_offset)
     }
 }

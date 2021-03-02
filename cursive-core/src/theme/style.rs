@@ -99,7 +99,7 @@ impl<'a> FromIterator<&'a Style> for Style {
             effects.insert_all(style.effects);
         }
 
-        Style { color, effects }
+        Style { effects, color }
     }
 }
 

@@ -114,9 +114,9 @@ impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
             self.offset += length;
 
             ChildItem {
+                child,
                 offset,
                 length,
-                child,
             }
         })
     }
