@@ -230,7 +230,8 @@ impl Dialog {
     pub fn clear_buttons(&mut self) {
         self.buttons.clear();
         self.invalidate();
-        // Fix focus?
+        self.content.take_focus(Direction::none());
+        self.focus = DialogFocus::Content;
     }
 
     /// Removes a button from this dialog.
@@ -242,6 +243,17 @@ impl Dialog {
         self.buttons.remove(i);
         self.invalidate();
         // Fix focus?
+        match (self.buttons.len(), self.focus) {
+            // TODO: take focus?
+            (0, ref mut focus) => {
+                self.content.take_focus(Direction::none());
+                *focus = DialogFocus::Content;
+            }
+            (n, DialogFocus::Button(ref mut i)) => {
+                *i = usize::min(*i, n - 1);
+            }
+            _ => (),
+        }
     }
 
     /// Sets the horizontal alignment for the buttons, if any.
