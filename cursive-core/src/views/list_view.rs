@@ -36,12 +36,16 @@ impl ListChild {
 /// Displays a list of elements.
 pub struct ListView {
     children: Vec<ListChild>,
+    // Height for each child.
+    // This should have the same size as the `children` list.
     children_heights: Vec<usize>,
+    // Which child is focused? Should index into the `children` list.
     focus: usize,
     // This callback is called when the selection is changed.
     on_select: Option<Rc<dyn Fn(&mut Cursive, &String)>>,
 }
 
+// Implement `Default` around `ListView::new`
 new_default!(ListView);
 
 impl ListView {
@@ -450,7 +454,7 @@ impl View for ListView {
 
     fn important_area(&self, size: Vec2) -> Rect {
         if self.children.is_empty() {
-            return Rect::from((0, 0));
+            return Rect::from_size(Vec2::zero(), size);
         }
 
         let labels_width = self.labels_width();

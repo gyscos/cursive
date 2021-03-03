@@ -14,16 +14,6 @@ pub struct Rect {
     bottom_right: Vec2,
 }
 
-impl<T> From<T> for Rect
-where
-    T: Into<Vec2>,
-{
-    fn from(other: T) -> Self {
-        // From a point, we can create a 1-by-1 rectangle.
-        Self::from_size(other, (1, 1))
-    }
-}
-
 impl<T> Add<T> for Rect
 where
     T: Into<Vec2>,
@@ -37,6 +27,16 @@ where
 }
 
 impl Rect {
+    /// Creates a new `Rect` around a single point.
+    ///
+    /// The size will be `(1, 1)`.
+    pub fn from_point<T>(point: T) -> Self
+    where
+        T: Into<Vec2>,
+    {
+        Self::from_size(point, (1, 1))
+    }
+
     /// Creates a new `Rect` with the given position and size.
     ///
     /// The minimum size will `(1, 1)`.
