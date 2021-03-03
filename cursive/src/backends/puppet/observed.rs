@@ -364,9 +364,9 @@ impl<'a> ObservedLine<'a> {
         line_len: usize,
     ) -> Self {
         ObservedLine {
-            parent,
             line_start,
             line_len,
+            parent,
         }
     }
 
@@ -380,9 +380,9 @@ impl<'a> ObservedLine<'a> {
         );
 
         ObservedLine {
-            parent: self.parent,
             line_start: Vec2::new(self.line_start.x - left, self.line_start.y),
             line_len: self.line_len + left + right,
+            parent: self.parent,
         }
     }
 }

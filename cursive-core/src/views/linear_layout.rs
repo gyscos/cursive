@@ -729,10 +729,10 @@ impl View for LinearLayout {
         Err(ViewNotFound)
     }
 
-    fn important_area(&self, _: Vec2) -> Rect {
+    fn important_area(&self, size: Vec2) -> Rect {
         if self.is_empty() {
             // Return dummy area if we are empty.
-            return Rect::from((0, 0));
+            return Rect::from_size(Vec2::zero(), size);
         }
 
         // Pick the focused item, with its offset

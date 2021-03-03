@@ -414,9 +414,9 @@ impl View for Menubar {
         Vec2::new(width, 1)
     }
 
-    fn important_area(&self, _: Vec2) -> Rect {
+    fn important_area(&self, size: Vec2) -> Rect {
         if self.root.is_empty() {
-            return Rect::from((0, 0));
+            return Rect::from_size(Vec2::zero(), size);
         }
 
         // X position is 1 (margin before the first item) + sum of widths

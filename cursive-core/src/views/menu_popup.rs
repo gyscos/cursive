@@ -303,7 +303,7 @@ impl MenuPopup {
 
     fn inner_important_area(&self, size: Vec2) -> Rect {
         if self.menu.is_empty() {
-            return Rect::from((0, 0));
+            return Rect::from_size(Vec2::zero(), size);
         }
 
         Rect::from_size((0, self.focus), (size.x, 1))

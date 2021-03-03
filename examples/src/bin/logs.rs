@@ -63,7 +63,7 @@ impl BufferView {
     fn new(size: usize, rx: mpsc::Receiver<String>) -> Self {
         let mut buffer = VecDeque::new();
         buffer.resize(size, String::new());
-        BufferView { rx, buffer }
+        BufferView { buffer, rx }
     }
 
     // Reads available data from the stream into the buffer

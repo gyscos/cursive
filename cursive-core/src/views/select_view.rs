@@ -973,7 +973,7 @@ impl<T: 'static> View for SelectView<T> {
     fn important_area(&self, size: Vec2) -> Rect {
         self.selected_id()
             .map(|i| Rect::from_size((0, i), (size.x, 1)))
-            .unwrap_or_else(|| Rect::from((0, 0)))
+            .unwrap_or_else(|| Rect::from_size(Vec2::zero(), size))
     }
 }
 
