@@ -1,8 +1,11 @@
+/// Event fired when the view is about to lose focus.
 use crate::{
     direction,
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
-    view::{IntoBoxedView, Selector, SizeCache, View, ViewNotFound},
+    view::{
+        CannotFocus, IntoBoxedView, Selector, SizeCache, View, ViewNotFound,
+    },
     Printer, Vec2, With, XY,
 };
 use log::debug;
@@ -230,17 +233,24 @@ impl LinearLayout {
     pub fn set_focus_index(
         &mut self,
         index: usize,
-    ) -> Result<(), ViewNotFound> {
-        if self
-            .children
+    ) -> Result<EventResult, ViewNotFound> {
+        self.children
             .get_mut(index)
-            .map(|child| child.view.take_focus(direction::Direction::none()))
-            .unwrap_or(false)
-        {
+            .and_then(|child| {
+                child.view.take_focus(direction::Direction::none()).ok()
+            })
+            .map(|res| res.and(self.set_focus_unchecked(index)))
+            .ok_or(ViewNotFound)
+    }
+
+    fn set_focus_unchecked(&mut self, index: usize) -> EventResult {
+        if index != self.focus {
+            let result =
+                self.children[self.focus].view.on_event(Event::FocusLost);
             self.focus = index;
-            Ok(())
+            result
         } else {
-            Err(ViewNotFound)
+            EventResult::Consumed(None)
         }
     }
 
@@ -373,19 +383,17 @@ impl LinearLayout {
                 // We don't want that one.
                 self.iter_mut(true, rel)
                     .skip(1)
-                    .filter_map(|p| try_focus(p, source))
-                    .next()
+                    .find_map(|p| try_focus(p, source))
             })
-            .map_or(EventResult::Ignored, |i| {
-                self.focus = i;
-                EventResult::Consumed(None)
+            .map_or(EventResult::Ignored, |(i, res)| {
+                res.and(self.set_focus_unchecked(i))
             })
     }
 
     // Move the focus to the selected view if needed.
     //
     // Does nothing if the event is not a `MouseEvent`.
-    fn check_focus_grab(&mut self, event: &Event) {
+    fn check_focus_grab(&mut self, event: &Event) -> Option<EventResult> {
         if let Event::Mouse {
             offset,
             position,
@@ -393,11 +401,11 @@ impl LinearLayout {
         } = *event
         {
             if !event.grabs_focus() {
-                return;
+                return None;
             }
 
             let position = match position.checked_sub(offset) {
-                None => return,
+                None => return None,
                 Some(pos) => pos,
             };
 
@@ -419,27 +427,27 @@ impl LinearLayout {
                 // this will give us the allowed window for a click.
                 let child_size = item.child.last_size.get(self.orientation);
 
-                if item.offset + child_size > position {
-                    if item.child.view.take_focus(direction::Direction::none())
-                    {
-                        self.focus = i;
-                    }
-                    return;
+                if item.offset + child_size <= position {
+                    continue;
                 }
+
+                return item
+                    .child
+                    .view
+                    .take_focus(direction::Direction::none())
+                    .ok()
+                    .map(|res| res.and(self.set_focus_unchecked(i)));
             }
         }
+        None
     }
 }
 
 fn try_focus(
     (i, child): (usize, &mut Child),
     source: direction::Direction,
-) -> Option<usize> {
-    if child.view.take_focus(source) {
-        Some(i)
-    } else {
-        None
-    }
+) -> Option<(usize, EventResult)> {
+    child.view.take_focus(source).ok().map(|res| (i, res))
 }
 
 impl View for LinearLayout {
@@ -623,24 +631,24 @@ impl View for LinearLayout {
         compromise
     }
 
-    fn take_focus(&mut self, source: direction::Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        source: direction::Direction,
+    ) -> Result<EventResult, CannotFocus> {
         // In what order will we iterate on the children?
         let rel = source.relative(self.orientation);
-        // We activate from_focus only if coming from the "sides".
-        let mut get_next_focus = || {
-            self.iter_mut(
-                rel.is_none(),
-                rel.unwrap_or(direction::Relative::Front),
-            )
-            .filter_map(|p| try_focus(p, source))
-            .next()
-        };
 
-        if let Some(i) = get_next_focus() {
-            self.focus = i;
-            true
+        // We activate from_focus only if coming from the "sides".
+        let focus_res = self
+            .iter_mut(rel.is_none(), rel.unwrap_or(direction::Relative::Front))
+            .find_map(|p| try_focus(p, source));
+
+        if let Some((next_focus, res)) = focus_res {
+            // No "FocusLost" here, since we didn't have focus before.
+            self.focus = next_focus;
+            Ok(res)
         } else {
-            false
+            Err(CannotFocus)
         }
     }
 
@@ -649,7 +657,9 @@ impl View for LinearLayout {
             return EventResult::Ignored;
         }
 
-        self.check_focus_grab(&event);
+        let res = self
+            .check_focus_grab(&event)
+            .unwrap_or(EventResult::Ignored);
 
         let result = {
             let mut iterator = ChildIterator::new(
@@ -661,7 +671,7 @@ impl View for LinearLayout {
             let offset = self.orientation.make_vec(item.offset, 0);
             item.child.view.on_event(event.relativized(offset))
         };
-        match result {
+        res.and(match result {
             EventResult::Ignored => match event {
                 Event::Shift(Key::Tab) if self.focus > 0 => {
                     self.move_focus(direction::Direction::back())
@@ -702,7 +712,7 @@ impl View for LinearLayout {
                 _ => EventResult::Ignored,
             },
             res => res,
-        }
+        })
     }
 
     fn call_on_any<'a>(
@@ -718,11 +728,10 @@ impl View for LinearLayout {
     fn focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         for (i, child) in self.children.iter_mut().enumerate() {
             if child.view.focus_view(selector).is_ok() {
-                self.focus = i;
-                return Ok(());
+                return Ok(self.set_focus_unchecked(i));
             }
         }
 

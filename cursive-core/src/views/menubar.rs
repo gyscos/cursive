@@ -1,13 +1,13 @@
-use crate::direction;
-use crate::event::*;
-use crate::menu;
-use crate::rect::Rect;
-use crate::theme::ColorStyle;
-use crate::view::{Position, View};
-use crate::views::{MenuPopup, OnEventView};
-use crate::Cursive;
-use crate::Printer;
-use crate::Vec2;
+use crate::{
+    direction,
+    event::*,
+    menu,
+    rect::Rect,
+    theme::ColorStyle,
+    view::{CannotFocus, Position, View},
+    views::{MenuPopup, OnEventView},
+    Cursive, Printer, Vec2,
+};
 use std::rc::Rc;
 use unicode_width::UnicodeWidthStr;
 
@@ -393,9 +393,12 @@ impl View for Menubar {
         EventResult::Consumed(None)
     }
 
-    fn take_focus(&mut self, _: direction::Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        _: direction::Direction,
+    ) -> Result<EventResult, CannotFocus> {
         self.state = State::Selected;
-        true
+        Ok(EventResult::consumed())
     }
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {

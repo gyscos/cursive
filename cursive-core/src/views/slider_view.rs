@@ -1,12 +1,10 @@
-use crate::direction::{Direction, Orientation};
-use crate::event::{
-    Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+use crate::{
+    direction::{Direction, Orientation},
+    event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
+    theme::ColorStyle,
+    view::{CannotFocus, View},
+    Cursive, Printer, Vec2, With,
 };
-use crate::theme::ColorStyle;
-use crate::view::View;
-use crate::Vec2;
-use crate::With;
-use crate::{Cursive, Printer};
 use std::rc::Rc;
 
 /// A horizontal or vertical slider.
@@ -232,7 +230,10 @@ impl View for SliderView {
         }
     }
 
-    fn take_focus(&mut self, _: Direction) -> bool {
-        true
+    fn take_focus(
+        &mut self,
+        _: Direction,
+    ) -> Result<EventResult, CannotFocus> {
+        Ok(EventResult::Consumed(None))
     }
 }

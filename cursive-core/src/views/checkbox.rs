@@ -1,11 +1,10 @@
-use crate::direction::Direction;
-use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
-use crate::theme::ColorStyle;
-use crate::view::View;
-use crate::Cursive;
-use crate::Printer;
-use crate::Vec2;
-use crate::With;
+use crate::{
+    direction::Direction,
+    event::{Event, EventResult, Key, MouseButton, MouseEvent},
+    theme::ColorStyle,
+    view::{CannotFocus, View},
+    Cursive, Printer, Vec2, With,
+};
 use std::rc::Rc;
 
 /// Checkable box.
@@ -141,8 +140,11 @@ impl View for Checkbox {
         Vec2::new(3, 1)
     }
 
-    fn take_focus(&mut self, _: Direction) -> bool {
-        self.enabled
+    fn take_focus(
+        &mut self,
+        _: Direction,
+    ) -> Result<EventResult, CannotFocus> {
+        self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 
     fn draw(&self, printer: &Printer) {

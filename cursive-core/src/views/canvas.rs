@@ -2,7 +2,7 @@ use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
     rect::Rect,
-    view::{Selector, View, ViewNotFound},
+    view::{CannotFocus, Selector, View, ViewNotFound},
     Printer, Vec2, With,
 };
 
@@ -49,9 +49,11 @@ pub struct Canvas<T> {
     on_event: Box<dyn FnMut(&mut T, Event) -> EventResult>,
     required_size: Box<dyn FnMut(&mut T, Vec2) -> Vec2>,
     layout: Box<dyn FnMut(&mut T, Vec2)>,
-    take_focus: Box<dyn FnMut(&mut T, Direction) -> bool>,
+    take_focus:
+        Box<dyn FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>>,
     needs_relayout: Box<dyn Fn(&T) -> bool>,
-    focus_view: Box<dyn FnMut(&mut T, &Selector) -> Result<(), ViewNotFound>>,
+    focus_view:
+        Box<dyn FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>>,
     call_on_any: CallOnAny<T>,
     important_area: Box<dyn Fn(&T, Vec2) -> Rect>,
 }
@@ -83,7 +85,7 @@ impl<T> Canvas<T> {
             on_event: Box::new(|_, _| EventResult::Ignored),
             required_size: Box::new(|_, _| Vec2::new(1, 1)),
             layout: Box::new(|_, _| ()),
-            take_focus: Box::new(|_, _| false),
+            take_focus: Box::new(|_, _| Err(CannotFocus)),
             needs_relayout: Box::new(|_| true),
             focus_view: Box::new(|_, _| Err(ViewNotFound)),
             call_on_any: Box::new(|_, _, _| ()),
@@ -173,7 +175,8 @@ impl<T> Canvas<T> {
     /// Sets the closure for `take_focus(Direction)`.
     pub fn set_take_focus<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, Direction) -> bool,
+        F: 'static
+            + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>,
     {
         self.take_focus = Box::new(f);
     }
@@ -183,7 +186,8 @@ impl<T> Canvas<T> {
     /// Chainable variant.
     pub fn with_take_focus<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, Direction) -> bool,
+        F: 'static
+            + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>,
     {
         self.with(|s| s.set_take_focus(f))
     }
@@ -245,7 +249,8 @@ impl<T> Canvas<T> {
     /// Sets the closure for `focus_view()`.
     pub fn set_focus_view<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, &Selector<'_>) -> Result<(), ViewNotFound>,
+        F: 'static
+            + FnMut(&mut T, &Selector<'_>) -> Result<EventResult, ViewNotFound>,
     {
         self.focus_view = Box::new(f);
     }
@@ -255,7 +260,8 @@ impl<T> Canvas<T> {
     /// Chainable variant.
     pub fn with_focus_view<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, &Selector<'_>) -> Result<(), ViewNotFound>,
+        F: 'static
+            + FnMut(&mut T, &Selector<'_>) -> Result<EventResult, ViewNotFound>,
     {
         self.with(|s| s.set_focus_view(f))
     }
@@ -278,7 +284,10 @@ impl<T: 'static> View for Canvas<T> {
         (self.layout)(&mut self.state, size);
     }
 
-    fn take_focus(&mut self, source: Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        source: Direction,
+    ) -> Result<EventResult, CannotFocus> {
         (self.take_focus)(&mut self.state, source)
     }
 
@@ -289,7 +298,7 @@ impl<T: 'static> View for Canvas<T> {
     fn focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         (self.focus_view)(&mut self.state, selector)
     }
 

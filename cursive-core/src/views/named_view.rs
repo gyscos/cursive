@@ -1,5 +1,5 @@
 use crate::{
-    event::AnyCb,
+    event::{AnyCb, EventResult},
     view::{Selector, View, ViewNotFound, ViewWrapper},
 };
 use owning_ref::{OwningHandle, RcRef};
@@ -111,13 +111,13 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
     fn wrap_focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         match selector {
             #[allow(deprecated)]
             &Selector::Name(name) | &Selector::Id(name)
                 if name == self.name =>
             {
-                Ok(())
+                Ok(EventResult::Consumed(None))
             }
             s => self
                 .view

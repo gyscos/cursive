@@ -2,7 +2,7 @@ use crate::{
     direction,
     event::{AnyCb, Callback, Event, EventResult, Key},
     rect::Rect,
-    view::{IntoBoxedView, Selector, View, ViewNotFound},
+    view::{CannotFocus, IntoBoxedView, Selector, View, ViewNotFound},
     Cursive, Printer, Vec2, With,
 };
 use log::debug;
@@ -96,8 +96,10 @@ impl ListView {
         label: &str,
         view: V,
     ) {
-        let mut view = view.into_boxed_view();
-        view.take_focus(direction::Direction::none());
+        let view = view.into_boxed_view();
+
+        // Why were we doing this here?
+        // view.take_focus(direction::Direction::none());
         self.children.push(ListChild::Row(label.to_string(), view));
         self.children_heights.push(0);
     }
@@ -106,7 +108,6 @@ impl ListView {
     pub fn clear(&mut self) {
         self.children.clear();
         self.children_heights.clear();
-        self.focus = 0;
     }
 
     /// Adds a view to the end of the list.
@@ -190,12 +191,31 @@ impl ListView {
         }
     }
 
+    fn unfocus_child(&mut self) -> EventResult {
+        self.children
+            .get_mut(self.focus)
+            .and_then(ListChild::view)
+            .map(|v| v.on_event(Event::FocusLost))
+            .unwrap_or(EventResult::Ignored)
+    }
+
+    // Move focus to the given index, regardless of whether that child accepts focus.
+    fn set_focus_unchecked(&mut self, index: usize) -> EventResult {
+        if index != self.focus {
+            let res = self.unfocus_child();
+            self.focus = index;
+            res
+        } else {
+            EventResult::Consumed(None)
+        }
+    }
+
     fn move_focus(
         &mut self,
         n: usize,
         source: direction::Direction,
     ) -> EventResult {
-        let i = if let Some(i) = source
+        let (i, res) = if let Some((i, res)) = source
             .relative(direction::Orientation::Vertical)
             .and_then(|rel| {
                 // The iterator starts at the focused element.
@@ -206,17 +226,17 @@ impl ListView {
                     .take(n)
                     .last()
             }) {
-            i
+            (i, res)
         } else {
             return EventResult::Ignored;
         };
-        self.focus = i;
+        self.set_focus_unchecked(i);
 
-        EventResult::Consumed(self.on_select.clone().map(|cb| {
+        res.and(EventResult::Consumed(self.on_select.clone().map(|cb| {
             let i = self.focus();
             let focused_string = String::from(self.children[i].label());
             Callback::from_fn(move |s| cb(s, &focused_string))
-        }))
+        })))
     }
 
     fn labels_width(&self) -> usize {
@@ -228,7 +248,7 @@ impl ListView {
             .unwrap_or(0)
     }
 
-    fn check_focus_grab(&mut self, event: &Event) {
+    fn check_focus_grab(&mut self, event: &Event) -> Option<EventResult> {
         if let Event::Mouse {
             offset,
             position,
@@ -236,51 +256,56 @@ impl ListView {
         } = *event
         {
             if !event.grabs_focus() {
-                return;
+                return None;
             }
 
             let mut position = match position.checked_sub(offset) {
-                None => return,
+                None => return None,
                 Some(pos) => pos,
             };
 
             // eprintln!("Rel pos: {:?}", position);
 
             // Now that we have a relative position, checks for buttons?
-            for (i, (child, height)) in self
+            for (i, (child, &height)) in self
                 .children
                 .iter_mut()
                 .zip(&self.children_heights)
                 .enumerate()
             {
-                if position.y < *height {
-                    if let ListChild::Row(_, ref mut view) = child {
-                        if view.take_focus(direction::Direction::none()) {
-                            self.focus = i;
-                        }
-                    }
-                    break;
-                } else {
-                    position.y -= height;
+                if let Some(y) = position.y.checked_sub(height) {
+                    // Not this child. Move on.
+                    position.y = y;
+                    continue;
                 }
+
+                // We found the correct target, try to focus it.
+                if let ListChild::Row(_, ref mut view) = child {
+                    match view.take_focus(direction::Direction::none()) {
+                        Ok(res) => {
+                            return Some(self.set_focus_unchecked(i).and(res));
+                        }
+                        Err(CannotFocus) => (),
+                    }
+                }
+                // We found the target, but we can't focus it.
+                break;
             }
         }
+        None
     }
 }
 
 fn try_focus(
     (i, child): (usize, &mut ListChild),
     source: direction::Direction,
-) -> Option<usize> {
+) -> Option<(usize, EventResult)> {
     match *child {
         ListChild::Delimiter => None,
-        ListChild::Row(_, ref mut view) => {
-            if view.take_focus(source) {
-                Some(i)
-            } else {
-                None
-            }
-        }
+        ListChild::Row(_, ref mut view) => match view.take_focus(source) {
+            Ok(res) => Some((i, res)),
+            Err(CannotFocus) => None,
+        },
     }
 }
 
@@ -367,7 +392,9 @@ impl View for ListView {
             return EventResult::Ignored;
         }
 
-        self.check_focus_grab(&event);
+        let res = self
+            .check_focus_grab(&event)
+            .unwrap_or(EventResult::Ignored);
 
         // Send the event to the focused child.
         let labels_width = self.labels_width();
@@ -376,12 +403,12 @@ impl View for ListView {
             let offset = (labels_width + 1, y);
             let result = view.on_event(event.relativized(offset));
             if result.is_consumed() {
-                return result;
+                return res.and(result);
             }
         }
 
         // If the child ignored this event, change the focus.
-        match event {
+        res.and(match event {
             Event::Key(Key::Up) if self.focus > 0 => {
                 self.move_focus(1, direction::Direction::down())
             }
@@ -405,22 +432,24 @@ impl View for ListView {
                 self.move_focus(1, direction::Direction::back())
             }
             _ => EventResult::Ignored,
-        }
+        })
     }
 
-    fn take_focus(&mut self, source: direction::Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        source: direction::Direction,
+    ) -> Result<EventResult, CannotFocus> {
         let rel = source.relative(direction::Orientation::Vertical);
-        let i = if let Some(i) = self
+        let (i, res) = if let Some((i, res)) = self
             .iter_mut(rel.is_none(), rel.unwrap_or(direction::Relative::Front))
             .find_map(|p| try_focus(p, source))
         {
-            i
+            (i, res)
         } else {
             // No one wants to be in focus
-            return false;
+            return Err(CannotFocus);
         };
-        self.focus = i;
-        true
+        Ok(self.set_focus_unchecked(i).and(res))
     }
 
     fn call_on_any<'a>(
@@ -436,17 +465,16 @@ impl View for ListView {
     fn focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         // Try to focus each view. Skip over delimiters.
-        if let Some(i) = self
+        if let Some((i, res)) = self
             .children
             .iter_mut()
             .enumerate()
             .filter_map(|(i, v)| v.view().map(|v| (i, v)))
-            .find_map(|(i, v)| v.focus_view(selector).ok().map(|_| i))
+            .find_map(|(i, v)| v.focus_view(selector).ok().map(|res| (i, res)))
         {
-            self.focus = i;
-            Ok(())
+            Ok(self.set_focus_unchecked(i).and(res))
         } else {
             Err(ViewNotFound)
         }

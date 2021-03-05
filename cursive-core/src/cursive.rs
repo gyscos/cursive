@@ -285,7 +285,10 @@ impl Cursive {
 
     /// Selects the menubar.
     pub fn select_menubar(&mut self) {
-        self.menubar.take_focus(direction::Direction::none());
+        if let Ok(res) = self.menubar.take_focus(direction::Direction::none())
+        {
+            res.process(self);
+        }
     }
 
     /// Sets the menubar autohide feature.
@@ -306,18 +309,18 @@ impl Cursive {
     /// # use cursive_core::{Cursive, event};
     /// # use cursive_core::views::{Dialog};
     /// # use cursive_core::traits::*;
-    /// # use cursive_core::menu::*;
+    /// # use cursive_core::menu;
     /// #
     /// let mut siv = Cursive::new();
     ///
     /// siv.menubar()
     ///     .add_subtree(
     ///         "File",
-    ///         MenuTree::new()
+    ///         menu::Tree::new()
     ///             .leaf("New", |s| s.add_layer(Dialog::info("New file!")))
     ///             .subtree(
     ///                 "Recent",
-    ///                 MenuTree::new().with(|tree| {
+    ///                 menu::Tree::new().with(|tree| {
     ///                     for i in 1..100 {
     ///                         tree.add_leaf(format!("Item {}", i), |_| ())
     ///                     }
@@ -334,10 +337,10 @@ impl Cursive {
     ///     )
     ///     .add_subtree(
     ///         "Help",
-    ///         MenuTree::new()
+    ///         menu::Tree::new()
     ///             .subtree(
     ///                 "Help",
-    ///                 MenuTree::new()
+    ///                 menu::Tree::new()
     ///                     .leaf("General", |s| {
     ///                         s.add_layer(Dialog::info("Help message!"))
     ///                     })
@@ -618,13 +621,16 @@ impl Cursive {
     /// Moves the focus to the view identified by `name`.
     ///
     /// Convenient method to call `focus` with a [`view::Selector::Name`].
-    pub fn focus_name(&mut self, name: &str) -> Result<(), ViewNotFound> {
+    pub fn focus_name(
+        &mut self,
+        name: &str,
+    ) -> Result<EventResult, ViewNotFound> {
         self.focus(&view::Selector::Name(name))
     }
 
     /// Same as [`focus_name`](Cursive::focus_name).
     #[deprecated(note = "`focus_id` is being renamed to `focus_name`")]
-    pub fn focus_id(&mut self, id: &str) -> Result<(), ViewNotFound> {
+    pub fn focus_id(&mut self, id: &str) -> Result<EventResult, ViewNotFound> {
         self.focus(&view::Selector::Name(id))
     }
 
@@ -632,7 +638,7 @@ impl Cursive {
     pub fn focus(
         &mut self,
         sel: &view::Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         self.root.focus_view(sel)
     }
 

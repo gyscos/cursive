@@ -54,6 +54,16 @@ impl<T: View> CircularFocus<T> {
         self.wrap_arrows
     }
 
+    /// Make this view now wrap focus around when the Tab key is pressed.
+    pub fn set_wrap_tab(&mut self, wrap_tab: bool) {
+        self.wrap_tab = wrap_tab;
+    }
+
+    /// Make this view now wrap focus around when arrow keys are pressed.
+    pub fn set_wrap_arrows(&mut self, wrap_arrows: bool) {
+        self.wrap_arrows = wrap_arrows;
+    }
+
     inner_getters!(self.view: T);
 }
 
@@ -64,61 +74,49 @@ impl<T: View> ViewWrapper for CircularFocus<T> {
         match (self.view.on_event(event.clone()), event) {
             (EventResult::Ignored, Event::Key(Key::Tab)) if self.wrap_tab => {
                 // Focus comes back!
-                if self.view.take_focus(Direction::front()) {
-                    EventResult::Consumed(None)
-                } else {
-                    EventResult::Ignored
-                }
+                self.view
+                    .take_focus(Direction::front())
+                    .unwrap_or(EventResult::Ignored)
             }
             (EventResult::Ignored, Event::Shift(Key::Tab))
                 if self.wrap_tab =>
             {
                 // Focus comes back!
-                if self.view.take_focus(Direction::back()) {
-                    EventResult::Consumed(None)
-                } else {
-                    EventResult::Ignored
-                }
+                self.view
+                    .take_focus(Direction::back())
+                    .unwrap_or(EventResult::Ignored)
             }
             (EventResult::Ignored, Event::Key(Key::Right))
                 if self.wrap_arrows =>
             {
                 // Focus comes back!
-                if self.view.take_focus(Direction::left()) {
-                    EventResult::Consumed(None)
-                } else {
-                    EventResult::Ignored
-                }
+                self.view
+                    .take_focus(Direction::left())
+                    .unwrap_or(EventResult::Ignored)
             }
             (EventResult::Ignored, Event::Key(Key::Left))
                 if self.wrap_arrows =>
             {
                 // Focus comes back!
-                if self.view.take_focus(Direction::right()) {
-                    EventResult::Consumed(None)
-                } else {
-                    EventResult::Ignored
-                }
+                self.view
+                    .take_focus(Direction::right())
+                    .unwrap_or(EventResult::Ignored)
             }
             (EventResult::Ignored, Event::Key(Key::Up))
                 if self.wrap_arrows =>
             {
                 // Focus comes back!
-                if self.view.take_focus(Direction::down()) {
-                    EventResult::Consumed(None)
-                } else {
-                    EventResult::Ignored
-                }
+                self.view
+                    .take_focus(Direction::down())
+                    .unwrap_or(EventResult::Ignored)
             }
             (EventResult::Ignored, Event::Key(Key::Down))
                 if self.wrap_arrows =>
             {
                 // Focus comes back!
-                if self.view.take_focus(Direction::up()) {
-                    EventResult::Consumed(None)
-                } else {
-                    EventResult::Ignored
-                }
+                self.view
+                    .take_focus(Direction::up())
+                    .unwrap_or(EventResult::Ignored)
             }
             (other, _) => other,
         }

@@ -1,7 +1,9 @@
 use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
-    view::{scroll, ScrollStrategy, Selector, View, ViewNotFound},
+    view::{
+        scroll, CannotFocus, ScrollStrategy, Selector, View, ViewNotFound,
+    },
     Cursive, Printer, Rect, Vec2, With,
 };
 
@@ -364,25 +366,35 @@ where
     fn focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
-        self.inner.focus_view(selector).map(|()| {
+    ) -> Result<EventResult, ViewNotFound> {
+        self.inner.focus_view(selector).map(|res| {
             self.scroll_to_important_area();
+            res
         })
     }
 
-    fn take_focus(&mut self, source: Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        source: Direction,
+    ) -> Result<EventResult, CannotFocus> {
         // If the inner view takes focus, re-align the important area.
-        if self.inner.take_focus(source) {
-            // Don't do anything if we come from `None`
-            if source != Direction::none() {
-                self.scroll_to_important_area();
+        match self.inner.take_focus(source) {
+            Ok(res) => {
+                // Don't do anything if we come from `None`
+                if source != Direction::none() {
+                    self.scroll_to_important_area();
 
-                // Note: we can't really return an `EventResult` here :(
-                self.on_scroll_callback();
+                    // Note: we can't really return an `EventResult` here :(
+                    self.on_scroll_callback();
+                }
+                Ok(res)
             }
-            true
-        } else {
-            self.core.is_scrolling().any()
+            Err(CannotFocus) => self
+                .core
+                .is_scrolling()
+                .any()
+                .then(|| EventResult::Consumed(None))
+                .ok_or(CannotFocus),
         }
     }
 

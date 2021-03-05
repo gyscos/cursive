@@ -253,6 +253,11 @@ impl EventResult {
         EventResult::Consumed(Some(Callback::from_fn(f)))
     }
 
+    /// Convenient method to create `Consumed(None)`
+    pub fn consumed() -> Self {
+        EventResult::Consumed(None)
+    }
+
     /// Returns `true` if `self` is `EventResult::Consumed`.
     pub fn is_consumed(&self) -> bool {
         matches!(*self, EventResult::Consumed(_))
@@ -468,6 +473,9 @@ impl MouseEvent {
 pub enum Event {
     /// Event fired when the window is resized.
     WindowResize,
+
+    /// Event fired when the view is about to lose focus.
+    FocusLost,
 
     /// Event fired regularly when a auto-refresh is set.
     Refresh,

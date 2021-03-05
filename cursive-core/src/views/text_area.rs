@@ -1,12 +1,13 @@
-use crate::direction::Direction;
-use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
-use crate::rect::Rect;
-use crate::theme::{ColorStyle, Effect};
-use crate::utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row};
 #[allow(deprecated)]
-use crate::view::{ScrollBase, SizeCache, View};
-use crate::Vec2;
-use crate::{Printer, With, XY};
+use crate::{
+    direction::Direction,
+    event::{Event, EventResult, Key, MouseButton, MouseEvent},
+    rect::Rect,
+    theme::{ColorStyle, Effect},
+    utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row},
+    view::{CannotFocus, ScrollBase, SizeCache, View},
+    Vec2, {Printer, With, XY},
+};
 use log::debug;
 use std::cmp::min;
 use unicode_segmentation::UnicodeSegmentation;
@@ -639,8 +640,13 @@ impl View for TextArea {
         EventResult::Consumed(None)
     }
 
-    fn take_focus(&mut self, _: Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        _: Direction,
+    ) -> Result<EventResult, CannotFocus> {
         self.enabled
+            .then(|| EventResult::Consumed(None))
+            .ok_or(CannotFocus)
     }
 
     fn layout(&mut self, size: Vec2) {

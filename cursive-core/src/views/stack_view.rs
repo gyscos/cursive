@@ -3,8 +3,8 @@ use crate::{
     event::{AnyCb, Event, EventResult},
     theme::ColorStyle,
     view::{
-        IntoBoxedView, Offset, Position, Selector, View, ViewNotFound,
-        ViewWrapper,
+        CannotFocus, IntoBoxedView, Offset, Position, Selector, View,
+        ViewNotFound, ViewWrapper,
     },
     views::{BoxedView, CircularFocus, Layer, ShadowView},
     Printer, Vec2, With,
@@ -164,7 +164,10 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn take_focus(&mut self, source: Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        source: Direction,
+    ) -> Result<EventResult, CannotFocus> {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.take_focus(source),
             ChildWrapper::Backfilled(ref mut v) => v.take_focus(source),
@@ -193,7 +196,7 @@ impl<T: View> View for ChildWrapper<T> {
     fn focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.focus_view(selector),
             ChildWrapper::Backfilled(ref mut v) => v.focus_view(selector),
@@ -257,7 +260,7 @@ impl StackView {
         let boxed = BoxedView::boxed(view);
         self.layers.push(Child {
             view: ChildWrapper::Backfilled(Layer::new(
-                CircularFocus::wrap_tab(boxed),
+                CircularFocus::new(boxed).wrap_tab(),
             )),
             size: Vec2::zero(),
             placement: Placement::Fullscreen,
@@ -372,9 +375,11 @@ impl StackView {
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
             view: ChildWrapper::Shadow(
-                ShadowView::new(Layer::new(CircularFocus::wrap_tab(boxed)))
-                    .top_padding(position.y == Offset::Center)
-                    .left_padding(position.x == Offset::Center),
+                ShadowView::new(Layer::new(
+                    CircularFocus::new(boxed).wrap_tab(),
+                ))
+                .top_padding(position.y == Offset::Center)
+                .left_padding(position.x == Offset::Center),
             ),
             size: Vec2::new(0, 0),
             placement: Placement::Floating(position),
@@ -397,7 +402,7 @@ impl StackView {
     {
         let boxed = BoxedView::boxed(view);
         self.layers.push(Child {
-            view: ChildWrapper::Plain(CircularFocus::wrap_tab(boxed)),
+            view: ChildWrapper::Plain(CircularFocus::new(boxed).wrap_tab()),
             size: Vec2::new(0, 0),
             placement: Placement::Floating(position),
             virgin: true,
@@ -652,7 +657,9 @@ impl View for StackView {
             // The text view takes focus because it's scrolling, but it only
             // knows that after a call to `layout()`.
             if layer.virgin {
-                layer.view.take_focus(Direction::none());
+                // Here we can't really forward the callback.
+                // So just ignore the result. :(
+                layer.view.take_focus(Direction::none()).ok();
                 layer.virgin = false;
             }
         }
@@ -667,9 +674,12 @@ impl View for StackView {
             .fold(Vec2::new(1, 1), Vec2::max)
     }
 
-    fn take_focus(&mut self, source: Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        source: Direction,
+    ) -> Result<EventResult, CannotFocus> {
         match self.layers.last_mut() {
-            None => false,
+            None => Err(CannotFocus),
             Some(v) => v.view.take_focus(source),
         }
     }
@@ -687,10 +697,10 @@ impl View for StackView {
     fn focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         for layer in &mut self.layers {
             if layer.view.focus_view(selector).is_ok() {
-                return Ok(());
+                return Ok(EventResult::Consumed(None));
             }
         }
 

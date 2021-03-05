@@ -115,7 +115,7 @@ pub use self::scroll_base::ScrollBase;
 pub use self::scrollable::Scrollable;
 pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
-pub use self::view_trait::{View, ViewNotFound};
+pub use self::view_trait::{CannotFocus, View, ViewNotFound};
 pub use self::view_wrapper::ViewWrapper;
 
 #[deprecated(note = "`Boxable` is being renamed to `Resizable`")]

@@ -10,9 +10,19 @@ use std::any::Any;
 #[derive(Debug)]
 pub struct ViewNotFound;
 
+/// Error indicating a view could not take focus.
+#[derive(Debug)]
+pub struct CannotFocus;
+
 impl std::fmt::Display for ViewNotFound {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "View could not be found")
+    }
+}
+
+impl std::fmt::Display for CannotFocus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "View does not take focus")
     }
 }
 
@@ -99,23 +109,32 @@ pub trait View: Any + AnyView {
 
     /// Moves the focus to the view identified by the given selector.
     ///
-    /// Returns `Ok(())` if the view was found and selected.
+    /// Returns `Ok(_)` if the view was found and selected.
+    /// A callback may be included, it should be run on `&mut Cursive`.
     ///
-    /// Default implementation simply returns `Err(())`.
-    fn focus_view(&mut self, _: &Selector<'_>) -> Result<(), ViewNotFound> {
+    /// Default implementation simply returns `Err(ViewNotFound)`.
+    fn focus_view(
+        &mut self,
+        _: &Selector<'_>,
+    ) -> Result<EventResult, ViewNotFound> {
         Err(ViewNotFound)
     }
 
-    /// This view is offered focus. Will it take it?
+    /// Attempt to give this view the focus.
     ///
     /// `source` indicates where the focus comes from.
     /// When the source is unclear (for example mouse events),
     /// `Direction::none()` can be used.
     ///
-    /// Default implementation always return `false`.
-    fn take_focus(&mut self, source: Direction) -> bool {
+    /// Returns `Ok(_)` if the focus was taken.
+    /// Returns `Err(_)` if this view does not take focus (default implementation).
+    fn take_focus(
+        &mut self,
+        source: Direction,
+    ) -> Result<EventResult, CannotFocus> {
         let _ = source;
-        false
+
+        Err(CannotFocus)
     }
 
     /// What part of the view is important and should be visible?

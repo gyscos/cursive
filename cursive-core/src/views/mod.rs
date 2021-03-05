@@ -70,6 +70,7 @@ mod dummy;
 mod edit_view;
 mod enableable_view;
 mod fixed_layout;
+mod focus_tracker;
 mod hideable_view;
 mod last_size_view;
 mod layer;
@@ -108,6 +109,7 @@ pub use self::{
     edit_view::EditView,
     enableable_view::EnableableView,
     fixed_layout::FixedLayout,
+    focus_tracker::FocusTracker,
     hideable_view::HideableView,
     last_size_view::LastSizeView,
     layer::Layer,

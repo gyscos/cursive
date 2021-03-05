@@ -1,11 +1,12 @@
-use crate::align::HAlign;
-use crate::direction::Direction;
-use crate::event::*;
-use crate::rect::Rect;
-use crate::theme::ColorStyle;
-use crate::view::View;
-use crate::Vec2;
-use crate::{Cursive, Printer};
+use crate::{
+    align::HAlign,
+    direction::Direction,
+    event::*,
+    rect::Rect,
+    theme::ColorStyle,
+    view::{CannotFocus, View},
+    Cursive, Printer, Vec2,
+};
 use unicode_width::UnicodeWidthStr;
 
 /// Simple text label with a callback when <Enter> is pressed.
@@ -185,8 +186,11 @@ impl View for Button {
         }
     }
 
-    fn take_focus(&mut self, _: Direction) -> bool {
-        self.enabled
+    fn take_focus(
+        &mut self,
+        _: Direction,
+    ) -> Result<EventResult, CannotFocus> {
+        self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 
     fn important_area(&self, view_size: Vec2) -> Rect {

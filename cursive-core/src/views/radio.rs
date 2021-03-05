@@ -1,10 +1,10 @@
-use crate::direction::Direction;
-use crate::event::{Event, EventResult, Key, MouseButton, MouseEvent};
-use crate::theme::ColorStyle;
-use crate::view::View;
-use crate::Cursive;
-use crate::Vec2;
-use crate::{Printer, With};
+use crate::{
+    direction::Direction,
+    event::{Event, EventResult, Key, MouseButton, MouseEvent},
+    theme::ColorStyle,
+    view::{CannotFocus, View},
+    Cursive, Printer, Vec2, With,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -198,8 +198,11 @@ impl<T: 'static> View for RadioButton<T> {
         self.req_size()
     }
 
-    fn take_focus(&mut self, _: Direction) -> bool {
-        self.enabled
+    fn take_focus(
+        &mut self,
+        _: Direction,
+    ) -> Result<EventResult, CannotFocus> {
+        self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 
     fn draw(&self, printer: &Printer) {

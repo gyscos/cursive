@@ -2,7 +2,7 @@ use crate::{
     direction::{Absolute, Direction, Relative},
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
-    view::{IntoBoxedView, Selector, ViewNotFound},
+    view::{CannotFocus, IntoBoxedView, Selector, ViewNotFound},
     {Printer, Vec2, View, With},
 };
 
@@ -37,6 +37,15 @@ pub struct FixedLayout {
 struct Child {
     view: Box<dyn View>,
     position: Rect,
+}
+
+impl Child {
+    // Convenient function to look for a focusable child in an iterator.
+    fn focuser(
+        source: Direction,
+    ) -> impl Fn((usize, &mut Self)) -> Option<(usize, EventResult)> {
+        move |(i, c)| c.view.take_focus(source).ok().map(|res| (i, res))
+    }
 }
 
 new_default!(FixedLayout);
@@ -75,17 +84,22 @@ impl FixedLayout {
     pub fn set_focus_index(
         &mut self,
         index: usize,
-    ) -> Result<(), ViewNotFound> {
-        if self
-            .children
+    ) -> Result<EventResult, ViewNotFound> {
+        self.children
             .get_mut(index)
-            .map(|child| child.view.take_focus(Direction::none()))
-            .unwrap_or(false)
-        {
+            .and_then(|child| child.view.take_focus(Direction::none()).ok())
+            .map(|res| self.set_focus_unchecked(index).and(res))
+            .ok_or(ViewNotFound)
+    }
+
+    fn set_focus_unchecked(&mut self, index: usize) -> EventResult {
+        if index != self.focus {
+            let result =
+                self.children[self.focus].view.on_event(Event::FocusLost);
             self.focus = index;
-            Ok(())
+            result
         } else {
-            Err(ViewNotFound)
+            EventResult::Consumed(None)
         }
     }
 
@@ -183,13 +197,12 @@ impl FixedLayout {
 
     fn move_focus_rel(&mut self, target: Relative) -> EventResult {
         let source = Direction::Rel(target.swap());
-        for (i, c) in
-            Self::iter_mut(source, &mut self.children).skip(self.focus + 1)
-        {
-            if c.view.take_focus(source) {
-                self.focus = i;
-                return EventResult::Consumed(None);
-            }
+        let focus_res = Self::iter_mut(source, &mut self.children)
+            .skip(self.focus + 1)
+            .find_map(Child::focuser(source));
+
+        if let Some((i, res)) = focus_res {
+            return self.set_focus_unchecked(i).and(res);
         }
 
         EventResult::Ignored
@@ -207,8 +220,8 @@ impl FixedLayout {
         let current_side = current_position.side(orientation.swap());
         let current_edge = current_position.edge(target);
 
-        let children =
-            Self::iter_mut(source, &mut self.children).filter(|(_, c)| {
+        let focus_res = Self::iter_mut(source, &mut self.children)
+            .filter(|(_, c)| {
                 // Only select children actually aligned with us
                 Some(rel)
                     == Relative::a_to_b(current_edge, c.position.edge(target))
@@ -216,19 +229,16 @@ impl FixedLayout {
                         c.position.side(orientation.swap()),
                         current_side,
                     )
-            });
+            })
+            .find_map(Child::focuser(source));
 
-        for (i, c) in children {
-            if c.view.take_focus(source) {
-                self.focus = i;
-                return EventResult::Consumed(None);
-            }
+        if let Some((i, res)) = focus_res {
+            return self.set_focus_unchecked(i).and(res);
         }
-
         EventResult::Ignored
     }
 
-    fn check_focus_grab(&mut self, event: &Event) {
+    fn check_focus_grab(&mut self, event: &Event) -> Option<EventResult> {
         if let Event::Mouse {
             offset,
             position,
@@ -236,22 +246,26 @@ impl FixedLayout {
         } = *event
         {
             if !event.grabs_focus() {
-                return;
+                return None;
             }
 
             let position = match position.checked_sub(offset) {
-                None => return,
+                None => return None,
                 Some(pos) => pos,
             };
 
-            for (i, child) in self.children.iter_mut().enumerate() {
-                if child.position.contains(position)
-                    && child.view.take_focus(Direction::none())
-                {
-                    self.focus = i;
-                }
+            if let Some((i, res)) = self
+                .children
+                .iter_mut()
+                .enumerate()
+                .filter(|(_, c)| c.position.contains(position))
+                .find_map(Child::focuser(Direction::none()))
+            {
+                return Some(self.set_focus_unchecked(i).and(res));
             }
         }
+
+        None
     }
 }
 
@@ -274,7 +288,9 @@ impl View for FixedLayout {
             return EventResult::Ignored;
         }
 
-        self.check_focus_grab(&event);
+        let res = self
+            .check_focus_grab(&event)
+            .unwrap_or(EventResult::Ignored);
 
         let child = &mut self.children[self.focus];
 
@@ -282,7 +298,7 @@ impl View for FixedLayout {
             .view
             .on_event(event.relativized(child.position.top_left()));
 
-        match result {
+        res.and(match result {
             EventResult::Ignored => match event {
                 Event::Shift(Key::Tab) => self.move_focus_rel(Relative::Front),
                 Event::Key(Key::Tab) => self.move_focus_rel(Relative::Back),
@@ -293,7 +309,7 @@ impl View for FixedLayout {
                 _ => EventResult::Ignored,
             },
             res => res,
-        }
+        })
     }
 
     fn important_area(&self, size: Vec2) -> Rect {
@@ -314,33 +330,33 @@ impl View for FixedLayout {
             .fold(Vec2::zero(), Vec2::max)
     }
 
-    fn take_focus(&mut self, source: Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        source: Direction,
+    ) -> Result<EventResult, CannotFocus> {
         match source {
             Direction::Abs(Absolute::None) => {
                 // We want to guarantee:
                 // * If the current focus _is_ focusable, keep it
                 // * If it isn't, find _any_ focusable view, and focus it
                 // * Otherwise, we can't take focus.
-                for (i, c) in
+                let focus_res =
                     Self::circular_mut(self.focus, &mut self.children)
-                {
-                    if c.view.take_focus(source) {
-                        self.focus = i;
-                        return true;
-                    }
+                        .find_map(Child::focuser(source));
+                if let Some((i, res)) = focus_res {
+                    return Ok(self.set_focus_unchecked(i).and(res));
                 }
 
-                false
+                Err(CannotFocus)
             }
             source => {
-                for (i, c) in Self::iter_mut(source, &mut self.children) {
-                    if c.view.take_focus(source) {
-                        self.focus = i;
-                        return true;
-                    }
+                let focus_res = Self::iter_mut(source, &mut self.children)
+                    .find_map(Child::focuser(source));
+                if let Some((i, res)) = focus_res {
+                    return Ok(self.set_focus_unchecked(i).and(res));
                 }
 
-                false
+                Err(CannotFocus)
             }
         }
     }
@@ -358,12 +374,13 @@ impl View for FixedLayout {
     fn focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
-        for (i, child) in self.children.iter_mut().enumerate() {
-            if child.view.focus_view(selector).is_ok() {
-                self.focus = i;
-                return Ok(());
-            }
+    ) -> Result<EventResult, ViewNotFound> {
+        let focus_res =
+            self.children.iter_mut().enumerate().find_map(|(i, c)| {
+                c.view.focus_view(selector).ok().map(|res| (i, res))
+            });
+        if let Some((i, res)) = focus_res {
+            return Ok(self.set_focus_unchecked(i).and(res));
         }
 
         Err(ViewNotFound)

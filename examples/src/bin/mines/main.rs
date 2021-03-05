@@ -1,12 +1,13 @@
 mod game;
 
-use cursive::direction::Direction;
-use cursive::event::{Event, EventResult, MouseButton, MouseEvent};
-use cursive::theme::{BaseColor, Color, ColorStyle};
-use cursive::views::{Button, Dialog, LinearLayout, Panel, SelectView};
-use cursive::Cursive;
-use cursive::Printer;
-use cursive::Vec2;
+use cursive::{
+    direction::Direction,
+    event::{Event, EventResult, MouseButton, MouseEvent},
+    theme::{BaseColor, Color, ColorStyle},
+    view::CannotFocus,
+    views::{Button, Dialog, LinearLayout, Panel, SelectView},
+    Cursive, Printer, Vec2,
+};
 
 fn main() {
     let mut siv = cursive::default();
@@ -211,8 +212,11 @@ impl cursive::view::View for BoardView {
         }
     }
 
-    fn take_focus(&mut self, _: Direction) -> bool {
-        true
+    fn take_focus(
+        &mut self,
+        _: Direction,
+    ) -> Result<EventResult, CannotFocus> {
+        Ok(EventResult::Consumed(None))
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {

@@ -1,11 +1,12 @@
-use crate::direction::Direction;
-use crate::event::{Callback, Event, EventResult, Key, MouseEvent};
-use crate::rect::Rect;
-use crate::theme::{ColorStyle, Effect};
-use crate::utils::lines::simple::{simple_prefix, simple_suffix};
-use crate::view::View;
-use crate::Vec2;
-use crate::{Cursive, Printer, With};
+use crate::{
+    direction::Direction,
+    event::{Callback, Event, EventResult, Key, MouseEvent},
+    rect::Rect,
+    theme::{ColorStyle, Effect},
+    utils::lines::simple::{simple_prefix, simple_suffix},
+    view::{CannotFocus, View},
+    Cursive, Printer, Vec2, With,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
 use unicode_segmentation::UnicodeSegmentation;
@@ -596,8 +597,11 @@ impl View for EditView {
         self.last_length = size.x;
     }
 
-    fn take_focus(&mut self, _: Direction) -> bool {
-        self.enabled
+    fn take_focus(
+        &mut self,
+        _: Direction,
+    ) -> Result<EventResult, CannotFocus> {
+        self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {

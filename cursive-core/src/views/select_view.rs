@@ -1,18 +1,15 @@
-use crate::align::{Align, HAlign, VAlign};
-use crate::direction::Direction;
-use crate::event::{
-    Callback, Event, EventResult, Key, MouseButton, MouseEvent,
+use crate::{
+    align::{Align, HAlign, VAlign},
+    direction,
+    event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
+    menu,
+    rect::Rect,
+    theme::ColorStyle,
+    utils::markup::StyledString,
+    view::{CannotFocus, Position, View},
+    views::MenuPopup,
+    Cursive, Printer, Vec2, With,
 };
-use crate::menu;
-use crate::rect::Rect;
-use crate::theme::ColorStyle;
-use crate::utils::markup::StyledString;
-use crate::view::{Position, View};
-use crate::views::MenuPopup;
-use crate::Cursive;
-use crate::Printer;
-use crate::Vec2;
-use crate::With;
 use std::borrow::Borrow;
 use std::cell::Cell;
 use std::cmp::{min, Ordering};
@@ -962,8 +959,24 @@ impl<T: 'static> View for SelectView<T> {
         }
     }
 
-    fn take_focus(&mut self, _: Direction) -> bool {
-        self.enabled && !self.items.is_empty()
+    fn take_focus(
+        &mut self,
+        source: direction::Direction,
+    ) -> Result<EventResult, CannotFocus> {
+        (self.enabled && !self.items.is_empty())
+            .then(|| {
+                match source {
+                    direction::Direction::Abs(direction::Absolute::Up) => {
+                        self.focus.set(0)
+                    }
+                    direction::Direction::Abs(direction::Absolute::Down) => {
+                        self.focus.set(self.items.len().saturating_sub(1))
+                    }
+                    _ => (),
+                }
+                EventResult::Consumed(None)
+            })
+            .ok_or(CannotFocus)
     }
 
     fn layout(&mut self, size: Vec2) {

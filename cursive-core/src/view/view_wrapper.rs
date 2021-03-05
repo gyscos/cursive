@@ -2,7 +2,7 @@ use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
     rect::Rect,
-    view::{Selector, View, ViewNotFound},
+    view::{CannotFocus, Selector, View, ViewNotFound},
     Printer, Vec2,
 };
 
@@ -70,9 +70,12 @@ pub trait ViewWrapper: 'static {
     }
 
     /// Wraps the `take_focus` method.
-    fn wrap_take_focus(&mut self, source: Direction) -> bool {
+    fn wrap_take_focus(
+        &mut self,
+        source: Direction,
+    ) -> Result<EventResult, CannotFocus> {
         self.with_view_mut(|v| v.take_focus(source))
-            .unwrap_or(false)
+            .unwrap_or(Err(CannotFocus))
     }
 
     /// Wraps the `find` method.
@@ -88,7 +91,7 @@ pub trait ViewWrapper: 'static {
     fn wrap_focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         self.with_view_mut(|v| v.focus_view(selector))
             .unwrap_or(Err(ViewNotFound))
     }
@@ -123,7 +126,10 @@ impl<T: ViewWrapper> View for T {
         self.wrap_layout(size);
     }
 
-    fn take_focus(&mut self, source: Direction) -> bool {
+    fn take_focus(
+        &mut self,
+        source: Direction,
+    ) -> Result<EventResult, CannotFocus> {
         self.wrap_take_focus(source)
     }
 
@@ -142,7 +148,7 @@ impl<T: ViewWrapper> View for T {
     fn focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         self.wrap_focus_view(selector)
     }
 

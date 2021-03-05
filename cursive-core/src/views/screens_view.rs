@@ -1,5 +1,5 @@
 use crate::{
-    event::AnyCb,
+    event::{AnyCb, EventResult},
     view::{Selector, View, ViewNotFound},
     views::BoxedView,
 };
@@ -133,11 +133,11 @@ where
     fn wrap_focus_view(
         &mut self,
         selector: &Selector<'_>,
-    ) -> Result<(), ViewNotFound> {
+    ) -> Result<EventResult, ViewNotFound> {
         for (i, child) in self.screens.iter_mut().enumerate() {
-            if child.focus_view(selector).is_ok() {
+            if let Ok(res) = child.focus_view(selector) {
                 self.active_screen = i;
-                return Ok(());
+                return Ok(res);
             }
         }
 
