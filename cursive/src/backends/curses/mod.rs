@@ -74,6 +74,7 @@ fn find_closest_pair(pair: ColorPair, max_colors: i16) -> (i16, i16) {
 /// If `max_colors` is less than 256 (like 8 or 16), the color will be
 /// downgraded to the closest one available.
 fn find_closest(color: Color, max_colors: i16) -> i16 {
+    let max_colors = std::cmp::max(max_colors, 8);
     match color {
         Color::TerminalDefault => -1,
         Color::Dark(BaseColor::Black) => 0,
