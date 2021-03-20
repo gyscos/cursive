@@ -1,6 +1,9 @@
-use crate::direction::Direction;
-use crate::event::{Event, EventResult, Key};
-use crate::view::{View, ViewWrapper};
+use crate::{
+    direction::Direction,
+    event::{Event, EventResult, Key},
+    view::{View, ViewWrapper},
+    With,
+};
 
 /// Adds circular focus to a wrapped view.
 ///
@@ -11,37 +14,22 @@ use crate::view::{View, ViewWrapper};
 pub struct CircularFocus<T: View> {
     view: T,
     wrap_tab: bool,
-    wrap_arrows: bool,
+    wrap_up_down: bool,
+    wrap_left_right: bool,
 }
 
 impl<T: View> CircularFocus<T> {
     /// Creates a new `CircularFocus` around the given view.
     ///
-    /// If `wrap_tab` is true, Tab keys will cause focus to wrap around.
-    /// If `wrap_arrows` is true, Arrow keys will cause focus to wrap around.
-    pub fn new(view: T, wrap_tab: bool, wrap_arrows: bool) -> Self {
+    /// Does not wrap anything by default,
+    /// so you'll want to call one of the setters.
+    pub fn new(view: T) -> Self {
         CircularFocus {
             view,
-            wrap_tab,
-            wrap_arrows,
+            wrap_tab: false,
+            wrap_left_right: false,
+            wrap_up_down: false,
         }
-    }
-
-    /// Creates a new `CircularFocus` view which will wrap around Tab-based
-    /// focus changes.
-    ///
-    /// Whenever `Tab` would leave focus from this view, the focus will be
-    /// brought back to the beginning of the view.
-    pub fn wrap_tab(view: T) -> Self {
-        CircularFocus::new(view, true, false)
-    }
-
-    /// Creates a new `CircularFocus` view which will wrap around Tab-based
-    /// focus changes.
-    ///
-    /// Whenever an arrow key
-    pub fn wrap_arrows(view: T) -> Self {
-        CircularFocus::new(view, false, true)
     }
 
     /// Returns `true` if Tab key cause focus to wrap around.
@@ -51,7 +39,61 @@ impl<T: View> CircularFocus<T> {
 
     /// Returns `true` if Arrow keys cause focus to wrap around.
     pub fn wraps_arrows(&self) -> bool {
-        self.wrap_arrows
+        self.wrap_left_right && self.wrap_up_down
+    }
+
+    /// Return `true` if left/right keys cause focus to wrap around.
+    pub fn wraps_left_right(&self) -> bool {
+        self.wrap_left_right
+    }
+
+    /// Return `true` if up/down keys cause focus to wrap around.
+    pub fn wraps_up_down(&self) -> bool {
+        self.wrap_up_down
+    }
+
+    /// Make this view now wrap focus around when arrow keys are pressed.
+    pub fn wrap_arrows(self) -> Self {
+        self.with_wrap_arrows(true)
+    }
+
+    /// Make this view now wrap focus around when the up/down keys are pressed.
+    pub fn wrap_up_down(self) -> Self {
+        self.with_wrap_up_down(true)
+    }
+
+    /// Make this view now wrap focus around when the left/right keys are pressed.
+    pub fn wrap_left_right(self) -> Self {
+        self.with_wrap_left_right(true)
+    }
+
+    /// Make this view now wrap focus around when the Tab key is pressed.
+    ///
+    /// Chainable variant.
+    pub fn with_wrap_tab(self, wrap_tab: bool) -> Self {
+        self.with(|s| s.set_wrap_tab(wrap_tab))
+    }
+
+    /// Make this view now wrap focus around when the Tab key is pressed.
+    ///
+    /// Chainable variant.
+    pub fn wrap_tab(self) -> Self {
+        self.with_wrap_tab(true)
+    }
+
+    /// Make this view now wrap focus around when the left/right keys are pressed.
+    pub fn with_wrap_left_right(self, wrap_left_right: bool) -> Self {
+        self.with(|s| s.set_wrap_left_right(wrap_left_right))
+    }
+
+    /// Make this view now wrap focus around when the up/down keys are pressed.
+    pub fn with_wrap_up_down(self, wrap_up_down: bool) -> Self {
+        self.with(|s| s.set_wrap_up_down(wrap_up_down))
+    }
+
+    /// Make this view now wrap focus around when arrow keys are pressed.
+    pub fn with_wrap_arrows(self, wrap_arrows: bool) -> Self {
+        self.with(|s| s.set_wrap_arrows(wrap_arrows))
     }
 
     /// Make this view now wrap focus around when the Tab key is pressed.
@@ -61,7 +103,18 @@ impl<T: View> CircularFocus<T> {
 
     /// Make this view now wrap focus around when arrow keys are pressed.
     pub fn set_wrap_arrows(&mut self, wrap_arrows: bool) {
-        self.wrap_arrows = wrap_arrows;
+        self.wrap_left_right = wrap_arrows;
+        self.wrap_up_down = wrap_arrows;
+    }
+
+    /// Make this view now wrap focus around when the up/down keys are pressed.
+    pub fn set_wrap_up_down(&mut self, wrap_up_down: bool) {
+        self.wrap_up_down = wrap_up_down;
+    }
+
+    /// Make this view now wrap focus around when the left/right keys are pressed.
+    pub fn set_wrap_left_right(&mut self, wrap_left_right: bool) {
+        self.wrap_left_right = wrap_left_right;
     }
 
     inner_getters!(self.view: T);
@@ -87,7 +140,7 @@ impl<T: View> ViewWrapper for CircularFocus<T> {
                     .unwrap_or(EventResult::Ignored)
             }
             (EventResult::Ignored, Event::Key(Key::Right))
-                if self.wrap_arrows =>
+                if self.wrap_left_right =>
             {
                 // Focus comes back!
                 self.view
@@ -95,7 +148,7 @@ impl<T: View> ViewWrapper for CircularFocus<T> {
                     .unwrap_or(EventResult::Ignored)
             }
             (EventResult::Ignored, Event::Key(Key::Left))
-                if self.wrap_arrows =>
+                if self.wrap_left_right =>
             {
                 // Focus comes back!
                 self.view
@@ -103,7 +156,7 @@ impl<T: View> ViewWrapper for CircularFocus<T> {
                     .unwrap_or(EventResult::Ignored)
             }
             (EventResult::Ignored, Event::Key(Key::Up))
-                if self.wrap_arrows =>
+                if self.wrap_up_down =>
             {
                 // Focus comes back!
                 self.view
@@ -111,7 +164,7 @@ impl<T: View> ViewWrapper for CircularFocus<T> {
                     .unwrap_or(EventResult::Ignored)
             }
             (EventResult::Ignored, Event::Key(Key::Down))
-                if self.wrap_arrows =>
+                if self.wrap_up_down =>
             {
                 // Focus comes back!
                 self.view
