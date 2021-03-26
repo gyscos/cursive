@@ -75,7 +75,7 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 pub struct EditView {
     /// Current content.
     #[allow(clippy::rc_buffer)] // Rc::make_mut is what we want here.
-    content: Rc<String>,
+    content: Option<Rc<String>>,
 
     /// Cursor position in the content, in bytes.
     cursor: usize,
@@ -120,7 +120,7 @@ impl EditView {
     /// Creates a new, empty edit view.
     pub fn new() -> Self {
         EditView {
-            content: Rc::new(String::new()),
+            content: None,
             cursor: 0,
             offset: 0,
             last_length: 0, // scrollable: false,
@@ -351,7 +351,7 @@ impl EditView {
         let content = content.into();
         let len = content.len();
 
-        self.content = Rc::new(content);
+        self.content = Some(Rc::new(content));
         self.offset = 0;
         self.set_cursor(len);
 
@@ -360,8 +360,8 @@ impl EditView {
 
     /// Get the current text.
     #[allow(clippy::rc_buffer)]
-    pub fn get_content(&self) -> Rc<String> {
-        Rc::clone(&self.content)
+    pub fn get_content(&self) -> Option<Rc<String>> {
+        self.content.clone()
     }
 
     /// Sets the current content to the given value.
@@ -393,7 +393,15 @@ impl EditView {
             // Is that true? What about weird combined unicode thingies?
             // Also, say the user copy+paste some content, do we want to
             // stop halfway through a possibly split grapheme?
-            if ch.width().unwrap_or(0) + self.content.width() > width {
+
+            if ch.width().unwrap_or(0)
+                + if self.content.is_some() {
+                    self.content.as_ref().unwrap().width()
+                } else {
+                    0
+                }
+                > width
+            {
                 // ABORT
                 return Callback::dummy();
             }
@@ -402,8 +410,12 @@ impl EditView {
         // `make_mut` applies copy-on-write
         // It means it'll just return a ref if no one else has a ref,
         // and it will clone it into `self.content` otherwise.
-
-        Rc::make_mut(&mut self.content).insert(self.cursor, ch);
+        if self.content.is_some() {
+            Rc::make_mut(&mut self.content.as_mut().unwrap())
+                .insert(self.cursor, ch);
+        } else {
+            self.content = Some(Rc::new(String::from(ch)));
+        }
         self.cursor += ch.len_utf8();
 
         self.keep_cursor_in_view();
@@ -417,19 +429,26 @@ impl EditView {
     ///
     /// You should run this callback with a `&mut Cursive`.
     pub fn remove(&mut self, len: usize) -> Callback {
-        let start = self.cursor;
-        let end = self.cursor + len;
-        for _ in Rc::make_mut(&mut self.content).drain(start..end) {}
+        if self.content.is_some() {
+            let start = self.cursor;
+            let end = self.cursor + len;
+            for _ in Rc::make_mut(&mut self.content.as_mut().unwrap())
+                .drain(start..end)
+            {}
 
-        self.keep_cursor_in_view();
-
+            self.keep_cursor_in_view();
+        }
         self.make_edit_cb().unwrap_or_else(Callback::dummy)
     }
 
     fn make_edit_cb(&self) -> Option<Callback> {
         self.on_edit.clone().map(|cb| {
             // Get a new Rc on the content
-            let content = Rc::clone(&self.content);
+            let content = if self.content.is_some() {
+                Rc::clone(&self.content.as_ref().unwrap())
+            } else {
+                Rc::new("".to_owned())
+            };
             let cursor = self.cursor;
 
             Callback::from_fn(move |s| {
@@ -449,7 +468,11 @@ impl EditView {
             // So we're against the right wall.
             // Let's find how much space will be taken by the selection
             // (either a char, or _)
-            let c_len = self.content[self.cursor..]
+            if self.content.is_none() {
+                return;
+            }
+
+            let c_len = self.content.as_ref().unwrap()[self.cursor..]
                 .graphemes(true)
                 .map(UnicodeWidthStr::width)
                 .next()
@@ -466,7 +489,7 @@ impl EditView {
             // From the end, count the length until we reach `available`.
             // Then sum the byte lengths.
             let suffix_length = simple_suffix(
-                &self.content[self.offset..self.cursor],
+                &self.content.as_ref().unwrap()[self.offset..self.cursor],
                 available,
             )
             .length;
@@ -478,13 +501,18 @@ impl EditView {
         }
 
         // If we have too much space
-        if self.content[self.offset..].width() < self.last_length {
+        if self.content.as_ref().unwrap()[self.offset..].width()
+            < self.last_length
+        {
             assert!(self.last_length >= 1);
-            let suffix_length =
-                simple_suffix(&self.content, self.last_length - 1).length;
+            let suffix_length = simple_suffix(
+                &self.content.as_ref().unwrap(),
+                self.last_length - 1,
+            )
+            .length;
 
-            assert!(self.content.len() >= suffix_length);
-            self.offset = self.content.len() - suffix_length;
+            assert!(self.content.as_ref().unwrap().len() >= suffix_length);
+            self.offset = self.content.as_ref().unwrap().len() - suffix_length;
         }
     }
 }
@@ -506,7 +534,12 @@ impl View for EditView {
             self.last_length, printer.size.x
         );
 
-        let width = self.content.width();
+        let width = if self.content.is_some() {
+            self.content.as_ref().unwrap().width()
+        } else {
+            0
+        };
+
         printer.with_color(self.style, |printer| {
             let effect = if self.enabled && printer.enabled {
                 Effect::Reverse
@@ -520,7 +553,12 @@ impl View for EditView {
                     if self.secret {
                         printer.print_hline((0, 0), width, "*");
                     } else {
-                        printer.print((0, 0), &self.content);
+                        if self.content.is_some() {
+                            printer.print(
+                                (0, 0),
+                                &self.content.as_ref().unwrap(),
+                            );
+                        }
                     }
                     let filler_len =
                         (printer.size.x - width) / self.filler.width();
@@ -530,7 +568,11 @@ impl View for EditView {
                         self.filler.as_str(),
                     );
                 } else {
-                    let content = &self.content[self.offset..];
+                    let content = if self.content.is_some() {
+                        &self.content.as_ref().unwrap()[self.offset..]
+                    } else {
+                        ""
+                    };
                     let display_bytes = content
                         .graphemes(true)
                         .scan(0, |w, g| {
@@ -567,26 +609,41 @@ impl View for EditView {
 
             // Now print cursor
             if printer.focused {
-                let c: &str = if self.cursor == self.content.len() {
+                let c: &str = if self.cursor
+                    == if self.content.is_some() {
+                        self.content.as_ref().unwrap().len()
+                    } else {
+                        0
+                    } {
                     &self.filler
                 } else {
                     // Get the char from the string... Is it so hard?
-                    let selected = self.content[self.cursor..]
-                        .graphemes(true)
-                        .next()
-                        .unwrap_or_else(|| {
-                            panic!(
-                                "Found no char at cursor {} in {}",
-                                self.cursor, &self.content
-                            )
-                        });
+                    let selected = if self.content.is_some() {
+                        self.content.as_ref().unwrap()[self.cursor..]
+                            .graphemes(true)
+                            .next()
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "Found no char at cursor {} in {}",
+                                    self.cursor,
+                                    &self.content.as_ref().unwrap()
+                                )
+                            })
+                    } else {
+                        ""
+                    };
                     if self.secret {
                         make_small_stars(selected.width())
                     } else {
                         selected
                     }
                 };
-                let offset = self.content[self.offset..self.cursor].width();
+                let offset = if self.content.is_some() {
+                    self.content.as_ref().unwrap()[self.offset..self.cursor]
+                        .width()
+                } else {
+                    0
+                };
                 printer.print((offset, 0), c);
             }
         });
@@ -612,47 +669,85 @@ impl View for EditView {
             Event::Key(Key::Home) => self.set_cursor(0),
             Event::Key(Key::End) => {
                 // When possible, NLL to the rescue!
-                let len = self.content.len();
+                let len = if self.content.is_some() {
+                    self.content.as_ref().unwrap().len()
+                } else {
+                    0
+                };
                 self.set_cursor(len);
             }
             Event::Key(Key::Left) if self.cursor > 0 => {
-                let len = self.content[..self.cursor]
-                    .graphemes(true)
-                    .last()
-                    .unwrap()
-                    .len();
+                let len = if self.content.is_some() {
+                    self.content.as_ref().unwrap()[..self.cursor]
+                        .graphemes(true)
+                        .last()
+                        .unwrap()
+                        .len()
+                } else {
+                    0
+                };
                 let cursor = self.cursor - len;
                 self.set_cursor(cursor);
             }
-            Event::Key(Key::Right) if self.cursor < self.content.len() => {
-                let len = self.content[self.cursor..]
-                    .graphemes(true)
-                    .next()
-                    .unwrap()
-                    .len();
+            Event::Key(Key::Right)
+                if self.cursor
+                    < if self.content.is_some() {
+                        self.content.as_ref().unwrap().len()
+                    } else {
+                        0
+                    } =>
+            {
+                let len = if self.content.is_some() {
+                    self.content.as_ref().unwrap()[self.cursor..]
+                        .graphemes(true)
+                        .next()
+                        .unwrap()
+                        .len()
+                } else {
+                    0
+                };
                 let cursor = self.cursor + len;
                 self.set_cursor(cursor);
             }
             Event::Key(Key::Backspace) if self.cursor > 0 => {
-                let len = self.content[..self.cursor]
-                    .graphemes(true)
-                    .last()
-                    .unwrap()
-                    .len();
+                let len = if self.content.is_some() {
+                    self.content.as_ref().unwrap()[..self.cursor]
+                        .graphemes(true)
+                        .last()
+                        .unwrap()
+                        .len()
+                } else {
+                    0
+                };
                 self.cursor -= len;
                 return EventResult::Consumed(Some(self.remove(len)));
             }
-            Event::Key(Key::Del) if self.cursor < self.content.len() => {
-                let len = self.content[self.cursor..]
-                    .graphemes(true)
-                    .next()
-                    .unwrap()
-                    .len();
+            Event::Key(Key::Del)
+                if self.cursor
+                    < if self.content.is_some() {
+                        self.content.as_ref().unwrap().len()
+                    } else {
+                        0
+                    } =>
+            {
+                let len = if self.content.is_some() {
+                    self.content.as_ref().unwrap()[self.cursor..]
+                        .graphemes(true)
+                        .next()
+                        .unwrap()
+                        .len()
+                } else {
+                    0
+                };
                 return EventResult::Consumed(Some(self.remove(len)));
             }
             Event::Key(Key::Enter) if self.on_submit.is_some() => {
                 let cb = self.on_submit.clone().unwrap();
-                let content = Rc::clone(&self.content);
+                let content = if self.content.is_some() {
+                    Rc::clone(&self.content.as_ref().unwrap())
+                } else {
+                    Rc::new("".to_owned())
+                };
                 return EventResult::with_cb(move |s| {
                     cb(s, &content);
                 });
@@ -663,12 +758,16 @@ impl View for EditView {
                 offset,
             } if position.fits_in_rect(offset, (self.last_length, 1)) => {
                 if let Some(position) = position.checked_sub(offset) {
-                    self.cursor = self.offset
-                        + simple_prefix(
-                            &self.content[self.offset..],
-                            position.x,
-                        )
-                        .length;
+                    self.cursor = if self.content.is_some() {
+                        self.offset
+                            + simple_prefix(
+                                &self.content.as_ref().unwrap()[self.offset..],
+                                position.x,
+                            )
+                            .length
+                    } else {
+                        0
+                    };
                 }
             }
             _ => return EventResult::Ignored,
@@ -680,19 +779,32 @@ impl View for EditView {
     }
 
     fn important_area(&self, _: Vec2) -> Rect {
-        let char_width = if self.cursor >= self.content.len() {
+        let char_width = if self.cursor
+            >= if self.content.is_some() {
+                self.content.as_ref().unwrap().len()
+            } else {
+                0
+            } {
             // Show a space if we're at the end of the content
             1
         } else {
             // Otherwise look at the selected character.
-            self.content[self.cursor..]
-                .graphemes(true)
-                .next()
-                .unwrap()
-                .width()
+            if self.content.is_some() {
+                self.content.as_ref().unwrap()[self.cursor..]
+                    .graphemes(true)
+                    .next()
+                    .unwrap()
+                    .width()
+            } else {
+                0
+            }
         };
 
-        let x = self.content[..self.cursor].width();
+        let x = if self.content.is_some() {
+            self.content.as_ref().unwrap()[..self.cursor].width()
+        } else {
+            0
+        };
 
         Rect::from_size((x, 0), (char_width, 1))
     }
