@@ -21,7 +21,7 @@ repository = "gyscos/cursive"
 repository = "gyscos/cursive"
 
 [dependencies]
-enum-map = "0.6"
+enum-map = "1.0"
 enumset = "1.0.4"
 log = "0.4"
 owning_ref = "0.4"
@@ -39,7 +39,7 @@ version = "0.5"
 
 [dependencies.num]
 default-features = false
-version = "0.3"
+version = "0.4"
 
 [dependencies.pulldown-cmark]
 default-features = false
