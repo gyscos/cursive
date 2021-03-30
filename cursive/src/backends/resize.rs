@@ -17,7 +17,9 @@ pub fn start_resize_thread(
         while resize_running.load(Ordering::Relaxed) {
             // We know it will only contain SIGWINCH signals, so no need to check.
             if signals.wait().count() > 0 {
-                resize_sender.send(()).unwrap();
+                if resize_sender.send(()).is_err() {
+                    return;
+                }
             }
         }
     });
