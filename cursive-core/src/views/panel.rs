@@ -26,6 +26,9 @@ pub struct Panel<V> {
 
 new_default!(Panel<V: Default>);
 
+/// Minimum distance between title and borders.
+const TITLE_SPACING: usize = 3;
+
 impl<V> Panel<V> {
     /// Creates a new panel around the given view.
     pub fn new(view: V) -> Self {
@@ -65,15 +68,10 @@ impl<V> Panel<V> {
     fn draw_title(&self, printer: &Printer) {
         if !self.title.is_empty() {
             let len = self.title.width();
-            let spacing = 3; //minimum distance to borders
-            let spacing_both_ends = 2 * spacing;
-            if len + spacing_both_ends > printer.size.x {
-                return;
-            }
-            let x = spacing
+            let x = TITLE_SPACING
                 + self
                     .title_position
-                    .get_offset(len, printer.size.x - spacing_both_ends);
+                    .get_offset(len, printer.size.x - 2 * TITLE_SPACING);
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
@@ -103,7 +101,13 @@ impl<V: View> ViewWrapper for Panel<V> {
         // TODO: make borders conditional?
         let req = req.saturating_sub((2, 2));
 
-        self.view.required_size(req) + (2, 2)
+        let size = self.view.required_size(req) + (2, 2);
+        if self.title.is_empty() {
+            size
+        } else {
+            let title_width = self.title.width() + 2 * TITLE_SPACING;
+            size.or_max((title_width, 0))
+        }
     }
 
     fn wrap_draw(&self, printer: &Printer) {
