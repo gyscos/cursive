@@ -49,6 +49,7 @@ version = "0.8"
 [features]
 markdown = ["pulldown-cmark"]
 unstable_scroll = []
+configurable-logger = []
 
 [lib]
 name = "cursive_core"
