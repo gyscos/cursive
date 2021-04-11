@@ -12,7 +12,7 @@ version = "0.16.4-alpha.0"
 edition = "2018"
 
 [package.metadata.docs.rs]
-features = ["unstable_scroll", "markdown", "toml"]
+all-features = true
 
 [dependencies]
 cursive_core = { path = "../cursive-core", version= "0.2.2"}
@@ -50,6 +50,7 @@ optional = true
 version = "0.19"
 
 [features]
+doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.
 blt-backend = ["bear-lib-terminal"]
 default = ["ncurses-backend"]
 ncurses-backend = ["ncurses", "maplit", "term_size"]
@@ -57,7 +58,7 @@ pancurses-backend = ["pancurses", "maplit", "term_size"]
 termion-backend = ["termion"]
 crossterm-backend = ["crossterm"]
 markdown = ["cursive_core/markdown"]
-unstable_scroll = ["cursive_core/unstable_scroll"]
+unstable_scroll = []  # Deprecated feature, remove in next version
 toml = ["cursive_core/toml"]
 
 [lib]

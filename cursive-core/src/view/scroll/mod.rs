@@ -1,7 +1,6 @@
 //! Core mechanisms to implement scrolling.
 //!
 //! *This module is still unstable and may go through breaking changes.*
-//! In addition, it is private unless you enable the `unstable_scroll` feature.
 //!
 //! This modules defines:
 //!

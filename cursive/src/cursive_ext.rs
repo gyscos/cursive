@@ -37,22 +37,27 @@ pub trait CursiveExt {
 
     /// Creates a new Cursive root using a ncurses backend.
     #[cfg(feature = "ncurses-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "ncurses-backend")))]
     fn run_ncurses(&mut self) -> std::io::Result<()>;
 
     /// Creates a new Cursive root using a pancurses backend.
     #[cfg(feature = "pancurses-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "pancurses-backend")))]
     fn run_pancurses(&mut self) -> std::io::Result<()>;
 
     /// Creates a new Cursive root using a termion backend.
     #[cfg(feature = "termion-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "termion-backend")))]
     fn run_termion(&mut self) -> std::io::Result<()>;
 
     /// Creates a new Cursive root using a crossterm backend.
     #[cfg(feature = "crossterm-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "crossterm-backend")))]
     fn run_crossterm(&mut self) -> Result<(), crossterm::ErrorKind>;
 
     /// Creates a new Cursive root using a bear-lib-terminal backend.
     #[cfg(feature = "blt-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
     fn run_blt(&mut self);
 }
 
@@ -77,26 +82,31 @@ impl CursiveExt for cursive_core::Cursive {
     }
 
     #[cfg(feature = "ncurses-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "curses-backend")))]
     fn run_ncurses(&mut self) -> std::io::Result<()> {
         self.try_run_with(crate::backends::curses::n::Backend::init)
     }
 
     #[cfg(feature = "pancurses-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "pancurses-backend")))]
     fn run_pancurses(&mut self) -> std::io::Result<()> {
         self.try_run_with(crate::backends::curses::pan::Backend::init)
     }
 
     #[cfg(feature = "termion-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "termion-backend")))]
     fn run_termion(&mut self) -> std::io::Result<()> {
         self.try_run_with(crate::backends::termion::Backend::init)
     }
 
     #[cfg(feature = "crossterm-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "crossterm-backend")))]
     fn run_crossterm(&mut self) -> Result<(), crossterm::ErrorKind> {
         self.try_run_with(crate::backends::crossterm::Backend::init)
     }
 
     #[cfg(feature = "blt-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
     fn run_blt(&mut self) {
         self.run_with(crate::backends::blt::Backend::init)
     }

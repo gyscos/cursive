@@ -1,8 +1,8 @@
 //! Backend using the pure-rust crossplatform crossterm library.
 //!
 //! Requires the `crossterm-backend` feature.
-
 #![cfg(feature = "crossterm")]
+#![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "crossterm-backend")))]
 
 use std::{
     cell::{Cell, RefCell, RefMut},

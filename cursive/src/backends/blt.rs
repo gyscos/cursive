@@ -2,6 +2,7 @@
 //!
 //! Requires the `blt-backend` feature.
 #![cfg(feature = "bear-lib-terminal")]
+#![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
 
 pub use bear_lib_terminal;
 

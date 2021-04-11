@@ -2,7 +2,6 @@
 //!
 //! Each module is optional and relies on a feature.
 
-#[cfg(feature = "markdown")]
 pub mod markdown;
 
 use crate::theme::Style;

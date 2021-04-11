@@ -1,5 +1,6 @@
 //! Ncurses-specific backend.
 #![cfg(feature = "ncurses-backend")]
+#![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "ncurses-backend")))]
 pub use ncurses;
 
 use log::{debug, warn};

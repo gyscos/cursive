@@ -91,16 +91,17 @@ mod size_cache;
 mod size_constraint;
 mod view_trait;
 
-// Helper bases
-mod nameable;
-mod resizable;
 #[macro_use]
 pub mod scroll;
 
-mod scroll_base;
+// Helper bases
+mod into_boxed_view;
+mod nameable;
+mod resizable;
 mod scrollable;
 
-mod into_boxed_view;
+// That one is deprecated
+mod scroll_base;
 
 pub use self::any::AnyView;
 pub use self::finder::{Finder, Selector};

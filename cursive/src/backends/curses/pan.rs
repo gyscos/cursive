@@ -1,5 +1,6 @@
 //! Pancuses-specific backend.
 #![cfg(feature = "pancurses-backend")]
+#![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "pancurses-backend")))]
 
 pub use pancurses;
 

@@ -12,7 +12,7 @@ version = "0.2.2"
 edition = "2018"
 
 [package.metadata.docs.rs]
-features = ["unstable_scroll", "markdown", "toml"]
+all-features = true
 
 [badges.travis-ci]
 repository = "gyscos/cursive"
@@ -47,8 +47,9 @@ optional = true
 version = "0.8"
 
 [features]
+doc-cfg = []
 markdown = ["pulldown-cmark"]
-unstable_scroll = []
+unstable_scroll = []  # Deprecated feature, remove in next version
 
 [lib]
 name = "cursive_core"

@@ -63,6 +63,7 @@
 //!
 //! [`cursive::theme`]: ./theme/index.html
 #![deny(missing_docs)]
+#![cfg_attr(feature = "doc-cfg", feature(doc_cfg))]
 
 pub use cursive_core::*;
 
@@ -96,30 +97,35 @@ pub fn default() -> CursiveRunnable {
 
 /// Creates a new Cursive root using a ncurses backend.
 #[cfg(feature = "ncurses-backend")]
+#[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "ncurses-backend")))]
 pub fn ncurses() -> CursiveRunnable {
     CursiveRunnable::ncurses()
 }
 
 /// Creates a new Cursive root using a pancurses backend.
 #[cfg(feature = "pancurses-backend")]
+#[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "pancurses-backend")))]
 pub fn pancurses() -> CursiveRunnable {
     CursiveRunnable::pancurses()
 }
 
 /// Creates a new Cursive root using a termion backend.
 #[cfg(feature = "termion-backend")]
+#[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "termion-backend")))]
 pub fn termion() -> CursiveRunnable {
     CursiveRunnable::termion()
 }
 
 /// Creates a new Cursive root using a crossterm backend.
 #[cfg(feature = "crossterm-backend")]
+#[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "crossterm-backend")))]
 pub fn crossterm() -> CursiveRunnable {
     CursiveRunnable::crossterm()
 }
 
 /// Creates a new Cursive root using a bear-lib-terminal backend.
 #[cfg(feature = "blt-backend")]
+#[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
 pub fn blt() -> CursiveRunnable {
     CursiveRunnable::blt()
 }

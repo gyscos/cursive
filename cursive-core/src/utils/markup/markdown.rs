@@ -1,6 +1,8 @@
 //! Parse markdown text.
 //!
 //! Needs the `markdown` feature to be enabled.
+#![cfg(feature = "markdown")]
+#![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "markdown")))]
 
 use std::borrow::Cow;
 

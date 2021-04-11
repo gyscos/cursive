@@ -242,6 +242,7 @@ impl Default for Theme {
 
 impl Theme {
     #[cfg(feature = "toml")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "toml")))]
     fn load_toml(&mut self, table: &toml::value::Table) {
         if let Some(&toml::Value::Boolean(shadow)) = table.get("shadow") {
             self.shadow = shadow;
@@ -264,11 +265,13 @@ pub enum Error {
     Io(io::Error),
 
     #[cfg(feature = "toml")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "toml")))]
     /// An error occured when parsing the toml content.
     Parse(toml::de::Error),
 }
 
 #[cfg(feature = "toml")]
+#[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "toml")))]
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
         Error::Io(err)
@@ -276,16 +279,18 @@ impl From<io::Error> for Error {
 }
 
 #[cfg(feature = "toml")]
+#[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "toml")))]
 impl From<toml::de::Error> for Error {
     fn from(err: toml::de::Error) -> Self {
         Error::Parse(err)
     }
 }
 
-#[cfg(feature = "toml")]
 /// Loads a theme from file.
 ///
 /// Must have the `toml` feature enabled.
+#[cfg(feature = "toml")]
+#[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "toml")))]
 pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
     let content = {
         let mut content = String::new();
@@ -301,6 +306,7 @@ pub fn load_theme_file<P: AsRef<Path>>(filename: P) -> Result<Theme, Error> {
 ///
 /// Must have the `toml` feature enabled.
 #[cfg(feature = "toml")]
+#[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "toml")))]
 pub fn load_toml(content: &str) -> Result<Theme, Error> {
     let table = toml::de::from_str(content)?;
 

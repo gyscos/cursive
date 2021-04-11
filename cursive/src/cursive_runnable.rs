@@ -140,6 +140,7 @@ impl CursiveRunnable {
     ///
     /// _Requires the `ncurses-backend` feature._
     #[cfg(feature = "ncurses-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "ncurses-backend")))]
     pub fn ncurses() -> Self {
         Self::new(backends::curses::n::Backend::init)
     }
@@ -148,6 +149,7 @@ impl CursiveRunnable {
     ///
     /// _Requires the `panncurses-backend` feature._
     #[cfg(feature = "pancurses-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "pancurses-backend")))]
     pub fn pancurses() -> Self {
         Self::new(backends::curses::pan::Backend::init)
     }
@@ -156,6 +158,7 @@ impl CursiveRunnable {
     ///
     /// _Requires the `termion-backend` feature._
     #[cfg(feature = "termion-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "termion-backend")))]
     pub fn termion() -> Self {
         Self::new(backends::termion::Backend::init)
     }
@@ -164,6 +167,7 @@ impl CursiveRunnable {
     ///
     /// _Requires the `crossterm-backend` feature._
     #[cfg(feature = "crossterm-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "crossterm-backend")))]
     pub fn crossterm() -> Self {
         Self::new(backends::crossterm::Backend::init)
     }
@@ -172,6 +176,7 @@ impl CursiveRunnable {
     ///
     /// _Requires the `blt-backend` feature._
     #[cfg(feature = "blt-backend")]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
     pub fn blt() -> Self {
         Self::new::<std::convert::Infallible, _>(|| {
             Ok(backends::blt::Backend::init())
