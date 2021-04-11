@@ -6,7 +6,6 @@
 
 use std::{
     cell::{Cell, RefCell, RefMut},
-    fs::File,
     io::{self, BufWriter, Write},
     time::Duration,
 };
@@ -42,7 +41,7 @@ use crate::{
 type Stdout = io::Stdout;
 
 #[cfg(unix)]
-type Stdout = File;
+type Stdout = std::fs::File;
 
 /// Backend using crossterm
 pub struct Backend {
@@ -205,7 +204,8 @@ impl Backend {
         )?;
 
         #[cfg(unix)]
-        let stdout = RefCell::new(BufWriter::new(File::create("/dev/tty")?));
+        let stdout =
+            RefCell::new(BufWriter::new(std::fs::File::create("/dev/tty")?));
         #[cfg(windows)]
         let stdout = RefCell::new(BufWriter::new(io::stdout()));
 
