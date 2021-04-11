@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Check
-      run: cd cursive && cargo check --all-features
+      run: cd cursive && cargo check --features "blt-backend ncurses-backend pancurses-backend termion-backend crossterm-backend markdown toml"
     - name: Build
       run: cd cursive && cargo build --features "toml markdown termion-backend crossterm-backend" --no-default-features --verbose
     - name: Run tests
