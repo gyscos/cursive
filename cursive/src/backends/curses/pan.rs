@@ -327,6 +327,17 @@ impl Backend {
             // or a weird double-release event. :S
             self.last_mouse_button
                 .map(MouseEvent::Hold)
+                .or_else(|| {
+                    // In legacy mode, some buttons overlap,
+                    // so we need to disambiguate.
+                    if mevent.bstate
+                        == pancurses::BUTTON5_DOUBLE_CLICKED as mmask_t
+                    {
+                        Some(MouseEvent::WheelDown)
+                    } else {
+                        None
+                    }
+                })
                 .map(&make_event)
                 .unwrap_or_else(|| {
                     debug!("We got a mouse drag, but no last mouse pressed?");
