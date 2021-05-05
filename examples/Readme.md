@@ -8,7 +8,7 @@ To run an example, use `cargo run --bin EXAMPLE_NAME`.
 To use a specific cursive backend, you can do, for example:
 
 ```
-cargo run --bin EXAMPLE_NAME --features cursive/crossterm-backend
+cargo run --bin EXAMPLE_NAME --features cursive/crossterm-backend --no-default-features 
 ```
 
 ## [`hello_world`](src/bin/hello_world.rs)
