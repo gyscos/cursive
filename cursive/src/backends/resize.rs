@@ -16,10 +16,8 @@ pub fn start_resize_thread(
         // This thread will listen to SIGWINCH events and report them.
         while resize_running.load(Ordering::Relaxed) {
             // We know it will only contain SIGWINCH signals, so no need to check.
-            if signals.wait().count() > 0 {
-                if resize_sender.send(()).is_err() {
-                    return;
-                }
+            if signals.wait().count() > 0 && resize_sender.send(()).is_err() {
+                return;
             }
         }
     });
