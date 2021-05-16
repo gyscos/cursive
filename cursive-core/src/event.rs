@@ -253,6 +253,16 @@ impl EventResult {
         EventResult::Consumed(Some(Callback::from_fn(f)))
     }
 
+    /// Convenient method to create `Consumed(Some(f))`
+    ///
+    /// After being called once, the callback will become a no-op.
+    pub fn with_cb_once<F>(f: F) -> Self
+    where
+        F: 'static + FnOnce(&mut Cursive),
+    {
+        EventResult::Consumed(Some(Callback::from_fn_once(f)))
+    }
+
     /// Convenient method to create `Consumed(None)`
     pub fn consumed() -> Self {
         EventResult::Consumed(None)
