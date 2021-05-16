@@ -394,13 +394,14 @@ impl View for TextView {
 
         let content = self.content.content.lock().unwrap();
 
-        let miny = printer.content_offset.y;
-        let maxy = printer.output_size.y + printer.content_offset.y;
         printer.with_style(self.style, |printer| {
-            for (y, row) in self.rows.iter().enumerate() {
-                if y < miny || y >= maxy {
-                    continue;
-                }
+            for (y, row) in self
+                .rows
+                .iter()
+                .enumerate()
+                .skip(printer.content_offset.y)
+                .take(printer.output_size.y)
+            {
                 let l = row.width;
                 let mut x = self.align.h.get_offset(l, printer.size.x);
 
