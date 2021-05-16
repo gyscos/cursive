@@ -267,7 +267,8 @@ impl backend::Backend for Backend {
     fn set_effect(&self, effect: Effect) {
         match effect {
             // TODO: does BLT support bold/italic/strikethrough/underline?
-            Effect::Bold
+            Effect::Dim
+            | Effect::Bold
             | Effect::Italic
             | Effect::Underline
             | Effect::Strikethrough
@@ -286,7 +287,8 @@ impl backend::Backend for Backend {
     fn unset_effect(&self, effect: Effect) {
         match effect {
             // TODO: does BLT support bold/italic/strikethrough/underline?
-            Effect::Bold
+            Effect::Dim
+            | Effect::Bold
             | Effect::Italic
             | Effect::Underline
             | Effect::Strikethrough

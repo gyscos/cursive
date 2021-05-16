@@ -8,6 +8,8 @@ pub enum Effect {
     Simple,
     /// Reverses foreground and background colors
     Reverse,
+    /// Prints foreground as "dim" or "faint" (has no effect for ncurses/pancurses/blt backends)
+    Dim,
     /// Prints foreground in bold
     Bold,
     /// Prints foreground in italic
