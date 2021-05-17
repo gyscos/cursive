@@ -6,13 +6,13 @@
 
 pub use termion;
 
-use crossbeam_channel::{self, select, Receiver};
+use crossbeam_channel::{self, Receiver};
 use termion::color as tcolor;
 use termion::event::Event as TEvent;
 use termion::event::Key as TKey;
 use termion::event::MouseButton as TMouseButton;
 use termion::event::MouseEvent as TMouseEvent;
-use termion::input::{MouseTerminal, TermRead};
+use termion::input::{Events, MouseTerminal, TermRead};
 use termion::raw::{IntoRawMode, RawTerminal};
 use termion::screen::AlternateScreen;
 use termion::style as tstyle;
@@ -28,7 +28,6 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::thread;
 
 /// Backend using termion
 pub struct Backend {
@@ -40,8 +39,59 @@ pub struct Backend {
     // Inner state required to parse input
     last_button: Option<MouseButton>,
 
-    input_receiver: Receiver<TEvent>,
+    events: Events<File>,
     resize_receiver: Receiver<()>,
+    running: Arc<AtomicBool>,
+}
+
+/// Set the given file to be read in non-blocking mode. That is, attempting a
+/// read on the given file may return 0 bytes.
+///
+/// Copied from private function at https://docs.rs/nonblock/0.1.0/nonblock/.
+///
+/// The MIT License (MIT)
+///
+/// Copyright (c) 2016 Anthony Nowell
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to deal
+/// in the Software without restriction, including without limitation the rights
+/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+/// copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in all
+/// copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+/// SOFTWARE.
+#[cfg(unix)]
+fn set_blocking(file: &File, blocking: bool) -> std::io::Result<()> {
+    use libc::{fcntl, F_GETFL, F_SETFL, O_NONBLOCK};
+    use std::os::unix::io::AsRawFd;
+
+    let fd = file.as_raw_fd();
+    let flags = unsafe { fcntl(fd, F_GETFL, 0) };
+    if flags < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+
+    let flags = if blocking {
+        flags & !O_NONBLOCK
+    } else {
+        flags | O_NONBLOCK
+    };
+    let res = unsafe { fcntl(fd, F_SETFL, flags) };
+    if res != 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+
+    Ok(())
 }
 
 impl Backend {
@@ -70,6 +120,9 @@ impl Backend {
         input_file: File,
         output_file: File,
     ) -> std::io::Result<Box<dyn backend::Backend>> {
+        #[cfg(unix)]
+        set_blocking(&input_file, false)?;
+
         // Use a ~8MB buffer
         // Should be enough for a single screen most of the time.
         let terminal =
@@ -80,41 +133,22 @@ impl Backend {
 
         write!(terminal.borrow_mut(), "{}", termion::cursor::Hide)?;
 
-        let (input_sender, input_receiver) = crossbeam_channel::unbounded();
         let (resize_sender, resize_receiver) = crossbeam_channel::bounded(0);
-
         let running = Arc::new(AtomicBool::new(true));
-
         #[cfg(unix)]
         backends::resize::start_resize_thread(
             resize_sender,
             Arc::clone(&running),
         );
 
-        // We want nonblocking input, but termion is blocking by default
-        // Read input from a separate thread
-        thread::spawn(move || {
-            let mut events = input_file.events();
-
-            // Take all the events we can
-            while let Some(Ok(event)) = events.next() {
-                // If we can't send, it means the receiving side closed,
-                // so just stop.
-                if input_sender.send(event).is_err() {
-                    break;
-                }
-            }
-
-            running.store(false, Ordering::Relaxed);
-        });
-
         let c = Backend {
             terminal,
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
 
             last_button: None,
-            input_receiver,
+            events: input_file.events(),
             resize_receiver,
+            running,
         };
 
         Ok(Box::new(c))
@@ -208,6 +242,8 @@ impl Backend {
 
 impl Drop for Backend {
     fn drop(&mut self) {
+        self.running.store(false, Ordering::Relaxed);
+
         write!(
             self.terminal.get_mut(),
             "{}{}",
@@ -325,12 +361,13 @@ impl backend::Backend for Backend {
     }
 
     fn poll_event(&mut self) -> Option<Event> {
-        let event = select! {
-            recv(self.input_receiver) -> event => event.ok(),
-            recv(self.resize_receiver) -> _ => return Some(Event::WindowResize),
-            default => return None,
-        };
-        event.map(|event| self.map_key(event))
+        if let Some(Ok(event)) = self.events.next() {
+            Some(self.map_key(event))
+        } else if let Ok(()) = self.resize_receiver.try_recv() {
+            Some(Event::WindowResize)
+        } else {
+            None
+        }
     }
 }
 
