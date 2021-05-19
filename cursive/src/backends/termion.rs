@@ -247,6 +247,7 @@ impl backend::Backend for Backend {
         match effect {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.write(tstyle::Invert),
+            theme::Effect::Dim => self.write(tstyle::Faint),
             theme::Effect::Bold => self.write(tstyle::Bold),
             theme::Effect::Blink => self.write(tstyle::Blink),
             theme::Effect::Italic => self.write(tstyle::Italic),
@@ -259,7 +260,9 @@ impl backend::Backend for Backend {
         match effect {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.write(tstyle::NoInvert),
-            theme::Effect::Bold => self.write(tstyle::NoFaint),
+            theme::Effect::Dim | theme::Effect::Bold => {
+                self.write(tstyle::NoFaint)
+            }
             theme::Effect::Blink => self.write(tstyle::NoBlink),
             theme::Effect::Italic => self.write(tstyle::NoItalic),
             theme::Effect::Strikethrough => self.write(tstyle::NoCrossedOut),

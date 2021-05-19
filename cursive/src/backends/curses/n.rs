@@ -367,6 +367,7 @@ impl backend::Backend for Backend {
         let style = match effect {
             Effect::Reverse => ncurses::A_REVERSE(),
             Effect::Simple => ncurses::A_NORMAL(),
+            Effect::Dim => ncurses::A_DIM(),
             Effect::Bold => ncurses::A_BOLD(),
             Effect::Blink => ncurses::A_BLINK(),
             Effect::Italic => ncurses::A_ITALIC(),
@@ -380,6 +381,7 @@ impl backend::Backend for Backend {
         let style = match effect {
             Effect::Reverse => ncurses::A_REVERSE(),
             Effect::Simple => ncurses::A_NORMAL(),
+            Effect::Dim => ncurses::A_DIM(),
             Effect::Bold => ncurses::A_BOLD(),
             Effect::Blink => ncurses::A_BLINK(),
             Effect::Italic => ncurses::A_ITALIC(),

@@ -362,6 +362,7 @@ impl backend::Backend for Backend {
         match effect {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.set_attr(Attribute::Reverse),
+            theme::Effect::Dim => self.set_attr(Attribute::Dim),
             theme::Effect::Bold => self.set_attr(Attribute::Bold),
             theme::Effect::Blink => self.set_attr(Attribute::SlowBlink),
             theme::Effect::Italic => self.set_attr(Attribute::Italic),
@@ -376,7 +377,7 @@ impl backend::Backend for Backend {
         match effect {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.set_attr(Attribute::NoReverse),
-            theme::Effect::Bold => self.set_attr(Attribute::NormalIntensity),
+            theme::Effect::Dim | theme::Effect::Bold => self.set_attr(Attribute::NormalIntensity),
             theme::Effect::Blink => self.set_attr(Attribute::NoBlink),
             theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
             theme::Effect::Strikethrough => {

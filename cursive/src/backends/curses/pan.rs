@@ -411,6 +411,7 @@ impl backend::Backend for Backend {
         let style = match effect {
             Effect::Simple => pancurses::Attribute::Normal,
             Effect::Reverse => pancurses::Attribute::Reverse,
+            Effect::Dim => pancurses::Attribute::Dim,
             Effect::Bold => pancurses::Attribute::Bold,
             Effect::Blink => pancurses::Attribute::Blink,
             Effect::Italic => pancurses::Attribute::Italic,
@@ -424,6 +425,7 @@ impl backend::Backend for Backend {
         let style = match effect {
             Effect::Simple => pancurses::Attribute::Normal,
             Effect::Reverse => pancurses::Attribute::Reverse,
+            Effect::Dim => pancurses::Attribute::Dim,
             Effect::Bold => pancurses::Attribute::Bold,
             Effect::Blink => pancurses::Attribute::Blink,
             Effect::Italic => pancurses::Attribute::Italic,
