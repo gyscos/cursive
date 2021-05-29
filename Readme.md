@@ -99,6 +99,7 @@ Here are some cool applications using cursive:
 * [rusty-man](https://sr.ht/~ireas/rusty-man): Browse rustdoc documentation.
 * [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
+* [launchk](https://github.com/mach-kernel/launchk): Manage launchd agents and daemons on macOS.
 
 ## Goals
 
