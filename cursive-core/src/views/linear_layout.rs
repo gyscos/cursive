@@ -281,6 +281,12 @@ impl LinearLayout {
         self.children.get_mut(i).map(|child| &mut *child.view)
     }
 
+    /// Removes all children from this view.
+    pub fn clear(&mut self) {
+        self.invalidate();
+        self.children.clear();
+    }
+
     /// Removes a child.
     ///
     /// If `i` is within bounds, the removed child will be returned.
