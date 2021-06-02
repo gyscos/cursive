@@ -29,7 +29,7 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 ///
 /// From the [edit example][1].
 ///
-/// [1]: https://github.com/gyscos/cursive/blob/main/examples/src/bin/edit.rs
+/// [1]: https://github.com/gyscos/cursive/blob/main/cursive/examples/edit.rs
 ///
 /// ```rust
 /// # use cursive_core::Cursive;

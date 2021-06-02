@@ -46,17 +46,17 @@ fn main() {
 }
 ```
 
-[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/main/doc/cursive_example.png)](examples/src/bin/dialog.rs)
+[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/main/doc/cursive_example.png)](cursive/examples/dialog.rs)
 
-Check out the other [examples](https://github.com/gyscos/cursive/tree/main/examples) to get these results, and more:
+Check out the other [examples](https://github.com/gyscos/cursive/tree/main/cursive/examples) to get these results, and more:
 
 <div>
-<a href="examples/src/bin/edit.rs"><img src="https://imgur.com/CQgSwly.png" alt="edit.rs example", width="48%" /></a>
-<a href="examples/src/bin/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
-<a href="examples/src/bin/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
-<a href="examples/src/bin/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
-<a href="examples/src/bin/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
-<a href="examples/src/bin/theme.rs"><img src="https://i.imgur.com/3Yleozc.png" alt="theme.rs example", width="48%" /></a>
+<a href="cursive/examples/edit.rs"><img src="https://imgur.com/CQgSwly.png" alt="edit.rs example", width="48%" /></a>
+<a href="cursive/examples/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
+<a href="cursive/examples/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
+<a href="cursive/examples/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
+<a href="cursive/examples/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
+<a href="cursive/examples/theme.rs"><img src="https://i.imgur.com/3Yleozc.png" alt="theme.rs example", width="48%" /></a>
 </div>
 
 _(Colors may depend on your terminal configuration.)_

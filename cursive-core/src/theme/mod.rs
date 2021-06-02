@@ -190,8 +190,8 @@
 //! [`Effect`]: ./enum.Effect.html
 //! [`Theme`]: ./struct.Theme.html
 //! [`Cursive::current_theme`]: ../struct.Cursive.html#method.current_theme
-//! [theme_manual example]: https://github.com/gyscos/cursive/blob/master/examples/theme_manual.rs
-//! [theme example]: https://github.com/gyscos/cursive/blob/master/examples/theme.rs
+//! [theme_manual example]: https://github.com/gyscos/cursive/blob/main/cursive/examples/theme_manual.rs
+//! [theme example]: https://github.com/gyscos/cursive/blob/main/cursive/examples/theme.rs
 //! [`Cursive::load_toml`]: ../struct.Cursive.html#method.load_toml
 //! [`theme::load_theme_file`]: ./fn.load_theme_file.html
 mod border_style;
