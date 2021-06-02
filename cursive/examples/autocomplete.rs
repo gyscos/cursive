@@ -9,7 +9,7 @@ use lazy_static::lazy_static;
 // Try entering "tok"!
 
 lazy_static! {
-    static ref CITIES: &'static str = include_str!("../../assets/cities.txt");
+    static ref CITIES: &'static str = include_str!("assets/cities.txt");
 }
 
 fn main() {
