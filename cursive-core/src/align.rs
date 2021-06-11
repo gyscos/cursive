@@ -37,7 +37,7 @@ impl Align {
 
     /// Creates a bottom-right alignment.
     pub fn bot_right() -> Self {
-        Align::new(HAlign::Right, VAlign::Top)
+        Align::new(HAlign::Right, VAlign::Bottom)
     }
 
     /// Creates a bottom-center alignment.
