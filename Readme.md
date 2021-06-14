@@ -91,6 +91,7 @@ Here are some cool applications using cursive:
 * [RustyChat](https://github.com/SambaDialloB/RustyChat): Chat client made using Rust and Cursive.
 * [clock-cli](https://github.com/TianyiShi2001/clock-cli-rs): A clock with stopwatch and countdown timer functionalities.
 * [fui](https://github.com/xliiv/fui): Add CLI & form interface to your program.
+* [git-branchless](https://github.com/arxanas/git-branchless): Branchless workflow for Git.
 * [grin-tui](https://github.com/mimblewimble/grin): Minimal implementation of the MimbleWimble protocol.
 * [kakikun](https://github.com/file-acomplaint/kakikun): A paint and ASCII art application for the terminal.
 * [mythra](https://github.com/deven96/mythra): CLI to search for music.
@@ -126,7 +127,7 @@ There is initial support for [wide characters](https://en.wikipedia.org/wiki/CJK
 * Keep in mind that if the terminal has shortcuts registered, they probably won't be transmitted to the app.
 * UTF-8 input should work fine in a unicode-enabled terminal emulator, but raw linux TTY may be more capricious.
 
-## [Contributing](CONTRIBUTING.md) 
+## [Contributing](CONTRIBUTING.md)
 ## Alternatives
 
 See also [tui-rs](https://github.com/fdehau/tui-rs) - and a small [comparison page](https://github.com/gyscos/cursive/wiki/Cursive-vs-tui%E2%80%90rs).
