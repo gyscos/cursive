@@ -15,7 +15,7 @@ fn main() {
         // We add a new "File" tree
         .add_subtree(
             "File",
-            menu::Tree::new()
+            menu::MenuTree::new()
                 // Trees are made of leaves, with are directly actionable...
                 .leaf("New", move |s| {
                     // Here we use the counter to add an entry
@@ -36,13 +36,17 @@ fn main() {
                     "Recent",
                     // The `.with()` method can help when running loops
                     // within builder patterns.
-                    menu::Tree::new().with(|tree| {
+                    menu::MenuTree::new().with(|tree| {
                         for i in 1..100 {
+                            tree.add_leaf(format!("Item {}",i), |_| ()).with(|s|{
+                                if i % 5 == 0 {
+                                }
+                            })
                             // We don't actually do anything here,
                             // but you could!
-                            tree.add_item(menu::Item::leaf(format!("Item {}", i), |_| ()).with(|s| {
-                                if i % 5 == 0 { s.disable(); }
-                            }))
+                            //tree.add_item(menu::Item::leaf(format!("Item {}", i), |_| ()).with(|s| {
+                            //    if i % 5 == 0 { s.disable(); }
+                            //}))
                         }
                     }),
                 )
@@ -57,10 +61,10 @@ fn main() {
         )
         .add_subtree(
             "Help",
-            menu::Tree::new()
+            menu::MenuTree::new()
                 .subtree(
                     "Help",
-                    menu::Tree::new()
+                    menu::MenuTree::new()
                         .leaf("General", |s| {
                             s.add_layer(Dialog::info("Help message!"))
                         })
