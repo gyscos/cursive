@@ -282,7 +282,7 @@ pub trait ObservedPieceInterface {
                     None => s.push(' '),
                     Some(cell) => {
                         if let GraphemePart::Begin(lex) = &cell.letter {
-                            s.push_str(&lex);
+                            s.push_str(lex);
                         }
                     }
                 }
