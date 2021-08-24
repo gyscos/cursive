@@ -281,8 +281,8 @@ pub trait ObservedPieceInterface {
                 match &self.parent()[Vec2::new(x, y)] {
                     None => s.push(' '),
                     Some(cell) => {
-                        if let GraphemePart::Begin(lex) = &cell.letter {
-                            s.push_str(&lex);
+                        if let GraphemePart::Begin(ref lex) = cell.letter {
+                            s.push_str(lex);
                         }
                     }
                 }

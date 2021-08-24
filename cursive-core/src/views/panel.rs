@@ -112,7 +112,7 @@ impl<V: View> ViewWrapper for Panel<V> {
 
     fn wrap_draw(&self, printer: &Printer) {
         printer.print_box((0, 0), printer.size, true);
-        self.draw_title(&printer);
+        self.draw_title(printer);
 
         let printer = printer.offset((1, 1)).shrinked((1, 1));
         self.view.draw(&printer);

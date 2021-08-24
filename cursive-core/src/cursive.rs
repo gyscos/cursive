@@ -135,7 +135,7 @@ impl Cursive {
         if self.menubar.visible() {
             let printer = printer.focused(self.menubar.receive_events());
             printer.with_color(theme::ColorStyle::primary(), |printer| {
-                self.menubar.draw(&printer)
+                self.menubar.draw(printer)
             });
         }
 

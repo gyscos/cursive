@@ -377,7 +377,9 @@ impl backend::Backend for Backend {
         match effect {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.set_attr(Attribute::NoReverse),
-            theme::Effect::Dim | theme::Effect::Bold => self.set_attr(Attribute::NormalIntensity),
+            theme::Effect::Dim | theme::Effect::Bold => {
+                self.set_attr(Attribute::NormalIntensity)
+            }
             theme::Effect::Blink => self.set_attr(Attribute::NoBlink),
             theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
             theme::Effect::Strikethrough => {

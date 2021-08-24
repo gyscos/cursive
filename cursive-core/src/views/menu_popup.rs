@@ -324,7 +324,7 @@ impl View for MenuPopup {
         // Start with a box
         scroll::draw_box_frame(
             self,
-            &printer,
+            printer,
             |s, y| s.menu.children[y].is_delimiter(),
             |_s, _x| false,
         );
