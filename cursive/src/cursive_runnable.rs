@@ -45,20 +45,25 @@ impl std::borrow::BorrowMut<Cursive> for CursiveRunnable {
     }
 }
 
+/// Helper function to help type inference when `Box::new` would not work.
 fn boxed(e: impl std::error::Error + 'static) -> Box<dyn std::error::Error> {
     Box::new(e)
 }
 
 impl CursiveRunnable {
+    /// Creates a new Cursive wrapper using the given boxed backend initializer.
+    fn with_initializer(backend_init: Box<Initializer>) -> Self {
+        let siv = Cursive::new();
+        Self { siv, backend_init }
+    }
+
     /// Creates a new Cursive wrapper, using the given backend.
     pub fn new<E, F>(mut backend_init: F) -> Self
     where
         E: std::error::Error + 'static,
         F: FnMut() -> Result<Box<dyn backend::Backend>, E> + 'static,
     {
-        let siv = Cursive::new();
-        let backend_init = Box::new(move || backend_init().map_err(boxed));
-        Self { siv, backend_init }
+        Self::with_initializer(Box::new(move || backend_init().map_err(boxed)))
     }
 
     /// Runs the event loop with the registered backend initializer.
@@ -193,21 +198,6 @@ impl CursiveRunnable {
     /// * Ncurses
     /// * Dummy
     pub fn default() -> Self {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "blt-backend")] {
-                Self::blt()
-            } else if #[cfg(feature = "termion-backend")] {
-                Self::termion()
-            } else if #[cfg(feature = "crossterm-backend")] {
-                Self::crossterm()
-            } else if #[cfg(feature = "pancurses-backend")] {
-                Self::pancurses()
-            } else if #[cfg(feature = "ncurses-backend")] {
-                Self::ncurses()
-            } else {
-                log::warn!("No built-it backend, falling back to Cursive::dummy().");
-                Self::dummy()
-            }
-        }
+        Self::with_initializer(Box::new(backends::try_default))
     }
 }
