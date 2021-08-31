@@ -880,6 +880,7 @@ impl<T: 'static> View for SelectView<T> {
             } else {
                 ColorStyle::primary()
             };
+
             let x = match printer.size.x.checked_sub(1) {
                 Some(x) => x,
                 None => return,

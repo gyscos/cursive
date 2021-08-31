@@ -332,7 +332,7 @@ impl View for ListView {
                             .focused(i == self.focus),
                     );
                 }
-                ListChild::Delimiter => (), // TODO: draw delimiters?
+                ListChild::Delimiter => y += 1, // TODO: draw delimiters?
             }
             y += height;
         }
@@ -378,8 +378,8 @@ impl View for ListView {
         for (child, height) in self
             .children
             .iter_mut()
-            .filter_map(ListChild::view)
             .zip(&mut self.children_heights)
+            .filter_map(|(v, h)| v.view().map(|v| (v, h)))
         {
             // TODO: Find the child height?
             *height = child.required_size(size).y;
