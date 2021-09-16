@@ -78,6 +78,7 @@ Here are a few crates implementing new views for you to use:
 * [cursive-flexi-logger-view](https://github.com/deinstapel/cursive-flexi-logger-view): An alternative debug view using `emabee/flexi_logger`.
 * [cursive-markup](https://sr.ht/~ireas/cursive-markup-rs): A view that renders HTML or other markup.
 * [cursive-multiplex](https://github.com/deinstapel/cursive-multiplex): A tmux like multiplexer.
+* [cursive-spinner-view](https://github.com/otov4its/cursive-spinner-view): A spinner view.
 * [cursive-tabs](https://github.com/deinstapel/cursive-tabs): Tabs.
 * [cursive_calendar_view](https://github.com/BonsaiDen/cursive_calendar_view): A basic calendar view implementation.
 * [cursive_hexview](https://github.com/hellow554/cursive_hexview): A simple hexview.
