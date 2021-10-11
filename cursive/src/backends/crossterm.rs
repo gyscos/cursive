@@ -106,6 +106,17 @@ fn translate_event(event: CKeyEvent) -> Event {
             modifiers: KeyModifiers::SHIFT,
             code: KeyCode::Char(c),
         } => Event::Char(c),
+        CKeyEvent {
+            code: KeyCode::Char(c),
+            ..
+        } => Event::Char(c),
+        // From now on, assume the key is never a `Char`.
+
+        // Explicitly handle 'backtab' since crossterm does not sent SHIFT alongside the back tab key.
+        CKeyEvent {
+            code: KeyCode::BackTab,
+            ..
+        } => Event::Shift(Key::Tab),
 
         // Handle key + multiple modifiers
         CKeyEvent {
@@ -134,17 +145,6 @@ fn translate_event(event: CKeyEvent) -> Event {
             modifiers: KeyModifiers::SHIFT,
             code,
         } => Event::Shift(translate_key(code)),
-
-        CKeyEvent {
-            code: KeyCode::Char(c),
-            ..
-        } => Event::Char(c),
-
-        // Explicitly handle 'backtab' since crossterm does not sent SHIFT alongside the back tab key.
-        CKeyEvent {
-            code: KeyCode::BackTab,
-            ..
-        } => Event::Shift(Key::Tab),
 
         // All other keys.
         CKeyEvent { code, .. } => Event::Key(translate_key(code)),
