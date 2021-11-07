@@ -505,6 +505,7 @@ impl View for LinearLayout {
         }
     }
 
+    #[allow(unreachable_code)]
     fn required_size(&mut self, req: Vec2) -> Vec2 {
         // Did anything change since last time?
         if let Some(size) = self.get_cache(req) {
@@ -528,6 +529,109 @@ impl View for LinearLayout {
             self.cache = Some(SizeCache::build(ideal, req));
             return ideal;
         }
+        // we're gonna use this alot for a bit.
+        let o = self.orientation;
+
+        // split the screen evenly...
+        let even_size = req.get( o );
+        let even_size = even_size / self.children.len();
+
+
+        // this would work better if we could get the constrained
+        // sizes from the children, but I can't figure out how to do that.
+        // so instead :
+
+        // clip everyone to even size, or the desired size,
+        // which ever is smaller.
+        // do it in a new list, so we can look at ideal sizes later.
+        let even_min : Vec<Vec2> = ideal_sizes.iter().map(|i| {
+            let new_size = min(even_size, *(i.get( o )));
+            let mut n = i.clone();
+            *(n.get_mut( o )) = new_size;
+            n
+        }).collect();
+
+
+        debug!("even_min {:?}",even_min);
+
+        // we fit now for sure. Might have violated
+        // constrained mins, but only if the screen is
+        // req is so small, and there isn't enough room
+        // for constrained mins... can't do anything
+        // about that... so just squash.
+
+        // but we might have extra room to give out if
+        // some children wanted less than even_size
+        let used_size = o.stack( even_min.iter().copied());
+        let used_size = used_size.get( o );
+        let extra_size = req.get( o ) - used_size;
+
+        debug!("extra size {}",extra_size);
+
+        // only do this if there is some to give away.
+        let good_fit = if extra_size > 0 {
+
+            // get a count of how many want more than the event amount
+            let big_cnt = even_min.iter().zip( ideal_sizes.iter() ).filter(|(even,ideal)| {
+                ideal.get( o ) > even.get( o )
+            }).count();
+
+            // could be no one wants the extra size?
+            // I don't think we should get here and
+            // have this be < 1. Just in case.
+            if big_cnt > 0 {
+                // just split the extra evenly, and hand it out.
+                // we should get fancy and use weights, or
+                // pro-rata based on constrained size....
+                // but life is short.
+                let each = extra_size / big_cnt;
+
+                // give it away...
+                let mut adj_even : Vec<Vec2>  = even_min.iter().zip( ideal_sizes.iter() ).map(|(even,ideal)| {
+                    let mut fin = even.clone();
+                    if ideal.get( o ) > fin.get( o ) {
+                        *(fin.get_mut(o)) += each
+                    }
+                    fin
+                }).collect();
+
+                // rounding error?
+                let odd_bit = extra_size & big_cnt;
+                if odd_bit > 0 {
+                    // give it to the largest (e.g. one of the clipped ones)
+                    let bigest = adj_even.iter_mut().reduce(|a,b|{
+                        if a.get( o ) > b.get( o ) {
+                            a
+                        } else {
+                            b
+                        }
+                    }).unwrap();
+                    *(bigest.get_mut( o )) += odd_bit;
+                }
+
+
+                adj_even
+            } else {
+                // don't think we shout get here.. but just to be safe.
+                even_min
+            }
+        } else {
+            // all the childern are huge. no one wants less than the max.
+            // so just do the even split.
+            even_min
+        };
+
+        debug!("good fit {:?}",good_fit);
+        // ok. all done. Just resize everyone.
+        self.children.iter_mut().zip(good_fit.iter() ).for_each(|(child, fit)| {
+            child.required_size = *fit;
+        });
+
+        let done = o.stack( good_fit.iter().copied() );
+
+        debug!("ret {:?}", done);
+
+        return done;
 
         // Ok, so maybe it didn't. Budget cuts, everyone.
         // Let's pretend we have almost no space in this direction.
