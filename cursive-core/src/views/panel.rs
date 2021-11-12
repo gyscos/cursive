@@ -72,7 +72,7 @@ impl<V> Panel<V> {
                 + self
                     .title_position
                     .get_offset(len, printer.size.x - 2 * TITLE_SPACING);
-            printer.with_high_border(false, |printer| {
+            printer.with_high_border(false, false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
             });
@@ -111,7 +111,7 @@ impl<V: View> ViewWrapper for Panel<V> {
     }
 
     fn wrap_draw(&self, printer: &Printer) {
-        printer.print_box((0, 0), printer.size, true);
+        printer.print_box((0, 0), printer.size, true, false);
         self.draw_title(printer);
 
         let printer = printer.offset((1, 1)).shrinked((1, 1));

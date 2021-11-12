@@ -1,9 +1,9 @@
 use crate::{
     align::*,
     direction::{Absolute, Direction, Relative},
-    event::{AnyCb, Event, EventResult, Key},
+    event::{AnyCb, Callback, Event, EventResult, Key},
     rect::Rect,
-    theme::ColorStyle,
+    theme::{BorderStyle, ColorStyle},
     utils::markup::StyledString,
     view::{
         CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound,
@@ -18,10 +18,12 @@ use unicode_width::UnicodeWidthStr;
 /// Identifies currently focused element in [`Dialog`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum DialogFocus {
-    /// Content element focused
+    /// Content element focused.
     Content,
-    /// One of buttons focused
+    /// One of the buttons is focused.
     Button(usize),
+    /// The dialog itself focused.
+    Dialog,
 }
 
 struct ChildButton {
@@ -78,6 +80,12 @@ pub struct Dialog {
 
     // `true` when we needs to relayout
     invalidated: bool,
+
+    // Dialog can take focus itself.
+    dialog_focusable: bool,
+
+    // Dialog callback when focused and Enter is pressed.
+    dialog_focus_callback: Option<Callback>,
 }
 
 new_default!(Dialog);
@@ -102,6 +110,8 @@ impl Dialog {
             borders: Margins::lrtb(1, 1, 1, 1),
             align: Align::top_right(),
             invalidated: true,
+            dialog_focusable: false,
+            dialog_focus_callback: None,
         }
     }
 
@@ -442,6 +452,43 @@ impl Dialog {
         self.buttons.iter_mut().map(|b| &mut b.button.view)
     }
 
+    /// Set the dialog itself focusable.
+    pub fn focusable(self, dialog_focusable: bool) -> Self {
+        self.with(|s| s.set_focusable(dialog_focusable))
+    }
+
+    /// Set the dialog itself focusable.
+    pub fn set_focusable(&mut self, dialog_focusable: bool) {
+        self.dialog_focusable = dialog_focusable
+    }
+
+    /// Sets the function to be called when the dialog is focused and Enter is pressed.
+    ///
+    /// Replaces the previous callback.
+    pub fn focus_callback<F>(self, cb: F) -> Self
+    where
+        F: Fn(&mut Cursive) + 'static,
+    {
+        self.with(|s| s.set_focus_callback(cb))
+    }
+
+    /// Sets the function to be called when the dialog is focused and Enter is pressed.
+    ///
+    /// Replaces the previous callback.
+    pub fn set_focus_callback<F>(&mut self, cb: F)
+    where
+        F: Fn(&mut Cursive) + 'static,
+    {
+        self.dialog_focus_callback = Some(Callback::from_fn(cb));
+    }
+
+    /// Sets the function to be called when the dialog is focused and Enter is pressed.
+    ///
+    /// Replaces the previous callback.
+    pub fn remove_focus_callback(&mut self) {
+        self.dialog_focus_callback = None;
+    }
+
     /// Returns currently focused element
     pub fn focus(&self) -> DialogFocus {
         self.focus
@@ -467,6 +514,7 @@ impl Dialog {
                 // TODO: send Event::LostFocus?
                 DialogFocus::Button(min(c, self.buttons.len() - 1))
             }
+            DialogFocus::Dialog => DialogFocus::Dialog,
         };
     }
 
@@ -577,6 +625,59 @@ impl Dialog {
         }
     }
 
+    // An event is received while the dialog itself is focused
+    fn on_event_dialog(&mut self, event: Event) -> EventResult {
+        match event {
+            // Enter calls callback or goes into the content
+            Event::Key(Key::Enter) => {
+                if let Some(callback) = self.dialog_focus_callback.clone() {
+                    EventResult::Consumed(Some(callback))
+                } else if let Ok(res) =
+                    self.content.take_focus(Direction::down())
+                {
+                    self.focus = DialogFocus::Content;
+                    res
+                } else if !self.buttons.is_empty() {
+                    self.focus = DialogFocus::Button(0);
+                    EventResult::Consumed(None)
+                } else {
+                    EventResult::Ignored
+                }
+            }
+            // Tab goes to the buttons
+            Event::Key(Key::Tab) => {
+                if !self.buttons.is_empty() {
+                    self.focus = DialogFocus::Button(0);
+                    EventResult::Consumed(None)
+                } else if let Ok(res) =
+                    self.content.take_focus(Direction::down())
+                {
+                    self.focus = DialogFocus::Content;
+                    res
+                } else {
+                    EventResult::Ignored
+                }
+            }
+            // Tab goes to the buttons
+            Event::Shift(Key::Tab) => {
+                if !self.buttons.is_empty() {
+                    self.focus = DialogFocus::Button(
+                        self.buttons.len().saturating_sub(1),
+                    );
+                    EventResult::Consumed(None)
+                } else if let Ok(res) =
+                    self.content.take_focus(Direction::up())
+                {
+                    self.focus = DialogFocus::Content;
+                    res
+                } else {
+                    EventResult::Ignored
+                }
+            }
+            _ => EventResult::Ignored,
+        }
+    }
+
     fn draw_buttons(&self, printer: &Printer) -> Option<usize> {
         let mut buttons_height = 0;
         // Current horizontal position of the next button we'll draw.
@@ -656,10 +757,14 @@ impl Dialog {
                 + self
                     .title_position
                     .get_offset(len, printer.size.x - spacing_both_ends);
-            printer.with_high_border(false, |printer| {
-                printer.print((x - 2, 0), "┤ ");
-                printer.print((x + len, 0), " ├");
-            });
+            printer.with_high_border(
+                false,
+                self.box_highlight(printer),
+                |printer| {
+                    printer.print((x - 2, 0), "┤ ");
+                    printer.print((x + len, 0), " ├");
+                },
+            );
 
             printer.with_color(ColorStyle::title_primary(), |p| {
                 p.print((x, 0), &self.title)
@@ -708,6 +813,12 @@ impl Dialog {
     fn invalidate(&mut self) {
         self.invalidated = true;
     }
+
+    fn box_highlight(&self, printer: &Printer) -> bool {
+        printer.focused
+            && (self.focus == DialogFocus::Dialog
+                || printer.theme.borders == BorderStyle::None)
+    }
 }
 
 impl View for Dialog {
@@ -721,7 +832,12 @@ impl View for Dialog {
         self.draw_content(printer, buttons_height);
 
         // Print the borders
-        printer.print_box(Vec2::new(0, 0), printer.size, false);
+        printer.print_box(
+            Vec2::new(0, 0),
+            printer.size,
+            false,
+            self.box_highlight(printer),
+        );
 
         self.draw_title(printer);
     }
@@ -806,6 +922,7 @@ impl View for Dialog {
             DialogFocus::Content => self.on_event_content(event),
             // If we are on a button, we have more choice
             DialogFocus::Button(i) => self.on_event_button(event, i),
+            DialogFocus::Dialog => self.on_event_dialog(event),
         })
     }
 
@@ -813,6 +930,11 @@ impl View for Dialog {
         &mut self,
         source: Direction,
     ) -> Result<EventResult, CannotFocus> {
+        if self.dialog_focusable {
+            self.focus = DialogFocus::Dialog;
+            return Ok(EventResult::Consumed(None));
+        }
+
         // TODO: This may depend on button position relative to the content?
         //
         match source {
@@ -843,6 +965,7 @@ impl View for Dialog {
                             }
                         }
                     }
+                    (DialogFocus::Dialog, _) => unreachable!(),
                 }
             }
             Direction::Rel(Relative::Front)

@@ -398,6 +398,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// If `invert` is `true`, and the theme uses `Outset` borders, then the
     /// box will use an "inset" style instead.
     ///
+    /// If `highlight` is `true`, then the "title" primary color will be used instead.
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -407,13 +409,14 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// # let b = backend::Dummy::init();
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((6,4), &t, &*b);
-    /// printer.print_box((0, 0), (6, 4), false);
+    /// printer.print_box((0, 0), (6, 4), false, false);
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
         &self,
         start: T,
         size: S,
         invert: bool,
+        highlight: bool,
     ) {
         let start = start.into();
         let size = size.into();
@@ -423,14 +426,14 @@ impl<'a, 'b> Printer<'a, 'b> {
         }
         let size = size - (1, 1);
 
-        self.with_high_border(invert, |s| {
+        self.with_high_border(invert, highlight, |s| {
             s.print(start, "┌");
             s.print(start + size.keep_y(), "└");
             s.print_hline(start + (1, 0), size.x - 1, "─");
             s.print_vline(start + (0, 1), size.y - 1, "│");
         });
 
-        self.with_low_border(invert, |s| {
+        self.with_low_border(invert, highlight, |s| {
             s.print(start + size.keep_x(), "┐");
             s.print(start + size, "┘");
             s.print_hline(start + (1, 0) + size.keep_y(), size.x - 1, "─");
@@ -444,14 +447,17 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// * If the theme's borders is "outset" and `invert` is `false`,
     ///   use `ColorStyle::Tertiary`.
     /// * Otherwise, use `ColorStyle::Primary`.
-    pub fn with_high_border<F>(&self, invert: bool, f: F)
+    pub fn with_high_border<F>(&self, invert: bool, highlight: bool, f: F)
     where
         F: FnOnce(&Printer),
     {
-        let color = match self.theme.borders {
-            BorderStyle::None => return,
-            BorderStyle::Outset if !invert => ColorStyle::tertiary(),
-            _ => ColorStyle::primary(),
+        let color = match (self.theme.borders, highlight) {
+            (BorderStyle::None, true) => ColorStyle::primary(),
+            (BorderStyle::None, false) => return,
+            (BorderStyle::Outset, true) if !invert => ColorStyle::primary(),
+            (BorderStyle::Outset, false) if !invert => ColorStyle::tertiary(),
+            (_, false) => ColorStyle::primary(),
+            (_, true) => ColorStyle::title_primary(),
         };
 
         self.with_color(color, f);
@@ -463,14 +469,17 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// * If the theme's borders is "outset" and `invert` is `true`,
     ///   use `ColorStyle::tertiary()`.
     /// * Otherwise, use `ColorStyle::primary()`.
-    pub fn with_low_border<F>(&self, invert: bool, f: F)
+    pub fn with_low_border<F>(&self, invert: bool, highlight: bool, f: F)
     where
         F: FnOnce(&Printer),
     {
-        let color = match self.theme.borders {
-            BorderStyle::None => return,
-            BorderStyle::Outset if invert => ColorStyle::tertiary(),
-            _ => ColorStyle::primary(),
+        let color = match (self.theme.borders, highlight) {
+            (BorderStyle::None, true) => ColorStyle::primary(),
+            (BorderStyle::None, false) => return,
+            (BorderStyle::Outset, true) if invert => ColorStyle::primary(),
+            (BorderStyle::Outset, false) if invert => ColorStyle::tertiary(),
+            (_, false) => ColorStyle::primary(),
+            (_, true) => ColorStyle::title_primary(),
         };
 
         self.with_color(color, f);
