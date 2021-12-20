@@ -147,7 +147,7 @@ impl LinearLayout {
         }
     }
 
-    /// Sets the weight of the given child.
+    /// Sets the weight of the given child. This weight is currently unused by the layout process.
     ///
     /// # Panics
     ///
@@ -156,7 +156,7 @@ impl LinearLayout {
         self.children[i]._weight = weight;
     }
 
-    /// Modifies the weight of the last child added.
+    /// Modifies the weight of the last child added. This weight is currently unused by the layout process.
     ///
     /// It is an error to call this before adding a child (and it will panic).
     pub fn weight(mut self, weight: usize) -> Self {
