@@ -41,9 +41,7 @@ pub mod reexports {
     pub use crossbeam_channel;
     pub use enumset;
     pub use log;
-
-    #[cfg(feature = "chrono")]
-    pub use chrono;
+    pub use time;
 
     #[cfg(feature = "toml")]
     pub use toml;
@@ -60,7 +58,6 @@ pub mod align;
 pub mod backend;
 pub mod direction;
 pub mod event;
-#[cfg(feature = "logger")]
 pub mod logger;
 pub mod menu;
 pub mod theme;

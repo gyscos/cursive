@@ -30,16 +30,21 @@ impl View for DebugView {
         // Only print the last logs, so skip what doesn't fit
         let skipped = logs.len().saturating_sub(printer.size.y);
 
+        let format = time::format_description::parse(
+            "[hour]:[minute]:[second].[subsecond digits:3]",
+        )
+        .unwrap();
+
         for (i, record) in logs.iter().skip(skipped).enumerate() {
             // TODO: Apply style to message? (Ex: errors in bold?)
             // TODO: customizable time format? (24h/AM-PM)
+            let formatted = record
+                .time
+                .format(&format)
+                .unwrap_or_else(|_| String::new());
             printer.print(
                 (0, i),
-                &format!(
-                    "{} | [     ] {}",
-                    record.time.with_timezone(&chrono::Local).format("%T%.3f"),
-                    record.message
-                ),
+                &format!("{} | [     ] {}", formatted, record.message),
             );
             let color = match record.level {
                 log::Level::Error => theme::BaseColor::Red.dark(),

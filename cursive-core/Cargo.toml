@@ -32,9 +32,9 @@ crossbeam-channel = "0.5"
 lazy_static = "1"
 ahash = "0.7"
 
-[dependencies.chrono]
-version = "0.4"
-optional = true
+[dependencies.time]
+version = "0.3"
+features = ["local-offset", "formatting"]
 
 [dependencies.toml]
 optional = true
@@ -53,7 +53,6 @@ version = "0.8"
 doc-cfg = []
 markdown = ["pulldown-cmark"]
 unstable_scroll = []  # Deprecated feature, remove in next version
-logger = ["chrono"]  # Debug view currently requires chrono
 
 [lib]
 name = "cursive_core"

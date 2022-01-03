@@ -64,7 +64,6 @@ mod button;
 mod canvas;
 mod checkbox;
 mod circular_focus;
-#[cfg(feature = "logger")]
 mod debug_view;
 mod dialog;
 mod dummy;
@@ -98,15 +97,13 @@ mod text_view;
 mod themed_view;
 mod tracked_view;
 
-#[cfg(feature = "logger")]
-pub use self::debug_view::DebugView;
-
 pub use self::{
     boxed_view::BoxedView,
     button::Button,
     canvas::Canvas,
     checkbox::Checkbox,
     circular_focus::CircularFocus,
+    debug_view::DebugView,
     dialog::{Dialog, DialogFocus},
     dummy::DummyView,
     edit_view::EditView,

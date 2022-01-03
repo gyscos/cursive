@@ -1,4 +1,4 @@
-//! Logging utilities. Only available with the `logger` cargo feature.
+//! Logging utilities.
 
 use lazy_static::lazy_static;
 use std::collections::VecDeque;
@@ -16,7 +16,7 @@ pub struct Record {
     /// Log level used for this record
     pub level: log::Level,
     /// Time this message was logged
-    pub time: chrono::DateTime<chrono::Utc>,
+    pub time: time::OffsetDateTime,
     /// Message content
     pub message: String,
 }
@@ -39,7 +39,8 @@ pub fn log(record: &log::Record<'_>) {
     logs.push_back(Record {
         level: record.level(),
         message: format!("{}", record.args()),
-        time: chrono::Utc::now(),
+        time: time::OffsetDateTime::now_local()
+            .unwrap_or_else(|_| time::OffsetDateTime::now_utc()),
     });
 }
 
