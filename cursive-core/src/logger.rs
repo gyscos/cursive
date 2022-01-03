@@ -1,4 +1,4 @@
-//! Logging utilities
+//! Logging utilities. Only available with the `logger` cargo feature.
 
 use lazy_static::lazy_static;
 use std::collections::VecDeque;

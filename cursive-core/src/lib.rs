@@ -38,10 +38,12 @@ macro_rules! new_default(
 /// Re-export crates used in the public API
 pub mod reexports {
     pub use ahash;
-    pub use chrono;
     pub use crossbeam_channel;
     pub use enumset;
     pub use log;
+
+    #[cfg(feature = "chrono")]
+    pub use chrono;
 
     #[cfg(feature = "toml")]
     pub use toml;
@@ -58,6 +60,7 @@ pub mod align;
 pub mod backend;
 pub mod direction;
 pub mod event;
+#[cfg(feature = "logger")]
 pub mod logger;
 pub mod menu;
 pub mod theme;

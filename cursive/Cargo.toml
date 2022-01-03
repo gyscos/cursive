@@ -60,6 +60,7 @@ crossterm-backend = ["crossterm"]
 markdown = ["cursive_core/markdown"]
 unstable_scroll = []  # Deprecated feature, remove in next version
 toml = ["cursive_core/toml"]
+logger = ["cursive_core/logger"]
 
 [lib]
 name = "cursive"
@@ -70,6 +71,10 @@ signal-hook = "0.3"
 [[example]]
 name = "theme"
 required-features = ["toml"]
+
+[[example]]
+name = "debug_console"
+required-features = ["logger"]
 
 [dev-dependencies]
 rand = "0.8"
