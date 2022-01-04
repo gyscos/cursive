@@ -107,3 +107,7 @@ This is a demonstration of the `SliderView`.
 ## [`mines`](./mines) (**Work in progress**)
 
 A larger example showing an implementation of minesweeper.
+
+## [`window_title`](./window_title.rs)
+
+This shows how to change the terminal window title.

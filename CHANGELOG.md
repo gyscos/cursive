@@ -16,6 +16,7 @@
 - Add `LinearLayout::clear`
 - Add `backends::try_default`
 - Add `StackView::layer_offset` and deprecate `StackView::offset`
+- Add `Cursive::set_window_title` to change the terminal window title
 
 ### Breaking Changes
 
@@ -25,6 +26,7 @@
 - Removed a bunch of deprecated methods and types:
     - All `_id` methods that were replaced with `_name` equivalent
     - `BoxView`, `ViewBox`, `SizedView`, `Identifiable`, `Boxable`, `IdView`, `Selector::Id`
+- Added `set_title` to the `Backend` trait
 
 ### Bugfixes
 
