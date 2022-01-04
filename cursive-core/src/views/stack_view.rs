@@ -439,18 +439,28 @@ impl StackView {
             .map(BoxedView::unwrap)
     }
 
-    /// Computes the offset of the current top view.
-    pub fn offset(&self) -> Vec2 {
+    fn layer_offsets(&self) -> impl Iterator<Item = Vec2> + '_ {
+        let last_size = self.last_size;
         let mut previous = Vec2::zero();
-        for layer in &self.layers {
-            let offset = layer.placement.compute_offset(
-                layer.size,
-                self.last_size,
-                previous,
-            );
+        self.layers.iter().map(move |layer| {
+            let offset = layer
+                .placement
+                .compute_offset(layer.size, last_size, previous);
             previous = offset;
-        }
-        previous
+            offset
+        })
+    }
+
+    /// Computes the offset of the selected view.
+    pub fn layer_offset(&self, pos: LayerPosition) -> Option<Vec2> {
+        let n = self.get_index(pos)?;
+        self.layer_offsets().nth(n)
+    }
+
+    /// Computes the offset of the current top view.
+    #[deprecated(note = "Use StackView::layer_offset instead.")]
+    pub fn offset(&self) -> Vec2 {
+        self.layer_offsets().last().unwrap_or_else(Vec2::zero)
     }
 
     /// Returns the size for each layer in this view.

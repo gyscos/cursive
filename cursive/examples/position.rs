@@ -1,7 +1,8 @@
-use cursive::view::Position;
-use cursive::views::LayerPosition;
-use cursive::views::TextView;
-use cursive::Cursive;
+use cursive::{
+    view::Position,
+    views::{LayerPosition, TextView},
+    Cursive,
+};
 
 /// Moves top layer by the specified amount
 fn move_top(c: &mut Cursive, x_in: isize, y_in: isize) {
@@ -10,7 +11,10 @@ fn move_top(c: &mut Cursive, x_in: isize, y_in: isize) {
     let l = LayerPosition::FromFront(0);
 
     // Step 2. add the specifed amount
-    let pos = s.offset().saturating_add((x_in, y_in));
+    let pos = s
+        .layer_offset(LayerPosition::FromFront(0))
+        .unwrap()
+        .saturating_add((x_in, y_in));
 
     // convert the new x and y into a position
     let p = Position::absolute(pos);

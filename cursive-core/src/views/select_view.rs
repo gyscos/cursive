@@ -7,7 +7,7 @@ use crate::{
     theme::ColorStyle,
     utils::markup::StyledString,
     view::{CannotFocus, Position, View},
-    views::MenuPopup,
+    views::{LayerPosition, MenuPopup},
     Cursive, Printer, Vec2, With,
 };
 use std::borrow::Borrow;
@@ -751,7 +751,10 @@ impl<T: 'static> SelectView<T> {
             // So that we are locked to the parent view.
             // A nice effect is that window resizes will keep both
             // layers together.
-            let current_offset = s.screen().offset();
+            let current_offset = s
+                .screen()
+                .layer_offset(LayerPosition::FromFront(0))
+                .unwrap_or_else(Vec2::zero);
             let offset = offset.signed() - current_offset;
             // And finally, put the view in view!
             s.screen_mut().add_layer_at(
@@ -966,14 +969,18 @@ impl<T: 'static> View for SelectView<T> {
     ) -> Result<EventResult, CannotFocus> {
         (self.enabled && !self.items.is_empty())
             .then(|| {
-                match source {
-                    direction::Direction::Abs(direction::Absolute::Up) => {
-                        self.focus.set(0)
+                if !self.popup {
+                    match source {
+                        direction::Direction::Abs(direction::Absolute::Up) => {
+                            self.focus.set(0);
+                        }
+                        direction::Direction::Abs(
+                            direction::Absolute::Down,
+                        ) => {
+                            self.focus.set(self.items.len().saturating_sub(1));
+                        }
+                        _ => (),
                     }
-                    direction::Direction::Abs(direction::Absolute::Down) => {
-                        self.focus.set(self.items.len().saturating_sub(1))
-                    }
-                    _ => (),
                 }
                 EventResult::Consumed(None)
             })
