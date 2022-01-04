@@ -250,6 +250,10 @@ impl backend::Backend for Backend {
         "bear-lib-terminal"
     }
 
+    fn set_title(&mut self, title: String) {
+        terminal::set(terminal::config::Window::empty().title(title));
+    }
+
     fn set_color(&self, color: ColorPair) -> ColorPair {
         let current = ColorPair {
             front: blt_colour_to_colour(state::foreground()),

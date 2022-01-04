@@ -84,6 +84,8 @@ impl backend::Backend for Backend {
         }
     }
 
+    fn set_title(&mut self, _title: String) {}
+
     fn refresh(&mut self) {
         let size = self.size.get();
         let current_frame =

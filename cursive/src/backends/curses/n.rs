@@ -338,6 +338,10 @@ impl backend::Backend for Backend {
         "ncurses"
     }
 
+    fn set_title(&mut self, title: String) {
+        write_to_tty(format!("\x1B]0;{}\x07", title).as_bytes()).unwrap();
+    }
+
     fn screen_size(&self) -> Vec2 {
         let mut x: i32 = 0;
         let mut y: i32 = 0;

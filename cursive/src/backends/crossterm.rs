@@ -206,6 +206,7 @@ impl Backend {
         #[cfg(unix)]
         let stdout =
             RefCell::new(BufWriter::new(std::fs::File::create("/dev/tty")?));
+
         #[cfg(windows)]
         let stdout = RefCell::new(BufWriter::new(io::stdout()));
 
@@ -216,20 +217,26 @@ impl Backend {
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
-        queue!(
-            self.stdout_mut(),
-            SetForegroundColor(translate_color(colors.front)),
-            SetBackgroundColor(translate_color(colors.back))
-        )
-        .unwrap();
+        self.with_stdout(|stdout| {
+            queue!(
+                stdout,
+                SetForegroundColor(translate_color(colors.front)),
+                SetBackgroundColor(translate_color(colors.back))
+            )
+            .unwrap()
+        });
     }
 
     fn stdout_mut(&self) -> RefMut<BufWriter<Stdout>> {
         self.stdout.borrow_mut()
     }
 
+    fn with_stdout(&self, f: impl FnOnce(&mut BufWriter<Stdout>)) {
+        f(&mut *self.stdout_mut());
+    }
+
     fn set_attr(&self, attr: Attribute) {
-        queue!(self.stdout_mut(), SetAttribute(attr)).unwrap();
+        self.with_stdout(|stdout| queue!(stdout, SetAttribute(attr)).unwrap());
     }
 
     fn map_key(&mut self, event: CEvent) -> Option<Event> {
@@ -273,13 +280,10 @@ impl Backend {
 impl Drop for Backend {
     fn drop(&mut self) {
         // We have to execute the show cursor command at the `stdout`.
-        execute!(
-            io::stdout(),
-            LeaveAlternateScreen,
-            DisableMouseCapture,
-            Show
-        )
-        .expect("Can not disable mouse capture or show cursor.");
+        self.with_stdout(|stdout| {
+            execute!(stdout, LeaveAlternateScreen, DisableMouseCapture, Show)
+                .expect("Can not disable mouse capture or show cursor.")
+        });
 
         disable_raw_mode().unwrap();
     }
@@ -299,8 +303,14 @@ impl backend::Backend for Backend {
         }
     }
 
+    fn set_title(&mut self, title: String) {
+        self.with_stdout(|stdout| {
+            execute!(stdout, terminal::SetTitle(title)).unwrap()
+        });
+    }
+
     fn refresh(&mut self) {
-        self.stdout_mut().flush().unwrap();
+        self.with_stdout(|stdout| stdout.flush().unwrap());
     }
 
     fn has_colors(&self) -> bool {
@@ -314,27 +324,25 @@ impl backend::Backend for Backend {
     }
 
     fn print_at(&self, pos: Vec2, text: &str) {
-        queue!(
-            self.stdout_mut(),
-            MoveTo(pos.x as u16, pos.y as u16),
-            Print(text)
-        )
-        .unwrap();
+        self.with_stdout(|stdout| {
+            queue!(stdout, MoveTo(pos.x as u16, pos.y as u16), Print(text))
+                .unwrap()
+        });
     }
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
-            let mut out = self.stdout_mut();
+            self.with_stdout(|out| {
+                queue!(out, MoveTo(pos.x as u16, pos.y as u16)).unwrap();
 
-            queue!(out, MoveTo(pos.x as u16, pos.y as u16)).unwrap();
-
-            out.write_all(text.as_bytes()).unwrap();
-
-            let mut dupes_left = repetitions - 1;
-            while dupes_left > 0 {
                 out.write_all(text.as_bytes()).unwrap();
-                dupes_left -= 1;
-            }
+
+                let mut dupes_left = repetitions - 1;
+                while dupes_left > 0 {
+                    out.write_all(text.as_bytes()).unwrap();
+                    dupes_left -= 1;
+                }
+            });
         }
     }
 
@@ -344,7 +352,9 @@ impl backend::Backend for Backend {
             back: color,
         });
 
-        queue!(self.stdout_mut(), Clear(ClearType::All)).unwrap();
+        self.with_stdout(|stdout| {
+            queue!(stdout, Clear(ClearType::All)).unwrap()
+        });
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {

@@ -71,6 +71,14 @@ where
         self.siv.borrow_mut().layout(size);
     }
 
+    // Process any backend-requiring calls accumulated by the Cursive root.
+    fn process_pending_backend_calls(&mut self) {
+        let calls = std::mem::take(&mut self.backend_calls);
+        for call in calls {
+            (call)(&mut *self.backend);
+        }
+    }
+
     fn draw(&mut self) {
         let sizes = self.screen().layer_sizes();
         if self.last_sizes != sizes {
@@ -115,6 +123,7 @@ where
         while let Some(event) = self.backend.poll_event() {
             boring = false;
             self.on_event(event);
+            self.process_pending_backend_calls();
 
             if !self.is_running() {
                 return true;
@@ -160,6 +169,7 @@ where
             if boring {
                 // We're only here because of a timeout.
                 self.on_event(Event::Refresh);
+                self.process_pending_backend_calls();
             }
 
             self.refresh();

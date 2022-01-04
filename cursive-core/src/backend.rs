@@ -38,6 +38,11 @@ pub trait Backend {
     /// * `Some(event)` for each event to process.
     fn poll_event(&mut self) -> Option<Event>;
 
+    /// Sets the title for the backend.
+    ///
+    /// This usually sets the terminal window title.
+    fn set_title(&mut self, title: String);
+
     /// Refresh the screen.
     ///
     /// This will be called each frame after drawing has been done.
@@ -121,6 +126,8 @@ impl Backend for Dummy {
     fn name(&self) -> &str {
         "dummy"
     }
+
+    fn set_title(&mut self, _title: String) {}
 
     fn refresh(&mut self) {}
 

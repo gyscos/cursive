@@ -51,6 +51,10 @@ pub struct Cursive {
 
     // Handle auto-refresh when no event is received.
     fps: Option<NonZeroU32>,
+
+    // List of callbacks to run on the backend.
+    // The current assumption is that we only add calls here during event processing.
+    pub(crate) backend_calls: Vec<Box<dyn FnOnce(&mut dyn backend::Backend)>>,
 }
 
 /// Identifies a screen in the cursive root.
@@ -95,6 +99,7 @@ impl Cursive {
             cb_sink,
             fps: None,
             user_data: Box::new(()),
+            backend_calls: Vec::new(),
         };
         cursive.reset_default_callbacks();
 
@@ -217,6 +222,15 @@ impl Cursive {
         T: Any,
     {
         self.user_data().map(f)
+    }
+
+    /// Sets the title for the terminal window.
+    ///
+    /// Note that not all backends support this.
+    pub fn set_window_title<S: Into<String>>(&mut self, title: S) {
+        let title = title.into();
+        self.backend_calls
+            .push(Box::new(move |backend| backend.set_title(title)));
     }
 
     /// Show the debug console.

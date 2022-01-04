@@ -268,6 +268,10 @@ impl backend::Backend for Backend {
         "termion"
     }
 
+    fn set_title(&mut self, title: String) {
+        write!(self.terminal.get_mut(), "\x1B]0;{}\x07", title).unwrap();
+    }
+
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
         let current_style = self.current_style.get();
 
