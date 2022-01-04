@@ -145,7 +145,7 @@ impl<T: 'static> SelectView<T> {
     /// # Examples
     ///
     /// ```
-    /// use cursive_core::traits::Identifiable;
+    /// use cursive_core::traits::Nameable;
     /// use cursive_core::views::{SelectView, TextView};
     ///
     /// let text_view = TextView::new("").with_name("text");

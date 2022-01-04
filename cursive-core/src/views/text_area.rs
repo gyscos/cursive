@@ -22,7 +22,7 @@ use unicode_width::UnicodeWidthStr;
 /// # Examples
 ///
 /// ```
-/// use cursive_core::traits::{Identifiable, Resizable};
+/// use cursive_core::traits::{Nameable, Resizable};
 /// use cursive_core::views::TextArea;
 ///
 /// let text_area = TextArea::new()

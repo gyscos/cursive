@@ -15,14 +15,6 @@ pub struct Margins {
 }
 
 impl Margins {
-    /// Creates a new Margins.
-    #[deprecated(
-        note = "`Margins::new()` is ambiguous. Use `Margins::lrtb()` instead."
-    )]
-    pub fn new(left: usize, right: usize, top: usize, bottom: usize) -> Self {
-        Self::lrtb(left, right, top, bottom)
-    }
-
     /// Creates a new `Margins` object with zero margins.
     pub fn zeroes() -> Self {
         Self::lrtb(0, 0, 0, 0)

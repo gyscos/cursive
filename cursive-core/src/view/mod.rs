@@ -118,9 +118,3 @@ pub use self::size_cache::SizeCache;
 pub use self::size_constraint::SizeConstraint;
 pub use self::view_trait::{CannotFocus, View, ViewNotFound};
 pub use self::view_wrapper::ViewWrapper;
-
-#[deprecated(note = "`Boxable` is being renamed to `Resizable`")]
-pub use self::resizable::Resizable as Boxable;
-
-#[deprecated(note = "`Identifiable` is being renamed to `Nameable`")]
-pub use self::nameable::Nameable as Identifiable;

@@ -13,6 +13,7 @@ use std::cmp::{max, min};
 /// [`scroll`]: ./scroll/index.html
 #[derive(Default, Debug)]
 #[deprecated(
+    since = "0.16.0",
     note = "`ScrollBase` is being deprecated in favor of the view::scroll module."
 )]
 pub struct ScrollBase {

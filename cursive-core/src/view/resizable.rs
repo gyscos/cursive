@@ -6,16 +6,6 @@ use crate::Vec2;
 ///
 /// [`ResizedView`]: ../views/struct.ResizedView.html
 pub trait Resizable: View + Sized {
-    /// Same as [`resized`](Resizable::resized)
-    #[deprecated(note = "Use `Resizable::resized()` instead.")]
-    fn boxed(
-        self,
-        width: SizeConstraint,
-        height: SizeConstraint,
-    ) -> ResizedView<Self> {
-        self.resized(width, height)
-    }
-
     /// Wraps `self` in a `ResizedView` with the given size constraints.
     fn resized(
         self,

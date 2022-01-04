@@ -316,7 +316,7 @@ impl StackView {
     ///
     /// ```rust
     /// # use cursive_core::views::{TextView, StackView, Dialog, LayerPosition};
-    /// # use cursive_core::view::Identifiable;
+    /// # use cursive_core::view::Nameable;
     /// let mut stack = StackView::new();
     /// stack.add_layer(TextView::new("Back"));
     /// stack.add_layer(Dialog::around(TextView::new("Middle").with_name("text")));
@@ -336,14 +336,6 @@ impl StackView {
         }
 
         None
-    }
-
-    /// Same as [`find_layer_from_name`](StackView::find_layer_from_name).
-    #[deprecated(
-        note = "`find_layer_from_id` is being renamed to `find_layer_from_name`"
-    )]
-    pub fn find_layer_from_id(&mut self, id: &str) -> Option<LayerPosition> {
-        self.find_layer_from_name(id)
     }
 
     /// Adds a new full-screen layer on top of the stack.
@@ -458,7 +450,10 @@ impl StackView {
     }
 
     /// Computes the offset of the current top view.
-    #[deprecated(note = "Use StackView::layer_offset instead.")]
+    #[deprecated(
+        since = "0.17.0",
+        note = "Use StackView::layer_offset instead."
+    )]
     pub fn offset(&self) -> Vec2 {
         self.layer_offsets().last().unwrap_or_else(Vec2::zero)
     }

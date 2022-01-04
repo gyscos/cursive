@@ -22,6 +22,9 @@
 - Dependencies update:
     - Replaced `wasmer_enumset` with `enumset`
     - Replaced `chrono` with `time` for logger
+- Removed a bunch of deprecated methods and types:
+    - All `_id` methods that were replaced with `_name` equivalent
+    - `BoxView`, `ViewBox`, `SizedView`, `Identifiable`, `Boxable`, `IdView`, `Selector::Id`
 
 ### Bugfixes
 

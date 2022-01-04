@@ -49,31 +49,12 @@ pub trait Finder {
         self.call_on(&Selector::Name(name), callback)
     }
 
-    /// Same as [`call_on_name`](Finder::call_on_name).
-    #[deprecated(note = "`call_on_id` is being renamed to `call_on_name`")]
-    fn call_on_id<V, F, R>(&mut self, id: &str, callback: F) -> Option<R>
-    where
-        V: View,
-        F: FnOnce(&mut V) -> R,
-    {
-        self.call_on_name(id, callback)
-    }
-
     /// Convenient method to find a view wrapped in an [`NamedView`].
     fn find_name<V>(&mut self, name: &str) -> Option<ViewRef<V>>
     where
         V: View,
     {
         self.call_on_name(name, NamedView::<V>::get_mut)
-    }
-
-    /// Same as [`find_name`](Finder::find_name()).
-    #[deprecated(note = "`find_id` is being renamed to `find_name`")]
-    fn find_id<V>(&mut self, id: &str) -> Option<ViewRef<V>>
-    where
-        V: View,
-    {
-        self.find_name(id)
     }
 }
 
@@ -96,12 +77,6 @@ impl<T: View> Finder for T {
 /// Selects a single view (if any) in the tree.
 #[non_exhaustive]
 pub enum Selector<'a> {
-    /// Same as [`Selector::Name`].
-    #[deprecated(
-        note = "`Selector::Id` is being renamed to `Selector::Name`"
-    )]
-    Id(&'a str),
-
     /// Selects a view from its name.
     Name(&'a str),
 }

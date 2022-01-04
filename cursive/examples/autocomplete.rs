@@ -1,6 +1,6 @@
 use cursive::align::HAlign;
 use cursive::traits::Scrollable;
-use cursive::view::{Boxable, Identifiable};
+use cursive::view::{Nameable, Resizable};
 use cursive::views::{Dialog, EditView, LinearLayout, SelectView, TextView};
 use cursive::Cursive;
 use lazy_static::lazy_static;

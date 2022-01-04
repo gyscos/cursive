@@ -39,12 +39,6 @@ pub trait Nameable: View + Sized {
     fn with_name<S: Into<String>>(self, name: S) -> NamedView<Self> {
         NamedView::new(name, self)
     }
-
-    /// Same as [`with_name`](Nameable::with_name)
-    #[deprecated(note = "`with_id` is being renamed to `with_name`")]
-    fn with_id<S: Into<String>>(self, id: S) -> NamedView<Self> {
-        self.with_name(id)
-    }
 }
 
 /// Any `View` implements this trait.

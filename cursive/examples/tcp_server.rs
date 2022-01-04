@@ -1,4 +1,4 @@
-use cursive::traits::Boxable;
+use cursive::traits::Resizable;
 use cursive::traits::*;
 use cursive::views;
 

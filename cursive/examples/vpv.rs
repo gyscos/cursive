@@ -1,6 +1,6 @@
 use std::io;
 
-use cursive::traits::{Boxable, With};
+use cursive::traits::{Resizable, With};
 use cursive::utils;
 use cursive::views::{Canvas, Dialog, LinearLayout, ProgressBar};
 use cursive::Cursive;

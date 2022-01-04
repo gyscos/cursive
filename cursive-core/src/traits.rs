@@ -9,10 +9,7 @@
 //! ```
 
 #[doc(no_inline)]
-#[allow(deprecated)]
-pub use crate::view::{
-    Boxable, Finder, Identifiable, Nameable, Resizable, Scrollable, View,
-};
+pub use crate::view::{Finder, Nameable, Resizable, Scrollable, View};
 
 #[doc(no_inline)]
 pub use crate::With;

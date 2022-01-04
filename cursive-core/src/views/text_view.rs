@@ -246,7 +246,7 @@ impl TextView {
     }
 
     /// Sets the effect for the entire content.
-    #[deprecated = "Use `set_style()` instead."]
+    #[deprecated(since = "0.16.0", note = "Use `set_style()` instead.")]
     pub fn set_effect(&mut self, effect: Effect) {
         self.set_style(effect);
     }
@@ -259,7 +259,7 @@ impl TextView {
     /// Sets the effect for the entire content.
     ///
     /// Chainable variant.
-    #[deprecated = "Use `style()` instead."]
+    #[deprecated(since = "0.16.0", note = "Use `style()` instead.")]
     pub fn effect(self, effect: Effect) -> Self {
         self.style(effect)
     }

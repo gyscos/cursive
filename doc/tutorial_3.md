@@ -224,12 +224,12 @@ The closure has access to the `&mut Cursive`, which in turn has access to all
 the views, so _in theory_, we could ask it to borrow the view, if only we knew
 how to point to the correct view.
 
-[`IdView`] is meant exactly for this: it wraps a view and gives it a name.
+[`NamedView`] is meant exactly for this: it wraps a view and gives it a name.
 Later, you can ask the Cursive root for this name and get access to the view.
 Just what we need!
 
-Like `ResizedView`, `IdView` can be used directly with [`IdView::new`], or through
-the [`Identifiable`] trait. [`Cursive::call_on_name`] allows you to run a closure
+Like `ResizedView`, `NamedView` can be used directly with [`NamedView::new`], or through
+the [`Nameable`] trait. [`Cursive::call_on_name`] allows you to run a closure
 on the view.
 
 Here's what it looks like in action:
@@ -251,7 +251,7 @@ fn add_name(s: &mut Cursive) {
 }
 ```
 
-We create the `EditView` with the id `"name"`, and we use `"name"` again when
+We create the `EditView` with the name `"name"`, and we use `"name"` again when
 calling `call_on_name`.
 
 Now we just need to do something with this name: add it to the list!
@@ -318,9 +318,9 @@ It uses `Rc` and `RefCell` under the hood to provide mutable access to the
 view without borrowing the `Cursive` root, leaving us free to pop layers.
 
 [`EditView`]: https://docs.rs/cursive/0/cursive/views/struct.EditView.html
-[`IdView`]: https://docs.rs/cursive/0/cursive/views/struct.IdView.html
-[`IdView::new`]: https://docs.rs/cursive/0/cursive/prelude/struct.IdView.html#method.around
-[`Identifiable`]: https://docs.rs/cursive/0/cursive/view/trait.Identifiable.html
+[`NamedView`]: https://docs.rs/cursive/0/cursive/views/struct.NamedView.html
+[`NamedView::new`]: https://docs.rs/cursive/0/cursive/prelude/struct.NamedView.html#method.around
+[`Nameable`]: https://docs.rs/cursive/0/cursive/view/trait.Nameable.html
 [`Cursive::find_name`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.find_name
 [`Cursive::call_on_name`]: https://docs.rs/cursive/0/cursive/struct.Cursive.html#method.call_on_name
 [`SelectView::selected_id`]: https://docs.rs/cursive/0/cursive/views/struct.SelectView.html#method.selected_id

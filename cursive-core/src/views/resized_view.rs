@@ -22,7 +22,7 @@ use crate::XY;
 /// let view = ResizedView::with_fixed_size((20, 4), TextView::new("Hello!"));
 /// ```
 ///
-/// See also [`Boxable`](crate::view::Boxable) for an easy way to wrap any view.
+/// See also [`Resizable`](crate::view::Resizable) for an easy way to wrap any view.
 pub struct ResizedView<T> {
     /// Constraint on each axis
     size: XY<SizeConstraint>,
@@ -230,7 +230,7 @@ impl<T: View> ViewWrapper for ResizedView<T> {
 #[cfg(test)]
 mod tests {
 
-    use crate::view::{Boxable, View};
+    use crate::view::{Resizable, View};
     use crate::views::DummyView;
     use crate::Vec2;
 

@@ -11,7 +11,7 @@ use std::rc::Rc;
 ///
 /// This lets other views refer to this one using a string identifier.
 ///
-/// See [`Identifiable`](crate::view::Identifiable) for an easy way to wrap any view with it.
+/// See [`Nameable`](crate::view::Nameable) for an easy way to wrap any view with it.
 pub struct NamedView<V> {
     view: Rc<RefCell<V>>,
     name: String,
@@ -94,12 +94,7 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
         callback: AnyCb<'a>,
     ) {
         match selector {
-            #[allow(deprecated)]
-            &Selector::Name(name) | &Selector::Id(name)
-                if name == self.name =>
-            {
-                callback(self)
-            }
+            &Selector::Name(name) if name == self.name => callback(self),
             s => {
                 if let Ok(mut v) = self.view.try_borrow_mut() {
                     v.deref_mut().call_on_any(s, callback);
@@ -113,10 +108,7 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
         selector: &Selector<'_>,
     ) -> Result<EventResult, ViewNotFound> {
         match selector {
-            #[allow(deprecated)]
-            &Selector::Name(name) | &Selector::Id(name)
-                if name == self.name =>
-            {
+            &Selector::Name(name) if name == self.name => {
                 Ok(EventResult::Consumed(None))
             }
             s => self

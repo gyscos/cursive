@@ -11,7 +11,7 @@ use crate::Printer;
 /// ```
 /// use cursive_core::Cursive;
 /// use cursive_core::views::{Button, EnableableView, Checkbox, LinearLayout};
-/// use cursive_core::traits::Identifiable;
+/// use cursive_core::traits::Nameable;
 ///
 /// let mut siv = Cursive::new();
 ///

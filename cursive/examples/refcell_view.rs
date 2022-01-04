@@ -1,4 +1,4 @@
-use cursive::view::{Boxable, Identifiable};
+use cursive::view::{Nameable, Resizable};
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 use cursive::Cursive;
 
