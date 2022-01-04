@@ -15,6 +15,7 @@
 - Add `Effect::Dim` (supported on some backends)
 - Add `LinearLayout::clear`
 - Add `backends::try_default`
+- Add `StackView::layer_offset` and deprecate `StackView::offset`
 
 ### Breaking Changes
 
@@ -32,6 +33,7 @@
 - Fix `Align::bot_right`
 - Fix delimiter handling in `ListView`
 - Fix input handling in crossterm backend
+- Fix focus issue with SelectView when in popup mode
 
 ## cursive 0.16.3
 
