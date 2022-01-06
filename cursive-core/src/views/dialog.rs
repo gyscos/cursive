@@ -457,17 +457,23 @@ impl Dialog {
     /// The given dialog focus will be clamped to a valid range. For example,
     /// attempting to focus a button that no longer exists will instead focus
     /// one that does (or the content, if no buttons exist).
-    pub fn set_focus(&mut self, new_focus: DialogFocus) {
+    pub fn set_focus(&mut self, new_focus: DialogFocus) -> EventResult {
+        let mut result = EventResult::Ignored;
+
         self.focus = match new_focus {
             DialogFocus::Content => DialogFocus::Content,
             DialogFocus::Button(_) if self.buttons.is_empty() => {
                 DialogFocus::Content
             }
             DialogFocus::Button(c) => {
-                // TODO: send Event::LostFocus?
+                if self.focus == DialogFocus::Content {
+                    result = self.content.on_event(Event::FocusLost);
+                }
                 DialogFocus::Button(min(c, self.buttons.len() - 1))
             }
         };
+
+        result
     }
 
     // Private methods
@@ -485,7 +491,11 @@ impl Dialog {
                         Event::Key(Key::Down) | Event::Key(Key::Tab) => {
                             // Default to leftmost button when going down.
                             self.focus = DialogFocus::Button(0);
+
+                            // Return the content's FocusLost trigger, but also make sure it is
+                            // consumed.
                             EventResult::Consumed(None)
+                                .and(self.content.on_event(Event::FocusLost))
                         }
                         _ => EventResult::Ignored,
                     }
@@ -690,7 +700,7 @@ impl Dialog {
                 // If position fits there...
                 position.fits_in_rect(btn.offset.get(), btn.button.size)
             }) {
-                self.focus = DialogFocus::Button(i);
+                return Some(self.set_focus(DialogFocus::Button(i)));
             } else if position.fits_in_rect(
                 (self.padding + self.borders).top_left(),
                 self.content.size,
@@ -835,11 +845,15 @@ impl View for Dialog {
                         self.content.take_focus(source)
                     }
                     (DialogFocus::Content, true) => {
+                        // Content had focus, but now refuses to take it again. So it loses it.
                         match self.content.take_focus(source) {
                             Ok(res) => Ok(res),
                             Err(CannotFocus) => {
                                 self.focus = DialogFocus::Button(0);
-                                Ok(EventResult::Consumed(None))
+                                Ok(self
+                                    .content
+                                    .on_event(Event::FocusLost)
+                                    .and(EventResult::consumed()))
                             }
                         }
                     }
@@ -855,8 +869,14 @@ impl View for Dialog {
                 } else if self.buttons.is_empty() {
                     Err(CannotFocus)
                 } else {
+                    let mut result = EventResult::consumed();
+                    if self.focus == DialogFocus::Content {
+                        // The content had focus, but now refuses to take it.
+                        result = result
+                            .and(self.content.on_event(Event::FocusLost));
+                    }
                     self.focus = DialogFocus::Button(0);
-                    Ok(EventResult::Consumed(None))
+                    Ok(result)
                 }
             }
             Direction::Rel(Relative::Back)
@@ -864,8 +884,13 @@ impl View for Dialog {
             | Direction::Abs(Absolute::Down) => {
                 // Back focus: first buttons, then content
                 if !self.buttons.is_empty() {
+                    let mut result = EventResult::consumed();
+                    if self.focus == DialogFocus::Content {
+                        result = result
+                            .and(self.content.on_event(Event::FocusLost));
+                    }
                     self.focus = DialogFocus::Button(self.buttons.len() - 1);
-                    Ok(EventResult::Consumed(None))
+                    Ok(result)
                 } else if let Ok(res) = self.content.take_focus(source) {
                     self.focus = DialogFocus::Content;
                     Ok(res)
