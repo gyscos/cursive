@@ -1,6 +1,6 @@
 # Changelog
 
-## Next version (cursive-core 0.3.0, cursive 0.17.0)
+## cursive-core 0.3.0, cursive 0.17.0
 
 ### API updates
 
