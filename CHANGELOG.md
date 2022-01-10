@@ -27,6 +27,9 @@
     - All `_id` methods that were replaced with `_name` equivalent
     - `BoxView`, `ViewBox`, `SizedView`, `Identifiable`, `Boxable`, `IdView`, `Selector::Id`
 - Added `set_title` to the `Backend` trait
+- Update dependencies:
+    - crossterm to 0.22.1
+    - pancurses to 0.17.0
 
 ### Bugfixes
 
@@ -39,6 +42,9 @@
 - Fix delimiter handling in `ListView`
 - Fix input handling in crossterm backend
 - Fix focus issue with SelectView when in popup mode
+- Updated internal dependencies:
+    - enum-map to 2.0
+    - pulldown-cmark to 0.9
 
 ## cursive 0.16.3
 

@@ -30,7 +30,7 @@ pub struct Parser<'a> {
     first: bool,
     stack: Vec<Style>,
     input: &'a str,
-    parser: pulldown_cmark::Parser<'a>,
+    parser: pulldown_cmark::Parser<'a, 'a>,
 }
 
 impl<'a> Parser<'a> {
@@ -73,7 +73,7 @@ impl<'a> Iterator for Parser<'a> {
                     Tag::Emphasis => {
                         self.stack.push(Style::from(Effect::Italic))
                     }
-                    Tag::Heading(level) => {
+                    Tag::Heading(level, ..) => {
                         return Some(
                             self.literal(format!(
                                 "{} ",
@@ -93,7 +93,7 @@ impl<'a> Iterator for Parser<'a> {
                 Event::End(tag) => match tag {
                     // Remove from stack!
                     Tag::Paragraph if self.first => self.first = false,
-                    Tag::Heading(_) => return Some(self.literal("\n\n")),
+                    Tag::Heading(..) => return Some(self.literal("\n\n")),
                     Tag::Link(_, link, _) => {
                         return Some(self.literal(format!("]({})", link)))
                     }
