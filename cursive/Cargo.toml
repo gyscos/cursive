@@ -39,7 +39,7 @@ version = "5.99.0"
 [dependencies.pancurses]
 features = ["wide"]
 optional = true
-version = "0.16"
+version = "0.17"
 
 [dependencies.termion]
 optional = true
@@ -47,7 +47,7 @@ version = "1"
 
 [dependencies.crossterm]
 optional = true
-version = "0.21"
+version = "0.22.1"
 
 [features]
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.

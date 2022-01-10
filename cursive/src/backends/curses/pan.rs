@@ -75,7 +75,7 @@ impl Backend {
         pancurses::mouseinterval(0);
         pancurses::mousemask(
             pancurses::ALL_MOUSE_EVENTS | pancurses::REPORT_MOUSE_POSITION,
-            ::std::ptr::null_mut(),
+            None,
         );
 
         // This asks the terminal to provide us with mouse drag events
