@@ -97,6 +97,7 @@ impl ProgressBar {
     ///
     /// Use this to manually control the progress to display
     /// by directly modifying the value pointed to by `value`.
+    #[must_use]
     pub fn with_value(self, value: Counter) -> Self {
         self.with(|s| s.set_counter(value))
     }
@@ -118,6 +119,7 @@ impl ProgressBar {
     /// Starts a function in a separate thread, and monitor the progress.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_task<F: FnOnce(Counter) + Send + 'static>(
         self,
         task: F,
@@ -138,6 +140,7 @@ impl ProgressBar {
     ///     format!("{} %", percent)
     /// }
     /// ```
+    #[must_use]
     pub fn with_label<F: Fn(usize, (usize, usize)) -> String + 'static>(
         self,
         label_maker: F,
@@ -163,6 +166,7 @@ impl ProgressBar {
     /// If `self.min > max`, `self.min` is set to `max`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn min(self, min: usize) -> Self {
         self.with(|s| s.set_min(min))
     }
@@ -184,6 +188,7 @@ impl ProgressBar {
     /// If `min > self.max`, `self.max` is set to `min`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn max(self, max: usize) -> Self {
         self.with(|s| s.set_max(max))
     }
@@ -203,6 +208,7 @@ impl ProgressBar {
     /// If `min > max`, swap the two values.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn range(self, min: usize, max: usize) -> Self {
         self.with(|s| s.set_range(min, max))
     }
@@ -248,6 +254,7 @@ impl ProgressBar {
     /// Sets the color style.
     ///
     /// Chainable variant of `set_color`.
+    #[must_use]
     pub fn with_color<C>(self, color: C) -> Self
     where
         C: Into<ColorType>,

@@ -29,6 +29,7 @@ macro_rules! impl_enabled {
         /// Disables this view.
         ///
         /// Chainable variant.
+        #[must_use]
         pub fn disabled(self) -> Self {
             use $crate::traits::With as _;
             self.with(Self::disable)
@@ -47,6 +48,7 @@ macro_rules! impl_enabled {
         /// Enable or disable this view.
         ///
         /// Chainable variant.
+        #[must_use]
         pub fn with_enabled(mut self, is_enabled: bool) -> Self {
             self.set_enabled(is_enabled);
             self

@@ -50,6 +50,7 @@ impl<V> HideableView<V> {
     /// Sets the visibility for this view to `false`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn hidden(self) -> Self {
         self.with(Self::hide)
     }
@@ -57,6 +58,7 @@ impl<V> HideableView<V> {
     /// Sets the visibility for this view to flag value.
     /// Useful when creating views needs to be decided at runtime.
     /// Chainable variant.
+    #[must_use]
     pub fn visible(self, flag: bool) -> Self {
         self.with(|s| s.set_visible(flag))
     }

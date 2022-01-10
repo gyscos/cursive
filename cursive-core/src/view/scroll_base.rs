@@ -61,6 +61,7 @@ impl ScrollBase {
     /// Used by views that draw their side borders in the children.
     /// Pushing the scrollbar to the left allows it to stay inside
     /// the borders.
+    #[must_use]
     pub fn scrollbar_offset(mut self, offset: usize) -> Self {
         self.scrollbar_offset = offset;
         self
@@ -69,6 +70,7 @@ impl ScrollBase {
     /// Sets the number of blank cells between the text and the scrollbar.
     ///
     /// Defaults to 1.
+    #[must_use]
     pub fn right_padding(mut self, padding: usize) -> Self {
         self.right_padding = padding;
         self

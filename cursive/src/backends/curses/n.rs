@@ -272,13 +272,9 @@ impl Backend {
                     .or_else(|| {
                         // In legacy mode, some buttons overlap,
                         // so we need to disambiguate.
-                        if mevent.bstate
-                            == ncurses::BUTTON5_DOUBLE_CLICKED as mmask_t
-                        {
-                            Some(MouseEvent::WheelDown)
-                        } else {
-                            None
-                        }
+                        (mevent.bstate
+                            == ncurses::BUTTON5_DOUBLE_CLICKED as mmask_t)
+                            .then(|| MouseEvent::WheelDown)
                     })
                     .map(&make_event)
                     .unwrap_or_else(|| Event::Unknown(vec![]))

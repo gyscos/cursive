@@ -14,6 +14,7 @@ impl ColorPair {
     /// Return an inverted color pair.
     ///
     /// With swapped front and back color.
+    #[must_use]
     pub fn invert(self) -> Self {
         ColorPair {
             front: self.back,
@@ -22,6 +23,7 @@ impl ColorPair {
     }
 
     /// Creates a new color pair from color IDs.
+    #[must_use]
     pub fn from_256colors(front: u8, back: u8) -> Self {
         Self {
             front: Color::from_256colors(front),

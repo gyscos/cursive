@@ -30,6 +30,7 @@ impl Rect {
     /// Creates a new `Rect` around a single point.
     ///
     /// The size will be `(1, 1)`.
+    #[must_use]
     pub fn from_point<T>(point: T) -> Self
     where
         T: Into<Vec2>,
@@ -40,6 +41,7 @@ impl Rect {
     /// Creates a new `Rect` with the given position and size.
     ///
     /// The minimum size will `(1, 1)`.
+    #[must_use]
     pub fn from_size<U, V>(top_left: U, size: V) -> Self
     where
         U: Into<Vec2>,
@@ -56,6 +58,7 @@ impl Rect {
     /// Creates a new `Rect` from two corners.
     ///
     /// It can be any two opposite corners.
+    #[must_use]
     pub fn from_corners<U, V>(a: U, b: V) -> Self
     where
         U: Into<Vec2>,
@@ -85,6 +88,7 @@ impl Rect {
     }
 
     /// Returns a new rectangle that includes both `self` and `other`.
+    #[must_use]
     pub fn expanded_to<R>(mut self, other: R) -> Self
     where
         R: Into<Rect>,

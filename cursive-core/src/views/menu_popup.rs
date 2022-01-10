@@ -55,6 +55,7 @@ impl MenuPopup {
     /// Sets the currently focused element.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn focus(self, focus: usize) -> Self {
         self.with(|s| s.set_focus(focus))
     }
@@ -75,6 +76,7 @@ impl MenuPopup {
     /// Sets the alignment for this view.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn align(self, align: Align) -> Self {
         self.with(|s| s.set_align(align))
     }
@@ -89,6 +91,7 @@ impl MenuPopup {
     /// (When the user hits <ESC>)
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_dismiss<F: 'static + Fn(&mut Cursive)>(self, f: F) -> Self {
         self.with(|s| s.set_on_dismiss(f))
     }
@@ -107,6 +110,7 @@ impl MenuPopup {
     /// Usually used to hide the parent view.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_action<F: 'static + Fn(&mut Cursive)>(self, f: F) -> Self {
         self.with(|s| s.set_on_action(f))
     }

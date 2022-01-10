@@ -53,16 +53,19 @@ impl<T: View> CircularFocus<T> {
     }
 
     /// Make this view now wrap focus around when arrow keys are pressed.
+    #[must_use]
     pub fn wrap_arrows(self) -> Self {
         self.with_wrap_arrows(true)
     }
 
     /// Make this view now wrap focus around when the up/down keys are pressed.
+    #[must_use]
     pub fn wrap_up_down(self) -> Self {
         self.with_wrap_up_down(true)
     }
 
     /// Make this view now wrap focus around when the left/right keys are pressed.
+    #[must_use]
     pub fn wrap_left_right(self) -> Self {
         self.with_wrap_left_right(true)
     }
@@ -70,6 +73,7 @@ impl<T: View> CircularFocus<T> {
     /// Make this view now wrap focus around when the Tab key is pressed.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_wrap_tab(self, wrap_tab: bool) -> Self {
         self.with(|s| s.set_wrap_tab(wrap_tab))
     }
@@ -77,21 +81,25 @@ impl<T: View> CircularFocus<T> {
     /// Make this view now wrap focus around when the Tab key is pressed.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn wrap_tab(self) -> Self {
         self.with_wrap_tab(true)
     }
 
     /// Make this view now wrap focus around when the left/right keys are pressed.
+    #[must_use]
     pub fn with_wrap_left_right(self, wrap_left_right: bool) -> Self {
         self.with(|s| s.set_wrap_left_right(wrap_left_right))
     }
 
     /// Make this view now wrap focus around when the up/down keys are pressed.
+    #[must_use]
     pub fn with_wrap_up_down(self, wrap_up_down: bool) -> Self {
         self.with(|s| s.set_wrap_up_down(wrap_up_down))
     }
 
     /// Make this view now wrap focus around when arrow keys are pressed.
+    #[must_use]
     pub fn with_wrap_arrows(self, wrap_arrows: bool) -> Self {
         self.with(|s| s.set_wrap_arrows(wrap_arrows))
     }

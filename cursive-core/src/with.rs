@@ -8,6 +8,7 @@ pub trait With: Sized {
     }
 
     /// Calls the given closure on `self`.
+    #[must_use]
     fn with<F: FnOnce(&mut Self)>(mut self, f: F) -> Self {
         f(&mut self);
         self
@@ -23,6 +24,7 @@ pub trait With: Sized {
     }
 
     /// Calls the given closure if `condition == true`.
+    #[must_use]
     fn with_if<F>(mut self, condition: bool, f: F) -> Self
     where
         F: FnOnce(&mut Self),

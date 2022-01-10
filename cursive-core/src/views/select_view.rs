@@ -114,6 +114,7 @@ impl<T: 'static> SelectView<T> {
     /// item beginning with the pressed letter.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn autojump(self) -> Self {
         self.with(|s| s.set_autojump(true))
     }
@@ -121,6 +122,7 @@ impl<T: 'static> SelectView<T> {
     /// Turns `self` into a popup select view.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn popup(self) -> Self {
         self.with(|s| s.set_popup(true))
     }
@@ -167,6 +169,7 @@ impl<T: 'static> SelectView<T> {
     ///         .unwrap();
     ///     });
     /// ```
+    #[must_use]
     pub fn on_select<F>(self, cb: F) -> Self
     where
         F: Fn(&mut Cursive, &T) + 'static,
@@ -218,6 +221,7 @@ impl<T: 'static> SelectView<T> {
     ///         s.add_layer(Dialog::info(content));
     ///     });
     /// ```
+    #[must_use]
     pub fn on_submit<F, V: ?Sized>(self, cb: F) -> Self
     where
         F: Fn(&mut Cursive, &V) + 'static,
@@ -238,6 +242,7 @@ impl<T: 'static> SelectView<T> {
     ///     .item("One", 1)
     ///     .align(align::Align::top_center());
     /// ```
+    #[must_use]
     pub fn align(mut self, align: Align) -> Self {
         self.align = align;
 
@@ -246,6 +251,7 @@ impl<T: 'static> SelectView<T> {
 
     /// Sets the vertical alignment for this view.
     /// (If the view is given too much space vertically.)
+    #[must_use]
     pub fn v_align(mut self, v: VAlign) -> Self {
         self.align.v = v;
 
@@ -253,6 +259,7 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Sets the horizontal alignment for this view.
+    #[must_use]
     pub fn h_align(mut self, h: HAlign) -> Self {
         self.align.h = h;
 
@@ -401,6 +408,7 @@ impl<T: 'static> SelectView<T> {
     ///     .item("Item 2", 2)
     ///     .item("Surprise item", 42);
     /// ```
+    #[must_use]
     pub fn item<S: Into<StyledString>>(self, label: S, value: T) -> Self {
         self.with(|s| s.add_item(label, value))
     }
@@ -429,6 +437,7 @@ impl<T: 'static> SelectView<T> {
     /// let select_view = SelectView::new()
     ///     .with_all((1u8..100).into_iter().map(|i| (format!("Item {}", i), i)));
     /// ```
+    #[must_use]
     pub fn with_all<S, I>(self, iter: I) -> Self
     where
         S: Into<StyledString>,
@@ -569,6 +578,7 @@ impl<T: 'static> SelectView<T> {
     /// Chainable variant.
     ///
     /// Does not apply `on_select` callbacks.
+    #[must_use]
     pub fn selected(self, i: usize) -> Self {
         self.with(|s| {
             s.set_selection(i);
@@ -800,6 +810,7 @@ impl SelectView<String> {
     ///     .item_str("New York")
     ///     .item_str("Tokyo");
     /// ```
+    #[must_use]
     pub fn item_str<S: Into<String>>(self, label: S) -> Self {
         self.with(|s| s.add_item_str(label))
     }
@@ -845,6 +856,7 @@ impl SelectView<String> {
     ///
     /// let select_view = SelectView::new().with_all_str(text.lines());
     /// ```
+    #[must_use]
     pub fn with_all_str<S, I>(self, iter: I) -> Self
     where
         S: Into<String>,

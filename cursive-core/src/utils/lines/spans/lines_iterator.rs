@@ -53,6 +53,7 @@ where
     ///
     /// Unless a word had to be truncated, in which case
     /// it can take the entire width.
+    #[must_use]
     pub fn show_spaces(mut self) -> Self {
         self.show_spaces = true;
         self

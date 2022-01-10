@@ -28,6 +28,7 @@ impl Row {
     /// Shift a row start and end by `offset`.
     ///
     /// Chainable variant;
+    #[must_use]
     pub fn shifted(self, offset: usize) -> Self {
         self.with(|s| s.shift(offset))
     }

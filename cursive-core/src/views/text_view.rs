@@ -260,6 +260,7 @@ impl TextView {
     ///
     /// Chainable variant.
     #[deprecated(since = "0.16.0", note = "Use `style()` instead.")]
+    #[must_use]
     pub fn effect(self, effect: Effect) -> Self {
         self.style(effect)
     }
@@ -267,6 +268,7 @@ impl TextView {
     /// Sets the style for the entire content.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn style<S: Into<Style>>(self, style: S) -> Self {
         self.with(|s| s.set_style(style))
     }
@@ -274,6 +276,7 @@ impl TextView {
     /// Disables content wrap for this view.
     ///
     /// This may be useful if you want horizontal scrolling.
+    #[must_use]
     pub fn no_wrap(self) -> Self {
         self.with(|s| s.set_content_wrap(false))
     }
@@ -286,6 +289,7 @@ impl TextView {
     }
 
     /// Sets the horizontal alignment for this view.
+    #[must_use]
     pub fn h_align(mut self, h: HAlign) -> Self {
         self.align.h = h;
 
@@ -293,6 +297,7 @@ impl TextView {
     }
 
     /// Sets the vertical alignment for this view.
+    #[must_use]
     pub fn v_align(mut self, v: VAlign) -> Self {
         self.align.v = v;
 
@@ -300,6 +305,7 @@ impl TextView {
     }
 
     /// Sets the alignment for this view.
+    #[must_use]
     pub fn align(mut self, a: Align) -> Self {
         self.align = a;
 
@@ -307,6 +313,7 @@ impl TextView {
     }
 
     /// Center the text horizontally and vertically inside the view.
+    #[must_use]
     pub fn center(mut self) -> Self {
         self.align = Align::center();
         self
@@ -315,6 +322,7 @@ impl TextView {
     /// Replace the text in this view.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn content<S>(self, content: S) -> Self
     where
         S: Into<StyledString>,

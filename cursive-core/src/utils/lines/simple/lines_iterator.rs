@@ -51,6 +51,7 @@ impl<'a> LinesIterator<'a> {
     ///
     /// Unless a word had to be truncated, in which case
     /// it takes the entire width.
+    #[must_use]
     pub fn show_spaces(self) -> Self {
         let iter = self.iter.show_spaces();
         let width = self.width;

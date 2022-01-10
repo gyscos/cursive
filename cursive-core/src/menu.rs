@@ -107,6 +107,7 @@ impl Item {
     }
 
     /// Return a disabled version of this item.
+    #[must_use]
     pub fn disabled(self) -> Self {
         self.with(Self::disable)
     }
@@ -182,6 +183,7 @@ impl Tree {
     }
 
     /// Adds a delimiter to the end of this tree - chainable variant.
+    #[must_use]
     pub fn delimiter(self) -> Self {
         self.with(Self::add_delimiter)
     }
@@ -214,6 +216,7 @@ impl Tree {
     }
 
     /// Adds a actionnable leaf to the end of this tree - chainable variant.
+    #[must_use]
     pub fn leaf<S, F>(self, label: S, cb: F) -> Self
     where
         S: Into<String>,
@@ -239,6 +242,7 @@ impl Tree {
     /// Adds an item to the end of this tree.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn item(self, item: Item) -> Self {
         self.with(|s| s.add_item(item))
     }
@@ -259,6 +263,7 @@ impl Tree {
     }
 
     /// Adds a submenu to the end of this tree - chainable variant.
+    #[must_use]
     pub fn subtree<S>(self, label: S, tree: Tree) -> Self
     where
         S: Into<String>,

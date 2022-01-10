@@ -133,6 +133,7 @@ impl EventTrigger {
     }
 
     /// Returns an `EventTrigger` that applies if either `self` or `other` applies.
+    #[must_use]
     pub fn or<O>(self, other: O) -> Self
     where
         O: Into<EventTrigger>,
@@ -288,6 +289,7 @@ impl EventResult {
     }
 
     /// Returns `self` if it is not `EventResult::Ignored`, otherwise returns `f()`.
+    #[must_use]
     pub fn or_else<F>(self, f: F) -> Self
     where
         F: FnOnce() -> EventResult,
@@ -299,6 +301,7 @@ impl EventResult {
     }
 
     /// Returns an event result that combines `self` and `other`.
+    #[must_use]
     pub fn and(self, other: Self) -> Self {
         match (self, other) {
             (EventResult::Ignored, result)
@@ -579,6 +582,7 @@ impl Event {
     ///
     /// If `self` is a mouse event, adds `top_left` to its offset.
     /// Otherwise, returns a simple clone.
+    #[must_use]
     pub fn relativized<V>(&self, top_left: V) -> Self
     where
         V: Into<Vec2>,

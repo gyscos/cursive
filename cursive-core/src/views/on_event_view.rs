@@ -104,6 +104,7 @@ impl<T> OnEventView<T> {
     ///         s.add_layer(DummyView);
     ///     });
     /// ```
+    #[must_use]
     pub fn on_event<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,
@@ -117,6 +118,7 @@ impl<T> OnEventView<T> {
     /// The child will never receive this event.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_pre_event<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,
@@ -135,6 +137,7 @@ impl<T> OnEventView<T> {
     ///   result.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_pre_event_inner<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,
@@ -177,6 +180,7 @@ impl<T> OnEventView<T> {
     ///         }
     ///     );
     /// ```
+    #[must_use]
     pub fn on_event_inner<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,

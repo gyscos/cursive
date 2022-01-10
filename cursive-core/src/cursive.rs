@@ -857,7 +857,7 @@ impl Cursive {
     ///
     /// Initializes a dummy backend for the event loop.
     pub fn run_dummy(&mut self) {
-        self.run_with(|| backend::Dummy::init())
+        self.run_with(backend::Dummy::init)
     }
 
     /// Returns a new runner on the given backend.

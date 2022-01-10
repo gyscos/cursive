@@ -53,6 +53,7 @@ impl Orientation {
     }
 
     /// Returns the other orientation.
+    #[must_use]
     pub fn swap(self) -> Self {
         match self {
             Orientation::Horizontal => Orientation::Vertical,
@@ -155,6 +156,7 @@ impl Direction {
     }
 
     /// Returns the direction opposite `self`.
+    #[must_use]
     pub fn opposite(self) -> Self {
         match self {
             Direction::Abs(abs) => Direction::Abs(abs.opposite()),
@@ -237,6 +239,7 @@ impl Relative {
     }
 
     /// Returns the other relative direction.
+    #[must_use]
     pub fn swap(self) -> Self {
         match self {
             Relative::Front => Relative::Back,
@@ -294,6 +297,7 @@ impl Absolute {
     }
 
     /// Returns the direction opposite `self`.
+    #[must_use]
     pub fn opposite(self) -> Self {
         match self {
             Absolute::Left => Absolute::Right,

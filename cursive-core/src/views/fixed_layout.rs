@@ -60,6 +60,7 @@ impl FixedLayout {
     }
 
     /// Adds a child. Chainable variant.
+    #[must_use]
     pub fn child<V: IntoBoxedView>(self, position: Rect, view: V) -> Self {
         self.with(|s| s.add_child(position, view))
     }

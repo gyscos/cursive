@@ -49,6 +49,7 @@ impl Checkbox {
     /// Sets a callback to be used when the state changes.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(
         self,
         on_change: F,
@@ -70,6 +71,7 @@ impl Checkbox {
     /// Check the checkbox.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn checked(self) -> Self {
         self.with(|s| {
             s.check();
@@ -101,6 +103,7 @@ impl Checkbox {
     /// Uncheck the checkbox.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn unchecked(self) -> Self {
         self.with(|s| {
             s.uncheck();
@@ -121,6 +124,7 @@ impl Checkbox {
     /// Set the checkbox state.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_checked(self, is_checked: bool) -> Self {
         self.with(|s| {
             s.set_checked(is_checked);

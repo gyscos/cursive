@@ -113,6 +113,7 @@ impl ListView {
     /// Adds a view to the end of the list.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn child<V: IntoBoxedView + 'static>(
         self,
         label: &str,
@@ -130,6 +131,7 @@ impl ListView {
     /// Adds a delimiter to the end of the list.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn delimiter(self) -> Self {
         self.with(Self::add_delimiter)
     }
@@ -155,6 +157,7 @@ impl ListView {
     /// Sets a callback to be used when an item is selected.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_select<F>(self, cb: F) -> Self
     where
         F: Fn(&mut Cursive, &String) + 'static,

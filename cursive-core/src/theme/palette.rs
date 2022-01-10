@@ -101,7 +101,8 @@ impl Palette {
     /// Returns a new palette where the given namespace has been merged.
     ///
     /// All values in the namespace will override previous values.
-    pub fn merge(&self, namespace: &str) -> Palette {
+    #[must_use]
+    pub fn merge(&self, namespace: &str) -> Self {
         let mut result = self.clone();
 
         if let Some(&PaletteNode::Namespace(ref palette)) =

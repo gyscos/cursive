@@ -132,6 +132,7 @@ impl TextArea {
     /// Sets the content of the view.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn content<S: Into<String>>(self, content: S) -> Self {
         self.with(|s| s.set_content(content))
     }
@@ -146,6 +147,7 @@ impl TextArea {
     /// Disables this view.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn disabled(self) -> Self {
         self.with(Self::disable)
     }
@@ -158,6 +160,7 @@ impl TextArea {
     /// Re-enables this view.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn enabled(self) -> Self {
         self.with(Self::enable)
     }
@@ -422,7 +425,7 @@ impl TextArea {
             .map(|i| 1 + i + self.cursor);
         let last_row = last_byte
             .map_or(self.rows.len(), |last_byte| self.row_at(last_byte));
-        let last_byte = last_byte.unwrap_or_else(|| self.content.len());
+        let last_byte = last_byte.unwrap_or(self.content.len());
 
         debug!("Content: `{}` (len={})", self.content, self.content.len());
         debug!("start/end: {}/{}", first_byte, last_byte);

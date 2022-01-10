@@ -36,6 +36,7 @@ impl<T> XY<T> {
     /// let xy = XY::new(1, 2);
     /// assert_eq!(xy.swap(), XY::new(2, 1));
     /// ```
+    #[must_use]
     pub fn swap(self) -> Self {
         XY::new(self.y, self.x)
     }
@@ -90,6 +91,7 @@ impl<T> XY<T> {
     ///
     /// assert_eq!(xy.map_if(cond, |v| v * 3), XY::new(3, 2));
     /// ```
+    #[must_use]
     pub fn map_if<F>(self, condition: XY<bool>, f: F) -> Self
     where
         F: Fn(T) -> T,
@@ -126,6 +128,7 @@ impl<T> XY<T> {
     /// let xy = XY::new(1, 2);
     /// assert_eq!(xy.map_x(|x| x * 10), XY::new(10, 2));
     /// ```
+    #[must_use]
     pub fn map_x<F>(self, f: F) -> Self
     where
         F: FnOnce(T) -> T,
@@ -142,6 +145,7 @@ impl<T> XY<T> {
     /// let xy = XY::new(1, 2);
     /// assert_eq!(xy.map_y(|y| y * 10), XY::new(1, 20));
     /// ```
+    #[must_use]
     pub fn map_y<F>(self, f: F) -> Self
     where
         F: FnOnce(T) -> T,
@@ -159,6 +163,7 @@ impl<T> XY<T> {
     /// let (x, y) = xy.pair();
     /// assert_eq!((x, y), (1, 2));
     /// ```
+    #[must_use]
     pub fn pair(self) -> (T, T) {
         (self.x, self.y)
     }
@@ -250,6 +255,7 @@ impl<T> XY<T> {
     /// let b = XY::new(true, false);
     /// assert_eq!(a.zip(b), XY::new((1, true), (2, false)));
     /// ```
+    #[must_use]
     pub fn zip<U>(self, other: XY<U>) -> XY<(T, U)> {
         XY::new((self.x, other.x), (self.y, other.y))
     }
@@ -265,6 +271,7 @@ impl<T> XY<T> {
     /// let c = XY::new("x", "y");
     /// assert_eq!(a.zip3(b, c), XY::new((1, true, "x"), (2, false, "y")));
     /// ```
+    #[must_use]
     pub fn zip3<U, V>(self, a: XY<U>, b: XY<V>) -> XY<(T, U, V)> {
         XY::new((self.x, a.x, b.x), (self.y, a.y, b.y))
     }
@@ -284,6 +291,7 @@ impl<T> XY<T> {
     ///     XY::new((1, true, "x", vec![1]), (2, false, "y", vec![2, 3, 4]))
     /// );
     /// ```
+    #[must_use]
     pub fn zip4<U, V, W>(
         self,
         a: XY<U>,
@@ -315,6 +323,7 @@ impl<T> XY<T> {
     ///     });
     /// assert_eq!(xy, XY::new(Some('a'), Some('y')));
     /// ```
+    #[must_use]
     pub fn zip5<U, V, W, Z>(
         self,
         a: XY<U>,
@@ -354,6 +363,7 @@ impl<T> XY<T> {
     ///
     /// assert_eq!(xy.keep(cond), XY::new(Some(1), None));
     /// ```
+    #[must_use]
     pub fn keep(self, keep: XY<bool>) -> XY<Option<T>> {
         keep.select(self)
     }
@@ -371,6 +381,7 @@ impl<T: Clone> XY<T> {
     ///
     /// assert_eq!(xy, XY::new(42, 2));
     /// ```
+    #[must_use]
     pub fn with_axis(&self, o: Orientation, value: T) -> Self {
         let mut new = self.clone();
         *o.get_ref(&mut new) = value;
@@ -389,6 +400,7 @@ impl<T: Clone> XY<T> {
     ///
     /// assert_eq!(xy, XY::new(3, 2));
     /// ```
+    #[must_use]
     pub fn with_axis_from(&self, o: Orientation, other: &Self) -> Self {
         let mut new = self.clone();
         new.set_axis_from(o, other);
@@ -422,6 +434,7 @@ impl<T: Clone> XY<T> {
     ///
     /// assert_eq!(xy, XY::new(42, 42));
     /// ```
+    #[must_use]
     pub fn both_from(value: T) -> Self {
         let x = value.clone();
         let y = value;
@@ -475,6 +488,7 @@ impl XY<bool> {
     /// assert_eq!(XY::new(false, false).any(), false);
     /// assert_eq!(XY::new('a', 'b').map(|c| c == 'a').any(), true);
     /// ```
+    #[must_use]
     pub fn any(self) -> bool {
         use std::ops::BitOr;
         self.fold(BitOr::bitor)
@@ -491,6 +505,7 @@ impl XY<bool> {
     /// assert_eq!(XY::new(true, true).both(), true);
     /// assert_eq!(XY::new("abc", "de").map(|s| s.len() > 2).both(), false);
     /// ```
+    #[must_use]
     pub fn both(self) -> bool {
         use std::ops::BitAnd;
         self.fold(BitAnd::bitand)
@@ -508,6 +523,7 @@ impl XY<bool> {
     ///
     /// assert_eq!(selection, XY::new(Some(1), None));
     /// ```
+    #[must_use]
     pub fn select<T>(self, other: XY<T>) -> XY<Option<T>> {
         self.zip_map(other, |keep, o| if keep { Some(o) } else { None })
     }
@@ -525,6 +541,7 @@ impl XY<bool> {
     ///
     /// assert_eq!(selection, XY::new(1, 4));
     /// ```
+    #[must_use]
     pub fn select_or<T>(self, if_true: XY<T>, if_false: XY<T>) -> XY<T> {
         self.select(if_true).unwrap_or(if_false)
     }
@@ -539,6 +556,7 @@ impl XY<bool> {
     /// let b = XY::new(true, true);
     /// assert_eq!(a.and(b), XY::new(true, false));
     /// ```
+    #[must_use]
     pub fn and(self, other: Self) -> Self {
         self.zip_map(other, |s, o| s && o)
     }
@@ -553,6 +571,7 @@ impl XY<bool> {
     /// let b = XY::new(true, true);
     /// assert_eq!(a.or(b), XY::new(true, true));
     /// ```
+    #[must_use]
     pub fn or(self, other: Self) -> Self {
         self.zip_map(other, |s, o| s || o)
     }

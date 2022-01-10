@@ -74,6 +74,7 @@ impl SliderView {
     /// Sets the current value.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn value(self, value: usize) -> Self {
         self.with(|s| {
             s.set_value(value);
@@ -91,6 +92,7 @@ impl SliderView {
     }
 
     /// Sets a callback to be called when the slider is moved.
+    #[must_use]
     pub fn on_change<F>(mut self, callback: F) -> Self
     where
         F: Fn(&mut Cursive, usize) + 'static,
@@ -100,6 +102,7 @@ impl SliderView {
     }
 
     /// Sets a callback to be called when the <Enter> key is pressed.
+    #[must_use]
     pub fn on_enter<F>(mut self, callback: F) -> Self
     where
         F: Fn(&mut Cursive, usize) + 'static,

@@ -46,6 +46,7 @@ impl XY<usize> {
     /// # use cursive_core::Vec2;
     /// assert!(Vec2::new(9999, 9999) < Vec2::max_value());
     /// ```
+    #[must_use]
     pub fn max_value() -> Self {
         Self::new(usize::max_value(), usize::max_value())
     }
@@ -62,6 +63,7 @@ impl XY<usize> {
     /// let v = Vec2::new(2, 1);
     /// assert_eq!(u.saturating_sub(v), Vec2::new(0, 1));
     /// ```
+    #[must_use]
     pub fn saturating_sub<O: Into<Self>>(&self, other: O) -> Self {
         let other = other.into();
         self.zip_map(other, usize::saturating_sub)
@@ -80,6 +82,7 @@ impl XY<usize> {
     /// let v = XY::<isize>::new(-2, 1);
     /// assert_eq!(u.saturating_add(v), Vec2::new(0, 3));
     /// ```
+    #[must_use]
     pub fn saturating_add<O: Into<XY<isize>>>(&self, other: O) -> Self {
         let other = other.into();
 
@@ -117,6 +120,7 @@ impl XY<usize> {
     /// let v = Vec2::new(2, 3);
     /// assert_eq!(u.div_up(v), Vec2::new(1, 2));
     /// ```
+    #[must_use]
     pub fn div_up<O>(&self, other: O) -> Self
     where
         O: Into<Self>,
@@ -226,6 +230,7 @@ impl<T: Ord> XY<T> {
     /// # use cursive_core::Vec2;
     /// assert_eq!(Vec2::max((1, 2), (3, 1)), Vec2::new(3, 2));
     /// ```
+    #[must_use]
     pub fn max<A: Into<XY<T>>, B: Into<XY<T>>>(a: A, b: B) -> Self {
         let a = a.into();
         let b = b.into();
@@ -240,6 +245,7 @@ impl<T: Ord> XY<T> {
     /// # use cursive_core::Vec2;
     /// assert_eq!(Vec2::min((1, 2), (3, 1)), Vec2::new(1, 1));
     /// ```
+    #[must_use]
     pub fn min<A: Into<XY<T>>, B: Into<XY<T>>>(a: A, b: B) -> Self {
         let a = a.into();
         let b = b.into();
@@ -249,6 +255,7 @@ impl<T: Ord> XY<T> {
     /// Returns the minimum of `self` and `other`.
     ///
     /// This is equivalent to `Vec2::min(self, other)`.
+    #[must_use]
     pub fn or_min<O: Into<XY<T>>>(self, other: O) -> Self {
         Self::min(self, other)
     }
@@ -256,6 +263,7 @@ impl<T: Ord> XY<T> {
     /// Returns the maximum of `self` and `other`.
     ///
     /// This is equivalent to `Vec2::max(self, other)`.
+    #[must_use]
     pub fn or_max<O: Into<XY<T>>>(self, other: O) -> Self {
         Self::max(self, other)
     }
@@ -315,6 +323,7 @@ impl<T: Zero + Clone> XY<T> {
     /// let xy = XY::new(1, 2);
     /// assert_eq!(xy.keep_x(), XY::new(1, 0));
     /// ```
+    #[must_use]
     pub fn keep_x(&self) -> Self {
         Self::new(self.x.clone(), T::zero())
     }
@@ -328,6 +337,7 @@ impl<T: Zero + Clone> XY<T> {
     /// let xy = XY::new(1, 2);
     /// assert_eq!(xy.keep_y(), XY::new(0, 2));
     /// ```
+    #[must_use]
     pub fn keep_y(&self) -> Self {
         Self::new(T::zero(), self.y.clone())
     }
@@ -340,6 +350,7 @@ impl<T: Zero + Clone> XY<T> {
     /// # use cursive_core::Vec2;
     /// assert_eq!(Vec2::zero(), Vec2::new(0, 0));
     /// ```
+    #[must_use]
     pub fn zero() -> Self {
         Self::new(T::zero(), T::zero())
     }

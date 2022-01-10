@@ -295,7 +295,7 @@ impl backend::Backend for Backend {
             Ok(true) => match read() {
                 Ok(event) => match self.map_key(event) {
                     Some(event) => Some(event),
-                    None => return self.poll_event(),
+                    None => self.poll_event(),
                 },
                 Err(e) => panic!("{:?}", e),
             },

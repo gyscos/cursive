@@ -159,6 +159,7 @@ impl LinearLayout {
     /// Modifies the weight of the last child added. This weight is currently unused by the layout process.
     ///
     /// It is an error to call this before adding a child (and it will panic).
+    #[must_use]
     pub fn weight(mut self, weight: usize) -> Self {
         self.children.last_mut().unwrap()._weight = weight;
 
@@ -168,6 +169,7 @@ impl LinearLayout {
     /// Adds a child to the layout.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn child<V: IntoBoxedView + 'static>(self, view: V) -> Self {
         self.with(|s| s.add_child(view))
     }

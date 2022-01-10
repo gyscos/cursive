@@ -93,6 +93,7 @@ impl<T: 'static> RadioGroup<T> {
     /// Sets a callback to be used when the selection changes.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_change<F: 'static + Fn(&mut Cursive, &T)>(
         self,
         on_change: F,
@@ -164,6 +165,7 @@ impl<T: 'static> RadioButton<T> {
     /// Selects this button, un-selecting any other in the same group.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn selected(self) -> Self {
         self.with(|s| {
             // Ignore the potential callback here

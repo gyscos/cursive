@@ -118,6 +118,7 @@ impl Dialog {
     ///     .content(TextView::new("Hello!"))
     ///     .button("Quit", |s| s.quit());
     /// ```
+    #[must_use]
     pub fn content<V: IntoBoxedView>(self, view: V) -> Self {
         self.with(|s| {
             s.set_content(view);
@@ -207,6 +208,7 @@ impl Dialog {
     /// Adds a button to the dialog with the given label and callback.
     ///
     /// Consumes and returns self for easy chaining.
+    #[must_use]
     pub fn button<F, S: Into<String>>(self, label: S, cb: F) -> Self
     where
         F: 'static + Fn(&mut Cursive),
@@ -270,6 +272,7 @@ impl Dialog {
     /// Sets the horizontal alignment for the buttons, if any.
     ///
     /// Only works if the buttons are as a row at the bottom of the dialog.
+    #[must_use]
     pub fn h_align(mut self, h: HAlign) -> Self {
         self.align.h = h;
 
@@ -287,6 +290,7 @@ impl Dialog {
     /// Sets the vertical alignment for the buttons, if any.
     ///
     /// Only works if the buttons are as a column to the right of the dialog.
+    #[must_use]
     pub fn v_align(mut self, v: VAlign) -> Self {
         self.align.v = v;
 
@@ -303,6 +307,7 @@ impl Dialog {
     ///
     /// let dialog = Dialog::text("Hello!").dismiss_button("Close");
     /// ```
+    #[must_use]
     pub fn dismiss_button<S: Into<String>>(self, label: S) -> Self {
         self.button(label, |s| {
             s.pop_layer();
@@ -320,6 +325,7 @@ impl Dialog {
     ///
     /// let dialog = Dialog::info("Some info").title("Read me!");
     /// ```
+    #[must_use]
     pub fn title<S: Into<String>>(self, label: S) -> Self {
         self.with(|s| s.set_title(label))
     }
@@ -337,6 +343,7 @@ impl Dialog {
 
     /// Sets the horizontal position of the title in the dialog.
     /// The default position is `HAlign::Center`
+    #[must_use]
     pub fn title_position(self, align: HAlign) -> Self {
         self.with(|s| s.set_title_position(align))
     }
@@ -362,6 +369,7 @@ impl Dialog {
     /// let dialog = Dialog::info("Hello!")
     ///         .padding(Margins::lrtb(1, 1, 0, 0)); // (Left, Right, Top, Bottom)
     /// ```
+    #[must_use]
     pub fn padding(self, padding: Margins) -> Self {
         self.with(|s| s.set_padding(padding))
     }
@@ -374,6 +382,7 @@ impl Dialog {
     /// Sets the padding in the dialog.
     ///
     /// Takes Left, Right, Top, Bottom fields.
+    #[must_use]
     pub fn padding_lrtb(
         self,
         left: usize,
@@ -392,6 +401,7 @@ impl Dialog {
     }
 
     /// Sets the top padding in the dialog (under the title).
+    #[must_use]
     pub fn padding_top(self, padding: usize) -> Self {
         self.with(|s| s.set_padding_top(padding))
     }
@@ -402,6 +412,7 @@ impl Dialog {
     }
 
     /// Sets the bottom padding in the dialog (under buttons).
+    #[must_use]
     pub fn padding_bottom(self, padding: usize) -> Self {
         self.with(|s| s.set_padding_bottom(padding))
     }
@@ -412,6 +423,7 @@ impl Dialog {
     }
 
     /// Sets the left padding in the dialog.
+    #[must_use]
     pub fn padding_left(self, padding: usize) -> Self {
         self.with(|s| s.set_padding_left(padding))
     }
@@ -422,6 +434,7 @@ impl Dialog {
     }
 
     /// Sets the right padding in the dialog.
+    #[must_use]
     pub fn padding_right(self, padding: usize) -> Self {
         self.with(|s| s.set_padding_right(padding))
     }

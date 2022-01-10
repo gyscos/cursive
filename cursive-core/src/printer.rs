@@ -512,6 +512,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a sub-printer with the given offset.
     ///
     /// It will print in an area slightly to the bottom/right.
+    #[must_use]
     pub fn offset<S>(&self, offset: S) -> Self
     where
         S: Into<Vec2>,
@@ -537,6 +538,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// If `self` is focused and `focused == true`, the child will be focused.
     ///
     /// Otherwise, he will be unfocused.
+    #[must_use]
     pub fn focused(&self, focused: bool) -> Self {
         self.clone().with(|s| {
             s.focused &= focused;
@@ -548,6 +550,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// If `self` is enabled and `enabled == true`, the child will be enabled.
     ///
     /// Otherwise, he will be disabled.
+    #[must_use]
     pub fn enabled(&self, enabled: bool) -> Self {
         self.clone().with(|s| s.enabled &= enabled)
     }
@@ -555,6 +558,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a new sub-printer for the given viewport.
     ///
     /// This is a combination of offset + cropped.
+    #[must_use]
     pub fn windowed(&self, viewport: Rect) -> Self {
         self.offset(viewport.top_left()).cropped(viewport.size())
     }
@@ -564,6 +568,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// The new printer size will be the minimum of `size` and its current size.
     ///
     /// Any size reduction happens at the bottom-right.
+    #[must_use]
     pub fn cropped<S>(&self, size: S) -> Self
     where
         S: Into<Vec2>,
@@ -582,6 +587,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// The view will stay centered.
     ///
     /// Note that if shrinking by an odd number, the view will round to the top-left.
+    #[must_use]
     pub fn cropped_centered<S>(&self, size: S) -> Self
     where
         S: Into<Vec2>,
@@ -596,6 +602,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a new sub-printer with a shrinked area.
     ///
     /// The printer size will be reduced by the given border from the bottom-right.
+    #[must_use]
     pub fn shrinked<S>(&self, borders: S) -> Self
     where
         S: Into<Vec2>,
@@ -608,6 +615,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// The printer size will be reduced by the given border, and will stay centered.
     ///
     /// Note that if shrinking by an odd number, the view will round to the top-left.
+    #[must_use]
     pub fn shrinked_centered<S>(&self, borders: S) -> Self
     where
         S: Into<Vec2>,
@@ -622,6 +630,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// This is useful for parent views that only show a subset of their
     /// child, like `ScrollView`.
+    #[must_use]
     pub fn content_offset<S>(&self, offset: S) -> Self
     where
         S: Into<Vec2>,
@@ -637,6 +646,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// users of this printer.
     ///
     /// Useful to give to children who think they're big, but really aren't.
+    #[must_use]
     pub fn inner_size<S>(&self, size: S) -> Self
     where
         S: Into<Vec2>,

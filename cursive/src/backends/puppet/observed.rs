@@ -373,6 +373,7 @@ impl<'a> ObservedLine<'a> {
     /// Returns the same line, but expanded.
     ///
     /// Asserts whether request can be satisfied
+    #[must_use]
     pub fn expanded_line(&self, left: usize, right: usize) -> Self {
         assert!(left <= self.line_start.x);
         assert!(

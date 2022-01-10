@@ -43,6 +43,7 @@ impl<V> Panel<V> {
     /// Sets the title of the dialog.
     ///
     /// If not empty, it will be visible at the top.
+    #[must_use]
     pub fn title<S: Into<String>>(self, label: S) -> Self {
         self.with(|s| s.set_title(label))
     }
@@ -55,6 +56,7 @@ impl<V> Panel<V> {
 
     /// Sets the horizontal position of the title in the dialog.
     /// The default position is `HAlign::Center`
+    #[must_use]
     pub fn title_position(self, align: HAlign) -> Self {
         self.with(|s| s.set_title_position(align))
     }

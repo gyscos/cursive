@@ -23,6 +23,7 @@ impl<T> FocusTracker<T> {
     }
 
     /// Sets a callback to be run when the focus is gained.
+    #[must_use]
     pub fn on_focus<F>(self, f: F) -> Self
     where
         F: 'static + FnMut(&mut T) -> EventResult,
@@ -31,6 +32,7 @@ impl<T> FocusTracker<T> {
     }
 
     /// Sets a callback to be run when the focus is lost.
+    #[must_use]
     pub fn on_focus_lost<F>(self, f: F) -> Self
     where
         F: 'static + FnMut(&mut T) -> EventResult,

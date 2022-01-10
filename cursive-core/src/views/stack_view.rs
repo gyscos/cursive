@@ -279,6 +279,7 @@ impl StackView {
     /// Adds new view on top of the stack in the center of the screen.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn layer<T>(self, view: T) -> Self
     where
         T: IntoBoxedView,
@@ -341,6 +342,7 @@ impl StackView {
     /// Adds a new full-screen layer on top of the stack.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn fullscreen_layer<T>(self, view: T) -> Self
     where
         T: IntoBoxedView,
@@ -351,6 +353,7 @@ impl StackView {
     /// Adds a new transparent layer on top of the stack.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn transparent_layer<T>(self, view: T) -> Self
     where
         T: IntoBoxedView,
@@ -404,6 +407,7 @@ impl StackView {
     /// Adds a view on top of the stack at the given position.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn layer_at<T>(self, position: Position, view: T) -> Self
     where
         T: IntoBoxedView,

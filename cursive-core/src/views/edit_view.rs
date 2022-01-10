@@ -149,6 +149,7 @@ impl EditView {
     /// Input will be rejected if it would make the content exceed this width.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn max_content_width(self, width: usize) -> Self {
         self.with(|s| s.set_max_content_width(Some(width)))
     }
@@ -163,6 +164,7 @@ impl EditView {
     /// Hides the content of the view.
     ///
     /// Only `*` will be shown.
+    #[must_use]
     pub fn secret(self) -> Self {
         self.with(|s| s.set_secret(true))
     }
@@ -184,6 +186,7 @@ impl EditView {
     /// # use cursive_core::views::EditView;
     /// let edit = EditView::new().filler(" ");
     /// ```
+    #[must_use]
     pub fn filler<S: Into<String>>(self, filler: S) -> Self {
         self.with(|s| s.set_filler(filler))
     }
@@ -202,6 +205,7 @@ impl EditView {
     /// When the view is enabled, the style will be reversed.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn style(self, style: ColorStyle) -> Self {
         self.with(|s| s.set_style(style))
     }
@@ -243,6 +247,7 @@ impl EditView {
     /// Sets a mutable callback to be called whenever the content is modified.
     ///
     /// Chainable variant. See [`set_on_edit_mut`](#method.set_on_edit_mut).
+    #[must_use]
     pub fn on_edit_mut<F>(self, callback: F) -> Self
     where
         F: FnMut(&mut Cursive, &str, usize) + 'static,
@@ -266,6 +271,7 @@ impl EditView {
     ///     content.set_content(format!("{}", text.len()));
     /// });
     /// ```
+    #[must_use]
     pub fn on_edit<F>(self, callback: F) -> Self
     where
         F: Fn(&mut Cursive, &str, usize) + 'static,
@@ -316,6 +322,7 @@ impl EditView {
     /// Sets a mutable callback to be called when `<Enter>` is pressed.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_submit_mut<F>(self, callback: F) -> Self
     where
         F: FnMut(&mut Cursive, &str) + 'static,
@@ -336,6 +343,7 @@ impl EditView {
     ///     s.add_layer(Dialog::info(text));
     /// });
     /// ```
+    #[must_use]
     pub fn on_submit<F>(self, callback: F) -> Self
     where
         F: Fn(&mut Cursive, &str) + 'static,
@@ -370,6 +378,7 @@ impl EditView {
     /// Convenient chainable method.
     ///
     /// Does not run the `on_edit` callback.
+    #[must_use]
     pub fn content<S: Into<String>>(mut self, content: S) -> Self {
         self.set_content(content);
         self

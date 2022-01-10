@@ -111,6 +111,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `draw(&Printer)`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_draw<F>(self, f: F) -> Self
     where
         F: 'static + Fn(&T, &Printer),
@@ -129,6 +130,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `on_event(Event)`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_on_event<F>(self, f: F) -> Self
     where
         F: 'static + FnMut(&mut T, Event) -> EventResult,
@@ -147,6 +149,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `required_size(Vec2)`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_required_size<F>(self, f: F) -> Self
     where
         F: 'static + FnMut(&mut T, Vec2) -> Vec2,
@@ -165,6 +168,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `layout(Vec2)`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_layout<F>(self, f: F) -> Self
     where
         F: 'static + FnMut(&mut T, Vec2),
@@ -184,6 +188,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `take_focus(Direction)`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_take_focus<F>(self, f: F) -> Self
     where
         F: 'static
@@ -203,6 +208,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `needs_relayout()`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_needs_relayout<F>(self, f: F) -> Self
     where
         F: 'static + Fn(&T) -> bool,
@@ -221,6 +227,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `call_on_any()`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_call_on_any<F>(self, f: F) -> Self
     where
         F: 'static + for<'a> FnMut(&mut T, &Selector<'_>, AnyCb<'a>),
@@ -239,6 +246,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `important_area()`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_important_area<F>(self, f: F) -> Self
     where
         F: 'static + Fn(&T, Vec2) -> Rect,
@@ -258,6 +266,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `focus_view()`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn with_focus_view<F>(self, f: F) -> Self
     where
         F: 'static

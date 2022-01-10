@@ -91,6 +91,7 @@ impl<V> ScrollView<V> {
     /// Defines the way scrolling is adjusted on content or size change.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn scroll_strategy(self, strategy: ScrollStrategy) -> Self {
         self.with(|s| {
             s.set_scroll_strategy(strategy);
@@ -107,6 +108,7 @@ impl<V> ScrollView<V> {
     /// Control whether scroll bars are visibile.
     ///
     /// Chainable variant
+    #[must_use]
     pub fn show_scrollbars(self, show_scrollbars: bool) -> Self {
         self.with(|s| s.set_show_scrollbars(show_scrollbars))
     }
@@ -144,6 +146,7 @@ impl<V> ScrollView<V> {
     /// Defaults to `true`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn scroll_y(self, enabled: bool) -> Self {
         self.with(|s| {
             s.set_scroll_y(enabled);
@@ -155,6 +158,7 @@ impl<V> ScrollView<V> {
     /// Defaults to `false`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn scroll_x(self, enabled: bool) -> Self {
         self.with(|s| {
             s.set_scroll_x(enabled);
@@ -286,6 +290,7 @@ impl<V> ScrollView<V> {
     /// `set_on_scroll`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_scroll_inner<F>(self, on_scroll: F) -> Self
     where
         F: Fn(&mut Self, Rect) -> EventResult + 'static,
@@ -296,6 +301,7 @@ impl<V> ScrollView<V> {
     /// Sets a callback to be run whenever scrolling happens.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn on_scroll<F>(self, on_scroll: F) -> Self
     where
         F: FnMut(&mut crate::Cursive, Rect) + 'static,

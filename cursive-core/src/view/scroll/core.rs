@@ -309,6 +309,7 @@ impl Core {
     /// Defines the way scrolling is adjusted on content or size change.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn scroll_strategy(self, strategy: ScrollStrategy) -> Self {
         self.with(|s| s.set_scroll_strategy(strategy))
     }
@@ -324,6 +325,7 @@ impl Core {
     /// Sets the padding between content and scrollbar.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn scrollbar_padding<V: Into<Vec2>>(
         self,
         scrollbar_padding: V,
@@ -354,6 +356,7 @@ impl Core {
     /// Control whether scroll bars are visibile.
     ///
     /// Chainable variant
+    #[must_use]
     pub fn show_scrollbars(self, show_scrollbars: bool) -> Self {
         self.with(|s| s.set_show_scrollbars(show_scrollbars))
     }
@@ -402,6 +405,7 @@ impl Core {
     /// Defaults to `true`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn scroll_y(self, enabled: bool) -> Self {
         self.with(|s| s.set_scroll_y(enabled))
     }
@@ -411,6 +415,7 @@ impl Core {
     /// Defaults to `false`.
     ///
     /// Chainable variant.
+    #[must_use]
     pub fn scroll_x(self, enabled: bool) -> Self {
         self.with(|s| s.set_scroll_x(enabled))
     }

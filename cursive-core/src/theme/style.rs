@@ -37,11 +37,13 @@ impl Style {
     /// Returns a new `Style` by merging all given styles.
     ///
     /// Will use the last non-`None` color, and will combine all effects.
+    #[must_use]
     pub fn merge(styles: &[Style]) -> Self {
         styles.iter().collect()
     }
 
     /// Returns a combination of `self` and `other`.
+    #[must_use]
     pub fn combine<S>(self, other: S) -> Self
     where
         S: Into<Style>,
