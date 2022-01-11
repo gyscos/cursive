@@ -69,18 +69,24 @@ impl<V> Panel<V> {
 
     fn draw_title(&self, printer: &Printer) {
         if !self.title.is_empty() {
-            let len = self.title.width();
-            let x = TITLE_SPACING
-                + self
-                    .title_position
-                    .get_offset(len, printer.size.x - 2 * TITLE_SPACING);
+            let available = match printer.size.x.checked_sub(2 * TITLE_SPACING)
+            {
+                Some(available) => available,
+                None => return, /* Panel is too small to even write the decoration. */
+            };
+            let len = std::cmp::min(self.title.width(), available);
+            let x =
+                TITLE_SPACING + self.title_position.get_offset(len, available);
+
+            printer
+                .offset((x, 0))
+                .cropped((len, 1))
+                .with_color(ColorStyle::title_primary(), |p| {
+                    p.print((0, 0), &self.title)
+                });
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");
                 printer.print((x + len, 0), " ├");
-            });
-
-            printer.with_color(ColorStyle::title_primary(), |p| {
-                p.print((x, 0), &self.title)
             });
         }
     }
