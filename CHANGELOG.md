@@ -1,5 +1,11 @@
 # Changelog
 
+## cursive-core 0.3.1
+
+### Bugfixes
+
+- Fix title layout for Panel when the space is limited
+
 ## cursive-core 0.3.0, cursive 0.17.0
 
 ### API updates

@@ -8,7 +8,7 @@ license = "MIT"
 name = "cursive_core"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/cursive"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2018"
 
 [package.metadata.docs.rs]
