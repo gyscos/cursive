@@ -380,11 +380,13 @@ impl<T: 'static> SelectView<T> {
     pub fn remove_item(&mut self, id: usize) -> Callback {
         self.items.remove(id);
         let focus = self.focus();
-        if focus >= id && focus > 0 {
-            self.focus.set(focus - 1);
-        }
-
-        self.make_select_cb().unwrap_or_else(Callback::dummy)
+        (focus >= id && focus > 0)
+            .then(|| {
+                self.focus.set(focus - 1);
+                self.make_select_cb()
+            })
+            .flatten()
+            .unwrap_or_else(Callback::dummy)
     }
 
     /// Inserts an item at position `index`, shifting all elements after it to
@@ -394,6 +396,10 @@ impl<T: 'static> SelectView<T> {
         S: Into<StyledString>,
     {
         self.items.insert(index, Item::new(label.into(), value));
+        let focus = self.focus();
+        if focus >= index {
+            self.focus.set(focus + 1);
+        }
     }
 
     /// Chainable variant of add_item
