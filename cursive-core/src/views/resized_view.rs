@@ -154,6 +154,11 @@ impl<T> ResizedView<T> {
     }
 
     /// Wraps `view` in a `ResizedView` which will never be smaller than `size`.
+    ///
+    /// As long as the parent view is large enough.
+    ///
+    /// If the space is constrained (for example the window is too small),
+    /// this view might still be given a smaller size than requested.
     pub fn with_min_size<S: Into<Vec2>>(size: S, view: T) -> Self {
         let size = size.into();
 
@@ -198,9 +203,12 @@ impl<T: View> ViewWrapper for ResizedView<T> {
     wrap_impl!(self.view: T);
 
     fn wrap_draw(&self, printer: &Printer) {
-        self.view.draw(&printer.inner_size(
-            self.size.zip_map(printer.size, |c, s| c.result((s, s))),
-        ));
+        let available = self
+            .size
+            .zip_map(printer.size, |c, s| c.result((s, s)))
+            .or_min(printer.size);
+
+        self.view.draw(&printer.inner_size(available));
     }
 
     fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
@@ -218,8 +226,11 @@ impl<T: View> ViewWrapper for ResizedView<T> {
 
     fn wrap_layout(&mut self, size: Vec2) {
         self.invalidated = false;
-        self.view
-            .layout(self.size.zip_map(size, |c, s| c.result((s, s))));
+        let available = self
+            .size
+            .zip_map(size, |c, s| c.result((s, s)))
+            .or_min(size);
+        self.view.layout(available);
     }
 
     fn wrap_needs_relayout(&self) -> bool {
@@ -302,6 +313,7 @@ mod tests {
         let child = parent.get_inner();
         assert_eq!(child.get_content().source(), "abc");
     }
+
     #[test]
     fn test_get_inner_mut() {
         use crate::views::TextView;
@@ -313,5 +325,39 @@ mod tests {
         child.set_content(new_value);
 
         assert_eq!(child.get_content().source(), new_value);
+    }
+
+    #[test]
+    fn test_restricted() {
+        // Make sure that we don't offer the inner view more space than we have.
+        use crate::views::{LastSizeView, ResizedView};
+
+        fn test_view(
+            mut view: ResizedView<LastSizeView<DummyView>>,
+            expected_big: Vec2,
+            expected_small: Vec2,
+        ) {
+            view.layout(Vec2::new(10, 10));
+            assert_eq!(view.view.size, expected_big);
+
+            view.layout(Vec2::new(3, 10));
+            assert_eq!(view.view.size, expected_small);
+        }
+
+        test_view(
+            LastSizeView::new(DummyView).fixed_size((5usize, 5)),
+            Vec2::new(5, 5),
+            Vec2::new(3, 5),
+        );
+        test_view(
+            LastSizeView::new(DummyView).max_size((5usize, 5)),
+            Vec2::new(5, 5),
+            Vec2::new(3, 5),
+        );
+        test_view(
+            LastSizeView::new(DummyView).min_size((5usize, 5)),
+            Vec2::new(10, 10),
+            Vec2::new(3, 10),
+        );
     }
 }

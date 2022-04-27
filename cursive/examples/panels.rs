@@ -1,5 +1,5 @@
 use cursive::traits::*;
-use cursive::views::{Button, DummyView, LinearLayout, Panel};
+use cursive::views::{Button, LinearLayout, Panel};
 
 fn main() {
     let mut siv = cursive::default();

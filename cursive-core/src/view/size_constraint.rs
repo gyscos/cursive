@@ -40,8 +40,8 @@ impl SizeConstraint {
     /// When it said it wanted `result`.
     pub fn result(self, (result, available): (usize, usize)) -> usize {
         match self {
-            SizeConstraint::AtLeast(value) if result < value => value,
-            SizeConstraint::AtMost(value) if result > value => value,
+            SizeConstraint::AtLeast(value) if result < value => value, /* max(result, value) */
+            SizeConstraint::AtMost(value) if result > value => value, /* min(result, value) */
             SizeConstraint::Fixed(value) => value,
             SizeConstraint::Full if available > result => available,
             _ => result,

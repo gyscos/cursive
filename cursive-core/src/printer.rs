@@ -642,8 +642,8 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Returns a sub-printer with a different inner size.
     ///
-    /// This will not change the actual output size, but will appear bigger to
-    /// users of this printer.
+    /// This will not change the actual output size, but will appear bigger
+    /// (or smaller) to users of this printer.
     ///
     /// Useful to give to children who think they're big, but really aren't.
     #[must_use]
