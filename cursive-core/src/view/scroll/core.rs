@@ -469,7 +469,11 @@ impl Core {
     /// Scroll until the given row is visible.
     pub fn scroll_to_y(&mut self, y: usize) {
         if y >= self.offset.y + self.last_available_size().y {
-            self.offset.y = 1 + y - self.last_available_size().y;
+            // If this is run before we get to properly layout, the last size
+            // might be (0,0).
+            // In that case, we risk setting the offset to y+1, which will
+            // make the item out of view.
+            self.offset.y = 1 + y - self.last_available_size().y.max(1);
         } else if y < self.offset.y {
             self.offset.y = y;
         }
