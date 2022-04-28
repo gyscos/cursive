@@ -1,5 +1,19 @@
 # Changelog
 
+## cursive 0.18.0
+
+### Breaking Changes
+
+- Updated crossterm to 0.23.0
+
+## cursive-core 0.3.2
+
+### Bugfixes
+
+- Fix focus for `SelectView::insert_item`.
+- Fix scroll offset before the first layout call.
+- Fix ResizedView to never give a larger size than available.
+
 ## cursive-core 0.3.1
 
 ### Bugfixes
