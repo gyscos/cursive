@@ -415,6 +415,43 @@ impl Key {
             _ => panic!("unknown function key: F{}", n),
         }
     }
+
+    /// Return the string representation of the key
+    ///
+    /// For example, `Key::Enter` returns `"Enter"`, `Key::F1` returns `"F1"`, etc. etc.
+    pub fn to_string(self) -> String {
+        match self {
+            Key::Enter => "Enter".to_string(),
+            Key::Tab => "Tab".to_string(),
+            Key::Backspace => "Backspace".to_string(),
+            Key::Esc => "Escape".to_string(),
+            Key::Left => "Left".to_string(),
+            Key::Right => "Right".to_string(),
+            Key::Up => "Up".to_string(),
+            Key::Down => "Down".to_string(),
+            Key::Ins => "Insert".to_string(),
+            Key::Del => "Delete".to_string(),
+            Key::Home => "Home".to_string(),
+            Key::End => "End".to_string(),
+            Key::PageUp => "PageUp".to_string(),
+            Key::PageDown => "PageDown".to_string(),
+            Key::PauseBreak => "PauseBreak".to_string(),
+            Key::NumpadCenter => "NumpadCenter".to_string(),
+            Key::F0 => "F0".to_string(),
+            Key::F1 => "F1".to_string(),
+            Key::F2 => "F2".to_string(),
+            Key::F3 => "F3".to_string(),
+            Key::F4 => "F4".to_string(),
+            Key::F5 => "F5".to_string(),
+            Key::F6 => "F6".to_string(),
+            Key::F7 => "F7".to_string(),
+            Key::F8 => "F8".to_string(),
+            Key::F9 => "F9".to_string(),
+            Key::F10 => "F10".to_string(),
+            Key::F11 => "F11".to_string(),
+            Key::F12 => "F12".to_string(),
+        }
+    }
 }
 
 /// One of the buttons present on the mouse
@@ -435,6 +472,23 @@ pub enum MouseButton {
     // TODO: handle more buttons?
     #[doc(hidden)]
     Other,
+}
+
+impl MouseButton {
+    /// Returns the string representation of the button
+    ///
+    /// For example, `MouseButton::Left` returns `"Left"`, `MouseButton::Right` returns `"Right"`, etc. etc.
+    ///
+    pub fn to_string(self) -> String {
+        match self {
+            MouseButton::Left => "Left".to_string(),
+            MouseButton::Middle => "Middle".to_string(),
+            MouseButton::Right => "Right".to_string(),
+            MouseButton::Button4 => "Button4".to_string(),
+            MouseButton::Button5 => "Button5".to_string(),
+            MouseButton::Other => "Other".to_string(),
+        }
+    }
 }
 
 /// Represents a possible event sent by the mouse.
@@ -478,6 +532,20 @@ impl MouseEvent {
             self,
             MouseEvent::Press(_) | MouseEvent::WheelUp | MouseEvent::WheelDown
         )
+    }
+
+    /// Returns a string representation of the event.
+    ///
+    /// For example, `MouseEvent::Press(MouseButton::Left)` returns `"Press Left"`, etc. etc.
+    ///
+    pub fn to_string(self) -> String {
+        match self {
+            MouseEvent::Press(btn) => format!("Press {}", btn.to_string()),
+            MouseEvent::Release(btn) => format!("Release {}", btn.to_string()),
+            MouseEvent::Hold(btn) => format!("Hold {}", btn.to_string()),
+            MouseEvent::WheelUp => "WheelUp".to_string(),
+            MouseEvent::WheelDown => "WheelDown".to_string(),
+        }
     }
 }
 
@@ -590,6 +658,41 @@ impl Event {
         let mut result = self.clone();
         result.relativize(top_left);
         result
+    }
+
+    /// Return a string representation of the event.
+    ///
+    /// For example, `Event::Key(Key::A)` returns `"Key A"`, etc. etc.
+    ///
+    ///
+    pub fn to_string(self) -> String {
+        match self {
+            Event::WindowResize => "WindowResize".to_string(),
+            Event::FocusLost => "FocusLost".to_string(),
+            Event::Refresh => "Refresh".to_string(),
+            Event::Char(c) => format!("Char {}", c),
+            Event::CtrlChar(c) => format!("CtrlChar {}", c),
+            Event::AltChar(c) => format!("AltChar {}", c),
+            Event::Key(k) => format!("Key {}", k.to_string()),
+            Event::Shift(k) => format!("Shift {}", k.to_string()),
+            Event::Alt(k) => format!("Alt {}", k.to_string()),
+            Event::AltShift(k) => format!("AltShift {}", k.to_string()),
+            Event::Ctrl(k) => format!("Ctrl {}", k.to_string()),
+            Event::CtrlShift(k) => format!("CtrlShift {}", k.to_string()),
+            Event::CtrlAlt(k) => format!("CtrlAlt {}", k.to_string()),
+            Event::Mouse {
+                offset: o,
+                position: p,
+                event: e,
+            } => format!(
+                "View Position={:?}, Mouse Position={:?}, Mouse Press {}",
+                o,
+                p,
+                e.to_string()
+            ),
+            Event::Unknown(v) => format!("Unknown {:?}", v),
+            Event::Exit => "Exit".to_string(),
+        }
     }
 }
 
