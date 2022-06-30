@@ -49,7 +49,7 @@ where
     T: Any + std::fmt::Debug,
 {
     fn as_any(&self) -> &dyn Any {
-        &*self
+        self
     }
 }
 

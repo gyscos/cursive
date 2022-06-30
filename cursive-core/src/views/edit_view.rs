@@ -298,7 +298,7 @@ impl EditView {
         let callback = RefCell::new(callback);
         self.set_on_submit(move |s, text| {
             if let Ok(mut f) = callback.try_borrow_mut() {
-                (&mut *f)(s, text);
+                (*f)(s, text);
             }
         });
     }

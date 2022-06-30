@@ -4,7 +4,7 @@ use crate::XY;
 /// Cache around a one-dimensional layout result.
 ///
 /// This is not a View, but something to help you if you create your own Views.
-#[derive(PartialEq, Debug, Clone, Copy)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub struct SizeCache<T = ()> {
     /// Cached value
     pub value: usize,

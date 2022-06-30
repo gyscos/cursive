@@ -35,13 +35,13 @@ impl std::ops::DerefMut for CursiveRunnable {
 
 impl std::borrow::Borrow<Cursive> for CursiveRunnable {
     fn borrow(&self) -> &Cursive {
-        &*self
+        self
     }
 }
 
 impl std::borrow::BorrowMut<Cursive> for CursiveRunnable {
     fn borrow_mut(&mut self) -> &mut Cursive {
-        &mut *self
+        self
     }
 }
 

@@ -94,7 +94,7 @@ impl<T> ChildIterator<T> {
     }
 }
 
-impl<'a, T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
+impl<T: Deref<Target = Child>, I: Iterator<Item = T>> Iterator
     for ChildIterator<I>
 {
     type Item = ChildItem<T>;
