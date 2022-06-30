@@ -60,7 +60,11 @@ where
     // Where we're not, just forward inner_size.
     let size = get_scroller(model).is_enabled().select_or(
         Vec2::min(inner_size + scrollbar_size, constraint),
-        inner_size + scrollbar_size,
+        // In strict mode, fill all the space we can:
+        match strict {
+            true => constraint,
+            false => inner_size + scrollbar_size,
+        }
     );
 
     // In strict mode, there's no way our size is over constraints.
