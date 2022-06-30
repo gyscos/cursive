@@ -1,5 +1,11 @@
 # Changelog
 
+## cursive-core 0.3.3
+
+### Bugfixes
+
+- Fix layout size inside `ScrollView`.
+
 ## cursive 0.18.0
 
 ### Breaking Changes
