@@ -272,8 +272,10 @@ impl FixedLayout {
 
 impl View for FixedLayout {
     fn draw(&self, printer: &Printer) {
-        for child in &self.children {
-            child.view.draw(&printer.windowed(child.position));
+        for (i, child) in self.children.iter().enumerate() {
+            child.view.draw(
+                &printer.windowed(child.position).focused(i == self.focus),
+            );
         }
     }
 

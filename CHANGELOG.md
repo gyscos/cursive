@@ -1,5 +1,11 @@
 # Changelog
 
+## Next version (cursive-core 0.3.4)
+
+### Bugfixes
+
+- Fix focused state in `FixedLayoutView`.
+
 ## cursive-core 0.3.3
 
 ### Bugfixes
