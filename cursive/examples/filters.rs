@@ -1,26 +1,28 @@
 use cursive::view::Resizable;
-use cursive::views::{Dialog, LinearLayout, RadioGroup, TextView};
+use cursive::views::{Dialog, LinearLayout, ListView, RadioGroup};
+use cursive::With;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Color {
     Red,
     Blue,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Size {
     Large,
     Small,
 }
 
-#[derive(Default)]
+#[derive(Clone, Copy, Debug, Default)]
 struct Filters {
     color: Option<Color>,
     size: Option<Size>,
 }
 
-// This is an examples of a Settings/Configuration "pop-up" where we can
-// modify user_data to be used elsewhere in our application.
+// This is an example with a more complex use of user_data.
+// Here we prepare some state (Filters) and make it available to be used
+// elsewhere via user_data.
 
 fn main() {
     let mut siv = cursive::default();
@@ -29,97 +31,98 @@ fn main() {
     siv.set_autohide_menu(false);
     siv.menubar()
         .add_leaf("Filters", |s| {
-            // Hide menu while "pop-up" settings are visible
+            // Hide menu while Filters are open to prevent other Filter windows
+            // to be created on top.
             s.set_autohide_menu(true);
 
             let mut color_group: RadioGroup<Option<Color>> = RadioGroup::new();
             let mut size_group: RadioGroup<Option<Size>> = RadioGroup::new();
 
             // Get current filters to draw the correct selected buttons.
-            let user_data = s.user_data::<Filters>().unwrap();
-            let current_color = user_data.color;
-            let current_size = user_data.size;
+            let current_filters = s
+                .with_user_data(|filters: &mut Filters| filters.clone())
+                .unwrap();
             s.add_layer(
                 Dialog::new()
                     .title("Filters")
                     .content(
-                        LinearLayout::vertical()
+                        ListView::new()
                             .child(
+                                "Color: ",
                                 LinearLayout::horizontal()
-                                    .child(
-                                        TextView::new("Color:")
-                                            .fixed_width(15)
-                                            .fixed_height(2),
-                                    )
                                     .child(
                                         color_group
                                             .button(None, "Any")
                                             .fixed_width(10),
                                     )
-                                    .child({
-                                        let mut button = color_group
-                                            .button(Some(Color::Red), "Red");
-                                        if let Some(Color::Red) = current_color
-                                        {
-                                            button.select();
-                                        }
-                                        button.fixed_width(10)
-                                    })
-                                    .child({
-                                        let mut button = color_group
-                                            .button(Some(Color::Blue), "Blue");
-                                        if let Some(Color::Blue) =
-                                            current_color
-                                        {
-                                            button.select();
-                                        }
-                                        button.fixed_width(10)
-                                    }),
+                                    .child(
+                                        color_group
+                                            .button(Some(Color::Red), "Red")
+                                            .with_if(
+                                                current_filters.color
+                                                    == Some(Color::Red),
+                                                |button| {
+                                                    button.select();
+                                                },
+                                            )
+                                            .fixed_width(10),
+                                    )
+                                    .child(
+                                        color_group
+                                            .button(Some(Color::Blue), "Blue")
+                                            .with_if(
+                                                current_filters.color
+                                                    == Some(Color::Blue),
+                                                |button| {
+                                                    button.select();
+                                                },
+                                            ),
+                                    ),
                             )
                             .child(
+                                "Size: ",
                                 LinearLayout::horizontal()
-                                    .child(
-                                        TextView::new("Size:")
-                                            .fixed_width(15)
-                                            .fixed_height(2),
-                                    )
                                     .child(
                                         size_group
                                             .button(None, "Any")
                                             .fixed_width(10),
                                     )
-                                    .child({
-                                        let mut button = size_group.button(
-                                            Some(Size::Small),
-                                            "Small",
-                                        );
-                                        if let Some(Size::Small) = current_size
-                                        {
-                                            button.select();
-                                        }
-                                        button.fixed_width(10)
-                                    })
-                                    .child({
-                                        let mut button = size_group.button(
-                                            Some(Size::Large),
-                                            "Large",
-                                        );
-                                        if let Some(Size::Large) = current_size
-                                        {
-                                            button.select();
-                                        }
-                                        button.fixed_width(10)
-                                    }),
+                                    .child(
+                                        size_group
+                                            .button(Some(Size::Small), "Small")
+                                            .with_if(
+                                                current_filters.size
+                                                    == Some(Size::Small),
+                                                |button| {
+                                                    button.select();
+                                                },
+                                            )
+                                            .fixed_width(10),
+                                    )
+                                    .child(
+                                        size_group
+                                            .button(Some(Size::Large), "Large")
+                                            .with_if(
+                                                current_filters.size
+                                                    == Some(Size::Large),
+                                                |button| {
+                                                    button.select();
+                                                },
+                                            ),
+                                    ),
                             ),
                     )
                     .button("Done", move |s| {
                         // Save selected filters as user_data
-                        s.user_data::<Filters>().unwrap().color =
-                            *color_group.selection();
-                        s.user_data::<Filters>().unwrap().size =
-                            *size_group.selection();
-                        s.pop_layer();
+                        s.with_user_data(|filters: &mut Filters| {
+                            filters.color = *color_group.selection();
+                            filters.size = *size_group.selection();
+                        })
+                        .unwrap();
+                        // Bring back the menu. Enable opening Filter window
+                        // again once this one is closed.
                         s.set_autohide_menu(false);
+                        s.pop_layer();
                     }),
             );
         })
