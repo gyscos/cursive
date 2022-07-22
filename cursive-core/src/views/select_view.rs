@@ -73,6 +73,9 @@ pub struct SelectView<T = String> {
     // We "cache" it during the draw, so we need interior mutability.
     last_offset: Cell<Vec2>,
     last_size: Vec2,
+
+    // Cache of required_size. Set to None when it needs to be recomputed.
+    last_required_size: Option<Vec2>,
 }
 
 impl<T: 'static> Default for SelectView<T> {
@@ -97,6 +100,7 @@ impl<T: 'static> SelectView<T> {
             autojump: false,
             last_offset: Cell::new(Vec2::zero()),
             last_size: Vec2::zero(),
+            last_required_size: None,
         }
     }
 
@@ -130,6 +134,7 @@ impl<T: 'static> SelectView<T> {
     /// Turns `self` into a popup select view.
     pub fn set_popup(&mut self, popup: bool) {
         self.popup = popup;
+        self.last_required_size = None;
     }
 
     /// Sets a callback to be used when an item is selected.
@@ -282,6 +287,7 @@ impl<T: 'static> SelectView<T> {
     pub fn clear(&mut self) {
         self.items.clear();
         self.focus.set(0);
+        self.last_required_size = None;
     }
 
     /// Adds a item to the list, with given label and value.
@@ -298,6 +304,7 @@ impl<T: 'static> SelectView<T> {
     /// ```
     pub fn add_item<S: Into<StyledString>>(&mut self, label: S, value: T) {
         self.items.push(Item::new(label.into(), value));
+        self.last_required_size = None;
     }
 
     /// Gets an item at given idx or None.
@@ -320,6 +327,7 @@ impl<T: 'static> SelectView<T> {
         if i >= self.items.len() {
             None
         } else {
+            self.last_required_size = None;
             let item = &mut self.items[i];
             if let Some(t) = Rc::get_mut(&mut item.value) {
                 let label = &mut item.label;
@@ -344,6 +352,7 @@ impl<T: 'static> SelectView<T> {
     where
         T: Clone,
     {
+        self.last_required_size = None;
         self.items
             .iter_mut()
             .map(|item| (&mut item.label, Rc::make_mut(&mut item.value)))
@@ -358,6 +367,7 @@ impl<T: 'static> SelectView<T> {
     pub fn try_iter_mut(
         &mut self,
     ) -> impl Iterator<Item = (&mut StyledString, Option<&mut T>)> {
+        self.last_required_size = None;
         self.items
             .iter_mut()
             .map(|item| (&mut item.label, Rc::get_mut(&mut item.value)))
@@ -379,6 +389,7 @@ impl<T: 'static> SelectView<T> {
     /// You should run this callback with a `&mut Cursive`.
     pub fn remove_item(&mut self, id: usize) -> Callback {
         self.items.remove(id);
+        self.last_required_size = None;
         let focus = self.focus();
         (focus >= id && focus > 0)
             .then(|| {
@@ -400,6 +411,7 @@ impl<T: 'static> SelectView<T> {
         if focus >= index {
             self.focus.set(focus + 1);
         }
+        self.last_required_size = None;
     }
 
     /// Chainable variant of add_item
@@ -951,6 +963,9 @@ impl<T: 'static> View for SelectView<T> {
     }
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {
+        if let Some(s) = self.last_required_size {
+            return s;
+        }
         // Items here are not compressible.
         // So no matter what the horizontal requirements are,
         // we'll still return our longest item.
@@ -960,13 +975,15 @@ impl<T: 'static> View for SelectView<T> {
             .map(|item| item.label.width())
             .max()
             .unwrap_or(1);
-        if self.popup {
+        let size = if self.popup {
             Vec2::new(w + 2, 1)
         } else {
             let h = self.items.len();
 
             Vec2::new(w, h)
-        }
+        };
+        self.last_required_size = Some(size);
+        size
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
