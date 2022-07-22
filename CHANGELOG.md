@@ -1,6 +1,16 @@
 # Changelog
 
-## Next version (cursive-core 0.3.4)
+## cursive 0.19.0
+
+### Breaking Changes
+
+- Updates crossterm to 0.24.0
+
+## cursive-core 0.3.4
+
+### Improvements
+
+- SelectView now caches its required size for improved performance.
 
 ### Bugfixes
 
