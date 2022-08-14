@@ -521,9 +521,9 @@ impl Cursive {
         self.root.call_on(sel, callback)
     }
 
-    /// Tries to find the view identified by the given id.
+    /// Tries to find the view identified by the given name.
     ///
-    /// Convenient method to use `call_on` with a `view::Selector::Id`.
+    /// Convenient method to use `call_on` with a `view::Selector::Name`.
     ///
     /// # Examples
     ///
