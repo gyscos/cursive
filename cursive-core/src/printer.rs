@@ -20,7 +20,7 @@ use unicode_width::UnicodeWidthStr;
 ///
 /// The area it can print on is defined by `offset` and `size`.
 ///
-/// The part of the content it will print is defined by `content_offset`
+/// The part of the content it will print is defined by `drawing_area_offset`
 /// and `size`.
 #[derive(Clone)]
 pub struct Printer<'a, 'b> {
@@ -48,8 +48,8 @@ pub struct Printer<'a, 'b> {
     /// The view being drawn can ignore this, but anything to the top-left of
     /// this will actually be ignored, so it can be used to skip this part.
     ///
-    /// A print request `x`, will really print at `x - content_offset`.
-    pub content_offset: Vec2,
+    /// A print request `x`, will really print at `x + drawing_area_offset`.
+    pub drawing_area_offset: Vec2,
 
     /// Whether the view to draw is currently focused or not.
     pub focused: bool,
@@ -80,7 +80,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let size = size.into();
         Printer {
             offset: Vec2::zero(),
-            content_offset: Vec2::zero(),
+            drawing_area_offset: Vec2::zero(),
             output_size: size,
             size,
             focused: true,
@@ -134,19 +134,18 @@ impl<'a, 'b> Printer<'a, 'b> {
         S: Into<Vec2>,
         F: FnOnce(&str) -> usize,
     {
-        // Where we are asked to start printing. Oh boy. It's not that simple.
         let start = start.into();
 
-        // We accept requests between `content_offset` and
-        // `content_offset + output_size`.
-        if !start.strictly_lt(self.output_size + self.content_offset) {
+        // Refuse to print if the starting offset is out of the higher limits of the drawing area.
+        // The drawing area is a rectangle area combined with an offset.
+        if !start.strictly_lt(self.output_size + self.drawing_area_offset) {
             return;
         }
 
-        // If start < content_offset, part of the text will not be visible.
+        // If start < drawing_area_offset, part of the text will not be visible.
         // This is the part of the text that's hidden:
-        // (It should always be smaller than the content offset)
-        let hidden_part = self.content_offset.saturating_sub(start);
+        // (It should always be smaller than the drawing area offset)
+        let hidden_part = self.drawing_area_offset.saturating_sub(start);
         if hidden_part.y > 0 {
             // Since we are printing a single line, there's nothing we can do.
             return;
@@ -185,10 +184,10 @@ impl<'a, 'b> Printer<'a, 'b> {
             text_width -= skipped_width;
         }
 
-        assert!(start.fits(self.content_offset));
+        assert!(start.fits(self.drawing_area_offset));
 
         // What we did before should guarantee that this won't overflow.
-        start = start - self.content_offset;
+        start = start - self.drawing_area_offset;
 
         // Do we have enough room for the entire line?
         let room = self.output_size.x - start.x;
@@ -217,12 +216,12 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         // Here again, we can abort if we're trying to print too far right or
         // too low.
-        if !start.strictly_lt(self.output_size + self.content_offset) {
+        if !start.strictly_lt(self.output_size + self.drawing_area_offset) {
             return;
         }
 
         // hidden_part describes how far to the top left of the viewport we are.
-        let hidden_part = self.content_offset.saturating_sub(start);
+        let hidden_part = self.drawing_area_offset.saturating_sub(start);
         if hidden_part.x > 0 || hidden_part.y >= height {
             // We're printing a single column, so we can't do much here.
             return;
@@ -230,12 +229,12 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         // Skip `hidden_part`
         let start = start + hidden_part;
-        assert!(start.fits(self.content_offset));
+        assert!(start.fits(self.drawing_area_offset));
 
         let height = height - hidden_part.y;
 
         // What we did before ensures this won't overflow.
-        let start = start - self.content_offset;
+        let start = start - self.drawing_area_offset;
 
         // Don't go overboard
         let height = min(height, self.output_size.y - start.y);
@@ -265,11 +264,11 @@ impl<'a, 'b> Printer<'a, 'b> {
         let start = start.into();
 
         // Nothing to be done if the start if too far to the bottom/right
-        if !start.strictly_lt(self.output_size + self.content_offset) {
+        if !start.strictly_lt(self.output_size + self.drawing_area_offset) {
             return;
         }
 
-        let hidden_part = self.content_offset.saturating_sub(start);
+        let hidden_part = self.drawing_area_offset.saturating_sub(start);
         if hidden_part.y > 0 || hidden_part.x >= width {
             // We're printing a single line, so we can't do much here.
             return;
@@ -277,12 +276,12 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         // Skip `hidden_part`
         let start = start + hidden_part;
-        assert!(start.fits(self.content_offset));
+        assert!(start.fits(self.drawing_area_offset));
 
         let width = width - hidden_part.x;
 
         // Don't go too far
-        let start = start - self.content_offset;
+        let start = start - self.drawing_area_offset;
 
         // Don't write too much if we're close to the end
         let repetitions = min(width, self.output_size.x - start.x) / c.width();
@@ -521,10 +520,10 @@ impl<'a, 'b> Printer<'a, 'b> {
         self.clone().with(|s| {
             // If we are drawing a part of the content,
             // let's reduce this first.
-            let consumed = Vec2::min(s.content_offset, offset);
+            let consumed = Vec2::min(s.drawing_area_offset, offset);
 
             let offset = offset - consumed;
-            s.content_offset = s.content_offset - consumed;
+            s.drawing_area_offset = s.drawing_area_offset - consumed;
 
             s.offset = s.offset + offset;
 
@@ -626,7 +625,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         self.shrinked(borders - half_borders).offset(half_borders)
     }
 
-    /// Returns a new sub-printer with a content offset.
+    /// Returns a new sub-printer with a drawing area offset.
     ///
     /// This is useful for parent views that only show a subset of their
     /// child, like `ScrollView`.
@@ -636,7 +635,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         S: Into<Vec2>,
     {
         self.clone().with(|s| {
-            s.content_offset = s.content_offset + offset;
+            s.drawing_area_offset = s.drawing_area_offset + offset;
         })
     }
 

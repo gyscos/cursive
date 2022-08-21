@@ -185,7 +185,7 @@ pub fn draw_lines<T, LineDrawer>(
     LineDrawer: FnMut(&T, &Printer, usize),
 {
     draw(scroller, printer, |s, printer| {
-        let start = printer.content_offset.y;
+        let start = printer.drawing_area_offset.y;
         let end = start + printer.output_size.y;
         for y in start..end {
             let printer = printer.offset((0, y)).cropped((printer.size.x, 1));

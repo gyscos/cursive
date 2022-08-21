@@ -407,7 +407,7 @@ impl View for TextView {
                 .rows
                 .iter()
                 .enumerate()
-                .skip(printer.content_offset.y)
+                .skip(printer.drawing_area_offset.y)
                 .take(printer.output_size.y)
             {
                 let l = row.width;
