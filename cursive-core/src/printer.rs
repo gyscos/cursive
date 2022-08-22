@@ -1,3 +1,4 @@
+#![warn(missing_docs)]
 //! Provide higher-level abstraction to draw things on backends.
 
 use crate::backend::Backend;
@@ -114,17 +115,46 @@ impl<'a, 'b> Printer<'a, 'b> {
         }
     }
 
-    // TODO: use &mut self? We don't *need* it, but it may make sense.
-    // We don't want people to start calling prints in parallel?
     /// Prints some text at the given position.
     ///
-    ///# Parameters
-    ///`start` is an offset used to print the text in the view.\
-    ///`text` is a simple string to print on the screen.
+    /// # Parameters
+    /// `start` is an offset used to print the text in the view.\
+    /// `text` is a simple string to print on the screen.
     ///
-    ///# Description
+    /// # Description
     /// Prints some text at the given position.
     /// The text could be truncated if it exceed the [drawing area size](Self::output_size).
+    ///
+    /// # Example
+    /// ```rust
+    /// use cursive::{View, Printer, XY, Vec2};
+    /// 
+    /// pub struct CustomView {
+    ///     word: String,
+    /// }
+    /// 
+    /// impl CustomView {
+    ///     pub fn new() -> Self {
+    ///         Self {
+    ///             word: String::from("Eh, tu connais Rust?"),
+    ///         }
+    ///     }
+    /// }
+    /// 
+    /// impl View for CustomView {
+    ///     fn draw(&self, printer: &Printer<'_, '_>){
+    ///         printer.print(XY::new(0, 0), self.word.as_str());
+    ///     }
+    /// 
+    ///     // This method override change the minimum view size
+    ///     // from the default one (1, 1) to the minimum size you need.
+    ///     fn required_size(&mut self, _constraint: XY<usize>) -> XY<usize> {
+    ///         Vec2::new(self.word.len(), 1)
+    ///     }
+    /// }
+    /// ```
+    // TODO: use &mut self? We don't *need* it, but it may make sense.
+    // We don't want people to start calling prints in parallel?
     pub fn print<S: Into<Vec2>>(&self, start: S, text: &str) {
         self.print_with_width(start, text, UnicodeWidthStr::width);
     }
