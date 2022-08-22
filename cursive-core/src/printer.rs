@@ -19,8 +19,8 @@ use unicode_width::UnicodeWidthStr;
 /// Convenient interface to draw on a subset of the screen.
 ///
 /// The area it can print on is defined by `offset` and `size`.\
-/// The part of the content it will print is defined by `content_offset`
-/// and `size`.
+/// The part of the content it will print is defined by [`Self::content_offset`]
+/// and [`Self::size`].
 #[derive(Clone)]
 pub struct Printer<'a, 'b> {
     /// Offset into the window this printer should start drawing at.
@@ -131,7 +131,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Prints some text, using the given callback to compute width.
     ///
-    /// Mostly used with `UnicodeWidthStr::width`.
+    /// Mostly used with [`UnicodeWidthStr::width`].
     /// If you already know the width, you can give it as a constant instead.
     fn print_with_width<S, F>(&self, start: S, text: &str, width: F)
     where
@@ -446,8 +446,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// * If the theme's borders is `None`, return without calling `f`.
     /// * If the theme's borders is "outset" and `invert` is `false`,
-    ///   use `ColorStyle::Tertiary`.
-    /// * Otherwise, use `ColorStyle::Primary`.
+    ///   use [`ColorStyle::tertiary()`].
+    /// * Otherwise, use [`ColorStyle::primary()`].
     pub fn with_high_border<F>(&self, invert: bool, f: F)
     where
         F: FnOnce(&Printer),
@@ -465,8 +465,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// * If the theme's borders is `None`, return without calling `f`.
     /// * If the theme's borders is "outset" and `invert` is `true`,
-    ///   use `ColorStyle::tertiary()`.
-    /// * Otherwise, use `ColorStyle::primary()`.
+    ///   use [`ColorStyle::tertiary()`].
+    /// * Otherwise, use [`ColorStyle::primary()`].
     pub fn with_low_border<F>(&self, invert: bool, f: F)
     where
         F: FnOnce(&Printer),
@@ -482,11 +482,11 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Apply a selection style and call the given function.
     ///
-    /// * If `selection` is `false`, simply uses `ColorStyle::primary()`.
+    /// * If `selection` is `false`, simply uses [`ColorStyle::primary()`].
     /// * If `selection` is `true`:
     ///     * If the printer currently has the focus,
-    ///       uses `ColorStyle::highlight()`.
-    ///     * Otherwise, uses `ColorStyle::highlight_inactive()`.
+    ///       uses [`ColorStyle::highlight()`].
+    ///     * Otherwise, uses [`ColorStyle::highlight_inactive()`].
     pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
         self.with_color(
             if selection {
@@ -628,7 +628,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a new sub-printer with a content offset.
     ///
     /// This is useful for parent views that only show a subset of their
-    /// child, like `ScrollView`.
+    /// child, like [`crate::views::ScrollView`].
     #[must_use]
     pub fn content_offset<S>(&self, offset: S) -> Self
     where
