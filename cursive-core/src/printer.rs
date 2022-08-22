@@ -35,7 +35,7 @@ pub struct Printer<'a, 'b> {
     ///
     /// The view being drawn can ingore this, but anything further than that
     /// will be ignored.
-    pub output_size: Vec2,
+    pub drawing_area_size: Vec2,
 
     /// Size allocated to the view.
     ///
@@ -81,7 +81,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         Printer {
             offset: Vec2::zero(),
             drawing_area_offset: Vec2::zero(),
-            output_size: size,
+            drawing_area_size: size,
             size,
             focused: true,
             enabled: true,
@@ -139,7 +139,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         // Refuse to print if the starting offset is out of the higher limits
         // of the drawing area (too far right, or too low on the screen).
         // The drawing area is a rectangle area combined with an offset.
-        if !start.strictly_lt(self.output_size + self.drawing_area_offset) {
+        if !start.strictly_lt(self.drawing_area_size + self.drawing_area_offset) {
             return;
         }
 
@@ -191,7 +191,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         start = start - self.drawing_area_offset;
 
         // Do we have enough room for the entire line?
-        let room = self.output_size.x - start.x;
+        let room = self.drawing_area_size.x - start.x;
 
         if room < text_width {
             // Drop the end of the text if it's too long
@@ -217,7 +217,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         // Here again, we can abort if we're trying to print too far right or
         // too low.
-        if !start.strictly_lt(self.output_size + self.drawing_area_offset) {
+        if !start.strictly_lt(self.drawing_area_size + self.drawing_area_offset) {
             return;
         }
 
@@ -238,7 +238,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let start = start - self.drawing_area_offset;
 
         // Don't go overboard
-        let height = min(height, self.output_size.y - start.y);
+        let height = min(height, self.drawing_area_size.y - start.y);
 
         let start = start + self.offset;
         for y in 0..height {
@@ -265,7 +265,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let start = start.into();
 
         // Nothing to be done if the start if too far to the bottom/right
-        if !start.strictly_lt(self.output_size + self.drawing_area_offset) {
+        if !start.strictly_lt(self.drawing_area_size + self.drawing_area_offset) {
             return;
         }
 
@@ -285,7 +285,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let start = start - self.drawing_area_offset;
 
         // Don't write too much if we're close to the end
-        let repetitions = min(width, self.output_size.x - start.x) / c.width();
+        let repetitions = min(width, self.drawing_area_size.x - start.x) / c.width();
 
         let start = start + self.offset;
         self.backend.print_at_rep(start, repetitions, c);
@@ -528,7 +528,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
             s.offset = s.offset + offset;
 
-            s.output_size = s.output_size.saturating_sub(offset);
+            s.drawing_area_size = s.drawing_area_size.saturating_sub(offset);
             s.size = s.size.saturating_sub(offset);
         })
     }
@@ -575,7 +575,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     {
         self.clone().with(|s| {
             let size = size.into();
-            s.output_size = Vec2::min(s.output_size, size);
+            s.drawing_area_size = Vec2::min(s.drawing_area_size, size);
             s.size = Vec2::min(s.size, size);
         })
     }

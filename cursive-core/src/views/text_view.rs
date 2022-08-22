@@ -408,7 +408,7 @@ impl View for TextView {
                 .iter()
                 .enumerate()
                 .skip(printer.drawing_area_offset.y)
-                .take(printer.output_size.y)
+                .take(printer.drawing_area_size.y)
             {
                 let l = row.width;
                 let mut x = self.align.h.get_offset(l, printer.size.x);
