@@ -136,7 +136,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     {
         let start = start.into();
 
-        // Refuse to print if the starting offset is out of the higher limits of the drawing area.
+        // Refuse to print if the starting offset is out of the higher limits
+        // of the drawing area (too far right, or too low on the screen).
         // The drawing area is a rectangle area combined with an offset.
         if !start.strictly_lt(self.output_size + self.drawing_area_offset) {
             return;
