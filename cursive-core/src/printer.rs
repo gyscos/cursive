@@ -18,8 +18,7 @@ use unicode_width::UnicodeWidthStr;
 
 /// Convenient interface to draw on a subset of the screen.
 ///
-/// The area it can print on is defined by `offset` and `size`.
-///
+/// The area it can print on is defined by `offset` and `size`.\
 /// The part of the content it will print is defined by `content_offset`
 /// and `size`.
 #[derive(Clone)]
@@ -31,8 +30,7 @@ pub struct Printer<'a, 'b> {
 
     /// Size of the area we are allowed to draw on.
     ///
-    /// Anything outside of this should be discarded.
-    ///
+    /// Anything outside of this should be discarded.\
     /// The view being drawn can ingore this, but anything further than that
     /// will be ignored.
     pub output_size: Vec2,
@@ -46,8 +44,7 @@ pub struct Printer<'a, 'b> {
     /// Offset into the view for this printer.
     ///
     /// The view being drawn can ignore this, but anything to the top-left of
-    /// this will actually be ignored, so it can be used to skip this part.
-    ///
+    /// this will actually be ignored, so it can be used to skip this part.\
     /// A print request `x`, will really print at `x - content_offset`.
     pub content_offset: Vec2,
 
@@ -93,8 +90,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Clear the screen.
     ///
-    /// It will discard anything drawn before.
-    ///
+    /// It will discard anything drawn before.\
     /// Users rarely need to call this directly.
     pub fn clear(&self) {
         self.backend
@@ -555,8 +551,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         self.clone().with(|s| s.enabled &= enabled)
     }
 
-    /// Returns a new sub-printer for the given viewport.
-    ///
+    /// Returns a new sub-printer for the given viewport.\
     /// This is a combination of offset + cropped.
     #[must_use]
     pub fn windowed(&self, viewport: Rect) -> Self {
@@ -565,8 +560,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Returns a new sub-printer with a cropped area.
     ///
-    /// The new printer size will be the minimum of `size` and its current size.
-    ///
+    /// The new printer size will be the minimum of `size` and its current size.\
     /// Any size reduction happens at the bottom-right.
     #[must_use]
     pub fn cropped<S>(&self, size: S) -> Self
@@ -582,10 +576,8 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Returns a new sub-printer with a cropped area.
     ///
-    /// The new printer size will be the minimum of `size` and its current size.
-    ///
-    /// The view will stay centered.
-    ///
+    /// The new printer size will be the minimum of `size` and its current size.\
+    /// The view will stay centered.\
     /// Note that if shrinking by an odd number, the view will round to the top-left.
     #[must_use]
     pub fn cropped_centered<S>(&self, size: S) -> Self
@@ -612,8 +604,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Returns a new sub-printer with a shrinked area.
     ///
-    /// The printer size will be reduced by the given border, and will stay centered.
-    ///
+    /// The printer size will be reduced by the given border, and will stay centered.\
     /// Note that if shrinking by an odd number, the view will round to the top-left.
     #[must_use]
     pub fn shrinked_centered<S>(&self, borders: S) -> Self
@@ -643,8 +634,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a sub-printer with a different inner size.
     ///
     /// This will not change the actual output size, but will appear bigger
-    /// (or smaller) to users of this printer.
-    ///
+    /// (or smaller) to users of this printer.\
     /// Useful to give to children who think they're big, but really aren't.
     #[must_use]
     pub fn inner_size<S>(&self, size: S) -> Self
