@@ -116,7 +116,15 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
-    /// Prints some text at the given position
+    /// Prints some text at the given position.
+    ///
+    ///# Parameters
+    ///`start` is an offset used to print the text in the view.\
+    ///`text` is a simple string to print on the screen.
+    ///
+    ///# Description
+    /// Prints some text at the given position.
+    /// The text could be truncated if it exceed the [drawing area size](Self::output_size).
     pub fn print<S: Into<Vec2>>(&self, start: S, text: &str) {
         self.print_with_width(start, text, UnicodeWidthStr::width);
     }
