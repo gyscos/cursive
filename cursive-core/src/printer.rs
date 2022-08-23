@@ -18,9 +18,13 @@ use unicode_width::UnicodeWidthStr;
 
 /// Convenient interface to draw on a subset of the screen.
 ///
-/// The area it can print on is defined by `offset` and `size`.\
-/// The part of the content it will print is defined by [`Self::content_offset`]
+/// The printing area is defined by `offset` and `size`.\
+/// The content that will be printed is defined by [`Self::content_offset`]
 /// and [`Self::size`].
+/// 
+/// If the printer is asked to print outside of the printing area,
+/// then the string to be printed shall be truncated without throwing errors.
+/// Refer to the [`crate::traits::View`] to understand how to change its size.
 #[derive(Clone)]
 pub struct Printer<'a, 'b> {
     /// Offset into the window this printer should start drawing at.
@@ -142,13 +146,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// 
     /// impl View for CustomView {
     ///     fn draw(&self, printer: &Printer<'_, '_>){
-    ///         printer.print(XY::new(0, 0), self.word.as_str());
-    ///     }
-    /// 
-    ///     // This method override change the minimum view size
-    ///     // from the default one (1, 1) to the minimum size you need.
-    ///     fn required_size(&mut self, _constraint: XY<usize>) -> XY<usize> {
-    ///         Vec2::new(self.word.len(), 1)
+    ///         printer.print(XY::new(0, 0), &self.word);
     ///     }
     /// }
     /// ```
