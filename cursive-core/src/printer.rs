@@ -1,4 +1,3 @@
-#![warn(missing_docs)]
 //! Provide higher-level abstraction to draw things on backends.
 
 use crate::backend::Backend;
@@ -118,8 +117,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Prints some text at the given position.
     ///
     /// # Parameters
-    /// `start` is an offset used to print the text in the view.\
-    /// `text` is a simple string to print on the screen.
+    /// * `start` is the offset used to print the text in the view.
+    /// * `text` is a simple string to print on the screen.
     ///
     /// # Description
     /// Prints some text at the given position.
