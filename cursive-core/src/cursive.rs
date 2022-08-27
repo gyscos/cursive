@@ -523,7 +523,7 @@ impl Cursive {
 
     /// Tries to find the view identified by the given name.
     ///
-    /// Convenient method to use `call_on` with a `view::Selector::Name`.
+    /// Convenient method to use `call_on` with a [`view::Selector::Name`].
     ///
     /// # Examples
     ///
