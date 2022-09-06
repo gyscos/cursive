@@ -18,16 +18,30 @@ where
 {
     let input = input.into();
 
-    let spans = parse_spans(&input);
+    let spans = Parser::new(&input).collect();
 
     StyledString::with_spans(input, spans)
 }
 
-/// Parse the given text with ANSI codes into a list of spans.
+/// Parses the given text with ANSI codes, using the given starting style.
 ///
-/// This is a shortcut for `Parser::new(input).collect()`.
-pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
-    Parser::new(input).collect()
+/// Useful if you need to parse something in the middle of a large text.
+///
+/// Returns the parsed string, and the ending style.
+pub fn parse_with_starting_style<S>(
+    current_style: Style,
+    input: S,
+) -> (StyledString, Style)
+where
+    S: Into<String>,
+{
+    let input = input.into();
+
+    let mut parser = Parser::with_starting_style(current_style, &input);
+    let spans = (&mut parser).collect();
+    let ending_style = parser.current_style();
+
+    (StyledString::with_spans(input, spans), ending_style)
 }
 
 /// Parses the given string as text with ANSI color codes.
@@ -59,9 +73,22 @@ fn parse_color(mut bytes: impl Iterator<Item = u8>) -> Option<Color> {
 impl<'a> Parser<'a> {
     /// Creates a new parser with the given input text.
     pub fn new(input: &'a str) -> Self {
+        Self::with_starting_style(Style::default(), input)
+    }
+
+    /// Returns the current style.
+    pub fn current_style(&self) -> Style {
+        self.current_style
+    }
+
+    /// Creates a new parser with the given input text,
+    /// using the given initial style.
+    ///
+    /// Useful if you need to parse something in the middle of a large text.
+    pub fn with_starting_style(current_style: Style, input: &'a str) -> Self {
         Parser {
             input,
-            current_style: Style::default(),
+            current_style,
             parser: input.ansi_parse(),
         }
     }
