@@ -530,25 +530,30 @@ impl IndexedCow {
         }
     }
 
+    /// Returns an indexed view of the given string.
+    ///
+    /// **Note**: it is assumed `cow`, if borrowed, is a substring of `source`.
+    pub fn from_str(value: &str, source: &str) -> Self {
+        let source_pos = source.as_ptr() as usize;
+        let value_pos = value.as_ptr() as usize;
+
+        // Make sure `value` is indeed a substring of `source`
+        assert!(value_pos >= source_pos);
+        assert!(value_pos + value.len() <= source_pos + source.len());
+
+        let start = value_pos - source_pos;
+        let end = start + value.len();
+
+        IndexedCow::Borrowed { start, end }
+    }
+
     /// Returns an indexed view of the given item.
     ///
     /// **Note**: it is assumed `cow`, if borrowed, is a substring of `source`.
     pub fn from_cow(cow: Cow<'_, str>, source: &str) -> Self {
         match cow {
             Cow::Owned(value) => IndexedCow::Owned(value),
-            Cow::Borrowed(value) => {
-                let source_pos = source.as_ptr() as usize;
-                let value_pos = value.as_ptr() as usize;
-
-                // Make sure `value` is indeed a substring of `source`
-                assert!(value_pos >= source_pos);
-                assert!(value_pos + value.len() <= source_pos + source.len());
-
-                let start = value_pos - source_pos;
-                let end = start + value.len();
-
-                IndexedCow::Borrowed { start, end }
-            }
+            Cow::Borrowed(value) => IndexedCow::from_str(value, source),
         }
     }
 

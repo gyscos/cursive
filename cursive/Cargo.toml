@@ -58,6 +58,7 @@ pancurses-backend = ["pancurses", "maplit", "term_size"]
 termion-backend = ["termion"]
 crossterm-backend = ["crossterm"]
 markdown = ["cursive_core/markdown"]
+ansi = ["cursive_core/ansi"]
 unstable_scroll = []  # Deprecated feature, remove in next version
 toml = ["cursive_core/toml"]
 

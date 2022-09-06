@@ -96,7 +96,7 @@ impl HAlign {
             match *self {
                 HAlign::Left => 0,
                 HAlign::Center => (container - content) / 2,
-                HAlign::Right => (container - content),
+                HAlign::Right => container - content,
             }
         }
     }
@@ -115,7 +115,7 @@ impl VAlign {
             match *self {
                 VAlign::Top => 0,
                 VAlign::Center => (container - content) / 2,
-                VAlign::Bottom => (container - content),
+                VAlign::Bottom => container - content,
             }
         }
     }
