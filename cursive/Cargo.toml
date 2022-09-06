@@ -72,6 +72,10 @@ signal-hook = "0.3"
 name = "theme"
 required-features = ["toml"]
 
+[[example]]
+name = "ansi"
+required-features = ["ansi"]
+
 [dev-dependencies]
 rand = "0.8"
 atty = "0.2"

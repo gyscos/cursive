@@ -4,7 +4,7 @@
 #![cfg(feature = "ansi")]
 #![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "ansi")))]
 
-use crate::theme::{BaseColor, Effect, Style};
+use crate::theme::{BaseColor, Color, Effect, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
 
@@ -37,6 +37,25 @@ pub struct Parser<'a> {
     parser: ansi_parser::AnsiParseIterator<'a>,
 }
 
+fn parse_color(mut bytes: impl Iterator<Item = u8>) -> Option<Color> {
+    Some(match bytes.next()? {
+        5 => {
+            let color = bytes.next()?;
+            Color::from_256colors(color)
+        }
+        2 => {
+            let r = bytes.next()?;
+            let g = bytes.next()?;
+            let b = bytes.next()?;
+            Color::Rgb(r, g, b)
+        }
+        _ => {
+            // ???
+            return None;
+        }
+    })
+}
+
 impl<'a> Parser<'a> {
     /// Creates a new parser with the given input text.
     pub fn new(input: &'a str) -> Self {
@@ -44,6 +63,86 @@ impl<'a> Parser<'a> {
             input,
             current_style: Style::default(),
             parser: input.ansi_parse(),
+        }
+    }
+
+    fn parse_sequence(&mut self, seq: &[u8]) -> Option<()> {
+        let mut bytes = seq.iter().copied();
+        loop {
+            let byte = bytes.next()?;
+
+            match byte {
+                0 => self.current_style = Style::default(),
+                1 => {
+                    self.current_style.effects.insert(Effect::Bold);
+                    self.current_style.effects.remove(Effect::Dim);
+                }
+                2 => {
+                    self.current_style.effects.insert(Effect::Dim);
+                    self.current_style.effects.remove(Effect::Bold);
+                }
+                22 => {
+                    self.current_style.effects.remove(Effect::Dim);
+                    self.current_style.effects.remove(Effect::Bold);
+                }
+                3 => {
+                    self.current_style.effects.insert(Effect::Italic);
+                }
+                23 => {
+                    self.current_style.effects.remove(Effect::Italic);
+                }
+                4 => {
+                    self.current_style.effects.insert(Effect::Underline);
+                }
+                24 => {
+                    self.current_style.effects.remove(Effect::Underline);
+                }
+                5 | 6 => {
+                    // Technically 6 is rapid blink...
+                    self.current_style.effects.insert(Effect::Blink);
+                }
+                25 => {
+                    // Technically 6 is rapid blink...
+                    self.current_style.effects.remove(Effect::Blink);
+                }
+                7 => {
+                    self.current_style.effects.insert(Effect::Reverse);
+                }
+                27 => {
+                    self.current_style.effects.remove(Effect::Reverse);
+                }
+                9 => {
+                    self.current_style.effects.insert(Effect::Strikethrough);
+                }
+                29 => {
+                    self.current_style.effects.remove(Effect::Strikethrough);
+                }
+                30..=37 => {
+                    self.current_style.color.front =
+                        BaseColor::from(byte - 30).dark().into();
+                }
+                38 => {
+                    self.current_style.color.front =
+                        parse_color(&mut bytes)?.into();
+                }
+                40..=47 => {
+                    self.current_style.color.back =
+                        BaseColor::from(byte - 40).dark().into();
+                }
+                48 => {
+                    self.current_style.color.back =
+                        parse_color(&mut bytes)?.into();
+                }
+                90..=97 => {
+                    self.current_style.color.front =
+                        BaseColor::from(byte - 90).light().into();
+                }
+                100..=107 => {
+                    self.current_style.color.back =
+                        BaseColor::from(byte - 100).light().into();
+                }
+                _ => (),
+            }
         }
     }
 }
@@ -66,112 +165,7 @@ impl<'a> Iterator for Parser<'a> {
                 ansi_parser::Output::Escape(sequence) => {
                     match sequence {
                         ansi_parser::AnsiSequence::SetGraphicsMode(bytes) => {
-                            for byte in bytes {
-                                match byte {
-                                    0 => self.current_style = Style::default(),
-                                    1 => {
-                                        self.current_style
-                                            .effects
-                                            .insert(Effect::Bold);
-                                        self.current_style
-                                            .effects
-                                            .remove(Effect::Dim);
-                                    }
-                                    2 => {
-                                        self.current_style
-                                            .effects
-                                            .insert(Effect::Dim);
-                                        self.current_style
-                                            .effects
-                                            .remove(Effect::Bold);
-                                    }
-                                    22 => {
-                                        self.current_style
-                                            .effects
-                                            .remove(Effect::Dim);
-                                        self.current_style
-                                            .effects
-                                            .remove(Effect::Bold);
-                                    }
-                                    3 => {
-                                        self.current_style
-                                            .effects
-                                            .insert(Effect::Italic);
-                                    }
-                                    23 => {
-                                        self.current_style
-                                            .effects
-                                            .remove(Effect::Italic);
-                                    }
-                                    4 => {
-                                        self.current_style
-                                            .effects
-                                            .insert(Effect::Underline);
-                                    }
-                                    24 => {
-                                        self.current_style
-                                            .effects
-                                            .remove(Effect::Underline);
-                                    }
-                                    5 | 6 => {
-                                        // Technically 6 is rapid blink...
-                                        self.current_style
-                                            .effects
-                                            .insert(Effect::Blink);
-                                    }
-                                    25 => {
-                                        // Technically 6 is rapid blink...
-                                        self.current_style
-                                            .effects
-                                            .remove(Effect::Blink);
-                                    }
-                                    7 => {
-                                        self.current_style
-                                            .effects
-                                            .insert(Effect::Reverse);
-                                    }
-                                    27 => {
-                                        self.current_style
-                                            .effects
-                                            .remove(Effect::Reverse);
-                                    }
-                                    9 => {
-                                        self.current_style
-                                            .effects
-                                            .insert(Effect::Strikethrough);
-                                    }
-                                    29 => {
-                                        self.current_style
-                                            .effects
-                                            .remove(Effect::Strikethrough);
-                                    }
-                                    30..=37 => {
-                                        self.current_style.color.front =
-                                            BaseColor::from(byte - 30)
-                                                .dark()
-                                                .into();
-                                    }
-                                    40..=47 => {
-                                        self.current_style.color.back =
-                                            BaseColor::from(byte - 40)
-                                                .dark()
-                                                .into();
-                                    }
-                                    90..=97 => {
-                                        self.current_style.color.front =
-                                            BaseColor::from(byte - 90)
-                                                .light()
-                                                .into();
-                                    }
-                                    100..=107 => {
-                                        self.current_style.color.back =
-                                            BaseColor::from(byte - 100)
-                                                .light()
-                                                .into();
-                                    }
-                                    _ => (),
-                                }
-                            }
+                            self.parse_sequence(&bytes);
                         }
                         // Nothing else to handle? Maybe SetMode/ResetMode?
                         _ => (),
