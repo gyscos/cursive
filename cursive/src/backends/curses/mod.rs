@@ -102,7 +102,7 @@ fn find_closest(color: Color, max_colors: i16) -> i16 {
             // r=g=b >= 247 should go to pure white.
 
             // TODO: project almost-gray colors as well?
-            if r == g && g == b && r >= 8 && r < 247 {
+            if r == g && g == b && (8..247).contains(&r) {
                 // The grayscale palette says the colors 232+n are:
                 // (r = g = b) = 8 + 10 * n
                 // With 0 <= n <= 23. This gives:

@@ -8,11 +8,13 @@ use crate::{
 use std::cell::RefCell;
 use std::rc::Rc;
 
+type Callback<T> = dyn Fn(&mut Cursive, &T);
+
 struct SharedState<T> {
     selection: usize,
     values: Vec<Rc<T>>,
 
-    on_change: Option<Rc<dyn Fn(&mut Cursive, &T)>>,
+    on_change: Option<Rc<Callback<T>>>,
 }
 
 impl<T> SharedState<T> {

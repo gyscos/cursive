@@ -7,6 +7,8 @@ use crate::{
 };
 use std::rc::Rc;
 
+type SliderCallback = dyn Fn(&mut Cursive, usize);
+
 /// A horizontal or vertical slider.
 ///
 /// # Examples
@@ -27,8 +29,8 @@ use std::rc::Rc;
 /// ```
 pub struct SliderView {
     orientation: Orientation,
-    on_change: Option<Rc<dyn Fn(&mut Cursive, usize)>>,
-    on_enter: Option<Rc<dyn Fn(&mut Cursive, usize)>>,
+    on_change: Option<Rc<SliderCallback>>,
+    on_enter: Option<Rc<SliderCallback>>,
     value: usize,
     max_value: usize,
     dragging: bool,

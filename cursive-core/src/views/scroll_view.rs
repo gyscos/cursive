@@ -9,6 +9,9 @@ use crate::{
 
 use std::rc::Rc;
 
+type InnerScrollCallback<V> = dyn Fn(&mut ScrollView<V>, Rect) -> EventResult;
+type ScrollCallback = dyn Fn(&mut Cursive, Rect);
+
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {
     /// The wrapped view.
@@ -16,7 +19,7 @@ pub struct ScrollView<V> {
 
     core: scroll::Core,
 
-    on_scroll: Rc<dyn Fn(&mut Self, Rect) -> EventResult>,
+    on_scroll: Rc<InnerScrollCallback<V>>,
 }
 
 new_default!(ScrollView<V: Default>);
@@ -230,7 +233,7 @@ impl<V> ScrollView<V> {
     where
         F: FnMut(&mut Cursive, Rect) + 'static,
     {
-        let on_scroll: Rc<dyn Fn(&mut Cursive, Rect)> =
+        let on_scroll: Rc<ScrollCallback> =
             std::rc::Rc::new(immut2!(on_scroll));
 
         self.set_on_scroll_inner(move |_, rect| {
@@ -399,7 +402,7 @@ where
                 .core
                 .is_scrolling()
                 .any()
-                .then(|| EventResult::Consumed(None))
+                .then(EventResult::consumed)
                 .ok_or(CannotFocus),
         }
     }

@@ -183,7 +183,7 @@ impl Backend {
         // Find if we have this color in stock
         let result = find_closest_pair(pair);
         let lookup = pairs.get(&result).copied();
-        lookup.unwrap_or_else(|| self.insert_color(&mut *pairs, result))
+        lookup.unwrap_or_else(|| self.insert_color(&mut pairs, result))
     }
 
     fn set_colors(&self, pair: ColorPair) {
@@ -274,9 +274,9 @@ impl Backend {
                         // so we need to disambiguate.
                         (mevent.bstate
                             == ncurses::BUTTON5_DOUBLE_CLICKED as mmask_t)
-                            .then(|| MouseEvent::WheelDown)
+                            .then_some(MouseEvent::WheelDown)
                     })
-                    .map(&make_event)
+                    .map(make_event)
                     .unwrap_or_else(|| Event::Unknown(vec![]))
             } else {
                 // Identify the button

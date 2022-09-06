@@ -3,12 +3,14 @@ use crossbeam_channel::{Receiver, Sender};
 use std::any::Any;
 use std::num::NonZeroU32;
 
+type Callback = dyn FnOnce(&mut Cursive) + Send;
+
 /// Represents a dump of everything from a `Cursive` instance.
 ///
 /// See [`Cursive::dump()`](../cursive.html#method.dump)
 pub struct Dump {
-    pub(crate) cb_sink: Sender<Box<dyn FnOnce(&mut Cursive) + Send>>,
-    pub(crate) cb_source: Receiver<Box<dyn FnOnce(&mut Cursive) + Send>>,
+    pub(crate) cb_sink: Sender<Box<Callback>>,
+    pub(crate) cb_source: Receiver<Box<Callback>>,
 
     pub(crate) fps: Option<NonZeroU32>,
 

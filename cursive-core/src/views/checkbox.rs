@@ -7,6 +7,8 @@ use crate::{
 };
 use std::rc::Rc;
 
+type Callback = dyn Fn(&mut Cursive, bool);
+
 /// Checkable box.
 ///
 /// # Examples
@@ -21,7 +23,7 @@ pub struct Checkbox {
     checked: bool,
     enabled: bool,
 
-    on_change: Option<Rc<dyn Fn(&mut Cursive, bool)>>,
+    on_change: Option<Rc<Callback>>,
 }
 
 new_default!(Checkbox);

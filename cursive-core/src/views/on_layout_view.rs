@@ -1,9 +1,11 @@
 use crate::{view::ViewWrapper, Vec2, View};
 
+type Callback<V> = dyn FnMut(&mut V, Vec2);
+
 /// View wrapper overriding the `View::layout` method.
 pub struct OnLayoutView<V> {
     view: V,
-    on_layout: Box<dyn FnMut(&mut V, Vec2)>,
+    on_layout: Box<Callback<V>>,
 }
 
 impl<V> OnLayoutView<V> {

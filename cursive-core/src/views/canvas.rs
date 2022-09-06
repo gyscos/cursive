@@ -6,8 +6,17 @@ use crate::{
     Printer, Vec2, With,
 };
 
-// Define this type separately to appease the Clippy god
-type CallOnAny<T> = Box<dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>;
+// Define these types separately to appease the Clippy god
+type Draw<T> = dyn Fn(&T, &Printer);
+type OnEvent<T> = dyn FnMut(&mut T, Event) -> EventResult;
+type RequestSize<T> = dyn FnMut(&mut T, Vec2) -> Vec2;
+type Layout<T> = dyn FnMut(&mut T, Vec2);
+type TakeFocus<T> =
+    dyn FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>;
+type FocusView<T> =
+    dyn FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>;
+type CallOnAny<T> = dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>);
+type ImportantArea<T> = dyn Fn(&T, Vec2) -> Rect;
 
 /// A blank view that forwards calls to closures.
 ///
@@ -45,17 +54,15 @@ type CallOnAny<T> = Box<dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>)>;
 pub struct Canvas<T> {
     state: T,
 
-    draw: Box<dyn Fn(&T, &Printer)>,
-    on_event: Box<dyn FnMut(&mut T, Event) -> EventResult>,
-    required_size: Box<dyn FnMut(&mut T, Vec2) -> Vec2>,
-    layout: Box<dyn FnMut(&mut T, Vec2)>,
-    take_focus:
-        Box<dyn FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>>,
+    draw: Box<Draw<T>>,
+    on_event: Box<OnEvent<T>>,
+    required_size: Box<RequestSize<T>>,
+    layout: Box<Layout<T>>,
+    take_focus: Box<TakeFocus<T>>,
     needs_relayout: Box<dyn Fn(&T) -> bool>,
-    focus_view:
-        Box<dyn FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>>,
-    call_on_any: CallOnAny<T>,
-    important_area: Box<dyn Fn(&T, Vec2) -> Rect>,
+    focus_view: Box<FocusView<T>>,
+    call_on_any: Box<CallOnAny<T>>,
+    important_area: Box<ImportantArea<T>>,
 }
 
 impl<T: 'static + View> Canvas<T> {

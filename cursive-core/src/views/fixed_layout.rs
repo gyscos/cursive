@@ -181,10 +181,10 @@ impl FixedLayout {
         }
     }
 
-    fn circular_mut<'a>(
+    fn circular_mut(
         start: usize,
-        children: &'a mut [Child],
-    ) -> impl Iterator<Item = (usize, &mut Child)> + 'a {
+        children: &mut [Child],
+    ) -> impl Iterator<Item = (usize, &mut Child)> {
         let (head, tail) = children.split_at_mut(start);
 
         let head = head.iter_mut().enumerate();

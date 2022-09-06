@@ -33,6 +33,8 @@ impl ListChild {
     }
 }
 
+type ListCallback = dyn Fn(&mut Cursive, &String);
+
 /// Displays a list of elements.
 pub struct ListView {
     children: Vec<ListChild>,
@@ -42,7 +44,7 @@ pub struct ListView {
     // Which child is focused? Should index into the `children` list.
     focus: usize,
     // This callback is called when the selection is changed.
-    on_select: Option<Rc<dyn Fn(&mut Cursive, &String)>>,
+    on_select: Option<Rc<ListCallback>>,
 }
 
 // Implement `Default` around `ListView::new`

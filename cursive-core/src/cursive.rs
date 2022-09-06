@@ -20,6 +20,8 @@ use crate::{
 static DEBUG_VIEW_NAME: &str = "_cursive_debug_view";
 
 type RootView = views::OnEventView<views::ScreensView<views::StackView>>;
+type BackendCallback = dyn FnOnce(&mut dyn backend::Backend);
+type Callback = dyn FnOnce(&mut Cursive) + Send;
 
 /// Central part of the cursive library.
 ///
@@ -41,8 +43,8 @@ pub struct Cursive {
     running: bool,
 
     // Handle asynchronous callbacks
-    cb_source: Receiver<Box<dyn FnOnce(&mut Cursive) + Send>>,
-    cb_sink: Sender<Box<dyn FnOnce(&mut Cursive) + Send>>,
+    cb_source: Receiver<Box<Callback>>,
+    cb_sink: Sender<Box<Callback>>,
 
     last_size: Vec2,
 
@@ -54,7 +56,7 @@ pub struct Cursive {
 
     // List of callbacks to run on the backend.
     // The current assumption is that we only add calls here during event processing.
-    pub(crate) backend_calls: Vec<Box<dyn FnOnce(&mut dyn backend::Backend)>>,
+    pub(crate) backend_calls: Vec<Box<BackendCallback>>,
 }
 
 /// Identifies a screen in the cursive root.

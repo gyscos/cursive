@@ -11,7 +11,7 @@ pub fn start_resize_thread(
     resize_sender: Sender<()>,
     resize_running: Arc<AtomicBool>,
 ) {
-    let mut signals = Signals::new(&[libc::SIGWINCH]).unwrap();
+    let mut signals = Signals::new([libc::SIGWINCH]).unwrap();
     thread::spawn(move || {
         // This thread will listen to SIGWINCH events and report them.
         while resize_running.load(Ordering::Relaxed) {

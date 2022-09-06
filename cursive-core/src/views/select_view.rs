@@ -15,6 +15,8 @@ use std::cell::Cell;
 use std::cmp::{min, Ordering};
 use std::rc::Rc;
 
+type SelectCallback<T> = dyn Fn(&mut Cursive, &T);
+
 /// View to select an item among a list.
 ///
 /// It contains a list of values of type T, with associated labels.
@@ -54,11 +56,11 @@ pub struct SelectView<T = String> {
 
     // This is a custom callback to include a &T.
     // It will be called whenever "Enter" is pressed or when an item is clicked.
-    on_submit: Option<Rc<dyn Fn(&mut Cursive, &T)>>,
+    on_submit: Option<Rc<SelectCallback<T>>>,
 
     // This callback is called when the selection is changed.
     // TODO: add the previous selection? Indices?
-    on_select: Option<Rc<dyn Fn(&mut Cursive, &T)>>,
+    on_select: Option<Rc<SelectCallback<T>>>,
 
     // If `true`, when a character is pressed, jump to the next item starting
     // with this character.

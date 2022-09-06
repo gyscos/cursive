@@ -647,9 +647,7 @@ impl View for TextArea {
         &mut self,
         _: Direction,
     ) -> Result<EventResult, CannotFocus> {
-        self.enabled
-            .then(|| EventResult::Consumed(None))
-            .ok_or(CannotFocus)
+        self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 
     fn layout(&mut self, size: Vec2) {
