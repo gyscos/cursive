@@ -125,6 +125,10 @@ impl<'a> Parser<'a> {
                     self.current_style.color.front =
                         parse_color(&mut bytes)?.into();
                 }
+                39 => {
+                    self.current_style.color.front =
+                        Color::TerminalDefault.into();
+                }
                 40..=47 => {
                     self.current_style.color.back =
                         BaseColor::from(byte - 40).dark().into();
@@ -132,6 +136,15 @@ impl<'a> Parser<'a> {
                 48 => {
                     self.current_style.color.back =
                         parse_color(&mut bytes)?.into();
+                }
+                49 => {
+                    self.current_style.color.back =
+                        Color::TerminalDefault.into();
+                }
+                58 => {
+                    // Set underline color.
+                    // Not implemented, but consumes the rest
+                    parse_color(&mut bytes)?;
                 }
                 90..=97 => {
                     self.current_style.color.front =
