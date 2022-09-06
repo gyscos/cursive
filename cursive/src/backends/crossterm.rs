@@ -58,8 +58,8 @@ fn translate_button(button: CMouseButton) -> MouseButton {
     }
 }
 
-fn translate_key(code: KeyCode) -> Key {
-    match code {
+fn translate_key(code: KeyCode) -> Option<Key> {
+    Some(match code {
         KeyCode::Esc => Key::Esc,
         KeyCode::Backspace => Key::Backspace,
         KeyCode::Left => Key::Left,
@@ -76,12 +76,12 @@ fn translate_key(code: KeyCode) -> Key {
         KeyCode::Tab => Key::Tab,
         KeyCode::F(n) => Key::from_f(n),
         KeyCode::BackTab => Key::Tab, /* not supported */
-        KeyCode::Char(_) => Key::Tab, /* is handled at `Event` level, use tab as default */
-        KeyCode::Null => Key::Tab, /* is handled at `Event` level, use tab as default */
-    }
+        // These should never occur.
+        _ => return None,
+    })
 }
 
-fn translate_event(event: CKeyEvent) -> Event {
+fn translate_event(event: CKeyEvent) -> Option<Event> {
     const CTRL_ALT: KeyModifiers = KeyModifiers::from_bits_truncate(
         KeyModifiers::CONTROL.bits() | KeyModifiers::ALT.bits(),
     );
@@ -92,19 +92,22 @@ fn translate_event(event: CKeyEvent) -> Event {
         KeyModifiers::ALT.bits() | KeyModifiers::SHIFT.bits(),
     );
 
-    match event {
+    Some(match event {
         // Handle Char + modifier.
         CKeyEvent {
             modifiers: KeyModifiers::CONTROL,
             code: KeyCode::Char(c),
+            ..
         } => Event::CtrlChar(c),
         CKeyEvent {
             modifiers: KeyModifiers::ALT,
             code: KeyCode::Char(c),
+            ..
         } => Event::AltChar(c),
         CKeyEvent {
             modifiers: KeyModifiers::SHIFT,
             code: KeyCode::Char(c),
+            ..
         } => Event::Char(c),
         CKeyEvent {
             code: KeyCode::Char(c),
@@ -122,33 +125,39 @@ fn translate_event(event: CKeyEvent) -> Event {
         CKeyEvent {
             modifiers: CTRL_ALT,
             code,
-        } => Event::CtrlAlt(translate_key(code)),
+            ..
+        } => Event::CtrlAlt(translate_key(code)?),
         CKeyEvent {
             modifiers: CTRL_SHIFT,
             code,
-        } => Event::CtrlShift(translate_key(code)),
+            ..
+        } => Event::CtrlShift(translate_key(code)?),
         CKeyEvent {
             modifiers: ALT_SHIFT,
             code,
-        } => Event::AltShift(translate_key(code)),
+            ..
+        } => Event::AltShift(translate_key(code)?),
 
         // Handle key + single modifier
         CKeyEvent {
             modifiers: KeyModifiers::CONTROL,
             code,
-        } => Event::Ctrl(translate_key(code)),
+            ..
+        } => Event::Ctrl(translate_key(code)?),
         CKeyEvent {
             modifiers: KeyModifiers::ALT,
             code,
-        } => Event::Alt(translate_key(code)),
+            ..
+        } => Event::Alt(translate_key(code)?),
         CKeyEvent {
             modifiers: KeyModifiers::SHIFT,
             code,
-        } => Event::Shift(translate_key(code)),
+            ..
+        } => Event::Shift(translate_key(code)?),
 
         // All other keys.
-        CKeyEvent { code, .. } => Event::Key(translate_key(code)),
-    }
+        CKeyEvent { code, .. } => Event::Key(translate_key(code)?),
+    })
 }
 
 fn translate_color(base_color: theme::Color) -> Color {
@@ -241,7 +250,7 @@ impl Backend {
 
     fn map_key(&mut self, event: CEvent) -> Option<Event> {
         Some(match event {
-            CEvent::Key(key_event) => translate_event(key_event),
+            CEvent::Key(key_event) => translate_event(key_event)?,
             CEvent::Mouse(CMouseEvent {
                 kind,
                 column,
@@ -273,6 +282,10 @@ impl Backend {
                 }
             }
             CEvent::Resize(_, _) => Event::WindowResize,
+            CEvent::Paste(_) => {
+                unreachable!("Did not enable bracketed paste.")
+            }
+            CEvent::FocusGained | CEvent::FocusLost => return None,
         })
     }
 }

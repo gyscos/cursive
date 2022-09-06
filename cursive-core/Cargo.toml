@@ -30,7 +30,7 @@ unicode-width = "0.1"
 xi-unicode = "0.3"
 crossbeam-channel = "0.5"
 lazy_static = "1"
-ahash = "0.7"
+ahash = "0.8"
 
 [dependencies.ansi-parser]
 version = "0.8.0"

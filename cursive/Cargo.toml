@@ -25,7 +25,7 @@ libc = "0.2"
 term_size = { version = "0.3", optional = true }
 maplit = { version = "1.0", optional = true }
 log = "0.4"
-ahash = "0.7"
+ahash = "0.8"
 
 [dependencies.bear-lib-terminal]
 optional = true
@@ -47,7 +47,7 @@ version = "1"
 
 [dependencies.crossterm]
 optional = true
-version = "0.24"
+version = "0.25"
 
 [features]
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.
