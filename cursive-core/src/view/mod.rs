@@ -65,7 +65,7 @@
 //!
 //! In some cases however it may be interesting for the nested view to know
 //! about this, maybe to avoid computing parts of the view that are not
-//! visible. `Printer::output_size` and `Printer::content_offset` can be used
+//! visible. `Printer::drawing_area_size` and `Printer::drawing_area_offset` can be used
 //! to find out what part of the view should actually be printed.
 //!
 //! ## Important Area
