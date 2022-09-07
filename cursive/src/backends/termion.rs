@@ -40,6 +40,12 @@ pub struct Backend {
     last_button: Option<MouseButton>,
 
     events: Events<File>,
+
+    // Raw input file descriptor, to fix the file on exit, since we can't
+    // (currently) get it from events.
+    #[cfg(unix)]
+    input_fd: std::os::unix::io::RawFd,
+
     resize_receiver: Receiver<()>,
     running: Arc<AtomicBool>,
 }
@@ -71,11 +77,12 @@ pub struct Backend {
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 /// SOFTWARE.
 #[cfg(unix)]
-fn set_blocking(file: &File, blocking: bool) -> std::io::Result<()> {
+fn set_blocking(
+    fd: std::os::unix::io::RawFd,
+    blocking: bool,
+) -> std::io::Result<()> {
     use libc::{fcntl, F_GETFL, F_SETFL, O_NONBLOCK};
-    use std::os::unix::io::AsRawFd;
 
-    let fd = file.as_raw_fd();
     let flags = unsafe { fcntl(fd, F_GETFL, 0) };
     if flags < 0 {
         return Err(std::io::Error::last_os_error());
@@ -121,7 +128,13 @@ impl Backend {
         output_file: File,
     ) -> std::io::Result<Box<dyn backend::Backend>> {
         #[cfg(unix)]
-        set_blocking(&input_file, false)?;
+        use std::os::unix::io::AsRawFd;
+
+        #[cfg(unix)]
+        let input_fd = input_file.as_raw_fd();
+
+        #[cfg(unix)]
+        set_blocking(input_fd, false)?;
 
         // Use a ~8MB buffer
         // Should be enough for a single screen most of the time.
@@ -147,6 +160,8 @@ impl Backend {
 
             last_button: None,
             events: input_file.events(),
+            #[cfg(unix)]
+            input_fd,
             resize_receiver,
             running,
         };
@@ -243,6 +258,9 @@ impl Backend {
 impl Drop for Backend {
     fn drop(&mut self) {
         self.running.store(false, Ordering::Relaxed);
+
+        #[cfg(unix)]
+        set_blocking(self.input_fd, true).unwrap();
 
         write!(
             self.terminal.get_mut(),
