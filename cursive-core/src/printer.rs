@@ -48,7 +48,8 @@ pub struct Printer<'a, 'b> {
     /// Offset into the view for this printer.
     ///
     /// The view being drawn can ignore this, but anything to the top-left of
-    /// this will actually be ignored, so it can be used to skip this part.\
+    /// this will actually be ignored, so it can be used to skip this part.
+    ///
     /// A print request `x`, will really print at `x - content_offset`.
     pub content_offset: Vec2,
 
@@ -94,7 +95,8 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Clear the screen.
     ///
-    /// It will discard anything drawn before.\
+    /// It will discard anything drawn before.
+    ///
     /// Users rarely need to call this directly.
     pub fn clear(&self) {
         self.backend
@@ -122,7 +124,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// # Parameters
     /// * `start` is the offset used to print the text in the view.
-    /// * `text` is a simple string to print on the screen.
+    /// * `text` is a string to print on the screen. It must be a single line, no line wrapping
+    /// will be done.
     ///
     /// # Description
     /// Prints some text at the given position.
