@@ -1,21 +1,35 @@
-use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle};
+use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle, Palette};
+use cursive::traits::With;
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 use cursive::Cursive;
 
 fn main() {
     let mut siv = cursive::default();
 
+    siv.set_theme(cursive::theme::Theme {
+        shadow: true,
+        borders: BorderStyle::Simple,
+        palette: Palette::default().with(|palette| {
+            use cursive::theme::BaseColor::*;
+            use cursive::theme::Color::*;
+            use cursive::theme::PaletteColor::*;
+
+            palette[Background] = TerminalDefault;
+            palette[View] = TerminalDefault;
+            palette[Primary] = White.dark();
+            palette[TitlePrimary] = Blue.light();
+            palette[Secondary] = Blue.light();
+            palette[Highlight] = Blue.dark();
+        }),
+    });
+
     let layout = LinearLayout::vertical()
         .child(TextView::new("This is a dynamic theme example!"))
-        .child(EditView::new().content("Woo! colors!").style(
-            ColorStyle::new(
-                Color::Rgb(200, 150, 150),
-                Color::Dark(BaseColor::Blue),
-            ),
-        ));
+        .child(EditView::new().content("Woo! colors!"));
 
     siv.add_layer(
         Dialog::around(layout)
+            .title("Theme example")
             .button("Change", |s| {
                 let mut theme = s.current_theme().clone();
 
