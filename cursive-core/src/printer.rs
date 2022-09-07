@@ -18,10 +18,13 @@ use unicode_width::UnicodeWidthStr;
 
 /// Convenient interface to draw on a subset of the screen.
 ///
-/// The area it can print on is defined by `offset` and `size`.
-///
-/// The part of the content it will print is defined by `content_offset`
-/// and `size`.
+/// The printing area is defined by `offset` and `size`.\
+/// The content that will be printed is defined by [`Self::content_offset`]
+/// and [`Self::size`].
+/// 
+/// If the printer is asked to print outside of the printing area,
+/// then the string to be printed shall be truncated without throwing errors.
+/// Refer to the [`crate::traits::View`] to understand how to change its size.
 #[derive(Clone)]
 pub struct Printer<'a, 'b> {
     /// Offset into the window this printer should start drawing at.
@@ -31,8 +34,7 @@ pub struct Printer<'a, 'b> {
 
     /// Size of the area we are allowed to draw on.
     ///
-    /// Anything outside of this should be discarded.
-    ///
+    /// Anything outside of this should be discarded.\
     /// The view being drawn can ingore this, but anything further than that
     /// will be ignored.
     pub output_size: Vec2,
@@ -118,16 +120,48 @@ impl<'a, 'b> Printer<'a, 'b> {
         }
     }
 
+    /// Prints some text at the given position.
+    ///
+    /// # Parameters
+    /// * `start` is the offset used to print the text in the view.
+    /// * `text` is a string to print on the screen. It must be a single line, no line wrapping
+    /// will be done.
+    ///
+    /// # Description
+    /// Prints some text at the given position.
+    /// The text could be truncated if it exceed the [drawing area size](Self::output_size).
+    ///
+    /// # Example
+    /// ```rust
+    /// use cursive::{View, Printer, XY, Vec2};
+    /// 
+    /// pub struct CustomView {
+    ///     word: String,
+    /// }
+    /// 
+    /// impl CustomView {
+    ///     pub fn new() -> Self {
+    ///         Self {
+    ///             word: String::from("Eh, tu connais Rust?"),
+    ///         }
+    ///     }
+    /// }
+    /// 
+    /// impl View for CustomView {
+    ///     fn draw(&self, printer: &Printer<'_, '_>){
+    ///         printer.print(XY::new(0, 0), &self.word);
+    ///     }
+    /// }
+    /// ```
     // TODO: use &mut self? We don't *need* it, but it may make sense.
     // We don't want people to start calling prints in parallel?
-    /// Prints some text at the given position
     pub fn print<S: Into<Vec2>>(&self, start: S, text: &str) {
         self.print_with_width(start, text, UnicodeWidthStr::width);
     }
 
     /// Prints some text, using the given callback to compute width.
     ///
-    /// Mostly used with `UnicodeWidthStr::width`.
+    /// Mostly used with [`UnicodeWidthStr::width`].
     /// If you already know the width, you can give it as a constant instead.
     fn print_with_width<S, F>(&self, start: S, text: &str, width: F)
     where
@@ -442,8 +476,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// * If the theme's borders is `None`, return without calling `f`.
     /// * If the theme's borders is "outset" and `invert` is `false`,
-    ///   use `ColorStyle::Tertiary`.
-    /// * Otherwise, use `ColorStyle::Primary`.
+    ///   use [`ColorStyle::tertiary()`].
+    /// * Otherwise, use [`ColorStyle::primary()`].
     pub fn with_high_border<F>(&self, invert: bool, f: F)
     where
         F: FnOnce(&Printer),
@@ -461,8 +495,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// * If the theme's borders is `None`, return without calling `f`.
     /// * If the theme's borders is "outset" and `invert` is `true`,
-    ///   use `ColorStyle::tertiary()`.
-    /// * Otherwise, use `ColorStyle::primary()`.
+    ///   use [`ColorStyle::tertiary()`].
+    /// * Otherwise, use [`ColorStyle::primary()`].
     pub fn with_low_border<F>(&self, invert: bool, f: F)
     where
         F: FnOnce(&Printer),
@@ -478,11 +512,11 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Apply a selection style and call the given function.
     ///
-    /// * If `selection` is `false`, simply uses `ColorStyle::primary()`.
+    /// * If `selection` is `false`, simply uses [`ColorStyle::primary()`].
     /// * If `selection` is `true`:
     ///     * If the printer currently has the focus,
-    ///       uses `ColorStyle::highlight()`.
-    ///     * Otherwise, uses `ColorStyle::highlight_inactive()`.
+    ///       uses [`ColorStyle::highlight()`].
+    ///     * Otherwise, uses [`ColorStyle::highlight_inactive()`].
     pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
         self.with_color(
             if selection {
@@ -555,8 +589,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         self.clone().with(|s| s.enabled &= enabled)
     }
 
-    /// Returns a new sub-printer for the given viewport.
-    ///
+    /// Returns a new sub-printer for the given viewport.\
     /// This is a combination of offset + cropped.
     #[must_use]
     pub fn windowed(&self, viewport: Rect) -> Self {
@@ -565,8 +598,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Returns a new sub-printer with a cropped area.
     ///
-    /// The new printer size will be the minimum of `size` and its current size.
-    ///
+    /// The new printer size will be the minimum of `size` and its current size.\
     /// Any size reduction happens at the bottom-right.
     #[must_use]
     pub fn cropped<S>(&self, size: S) -> Self
@@ -582,10 +614,8 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Returns a new sub-printer with a cropped area.
     ///
-    /// The new printer size will be the minimum of `size` and its current size.
-    ///
-    /// The view will stay centered.
-    ///
+    /// The new printer size will be the minimum of `size` and its current size.\
+    /// The view will stay centered.\
     /// Note that if shrinking by an odd number, the view will round to the top-left.
     #[must_use]
     pub fn cropped_centered<S>(&self, size: S) -> Self
@@ -612,8 +642,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Returns a new sub-printer with a shrinked area.
     ///
-    /// The printer size will be reduced by the given border, and will stay centered.
-    ///
+    /// The printer size will be reduced by the given border, and will stay centered.\
     /// Note that if shrinking by an odd number, the view will round to the top-left.
     #[must_use]
     pub fn shrinked_centered<S>(&self, borders: S) -> Self
@@ -629,7 +658,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a new sub-printer with a content offset.
     ///
     /// This is useful for parent views that only show a subset of their
-    /// child, like `ScrollView`.
+    /// child, like [`crate::views::ScrollView`].
     #[must_use]
     pub fn content_offset<S>(&self, offset: S) -> Self
     where
@@ -643,8 +672,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Returns a sub-printer with a different inner size.
     ///
     /// This will not change the actual output size, but will appear bigger
-    /// (or smaller) to users of this printer.
-    ///
+    /// (or smaller) to users of this printer.\
     /// Useful to give to children who think they're big, but really aren't.
     #[must_use]
     pub fn inner_size<S>(&self, size: S) -> Self
