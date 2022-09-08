@@ -45,6 +45,9 @@ pub mod reexports {
 
     #[cfg(feature = "toml")]
     pub use toml;
+
+    #[cfg(feature = "ansi")]
+    pub use ansi_parser;
 }
 
 #[macro_use]

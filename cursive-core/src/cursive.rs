@@ -379,6 +379,15 @@ impl Cursive {
         &self.theme
     }
 
+    /// Modifies the current theme.
+    ///
+    /// Shortcut to get the [`Cursive::current_theme()`],
+    /// then run [`Cursive::set_theme()`].
+    pub fn with_theme<F: FnOnce(&mut theme::Theme)>(&mut self, f: F) {
+        f(&mut self.theme);
+        self.clear();
+    }
+
     /// Sets the current theme.
     pub fn set_theme(&mut self, theme: theme::Theme) {
         self.theme = theme;
