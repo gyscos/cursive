@@ -64,7 +64,7 @@ where
         match strict {
             true => constraint,
             false => inner_size + scrollbar_size,
-        }
+        },
     );
 
     // In strict mode, there's no way our size is over constraints.

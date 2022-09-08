@@ -21,7 +21,7 @@ use unicode_width::UnicodeWidthStr;
 /// The printing area is defined by `offset` and `size`.\
 /// The content that will be printed is defined by [`Self::content_offset`]
 /// and [`Self::size`].
-/// 
+///
 /// If the printer is asked to print outside of the printing area,
 /// then the string to be printed shall be truncated without throwing errors.
 /// Refer to the [`crate::traits::View`] to understand how to change its size.
@@ -133,12 +133,12 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// # Example
     /// ```rust
-    /// use cursive::{View, Printer, XY, Vec2};
-    /// 
+    /// use cursive::{Printer, Vec2, View, XY};
+    ///
     /// pub struct CustomView {
     ///     word: String,
     /// }
-    /// 
+    ///
     /// impl CustomView {
     ///     pub fn new() -> Self {
     ///         Self {
@@ -146,9 +146,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///         }
     ///     }
     /// }
-    /// 
+    ///
     /// impl View for CustomView {
-    ///     fn draw(&self, printer: &Printer<'_, '_>){
+    ///     fn draw(&self, printer: &Printer<'_, '_>) {
     ///         printer.print(XY::new(0, 0), &self.word);
     ///     }
     /// }

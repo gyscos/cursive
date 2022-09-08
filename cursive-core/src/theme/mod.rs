@@ -253,7 +253,7 @@ impl Theme {
         }
 
         if let Some(&toml::Value::Table(ref table)) = table.get("colors") {
-            palette::load_toml(&mut self.palette, table);
+            self.palette.load_toml(table);
         }
     }
 }

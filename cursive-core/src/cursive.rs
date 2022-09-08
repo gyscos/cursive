@@ -132,7 +132,6 @@ impl Cursive {
 
         // The printer for the stackview
         let sv_printer = printer.offset((0, offset)).focused(!selected);
-        self.root.draw(&sv_printer);
 
         self.root.get_inner().draw_bg(&sv_printer);
 

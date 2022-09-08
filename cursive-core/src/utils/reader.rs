@@ -9,8 +9,8 @@ use std::io::{self, Read};
 /// # Examples
 ///
 /// ```rust,no_run
-/// use std::io::Read;
 /// use cursive_core::utils::{Counter, ProgressReader};
+/// use std::io::Read;
 ///
 /// // Read a file and report the progress
 /// let file = std::fs::File::open("large_file").unwrap();

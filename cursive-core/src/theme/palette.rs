@@ -152,6 +152,20 @@ impl Palette {
         self.custom
             .insert(key.to_string(), PaletteNode::Namespace(namespace));
     }
+
+    /// Fills `palette` with the colors from the given `table`.
+    #[cfg(feature = "toml")]
+    pub(crate) fn load_toml(&mut self, table: &toml::value::Table) {
+        // TODO: use serde for that?
+        // Problem: toml-rs doesn't do well with Enums...
+
+        for (key, value) in iterate_toml(table) {
+            match value {
+                PaletteNode::Color(color) => self.set_color(key, color),
+                PaletteNode::Namespace(map) => self.add_namespace(key, map),
+            }
+        }
+    }
 }
 
 impl Extend<(PaletteColor, Color)> for Palette {
@@ -247,20 +261,6 @@ fn iterate_toml(
     })
 }
 
-/// Fills `palette` with the colors from the given `table`.
-#[cfg(feature = "toml")]
-pub(crate) fn load_toml(palette: &mut Palette, table: &toml::value::Table) {
-    // TODO: use serde for that?
-    // Problem: toml-rs doesn't do well with Enums...
-
-    for (key, value) in iterate_toml(table) {
-        match value {
-            PaletteNode::Color(color) => palette.set_color(key, color),
-            PaletteNode::Namespace(map) => palette.add_namespace(key, map),
-        }
-    }
-}
-
 /// Color entry in a palette.
 ///
 /// Each `PaletteColor` is used for a specific role in a default application.
@@ -294,6 +294,11 @@ impl PaletteColor {
     /// Given a palette, resolve `self` to a concrete color.
     pub fn resolve(self, palette: &Palette) -> Color {
         palette[self]
+    }
+
+    /// Returns an iterator on all possible palette colors.
+    pub fn all() -> impl Iterator<Item = Self> {
+        (0..Self::LENGTH).map(Self::from_usize)
     }
 }
 

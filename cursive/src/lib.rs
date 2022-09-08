@@ -17,8 +17,8 @@
 //! ## Examples
 //!
 //! ```rust,no_run
-//! use cursive::{Cursive, CursiveExt};
 //! use cursive::views::TextView;
+//! use cursive::{Cursive, CursiveExt};
 //!
 //! let mut siv = Cursive::new();
 //!

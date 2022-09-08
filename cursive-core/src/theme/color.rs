@@ -1,5 +1,7 @@
+use enum_map::Enum;
+
 /// One of the 8 base colors.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Enum)]
 pub enum BaseColor {
     /// Black color
     ///
@@ -44,6 +46,11 @@ impl BaseColor {
     /// Returns the light version of this base color.
     pub fn light(self) -> Color {
         Color::Light(self)
+    }
+
+    /// Returns an iterator on all possible base colors.
+    pub fn all() -> impl Iterator<Item = Self> {
+        (0..Self::LENGTH).map(Self::from_usize)
     }
 }
 
