@@ -18,6 +18,8 @@ use crate::{
 /// You can also override any of the `wrap_*` methods for more specific
 /// behaviors (the default implementations simply forwards the calls to the
 /// child view).
+///
+/// [`wrap_impl!`]: crate::wrap_impl!
 pub trait ViewWrapper: 'static {
     /// Type that this view wraps.
     type V: View + ?Sized;

@@ -26,6 +26,7 @@ features = ["parsing"]
 cursive = { path = "../cursive", version = "0.19.0" }
 
 [dev-dependencies.syntect]
+version = "5.0.0"
 features = ["regex-onig", "metadata"]
 
 [features]

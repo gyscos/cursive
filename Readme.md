@@ -2,7 +2,6 @@
 
 [![crates.io](https://img.shields.io/crates/v/cursive.svg)](https://crates.io/crates/cursive)
 [![Rust](https://github.com/gyscos/cursive/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/gyscos/cursive/actions/workflows/rust.yml)
-[![Build status (appveyor)](https://ci.appveyor.com/api/projects/status/uk5pww718jsp5x2l/branch/main?svg=true)](https://ci.appveyor.com/project/gyscos/cursive/branch/main)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Gitter chat](https://badges.gitter.im/gyscos/cursive.png)](https://gitter.im/cursive-rs/cursive)
 

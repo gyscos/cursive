@@ -1,4 +1,9 @@
-//! Parse text using a syntect highlighter.
+//! Parse text using a [`syntect`] highlighter.
+//!
+//! The [`parse()`] function can be used to generate a StyledString using a
+//! highlighter and a syntax set.
+//!
+//! [`syntect`]: https://docs.rs/syntect
 #![deny(missing_docs)]
 
 use cursive_core::theme;

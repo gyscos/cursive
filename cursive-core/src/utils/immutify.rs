@@ -39,6 +39,9 @@ pub fn immutify<F: FnMut(&mut Cursive)>(
 ///
 /// See [`immut2!`] and [`immut3!`] to support a different number of arguments.
 ///
+/// [`immut2!`]: crate::immut2!
+/// [`immut3!`]: crate::immut3!
+///
 /// # Note
 ///
 /// If this function tries to call itself recursively (for example by
@@ -123,6 +126,9 @@ macro_rules! once1 {
 ///
 /// See [`immut1!`] and [`immut3!`] to support a different number of arguments.
 ///
+/// [`immut1!`]: crate::immut1!
+/// [`immut3!`]: crate::immut3!
+///
 /// # Note
 ///
 /// If this function tries to call itself recursively (for example by
@@ -160,6 +166,9 @@ macro_rules! immut2 {
 /// This can wrap any `FnMut` with three arguments.
 ///
 /// See [`immut1!`] and [`immut2!`] to support a different number of arguments.
+///
+/// [`immut1!`]: crate::immut1!
+/// [`immut2!`]: crate::immut2!
 ///
 /// # Note
 ///
