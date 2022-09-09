@@ -1,6 +1,8 @@
 use cursive::traits::*;
 use syntect::{highlighting::ThemeSet, parsing::SyntaxSet};
 
+use std::rc::Rc;
+
 struct State {
     syntax_set: SyntaxSet,
     themes: ThemeSet,
@@ -13,7 +15,7 @@ fn main() {
     let syntax_set = SyntaxSet::load_defaults_newlines();
     let themes = ThemeSet::load_defaults();
 
-    siv.set_user_data(std::rc::Rc::new(State { syntax_set, themes }));
+    siv.set_user_data(Rc::new(State { syntax_set, themes }));
 
     // Use it as a single view.
     siv.add_fullscreen_layer(
@@ -23,13 +25,17 @@ fn main() {
             .full_screen(),
     );
 
+    siv.with_theme(|t| {
+        t.shadow = false;
+    });
+
     apply_theme(&mut siv, "InspiredGitHub");
 
     siv.add_global_callback('q', |s| s.quit());
 
     siv.add_global_callback('t', |s| {
         let theme_names: Vec<_> = s
-            .with_user_data(|s: &mut std::rc::Rc<State>| {
+            .with_user_data(|s: &mut Rc<State>| {
                 s.themes.themes.keys().cloned().collect()
             })
             .unwrap();
@@ -67,7 +73,7 @@ Press Q to quit.",
 
 fn apply_theme(siv: &mut cursive::Cursive, theme_name: &str) {
     let state = siv
-        .with_user_data(|s: &mut std::rc::Rc<State>| std::rc::Rc::clone(s))
+        .with_user_data(|s: &mut Rc<State>| Rc::clone(s))
         .unwrap();
 
     let theme = &state.themes.themes[theme_name];
