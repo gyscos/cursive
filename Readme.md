@@ -56,7 +56,7 @@ Check out the other [examples](https://github.com/gyscos/cursive/tree/main/cursi
 <a href="cursive/examples/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
 <a href="cursive/examples/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
 <a href="cursive/examples/theme_manual.rs"><img src="https://i.imgur.com/I9V5KRi.png" alt="theme_manual.rs example", width="48%" /></a>
-<a href="cursive-syntect/examples/parse.rs"><img src="https://i.imgur.com/XEn1V3I.png", alt="syntect example", width="48%" /></a>
+<a href="cursive-syntect/examples/parse.rs"><img src="https://i.imgur.com/XEn1V3I.png" alt="syntect example" width="48%" /></a>
 </div>
 
 _(Colors may depend on your terminal configuration.)_
