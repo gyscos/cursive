@@ -6,9 +6,9 @@ documentation = "https://docs.rs/cursive"
 keywords = ["ncurses", "TUI", "UI"]
 license = "MIT"
 name = "cursive"
-readme = "../Readme.md"
+readme = "Readme.md"
 repository = "https://github.com/gyscos/cursive"
-version = "0.19.0"
+version = "0.20.0"
 edition = "2021"
 
 [package.metadata.docs.rs]

@@ -1,5 +1,31 @@
 # Changelog
 
+## cursive 0.20.0
+
+### Breaking Changes
+
+- Updates crossterm to 0.25.0
+
+## cursive-syntect 0.1.0
+
+- First release
+
+## cursive-core 0.3.5
+
+### Bugfixes
+
+- Termion backend: properly revert terminal to blocking when exiting
+  application.
+
+### Improvements
+
+- Added an ANSI color code parser
+- Added some examples:
+    - `advanced_user_data`
+    - `ansi`
+    - `theme_editor`
+- Improved documentation for Printer
+
 ## cursive 0.19.0
 
 ### Breaking Changes
