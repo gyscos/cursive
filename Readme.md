@@ -51,12 +51,12 @@ fn main() {
 Check out the other [examples](https://github.com/gyscos/cursive/tree/main/cursive/examples) to get these results, and more:
 
 <div>
-<a href="cursive/examples/edit.rs"><img src="https://imgur.com/CQgSwly.png" alt="edit.rs example", width="48%" /></a>
 <a href="cursive/examples/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
 <a href="cursive/examples/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
 <a href="cursive/examples/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
 <a href="cursive/examples/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
-<a href="cursive/examples/theme.rs"><img src="https://i.imgur.com/I9V5KRi.png" alt="theme.rs example", width="48%" /></a>
+<a href="cursive/examples/theme_manual.rs"><img src="https://i.imgur.com/I9V5KRi.png" alt="theme_manual.rs example", width="48%" /></a>
+<a href="cursive-syntect/examples/parse.rs"><img src="https://i.imgur.com/XEn1V3I.png", alt="syntect example", width="48%" /></a>
 </div>
 
 _(Colors may depend on your terminal configuration.)_
