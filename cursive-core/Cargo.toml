@@ -9,7 +9,7 @@ name = "cursive_core"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/cursive"
 version = "0.3.5"
-edition = "2018"
+edition = "2021"
 
 [package.metadata.docs.rs]
 all-features = true
