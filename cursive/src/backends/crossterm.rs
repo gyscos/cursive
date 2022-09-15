@@ -13,7 +13,7 @@ use std::{
 pub use crossterm;
 
 use crossterm::{
-    cursor::{Hide, MoveTo, Show},
+    cursor,
     event::{
         poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent,
         KeyCode, KeyEvent as CKeyEvent, KeyModifiers,
@@ -209,7 +209,7 @@ impl Backend {
             io::stdout(),
             EnterAlternateScreen,
             EnableMouseCapture,
-            Hide
+            cursor::Hide
         )?;
 
         #[cfg(unix)]
@@ -294,8 +294,15 @@ impl Drop for Backend {
     fn drop(&mut self) {
         // We have to execute the show cursor command at the `stdout`.
         self.with_stdout(|stdout| {
-            execute!(stdout, LeaveAlternateScreen, DisableMouseCapture, Show)
-                .expect("Can not disable mouse capture or show cursor.")
+            execute!(
+                stdout,
+                SetForegroundColor(Color::Reset),
+                SetBackgroundColor(Color::Reset),
+                LeaveAlternateScreen,
+                DisableMouseCapture,
+                cursor::Show
+            )
+            .expect("Can not disable mouse capture or show cursor.")
         });
 
         disable_raw_mode().unwrap();
@@ -338,15 +345,20 @@ impl backend::Backend for Backend {
 
     fn print_at(&self, pos: Vec2, text: &str) {
         self.with_stdout(|stdout| {
-            queue!(stdout, MoveTo(pos.x as u16, pos.y as u16), Print(text))
-                .unwrap()
+            queue!(
+                stdout,
+                cursor::MoveTo(pos.x as u16, pos.y as u16),
+                Print(text)
+            )
+            .unwrap()
         });
     }
 
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
             self.with_stdout(|out| {
-                queue!(out, MoveTo(pos.x as u16, pos.y as u16)).unwrap();
+                queue!(out, cursor::MoveTo(pos.x as u16, pos.y as u16))
+                    .unwrap();
 
                 out.write_all(text.as_bytes()).unwrap();
 
