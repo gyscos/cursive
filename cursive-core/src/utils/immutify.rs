@@ -183,7 +183,7 @@ macro_rules! immut2 {
 macro_rules! immut3 {
     ($f:expr ; else $else:expr) => {{
         let callback = ::std::cell::RefCell::new($f);
-        move |s, t, t| {
+        move |s, t, u| {
             if let ::std::result::Result::Ok(mut f) = callback.try_borrow_mut()
             {
                 (&mut *f)(s, t, u)
@@ -200,4 +200,23 @@ macro_rules! immut3 {
             }
         }
     }};
+}
+
+#[cfg(test)]
+mod tests {
+
+    fn call(f: impl Fn(i64, i64, i64), a: i64, b: i64, c: i64) {
+        f(a, b, c)
+    }
+
+    #[test]
+    fn immut3_loop() {
+        let mut count = 0;
+        let reenter: &mut dyn FnMut(i64, i64, i64) =
+            &mut |a, b, c| count += a + b + c;
+        for _i in 0..3 {
+            call(immut3! { |a, b, c| reenter(2*a, b, c) }, 1, 2, 3);
+        }
+        assert_eq!(count, 7 * 3);
+    }
 }
