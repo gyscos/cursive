@@ -132,8 +132,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// The text could be truncated if it exceed the [drawing area size](Self::output_size).
     ///
     /// # Example
-    /// ```ignore
-    /// use cursive::{Printer, Vec2, View, XY};
+    /// ```rust
+    /// use cursive_core::{Printer, Vec2, View, XY};
     ///
     /// pub struct CustomView {
     ///     word: String,
