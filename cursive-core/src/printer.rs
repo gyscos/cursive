@@ -133,7 +133,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// # Example
     /// ```rust
-    /// use cursive_core::{Printer, Vec2, View, XY};
+    /// # use cursive_core as cursive;
+    /// use cursive::{Printer, Vec2, View, XY};
     ///
     /// pub struct CustomView {
     ///     word: String,
