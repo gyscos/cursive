@@ -22,7 +22,7 @@ unicode-segmentation = "1"
 unicode-width = "0.1"
 lazy_static = "1"
 libc = "0.2"
-term_size = { version = "0.3", optional = true }
+terminal_size = { version = "0.2", optional = true }
 maplit = { version = "1.0", optional = true }
 log = "0.4"
 ahash = "0.8"
@@ -53,8 +53,8 @@ version = "0.25"
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.
 blt-backend = ["bear-lib-terminal"]
 default = ["ncurses-backend"]
-ncurses-backend = ["ncurses", "maplit", "term_size"]
-pancurses-backend = ["pancurses", "maplit", "term_size"]
+ncurses-backend = ["ncurses", "maplit", "terminal_size"]
+pancurses-backend = ["pancurses", "maplit", "terminal_size"]
 termion-backend = ["termion"]
 crossterm-backend = ["crossterm"]
 markdown = ["cursive_core/markdown"]
