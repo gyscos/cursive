@@ -50,6 +50,8 @@ pub mod reexports {
     pub use ansi_parser;
 }
 
+pub use cursive_macros::callback_helpers;
+
 #[macro_use]
 pub mod utils;
 #[macro_use]
@@ -66,6 +68,12 @@ pub mod menu;
 pub mod theme;
 pub mod traits;
 pub mod vec;
+
+#[cfg(feature = "builder")]
+pub use inventory::submit;
+
+#[macro_use]
+pub mod builder;
 
 mod cursive;
 mod cursive_run;

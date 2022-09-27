@@ -226,7 +226,7 @@ impl Menubar {
                         .iter()
                         .map(|child| child.label().width() + 2)
                         .sum(),
-                    if self.autohide { 1 } else { 0 },
+                    usize::from(self.autohide),
                 );
                 // Since the closure will be called multiple times,
                 // we also need a new Rc on every call.

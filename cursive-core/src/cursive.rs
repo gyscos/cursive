@@ -117,7 +117,7 @@ impl Cursive {
 
     pub(crate) fn layout(&mut self, size: Vec2) {
         self.last_size = size;
-        let offset = if self.menubar.autohide { 0 } else { 1 };
+        let offset = usize::from(!self.menubar.autohide);
         let size = size.saturating_sub((0, offset));
         self.root.layout(size);
     }
@@ -126,7 +126,8 @@ impl Cursive {
         let printer = Printer::new(size, &self.theme, backend);
 
         let selected = self.menubar.receive_events();
-        let offset = if self.menubar.autohide { 0 } else { 1 };
+
+        let offset = usize::from(!self.menubar.autohide);
 
         // The printer for the stackview
         let sv_printer = printer.offset((0, offset)).focused(!selected);
@@ -828,7 +829,7 @@ impl Cursive {
         if self.menubar.receive_events() {
             self.menubar.on_event(event).process(self);
         } else {
-            let offset = if self.menubar.autohide { 0 } else { 1 };
+            let offset = usize::from(!self.menubar.autohide);
 
             let result =
                 View::on_event(&mut self.root, event.relativized((0, offset)));
@@ -978,3 +979,9 @@ impl Cursive {
         self.clear();
     }
 }
+
+// Callback recipe
+crate::var_recipe!("Cursive.quit", |_config, _context| {
+    let cb: std::rc::Rc<dyn Fn(&mut Cursive)> = std::rc::Rc::new(|s| s.quit());
+    Ok(cb)
+});

@@ -92,9 +92,7 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
         match selector {
             &Selector::Name(name) if name == self.name => callback(self),
             s => {
-                if let Ok(mut v) = self.view.try_borrow_mut() {
-                    v.deref_mut().call_on_any(s, callback);
-                }
+                self.with_view_mut(|v| v.call_on_any(s, callback));
             }
         }
     }
@@ -115,3 +113,22 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
         }
     }
 }
+
+#[cursive_macros::recipe(NamedView::new(name, view))]
+struct Recipe {
+    name: String,
+    view: crate::views::BoxedView,
+}
+
+crate::raw_recipe!(with name, |config, context| {
+    let name: String = context.resolve(config)?;
+    Ok(|view| NamedView::new(name, view))
+});
+
+/*
+crate::raw_recipe!(NamedView, |config, context| {
+    let name: String = context.resolve(&config["name"])?;
+    let view: crate::views::BoxedView = context.resolve(&config["view"])?;
+    Ok(NamedView::new(name, view))
+});
+*/

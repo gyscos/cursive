@@ -8,7 +8,7 @@ pub struct OnLayoutView<V> {
     on_layout: Box<Callback<V>>,
 }
 
-impl<V> OnLayoutView<V> {
+impl<V: 'static> OnLayoutView<V> {
     /// Wraps a view in an `OnLayoutView`.
     ///
     /// Will run the given closure for layout _instead_ of the one from `view`.
@@ -45,6 +45,7 @@ impl<V> OnLayoutView<V> {
     }
 
     /// Replaces the callback to run.
+    #[crate::callback_helpers]
     pub fn set_on_layout<F>(&mut self, on_layout: F)
     where
         F: FnMut(&mut V, Vec2) + 'static,
@@ -62,3 +63,14 @@ impl<V: View> ViewWrapper for OnLayoutView<V> {
         (self.on_layout)(&mut self.view, size);
     }
 }
+
+crate::raw_recipe!(with on_layout, |config, context| {
+    let callback = context.resolve(config)?;
+    Ok(move |view| {
+        let mut view = OnLayoutView::wrap(view);
+        if let Some(callback) = callback {
+            view.set_on_layout_cb(callback);
+        }
+        view
+    })
+});

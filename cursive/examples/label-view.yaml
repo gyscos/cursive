@@ -1,0 +1,12 @@
+# Definition for a labeled view
+LinearLayout:
+  orientation: horizontal
+  children:
+    # We can use variables here - they will be filled from entries in the config.
+    - TextView: $label
+    - DummyView
+    - EditView:
+        on_edit: $on_edit
+        with:
+          - name: $name
+          - full_width

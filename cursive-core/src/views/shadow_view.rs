@@ -114,3 +114,5 @@ impl<T: View> ViewWrapper for ShadowView<T> {
             + self.top_left_padding()
     }
 }
+
+crate::raw_recipe!(with shadow, |_, _| Ok(ShadowView::new));

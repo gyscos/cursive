@@ -51,3 +51,19 @@ impl<T: View> ViewWrapper for Layer<T> {
         });
     }
 }
+
+crate::raw_recipe!(with layer, |config, context| {
+    let color = match config {
+        crate::builder::Config::Null => None,
+        config => Some(context.resolve(config)?),
+    };
+    Ok(move |view| {
+        let mut layer = Layer::new(view);
+
+        if let Some(color) = color {
+            layer.set_color(color);
+        }
+
+        layer
+    })
+});

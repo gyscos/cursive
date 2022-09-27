@@ -42,6 +42,7 @@ impl Checkbox {
     }
 
     /// Sets a callback to be used when the state changes.
+    #[crate::callback_helpers]
     pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(
         &mut self,
         on_change: F,
@@ -180,4 +181,12 @@ impl View for Checkbox {
             _ => EventResult::Ignored,
         }
     }
+}
+
+#[cursive_macros::recipe(Checkbox::new())]
+struct Recipe {
+    on_change: Option<_>,
+
+    checked: Option<bool>,
+    enabled: Option<bool>,
 }

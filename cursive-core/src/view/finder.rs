@@ -1,5 +1,5 @@
 use crate::view::{View, ViewWrapper};
-use crate::views::{NamedView, ViewRef};
+use crate::views::{BoxedView, NamedView, ViewRef};
 
 /// Provides `call_on<V: View>` to views.
 ///
@@ -62,9 +62,17 @@ impl<T: View> Finder for T {
     {
         self.call_on_any(sel, &mut |v: &mut dyn View| {
             if let Some(v) = v.downcast_mut::<V>() {
+                // Allow to select the view directly.
                 callback(v);
             } else if let Some(v) = v.downcast_mut::<NamedView<V>>() {
+                // In most cases we will actually find the wrapper.
                 v.with_view_mut(&mut callback);
+            } else if let Some(v) = v.downcast_mut::<NamedView<BoxedView>>() {
+                v.with_view_mut(|v: &mut BoxedView| {
+                    if let Some(v) = v.get_mut() {
+                        callback(v);
+                    }
+                });
             }
         });
     }

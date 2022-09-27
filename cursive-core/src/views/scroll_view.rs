@@ -440,3 +440,53 @@ where
         scroll::important_area(self, size, |s, si| s.inner.important_area(si))
     }
 }
+
+// ```yaml
+// - TextView
+//     content: $content
+//     with:
+//         - name: text
+//         - scroll: true
+// ```
+crate::raw_recipe!(with scroll, |config, context| {
+    use crate::builder::{Config, Error};
+
+    // Value could be:
+    // - Null (y-scroll)
+    // - Boolean (y-scroll?)
+    // - Array of strings [x y]
+    // - XY<bool>
+    //      - Array of booleans
+    //      - x: bool, y: bool
+    // TODO: Simplify? Re-use FromConfig for XY<bool>?
+    let (x, y) = match config {
+        Config::Null => (false, true),
+        Config::Bool(b) => (false, *b),
+        Config::String(s) if s == "x" => (true, false),
+        Config::String(s) if s == "y" => (false, true),
+        Config::Array(array) if array.len() <= 2 => {
+            let mut xy = [false, false];
+
+            // Sooo right now we allow `- scroll: [x, true]` and it'll return (true, true)
+            // Do we care enough to reject it?
+            for (i, value) in array.iter().enumerate() {
+                match value {
+                    Config::String(v) if v == "x" => xy[0] = true,
+                    Config::String(v) if v == "y" => xy[1] = true,
+                    // Anything else we try to resolve as bool. Maybe variable?
+                    other => xy[i] = context.resolve(other)?,
+                }
+            }
+
+            (xy[0], xy[1])
+        }
+        Config::Object(_) => {
+            let x = context.resolve_or(&config["x"], false)?;
+            let y = context.resolve_or(&config["y"], false)?;
+            (x, y)
+        }
+        _ => return Err(Error::invalid_config("Expected differently", config)),
+    };
+
+    Ok(move |view| ScrollView::new(view).scroll_x(x).scroll_y(y))
+});

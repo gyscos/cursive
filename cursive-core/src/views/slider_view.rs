@@ -94,23 +94,41 @@ impl SliderView {
     }
 
     /// Sets a callback to be called when the slider is moved.
-    #[must_use]
-    pub fn on_change<F>(mut self, callback: F) -> Self
+    #[crate::callback_helpers]
+    pub fn set_on_change<F>(&mut self, callback: F)
     where
         F: Fn(&mut Cursive, usize) + 'static,
     {
         self.on_change = Some(Rc::new(callback));
-        self
+    }
+
+    /// Sets a callback to be called when the slider is moved.
+    ///
+    /// Chainable variant.
+    #[must_use]
+    pub fn on_change<F>(self, callback: F) -> Self
+    where
+        F: Fn(&mut Cursive, usize) + 'static,
+    {
+        self.with(|s| s.set_on_change(callback))
     }
 
     /// Sets a callback to be called when the `<Enter>` key is pressed.
-    #[must_use]
-    pub fn on_enter<F>(mut self, callback: F) -> Self
+    #[crate::callback_helpers]
+    pub fn set_on_enter<F>(&mut self, callback: F)
     where
         F: Fn(&mut Cursive, usize) + 'static,
     {
         self.on_enter = Some(Rc::new(callback));
-        self
+    }
+
+    /// Sets a callback to be called when the `<Enter>` key is pressed.
+    #[must_use]
+    pub fn on_enter<F>(self, callback: F) -> Self
+    where
+        F: Fn(&mut Cursive, usize) + 'static,
+    {
+        self.with(|s| s.set_on_enter(callback))
     }
 
     fn get_change_result(&self) -> EventResult {
@@ -242,4 +260,14 @@ impl View for SliderView {
     ) -> Result<EventResult, CannotFocus> {
         Ok(EventResult::Consumed(None))
     }
+}
+
+// TODO: Rename the view itself as Slider to match the config?
+#[cursive_macros::recipe(SliderView::new(orientation, max_value))]
+struct Recipe {
+    orientation: Orientation,
+    max_value: usize,
+
+    on_change: Option<_>,
+    on_enter: Option<_>,
 }

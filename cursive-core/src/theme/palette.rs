@@ -1,4 +1,4 @@
-use super::{Color, Style};
+use super::{Color, NoSuchColor, Style};
 use enum_map::{enum_map, Enum, EnumMap};
 #[cfg(feature = "toml")]
 use log::warn;
@@ -8,18 +8,6 @@ use std::str::FromStr;
 
 // Use AHash instead of the slower SipHash
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
-
-/// Error parsing a color.
-#[derive(Debug)]
-pub struct NoSuchColor;
-
-impl std::fmt::Display for NoSuchColor {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Could not parse the given color")
-    }
-}
-
-impl std::error::Error for NoSuchColor {}
 
 /// Color configuration for the application.
 ///
@@ -239,7 +227,7 @@ impl Palette {
         &mut self,
         key: &str,
         color: Color,
-    ) -> Result<(), NoSuchColor> {
+    ) -> Result<(), crate::theme::NoSuchColor> {
         PaletteColor::from_str(key).map(|c| self.basic[c] = color)
     }
 
@@ -456,9 +444,9 @@ impl FromStr for PaletteStyle {
 }
 
 impl FromStr for PaletteColor {
-    type Err = NoSuchColor;
+    type Err = crate::theme::NoSuchColor;
 
-    fn from_str(s: &str) -> Result<Self, NoSuchColor> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         use PaletteColor::*;
 
         Ok(match s {
@@ -473,7 +461,7 @@ impl FromStr for PaletteColor {
             "Highlight" | "highlight" => Highlight,
             "HighlightInactive" | "highlight_inactive" => HighlightInactive,
             "HighlightText" | "highlight_text" => HighlightText,
-            _ => return Err(NoSuchColor),
+            _ => return Err(crate::theme::NoSuchColor),
         })
     }
 }

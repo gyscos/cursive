@@ -803,3 +803,59 @@ mod tests {
             .is::<TextView>());
     }
 }
+
+crate::raw_recipe!(StackView, |config, context| {
+    use crate::builder::{Config, Context, Error, FromConfig};
+
+    impl FromConfig for Placement {
+        fn from_config(
+            config: &Config,
+            context: &Context,
+        ) -> Result<Self, Error> {
+            match config.as_str() {
+                Some("fullscreen" | "Fullscreen" | "FullScreen") => {
+                    Ok(Self::Fullscreen)
+                }
+                _ => Ok(Self::Floating(context.resolve(config)?)),
+            }
+        }
+    }
+
+    impl FromConfig for Child {
+        fn from_config(
+            config: &Config,
+            context: &Context,
+        ) -> Result<Self, Error> {
+            let view: crate::views::BoxedView =
+                context.resolve(&config["child"])?;
+
+            let placement = context.resolve(&config["placement"])?;
+            let position: Position = context.resolve(&config["position"])?;
+
+            // Right now only plain layer+shadow views are allowed in configs.
+            Ok(Child {
+                view: ChildWrapper::Shadow(
+                    ShadowView::new(Layer::new(
+                        CircularFocus::new(view).wrap_tab(),
+                    ))
+                    .top_padding(position.y == Offset::Center)
+                    .left_padding(position.x == Offset::Center),
+                ),
+                size: Vec2::zero(),
+                placement,
+                virgin: true,
+            })
+        }
+    }
+
+    let mut stack = StackView::new();
+
+    // TODO: Use `layers`?
+    // Start from the top? (So the yaml file looks like the actual stack?)
+    // Use `top_to_bottom` field name to make this clear?
+    if let Some(children) = context.resolve(&config["children"])? {
+        stack.layers = children;
+    }
+
+    Ok(stack)
+});

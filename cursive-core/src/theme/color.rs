@@ -53,6 +53,21 @@ impl BaseColor {
     pub fn all() -> impl Iterator<Item = Self> {
         (0..Self::LENGTH).map(Self::from_usize)
     }
+
+    /// Parse a string into a base color.
+    pub fn parse(value: &str) -> Option<Self> {
+        Some(match value {
+            "Black" | "black" => BaseColor::Black,
+            "Red" | "red" => BaseColor::Red,
+            "Green" | "green" => BaseColor::Green,
+            "Yellow" | "yellow" => BaseColor::Yellow,
+            "Blue" | "blue" => BaseColor::Blue,
+            "Magenta" | "magenta" => BaseColor::Magenta,
+            "Cyan" | "cyan" => BaseColor::Cyan,
+            "White" | "white" => BaseColor::White,
+            _ => return None,
+        })
+    }
 }
 
 impl From<u8> for BaseColor {
@@ -162,26 +177,31 @@ impl Color {
     /// * `"default"` becomes `Color::TerminalDefault`
     /// * `"#123456"` becomes `Color::Rgb(0x12, 0x34, 0x56)`
     pub fn parse(value: &str) -> Option<Self> {
-        Some(match value {
-            "dark black" | "black" => Color::Dark(BaseColor::Black),
-            "dark red" | "red" => Color::Dark(BaseColor::Red),
-            "dark green" | "green" => Color::Dark(BaseColor::Green),
-            "dark yellow" | "yellow" => Color::Dark(BaseColor::Yellow),
-            "dark blue" | "blue" => Color::Dark(BaseColor::Blue),
-            "dark magenta" | "magenta" => Color::Dark(BaseColor::Magenta),
-            "dark cyan" | "cyan" => Color::Dark(BaseColor::Cyan),
-            "dark white" | "white" => Color::Dark(BaseColor::White),
-            "light black" => Color::Light(BaseColor::Black),
-            "light red" => Color::Light(BaseColor::Red),
-            "light green" => Color::Light(BaseColor::Green),
-            "light yellow" => Color::Light(BaseColor::Yellow),
-            "light blue" => Color::Light(BaseColor::Blue),
-            "light magenta" => Color::Light(BaseColor::Magenta),
-            "light cyan" => Color::Light(BaseColor::Cyan),
-            "light white" => Color::Light(BaseColor::White),
-            "default" => Color::TerminalDefault,
-            value => return parse_special(value),
-        })
+        // These values cannot be prefixed.
+        if value == "default" || value == "terminal default" {
+            return Some(Color::TerminalDefault);
+        }
+
+        // "light " prefix?
+        if let Some(base) =
+            value.strip_prefix("light ").and_then(BaseColor::parse)
+        {
+            return Some(Color::Light(base));
+        }
+
+        // "dark " prefix is optional.
+        if let Some(base) =
+            BaseColor::parse(value.strip_prefix("dark ").unwrap_or(value))
+        {
+            return Some(Color::Dark(base));
+        }
+
+        // This includes hex colors
+        if let Some(color) = parse_hex_color(value) {
+            return Some(color);
+        }
+
+        None
     }
 }
 
@@ -193,7 +213,10 @@ impl FromStr for Color {
     }
 }
 
-fn parse_special(value: &str) -> Option<Color> {
+/// Parses a hex represenation of a color.
+///
+/// Optionally prefixed with `#` or `0x`.
+fn parse_hex_color(value: &str) -> Option<Color> {
     if let Some(value) = value.strip_prefix('#') {
         parse_hex(value)
     } else if let Some(value) = value.strip_prefix("0x") {
@@ -217,6 +240,7 @@ fn parse_special(value: &str) -> Option<Color> {
     }
 }
 
+/// This parses a purely hex string (either rrggbb or rgb) into a color.
 fn parse_hex(value: &str) -> Option<Color> {
     // Compute per-color length, and amplitude
     let (l, multiplier) = match value.len() {

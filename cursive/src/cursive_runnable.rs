@@ -19,6 +19,21 @@ pub struct CursiveRunnable {
     backend_init: Box<Initializer>,
 }
 
+impl Default for CursiveRunnable {
+    /// Creates a new Cursive wrapper using one of the available backends.
+    ///
+    /// Picks the first backend enabled from the list:
+    /// * BearLibTerminal
+    /// * Termion
+    /// * Crossterm
+    /// * Pancurses
+    /// * Ncurses
+    /// * Dummy
+    fn default() -> Self {
+        Self::with_initializer(Box::new(backends::try_default))
+    }
+}
+
 impl std::ops::Deref for CursiveRunnable {
     type Target = Cursive;
 
@@ -186,20 +201,5 @@ impl CursiveRunnable {
         Self::new::<std::convert::Infallible, _>(|| {
             Ok(backends::blt::Backend::init())
         })
-    }
-}
-
-/// Creates a new Cursive wrapper using one of the available backends.
-///
-/// Picks the first backend enabled from the list:
-/// * BearLibTerminal
-/// * Termion
-/// * Crossterm
-/// * Pancurses
-/// * Ncurses
-/// * Dummy
-impl Default for CursiveRunnable {
-    fn default() -> Self {
-        Self::with_initializer(Box::new(backends::try_default))
     }
 }

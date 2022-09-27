@@ -237,6 +237,7 @@ impl EditView {
     ///
     /// If you need a mutable closure and don't care about the recursive
     /// aspect, see [`set_on_edit_mut`](#method.set_on_edit_mut).
+    #[crate::callback_helpers]
     pub fn set_on_edit<F>(&mut self, callback: F)
     where
         F: Fn(&mut Cursive, &str, usize) + 'static,
@@ -312,6 +313,7 @@ impl EditView {
     ///
     /// If you need a mutable closure and don't care about the recursive
     /// aspect, see [`set_on_submit_mut`](#method.set_on_submit_mut).
+    #[crate::callback_helpers]
     pub fn set_on_submit<F>(&mut self, callback: F)
     where
         F: Fn(&mut Cursive, &str) + 'static,
@@ -710,3 +712,68 @@ impl View for EditView {
         Rect::from_size((x, 0), (char_width, 1))
     }
 }
+
+#[cursive_macros::recipe(EditView::new())]
+struct Recipe {
+    content: Option<String>,
+
+    on_edit: Option<_>,
+    on_submit: Option<_>,
+}
+
+// The above recipe would expand to:
+/*
+crate::raw_recipe!(EditView, |config, context| {
+    let mut edit_view = EditView::new();
+
+    if let Some(content) = config.get("content") {
+        edit_view.set_content(context.resolve::<String>(content)?);
+    }
+
+    if let Some(on_edit) = config.get("on_edit") {
+        edit_view.set_on_edit_cb(context.resolve(on_edit)?);
+    }
+
+    if let Some(on_submit) = config.get("on_submit") {
+        edit_view.set_on_submit_cb(context.resolve(on_submit)?);
+    }
+
+    Ok(edit_view)
+});
+*/
+
+crate::var_recipe!("EditView.with_content", |config, context| {
+    let name: String = context.resolve(&config["name"])?;
+
+    // We won't resolve the callback just yet.
+    // Instead, store it and resolve it later, when we run the callback.
+    let callback = config["callback"].clone();
+    let context = context.clone();
+
+    let result: Rc<dyn Fn(&mut Cursive)> = Rc::new(move |s| {
+        let content: String = s
+            .call_on_name(&name, |view: &mut EditView| view.get_content())
+            .unwrap()
+            .as_ref()
+            .clone();
+
+        let context = context.sub_context(|c| {
+            c.store("content", content);
+        });
+
+        // Hopefully resolving this config as callback is what will pull the
+        // "content" variable we just set.
+        let callback: Rc<dyn Fn(&mut Cursive)> =
+            match context.resolve(&callback) {
+                Ok(callback) => callback,
+                Err(err) => {
+                    log::error!("Could not resolve callback: {err:?}");
+                    return;
+                }
+            };
+
+        (*callback)(s);
+    });
+
+    Ok(result)
+});

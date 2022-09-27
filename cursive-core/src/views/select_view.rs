@@ -170,6 +170,7 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Sets a callback to be used when an item is selected.
+    #[crate::callback_helpers]
     pub fn set_on_select<F>(&mut self, cb: F)
     where
         F: Fn(&mut Cursive, &T) + 'static,
@@ -221,9 +222,9 @@ impl<T: 'static> SelectView<T> {
     /// The item currently selected will be given to the callback.
     ///
     /// Here, `V` can be `T` itself, or a type that can be borrowed from `T`.
-    pub fn set_on_submit<F, R, V: ?Sized>(&mut self, cb: F)
+    pub fn set_on_submit<F, V: ?Sized>(&mut self, cb: F)
     where
-        F: 'static + Fn(&mut Cursive, &V) -> R,
+        F: 'static + Fn(&mut Cursive, &V),
         T: Borrow<V>,
     {
         self.on_submit = Some(Rc::new(move |s, t| {
@@ -1090,6 +1091,16 @@ impl<T> Item<T> {
         let value = Rc::new(value);
         Item { label, value }
     }
+}
+
+#[cursive_macros::recipe(SelectView::<String>::new())]
+struct Recipe {
+    autojump: Option<bool>,
+    popup: Option<bool>,
+    on_select: Option<_>,
+
+    #[recipe(foreach(add_item_str))]
+    items: Vec<String>,
 }
 
 #[cfg(test)]

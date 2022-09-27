@@ -1,0 +1,68 @@
+# This is the config for a small app
+# The top-level view will be a dialog.
+Dialog:
+  # Here we use the `title` variable.
+  # Users of this template will have to specify a value for that before rendering it.
+  title:
+    # We can use some of the builtin functions
+    $concat:
+      - "Title: "
+      - $title
+  child:
+    LinearLayout:
+      children:
+        # Some view can take a single value as parameter.
+        - TextView: Fancy prompt
+        # Some view don't even need any parameter at all.
+        - DummyView
+        # This is a custom recipe defined in our example.
+        - Titled:
+            title: Edit area
+            child:
+              # This is a custom view defined using a separate template file.
+              LabeledField:
+                label: "Please write:"
+                on_edit: $on_edit
+                name: edit
+        - Button:
+            label: Randomize
+            callback: $randomize
+        # This is another one of our custom views
+        - VSpace: 2
+        # Give the TextView a name so we can update it
+        - TextView:
+            # Every view can have a `with` field with a list of wrappers.
+            with:
+              # Here we only give this view a name: "status".
+              - name: status
+      with:
+        # Other examples of wrappers.
+        - padding: 1
+        # Some wrappers don't take any parameter.
+        - full_width
+        - fixed_height: 11
+  buttons:
+    - Info:
+        $EditView.with_content:
+          # This special callback fetches the content from a named EditView,
+          # then runs another callback with the result.
+          name: edit
+          callback:
+            # In the callback, `$content` will be set to the EditView's content.
+            $Dialog.info:
+              $concat:
+                - "This is an example of template-driven callback.\nThe current content is: `"
+                - $content
+                - "`."
+    # This is another builtin callback
+    - Exit: $Cursive.quit
+  with:
+    - circular_focus: left_right
+    - layer
+    - shadow
+    - padding:
+        # Some wrappers take a full object as parameter.
+        left: 2
+        right: 2
+        top: 1
+        bottom: 1

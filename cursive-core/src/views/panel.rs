@@ -139,3 +139,37 @@ impl<V: View> ViewWrapper for Panel<V> {
         self.invalidated || self.view.needs_relayout()
     }
 }
+
+#[cursive_macros::recipe(Panel::new(child))]
+struct Recipe {
+    child: crate::views::BoxedView,
+
+    title: Option<String>,
+    title_position: Option<HAlign>,
+}
+
+// TODO: reduce code duplication between recipes for the same view.
+crate::raw_recipe!(with panel, |config, context| {
+    let title = match config {
+        crate::builder::Config::String(_) => context.resolve(config)?,
+        crate::builder::Config::Object(config) => {
+            match config.get("title") {
+                Some(title) => context.resolve(title)?,
+                None => String::new()
+            }
+        }
+        _ => String::new(),
+    };
+
+    let title_position = context.resolve(&config["title_position"])?;
+
+    Ok(move |view| {
+        let mut panel = crate::views::Panel::new(view).title(title);
+
+        if let Some(title_position) = title_position {
+            panel.set_title_position(title_position);
+        }
+
+        panel
+    })
+});

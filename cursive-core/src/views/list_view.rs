@@ -1,3 +1,4 @@
+use crate::builder::{Config, Context, Error, FromConfig};
 use crate::{
     direction,
     event::{AnyCb, Callback, Event, EventResult, Key},
@@ -92,17 +93,23 @@ impl ListView {
         &mut self.children[id]
     }
 
+    /// Setter for the recipe.
+    fn set_children(&mut self, children: Vec<ListChild>) {
+        self.children_heights.resize(children.len(), 0);
+        self.children = children;
+    }
+
     /// Adds a view to the end of the list.
     pub fn add_child<V: IntoBoxedView + 'static>(
         &mut self,
-        label: &str,
+        label: impl Into<String>,
         view: V,
     ) {
         let view = view.into_boxed_view();
 
         // Why were we doing this here?
         // view.take_focus(direction::Direction::none());
-        self.children.push(ListChild::Row(label.to_string(), view));
+        self.children.push(ListChild::Row(label.into(), view));
         self.children_heights.push(0);
     }
 
@@ -149,6 +156,7 @@ impl ListView {
     }
 
     /// Sets a callback to be used when an item is selected.
+    #[crate::callback_helpers]
     pub fn set_on_select<F>(&mut self, cb: F)
     where
         F: Fn(&mut Cursive, &String) + 'static,
@@ -511,4 +519,23 @@ impl View for ListView {
 
         area + (0, y_offset)
     }
+}
+
+impl FromConfig for ListChild {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        if config.as_str() == Some("delimiter") {
+            Ok(ListChild::Delimiter)
+        } else {
+            let view = context.resolve(&config["view"])?;
+            let label = context.resolve(&config["label"])?;
+            Ok(ListChild::Row(label, view))
+        }
+    }
+}
+
+#[cursive_macros::recipe(ListView::new())]
+struct Recipe {
+    children: Vec<ListChild>,
+
+    on_select: Option<_>,
 }

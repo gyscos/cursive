@@ -1,3 +1,4 @@
+use crate::builder::{Config, Context, Error, FromConfig};
 use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
@@ -74,10 +75,15 @@ impl<T: 'static> RadioGroup<T> {
         }
     }
 
+    /// Get a global group based on a key and `T` type.
+    pub fn global<S: Into<String>>(key: S) -> Self {
+        Self::with_global(key, |group| group.clone())
+    }
+
     /// Run a closure on a radio group from a global pool.
     ///
     /// If none exist with the given type `T` and `key`, a new one will be created.
-    pub fn with_global<F, R>(key: &str, f: F) -> R
+    pub fn with_global<F, R, S: Into<String>>(key: S, f: F) -> R
     where
         F: FnOnce(&mut RadioGroup<T>) -> R,
     {
@@ -87,7 +93,7 @@ impl<T: 'static> RadioGroup<T> {
             let mut groups = groups.borrow_mut();
 
             let group = groups
-                .entry((key.to_string(), type_id))
+                .entry((key.into(), type_id))
                 .or_insert(Box::new(RadioGroup::<T>::new()));
 
             // Because we key by TypeId we _know_ it'll be the correct type.
@@ -259,6 +265,29 @@ impl<T: 'static> RadioButton<T> {
             Vec2::new(3 + 1 + self.label.width(), 1)
         }
     }
+
+    /// Build a button from a radio group.
+    ///
+    /// Equivalent to `group.button(value, label)`
+    pub fn from_group<S: Into<String>>(
+        group: &mut RadioGroup<T>,
+        value: T,
+        label: S,
+    ) -> Self {
+        group.button(value, label)
+    }
+}
+
+impl RadioButton<String> {
+    /// Build a button from a radio group.
+    ///
+    /// Equivalent to `group.button_str(label)`
+    pub fn from_group_str<S: Into<String>>(
+        group: &mut RadioGroup<String>,
+        label: S,
+    ) -> Self {
+        group.button_str(label)
+    }
 }
 
 impl<T: 'static> View for RadioButton<T> {
@@ -302,4 +331,18 @@ impl<T: 'static> View for RadioButton<T> {
             _ => EventResult::Ignored,
         }
     }
+}
+
+impl FromConfig for RadioGroup<String> {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        let name: String = context.resolve(config)?;
+
+        Ok(Self::global(name))
+    }
+}
+
+#[cursive_macros::recipe(RadioButton::from_group_str(&mut group, label))]
+struct Recipe {
+    group: RadioGroup<String>,
+    label: String,
 }

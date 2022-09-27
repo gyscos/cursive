@@ -1,0 +1,23 @@
+[package]
+authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
+categories = ["command-line-interface", "gui"]
+description = "Proc-macros for the cursive TUI library."
+documentation = "https://docs.rs/cursive-macros"
+edition = "2021"
+keywords = ["ncurses", "TUI", "UI"]
+license = "MIT"
+name = "cursive-macros"
+readme = "Readme.md"
+repository = "https://github.com/gyscos/cursive"
+version = "0.1.0"
+
+[lib]
+proc-macro = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+proc-macro2 = "1.0.47"
+quote = "1.0.21"
+syn = { version = "1.0.102", features = ["full"] }
+

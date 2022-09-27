@@ -446,3 +446,17 @@ impl View for TextView {
         content.size_cache = Some(SizeCache::build(my_size, size));
     }
 }
+
+// Need: a name, a base (potential dependencies), setters
+#[cursive_macros::recipe(TextView::empty())]
+enum Recipe {
+    // We accept `TextView` without even a body
+    Empty,
+
+    // Inline content
+    Content(String),
+
+    // Full object with optional content field
+    // This is also used to add a `with` block
+    Object { content: Option<String> },
+}

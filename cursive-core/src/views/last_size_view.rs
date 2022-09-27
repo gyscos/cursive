@@ -32,3 +32,5 @@ impl<T: View> ViewWrapper for LastSizeView<T> {
         self.view.layout(size);
     }
 }
+
+crate::raw_recipe!(with last_size, |_, _| Ok(LastSizeView::new));

@@ -478,7 +478,7 @@ impl View for TextArea {
         // (we always keep a space at the end)
         // And y = number of rows
         debug!("{:?}", self.rows);
-        let scroll_width = if self.rows.len() > constraint.y { 1 } else { 0 };
+        let scroll_width = usize::from(self.rows.len() > constraint.y);
 
         let content_width = if self.rows.iter().any(|row| row.is_wrapped) {
             // If any row has been wrapped, we want to take the full width.
@@ -674,4 +674,9 @@ impl View for TextArea {
             (char_width, 1),
         )
     }
+}
+
+#[cursive_macros::recipe(TextArea::new())]
+struct Recipe {
+    content: Option<String>,
 }

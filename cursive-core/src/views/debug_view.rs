@@ -81,3 +81,5 @@ impl View for DebugView {
         // Uh?
     }
 }
+
+crate::raw_recipe!(DebugView, |_, _| { Ok(DebugView::new()) });

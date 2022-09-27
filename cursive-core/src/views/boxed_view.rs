@@ -14,6 +14,20 @@ impl BoxedView {
         BoxedView { view }
     }
 
+    /// Returns a reference to the inner view.
+    ///
+    /// Returns `None` if the inner view is not actually type `V`.
+    pub fn get<V: View>(&self) -> Option<&V> {
+        self.view.downcast_ref()
+    }
+
+    /// Returns a mutable reference to the inner view.
+    ///
+    /// Returns `None` if the inner view is not actually type `V`.
+    pub fn get_mut<V: View>(&mut self) -> Option<&mut V> {
+        self.view.downcast_mut()
+    }
+
     /// Box the given view
     pub fn boxed<T>(view: T) -> Self
     where

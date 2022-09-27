@@ -38,3 +38,5 @@ impl<T: View> ViewWrapper for TrackedView<T> {
         self.view.draw(printer);
     }
 }
+
+crate::raw_recipe!(with tracked, |_, _| Ok(TrackedView::new));

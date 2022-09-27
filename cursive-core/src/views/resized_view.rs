@@ -362,3 +362,60 @@ mod tests {
         );
     }
 }
+
+crate::raw_recipe!(with full_screen, |_config, _context| {
+    Ok(crate::views::ResizedView::with_full_screen)
+});
+
+crate::raw_recipe!(with full_width, |_config, _context| {
+    Ok(crate::views::ResizedView::with_full_width)
+});
+
+crate::raw_recipe!(with full_height, |_config, _context| {
+    Ok(crate::views::ResizedView::with_full_height)
+});
+
+crate::raw_recipe!(with fixed_size, |config, context| {
+    let size: Vec2 = context.resolve(config)?;
+    Ok(move |view| crate::views::ResizedView::with_fixed_size(size, view))
+});
+
+crate::raw_recipe!(with max_size, |config, context| {
+    let size: Vec2 = context.resolve(config)?;
+    Ok(move |view| crate::views::ResizedView::with_max_size(size, view))
+});
+
+crate::raw_recipe!(with min_size, |config, context| {
+    let size: Vec2 = context.resolve(config)?;
+    Ok(move |view| crate::views::ResizedView::with_min_size(size, view))
+});
+
+crate::raw_recipe!(with fixed_width, |config, context| {
+    let width = context.resolve(config)?;
+    Ok(move |view| crate::views::ResizedView::with_fixed_width(width, view))
+});
+
+crate::raw_recipe!(with fixed_height, |config, context| {
+    let height = context.resolve(config)?;
+    Ok(move |view| crate::views::ResizedView::with_fixed_height(height, view))
+});
+
+crate::raw_recipe!(with max_width, |config, context| {
+    let width = context.resolve(config)?;
+    Ok(move |view| crate::views::ResizedView::with_max_width(width, view))
+});
+
+crate::raw_recipe!(with max_height, |config, context| {
+    let height = context.resolve(config)?;
+    Ok(move |view| crate::views::ResizedView::with_max_height(height, view))
+});
+
+crate::raw_recipe!(with min_width, |config, context| {
+    let width = context.resolve(config)?;
+    Ok(move |view| crate::views::ResizedView::with_min_width(width, view))
+});
+
+crate::raw_recipe!(with min_height, |config, context| {
+    let height = context.resolve(config)?;
+    Ok(move |view| crate::views::ResizedView::with_min_height(height, view))
+});

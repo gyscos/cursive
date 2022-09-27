@@ -207,7 +207,7 @@ pub use self::color::{BaseColor, Color};
 pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::Effect;
-pub use self::palette::{NoSuchColor, Palette, PaletteColor, PaletteStyle};
+pub use self::palette::{Palette, PaletteColor, PaletteNode, PaletteStyle};
 pub use self::style::{Style, StyleType};
 #[cfg(feature = "toml")]
 use std::fs::File;
@@ -216,6 +216,18 @@ use std::io;
 use std::io::Read;
 #[cfg(feature = "toml")]
 use std::path::Path;
+
+/// Error parsing a color.
+#[derive(Debug)]
+pub struct NoSuchColor;
+
+impl std::fmt::Display for NoSuchColor {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Could not parse the given color")
+    }
+}
+
+impl std::error::Error for NoSuchColor {}
 
 /// Represents the style a Cursive application will use.
 #[derive(Clone, Debug)]

@@ -310,7 +310,11 @@ impl FromStr for ColorType {
     type Err = super::NoSuchColor;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s == "inherit_parent" || s == "InheritParent" {
+        if s == "inherit_parent"
+            || s == "InheritParent"
+            || s == "inherit parent"
+            || s == "parent"
+        {
             return Ok(ColorType::InheritParent);
         }
 

@@ -125,7 +125,24 @@ impl<T: View> CircularFocus<T> {
         self.wrap_left_right = wrap_left_right;
     }
 
+    fn set_wrap(&mut self, wrap_kind: WrapKind, wrap: bool) {
+        match wrap_kind {
+            WrapKind::Tab => self.set_wrap_tab(wrap),
+            WrapKind::Arrows => self.set_wrap_arrows(wrap),
+            WrapKind::LeftRight => self.set_wrap_left_right(wrap),
+            WrapKind::UpDown => self.set_wrap_up_down(wrap),
+        }
+    }
+
     inner_getters!(self.view: T);
+}
+
+#[derive(Hash)]
+enum WrapKind {
+    Tab,
+    Arrows,
+    LeftRight,
+    UpDown,
 }
 
 impl<T: View> ViewWrapper for CircularFocus<T> {
@@ -183,3 +200,98 @@ impl<T: View> ViewWrapper for CircularFocus<T> {
         }
     }
 }
+/*
+
+#[cursive_macros::recipe(with = "circular_focus", CircularFocus::new)]
+enum Recipe {
+    #[recipe(
+        set_wrap(wrap_kind, true),
+        from=String,
+    )]
+    String(WrapKind),
+
+    #[recipe(
+        foreach=set_wrap(wrap_kind, true),
+        from=Array,
+    )]
+    Array(Vec<WrapKind>),
+
+    #[recipe(
+        foreach=set_wrap,
+        from=Object
+    )]
+    Object(HashMap<WrapKind, bool>),
+}
+*/
+
+crate::raw_recipe!(with circular_focus, |config, context| {
+    use crate::builder::{Config, Error};
+
+    // TODO: enable variable resolution across types
+    // (for example `circular_focus: $focus` where $focus is an array.)
+    // Especially for secondary template, where the variables are directly configs.
+    //
+    // Ex:
+    // # circular_focus.yaml
+    // View:
+    //      view: $child
+    //      with:
+    //          - name: $name
+    //          - circular_focus: $focus
+    //
+    // Maybe a method to "peek/resolve" a config value _as a config_? And then match that?
+    // (Would return an error if the variable cannot be config'ed)
+    // Or instead try resolving different types in the recipe.
+    fn parse_keyword(word: &str) -> Result<(bool, bool, bool), Error> {
+        Ok(match word {
+            "tab" => (true, false, false),
+            "arrows" => (false, true, true),
+            "left_right" => (false, false, true),
+            "up_down" => (false, true, false),
+            _ => {
+                return Err(Error::InvalidConfig {
+                    message: "Unrecognized circular focus style".into(),
+                    config: word.into(),
+                })
+            }
+        })
+    }
+
+    let (tab, up_down, left_right) = match config {
+        Config::String(config) => parse_keyword(config)?,
+        Config::Array(config) => {
+            // Array: combine everything.
+            let (mut tab, mut up_down, mut left_right) = (false, false, false);
+
+            for config in config {
+                let config: String = context.resolve(config)?;
+                let (t, u, l) = parse_keyword(&config)?;
+                tab |= t;
+                up_down |= u;
+                left_right |= l;
+            }
+
+            (tab, up_down, left_right)
+        }
+        Config::Object(config) => {
+            let tab = context.resolve(&config["tab"])?;
+            let mut left_right = context.resolve_or(&config["left_right"], false)?;
+            let mut up_down = context.resolve_or(&config["up_down"], false)?;
+
+            if let Some(arrows) = context.resolve(&config["arrows"])? {
+                left_right = arrows;
+                up_down = arrows;
+            }
+
+            (tab, up_down, left_right)
+        }
+        _ => (false, false, false),
+    };
+
+    Ok(move |view| {
+        CircularFocus::new(view)
+            .with_wrap_tab(tab)
+            .with_wrap_left_right(left_right)
+            .with_wrap_up_down(up_down)
+    })
+});

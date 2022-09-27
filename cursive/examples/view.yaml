@@ -1,0 +1,10 @@
+# Definition for a labeled view
+LinearLayout:
+  orientation: horizontal
+  children:
+    - TextView: $label
+    - DummyView
+    - EditView:
+        on_edit: $on_edit
+        with:
+          - name: $name

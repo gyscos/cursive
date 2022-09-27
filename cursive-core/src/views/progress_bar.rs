@@ -152,6 +152,7 @@ impl ProgressBar {
     ///
     /// The given function will be called with `(value, (min, max))`.
     /// Its output will be used as the label to print inside the progress bar.
+    #[crate::callback_helpers]
     pub fn set_label<F: Fn(usize, (usize, usize)) -> String + 'static>(
         &mut self,
         label_maker: F,
@@ -313,4 +314,13 @@ impl View for ProgressBar {
             printer.print((offset, 0), &label);
         });
     }
+}
+
+#[cursive_macros::recipe(ProgressBar::new())]
+struct Recipe {
+    min: Option<usize>,
+    max: Option<usize>,
+    value: Option<usize>,
+    color: Option<ColorType>,
+    label: Option<_>,
 }
