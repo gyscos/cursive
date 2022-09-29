@@ -882,6 +882,7 @@ impl Cursive {
         &mut self,
         backend: Box<dyn backend::Backend>,
     ) -> CursiveRunner<&mut Self> {
+        self.running = true;
         CursiveRunner::new(self, backend)
     }
 
@@ -916,7 +917,6 @@ impl Cursive {
     where
         F: FnOnce() -> Result<Box<dyn backend::Backend>, E>,
     {
-        self.running = true;
         let mut runner = self.runner(backend_init()?);
 
         runner.run();
