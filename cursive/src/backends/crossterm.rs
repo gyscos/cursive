@@ -300,7 +300,9 @@ impl Drop for Backend {
                 SetBackgroundColor(Color::Reset),
                 LeaveAlternateScreen,
                 DisableMouseCapture,
-                cursor::Show
+                cursor::Show,
+                cursor::MoveTo(0, 0),
+                terminal::Clear(terminal::ClearType::All)
             )
             .expect("Can not disable mouse capture or show cursor.")
         });
