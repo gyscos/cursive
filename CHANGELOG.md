@@ -1,5 +1,23 @@
 # Changelog
 
+## cursive 0.20.1
+
+### Improvements
+
+- Removed unused (and unmaintainted) `term_size` dependency.
+- Added a `status_bar` example.
+
+### Bugfixes
+
+- Crossterm backend: properly reset the color when de-initializing.
+
+## cursive-core 0.3.6
+
+### Bugfixes
+
+- Fix the `immut3!` macro.
+- Reset the running state when using non-default runners.
+
 ## cursive 0.20.0
 
 ### Breaking Changes
