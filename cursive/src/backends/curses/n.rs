@@ -274,7 +274,7 @@ impl Backend {
                         // so we need to disambiguate.
                         (mevent.bstate
                             == ncurses::BUTTON5_DOUBLE_CLICKED as mmask_t)
-                            .then_some(MouseEvent::WheelDown)
+                            .then(|| Some(MouseEvent::WheelDown)).ok_or_else(|| ()).unwrap()
                     })
                     .map(make_event)
                     .unwrap_or_else(|| Event::Unknown(vec![]))
