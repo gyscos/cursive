@@ -89,6 +89,7 @@ Here are a few crates implementing new views for you to use:
 Here are some cool applications using cursive:
 
 * [RustyChat](https://github.com/SambaDialloB/RustyChat): Chat client made using Rust and Cursive.
+* [checkline](https://github.com/sixarm/checkline-rust-crate): Checkbox line picker from stdin to stdout.
 * [clock-cli](https://github.com/TianyiShi2001/clock-cli-rs): A clock with stopwatch and countdown timer functionalities.
 * [fui](https://github.com/xliiv/fui): Add CLI & form interface to your program.
 * [git-branchless](https://github.com/arxanas/git-branchless): Branchless workflow for Git.
