@@ -44,6 +44,15 @@ impl ColorStyle {
         Self::new(ColorType::InheritParent, back)
     }
 
+    /// Returns an inverted color style, with the front and back colors swapped.
+    #[must_use]
+    pub fn invert(self) -> Self {
+        ColorStyle {
+            front: self.back,
+            back: self.front,
+        }
+    }
+
     /// Uses `ColorType::InheritParent` for both front and background.
     pub fn inherit_parent() -> Self {
         Self::new(ColorType::InheritParent, ColorType::InheritParent)
