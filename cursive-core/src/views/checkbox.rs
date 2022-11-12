@@ -17,7 +17,7 @@ type Callback = dyn Fn(&mut Cursive, bool);
 /// use cursive_core::traits::Nameable;
 /// use cursive_core::views::Checkbox;
 ///
-/// let checkbox = Checkbox::new().checked().with_name("check");
+/// let checkbox = Checkbox::new().checked();
 /// ```
 pub struct Checkbox {
     checked: bool,
