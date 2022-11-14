@@ -17,7 +17,25 @@ pub struct ColorStyle {
 }
 
 impl ColorStyle {
-    /// Creates
+    /// Creates a new color style, using the given values for front and back.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive_core as cursive;
+    /// use cursive::theme::ColorStyle;
+    ///
+    /// // `BaseColor` implements `Into<ColorStyle>`
+    /// use cursive::theme::BaseColor::*;
+    /// let red_on_black = ColorStyle::new(Red, Black);
+    ///
+    /// // So does `Color`.
+    /// let red_on_black = ColorStyle::new(Red.light(), Black.dark());
+    ///
+    /// // Or `PaletteColor`.
+    /// use cursive::theme::PaletteColor::*;
+    /// let primary = ColorStyle::new(Primary, View);
+    /// ```
     pub fn new<F, B>(front: F, back: B) -> Self
     where
         F: Into<ColorType>,
@@ -29,6 +47,17 @@ impl ColorStyle {
     }
 
     /// Uses the given color as front, inherits the parent background color.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive_core as cursive;
+    /// use cursive::theme::{BaseColor::*, ColorStyle, ColorType};
+    ///
+    /// let color = ColorStyle::front(Red.dark());
+    ///
+    /// assert_eq!(color, ColorStyle::new(Red.dark(), ColorType::InheritParent));
+    /// ```
     pub fn front<F>(front: F) -> Self
     where
         F: Into<ColorType>,
@@ -37,6 +66,20 @@ impl ColorStyle {
     }
 
     /// Uses the given color as background, inherits the parent front color.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive_core as cursive;
+    /// use cursive::theme::{BaseColor::*, ColorStyle, ColorType};
+    ///
+    /// let color = ColorStyle::back(Black.dark());
+    ///
+    /// assert_eq!(
+    ///     color,
+    ///     ColorStyle::new(ColorType::InheritParent, Black.dark())
+    /// );
+    /// ```
     pub fn back<B>(back: B) -> Self
     where
         B: Into<ColorType>,
@@ -45,6 +88,19 @@ impl ColorStyle {
     }
 
     /// Returns an inverted color style, with the front and back colors swapped.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive_core as cursive;
+    /// use cursive::theme::BaseColor::*;
+    /// use cursive::theme::ColorStyle;
+    ///
+    /// let red_on_black = ColorStyle::new(Red.dark(), Black.dark());
+    /// let black_on_red = red_on_black.invert();
+    ///
+    /// assert_eq!(black_on_red, ColorStyle::new(Black.dark(), Red.dark()));
+    /// ```
     #[must_use]
     pub fn invert(self) -> Self {
         ColorStyle {
@@ -108,14 +164,11 @@ impl ColorStyle {
         Self::new(PaletteColor::HighlightText, PaletteColor::HighlightInactive)
     }
 
-    /// Merge the style `b` over style `a`.
+    /// Merge the color type `new` over the color type `old`.
     ///
     /// This merges the front and back color types of `a` and `b`.
-    pub fn merge(a: Self, b: Self) -> Self {
-        ColorStyle {
-            front: ColorType::merge(a.front, b.front),
-            back: ColorType::merge(a.back, b.back),
-        }
+    pub fn merge(old: Self, new: Self) -> Self {
+        Self::zip_map(old, new, ColorType::merge)
     }
 
     /// Return the color pair that this style represents.
@@ -127,6 +180,26 @@ impl ColorStyle {
         ColorPair {
             front: self.front.resolve(palette, previous.front),
             back: self.back.resolve(palette, previous.back),
+        }
+    }
+
+    /// Apply a function to both the front and back colors.
+    pub fn map<F: FnMut(ColorType) -> ColorType>(self, mut f: F) -> Self {
+        ColorStyle {
+            front: f(self.front),
+            back: f(self.back),
+        }
+    }
+
+    /// Apply a function to each pair of front/back color.
+    pub fn zip_map<F: FnMut(ColorType, ColorType) -> ColorType>(
+        self,
+        other: Self,
+        mut f: F,
+    ) -> Self {
+        ColorStyle {
+            front: f(self.front, other.front),
+            back: f(self.back, other.back),
         }
     }
 }
@@ -171,12 +244,15 @@ where
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ColorType {
     /// Uses a color from the application palette.
+    ///
+    /// This is the best way to support themes and achieve a unified look
+    /// across different views.
     Palette(PaletteColor),
 
     /// Uses a direct color, independent of the current palette.
     Color(Color),
 
-    /// Re-use the color from the parent.
+    /// Re-uses the color from the parent.
     InheritParent,
 }
 
@@ -196,15 +272,21 @@ impl ColorType {
         }
     }
 
-    /// Merge the color type `b` over the color type `a`.
+    /// Merge the color type `new` over the color type `old`.
     ///
-    /// This returns `b`, unless `b = ColorType::InheritParent`,
-    /// in which case it returns `a`.
-    pub fn merge(a: ColorType, b: ColorType) -> ColorType {
-        match b {
-            ColorType::InheritParent => a,
-            b => b,
+    /// This returns `new`, unless `new = ColorType::InheritParent`,
+    /// in which case it returns `old`.
+    pub fn merge(old: ColorType, new: ColorType) -> ColorType {
+        match new {
+            ColorType::InheritParent => old,
+            new => new,
         }
+    }
+}
+
+impl From<BaseColor> for ColorType {
+    fn from(color: BaseColor) -> Self {
+        ColorType::Color(color.dark())
     }
 }
 

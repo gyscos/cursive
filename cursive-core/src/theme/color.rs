@@ -101,7 +101,7 @@ pub enum Color {
     ///
     /// Each value should be `<= 5` (you'll get panics otherwise).
     ///
-    /// These 216 possible colors are part of the default color palette (256 colors).
+    /// These 216 possible colors are part of the terminal color palette (256 colors).
     RgbLowRes(u8, u8, u8),
 }
 
