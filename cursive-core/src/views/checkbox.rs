@@ -13,9 +13,10 @@ type Callback = dyn Fn(&mut Cursive, bool);
 ///
 /// # Examples
 ///
-/// ```
-/// use cursive_core::traits::Nameable;
-/// use cursive_core::views::Checkbox;
+/// ```rust
+/// # use cursive_core as cursive;
+/// use cursive::traits::Nameable;
+/// use cursive::views::Checkbox;
 ///
 /// let checkbox = Checkbox::new().checked().with_name("check");
 /// ```
