@@ -1,4 +1,4 @@
-use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle, Palette};
+use cursive::theme::{BorderStyle, Palette};
 use cursive::traits::With;
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 use cursive::Cursive;
@@ -11,7 +11,7 @@ fn main() {
         borders: BorderStyle::Simple,
         palette: Palette::default().with(|palette| {
             use cursive::theme::BaseColor::*;
-            use cursive::theme::Color::*;
+            use cursive::theme::Color::TerminalDefault;
             use cursive::theme::PaletteColor::*;
 
             palette[Background] = TerminalDefault;
