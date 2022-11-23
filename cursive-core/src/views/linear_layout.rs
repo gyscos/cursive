@@ -287,6 +287,7 @@ impl LinearLayout {
     pub fn clear(&mut self) {
         self.invalidate();
         self.children.clear();
+        self.focus = 0;
     }
 
     /// Removes a child.
