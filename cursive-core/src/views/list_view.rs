@@ -278,6 +278,7 @@ impl ListView {
                 .zip(&self.children_heights)
                 .enumerate()
             {
+                // Keep trying to remove the child height to the position
                 if let Some(y) = position.y.checked_sub(height) {
                     // Not this child. Move on.
                     position.y = y;
@@ -337,7 +338,7 @@ impl View for ListView {
                             .focused(i == self.focus),
                     );
                 }
-                ListChild::Delimiter => y += 1, // TODO: draw delimiters?
+                ListChild::Delimiter => (), // TODO: draw delimiters?
             }
             y += height;
         }
@@ -380,15 +381,20 @@ impl View for ListView {
         debug!("Available: {}", available);
 
         self.children_heights.resize(self.children.len(), 0);
-        for (child, height) in self
-            .children
-            .iter_mut()
-            .zip(&mut self.children_heights)
-            .filter_map(|(v, h)| v.view().map(|v| (v, h)))
+
+        for (child, height) in
+            self.children.iter_mut().zip(&mut self.children_heights)
         {
-            // TODO: Find the child height?
-            *height = child.required_size(size).y;
-            child.layout(Vec2::new(available, *height));
+            match child.view() {
+                Some(child) => {
+                    *height = child.required_size(size).y;
+                    child.layout(Vec2::new(available, *height));
+                }
+                None => {
+                    // Delimiters have height=1
+                    *height = 1;
+                }
+            }
         }
     }
 
