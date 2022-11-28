@@ -84,18 +84,21 @@ impl<V> ScrollView<V> {
     pub fn set_scroll_strategy(
         &mut self,
         strategy: ScrollStrategy,
-    ) -> EventResult {
-        self.core.set_scroll_strategy(strategy);
-
-        // Scrolling may have happened.
-        self.on_scroll_callback()
+    ) -> EventResult
+    where
+        V: View,
+    {
+        self.scroll_operation(|s| s.core.set_scroll_strategy(strategy))
     }
 
     /// Defines the way scrolling is adjusted on content or size change.
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn scroll_strategy(self, strategy: ScrollStrategy) -> Self {
+    pub fn scroll_strategy(self, strategy: ScrollStrategy) -> Self
+    where
+        V: View,
+    {
         self.with(|s| {
             s.set_scroll_strategy(strategy);
         })
@@ -119,11 +122,10 @@ impl<V> ScrollView<V> {
     /// Sets the scroll offset to the given value
     pub fn set_offset<S>(&mut self, offset: S) -> EventResult
     where
+        V: View,
         S: Into<Vec2>,
     {
-        self.core.set_offset(offset);
-
-        self.on_scroll_callback()
+        self.scroll_operation(|s| s.core.set_offset(offset))
     }
 
     /// Controls whether this view can scroll vertically.
@@ -132,6 +134,7 @@ impl<V> ScrollView<V> {
     pub fn set_scroll_y(&mut self, enabled: bool) -> EventResult {
         self.core.set_scroll_y(enabled);
 
+        // Egh~~ this is not actually a scroll operation, it cannot _by itself_ cause a callback.
         self.on_scroll_callback()
     }
 
@@ -169,31 +172,35 @@ impl<V> ScrollView<V> {
     }
 
     /// Programmatically scroll to the top of the view.
-    pub fn scroll_to_top(&mut self) -> EventResult {
-        self.core.scroll_to_top();
-
-        self.on_scroll_callback()
+    pub fn scroll_to_top(&mut self) -> EventResult
+    where
+        V: View,
+    {
+        self.scroll_operation(|s| s.core.scroll_to_top())
     }
 
     /// Programmatically scroll to the bottom of the view.
-    pub fn scroll_to_bottom(&mut self) -> EventResult {
-        self.core.scroll_to_bottom();
-
-        self.on_scroll_callback()
+    pub fn scroll_to_bottom(&mut self) -> EventResult
+    where
+        V: View,
+    {
+        self.scroll_operation(|s| s.core.scroll_to_bottom())
     }
 
     /// Programmatically scroll to the leftmost side of the view.
-    pub fn scroll_to_left(&mut self) -> EventResult {
-        self.core.scroll_to_left();
-
-        self.on_scroll_callback()
+    pub fn scroll_to_left(&mut self) -> EventResult
+    where
+        V: View,
+    {
+        self.scroll_operation(|s| s.core.scroll_to_left())
     }
 
     /// Programmatically scroll to the rightmost side of the view.
-    pub fn scroll_to_right(&mut self) -> EventResult {
-        self.core.scroll_to_right();
-
-        self.on_scroll_callback()
+    pub fn scroll_to_right(&mut self) -> EventResult
+    where
+        V: View,
+    {
+        self.scroll_operation(|s| s.core.scroll_to_right())
     }
 
     /// Programmatically scroll until the child's important area is in view.
@@ -201,11 +208,11 @@ impl<V> ScrollView<V> {
     where
         V: View,
     {
-        let important_area =
-            self.inner.important_area(self.core.last_outer_size());
-        self.core.scroll_to_rect(important_area);
-
-        self.on_scroll_callback()
+        self.scroll_operation(|s| {
+            let important_area =
+                s.inner.important_area(s.core.last_outer_size());
+            s.core.scroll_to_rect(important_area)
+        })
     }
 
     /// Returns the wrapped view.
@@ -310,6 +317,28 @@ impl<V> ScrollView<V> {
         F: FnMut(&mut crate::Cursive, Rect) + 'static,
     {
         self.with(|s| s.set_on_scroll(on_scroll))
+    }
+
+    fn scroll_operation<F>(&mut self, f: F) -> EventResult
+    where
+        V: View,
+        F: FnOnce(&mut Self),
+    {
+        self.refresh();
+
+        f(self);
+
+        self.on_scroll_callback()
+    }
+
+    fn refresh(&mut self)
+    where
+        V: View,
+    {
+        // Note: the child may have changed since the last call to layout().
+        // We really should update that.
+        // Ideally, we would only fetch the last inner size and update that.
+        self.layout(self.core.last_outer_size());
     }
 
     /// Run any callback after scrolling.
