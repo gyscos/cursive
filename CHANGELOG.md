@@ -1,6 +1,10 @@
 # Changelog
 
-## cursive 0.20.1
+## cursive next (0.21)
+
+### Breaking Changes
+
+- Updates termion to 2.0
 
 ### Improvements
 
@@ -13,10 +17,25 @@
 
 ## cursive-core 0.3.6
 
+### API updates
+
+- Add `ColorStyle::{map, zip_map}`
+- Add `ColorStyle::invert`
+- Add `impl From<BaseColor> for ColorType`
+
+### Improvements
+
+- Added more doc and doc tests to `ColorStyle`.
+- Add a Minimum Supported Rust Version to Cargo.toml for a better error
+  message on old toolchains.
+
 ### Bugfixes
 
 - Fix the `immut3!` macro.
 - Reset the running state when using non-default runners.
+- Fix `ListView` behaviour with delimiters.
+- Reset focus field when clearing `LinearLayout`.
+- Fix scroll operation using outdated size if the child view was modified.
 
 ## cursive 0.20.0
 
