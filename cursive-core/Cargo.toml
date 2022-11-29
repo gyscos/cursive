@@ -10,6 +10,7 @@ readme = "Readme.md"
 repository = "https://github.com/gyscos/cursive"
 version = "0.3.5"
 edition = "2021"
+rust-version = "1.61"
 
 [package.metadata.docs.rs]
 all-features = true
