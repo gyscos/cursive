@@ -4,7 +4,7 @@ use crate::{
     event::*,
     rect::Rect,
     theme::ColorStyle,
-    view::{CannotFocus, View},
+    view::{CannotFocus, SizeRequest, View},
     Cursive, Printer, Vec2,
 };
 use unicode_width::UnicodeWidthStr;
@@ -155,9 +155,9 @@ impl View for Button {
         self.invalidated = false;
     }
 
-    fn required_size(&mut self, _: Vec2) -> Vec2 {
+    fn required_size(&mut self, _: Vec2) -> SizeRequest {
         // Meh. Fixed size we are.
-        self.req_size()
+        self.req_size().into()
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {

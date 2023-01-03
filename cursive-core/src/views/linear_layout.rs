@@ -4,7 +4,8 @@ use crate::{
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
     view::{
-        CannotFocus, IntoBoxedView, Selector, SizeCache, View, ViewNotFound,
+        CannotFocus, IntoBoxedView, Selector, SizeCache, SizeRequest, View,
+        ViewNotFound,
     },
     Printer, Vec2, With, XY,
 };
@@ -333,7 +334,7 @@ impl LinearLayout {
 
     // If the cache can be used, return the cached size.
     // Otherwise, return None.
-    fn get_cache(&self, req: Vec2) -> Option<Vec2> {
+    fn get_cache(&self, req: Vec2) -> Option<SizeRequest> {
         match self.cache {
             None => None,
             Some(ref cache) => {
@@ -508,7 +509,7 @@ impl View for LinearLayout {
         }
     }
 
-    fn required_size(&mut self, req: Vec2) -> Vec2 {
+    fn required_size(&mut self, req: Vec2) -> SizeRequest {
         // Did anything change since last time?
         if let Some(size) = self.get_cache(req) {
             return size;

@@ -2,7 +2,7 @@ use crate::{
     direction::{Absolute, Direction, Relative},
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
-    view::{CannotFocus, IntoBoxedView, Selector, ViewNotFound},
+    view::{CannotFocus, IntoBoxedView, Selector, SizeRequest, ViewNotFound},
     {Printer, Vec2, View, With},
 };
 
@@ -326,11 +326,13 @@ impl View for FixedLayout {
             + child.position.top_left()
     }
 
-    fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
-        self.children
-            .iter()
-            .map(|c| c.position.bottom_right() + (1, 1))
-            .fold(Vec2::zero(), Vec2::max)
+    fn required_size(&mut self, _constraint: Vec2) -> SizeRequest {
+        SizeRequest::simple(
+            self.children
+                .iter()
+                .map(|c| c.position.bottom_right() + (1, 1))
+                .fold(Vec2::zero(), Vec2::max),
+        )
     }
 
     fn take_focus(

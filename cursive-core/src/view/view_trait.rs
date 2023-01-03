@@ -4,7 +4,9 @@ use crate::rect::Rect;
 use crate::view::{AnyView, Selector};
 use crate::Printer;
 use crate::Vec2;
+use crate::XY;
 use std::any::Any;
+use std::ops::RangeInclusive;
 
 /// Error indicating a view was not found.
 #[derive(Debug)]
@@ -27,6 +29,124 @@ impl std::fmt::Display for CannotFocus {
 }
 
 impl std::error::Error for ViewNotFound {}
+
+/// A request for size: ranges of acceptable values for X and Y.
+pub type SizeRequest = XY<RangeInclusive<usize>>;
+
+impl SizeRequest {
+    /// Create a new size request using a single size.
+    pub fn simple<T: Into<Vec2>>(size: T) -> Self {
+        size.into().map(|x| x..=x)
+    }
+
+    /// Creates a new size request with a (0,0) size.
+    pub fn empty() -> Self {
+        Self::simple((0, 0))
+    }
+
+    /// Returns the minimum acceptable size in this request.
+    #[must_use]
+    pub fn min_size(self) -> Vec2 {
+        self.map(|range| *range.start())
+    }
+
+    /// Returns the minimum acceptable size in this request.
+    #[must_use]
+    pub fn max_size(self) -> Vec2 {
+        self.map(|range| *range.end())
+    }
+
+    /// Add `other` to this size request.
+    #[must_use]
+    pub fn add<T: Into<Vec2>>(self, other: T) -> Self {
+        self.zip_map(other.into(), |range, other| {
+            (other + range.start())..=(other + range.end())
+        })
+    }
+
+    fn max_range<T: Ord>(
+        a: RangeInclusive<T>,
+        b: RangeInclusive<T>,
+    ) -> RangeInclusive<T> {
+        use std::cmp::max;
+        let (a_start, a_end) = a.into_inner();
+        let (b_start, b_end) = b.into_inner();
+        max(a_start, b_start)..=max(a_end, b_end)
+    }
+
+    fn add_range<T: std::ops::Add<Output = T>>(
+        a: RangeInclusive<T>,
+        b: RangeInclusive<T>,
+    ) -> RangeInclusive<T> {
+        let (a_start, a_end) = a.into_inner();
+        let (b_start, b_end) = b.into_inner();
+        (a_start + b_start)..=(a_end + b_end)
+    }
+
+    /// Add the given width to this request.
+    #[must_use]
+    pub fn add_x(self, width: usize) -> Self {
+        self.add_horizontal((width, 0))
+    }
+
+    /// Add the given height to this request.
+    #[must_use]
+    pub fn add_y(self, height: usize) -> Self {
+        self.add_vertical((0, height))
+    }
+
+    /// Stack the two size requests vertically.
+    #[must_use]
+    pub fn add_vertical<T: Into<Vec2>>(self, other: T) -> Self {
+        // Take the max on X
+        // Take the sum on Y
+        self.combine_vertical(other.into().map(|x| x..=x))
+    }
+
+    /// Stack the two size requests horizontally.
+    #[must_use]
+    pub fn add_horizontal<T: Into<Vec2>>(self, other: T) -> Self {
+        // Take the max on X
+        // Take the sum on Y
+        self.combine_horizontal(other.into().map(|x| x..=x))
+    }
+
+    /// Stack the two size requests vertically.
+    #[must_use]
+    pub fn combine_vertical(self, other: Self) -> Self {
+        // Take the max on X
+        // Take the sum on Y
+        XY::zip_map_xy(self, other, Self::max_range, Self::add_range)
+    }
+
+    /// Stack the two size requests horizontally.
+    #[must_use]
+    pub fn combine_horizontal(self, other: Self) -> Self {
+        // Take the sum on X
+        // Take the max on Y
+        XY::zip_map_xy(self, other, Self::add_range, Self::max_range)
+    }
+
+    /// Remove `other` from this size request.
+    #[must_use]
+    fn saturating_sub<T: Into<Vec2>>(self, other: T) -> Self {
+        self.zip_map(other.into(), |range, other| {
+            (range.start().saturating_sub(other))
+                ..=(range.end().saturating_sub(other))
+        })
+    }
+
+    /// Returns the size remaining after taking `self` from `size`.
+    ///
+    /// Conceptually `size.saturating_sub(self)`
+    #[must_use]
+    pub fn taken_from(self, size: Vec2) -> Self {
+        self.zip_map(size, |range, size| {
+            size.saturating_sub(*range.end())
+                ..=size.saturating_sub(*range.start())
+        })
+    }
+}
 
 /// Main trait defining a view behaviour.
 ///
@@ -74,9 +194,9 @@ pub trait View: Any + AnyView {
     /// constraints.
     ///
     /// Default implementation always return `(1,1)`.
-    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+    fn required_size(&mut self, constraint: Vec2) -> SizeRequest {
         let _ = constraint;
-        Vec2::new(1, 1)
+        Vec2::new(1, 1).into()
     }
 
     /// Called when an event is received (key press, mouse event, ...).

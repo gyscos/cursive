@@ -2,14 +2,14 @@ use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
     rect::Rect,
-    view::{CannotFocus, Selector, View, ViewNotFound},
+    view::{self, CannotFocus, Selector, View, ViewNotFound},
     Printer, Vec2, With,
 };
 
 // Define these types separately to appease the Clippy god
 type Draw<T> = dyn Fn(&T, &Printer);
 type OnEvent<T> = dyn FnMut(&mut T, Event) -> EventResult;
-type RequestSize<T> = dyn FnMut(&mut T, Vec2) -> Vec2;
+type RequiredSize<T> = dyn FnMut(&mut T, Vec2) -> view::SizeRequest;
 type Layout<T> = dyn FnMut(&mut T, Vec2);
 type TakeFocus<T> =
     dyn FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>;
@@ -56,7 +56,7 @@ pub struct Canvas<T> {
 
     draw: Box<Draw<T>>,
     on_event: Box<OnEvent<T>>,
-    required_size: Box<RequestSize<T>>,
+    required_size: Box<RequiredSize<T>>,
     layout: Box<Layout<T>>,
     take_focus: Box<TakeFocus<T>>,
     needs_relayout: Box<dyn Fn(&T) -> bool>,
@@ -90,7 +90,7 @@ impl<T> Canvas<T> {
             state,
             draw: Box::new(|_, _| ()),
             on_event: Box::new(|_, _| EventResult::Ignored),
-            required_size: Box::new(|_, _| Vec2::new(1, 1)),
+            required_size: Box::new(|_, _| Vec2::new(1, 1).into()),
             layout: Box::new(|_, _| ()),
             take_focus: Box::new(|_, _| Err(CannotFocus)),
             needs_relayout: Box::new(|_| true),
@@ -148,7 +148,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `required_size(Vec2)`.
     pub fn set_required_size<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, Vec2) -> Vec2,
+        F: 'static + FnMut(&mut T, Vec2) -> view::SizeRequest,
     {
         self.required_size = Box::new(f);
     }
@@ -159,7 +159,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_required_size<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, Vec2) -> Vec2,
+        F: 'static + FnMut(&mut T, Vec2) -> view::SizeRequest,
     {
         self.with(|s| s.set_required_size(f))
     }
@@ -292,7 +292,7 @@ impl<T: 'static> View for Canvas<T> {
         (self.on_event)(&mut self.state, event)
     }
 
-    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+    fn required_size(&mut self, constraint: Vec2) -> view::SizeRequest {
         (self.required_size)(&mut self.state, constraint)
     }
 

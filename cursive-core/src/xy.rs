@@ -153,6 +153,16 @@ impl<T> XY<T> {
         XY::new(self.x, f(self.y))
     }
 
+    /// Apply different functions to x and y
+    #[must_use]
+    pub fn map_xy<Fx, Fy>(self, fx: Fx, fy: Fy) -> Self
+    where
+        Fx: FnOnce(T) -> T,
+        Fy: FnOnce(T) -> T,
+    {
+        XY::new(fx(self.x), fy(self.y))
+    }
+
     /// Destructure self into a pair.
     ///
     /// # Examples
@@ -350,6 +360,19 @@ impl<T> XY<T> {
         F: FnMut(T, U) -> V,
     {
         XY::new(f(self.x, other.x), f(self.y, other.y))
+    }
+
+    pub fn zip_map_xy<U, V, Fx, Fy>(
+        self,
+        other: XY<U>,
+        fx: Fx,
+        fy: Fy,
+    ) -> XY<V>
+    where
+        Fx: FnOnce(T, U) -> V,
+        Fy: FnOnce(T, U) -> V,
+    {
+        XY::new(fx(self.x, other.x), fy(self.y, other.y))
     }
 
     /// For each axis, keep the element from `self` if `keep` is `true`.

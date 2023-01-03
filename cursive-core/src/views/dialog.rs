@@ -6,7 +6,8 @@ use crate::{
     theme::ColorStyle,
     utils::markup::StyledString,
     view::{
-        CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound,
+        CannotFocus, IntoBoxedView, Margins, Selector, SizeRequest, View,
+        ViewNotFound,
     },
     views::{BoxedView, Button, DummyView, LastSizeView, TextView},
     Cursive, Printer, Vec2, With,
@@ -749,7 +750,7 @@ impl View for Dialog {
         self.draw_title(printer);
     }
 
-    fn required_size(&mut self, req: Vec2) -> Vec2 {
+    fn required_size(&mut self, req: Vec2) -> SizeRequest {
         // Padding and borders are not available for kids.
         let nomans_land = self.padding.combined() + self.borders.combined();
 
@@ -760,7 +761,8 @@ impl View for Dialog {
         buttons_size.x += self.buttons.len().saturating_sub(1);
 
         for button in &mut self.buttons {
-            let s = button.button.view.required_size(req);
+            // In our case we know buttons have a fixed size request
+            let s = button.button.view.required_size(req).min_size();
             buttons_size.x += s.x;
             buttons_size.y = max(buttons_size.y, s.y + 1);
         }
@@ -771,25 +773,22 @@ impl View for Dialog {
         let content_req = match req.checked_sub(taken) {
             Some(r) => r,
             // Bad!!
-            None => return taken,
+            None => return SizeRequest::simple(taken),
         };
 
         let content_size = self.content.required_size(content_req);
 
         // On the Y axis, we add buttons and content.
         // On the X axis, we take the max.
-        let mut inner_size = Vec2::new(
-            max(content_size.x, buttons_size.x),
-            content_size.y + buttons_size.y,
-        ) + self.padding.combined()
-            + self.borders.combined();
+        let mut outer_size =
+            content_size.add_vertical(buttons_size).add(nomans_land);
 
         if !self.title.is_empty() {
             // If we have a title, we have to fit it too!
-            inner_size.x = max(inner_size.x, self.title.width() + 6);
+            outer_size = outer_size.add_vertical((self.title.width() + 6, 0));
         }
 
-        inner_size
+        outer_size
     }
 
     fn layout(&mut self, mut size: Vec2) {
@@ -801,7 +800,7 @@ impl View for Dialog {
         // Buttons are kings, we give them everything they want.
         let mut buttons_height = 0;
         for button in self.buttons.iter_mut().rev() {
-            let size = button.button.required_size(size);
+            let size = button.button.required_size(size).min_size();
             buttons_height = max(buttons_height, size.y + 1);
             button.button.layout(size);
         }

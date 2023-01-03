@@ -143,8 +143,8 @@ impl Checkbox {
 }
 
 impl View for Checkbox {
-    fn required_size(&mut self, _: Vec2) -> Vec2 {
-        Vec2::new(3, 1)
+    fn required_size(&mut self, _: Vec2) -> crate::view::SizeRequest {
+        Vec2::new(3, 1).into()
     }
 
     fn take_focus(

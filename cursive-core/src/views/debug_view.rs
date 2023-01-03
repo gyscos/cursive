@@ -1,6 +1,6 @@
 use crate::logger;
 use crate::theme;
-use crate::view::View;
+use crate::view::{SizeRequest, View};
 use crate::Printer;
 use crate::Vec2;
 
@@ -59,7 +59,7 @@ impl View for DebugView {
         }
     }
 
-    fn required_size(&mut self, _constraint: Vec2) -> Vec2 {
+    fn required_size(&mut self, _constraint: Vec2) -> SizeRequest {
         // TODO: read the logs, and compute the required size to print it.
         let logs = logger::LOGS.lock().unwrap();
 
@@ -74,7 +74,7 @@ impl View for DebugView {
             .unwrap_or(1);
         let h = logs.len();
 
-        Vec2::new(w, h)
+        SizeRequest::new(w, h)
     }
 
     fn layout(&mut self, _size: Vec2) {

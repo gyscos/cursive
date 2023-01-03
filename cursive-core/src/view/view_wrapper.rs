@@ -55,9 +55,9 @@ pub trait ViewWrapper: 'static {
     }
 
     /// Wraps the `required_size` method.
-    fn wrap_required_size(&mut self, req: Vec2) -> Vec2 {
+    fn wrap_required_size(&mut self, req: Vec2) -> crate::view::SizeRequest {
         self.with_view_mut(|v| v.required_size(req))
-            .unwrap_or_else(Vec2::zero)
+            .unwrap_or_else(crate::view::SizeRequest::zero)
     }
 
     /// Wraps the `on_event` method.
@@ -116,7 +116,7 @@ impl<T: ViewWrapper> View for T {
         self.wrap_draw(printer);
     }
 
-    fn required_size(&mut self, req: Vec2) -> Vec2 {
+    fn required_size(&mut self, req: Vec2) -> crate::view::SizeRequest {
         self.wrap_required_size(req)
     }
 
