@@ -513,7 +513,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Apply a selection style and call the given function.
     ///
-    /// * If `selection` is `false`, simply uses [`ColorStyle::primary()`].
+    /// * If `selection` is `false`, simply uses the current style.
     /// * If `selection` is `true`:
     ///     * If the printer currently has the focus,
     ///       uses [`ColorStyle::highlight()`].

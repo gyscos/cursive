@@ -146,7 +146,14 @@ impl View for Button {
             HAlign::Center.get_offset(self.label.width(), printer.size.x);
 
         printer.with_color(style, |printer| {
+            printer.print_hline((0, 0), offset, " ");
             printer.print((offset, 0), &self.label);
+            let end = offset + self.label.width();
+            printer.print_hline(
+                (end, 0),
+                printer.size.x.saturating_sub(end),
+                " ",
+            );
         });
     }
 

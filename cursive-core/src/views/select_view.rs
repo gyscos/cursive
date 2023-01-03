@@ -54,6 +54,10 @@ pub struct SelectView<T = String> {
     // Callbacks may need to manipulate focus, so give it some mutability.
     focus: Rc<Cell<usize>>,
 
+    // If true, highlight the selection even when inactive (not focused).
+    // If false, selection will be drawn like regular text if inactive.
+    inactive_highlight: bool,
+
     // This is a custom callback to include a &T.
     // It will be called whenever "Enter" is pressed or when an item is clicked.
     on_submit: Option<Rc<SelectCallback<T>>>,
@@ -95,6 +99,7 @@ impl<T: 'static> SelectView<T> {
             items: Vec::new(),
             enabled: true,
             focus: Rc::new(Cell::new(0)),
+            inactive_highlight: true,
             on_select: None,
             on_submit: None,
             align: Align::top_left(),
@@ -123,6 +128,26 @@ impl<T: 'static> SelectView<T> {
     #[must_use]
     pub fn autojump(self) -> Self {
         self.with(|s| s.set_autojump(true))
+    }
+
+    /// Sets the "inactive highlight" property for this view.
+    ///
+    /// * If true (the default), the selected row will be highlighted when the
+    ///   view is not focused.
+    /// * If false, the selected row will be printed like the others if inactive.
+    pub fn set_inactive_highlight(&mut self, inactive_highlight: bool) {
+        self.inactive_highlight = inactive_highlight;
+    }
+
+    /// Sets the "inactive highlight" property for this view.
+    ///
+    /// * If true (the default), the selected row will be highlighted when the
+    ///   view is not focused.
+    /// * If false, the selected row will be printed like the others if inactive.
+    ///
+    /// Chainable variant.
+    pub fn with_inactive_highlight(self, inactive_highlight: bool) -> Self {
+        self.with(|s| s.set_inactive_highlight(inactive_highlight))
     }
 
     /// Turns `self` into a popup select view.
@@ -410,7 +435,8 @@ impl<T: 'static> SelectView<T> {
     {
         self.items.insert(index, Item::new(label.into(), value));
         let focus = self.focus();
-        if focus >= index {
+        // Do not increase focus if we were empty with focus=0.
+        if focus >= index && self.items.len() >= 1 {
             self.focus.set(focus + 1);
         }
         self.last_required_size = None;
@@ -905,6 +931,8 @@ impl<T: 'static> View for SelectView<T> {
     fn draw(&self, printer: &Printer) {
         self.last_offset.set(printer.offset);
 
+        let focus = self.focus();
+
         if self.popup {
             // Popup-select only draw the active element.
             // We'll draw the full list in a popup if needed.
@@ -929,7 +957,7 @@ impl<T: 'static> View for SelectView<T> {
                 printer.print((x, 0), ">");
 
                 if let Some(label) =
-                    self.items.get(self.focus()).map(|item| &item.label)
+                    self.items.get(focus).map(|item| &item.label)
                 {
                     // And center the text?
                     let offset =
@@ -944,22 +972,35 @@ impl<T: 'static> View for SelectView<T> {
             let offset = self.align.v.get_offset(h, printer.size.y);
             let printer = &printer.offset((0, offset));
 
+            let enabled = self.enabled && printer.enabled;
+            let active = printer.focused;
+
+            let regular_style = if enabled {
+                ColorStyle::inherit_parent()
+            } else {
+                ColorStyle::secondary()
+            };
+
+            let highlight_style = if active {
+                ColorStyle::highlight()
+            } else {
+                if self.inactive_highlight {
+                    ColorStyle::highlight_inactive()
+                } else {
+                    regular_style
+                }
+            };
+
             for i in 0..self.len() {
-                printer.offset((0, i)).with_selection(
-                    i == self.focus(),
-                    |printer| {
-                        if i != self.focus()
-                            && !(self.enabled && printer.enabled)
-                        {
-                            printer.with_color(
-                                ColorStyle::secondary(),
-                                |printer| self.draw_item(printer, i),
-                            );
-                        } else {
-                            self.draw_item(printer, i);
-                        }
-                    },
-                );
+                let color = if i == focus {
+                    highlight_style
+                } else {
+                    regular_style
+                };
+
+                printer.offset((0, i)).with_color(color, |printer| {
+                    self.draw_item(printer, i);
+                });
             }
         }
     }
