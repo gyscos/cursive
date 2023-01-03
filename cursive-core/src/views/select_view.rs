@@ -150,6 +150,11 @@ impl<T: 'static> SelectView<T> {
         self.with(|s| s.set_inactive_highlight(inactive_highlight))
     }
 
+    /// Returns the current status of the "inactive highlight" property.
+    pub fn get_inactive_highlight(&self) -> bool {
+        self.inactive_highlight
+    }
+
     /// Turns `self` into a popup select view.
     ///
     /// Chainable variant.
