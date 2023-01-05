@@ -85,6 +85,42 @@ impl IndexMut<PaletteColor> for Palette {
 }
 
 impl Palette {
+    /// Returns the palette for a retro look, similar to dialog.
+    ///
+    /// * `Background` => `Dark(Blue)`
+    /// * `Shadow` => `Dark(Black)`
+    /// * `View` => `Dark(White)`
+    /// * `Primary` => `Dark(Black)`
+    /// * `Secondary` => `Dark(Blue)`
+    /// * `Tertiary` => `Light(White)`
+    /// * `TitlePrimary` => `Dark(Red)`
+    /// * `TitleSecondary` => `Dark(Yellow)`
+    /// * `Highlight` => `Dark(Red)`
+    /// * `HighlightInactive` => `Dark(Blue)`
+    /// * `HighlightText` => `Dark(White)`
+    pub fn retro() -> Self {
+        use self::PaletteColor::*;
+        use crate::theme::BaseColor::*;
+        use crate::theme::Color::*;
+
+        Palette {
+            basic: enum_map! {
+                Background => Dark(Blue),
+                Shadow => Dark(Black),
+                View => Dark(White),
+                Primary => Dark(Black),
+                Secondary => Dark(Blue),
+                Tertiary => Light(White),
+                TitlePrimary => Dark(Red),
+                TitleSecondary => Light(Blue),
+                Highlight => Dark(Red),
+                HighlightInactive => Dark(Blue),
+                HighlightText => Dark(White),
+            },
+            custom: HashMap::default(),
+        }
+    }
+
     /// Returns a custom color from this palette.
     ///
     /// Returns `None` if the given key was not found.
@@ -179,41 +215,10 @@ impl Extend<(PaletteColor, Color)> for Palette {
     }
 }
 
-/// Returns the default palette for a cursive application.
-///
-/// * `Background` => `Dark(Blue)`
-/// * `Shadow` => `Dark(Black)`
-/// * `View` => `Dark(White)`
-/// * `Primary` => `Dark(Black)`
-/// * `Secondary` => `Dark(Blue)`
-/// * `Tertiary` => `Light(White)`
-/// * `TitlePrimary` => `Dark(Red)`
-/// * `TitleSecondary` => `Dark(Yellow)`
-/// * `Highlight` => `Dark(Red)`
-/// * `HighlightInactive` => `Dark(Blue)`
-/// * `HighlightText` => `Dark(White)`
+/// Currently returns the retro palette.
 impl Default for Palette {
     fn default() -> Palette {
-        use self::PaletteColor::*;
-        use crate::theme::BaseColor::*;
-        use crate::theme::Color::*;
-
-        Palette {
-            basic: enum_map! {
-                Background => Dark(Blue),
-                Shadow => Dark(Black),
-                View => Dark(White),
-                Primary => Dark(Black),
-                Secondary => Dark(Blue),
-                Tertiary => Light(White),
-                TitlePrimary => Dark(Red),
-                TitleSecondary => Light(Blue),
-                Highlight => Dark(Red),
-                HighlightInactive => Dark(Blue),
-                HighlightText => Dark(White),
-            },
-            custom: HashMap::default(),
-        }
+        Palette::retro()
     }
 }
 

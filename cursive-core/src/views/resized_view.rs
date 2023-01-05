@@ -217,6 +217,7 @@ impl<T: View> ViewWrapper for ResizedView<T> {
 
         // This is the size the child would like to have.
         // Given the constraints of our box.
+        // TODO: Skip running this if not needed?
         let child_size = self.view.required_size(req);
 
         // Some of this request will be granted, but maybe not all.

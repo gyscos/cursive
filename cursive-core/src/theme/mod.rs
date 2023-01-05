@@ -230,17 +230,23 @@ pub struct Theme {
     pub palette: Palette,
 }
 
+/// Currently returns the retro theme.
 impl Default for Theme {
     fn default() -> Self {
-        Theme {
-            shadow: true,
-            borders: BorderStyle::Simple,
-            palette: Palette::default(),
-        }
+        Theme::retro()
     }
 }
 
 impl Theme {
+    /// Returns a retro theme, similar to GNU dialog applications.
+    pub fn retro() -> Self {
+        Theme {
+            shadow: true,
+            borders: BorderStyle::Simple,
+            palette: Palette::retro(),
+        }
+    }
+
     #[cfg(feature = "toml")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "toml")))]
     fn load_toml(&mut self, table: &toml::value::Table) {

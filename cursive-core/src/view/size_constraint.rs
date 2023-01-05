@@ -43,6 +43,7 @@ impl SizeConstraint {
             SizeConstraint::AtLeast(value) if result < value => value, /* max(result, value) */
             SizeConstraint::AtMost(value) if result > value => value, /* min(result, value) */
             SizeConstraint::Fixed(value) => value,
+            // Explanation required: why return result if result > available?
             SizeConstraint::Full if available > result => available,
             _ => result,
         }
