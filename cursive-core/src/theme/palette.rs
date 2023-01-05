@@ -85,6 +85,30 @@ impl IndexMut<PaletteColor> for Palette {
 }
 
 impl Palette {
+    /// Returns a bi-color palette using the terminal's default background and
+    /// text color for everything.
+    pub fn terminal_default() -> Self {
+        use self::PaletteColor::*;
+        use crate::theme::Color::TerminalDefault;
+
+        Palette {
+            basic: enum_map! {
+                Background => TerminalDefault,
+                Shadow => TerminalDefault,
+                View => TerminalDefault,
+                Primary => TerminalDefault,
+                Secondary => TerminalDefault,
+                Tertiary => TerminalDefault,
+                TitlePrimary => TerminalDefault,
+                TitleSecondary => TerminalDefault,
+                Highlight => TerminalDefault,
+                HighlightInactive => TerminalDefault,
+                HighlightText => TerminalDefault,
+            },
+            custom: HashMap::default(),
+        }
+    }
+
     /// Returns the palette for a retro look, similar to dialog.
     ///
     /// * `Background` => `Dark(Blue)`

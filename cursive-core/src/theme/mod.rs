@@ -240,6 +240,15 @@ impl Default for Theme {
 }
 
 impl Theme {
+    /// Returns a bi-color theme using the terminal default text and background colors.
+    pub fn terminal_default() -> Self {
+        Theme {
+            shadow: false,
+            borders: BorderStyle::Simple,
+            palette: Palette::terminal_default(),
+        }
+    }
+
     /// Returns a retro theme, similar to GNU dialog applications.
     pub fn retro() -> Self {
         Theme {
