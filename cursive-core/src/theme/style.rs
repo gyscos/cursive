@@ -99,7 +99,7 @@ impl Style {
     /// Returns a highlight style.
     pub fn highlight() -> Self {
         Style {
-            color: ColorStyle::highlight(),
+            color: ColorStyle::highlight().invert(),
             effects: enumset::enum_set!(Effect::Reverse),
         }
     }
@@ -107,7 +107,7 @@ impl Style {
     /// Returns an inactive highlight style.
     pub fn highlight_inactive() -> Self {
         Style {
-            color: ColorStyle::highlight_inactive(),
+            color: ColorStyle::highlight_inactive().invert(),
             effects: enumset::enum_set!(Effect::Reverse),
         }
     }

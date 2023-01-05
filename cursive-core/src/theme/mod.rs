@@ -95,14 +95,12 @@
 //!     * Its *background* color is `View`.
 //!     * Its *foreground* color is `TitleSecondary`.
 //! * **`ColorStyle::highlight()`**: style used to print selected items.
-//!   Note: it is meant to be used with `Effect::Reverse`.
-//!     * Its *background* color is `HighlightText`.
-//!     * Its *foreground* color is `Highlight`.
+//!     * Its *background* color is `Highlight`.
+//!     * Its *foreground* color is `HighlightText`.
 //! * **`ColorStyle::highlight_inactive()`**: style used to print selected,
 //!   but inactive items.
-//!   Note: it is meant to be used with `Effect::Reverse`.
-//!     * Its *background* color is `HighlightText`.
-//!     * Its *foreground* color is `HighlightInactive`.
+//!     * Its *background* color is `HighlightInactive`.
+//!     * Its *foreground* color is `HighlightText`.
 //!
 //! Using one of these pairs when styling your application helps give it a
 //! coherent look.
