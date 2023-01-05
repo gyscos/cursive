@@ -1,5 +1,24 @@
 # Changelog
 
+## cursive-core next (0.3.7)
+
+### API updates
+
+- Added "inactive highlight" property to SelectView.
+- Added `{Theme, Palette}::{retro, terminal_default}()`.
+- Added convenient method to create `Style`, similar to `ColorStyle`.
+- Added `{ColorStyle, Style}::view()` with Primary/View colors.
+
+### Bugfixes
+
+- Fixed a focus update in `SelectView` that could result in no entry being selected.
+
+### Other Changes
+
+- `Style::{highlight, highlight_inactive}` now rely on `Effect::Reverse`.
+- Most styles have been changed to use `TerminalDefault` for their background.
+    - `Layer` now explicitly uses `PaletteColor::View`.
+
 ## cursive next (0.21)
 
 ### Breaking Changes
