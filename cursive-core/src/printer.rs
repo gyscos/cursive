@@ -343,7 +343,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// # let b = backend::Dummy::init();
     /// # let t = theme::load_default();
     /// # let printer = Printer::new((6,4), &t, &*b);
-    /// printer.with_color(theme::ColorStyle::highlight(), |printer| {
+    /// printer.with_style(theme::Style::highlight(), |printer| {
     ///     printer.print((0, 0), "This text is highlighted!");
     /// });
     /// ```
@@ -515,19 +515,18 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// * If `selection` is `false`, simply uses the current style.
     /// * If `selection` is `true`:
-    ///     * If the printer currently has the focus,
-    ///       uses [`ColorStyle::highlight()`].
-    ///     * Otherwise, uses [`ColorStyle::highlight_inactive()`].
+    ///     * If the printer currently has the focus, uses [`Style::highlight()`].
+    ///     * Otherwise, uses [`Style::highlight_inactive()`].
     pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
-        self.with_color(
+        self.with_style(
             if selection {
                 if self.focused {
-                    ColorStyle::highlight()
+                    Style::highlight()
                 } else {
-                    ColorStyle::highlight_inactive()
+                    Style::highlight_inactive()
                 }
             } else {
-                ColorStyle::inherit_parent()
+                Style::inherit_parent()
             },
             f,
         );

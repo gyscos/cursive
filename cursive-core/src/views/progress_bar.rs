@@ -1,5 +1,5 @@
 use crate::align::HAlign;
-use crate::theme::{ColorStyle, ColorType, Effect};
+use crate::theme::{ColorStyle, ColorType, Effect, PaletteColor};
 use crate::utils::Counter;
 use crate::view::View;
 use crate::{Printer, With};
@@ -88,7 +88,7 @@ impl ProgressBar {
             min: 0,
             max: 100,
             value: Counter::new(0),
-            color: ColorStyle::highlight().back,
+            color: PaletteColor::Highlight.into(),
             label_maker: Box::new(make_percentage),
         }
     }
@@ -297,9 +297,10 @@ impl View for ProgressBar {
         let offset = HAlign::Center.get_offset(label.len(), printer.size.x);
 
         let color_style =
-            ColorStyle::new(ColorStyle::highlight().front, self.color);
+            ColorStyle::new(PaletteColor::HighlightText, self.color);
 
         printer.with_color(color_style, |printer| {
+            // TODO: Instead, write it with self.color and inherit_parent background?
             // Draw the right half of the label in reverse
             printer.with_effect(Effect::Reverse, |printer| {
                 printer.print((length, 0), sub_block(extra));

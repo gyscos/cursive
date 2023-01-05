@@ -1,5 +1,5 @@
 use crate::div::div_up;
-use crate::theme::ColorStyle;
+use crate::theme::Style;
 use crate::Printer;
 use crate::Vec2;
 use std::cmp::{max, min};
@@ -265,10 +265,10 @@ impl ScrollBase {
             let height = self.scrollbar_thumb_height();
             let start = self.scrollbar_thumb_y(height);
 
-            let color = if printer.focused {
-                ColorStyle::highlight()
+            let style = if printer.focused {
+                Style::highlight()
             } else {
-                ColorStyle::highlight_inactive()
+                Style::highlight_inactive()
             };
 
             let scrollbar_x = self.scrollbar_x(printer.size.x);
@@ -278,7 +278,7 @@ impl ScrollBase {
             printer.print_vline((scrollbar_x, 0), printer.size.y, "|");
 
             // The scrollbar thumb
-            printer.with_color(color, |printer| {
+            printer.with_style(style, |printer| {
                 printer.print_vline((scrollbar_x, start), height, "▒");
             });
         }

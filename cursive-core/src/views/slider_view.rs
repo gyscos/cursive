@@ -1,7 +1,7 @@
 use crate::{
     direction::{Direction, Orientation},
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
-    theme::ColorStyle,
+    theme::Style,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
@@ -156,12 +156,12 @@ impl View for SliderView {
             }
         }
 
-        let color = if printer.focused {
-            ColorStyle::highlight()
+        let style = if printer.focused {
+            Style::highlight()
         } else {
-            ColorStyle::highlight_inactive()
+            Style::highlight_inactive()
         };
-        printer.with_color(color, |printer| {
+        printer.with_style(style, |printer| {
             printer.print(self.orientation.make_vec(self.value, 0), " ");
         });
     }

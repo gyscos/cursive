@@ -3,7 +3,7 @@ use crate::{
     event::*,
     menu,
     rect::Rect,
-    theme::ColorStyle,
+    theme::Style,
     view::{CannotFocus, Position, View},
     views::{MenuPopup, OnEventView},
     Cursive, Printer, Vec2,
@@ -280,7 +280,7 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<menu::Tree>) {
 impl View for Menubar {
     fn draw(&self, printer: &Printer) {
         // Draw the bar at the top
-        printer.with_color(ColorStyle::primary(), |printer| {
+        printer.with_style(Style::primary(), |printer| {
             printer.print_hline((0, 0), printer.size.x, " ");
         });
 
@@ -299,15 +299,15 @@ impl View for Menubar {
             let selected =
                 (self.state != State::Inactive) && (i == self.focus);
 
-            let color = if !enabled {
-                ColorStyle::secondary()
+            let style = if !enabled {
+                Style::secondary()
             } else if selected {
-                ColorStyle::highlight()
+                Style::highlight()
             } else {
-                ColorStyle::primary()
+                Style::primary()
             };
 
-            printer.with_style(color, |printer| {
+            printer.with_style(style, |printer| {
                 printer.print((offset, 0), &format!(" {} ", label));
             });
             offset += label.width() + 2;

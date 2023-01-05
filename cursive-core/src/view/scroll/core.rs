@@ -5,7 +5,7 @@ use crate::{
     event::{AnyCb, Event},
     printer::Printer,
     rect::Rect,
-    theme::ColorStyle,
+    theme::Style,
     view::{ScrollStrategy, Selector, SizeCache, ViewNotFound},
     with::With,
     Vec2, XY,
@@ -144,10 +144,10 @@ impl Core {
 
             let line_c = XY::new("-", "|");
 
-            let color = if printer.focused {
-                ColorStyle::highlight()
+            let style = if printer.focused {
+                Style::highlight()
             } else {
-                ColorStyle::highlight_inactive()
+                Style::highlight_inactive()
             };
 
             XY::zip5(lengths, offsets, size, line_c, Orientation::pair())
@@ -171,7 +171,7 @@ impl Core {
                         } else {
                             "▒"
                         };
-                        printer.with_color(color, |printer| {
+                        printer.with_style(style, |printer| {
                             printer.print_line(
                                 orientation,
                                 start + offset,

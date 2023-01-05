@@ -4,7 +4,7 @@ use crate::{
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
     menu,
     rect::Rect,
-    theme::ColorStyle,
+    theme::{ColorStyle, Style},
     utils::markup::StyledString,
     view::{CannotFocus, Position, View},
     views::{LayerPosition, MenuPopup},
@@ -942,11 +942,11 @@ impl<T: 'static> View for SelectView<T> {
             // Popup-select only draw the active element.
             // We'll draw the full list in a popup if needed.
             let style = if !(self.enabled && printer.enabled) {
-                ColorStyle::secondary()
+                Style::secondary()
             } else if printer.focused {
-                ColorStyle::highlight()
+                Style::highlight()
             } else {
-                ColorStyle::primary()
+                Style::primary()
             };
 
             let x = match printer.size.x.checked_sub(1) {
@@ -954,7 +954,7 @@ impl<T: 'static> View for SelectView<T> {
                 None => return,
             };
 
-            printer.with_color(style, |printer| {
+            printer.with_style(style, |printer| {
                 // Prepare the entire background
                 printer.print_hline((1, 0), x, " ");
                 // Draw the borders
@@ -980,30 +980,30 @@ impl<T: 'static> View for SelectView<T> {
             let enabled = self.enabled && printer.enabled;
             let active = printer.focused;
 
-            let regular_style = if enabled {
-                ColorStyle::inherit_parent()
+            let regular_style: Style = if enabled {
+                ColorStyle::inherit_parent().into()
             } else {
-                ColorStyle::secondary()
+                ColorStyle::secondary().into()
             };
 
             let highlight_style = if active {
-                ColorStyle::highlight()
+                Style::highlight()
             } else {
                 if self.inactive_highlight {
-                    ColorStyle::highlight_inactive()
+                    Style::highlight_inactive()
                 } else {
                     regular_style
                 }
             };
 
             for i in 0..self.len() {
-                let color = if i == focus {
+                let style = if i == focus {
                     highlight_style
                 } else {
                     regular_style
                 };
 
-                printer.offset((0, i)).with_color(color, |printer| {
+                printer.offset((0, i)).with_style(style, |printer| {
                     self.draw_item(printer, i);
                 });
             }

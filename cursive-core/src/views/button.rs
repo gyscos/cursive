@@ -3,7 +3,7 @@ use crate::{
     direction::Direction,
     event::*,
     rect::Rect,
-    theme::ColorStyle,
+    theme::Style,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2,
 };
@@ -135,25 +135,26 @@ impl View for Button {
         }
 
         let style = if !(self.enabled && printer.enabled) {
-            ColorStyle::secondary()
+            Style::secondary()
         } else if printer.focused {
-            ColorStyle::highlight()
+            Style::highlight()
         } else {
-            ColorStyle::primary()
+            Style::primary()
         };
 
         let offset =
             HAlign::Center.get_offset(self.label.width(), printer.size.x);
 
-        printer.with_color(style, |printer| {
-            printer.print_hline((0, 0), offset, " ");
+        printer.with_style(style, |printer| {
+            // TODO: do we want to "fill" the button highlight color to the full given size?
+            // printer.print_hline((0, 0), offset, " ");
             printer.print((offset, 0), &self.label);
-            let end = offset + self.label.width();
-            printer.print_hline(
-                (end, 0),
-                printer.size.x.saturating_sub(end),
-                " ",
-            );
+            // let end = offset + self.label.width();
+            // printer.print_hline(
+            //     (end, 0),
+            //     printer.size.x.saturating_sub(end),
+            //     " ",
+            // );
         });
     }
 

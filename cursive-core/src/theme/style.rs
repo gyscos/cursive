@@ -50,6 +50,67 @@ impl Style {
     {
         Self::merge(&[self, other.into()])
     }
+
+    /// Uses `ColorType::InheritParent` for both front and background.
+    pub fn inherit_parent() -> Self {
+        ColorStyle::inherit_parent().into()
+    }
+
+    /// Style set by terminal before entering a Cursive program.
+    pub fn terminal_default() -> Self {
+        ColorStyle::terminal_default().into()
+    }
+
+    /// Application background, where no view is present.
+    pub fn background() -> Self {
+        ColorStyle::background().into()
+    }
+
+    /// Color used by view shadows. Only background matters.
+    pub fn shadow() -> Self {
+        ColorStyle::shadow().into()
+    }
+
+    /// Main text with default background.
+    pub fn primary() -> Self {
+        ColorStyle::primary().into()
+    }
+
+    /// Secondary text color, with default background.
+    pub fn secondary() -> Self {
+        ColorStyle::secondary().into()
+    }
+
+    /// Tertiary text color, with default background.
+    pub fn tertiary() -> Self {
+        ColorStyle::tertiary().into()
+    }
+
+    /// Title text color with default background.
+    pub fn title_primary() -> Self {
+        ColorStyle::title_primary().into()
+    }
+
+    /// Alternative color for a title.
+    pub fn title_secondary() -> Self {
+        ColorStyle::title_secondary().into()
+    }
+
+    /// Returns a highlight style.
+    pub fn highlight() -> Self {
+        Style {
+            color: ColorStyle::highlight(),
+            effects: enumset::enum_set!(Effect::Reverse),
+        }
+    }
+
+    /// Returns an inactive highlight style.
+    pub fn highlight_inactive() -> Self {
+        Style {
+            color: ColorStyle::highlight_inactive(),
+            effects: enumset::enum_set!(Effect::Reverse),
+        }
+    }
 }
 
 impl From<Effect> for Style {

@@ -155,13 +155,19 @@ impl ColorStyle {
     }
 
     /// Alternate text with highlight background.
+    ///
+    /// Note: this is meant to be used with Effect::Reverse.
     pub fn highlight() -> Self {
         Self::new(PaletteColor::HighlightText, PaletteColor::Highlight)
+            .invert()
     }
 
     /// Highlight color for inactive views (not in focus).
+    ///
+    /// Note: this is meant to be used with Effect::Reverse.
     pub fn highlight_inactive() -> Self {
         Self::new(PaletteColor::HighlightText, PaletteColor::HighlightInactive)
+            .invert()
     }
 
     /// Merge the color type `new` over the color type `old`.

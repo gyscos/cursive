@@ -3,7 +3,7 @@ use crate::{
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
     menu,
     rect::Rect,
-    theme::ColorStyle,
+    theme::Style,
     view::scroll,
     view::{Position, View},
     views::OnEventView,
@@ -341,11 +341,11 @@ impl View for MenuPopup {
             let enabled =
                 printer.enabled && (item.is_enabled() || item.is_delimiter());
             let color = if !enabled {
-                ColorStyle::secondary()
+                Style::secondary()
             } else if i == s.focus {
-                ColorStyle::highlight()
+                Style::highlight()
             } else {
-                ColorStyle::primary()
+                Style::primary()
             };
             printer.with_style(color, |printer| {
                 match *item {
