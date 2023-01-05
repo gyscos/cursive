@@ -1,4 +1,4 @@
-use crate::theme::{ColorStyle, PaletteColor};
+use crate::theme::ColorStyle;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 
@@ -18,10 +18,7 @@ new_default!(Layer<T: Default>);
 impl<T> Layer<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
-        Self::with_color(
-            view,
-            ColorStyle::new(PaletteColor::Primary, PaletteColor::View),
-        )
+        Self::with_color(view, ColorStyle::view())
     }
 
     /// Wraps the given view with a custom background color.
