@@ -1,7 +1,7 @@
 use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
-    theme::ColorStyle,
+    theme::{ColorStyle, PaletteColor},
     view::{
         CannotFocus, IntoBoxedView, Offset, Position, Selector, View,
         ViewNotFound, ViewWrapper,
@@ -537,7 +537,7 @@ impl StackView {
     /// Drawing functions are split into forground and background to
     /// ease inserting layers under the stackview but above its background.
     ///
-    /// you probably just want to call draw()
+    /// You probably just want to call draw()
     pub fn draw_bg(&self, printer: &Printer) {
         // If the background is dirty draw a new background
         if self.bg_dirty.get() {
@@ -552,27 +552,32 @@ impl StackView {
         }
     }
 
-    /// Forground drawing
+    /// Foreground drawing
     ///
     /// Drawing functions are split into forground and background to
     /// ease inserting layers under the stackview but above its background.
     ///
-    /// You probably just want to call draw()
+    /// you probably just want to call draw()
     pub fn draw_fg(&self, printer: &Printer) {
         let last = self.layers.len();
-        printer.with_color(ColorStyle::primary(), |printer| {
-            for (i, (v, offset)) in
-                StackPositionIterator::new(self.layers.iter(), printer.size)
-                    .enumerate()
-            {
-                v.view.draw(
-                    &printer
-                        .offset(offset)
-                        .cropped(v.size)
-                        .focused(i + 1 == last),
-                );
-            }
-        });
+        printer.with_color(
+            ColorStyle::new(PaletteColor::Primary, PaletteColor::Background),
+            |printer| {
+                for (i, (v, offset)) in StackPositionIterator::new(
+                    self.layers.iter(),
+                    printer.size,
+                )
+                .enumerate()
+                {
+                    v.view.draw(
+                        &printer
+                            .offset(offset)
+                            .cropped(v.size)
+                            .focused(i + 1 == last),
+                    );
+                }
+            },
+        );
     }
 }
 

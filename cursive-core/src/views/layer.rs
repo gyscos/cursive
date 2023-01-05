@@ -1,4 +1,4 @@
-use crate::theme::ColorStyle;
+use crate::theme::{ColorStyle, PaletteColor};
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 
@@ -18,7 +18,10 @@ new_default!(Layer<T: Default>);
 impl<T> Layer<T> {
     /// Wraps the given view.
     pub fn new(view: T) -> Self {
-        Self::with_color(view, ColorStyle::primary())
+        Self::with_color(
+            view,
+            ColorStyle::new(PaletteColor::Primary, PaletteColor::View),
+        )
     }
 
     /// Wraps the given view with a custom background color.
@@ -47,7 +50,7 @@ impl<T: View> ViewWrapper for Layer<T> {
             for y in 0..printer.size.y {
                 printer.print_hline((0, y), printer.size.x, " ");
             }
+            self.view.draw(printer);
         });
-        self.view.draw(printer);
     }
 }

@@ -4,7 +4,8 @@ use crate::backend::Backend;
 use crate::direction::Orientation;
 use crate::rect::Rect;
 use crate::theme::{
-    BorderStyle, ColorPair, ColorStyle, Effect, PaletteColor, Style, Theme,
+    BorderStyle, Color, ColorPair, ColorStyle, Effect, PaletteColor, Style,
+    Theme,
 };
 use crate::utils::lines::simple::{prefix, suffix};
 use crate::with::With;
@@ -89,7 +90,10 @@ impl<'a, 'b> Printer<'a, 'b> {
             enabled: true,
             theme,
             backend,
-            current_color: Cell::new(ColorPair::from_256colors(0, 0)),
+            current_color: Cell::new(ColorPair {
+                front: Color::TerminalDefault,
+                back: Color::TerminalDefault,
+            }),
         }
     }
 

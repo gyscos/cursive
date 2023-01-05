@@ -126,18 +126,16 @@ impl Cursive {
         let printer = Printer::new(size, &self.theme, backend);
 
         let selected = self.menubar.receive_events();
-
-        // Print the stackview background before the menubar
         let offset = if self.menubar.autohide { 0 } else { 1 };
 
         // The printer for the stackview
         let sv_printer = printer.offset((0, offset)).focused(!selected);
 
+        // Print the stackview background (the blue background) before the menubar
         self.root.get_inner().draw_bg(&sv_printer);
 
         // Draw the currently active screen
         // If the menubar is active, nothing else can be.
-        // Draw the menubar?
         if self.menubar.visible() {
             let printer = printer.focused(self.menubar.receive_events());
             printer.with_color(theme::ColorStyle::primary(), |printer| {
@@ -145,8 +143,7 @@ impl Cursive {
             });
         }
 
-        // finally draw stackview layers
-        // using variables from above
+        // Finally draw stackview layers
         self.root.get_inner().draw_fg(&sv_printer);
     }
 

@@ -131,37 +131,37 @@ impl ColorStyle {
 
     /// Main text with default background.
     pub fn primary() -> Self {
-        Self::new(PaletteColor::Primary, PaletteColor::View)
+        Self::new(PaletteColor::Primary, ColorType::InheritParent)
     }
 
     /// Secondary text color, with default background.
     pub fn secondary() -> Self {
-        Self::new(PaletteColor::Secondary, PaletteColor::View)
+        Self::new(PaletteColor::Secondary, ColorType::InheritParent)
     }
 
     /// Tertiary text color, with default background.
     pub fn tertiary() -> Self {
-        Self::new(PaletteColor::Tertiary, PaletteColor::View)
+        Self::new(PaletteColor::Tertiary, ColorType::InheritParent)
     }
 
     /// Title text color with default background.
     pub fn title_primary() -> Self {
-        Self::new(PaletteColor::TitlePrimary, PaletteColor::View)
+        Self::new(PaletteColor::TitlePrimary, ColorType::InheritParent)
     }
 
     /// Alternative color for a title.
     pub fn title_secondary() -> Self {
-        Self::new(PaletteColor::TitleSecondary, PaletteColor::View)
+        Self::new(PaletteColor::TitleSecondary, ColorType::InheritParent)
     }
 
     /// Alternate text with highlight background.
     pub fn highlight() -> Self {
-        Self::new(PaletteColor::HighlightText, PaletteColor::Highlight)
+        Self::new(ColorType::InheritParent, PaletteColor::Highlight)
     }
 
     /// Highlight color for inactive views (not in focus).
     pub fn highlight_inactive() -> Self {
-        Self::new(PaletteColor::HighlightText, PaletteColor::HighlightInactive)
+        Self::new(ColorType::InheritParent, PaletteColor::HighlightInactive)
     }
 
     /// Merge the color type `new` over the color type `old`.
