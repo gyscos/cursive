@@ -280,38 +280,38 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<menu::Tree>) {
 impl View for Menubar {
     fn draw(&self, printer: &Printer) {
         // Draw the bar at the top
-        printer.with_style(Style::primary(), |printer| {
+        printer.with_style(Style::view(), |printer| {
             printer.print_hline((0, 0), printer.size.x, " ");
+
+            // TODO: draw the rest
+            let mut offset = 1;
+            for (i, item) in self.root.children.iter().enumerate() {
+                let label = item.label();
+
+                // We print disabled items differently, except delimiters,
+                // which are still white.
+                let enabled = printer.enabled
+                    && (item.is_enabled() || item.is_delimiter());
+
+                // We don't want to show HighlightInactive when we're not selected,
+                // because it's ugly on the menubar.
+                let selected =
+                    (self.state != State::Inactive) && (i == self.focus);
+
+                let style = if !enabled {
+                    Style::secondary()
+                } else if selected {
+                    Style::highlight()
+                } else {
+                    Style::primary()
+                };
+
+                printer.with_style(style, |printer| {
+                    printer.print((offset, 0), &format!(" {} ", label));
+                });
+                offset += label.width() + 2;
+            }
         });
-
-        // TODO: draw the rest
-        let mut offset = 1;
-        for (i, item) in self.root.children.iter().enumerate() {
-            let label = item.label();
-
-            // We print disabled items differently, except delimiters,
-            // which are still white.
-            let enabled =
-                printer.enabled && (item.is_enabled() || item.is_delimiter());
-
-            // We don't want to show HighlightInactive when we're not selected,
-            // because it's ugly on the menubar.
-            let selected =
-                (self.state != State::Inactive) && (i == self.focus);
-
-            let style = if !enabled {
-                Style::secondary()
-            } else if selected {
-                Style::highlight()
-            } else {
-                Style::primary()
-            };
-
-            printer.with_style(style, |printer| {
-                printer.print((offset, 0), &format!(" {} ", label));
-            });
-            offset += label.width() + 2;
-        }
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {

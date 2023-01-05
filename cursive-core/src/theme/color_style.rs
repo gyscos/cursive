@@ -129,6 +129,13 @@ impl ColorStyle {
         Self::new(PaletteColor::Shadow, PaletteColor::Shadow)
     }
 
+    /// Color used by views.
+    ///
+    /// Primary foreground, View background.
+    pub fn view() -> Self {
+        Self::new(PaletteColor::Primary, PaletteColor::View)
+    }
+
     /// Main text with default background.
     pub fn primary() -> Self {
         Self::new(PaletteColor::Primary, ColorType::InheritParent)

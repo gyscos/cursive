@@ -71,6 +71,11 @@ impl Style {
         ColorStyle::shadow().into()
     }
 
+    /// Style used for views.
+    pub fn view() -> Self {
+        ColorStyle::view().into()
+    }
+
     /// Main text with default background.
     pub fn primary() -> Self {
         ColorStyle::primary().into()
