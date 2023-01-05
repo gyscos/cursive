@@ -163,12 +163,12 @@ impl ColorStyle {
 
     /// Alternate text with highlight background.
     pub fn highlight() -> Self {
-        Self::new(ColorType::InheritParent, PaletteColor::Highlight)
+        Self::new(PaletteColor::HighlightText, PaletteColor::Highlight)
     }
 
     /// Highlight color for inactive views (not in focus).
     pub fn highlight_inactive() -> Self {
-        Self::new(ColorType::InheritParent, PaletteColor::HighlightInactive)
+        Self::new(PaletteColor::HighlightText, PaletteColor::HighlightInactive)
     }
 
     /// Merge the color type `new` over the color type `old`.

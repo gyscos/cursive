@@ -16,7 +16,7 @@
 ### Other Changes
 
 - `Style::{highlight, highlight_inactive}` now rely on `Effect::Reverse`.
-- Most styles have been changed to use `TerminalDefault` for their background.
+- Most styles have been changed to use `InheritParent` for their background.
     - `Layer` now explicitly uses `PaletteColor::View`.
 
 ## cursive next (0.21)
