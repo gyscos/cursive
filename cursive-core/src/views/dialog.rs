@@ -3,7 +3,7 @@ use crate::{
     direction::{Absolute, Direction, Relative},
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
-    theme::ColorStyle,
+    theme::PaletteStyle,
     utils::markup::StyledString,
     view::{
         CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound,
@@ -684,7 +684,7 @@ impl Dialog {
                 printer.print((x + len, 0), " ├");
             });
 
-            printer.with_color(ColorStyle::title_primary(), |p| {
+            printer.with_style(PaletteStyle::TitlePrimary, |p| {
                 p.print((x, 0), &self.title)
             });
         }

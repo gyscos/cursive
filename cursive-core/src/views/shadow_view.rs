@@ -1,6 +1,6 @@
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
-use crate::theme::ColorStyle;
+use crate::theme::PaletteStyle;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 use crate::Vec2;
@@ -97,7 +97,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
                 return;
             }
 
-            printer.with_color(ColorStyle::shadow(), |printer| {
+            printer.with_style(PaletteStyle::Shadow, |printer| {
                 printer.print_hline((1, h - 1), w - 1, " ");
                 printer.print_vline((w - 1, 1), h - 1, " ");
             });

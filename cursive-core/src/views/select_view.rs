@@ -4,7 +4,7 @@ use crate::{
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
     menu,
     rect::Rect,
-    theme::{ColorStyle, Style},
+    theme::{PaletteStyle, Style, StyleType},
     utils::markup::StyledString,
     view::{CannotFocus, Position, View},
     views::{LayerPosition, MenuPopup},
@@ -942,11 +942,11 @@ impl<T: 'static> View for SelectView<T> {
             // Popup-select only draw the active element.
             // We'll draw the full list in a popup if needed.
             let style = if !(self.enabled && printer.enabled) {
-                Style::secondary()
+                PaletteStyle::Secondary
             } else if printer.focused {
-                Style::highlight()
+                PaletteStyle::Highlight
             } else {
-                Style::primary()
+                PaletteStyle::Primary
             };
 
             let x = match printer.size.x.checked_sub(1) {
@@ -980,17 +980,17 @@ impl<T: 'static> View for SelectView<T> {
             let enabled = self.enabled && printer.enabled;
             let active = printer.focused;
 
-            let regular_style: Style = if enabled {
-                ColorStyle::inherit_parent().into()
+            let regular_style: StyleType = if enabled {
+                Style::inherit_parent().into()
             } else {
-                ColorStyle::secondary().into()
+                PaletteStyle::Secondary.into()
             };
 
             let highlight_style = if active {
-                Style::highlight()
+                PaletteStyle::Highlight.into()
             } else {
                 if self.inactive_highlight {
-                    Style::highlight_inactive()
+                    PaletteStyle::HighlightInactive.into()
                 } else {
                     regular_style
                 }

@@ -6,7 +6,7 @@ use owning_ref::{ArcRef, OwningHandle};
 use unicode_width::UnicodeWidthStr;
 
 use crate::align::*;
-use crate::theme::{Effect, Style};
+use crate::theme::{Effect, StyleType};
 use crate::utils::lines::spans::{LinesIterator, Row};
 use crate::utils::markup::StyledString;
 use crate::view::{SizeCache, View};
@@ -195,7 +195,7 @@ pub struct TextView {
 
     align: Align,
 
-    style: Style,
+    style: StyleType,
 
     // True if we can wrap long lines.
     wrap: bool,
@@ -232,7 +232,7 @@ impl TextView {
     pub fn new_with_content(content: TextContent) -> Self {
         TextView {
             content,
-            style: Style::default(),
+            style: StyleType::default(),
             rows: Vec::new(),
             wrap: true,
             align: Align::top_left(),
@@ -252,7 +252,7 @@ impl TextView {
     }
 
     /// Sets the style for the content.
-    pub fn set_style<S: Into<Style>>(&mut self, style: S) {
+    pub fn set_style<S: Into<StyleType>>(&mut self, style: S) {
         self.style = style.into();
     }
 
@@ -269,7 +269,7 @@ impl TextView {
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn style<S: Into<Style>>(self, style: S) -> Self {
+    pub fn style<S: Into<StyleType>>(self, style: S) -> Self {
         self.with(|s| s.set_style(style))
     }
 

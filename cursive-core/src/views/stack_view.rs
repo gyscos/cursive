@@ -1,7 +1,7 @@
 use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
-    theme::{ColorStyle, PaletteColor},
+    theme::PaletteStyle,
     view::{
         CannotFocus, IntoBoxedView, Offset, Position, Selector, View,
         ViewNotFound, ViewWrapper,
@@ -542,7 +542,7 @@ impl StackView {
         // If the background is dirty draw a new background
         if self.bg_dirty.get() {
             for y in 0..printer.size.y {
-                printer.with_color(ColorStyle::background(), |printer| {
+                printer.with_style(PaletteStyle::Background, |printer| {
                     printer.print_hline((0, y), printer.size.x, " ");
                 });
             }
@@ -560,24 +560,19 @@ impl StackView {
     /// you probably just want to call draw()
     pub fn draw_fg(&self, printer: &Printer) {
         let last = self.layers.len();
-        printer.with_color(
-            ColorStyle::new(PaletteColor::Primary, PaletteColor::Background),
-            |printer| {
-                for (i, (v, offset)) in StackPositionIterator::new(
-                    self.layers.iter(),
-                    printer.size,
-                )
-                .enumerate()
-                {
-                    v.view.draw(
-                        &printer
-                            .offset(offset)
-                            .cropped(v.size)
-                            .focused(i + 1 == last),
-                    );
-                }
-            },
-        );
+        printer.with_style(PaletteStyle::Background, |printer| {
+            for (i, (v, offset)) in
+                StackPositionIterator::new(self.layers.iter(), printer.size)
+                    .enumerate()
+            {
+                v.view.draw(
+                    &printer
+                        .offset(offset)
+                        .cropped(v.size)
+                        .focused(i + 1 == last),
+                );
+            }
+        });
     }
 }
 

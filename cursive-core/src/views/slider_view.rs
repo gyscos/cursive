@@ -1,7 +1,7 @@
 use crate::{
     direction::{Direction, Orientation},
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
-    theme::Style,
+    theme::PaletteStyle,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
@@ -103,7 +103,7 @@ impl SliderView {
         self
     }
 
-    /// Sets a callback to be called when the <Enter> key is pressed.
+    /// Sets a callback to be called when the `<Enter>` key is pressed.
     #[must_use]
     pub fn on_enter<F>(mut self, callback: F) -> Self
     where
@@ -157,10 +157,11 @@ impl View for SliderView {
         }
 
         let style = if printer.focused {
-            Style::highlight()
+            PaletteStyle::Highlight
         } else {
-            Style::highlight_inactive()
+            PaletteStyle::HighlightInactive
         };
+
         printer.with_style(style, |printer| {
             printer.print(self.orientation.make_vec(self.value, 0), " ");
         });

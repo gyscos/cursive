@@ -3,7 +3,7 @@ use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     rect::Rect,
-    theme::{ColorStyle, Effect},
+    theme::{Effect, PaletteStyle},
     utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row},
     view::{CannotFocus, ScrollBase, SizeCache, View},
     Vec2, {Printer, With, XY},
@@ -491,7 +491,7 @@ impl View for TextArea {
     }
 
     fn draw(&self, printer: &Printer) {
-        printer.with_color(ColorStyle::secondary(), |printer| {
+        printer.with_style(PaletteStyle::Secondary, |printer| {
             let effect = if self.enabled && printer.enabled {
                 Effect::Reverse
             } else {

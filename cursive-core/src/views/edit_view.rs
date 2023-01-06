@@ -2,7 +2,7 @@ use crate::{
     direction::Direction,
     event::{Callback, Event, EventResult, Key, MouseEvent},
     rect::Rect,
-    theme::{ColorStyle, Effect},
+    theme::{Effect, PaletteStyle, StyleType},
     utils::lines::simple::{simple_prefix, simple_suffix},
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
@@ -99,7 +99,7 @@ pub struct EditView {
     /// Will be called with the current content and the cursor position.
     on_edit: Option<Rc<OnEdit>>,
 
-    /// Callback when <Enter> is pressed.
+    /// Callback when `<Enter>` is pressed.
     on_submit: Option<Rc<OnSubmit>>,
 
     /// When `true`, only print `*` instead of the true content.
@@ -110,7 +110,7 @@ pub struct EditView {
 
     enabled: bool,
 
-    style: ColorStyle,
+    style: StyleType,
 }
 
 new_default!(EditView);
@@ -131,7 +131,7 @@ impl EditView {
             secret: false,
             filler: "_".to_string(),
             enabled: true,
-            style: ColorStyle::secondary(),
+            style: PaletteStyle::Secondary.into(),
         }
     }
 
@@ -196,8 +196,8 @@ impl EditView {
     /// When the view is enabled, the style will be reversed.
     ///
     /// Defaults to `ColorStyle::Secondary`.
-    pub fn set_style(&mut self, style: ColorStyle) {
-        self.style = style;
+    pub fn set_style<S: Into<StyleType>>(&mut self, style: S) {
+        self.style = style.into();
     }
 
     /// Sets the style used for this view.
@@ -206,7 +206,7 @@ impl EditView {
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn style(self, style: ColorStyle) -> Self {
+    pub fn style<S: Into<StyleType>>(self, style: S) -> Self {
         self.with(|s| s.set_style(style))
     }
 
@@ -517,7 +517,7 @@ impl View for EditView {
         );
 
         let width = self.content.width();
-        printer.with_color(self.style, |printer| {
+        printer.with_style(self.style, |printer| {
             let effect = if self.enabled && printer.enabled {
                 Effect::Reverse
             } else {

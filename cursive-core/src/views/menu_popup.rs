@@ -3,7 +3,7 @@ use crate::{
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
     menu,
     rect::Rect,
-    theme::Style,
+    theme::PaletteStyle,
     view::scroll,
     view::{Position, View},
     views::OnEventView,
@@ -88,7 +88,7 @@ impl MenuPopup {
 
     /// Sets a callback to be used when this view is actively dismissed.
     ///
-    /// (When the user hits <ESC>)
+    /// (When the user hits `<ESC>`)
     ///
     /// Chainable variant.
     #[must_use]
@@ -98,7 +98,7 @@ impl MenuPopup {
 
     /// Sets a callback to be used when this view is actively dismissed.
     ///
-    /// (When the user hits <ESC>)
+    /// (When the user hits `<ESC>`)
     pub fn set_on_dismiss<F: 'static + Fn(&mut Cursive)>(&mut self, f: F) {
         self.on_dismiss = Some(Callback::from_fn(f));
     }
@@ -340,14 +340,14 @@ impl View for MenuPopup {
             let item = &s.menu.children[i];
             let enabled =
                 printer.enabled && (item.is_enabled() || item.is_delimiter());
-            let color = if !enabled {
-                Style::secondary()
+            let style = if !enabled {
+                PaletteStyle::Secondary
             } else if i == s.focus {
-                Style::highlight()
+                PaletteStyle::Highlight
             } else {
-                Style::primary()
+                PaletteStyle::Primary
             };
-            printer.with_style(color, |printer| {
+            printer.with_style(style, |printer| {
                 match *item {
                     menu::Item::Delimiter => {
                         // printer.print_hdelim((0, 0), printer.size.x)

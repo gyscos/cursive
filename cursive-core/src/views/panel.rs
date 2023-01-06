@@ -1,7 +1,7 @@
 use crate::align::*;
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
-use crate::theme::ColorStyle;
+use crate::theme::PaletteStyle;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 use crate::Vec2;
@@ -81,7 +81,7 @@ impl<V> Panel<V> {
             printer
                 .offset((x, 0))
                 .cropped((len, 1))
-                .with_color(ColorStyle::title_primary(), |p| {
+                .with_style(PaletteStyle::TitlePrimary, |p| {
                     p.print((0, 0), &self.title)
                 });
             printer.with_high_border(false, |printer| {

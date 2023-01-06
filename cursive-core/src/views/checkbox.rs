@@ -1,7 +1,7 @@
 use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
-    theme::ColorStyle,
+    theme::PaletteStyle,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
@@ -160,7 +160,7 @@ impl View for Checkbox {
                 self.draw_internal(printer)
             });
         } else {
-            printer.with_color(ColorStyle::secondary(), |printer| {
+            printer.with_style(PaletteStyle::Secondary, |printer| {
                 self.draw_internal(printer)
             });
         }

@@ -4,8 +4,8 @@ use crate::backend::Backend;
 use crate::direction::Orientation;
 use crate::rect::Rect;
 use crate::theme::{
-    BorderStyle, Color, ColorPair, ColorStyle, Effect, PaletteColor, Style,
-    Theme,
+    BorderStyle, Color, ColorPair, ColorStyle, Effect, PaletteColor,
+    PaletteStyle, Style, StyleType, Theme,
 };
 use crate::utils::lines::simple::{prefix, suffix};
 use crate::with::With;
@@ -337,20 +337,6 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Call the given closure with a colored printer,
     /// that will apply the given color on prints.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use cursive_core::Printer;
-    /// # use cursive_core::theme;
-    /// # use cursive_core::backend;
-    /// # let b = backend::Dummy::init();
-    /// # let t = theme::load_default();
-    /// # let printer = Printer::new((6,4), &t, &*b);
-    /// printer.with_style(theme::Style::highlight(), |printer| {
-    ///     printer.print((0, 0), "This text is highlighted!");
-    /// });
-    /// ```
     pub fn with_color<F>(&self, c: ColorStyle, f: F)
     where
         F: FnOnce(&Printer),
@@ -369,12 +355,26 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Call the given closure with a styled printer,
     /// that will apply the given style on prints.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive_core::Printer;
+    /// # use cursive_core::theme;
+    /// # use cursive_core::backend;
+    /// # let b = backend::Dummy::init();
+    /// # let t = theme::load_default();
+    /// # let printer = Printer::new((6,4), &t, &*b);
+    /// printer.with_style(theme::PaletteStyle::Highlight, |printer| {
+    ///     printer.print((0, 0), "This text is highlighted!");
+    /// });
+    /// ```
     pub fn with_style<F, T>(&self, style: T, f: F)
     where
         F: FnOnce(&Printer),
-        T: Into<Style>,
+        T: Into<StyleType>,
     {
-        let style = style.into();
+        let style = style.into().resolve(&self.theme.palette);
 
         let color = style.color;
         let effects = style.effects;
@@ -481,56 +481,56 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// * If the theme's borders is `None`, return without calling `f`.
     /// * If the theme's borders is "outset" and `invert` is `false`,
-    ///   use [`ColorStyle::tertiary()`].
-    /// * Otherwise, use [`ColorStyle::primary()`].
+    ///   use [`PaletteStyle::Tertiary`].
+    /// * Otherwise, use [`PaletteStyle::Primary`].
     pub fn with_high_border<F>(&self, invert: bool, f: F)
     where
         F: FnOnce(&Printer),
     {
-        let color = match self.theme.borders {
+        let style = match self.theme.borders {
             BorderStyle::None => return,
-            BorderStyle::Outset if !invert => ColorStyle::tertiary(),
-            _ => ColorStyle::primary(),
+            BorderStyle::Outset if !invert => PaletteStyle::Tertiary,
+            _ => PaletteStyle::Primary,
         };
 
-        self.with_color(color, f);
+        self.with_style(style, f);
     }
 
     /// Runs the given function using a color depending on the theme.
     ///
     /// * If the theme's borders is `None`, return without calling `f`.
     /// * If the theme's borders is "outset" and `invert` is `true`,
-    ///   use [`ColorStyle::tertiary()`].
-    /// * Otherwise, use [`ColorStyle::primary()`].
+    ///   use [`PaletteStyle::Tertiary`].
+    /// * Otherwise, use [`PaletteStyle::Primary`].
     pub fn with_low_border<F>(&self, invert: bool, f: F)
     where
         F: FnOnce(&Printer),
     {
         let color = match self.theme.borders {
             BorderStyle::None => return,
-            BorderStyle::Outset if invert => ColorStyle::tertiary(),
-            _ => ColorStyle::primary(),
+            BorderStyle::Outset if invert => PaletteStyle::Tertiary,
+            _ => PaletteStyle::Primary,
         };
 
-        self.with_color(color, f);
+        self.with_style(color, f);
     }
 
     /// Apply a selection style and call the given function.
     ///
     /// * If `selection` is `false`, simply uses the current style.
     /// * If `selection` is `true`:
-    ///     * If the printer currently has the focus, uses [`Style::highlight()`].
-    ///     * Otherwise, uses [`Style::highlight_inactive()`].
+    ///     * If the printer currently has the focus, uses [`PaletteStyle::Highlight`].
+    ///     * Otherwise, uses [`PaletteStyle::HighlightInactive`].
     pub fn with_selection<F: FnOnce(&Printer)>(&self, selection: bool, f: F) {
         self.with_style(
             if selection {
                 if self.focused {
-                    Style::highlight()
+                    StyleType::highlight()
                 } else {
-                    Style::highlight_inactive()
+                    StyleType::highlight_inactive()
                 }
             } else {
-                Style::inherit_parent()
+                StyleType::inherit_parent()
             },
             f,
         );
@@ -593,7 +593,8 @@ impl<'a, 'b> Printer<'a, 'b> {
         self.clone().with(|s| s.enabled &= enabled)
     }
 
-    /// Returns a new sub-printer for the given viewport.\
+    /// Returns a new sub-printer for the given viewport.
+    ///
     /// This is a combination of offset + cropped.
     #[must_use]
     pub fn windowed(&self, viewport: Rect) -> Self {

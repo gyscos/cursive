@@ -1,4 +1,4 @@
-use super::Color;
+use super::{Color, Style};
 use enum_map::{enum_map, Enum, EnumMap};
 #[cfg(feature = "toml")]
 use log::warn;
@@ -51,6 +51,7 @@ impl std::error::Error for NoSuchColor {}
 pub struct Palette {
     basic: EnumMap<PaletteColor, Color>,
     custom: HashMap<String, PaletteNode>,
+    styles: EnumMap<PaletteStyle, Style>,
 }
 
 /// A node in the palette tree.
@@ -77,10 +78,42 @@ impl Index<PaletteColor> for Palette {
     }
 }
 
+impl Index<PaletteStyle> for Palette {
+    type Output = Style;
+
+    fn index(&self, palette_style: PaletteStyle) -> &Style {
+        &self.styles[palette_style]
+    }
+}
+
 // We can alter existing color if needed (but why?...)
 impl IndexMut<PaletteColor> for Palette {
     fn index_mut(&mut self, palette_color: PaletteColor) -> &mut Color {
         &mut self.basic[palette_color]
+    }
+}
+
+fn default_styles() -> EnumMap<PaletteStyle, Style> {
+    use self::PaletteStyle::*;
+    use crate::theme::{ColorStyle, Effect};
+
+    enum_map! {
+        Shadow => ColorStyle::shadow().into(),
+        Primary => ColorStyle::primary().into(),
+        Secondary => ColorStyle::secondary().into(),
+        Tertiary => ColorStyle::tertiary().into(),
+        View => ColorStyle::view().into(),
+        Background => ColorStyle::background().into(),
+        TitlePrimary => ColorStyle::title_primary().into(),
+        TitleSecondary => ColorStyle::title_secondary().into(),
+        Highlight => Style {
+            color: ColorStyle::highlight().invert(),
+            effects: enumset::enum_set!(Effect::Reverse),
+        },
+        HighlightInactive => Style {
+            color: ColorStyle::highlight_inactive().invert(),
+            effects: enumset::enum_set!(Effect::Reverse),
+        },
     }
 }
 
@@ -106,6 +139,7 @@ impl Palette {
                 HighlightText => TerminalDefault,
             },
             custom: HashMap::default(),
+            styles: default_styles(),
         }
     }
 
@@ -142,6 +176,7 @@ impl Palette {
                 HighlightText => Dark(White),
             },
             custom: HashMap::default(),
+            styles: default_styles(),
         }
     }
 
@@ -317,6 +352,38 @@ pub enum PaletteColor {
     HighlightInactive,
     /// Color used for highlighted text
     HighlightText,
+}
+
+/// Style entry in a palette.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Enum)]
+pub enum PaletteStyle {
+    /// Style used for regular text.
+    Primary,
+    /// Style used for secondary text.
+    Secondary,
+    /// Style used for tertiary text.
+    Tertiary,
+    /// Style used for view background.
+    View,
+    /// Style used for application background (behind all views).
+    Background,
+    /// Style used for main titles.
+    TitlePrimary,
+    /// Style used for secondary titles.
+    TitleSecondary,
+    /// Style used for highlighted text.
+    Highlight,
+    /// Style used for inactive highlighted text.
+    HighlightInactive,
+    /// Style used to draw the shadows.
+    Shadow,
+}
+
+impl PaletteStyle {
+    /// Given a style palette, resolve `self` to a concrete style.
+    pub fn resolve(self, palette: &Palette) -> Style {
+        palette[self]
+    }
 }
 
 impl PaletteColor {

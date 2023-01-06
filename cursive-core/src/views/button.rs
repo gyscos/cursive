@@ -3,13 +3,13 @@ use crate::{
     direction::Direction,
     event::*,
     rect::Rect,
-    theme::Style,
+    theme::PaletteStyle,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2,
 };
 use unicode_width::UnicodeWidthStr;
 
-/// Simple text label with a callback when <Enter> is pressed.
+/// Simple text label with a callback when `<Enter>` is pressed.
 ///
 /// A button shows its content in a single line and has a fixed size.
 ///
@@ -135,11 +135,11 @@ impl View for Button {
         }
 
         let style = if !(self.enabled && printer.enabled) {
-            Style::secondary()
+            PaletteStyle::Secondary
         } else if printer.focused {
-            Style::highlight()
+            PaletteStyle::Highlight
         } else {
-            Style::primary()
+            PaletteStyle::Primary
         };
 
         let offset =

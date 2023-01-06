@@ -121,7 +121,7 @@ impl ColorStyle {
 
     /// Application background, where no view is present.
     pub fn background() -> Self {
-        Self::new(PaletteColor::Background, PaletteColor::Background)
+        Self::new(PaletteColor::Primary, PaletteColor::Background)
     }
 
     /// Color used by view shadows. Only background matters.
@@ -208,6 +208,12 @@ impl ColorStyle {
             front: f(self.front, other.front),
             back: f(self.back, other.back),
         }
+    }
+}
+
+impl From<ColorPair> for ColorStyle {
+    fn from(color: ColorPair) -> Self {
+        Self::new(color.front, color.back)
     }
 }
 
