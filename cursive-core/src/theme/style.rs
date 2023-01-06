@@ -118,6 +118,22 @@ impl Style {
             effects: enumset::enum_set!(Effect::Reverse),
         }
     }
+
+    /// Parse a toml entry
+    #[cfg(feature = "toml")]
+    pub(crate) fn parse(table: &toml::Value) -> Option<Self> {
+        let table = table.as_table()?;
+        let mut effects: EnumSet<Effect> = EnumSet::new();
+
+        for effect in table.get("effects")?.as_array()? {
+            let effect = effect.as_str()?.parse().ok()?;
+            effects.insert(effect);
+        }
+
+        let color = ColorStyle::parse(table)?;
+
+        Some(Style { effects, color })
+    }
 }
 
 impl From<Effect> for Style {

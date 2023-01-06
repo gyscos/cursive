@@ -1,4 +1,5 @@
 use super::{BaseColor, Color, ColorPair, Palette, PaletteColor};
+use std::str::FromStr;
 
 /// Possible color style for a cell.
 ///
@@ -209,6 +210,14 @@ impl ColorStyle {
             back: f(self.back, other.back),
         }
     }
+
+    #[cfg(feature = "toml")]
+    pub(crate) fn parse(table: &toml::value::Table) -> Option<Self> {
+        let front = table.get("front")?.as_str()?.parse().ok()?;
+        let back = table.get("back")?.as_str()?.parse().ok()?;
+
+        Some(ColorStyle { front, back })
+    }
 }
 
 impl From<ColorPair> for ColorStyle {
@@ -294,6 +303,26 @@ impl ColorType {
             ColorType::InheritParent => old,
             new => new,
         }
+    }
+}
+
+impl FromStr for ColorType {
+    type Err = super::NoSuchColor;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s == "inherit_parent" || s == "InheritParent" {
+            return Ok(ColorType::InheritParent);
+        }
+
+        if let Ok(color) = s.parse() {
+            return Ok(ColorType::Palette(color));
+        }
+
+        if let Ok(color) = s.parse() {
+            return Ok(ColorType::Color(color));
+        }
+
+        return Err(super::NoSuchColor);
     }
 }
 

@@ -15,6 +15,7 @@ fn main() {
              custom theme!",
         ))
         .title("Themed dialog")
+        .button("Oh rly?", |_| ())
         .button("Quit", |s| s.quit()),
     );
 

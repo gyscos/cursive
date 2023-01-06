@@ -1,4 +1,5 @@
 use enum_map::Enum;
+use std::str::FromStr;
 
 /// One of the 8 base colors.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Enum)]
@@ -179,13 +180,16 @@ impl Color {
             "light cyan" => Color::Light(BaseColor::Cyan),
             "light white" => Color::Light(BaseColor::White),
             "default" => Color::TerminalDefault,
-            value => {
-                return parse_special(value).or_else(|| {
-                    log::warn!("Could not parse color `{}`.", value);
-                    None
-                })
-            }
+            value => return parse_special(value),
         })
+    }
+}
+
+impl FromStr for Color {
+    type Err = super::NoSuchColor;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Color::parse(s).ok_or(super::NoSuchColor)
     }
 }
 

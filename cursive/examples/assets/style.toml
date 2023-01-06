@@ -37,3 +37,7 @@ borders = "outset" # Alternatives are "none" and "simple"
 	highlight          = "#F88"
 	highlight_inactive = "#5555FF"
 
+[styles.highlight]
+    effects = []
+    front = "red"
+    back = "inherit_parent"

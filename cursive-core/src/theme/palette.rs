@@ -254,11 +254,36 @@ impl Palette {
         // TODO: use serde for that?
         // Problem: toml-rs doesn't do well with Enums...
 
-        for (key, value) in iterate_toml(table) {
+        for (key, value) in iterate_toml_colors(table) {
             match value {
                 PaletteNode::Color(color) => self.set_color(key, color),
                 PaletteNode::Namespace(map) => self.add_namespace(key, map),
             }
+        }
+    }
+
+    /// Fills `palette` with the colors from the given `table`.
+    #[cfg(feature = "toml")]
+    pub(crate) fn load_toml_styles(&mut self, table: &toml::value::Table) {
+        // TODO: use serde for that?
+        for (key, value) in table {
+            let key = match key.parse() {
+                Ok(key) => key,
+                _ => {
+                    log::warn!("Found unknown palette style: `{key}`.");
+                    continue;
+                }
+            };
+
+            let value = match Style::parse(value) {
+                Some(value) => value,
+                _ => {
+                    log::warn!("Could not parse style: `{value}`.");
+                    continue;
+                }
+            };
+
+            self.styles[key] = value;
         }
     }
 }
@@ -283,7 +308,7 @@ impl Default for Palette {
 
 // Iterate over a toml
 #[cfg(feature = "toml")]
-fn iterate_toml(
+fn iterate_toml_colors(
     table: &toml::value::Table,
 ) -> impl Iterator<Item = (&str, PaletteNode)> {
     table.iter().flat_map(|(key, value)| {
@@ -292,7 +317,7 @@ fn iterate_toml(
                 // This should define a new namespace
                 // Treat basic colors as simple string.
                 // We'll convert them back in the merge method.
-                let map = iterate_toml(table)
+                let map = iterate_toml_colors(table)
                     .map(|(key, value)| (key.to_string(), value))
                     .collect();
                 // Should we only return something if it's non-empty?
@@ -384,6 +409,11 @@ impl PaletteStyle {
     pub fn resolve(self, palette: &Palette) -> Style {
         palette[self]
     }
+
+    /// Returns an iterator on all possible palette styles.
+    pub fn all() -> impl Iterator<Item = Self> {
+        (0..Self::LENGTH).map(Self::from_usize)
+    }
 }
 
 impl PaletteColor {
@@ -395,6 +425,28 @@ impl PaletteColor {
     /// Returns an iterator on all possible palette colors.
     pub fn all() -> impl Iterator<Item = Self> {
         (0..Self::LENGTH).map(Self::from_usize)
+    }
+}
+
+impl FromStr for PaletteStyle {
+    type Err = NoSuchColor;
+
+    fn from_str(s: &str) -> Result<Self, NoSuchColor> {
+        use PaletteStyle::*;
+
+        Ok(match s {
+            "Background" | "background" => Background,
+            "Shadow" | "shadow" => Shadow,
+            "View" | "view" => View,
+            "Primary" | "primary" => Primary,
+            "Secondary" | "secondary" => Secondary,
+            "Tertiary" | "tertiary" => Tertiary,
+            "TitlePrimary" | "title_primary" => TitlePrimary,
+            "TitleSecondary" | "title_secondary" => TitleSecondary,
+            "Highlight" | "highlight" => Highlight,
+            "HighlightInactive" | "highlight_inactive" => HighlightInactive,
+            _ => return Err(NoSuchColor),
+        })
     }
 }
 

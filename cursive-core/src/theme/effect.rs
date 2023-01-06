@@ -1,4 +1,5 @@
 use enumset::EnumSetType;
+use std::str::FromStr;
 
 /// Text effect
 #[allow(clippy::derive_hash_xor_eq)] // We do derive it through EnumSetType
@@ -20,4 +21,22 @@ pub enum Effect {
     Underline,
     /// Foreground text blinks (background color is static).
     Blink,
+}
+
+impl FromStr for Effect {
+    type Err = super::NoSuchColor;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Simple" | "simple" => Effect::Simple,
+            "Reverse" | "reverse" => Effect::Reverse,
+            "Dim" | "dim" => Effect::Dim,
+            "Bold" | "bold" => Effect::Bold,
+            "Italic" | "italic" => Effect::Italic,
+            "Strikethrough" | "strikethrough" => Effect::Strikethrough,
+            "Underline" | "underline" => Effect::Underline,
+            "Blink" | "blink" => Effect::Blink,
+            _ => return Err(super::NoSuchColor),
+        })
+    }
 }

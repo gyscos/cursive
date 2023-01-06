@@ -207,7 +207,7 @@ pub use self::color::{BaseColor, Color};
 pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::Effect;
-pub use self::palette::{Palette, PaletteColor, PaletteStyle};
+pub use self::palette::{NoSuchColor, Palette, PaletteColor, PaletteStyle};
 pub use self::style::{Style, StyleType};
 #[cfg(feature = "toml")]
 use std::fs::File;
@@ -269,6 +269,10 @@ impl Theme {
 
         if let Some(&toml::Value::Table(ref table)) = table.get("colors") {
             self.palette.load_toml(table);
+        }
+
+        if let Some(&toml::Value::Table(ref table)) = table.get("styles") {
+            self.palette.load_toml_styles(table);
         }
     }
 }
