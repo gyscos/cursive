@@ -170,6 +170,16 @@ impl<T> SpannedString<T> {
         Self::with_spans(String::new(), Vec::new())
     }
 
+    /// Concatenates all styled strings.
+    ///
+    /// Same as `spans.into_iter().collect()`.
+    pub fn concatenate<I>(spans: I) -> Self
+    where
+        I: IntoIterator<Item = Self>,
+    {
+        spans.into_iter().collect()
+    }
+
     /// Creates a new `SpannedString` manually.
     ///
     /// It is not recommended to use this directly.
@@ -348,6 +358,8 @@ impl<T> FromIterator<SpannedString<T>> for SpannedString<T> {
     fn from_iter<I: IntoIterator<Item = SpannedString<T>>>(
         iter: I,
     ) -> SpannedString<T> {
+        // It would look simpler to always fold(), starting with an empty string.
+        // But this here lets us re-use the allocation from the first string, which is a small win.
         let mut iter = iter.into_iter();
         if let Some(first) = iter.next() {
             iter.fold(first, |mut acc, s| {

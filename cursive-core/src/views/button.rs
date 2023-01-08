@@ -4,10 +4,10 @@ use crate::{
     event::*,
     rect::Rect,
     theme::PaletteStyle,
+    utils::markup::StyledString,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2,
 };
-use unicode_width::UnicodeWidthStr;
 
 /// Simple text label with a callback when `<Enter>` is pressed.
 ///
@@ -21,7 +21,7 @@ use unicode_width::UnicodeWidthStr;
 /// let quit_button = Button::new("Quit", |s| s.quit());
 /// ```
 pub struct Button {
-    label: String,
+    label: StyledString,
     callback: Callback,
     enabled: bool,
     last_size: Vec2,
@@ -36,10 +36,16 @@ impl Button {
     pub fn new<F, S>(label: S, cb: F) -> Self
     where
         F: 'static + Fn(&mut Cursive),
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         let label = label.into();
-        Self::new_raw(format!("<{}>", label), cb)
+        let label: StyledString = StyledString::concatenate([
+            StyledString::plain("<"),
+            label,
+            StyledString::plain(">"),
+        ]);
+
+        Self::new_raw(label, cb)
     }
 
     /// Creates a new button without angle brackets.
@@ -51,7 +57,7 @@ impl Button {
     ///
     /// let button = Button::new_raw("[ Quit ]", |s| s.quit());
     /// ```
-    pub fn new_raw<F, S: Into<String>>(label: S, cb: F) -> Self
+    pub fn new_raw<F, S: Into<StyledString>>(label: S, cb: F) -> Self
     where
         F: 'static + Fn(&mut Cursive),
     {
@@ -86,7 +92,7 @@ impl Button {
     /// assert_eq!(button.label(), "<Quit>");
     /// ```
     pub fn label(&self) -> &str {
-        &self.label
+        &self.label.source()
     }
 
     /// Sets the label to the given value.
@@ -113,7 +119,7 @@ impl Button {
     /// This will not include brackets.
     pub fn set_label_raw<S>(&mut self, label: S)
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         self.label = label.into();
         self.invalidate();
@@ -148,7 +154,7 @@ impl View for Button {
         printer.with_style(style, |printer| {
             // TODO: do we want to "fill" the button highlight color to the full given size?
             // printer.print_hline((0, 0), offset, " ");
-            printer.print((offset, 0), &self.label);
+            printer.print_styled((offset, 0), &self.label);
             // let end = offset + self.label.width();
             // printer.print_hline(
             //     (end, 0),

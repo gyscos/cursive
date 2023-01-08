@@ -2,6 +2,7 @@ use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     theme::PaletteStyle,
+    utils::markup::StyledString,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
@@ -62,7 +63,7 @@ impl<T: 'static> RadioGroup<T> {
     /// Adds a new button to the group.
     ///
     /// The button will display `label` next to it, and will embed `value`.
-    pub fn button<S: Into<String>>(
+    pub fn button<S: Into<StyledString>>(
         &mut self,
         value: T,
         label: S,
@@ -127,7 +128,7 @@ pub struct RadioButton<T> {
     state: Rc<RefCell<SharedState<T>>>,
     id: usize,
     enabled: bool,
-    label: String,
+    label: StyledString,
 }
 
 impl<T: 'static> RadioButton<T> {
@@ -136,7 +137,7 @@ impl<T: 'static> RadioButton<T> {
     fn new(
         state: Rc<RefCell<SharedState<T>>>,
         id: usize,
-        label: String,
+        label: StyledString,
     ) -> Self {
         RadioButton {
             state,
@@ -184,7 +185,7 @@ impl<T: 'static> RadioButton<T> {
         if !self.label.is_empty() {
             // We want the space to be highlighted if focused
             printer.print((3, 0), " ");
-            printer.print((4, 0), &self.label);
+            printer.print_styled((4, 0), &self.label);
         }
     }
 
@@ -192,7 +193,7 @@ impl<T: 'static> RadioButton<T> {
         if self.label.is_empty() {
             Vec2::new(3, 1)
         } else {
-            Vec2::new(3 + 1 + self.label.len(), 1)
+            Vec2::new(3 + 1 + self.label.width(), 1)
         }
     }
 }

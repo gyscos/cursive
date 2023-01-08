@@ -2,11 +2,11 @@ use crate::align::*;
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
 use crate::theme::PaletteStyle;
+use crate::utils::markup::StyledString;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 use crate::Vec2;
 use crate::With;
-use unicode_width::UnicodeWidthStr;
 
 /// Draws a border around a wrapped view.
 #[derive(Debug)]
@@ -15,7 +15,7 @@ pub struct Panel<V> {
     view: V,
 
     // Possibly empty title.
-    title: String,
+    title: StyledString,
 
     // Where to put the title position
     title_position: HAlign,
@@ -34,7 +34,7 @@ impl<V> Panel<V> {
     pub fn new(view: V) -> Self {
         Panel {
             view,
-            title: String::new(),
+            title: StyledString::new(),
             title_position: HAlign::Center,
             invalidated: true,
         }
@@ -44,12 +44,12 @@ impl<V> Panel<V> {
     ///
     /// If not empty, it will be visible at the top.
     #[must_use]
-    pub fn title<S: Into<String>>(self, label: S) -> Self {
+    pub fn title<S: Into<StyledString>>(self, label: S) -> Self {
         self.with(|s| s.set_title(label))
     }
 
     /// Sets the title of the dialog.
-    pub fn set_title<S: Into<String>>(&mut self, label: S) {
+    pub fn set_title<S: Into<StyledString>>(&mut self, label: S) {
         self.title = label.into();
         self.invalidate();
     }
@@ -82,7 +82,7 @@ impl<V> Panel<V> {
                 .offset((x, 0))
                 .cropped((len, 1))
                 .with_style(PaletteStyle::TitlePrimary, |p| {
-                    p.print((0, 0), &self.title)
+                    p.print_styled((0, 0), &self.title)
                 });
             printer.with_high_border(false, |printer| {
                 printer.print((x - 2, 0), "┤ ");

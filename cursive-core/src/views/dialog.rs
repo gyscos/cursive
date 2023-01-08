@@ -13,7 +13,6 @@ use crate::{
 };
 use std::cell::Cell;
 use std::cmp::{max, min};
-use unicode_width::UnicodeWidthStr;
 
 /// Identifies currently focused element in [`Dialog`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -30,7 +29,7 @@ struct ChildButton {
 }
 
 impl ChildButton {
-    pub fn new<F, S: Into<String>>(label: S, cb: F) -> Self
+    pub fn new<F>(label: StyledString, cb: F) -> Self
     where
         F: 'static + Fn(&mut Cursive),
     {
@@ -52,7 +51,7 @@ impl ChildButton {
 /// ```
 pub struct Dialog {
     // Possibly empty title.
-    title: String,
+    title: StyledString,
 
     // Where to put the title position
     title_position: HAlign,
@@ -95,7 +94,7 @@ impl Dialog {
         Dialog {
             content: LastSizeView::new(BoxedView::boxed(view)),
             buttons: Vec::new(),
-            title: String::new(),
+            title: StyledString::new(),
             title_position: HAlign::Center,
             focus: DialogFocus::Content,
             padding: Margins::lr(1, 1),
@@ -209,7 +208,7 @@ impl Dialog {
     ///
     /// Consumes and returns self for easy chaining.
     #[must_use]
-    pub fn button<F, S: Into<String>>(self, label: S, cb: F) -> Self
+    pub fn button<F, S: Into<StyledString>>(self, label: S, cb: F) -> Self
     where
         F: 'static + Fn(&mut Cursive),
     {
@@ -217,11 +216,11 @@ impl Dialog {
     }
 
     /// Adds a button to the dialog with the given label and callback.
-    pub fn add_button<F, S: Into<String>>(&mut self, label: S, cb: F)
+    pub fn add_button<F, S: Into<StyledString>>(&mut self, label: S, cb: F)
     where
         F: 'static + Fn(&mut Cursive),
     {
-        self.buttons.push(ChildButton::new(label, cb));
+        self.buttons.push(ChildButton::new(label.into(), cb));
         self.invalidate();
     }
 
@@ -308,7 +307,7 @@ impl Dialog {
     /// let dialog = Dialog::text("Hello!").dismiss_button("Close");
     /// ```
     #[must_use]
-    pub fn dismiss_button<S: Into<String>>(self, label: S) -> Self {
+    pub fn dismiss_button<S: Into<StyledString>>(self, label: S) -> Self {
         self.button(label, |s| {
             s.pop_layer();
         })
@@ -326,19 +325,19 @@ impl Dialog {
     /// let dialog = Dialog::info("Some info").title("Read me!");
     /// ```
     #[must_use]
-    pub fn title<S: Into<String>>(self, label: S) -> Self {
+    pub fn title<S: Into<StyledString>>(self, label: S) -> Self {
         self.with(|s| s.set_title(label))
     }
 
     /// Sets the title of the dialog.
-    pub fn set_title<S: Into<String>>(&mut self, label: S) {
+    pub fn set_title<S: Into<StyledString>>(&mut self, label: S) {
         self.title = label.into();
         self.invalidate();
     }
 
     /// Get the title of the dialog.
     pub fn get_title(&self) -> &str {
-        &self.title
+        self.title.source()
     }
 
     /// Sets the horizontal position of the title in the dialog.
@@ -685,7 +684,7 @@ impl Dialog {
             });
 
             printer.with_style(PaletteStyle::TitlePrimary, |p| {
-                p.print((x, 0), &self.title)
+                p.print_styled((x, 0), &self.title)
             });
         }
     }

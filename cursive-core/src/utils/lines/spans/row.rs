@@ -27,6 +27,24 @@ impl Row {
             .collect()
     }
 
+    /// Resolve the row indices into string slices and attributes.
+    pub fn resolve_stream<'a, 'b, T, S>(
+        &'b self,
+        source: S,
+    ) -> impl Iterator<Item = Span<'a, T>>
+    where
+        S: Into<SpannedStr<'a, T>>,
+        T: 'a,
+        'b: 'a,
+    {
+        let source = source.into();
+
+        self.segments
+            .iter()
+            .map(move |seg| seg.resolve(&source))
+            .filter(|span| !span.content.is_empty())
+    }
+
     /// Returns indices in the source string, if possible.
     ///
     /// Returns overall `(start, end)`, or `None` if the segments are owned.

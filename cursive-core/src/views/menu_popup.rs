@@ -11,7 +11,6 @@ use crate::{
 };
 use std::cmp::min;
 use std::rc::Rc;
-use unicode_width::UnicodeWidthStr;
 
 /// Popup that shows a list of items.
 ///
@@ -358,7 +357,7 @@ impl View for MenuPopup {
                             return;
                         }
                         printer.print_hline((0, 0), printer.size.x, " ");
-                        printer.print((1, 0), label);
+                        printer.print_styled((1, 0), label);
                         let x = printer.size.x.saturating_sub(3);
                         printer.print((x, 0), ">>");
                     }
@@ -367,7 +366,7 @@ impl View for MenuPopup {
                             return;
                         }
                         printer.print_hline((0, 0), printer.size.x, " ");
-                        printer.print((1, 0), label);
+                        printer.print_styled((1, 0), label);
                     }
                 }
             });

@@ -4,6 +4,7 @@ use crate::{
     menu,
     rect::Rect,
     theme::PaletteStyle,
+    utils::markup::StyledString,
     view::{CannotFocus, Position, View},
     views::{MenuPopup, OnEventView},
     Cursive, Printer, Vec2,
@@ -95,7 +96,7 @@ impl Menubar {
     /// popup-menu with the given menu tree.
     pub fn add_subtree<S>(&mut self, title: S, menu: menu::Tree) -> &mut Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         let i = self.root.len();
         self.insert_subtree(i, title, menu)
@@ -110,7 +111,7 @@ impl Menubar {
     /// Adds a leaf node to the menubar.
     pub fn add_leaf<S, F>(&mut self, title: S, cb: F) -> &mut Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
         F: 'static + Fn(&mut Cursive),
     {
         let i = self.root.len();
@@ -125,7 +126,7 @@ impl Menubar {
         menu: menu::Tree,
     ) -> &mut Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         self.root.insert_subtree(i, title, menu);
         self
@@ -144,7 +145,7 @@ impl Menubar {
     /// It will be directly actionable.
     pub fn insert_leaf<S, F>(&mut self, i: usize, title: S, cb: F) -> &mut Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
         F: 'static + Fn(&mut Cursive),
     {
         self.root.insert_leaf(i, title, cb);

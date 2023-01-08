@@ -108,13 +108,12 @@ impl<'a, 'b> Printer<'a, 'b> {
     }
 
     /// Prints some styled text at the given position.
-    pub fn print_styled<S>(
-        &self,
-        start: S,
-        text: crate::utils::span::SpannedStr<'_, Style>,
-    ) where
-        S: Into<Vec2>,
+    pub fn print_styled<'c, V, S>(&self, start: V, text: S)
+    where
+        V: Into<Vec2>,
+        S: Into<crate::utils::span::SpannedStr<'a, Style>>,
     {
+        let text = text.into();
         let Vec2 { mut x, y } = start.into();
         for span in text.spans() {
             self.with_style(*span.attr, |printer| {

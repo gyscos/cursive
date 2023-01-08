@@ -13,7 +13,7 @@
 //! [`Tree`]: struct.Tree.html
 //! [menubar]: ../struct.Cursive.html#method.menubar
 
-use crate::{event::Callback, Cursive, With};
+use crate::{event::Callback, utils::markup::StyledString, Cursive, With};
 use std::rc::Rc;
 
 /// Root of a menu tree.
@@ -29,7 +29,7 @@ pub enum Item {
     /// Actionnable button with a label.
     Leaf {
         /// Text displayed for this entry.
-        label: String,
+        label: StyledString,
         /// Callback to run when the entry is selected.
         cb: Callback,
         /// Whether this item is enabled.
@@ -41,7 +41,7 @@ pub enum Item {
     /// Sub-menu with a label.
     Subtree {
         /// Text displayed for this entry.
-        label: String,
+        label: StyledString,
         /// Subtree under this item.
         tree: Rc<Tree>,
         /// Whether this item is enabled.
@@ -58,7 +58,7 @@ impl Item {
     /// Create a new leaf menu item.
     pub fn leaf<S, F>(label: S, cb: F) -> Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
         F: 'static + Fn(&mut Cursive),
     {
         let label = label.into();
@@ -70,7 +70,7 @@ impl Item {
     /// Create a new subtree menu item.
     pub fn subtree<S>(label: S, tree: Tree) -> Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         let label = label.into();
         let tree = Rc::new(tree);
@@ -89,7 +89,7 @@ impl Item {
         match *self {
             Item::Delimiter => "│",
             Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => {
-                label
+                label.source()
             }
         }
     }
@@ -191,7 +191,7 @@ impl Tree {
     /// Adds a actionnable leaf to the end of this tree.
     pub fn add_leaf<S, F>(&mut self, label: S, cb: F)
     where
-        S: Into<String>,
+        S: Into<StyledString>,
         F: 'static + Fn(&mut Cursive),
     {
         let i = self.children.len();
@@ -201,7 +201,7 @@ impl Tree {
     /// Inserts a leaf at the given position.
     pub fn insert_leaf<S, F>(&mut self, i: usize, label: S, cb: F)
     where
-        S: Into<String>,
+        S: Into<StyledString>,
         F: 'static + Fn(&mut Cursive),
     {
         let label = label.into();
@@ -219,7 +219,7 @@ impl Tree {
     #[must_use]
     pub fn leaf<S, F>(self, label: S, cb: F) -> Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
         F: 'static + Fn(&mut Cursive),
     {
         self.with(|menu| menu.add_leaf(label, cb))
@@ -228,7 +228,7 @@ impl Tree {
     /// Inserts a subtree at the given position.
     pub fn insert_subtree<S>(&mut self, i: usize, label: S, tree: Tree)
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         let label = label.into();
         let tree = Item::Subtree {
@@ -256,7 +256,7 @@ impl Tree {
     /// Adds a submenu to the end of this tree.
     pub fn add_subtree<S>(&mut self, label: S, tree: Tree)
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         let i = self.children.len();
         self.insert_subtree(i, label, tree);
@@ -266,7 +266,7 @@ impl Tree {
     #[must_use]
     pub fn subtree<S>(self, label: S, tree: Tree) -> Self
     where
-        S: Into<String>,
+        S: Into<StyledString>,
     {
         self.with(|menu| menu.add_subtree(label, tree))
     }

@@ -501,7 +501,7 @@ impl<T: 'static> SelectView<T> {
         let l = self.items[i].label.width();
         let x = self.align.h.get_offset(l, printer.size.x);
         printer.print_hline((0, 0), x, " ");
-        printer.print_styled((x, 0), (&self.items[i].label).into());
+        printer.print_styled((x, 0), &self.items[i].label);
         if l < printer.size.x {
             assert!((l + x) <= printer.size.x);
             printer.print_hline((x + l, 0), printer.size.x - (l + x), " ");
@@ -968,7 +968,7 @@ impl<T: 'static> View for SelectView<T> {
                     let offset =
                         HAlign::Center.get_offset(label.width(), x + 1);
 
-                    printer.print_styled((offset, 0), label.into());
+                    printer.print_styled((offset, 0), label);
                 }
             });
         } else {
