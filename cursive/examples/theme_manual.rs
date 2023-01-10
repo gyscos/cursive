@@ -6,13 +6,15 @@ use cursive::Cursive;
 fn main() {
     let mut siv = cursive::default();
 
+    // Start with a custom theme.
     siv.set_theme(cursive::theme::Theme {
         shadow: true,
         borders: BorderStyle::Simple,
-        palette: Palette::default().with(|palette| {
+        palette: Palette::retro().with(|palette| {
             use cursive::theme::BaseColor::*;
 
             {
+                // First, override some colors from the base palette.
                 use cursive::theme::Color::TerminalDefault;
                 use cursive::theme::PaletteColor::*;
 
@@ -25,6 +27,7 @@ fn main() {
             }
 
             {
+                // Then override some styles.
                 use cursive::theme::Effect::*;
                 use cursive::theme::PaletteStyle::*;
                 use cursive::theme::Style;

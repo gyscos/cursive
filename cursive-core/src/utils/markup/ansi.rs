@@ -203,13 +203,12 @@ impl<'a> Iterator for Parser<'a> {
                     });
                 }
                 ansi_parser::Output::Escape(sequence) => {
-                    match sequence {
-                        ansi_parser::AnsiSequence::SetGraphicsMode(bytes) => {
-                            self.parse_sequence(&bytes);
-                        }
-                        // Nothing else to handle? Maybe SetMode/ResetMode?
-                        _ => (),
+                    if let ansi_parser::AnsiSequence::SetGraphicsMode(bytes) =
+                        sequence
+                    {
+                        self.parse_sequence(&bytes);
                     }
+                    // Nothing else to handle? Maybe SetMode/ResetMode?
                 }
             }
         }

@@ -452,9 +452,9 @@ mod tests {
 
         let mut os = ObservedScreen::new(size);
 
-        for y in 0..fake_screen.len() {
+        for (y, row) in fake_screen.iter().enumerate() {
             let mut x: usize = 0;
-            for letter in fake_screen[y].graphemes(true) {
+            for letter in row.graphemes(true) {
                 let idx = os.flatten_index(Vec2::new(x, y));
                 os.contents[idx] = if letter == "#" {
                     None

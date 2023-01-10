@@ -263,15 +263,15 @@ impl Theme {
             self.shadow = shadow;
         }
 
-        if let Some(&toml::Value::String(ref borders)) = table.get("borders") {
+        if let Some(toml::Value::String(borders)) = table.get("borders") {
             self.borders = BorderStyle::from(borders);
         }
 
-        if let Some(&toml::Value::Table(ref table)) = table.get("colors") {
+        if let Some(toml::Value::Table(table)) = table.get("colors") {
             self.palette.load_toml(table);
         }
 
-        if let Some(&toml::Value::Table(ref table)) = table.get("styles") {
+        if let Some(toml::Value::Table(table)) = table.get("styles") {
             self.palette.load_toml_styles(table);
         }
     }

@@ -562,7 +562,7 @@ mod tests {
         let vu32 = Vec2::from((4u32, 5u32));
 
         let vusize = Vec2::from((4usize, 5usize));
-        let vvec = Vec2::from(Vec2::new(4, 5));
+        let vvec = Vec2::new(4, 5);
 
         assert_eq!(vi32 - vu32, vusize - vvec);
     }

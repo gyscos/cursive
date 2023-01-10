@@ -253,7 +253,7 @@ impl Backend {
     where
         T: std::fmt::Display,
     {
-        write!(self.terminal.borrow_mut(), "{}", content).unwrap();
+        write!(self.terminal.borrow_mut(), "{content}").unwrap();
     }
 }
 
@@ -289,7 +289,7 @@ impl backend::Backend for Backend {
     }
 
     fn set_title(&mut self, title: String) {
-        write!(self.terminal.get_mut(), "\x1B]0;{}\x07", title).unwrap();
+        write!(self.terminal.get_mut(), "\x1B]0;{title}\x07").unwrap();
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
@@ -358,9 +358,8 @@ impl backend::Backend for Backend {
     fn print_at(&self, pos: Vec2, text: &str) {
         write!(
             self.terminal.borrow_mut(),
-            "{}{}",
+            "{}{text}",
             termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
-            text
         )
         .unwrap();
     }
@@ -370,15 +369,14 @@ impl backend::Backend for Backend {
             let mut out = self.terminal.borrow_mut();
             write!(
                 out,
-                "{}{}",
+                "{}{text}",
                 termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
-                text
             )
             .unwrap();
 
             let mut dupes_left = repetitions - 1;
             while dupes_left > 0 {
-                write!(out, "{}", text).unwrap();
+                write!(out, "{text}").unwrap();
                 dupes_left -= 1;
             }
         }

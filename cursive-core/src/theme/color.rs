@@ -291,10 +291,7 @@ mod tests {
                 for b in 0..=5 {
                     assert!(
                         Color::low_res(r, g, b).is_some(),
-                        "Could not create lowres color {}:{}:{}",
-                        r,
-                        g,
-                        b,
+                        "Could not create lowres color {r}:{g}:{b}",
                     );
                 }
             }
@@ -306,10 +303,7 @@ mod tests {
                     assert_eq!(
                         Color::low_res(r, g, b),
                         None,
-                        "Created invalid lowres color {}:{}:{}",
-                        r,
-                        g,
-                        b,
+                        "Created invalid lowres color {r}:{g}:{b}",
                     );
                 }
             }

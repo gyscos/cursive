@@ -95,7 +95,7 @@ impl<'a> Iterator for Parser<'a> {
                     Tag::Paragraph if self.first => self.first = false,
                     Tag::Heading(..) => return Some(self.literal("\n\n")),
                     Tag::Link(_, link, _) => {
-                        return Some(self.literal(format!("]({})", link)))
+                        return Some(self.literal(format!("]({link})")))
                     }
                     Tag::CodeBlock(_) => return Some(self.literal("```")),
                     Tag::Emphasis | Tag::Strong => {

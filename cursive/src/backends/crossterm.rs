@@ -180,15 +180,9 @@ fn translate_color(base_color: theme::Color) -> Color {
         theme::Color::Light(theme::BaseColor::White) => Color::White,
         theme::Color::Rgb(r, g, b) => Color::Rgb { r, g, b },
         theme::Color::RgbLowRes(r, g, b) => {
-            debug_assert!(r <= 5,
-                              "Red color fragment (r = {}) is out of bound. Make sure r ≤ 5.",
-                              r);
-            debug_assert!(g <= 5,
-                              "Green color fragment (g = {}) is out of bound. Make sure g ≤ 5.",
-                              g);
-            debug_assert!(b <= 5,
-                              "Blue color fragment (b = {}) is out of bound. Make sure b ≤ 5.",
-                              b);
+            debug_assert!(r <= 5, "Red color fragment (r = {r}) is out of bound. Make sure r ≤ 5.");
+            debug_assert!(g <= 5, "Green color fragment (g = {g}) is out of bound. Make sure g ≤ 5.");
+            debug_assert!(b <= 5, "Blue color fragment (b = {b}) is out of bound. Make sure b ≤ 5.");
 
             Color::AnsiValue(16 + 36 * r + 6 * g + b)
         }
@@ -241,7 +235,7 @@ impl Backend {
     }
 
     fn with_stdout(&self, f: impl FnOnce(&mut BufWriter<Stdout>)) {
-        f(&mut *self.stdout_mut());
+        f(&mut self.stdout_mut());
     }
 
     fn set_attr(&self, attr: Attribute) {
@@ -319,7 +313,7 @@ impl backend::Backend for Backend {
                     Some(event) => Some(event),
                     None => self.poll_event(),
                 },
-                Err(e) => panic!("{:?}", e),
+                Err(e) => panic!("{e:?}"),
             },
             _ => None,
         }

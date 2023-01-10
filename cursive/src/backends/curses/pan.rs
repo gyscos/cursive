@@ -131,7 +131,7 @@ impl Backend {
             // We got it!
             pairs[&pair]
         } else {
-            self.insert_color(&mut *pairs, pair)
+            self.insert_color(&mut pairs, pair)
         }
     }
 
@@ -332,9 +332,9 @@ impl Backend {
                     // so we need to disambiguate.
                     (mevent.bstate
                         == pancurses::BUTTON5_DOUBLE_CLICKED as mmask_t)
-                        .then(|| MouseEvent::WheelDown)
+                        .then_some(MouseEvent::WheelDown)
                 })
-                .map(&make_event)
+                .map(make_event)
                 .unwrap_or_else(|| {
                     debug!("We got a mouse drag, but no last mouse pressed?");
                     Event::Unknown(vec![])
@@ -384,7 +384,7 @@ impl backend::Backend for Backend {
     }
 
     fn set_title(&mut self, title: String) {
-        print!("\x1B]0;{}\x07", title);
+        print!("\x1B]0;{title}\x07");
         stdout().flush().expect("could not flush stdout");
     }
 
