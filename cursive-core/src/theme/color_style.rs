@@ -322,7 +322,7 @@ impl FromStr for ColorType {
             return Ok(ColorType::Color(color));
         }
 
-        return Err(super::NoSuchColor);
+        Err(super::NoSuchColor)
     }
 }
 

@@ -92,7 +92,7 @@ impl Button {
     /// assert_eq!(button.label(), "<Quit>");
     /// ```
     pub fn label(&self) -> &str {
-        &self.label.source()
+        self.label.source()
     }
 
     /// Sets the label to the given value.

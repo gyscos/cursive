@@ -88,11 +88,7 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
         }
     }
 
-    fn wrap_call_on_any<'a>(
-        &mut self,
-        selector: &Selector<'_>,
-        callback: AnyCb<'a>,
-    ) {
+    fn wrap_call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
         match selector {
             &Selector::Name(name) if name == self.name => callback(self),
             s => {
@@ -105,7 +101,7 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
 
     fn wrap_focus_view(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         match selector {
             &Selector::Name(name) if name == self.name => {

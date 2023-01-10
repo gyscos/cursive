@@ -412,7 +412,7 @@ impl Key {
             10 => Key::F10,
             11 => Key::F11,
             12 => Key::F12,
-            _ => panic!("unknown function key: F{}", n),
+            _ => panic!("unknown function key: F{n}"),
         }
     }
 }

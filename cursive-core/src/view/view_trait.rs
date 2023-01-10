@@ -15,13 +15,13 @@ pub struct ViewNotFound;
 pub struct CannotFocus;
 
 impl std::fmt::Display for ViewNotFound {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "View could not be found")
     }
 }
 
 impl std::fmt::Display for CannotFocus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "View does not take focus")
     }
 }
@@ -105,7 +105,7 @@ pub trait View: Any + AnyView {
     /// View groups should implement this to forward the call to each children.
     ///
     /// Default implementation is a no-op.
-    fn call_on_any<'a>(&mut self, _: &Selector<'_>, _: AnyCb<'a>) {}
+    fn call_on_any(&mut self, _: &Selector, _: AnyCb) {}
 
     /// Moves the focus to the view identified by the given selector.
     ///
@@ -115,7 +115,7 @@ pub trait View: Any + AnyView {
     /// Default implementation simply returns `Err(ViewNotFound)`.
     fn focus_view(
         &mut self,
-        _: &Selector<'_>,
+        _: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         Err(ViewNotFound)
     }

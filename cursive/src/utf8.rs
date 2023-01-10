@@ -33,9 +33,7 @@ where
         let byte = next().ok_or_else(|| "Missing UTF-8 byte".to_string())?;
         if byte & 0xC0 != 0x80 {
             return Err(format!(
-                "Found non-continuation byte after leading: \
-                 {}",
-                byte
+                "Found non-continuation byte after leading: `{byte}`",
             ));
         }
         // We have 6 fresh new bits to read, make room.

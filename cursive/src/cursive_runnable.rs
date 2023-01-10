@@ -187,17 +187,19 @@ impl CursiveRunnable {
             Ok(backends::blt::Backend::init())
         })
     }
+}
 
-    /// Creates a new Cursive wrapper using one of the available backends.
-    ///
-    /// Picks the first backend enabled from the list:
-    /// * BearLibTerminal
-    /// * Termion
-    /// * Crossterm
-    /// * Pancurses
-    /// * Ncurses
-    /// * Dummy
-    pub fn default() -> Self {
+/// Creates a new Cursive wrapper using one of the available backends.
+///
+/// Picks the first backend enabled from the list:
+/// * BearLibTerminal
+/// * Termion
+/// * Crossterm
+/// * Pancurses
+/// * Ncurses
+/// * Dummy
+impl Default for CursiveRunnable {
+    fn default() -> Self {
         Self::with_initializer(Box::new(backends::try_default))
     }
 }

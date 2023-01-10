@@ -53,7 +53,7 @@ fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
     } else {
         percentage
     };
-    format!("{} %", percentage)
+    format!("{percentage} %")
 }
 
 /// Returns length * value/max

@@ -441,7 +441,7 @@ impl<T: 'static> SelectView<T> {
         self.items.insert(index, Item::new(label.into(), value));
         let focus = self.focus();
         // Do not increase focus if we were empty with focus=0.
-        if focus >= index && self.items.len() >= 1 {
+        if focus >= index && !self.items.is_empty() {
             self.focus.set(focus + 1);
         }
         self.last_required_size = None;
@@ -988,12 +988,10 @@ impl<T: 'static> View for SelectView<T> {
 
             let highlight_style = if active {
                 PaletteStyle::Highlight.into()
+            } else if self.inactive_highlight {
+                PaletteStyle::HighlightInactive.into()
             } else {
-                if self.inactive_highlight {
-                    PaletteStyle::HighlightInactive.into()
-                } else {
-                    regular_style
-                }
+                regular_style
             };
 
             for i in 0..self.len() {

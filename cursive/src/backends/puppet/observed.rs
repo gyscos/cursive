@@ -91,7 +91,7 @@ pub struct ObservedScreen {
 }
 
 impl Display for ObservedScreen {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         writeln!(f, "captured piece:")?;
 
         write!(f, "x")?;
@@ -117,7 +117,7 @@ impl Display for ObservedScreen {
                         if letter == " " {
                             write!(f, " ")?;
                         } else {
-                            write!(f, "{}", letter)?;
+                            write!(f, "{letter}")?;
                         }
                     }
                 } else {
@@ -180,7 +180,7 @@ impl ObservedScreen {
 
     /// Prints the piece to stdout.
     pub fn print_stdout(&self) {
-        println!("{}", self)
+        println!("{self}")
     }
 
     /// Returns occurences of given string pattern

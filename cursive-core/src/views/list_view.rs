@@ -463,11 +463,7 @@ impl View for ListView {
         Ok(self.set_focus_unchecked(i).and(res))
     }
 
-    fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector<'_>,
-        callback: AnyCb<'a>,
-    ) {
+    fn call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
         for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, callback);
         }
@@ -475,7 +471,7 @@ impl View for ListView {
 
     fn focus_view(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         // Try to focus each view. Skip over delimiters.
         if let Some((i, res)) = self

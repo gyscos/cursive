@@ -211,7 +211,7 @@ impl Backend {
             utf8::read_char(ch as u8, || Some(ncurses::getch() as u8))
                 .map(Event::Char)
                 .unwrap_or_else(|e| {
-                    warn!("Error reading input: {}", e);
+                    warn!("Error reading input: {e}");
                     Event::Unknown(vec![ch as u8])
                 })
         } else {
@@ -335,7 +335,7 @@ impl backend::Backend for Backend {
     }
 
     fn set_title(&mut self, title: String) {
-        write_to_tty(format!("\x1B]0;{}\x07", title).as_bytes()).unwrap();
+        write_to_tty(format!("\x1B]0;{title}\x07").as_bytes()).unwrap();
     }
 
     fn screen_size(&self) -> Vec2 {

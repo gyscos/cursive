@@ -15,7 +15,7 @@ type TakeFocus<T> =
     dyn FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>;
 type FocusView<T> =
     dyn FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>;
-type CallOnAny<T> = dyn for<'a> FnMut(&mut T, &Selector, AnyCb<'a>);
+type CallOnAny<T> = dyn FnMut(&mut T, &Selector, AnyCb);
 type ImportantArea<T> = dyn Fn(&T, Vec2) -> Rect;
 
 /// A blank view that forwards calls to closures.
@@ -226,7 +226,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `call_on_any()`.
     pub fn set_call_on_any<F>(&mut self, f: F)
     where
-        F: 'static + for<'a> FnMut(&mut T, &Selector<'_>, AnyCb<'a>),
+        F: 'static + FnMut(&mut T, &Selector, AnyCb),
     {
         self.call_on_any = Box::new(f);
     }
@@ -237,7 +237,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_call_on_any<F>(self, f: F) -> Self
     where
-        F: 'static + for<'a> FnMut(&mut T, &Selector<'_>, AnyCb<'a>),
+        F: 'static + FnMut(&mut T, &Selector, AnyCb),
     {
         self.with(|s| s.set_call_on_any(f))
     }
@@ -265,7 +265,7 @@ impl<T> Canvas<T> {
     pub fn set_focus_view<F>(&mut self, f: F)
     where
         F: 'static
-            + FnMut(&mut T, &Selector<'_>) -> Result<EventResult, ViewNotFound>,
+            + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>,
     {
         self.focus_view = Box::new(f);
     }
@@ -277,7 +277,7 @@ impl<T> Canvas<T> {
     pub fn with_focus_view<F>(self, f: F) -> Self
     where
         F: 'static
-            + FnMut(&mut T, &Selector<'_>) -> Result<EventResult, ViewNotFound>,
+            + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>,
     {
         self.with(|s| s.set_focus_view(f))
     }
@@ -313,7 +313,7 @@ impl<T: 'static> View for Canvas<T> {
 
     fn focus_view(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         (self.focus_view)(&mut self.state, selector)
     }
@@ -322,7 +322,7 @@ impl<T: 'static> View for Canvas<T> {
         (self.important_area)(&self.state, view_size)
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector<'_>, cb: AnyCb<'a>) {
+    fn call_on_any(&mut self, selector: &Selector, cb: AnyCb) {
         (self.call_on_any)(&mut self.state, selector, cb);
     }
 }

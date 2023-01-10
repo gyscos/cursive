@@ -266,10 +266,10 @@ impl Core {
     }
 
     /// Performs `View::call_on_any()`
-    pub fn call_on_any<'a, F>(
+    pub fn call_on_any<F>(
         &mut self,
-        selector: &Selector<'_>,
-        cb: AnyCb<'a>,
+        selector: &Selector,
+        cb: AnyCb,
         inner_call_on_any: F,
     ) where
         F: FnOnce(&Selector, AnyCb),
@@ -280,7 +280,7 @@ impl Core {
     /// Performs `View::focus_view()`
     pub fn focus_view<F>(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
         inner_focus_view: F,
     ) -> Result<(), ViewNotFound>
     where

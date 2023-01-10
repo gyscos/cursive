@@ -518,7 +518,7 @@ impl Cursive {
     /// ```
     pub fn call_on<V, F, R>(
         &mut self,
-        sel: &view::Selector<'_>,
+        sel: &view::Selector,
         callback: F,
     ) -> Option<R>
     where
@@ -633,7 +633,7 @@ impl Cursive {
     /// Moves the focus to the view identified by `sel`.
     pub fn focus(
         &mut self,
-        sel: &view::Selector<'_>,
+        sel: &view::Selector,
     ) -> Result<EventResult, ViewNotFound> {
         self.root.focus_view(sel)
     }

@@ -724,11 +724,7 @@ impl View for LinearLayout {
         })
     }
 
-    fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector<'_>,
-        callback: AnyCb<'a>,
-    ) {
+    fn call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
         for child in &mut self.children {
             child.view.call_on_any(selector, callback);
         }
@@ -736,7 +732,7 @@ impl View for LinearLayout {
 
     fn focus_view(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         for (i, child) in self.children.iter_mut().enumerate() {
             if child.view.focus_view(selector).is_ok() {

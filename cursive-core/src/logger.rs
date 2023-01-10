@@ -30,7 +30,7 @@ lazy_static! {
 }
 
 /// Log a record in cursive's log queue.
-pub fn log(record: &log::Record<'_>) {
+pub fn log(record: &log::Record) {
     let mut logs = LOGS.lock().unwrap();
     // TODO: customize the format? Use colors? Save more info?
     if logs.len() == logs.capacity() {
@@ -45,11 +45,11 @@ pub fn log(record: &log::Record<'_>) {
 }
 
 impl log::Log for CursiveLogger {
-    fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
+    fn enabled(&self, _metadata: &log::Metadata) -> bool {
         true
     }
 
-    fn log(&self, record: &log::Record<'_>) {
+    fn log(&self, record: &log::Record) {
         log(record);
     }
 

@@ -83,7 +83,7 @@ impl<T> OnEventView<T> {
     {
         let event = event.into();
         self.callbacks
-            .retain(move |&(ref trigger, _)| !trigger.has_tag(&event));
+            .retain(move |(trigger, _)| !trigger.has_tag(&event));
     }
     /// Registers a callback when the given event is ignored by the child.
     ///

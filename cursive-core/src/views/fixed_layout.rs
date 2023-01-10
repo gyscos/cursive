@@ -364,11 +364,7 @@ impl View for FixedLayout {
         }
     }
 
-    fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector<'_>,
-        callback: AnyCb<'a>,
-    ) {
+    fn call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
         for child in &mut self.children {
             child.view.call_on_any(selector, callback);
         }
@@ -376,7 +372,7 @@ impl View for FixedLayout {
 
     fn focus_view(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         let focus_res =
             self.children.iter_mut().enumerate().find_map(|(i, c)| {

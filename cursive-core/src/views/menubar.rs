@@ -308,7 +308,7 @@ impl View for Menubar {
                 };
 
                 printer.with_style(style, |printer| {
-                    printer.print((offset, 0), &format!(" {} ", label));
+                    printer.print((offset, 0), &format!(" {label} "));
                 });
                 offset += label.width() + 2;
             }

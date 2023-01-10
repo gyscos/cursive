@@ -175,11 +175,7 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector<'_>,
-        callback: AnyCb<'a>,
-    ) {
+    fn call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
         match *self {
             ChildWrapper::Shadow(ref mut v) => {
                 v.call_on_any(selector, callback)
@@ -195,7 +191,7 @@ impl<T: View> View for ChildWrapper<T> {
 
     fn focus_view(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.focus_view(selector),
@@ -693,11 +689,7 @@ impl View for StackView {
         }
     }
 
-    fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector<'_>,
-        callback: AnyCb<'a>,
-    ) {
+    fn call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
         for layer in &mut self.layers {
             layer.view.call_on_any(selector, callback);
         }
@@ -705,7 +697,7 @@ impl View for StackView {
 
     fn focus_view(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         for layer in &mut self.layers {
             if layer.view.focus_view(selector).is_ok() {

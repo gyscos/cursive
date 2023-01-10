@@ -14,7 +14,7 @@ type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 pub struct NoSuchColor;
 
 impl std::fmt::Display for NoSuchColor {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "Could not parse the given color")
     }
 }
@@ -200,7 +200,7 @@ impl Palette {
     pub fn merge(&self, namespace: &str) -> Self {
         let mut result = self.clone();
 
-        if let Some(&PaletteNode::Namespace(ref palette)) =
+        if let Some(PaletteNode::Namespace(palette)) =
             self.custom.get(namespace)
         {
             // Merge `result` and `palette`

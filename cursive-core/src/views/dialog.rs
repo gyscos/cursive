@@ -913,17 +913,13 @@ impl View for Dialog {
         }
     }
 
-    fn call_on_any<'a>(
-        &mut self,
-        selector: &Selector<'_>,
-        callback: AnyCb<'a>,
-    ) {
+    fn call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
         self.content.call_on_any(selector, callback);
     }
 
     fn focus_view(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         self.content.focus_view(selector)
     }

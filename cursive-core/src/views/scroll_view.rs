@@ -395,7 +395,7 @@ where
         )
     }
 
-    fn call_on_any<'a>(&mut self, selector: &Selector<'_>, cb: AnyCb<'a>) {
+    fn call_on_any(&mut self, selector: &Selector, cb: AnyCb) {
         // TODO: should we scroll_to_important_area here?
         // The callback may change the focus or some other thing.
         self.inner.call_on_any(selector, cb)
@@ -403,7 +403,7 @@ where
 
     fn focus_view(
         &mut self,
-        selector: &Selector<'_>,
+        selector: &Selector,
     ) -> Result<EventResult, ViewNotFound> {
         self.inner.focus_view(selector).map(|res| {
             self.scroll_to_important_area();

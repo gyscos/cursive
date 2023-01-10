@@ -100,11 +100,7 @@ impl<V: View> ViewWrapper for HideableView<V> {
         }
     }
 
-    fn wrap_call_on_any<'a>(
-        &mut self,
-        selector: &Selector<'_>,
-        callback: AnyCb<'a>,
-    ) {
+    fn wrap_call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
         // We always run callbacks, even when invisible.
         self.view.call_on_any(selector, callback)
     }
