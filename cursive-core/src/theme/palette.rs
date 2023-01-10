@@ -86,10 +86,15 @@ impl Index<PaletteStyle> for Palette {
     }
 }
 
-// We can alter existing color if needed (but why?...)
 impl IndexMut<PaletteColor> for Palette {
     fn index_mut(&mut self, palette_color: PaletteColor) -> &mut Color {
         &mut self.basic[palette_color]
+    }
+}
+
+impl IndexMut<PaletteStyle> for Palette {
+    fn index_mut(&mut self, palette_style: PaletteStyle) -> &mut Style {
+        &mut self.styles[palette_style]
     }
 }
 

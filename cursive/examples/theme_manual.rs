@@ -11,15 +11,25 @@ fn main() {
         borders: BorderStyle::Simple,
         palette: Palette::default().with(|palette| {
             use cursive::theme::BaseColor::*;
-            use cursive::theme::Color::TerminalDefault;
-            use cursive::theme::PaletteColor::*;
 
-            palette[Background] = TerminalDefault;
-            palette[View] = TerminalDefault;
-            palette[Primary] = White.dark();
-            palette[TitlePrimary] = Blue.light();
-            palette[Secondary] = Blue.light();
-            palette[Highlight] = Blue.dark();
+            {
+                use cursive::theme::Color::TerminalDefault;
+                use cursive::theme::PaletteColor::*;
+
+                palette[Background] = TerminalDefault;
+                palette[View] = TerminalDefault;
+                palette[Primary] = White.dark();
+                palette[TitlePrimary] = Blue.light();
+                palette[Secondary] = Blue.light();
+                palette[Highlight] = Blue.dark();
+            }
+
+            {
+                use cursive::theme::Effect::*;
+                use cursive::theme::PaletteStyle::*;
+                use cursive::theme::Style;
+                palette[Highlight] = Style::from(Blue.light()).combine(Bold);
+            }
         }),
     });
 
