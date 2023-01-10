@@ -123,11 +123,13 @@ impl MenuPopup {
         self.on_action = Some(Callback::from_fn(f));
     }
 
-    fn scroll_up(&mut self, mut n: usize, cycle: bool) {
+    fn scroll_up(&mut self, mut n: usize, mut cycle: bool) {
         while n > 0 {
             if self.focus > 0 {
                 self.focus -= 1;
             } else if cycle {
+                // Only cycle once to prevent endless loop
+                cycle = false;
                 self.focus = self.menu.children.len() - 1;
             } else {
                 break;
@@ -139,11 +141,13 @@ impl MenuPopup {
         }
     }
 
-    fn scroll_down(&mut self, mut n: usize, cycle: bool) {
+    fn scroll_down(&mut self, mut n: usize, mut cycle: bool) {
         while n > 0 {
             if self.focus + 1 < self.menu.children.len() {
                 self.focus += 1;
             } else if cycle {
+                // Only cycle once to prevent endless loop
+                cycle = false;
                 self.focus = 0;
             } else {
                 // Stop if we're at the bottom.
