@@ -4,12 +4,24 @@ use crate::{
     theme::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, View},
-    Cursive, Printer, Vec2, With,
+    Cursive, Printer, Vec2,
 };
+use std::any::Any;
+use std::any::TypeId;
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::rc::Rc;
 
 type Callback<T> = dyn Fn(&mut Cursive, &T);
+
+// Maps keys (strings) to RadioGroup<T> (wrapped in a Box<Any>).
+// So with a key: &str and a concrete T, we can get the matching `RadioGroup<T>`, or create one.
+//
+// TODO: should we use thread local instead of a static mutex?
+thread_local! {
+    static GROUPS: RefCell<BTreeMap<(String, TypeId), Box<dyn Any>>> =
+        RefCell::new(BTreeMap::new());
+}
 
 struct SharedState<T> {
     selection: usize,
@@ -34,6 +46,8 @@ pub struct RadioGroup<T> {
     state: Rc<RefCell<SharedState<T>>>,
 }
 
+// We have to manually implement Clone.
+// Using derive(Clone) would add am unwanted `T: Clone` where-clause.
 impl<T> Clone for RadioGroup<T> {
     fn clone(&self) -> Self {
         Self {
@@ -60,6 +74,29 @@ impl<T: 'static> RadioGroup<T> {
         }
     }
 
+    /// Run a closure on a radio group from a global pool.
+    ///
+    /// If none exist with the given type `T` and `key`, a new one will be created.
+    pub fn with_global<F, R>(key: &str, f: F) -> R
+    where
+        F: FnOnce(&mut RadioGroup<T>) -> R,
+    {
+        let type_id = TypeId::of::<T>();
+
+        GROUPS.with(|groups| {
+            let mut groups = groups.borrow_mut();
+
+            let group = groups
+                .entry((key.to_string(), type_id))
+                .or_insert(Box::new(RadioGroup::<T>::new()));
+
+            // Because we key by TypeId we _know_ it'll be the correct type.
+            let group = group.downcast_mut().unwrap();
+
+            f(group)
+        })
+    }
+
     /// Adds a new button to the group.
     ///
     /// The button will display `label` next to it, and will embed `value`.
@@ -81,6 +118,10 @@ impl<T: 'static> RadioGroup<T> {
     }
 
     /// Returns the value associated with the selected button.
+    ///
+    /// # Panics
+    ///
+    /// If the group is empty (no button).
     pub fn selection(&self) -> Rc<T> {
         self.state.borrow().selection()
     }
@@ -101,7 +142,8 @@ impl<T: 'static> RadioGroup<T> {
         self,
         on_change: F,
     ) -> Self {
-        self.with(|s| s.set_on_change(on_change))
+        // We need .with for the thread local, so we can't import the With trait...
+        crate::With::with(self, |s| s.set_on_change(on_change))
     }
 }
 
@@ -116,6 +158,16 @@ impl RadioGroup<String> {
     }
 }
 
+impl RadioButton<String> {
+    /// Create a new button on the global group pool.
+    ///
+    /// Uses the label itself as value.
+    ///
+    /// If no group exist for the given `key` and type `T`, one will be created.
+    pub fn global_str<S: Into<String>>(key: &str, text: S) -> Self {
+        RadioGroup::with_global(key, move |group| group.button_str(text))
+    }
+}
 /// Variant of `Checkbox` arranged in group.
 ///
 /// `RadioButton`s are managed by a [`RadioGroup`]. A single group can contain
@@ -147,6 +199,17 @@ impl<T: 'static> RadioButton<T> {
         }
     }
 
+    /// Create a new button on the global group pool.
+    ///
+    /// If no group exist for the given `key` and type `T`, one will be created.
+    pub fn global<S: Into<StyledString>>(
+        key: &str,
+        value: T,
+        label: S,
+    ) -> Self {
+        RadioGroup::with_global(key, move |group| group.button(value, label))
+    }
+
     /// Returns `true` if this button is selected.
     pub fn is_selected(&self) -> bool {
         self.state.borrow().selection == self.id
@@ -170,7 +233,7 @@ impl<T: 'static> RadioButton<T> {
     /// Chainable variant.
     #[must_use]
     pub fn selected(self) -> Self {
-        self.with(|s| {
+        crate::With::with(self, |s| {
             // Ignore the potential callback here
             s.select();
         })
