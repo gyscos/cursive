@@ -70,6 +70,6 @@ fn find(siv: &mut Cursive, text: &str) {
 
     if let Some(Err(())) = res {
         // If we didn't find anything, tell the user!
-        siv.add_layer(Dialog::info(format!("`{}` not found", text)));
+        siv.add_layer(Dialog::info(format!("`{text}` not found")));
     }
 }

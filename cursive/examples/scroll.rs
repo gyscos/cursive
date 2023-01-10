@@ -27,7 +27,7 @@ fn draw(_: &(), p: &Printer) {
     for x in 0..p.size.x {
         for y in 0..p.size.y {
             let c = (x + 6 * y) % 10;
-            p.print((x, y), &format!("{}", c));
+            p.print((x, y), &format!("{c}"));
         }
     }
 }

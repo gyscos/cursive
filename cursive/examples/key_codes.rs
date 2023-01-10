@@ -39,7 +39,7 @@ impl View for KeyCodeView {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         // Each line will be a debug-format of the event.
-        let line = format!("{:?}", event);
+        let line = format!("{event:?}");
         self.history.push(line);
 
         // Keep a fixed-sized history.

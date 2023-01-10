@@ -21,7 +21,7 @@ fn main() {
                     // Here we use the counter to add an entry
                     // in the list of "Recent" items.
                     let i = counter.fetch_add(1, Ordering::Relaxed);
-                    let filename = format!("New {}", i);
+                    let filename = format!("New {i}");
                     s.menubar()
                         .find_subtree("File")
                         .unwrap()
@@ -40,7 +40,7 @@ fn main() {
                         for i in 1..100 {
                             // We don't actually do anything here,
                             // but you could!
-                            tree.add_item(menu::Item::leaf(format!("Item {}", i), |_| ()).with(|s| {
+                            tree.add_item(menu::Item::leaf(format!("Item {i}"), |_| ()).with(|s| {
                                 if i % 5 == 0 { s.disable(); }
                             }))
                         }
@@ -51,7 +51,7 @@ fn main() {
                 .delimiter()
                 .with(|tree| {
                     for i in 1..10 {
-                        tree.add_leaf(format!("Option {}", i), |_| ());
+                        tree.add_leaf(format!("Option {i}"), |_| ());
                     }
                 }),
         )

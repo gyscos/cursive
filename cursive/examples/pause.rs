@@ -20,7 +20,7 @@ fn main() {
 
     // And we can start another event loop later on.
     siv.add_layer(
-        views::Dialog::text(format!("Your message was:\n{}", line))
+        views::Dialog::text(format!("Your message was:\n{line}"))
             .button("I guess?", |s| s.quit()),
     );
     siv.run();

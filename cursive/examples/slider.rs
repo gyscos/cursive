@@ -17,7 +17,7 @@ fn main() {
                 // Sets the initial value
                 .value(7)
                 .on_change(|s, v| {
-                    let title = format!("[ {} ]", v);
+                    let title = format!("{v: ^5}");
                     s.call_on_name("dialog", |view: &mut Dialog| {
                         view.set_title(title)
                     });
@@ -25,12 +25,12 @@ fn main() {
                 .on_enter(|s, v| {
                     s.pop_layer();
                     s.add_layer(
-                        Dialog::text(format!("Lucky number {}!", v))
+                        Dialog::text(format!("Lucky number {v}!"))
                             .button("Ok", Cursive::quit),
                     );
                 }),
         )
-        .title("[ 7 ]")
+        .title("  7  ")
         .with_name("dialog"),
     );
 

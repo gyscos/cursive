@@ -49,7 +49,7 @@ fn show_popup(s: &mut Cursive, name: &str) {
         // Try again as many times as we need!
         s.add_layer(Dialog::info("Please enter a name!"));
     } else {
-        let content = format!("Hello {}!", name);
+        let content = format!("Hello {name}!");
         // Remove the initial popup
         s.pop_layer();
         // And put a new one instead

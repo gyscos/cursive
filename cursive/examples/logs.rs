@@ -38,7 +38,7 @@ fn main() {
 fn generate_logs(tx: &mpsc::Sender<String>, cb_sink: cursive::CbSink) {
     let mut i = 1;
     loop {
-        let line = format!("Interesting log line {}", i);
+        let line = format!("Interesting log line {i}");
         i += 1;
         // The send will fail when the other side is dropped.
         // (When the application ends).

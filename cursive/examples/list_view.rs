@@ -71,7 +71,7 @@ fn main() {
                         // We can also add children procedurally
                         for i in 0..50 {
                             list.add_child(
-                                &format!("Item {}", i),
+                                &format!("Item {i}"),
                                 EditView::new(),
                             );
                         }

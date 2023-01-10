@@ -33,7 +33,7 @@ fn main() {
             .button("Show", |s| {
                 // `Cursive::user_data()` returns a reference to the data.
                 let value = s.user_data::<Data>().unwrap().counter;
-                s.add_layer(Dialog::info(format!("Current value: {}", value)));
+                s.add_layer(Dialog::info(format!("Current value: {value}")));
             })
             .button("Quit", Cursive::quit),
     );

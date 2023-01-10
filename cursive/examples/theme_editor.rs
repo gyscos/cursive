@@ -102,11 +102,11 @@ fn make_color_selection(
                 })
                 .with_name(format!("{title}_kind")),
         )
-        .with(|mut v| match starting_color {
+        .with(|v| match starting_color {
             Color::TerminalDefault => (),
             Color::Rgb(r, g, b) | Color::RgbLowRes(r, g, b) => {
                 let is_lowres = matches!(starting_color, Color::RgbLowRes(..));
-                set_color_subtree(&mut v, &ColorKind::Rgb, title);
+                set_color_subtree(v, &ColorKind::Rgb, title);
 
                 for (primary, value) in [("red", r), ("green", g), ("blue", b)]
                 {
@@ -129,7 +129,7 @@ fn make_color_selection(
             }
             Color::Light(color) | Color::Dark(color) => {
                 let is_light = matches!(starting_color, Color::Light(_));
-                set_color_subtree(&mut v, &ColorKind::Base, title);
+                set_color_subtree(v, &ColorKind::Base, title);
                 v.call_on_name(
                     &format!("{title}_base"),
                     |s: &mut cursive::views::SelectView<BaseColor>| {

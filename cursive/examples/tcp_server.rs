@@ -59,7 +59,7 @@ fn start_server(model: Model) {
                 .cb_sink
                 .send(Box::new(move |s: &mut cursive::Cursive| {
                     s.add_layer(
-                        views::Dialog::text(format!("{:?}", err))
+                        views::Dialog::text(format!("{err:?}"))
                             .title("Error in TCP server")
                             .button("Quit", |s| s.quit()),
                     );
@@ -153,7 +153,7 @@ fn build_selector(model: Model) -> impl cursive::view::View {
     views::LinearLayout::horizontal()
         .child(
             views::EditView::new()
-                .content(format!("{}", offset))
+                .content(format!("{offset}"))
                 .with_name("edit")
                 .min_width(5),
         )
@@ -193,7 +193,7 @@ fn build_tester(model: Model) -> impl cursive::view::View {
         .child(views::Button::new("Test", |s| {
             if let Err(err) = test_server() {
                 s.add_layer(
-                    views::Dialog::info(format!("{:?}", err))
+                    views::Dialog::info(format!("{err:?}"))
                         .title("Error running test."),
                 );
             }

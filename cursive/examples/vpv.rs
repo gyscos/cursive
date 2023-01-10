@@ -60,16 +60,14 @@ fn main() {
                                     printer.print(
                                         (0, 0),
                                         &format!(
-                                            "ETA:     {:.1} seconds",
-                                            remaining
+                                            "ETA:     {remaining:.1} seconds"
                                         ),
                                     );
                                 } else {
                                     printer.print(
                                         (0, 0),
                                         &format!(
-                                            "Elapsed: {:.1} seconds",
-                                            seconds
+                                            "Elapsed: {seconds:.1} seconds",
                                         ),
                                     );
                                 }

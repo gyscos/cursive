@@ -18,7 +18,7 @@ fn main() {
     // so that we can't call it when the popup is already visible.
     siv.add_layer(
         OnEventView::new(TextView::new(content).with_name("text"))
-            .on_event('p', |s| show_popup(s)),
+            .on_event('p', show_popup),
     );
 
     siv.run();
