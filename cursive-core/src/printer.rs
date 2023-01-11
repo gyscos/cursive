@@ -111,7 +111,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     pub fn print_styled<'c, V, S>(&self, start: V, text: S)
     where
         V: Into<Vec2>,
-        S: Into<crate::utils::span::SpannedStr<'a, Style>>,
+        S: Into<crate::utils::span::SpannedStr<'c, Style>>,
     {
         let text = text.into();
         let Vec2 { mut x, y } = start.into();

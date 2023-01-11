@@ -1,6 +1,6 @@
 # Changelog
 
-## cursive-core next (0.3.7)
+## cursive-core 0.3.7
 
 ### API updates
 
@@ -8,16 +8,27 @@
 - Added `{Theme, Palette}::{retro, terminal_default}()`.
 - Added convenient method to create `Style`, similar to `ColorStyle`.
 - Added `{ColorStyle, Style}::view()` with Primary/View colors.
+- Added methods to create `RadioButton` using a key `&str`,
+  rather than relying on shared `RadioGroup`.
+- Many views now support using `StyledString` instead of just plain `String`.
+    - Menu entries
+    - Buttons
+    - Dialog titles and buttons
+    - Panel title
+    - Radio button labels
 
 ### Bugfixes
 
 - Fixed a focus update in `SelectView` that could result in no entry being selected.
+- Fixed endless loop in `MenuPopup` (from the menubar for example) when all entries are disabled.
 
 ### Other Changes
 
 - `Style::{highlight, highlight_inactive}` now rely on `Effect::Reverse`.
 - Most styles have been changed to use `InheritParent` for their background.
     - `Layer` now explicitly uses `PaletteColor::View`.
+- `Printer::print_styled` now takes `S: Into<SpannedStr>` rather than a `SpannedStr` directly.
+  This lets it directly takes `&StyledString` as input.
 
 ## cursive next (0.21)
 
