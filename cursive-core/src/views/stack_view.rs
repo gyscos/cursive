@@ -45,7 +45,7 @@ pub struct NonModal<T>(pub T);
 
 /// Make a layer full-screen.
 ///
-/// No shadow will be drawn around the view.
+/// You probably _also_ want to make the layer `NoShadow`, or even `Transparent`.
 pub struct Fullscreen<T>(pub T);
 
 /// Make the layer not include a shadow.
@@ -88,7 +88,6 @@ where
     fn from(other: Fullscreen<T>) -> Self {
         other.0.into().with(|config| {
             config.placement = Placement::Fullscreen;
-            config.wrapper = WrapperType::Plain;
         })
     }
 }
@@ -98,10 +97,9 @@ where
     T: Into<LayerConfig<V>>,
 {
     fn from(other: LayerAt<T>) -> Self {
-        other
-            .1
-            .into()
-            .with(|config| config.placement = Placement::Floating(other.0))
+        other.1.into().with(|config| {
+            config.placement = Placement::Floating(other.0);
+        })
     }
 }
 
