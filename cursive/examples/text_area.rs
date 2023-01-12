@@ -34,9 +34,7 @@ fn main() {
                     )
                     .button("Ok", |s| {
                         let text = s
-                            .call_on_name("edit", |view: &mut EditView| {
-                                view.get_content()
-                            })
+                            .call_on_name("edit", |view: &mut EditView| view.get_content())
                             .unwrap();
                         find(s, &text);
                     })

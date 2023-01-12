@@ -39,9 +39,7 @@ fn main() {
         "randomize",
         Button::new_cb(|s| {
             let cb = s
-                .call_on_name("edit", |e: &mut EditView| {
-                    e.set_content("Not so random!")
-                })
+                .call_on_name("edit", |e: &mut EditView| e.set_content("Not so random!"))
                 .unwrap();
             cb(s);
         }),
@@ -70,35 +68,3 @@ fn on_edit_callback(siv: &mut cursive::Cursive, text: &str, cursor: usize) {
     })
     .unwrap();
 }
-
-// Still TODO:
-// * Resolve a config, then let us work with it?
-//  * From a recipe, we can:
-//      * Get a sub-field (resolve!)
-//      * Check the type of the config (array, string (then resolve!), number...)
-//          * The problem is when we look for, say, an array, but actually got a variable that
-//          _resolves_ to an array. :^/
-//          * In that case... We can:
-//              * _Also_ provide a way to do the same without a direct array value (but as a field)
-//              * When checking a string, see if it's a variable (in the recipe).
-//              * First try to resolve as an array config, then try string.
-//              * Go full-on callback visitors instead, let the context resolve the thing, and call
-//                  the appropriate visitor. Ugh.
-//      * Almost every time we want to check a sub-object, we actually want to resolve it.
-// * Write more recipes (almost done?)
-// * Automate `if let Some(v) = context.resolve(&config[field_name])? { foo.set_v(v); }`
-//      * Need an automatic "try_set_foo(&mut self, &Config, &Context)" function
-//      * Need to register all such fields for a struct and call them all in turn?
-//          * Might be from more than just one impl block... :(
-//          * A derive on the type itself + proc macro per function?
-//          * An attribute on the impl block? Each block?
-//      * Could be done with inventory? (Post-macro?)
-// * Simplify a bit Rc everywhere
-//      * Especially for places where we already need a Rc<callback> anyway, maybe don't
-//      double-wrap it?
-// * Merge recipes & variables? ~~
-// * Documentation
-// * Standardize casing of values
-//      * CamelCase? (Currently used for Views)
-//      * snake_case? (Currently used for wrappers, keys and some values)
-//      * space case? (Currently used for some values)

@@ -113,10 +113,7 @@ pub trait View: Any + AnyView {
     /// A callback may be included, it should be run on `&mut Cursive`.
     ///
     /// Default implementation simply returns `Err(ViewNotFound)`.
-    fn focus_view(
-        &mut self,
-        _: &Selector,
-    ) -> Result<EventResult, ViewNotFound> {
+    fn focus_view(&mut self, _: &Selector) -> Result<EventResult, ViewNotFound> {
         Err(ViewNotFound)
     }
 
@@ -128,10 +125,7 @@ pub trait View: Any + AnyView {
     ///
     /// Returns `Ok(_)` if the focus was taken.
     /// Returns `Err(_)` if this view does not take focus (default implementation).
-    fn take_focus(
-        &mut self,
-        source: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, source: Direction) -> Result<EventResult, CannotFocus> {
         let _ = source;
 
         Err(CannotFocus)

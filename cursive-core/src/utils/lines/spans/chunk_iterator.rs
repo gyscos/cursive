@@ -110,8 +110,7 @@ where
                     // We didn't know it was a hard-stop at the time.
                     // But now we do, so let's omit the last character from
                     // that segment.
-                    if let Some(to_remove) =
-                        prev_text.graphemes(true).next_back().map(|g| g.len())
+                    if let Some(to_remove) = prev_text.graphemes(true).next_back().map(|g| g.len())
                     {
                         segments.last_mut().unwrap().end -= to_remove;
                     }
@@ -151,10 +150,7 @@ where
             }
 
             if pos == span_text.len() {
-                assert!(
-                    !hard_stop,
-                    "Cannot have hard-break at the end of a span."
-                );
+                assert!(!hard_stop, "Cannot have hard-break at the end of a span.");
                 // ... or can we?
 
                 // If we reached the end of the slice,
@@ -162,10 +158,11 @@ where
                 self.current_span += 1;
 
                 // Skip empty spans
-                while let Some(true) =
-                    self.source.spans().get(self.current_span).map(|span| {
-                        span.as_ref().resolve(self.source.source()).is_empty()
-                    })
+                while let Some(true) = self
+                    .source
+                    .spans()
+                    .get(self.current_span)
+                    .map(|span| span.as_ref().resolve(self.source.source()).is_empty())
                 {
                     self.current_span += 1;
                 }

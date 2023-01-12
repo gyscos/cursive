@@ -38,11 +38,7 @@ impl<T> ResizedView<T> {
     /// Creates a new `ResizedView` with the given width and height requirements.
     ///
     /// `None` values will use the wrapped view's preferences.
-    pub fn new(
-        width: SizeConstraint,
-        height: SizeConstraint,
-        view: T,
-    ) -> Self {
+    pub fn new(width: SizeConstraint, height: SizeConstraint, view: T) -> Self {
         ResizedView {
             size: (width, height).into(),
             invalidated: true,
@@ -51,11 +47,7 @@ impl<T> ResizedView<T> {
     }
 
     /// Sets the size constraints for this view.
-    pub fn set_constraints(
-        &mut self,
-        width: SizeConstraint,
-        height: SizeConstraint,
-    ) {
+    pub fn set_constraints(&mut self, width: SizeConstraint, height: SizeConstraint) {
         self.set_width(width);
         self.set_height(height);
     }
@@ -89,20 +81,12 @@ impl<T> ResizedView<T> {
 
     /// Wraps `view` in a new `ResizedView` with fixed width.
     pub fn with_fixed_width(width: usize, view: T) -> Self {
-        ResizedView::new(
-            SizeConstraint::Fixed(width),
-            SizeConstraint::Free,
-            view,
-        )
+        ResizedView::new(SizeConstraint::Fixed(width), SizeConstraint::Free, view)
     }
 
     /// Wraps `view` in a new `ResizedView` with fixed height.
     pub fn with_fixed_height(height: usize, view: T) -> Self {
-        ResizedView::new(
-            SizeConstraint::Free,
-            SizeConstraint::Fixed(height),
-            view,
-        )
+        ResizedView::new(SizeConstraint::Free, SizeConstraint::Fixed(height), view)
     }
 
     /// Wraps `view` in a `ResizedView` which will take all available space.

@@ -35,12 +35,11 @@ impl<T: View> ViewWrapper for ThemedView<T> {
         // (after the theme is applied), so it would not pick up the theme new colors.
         // Ideally we would need to know the previous _StyleType_ (before the theme is applied),
         // but that's not easy for now.
-        printer.theme(&self.theme).with_style(
-            crate::theme::PaletteStyle::Primary,
-            |printer| {
+        printer
+            .theme(&self.theme)
+            .with_style(crate::theme::PaletteStyle::Primary, |printer| {
                 self.view.draw(printer);
-            },
-        );
+            });
     }
 }
 

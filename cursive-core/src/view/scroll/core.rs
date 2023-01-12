@@ -127,10 +127,7 @@ impl Core {
     }
 
     /// Returns a sub-printer ready to draw the content.
-    pub fn sub_printer<'a, 'b>(
-        &self,
-        printer: &Printer<'a, 'b>,
-    ) -> Printer<'a, 'b> {
+    pub fn sub_printer<'a, 'b>(&self, printer: &Printer<'a, 'b>) -> Printer<'a, 'b> {
         // Draw scrollbar?
 
         let size = self.last_available_size();
@@ -150,37 +147,31 @@ impl Core {
                 Style::highlight_inactive()
             };
 
-            XY::zip5(lengths, offsets, size, line_c, Orientation::pair())
-                .run_if(
-                    scrolling,
-                    |(length, offset, size, c, orientation)| {
-                        let start = printer
-                            .size
-                            .saturating_sub((1, 1))
-                            .with_axis(orientation, 0);
-                        let offset = orientation.make_vec(offset, 0);
+            XY::zip5(lengths, offsets, size, line_c, Orientation::pair()).run_if(
+                scrolling,
+                |(length, offset, size, c, orientation)| {
+                    let start = printer
+                        .size
+                        .saturating_sub((1, 1))
+                        .with_axis(orientation, 0);
+                    let offset = orientation.make_vec(offset, 0);
 
-                        printer.print_line(orientation, start, size, c);
+                    printer.print_line(orientation, start, size, c);
 
-                        let thumb_c = if self
-                            .thumb_grab
-                            .map(|(o, _)| o == orientation)
-                            .unwrap_or(false)
-                        {
-                            " "
-                        } else {
-                            "▒"
-                        };
-                        printer.with_style(style, |printer| {
-                            printer.print_line(
-                                orientation,
-                                start + offset,
-                                length,
-                                thumb_c,
-                            );
-                        });
-                    },
-                );
+                    let thumb_c = if self
+                        .thumb_grab
+                        .map(|(o, _)| o == orientation)
+                        .unwrap_or(false)
+                    {
+                        " "
+                    } else {
+                        "▒"
+                    };
+                    printer.with_style(style, |printer| {
+                        printer.print_line(orientation, start + offset, length, thumb_c);
+                    });
+                },
+            );
 
             // Draw the X between the two scrollbars.
             if scrolling.both() {
@@ -219,11 +210,7 @@ impl Core {
     }
 
     /// Specifies the size given in a layout phase.
-    pub(crate) fn set_last_size(
-        &mut self,
-        last_size: Vec2,
-        scrolling: XY<bool>,
-    ) {
+    pub(crate) fn set_last_size(&mut self, last_size: Vec2, scrolling: XY<bool>) {
         self.last_available = last_size.saturating_sub(
             scrolling
                 .swap()
@@ -237,22 +224,16 @@ impl Core {
     }
 
     /// Rebuild the cache with the given parameters.
-    pub(crate) fn build_cache(
-        &mut self,
-        self_size: Vec2,
-        last_size: Vec2,
-        scrolling: XY<bool>,
-    ) {
-        self.size_cache =
-            Some(SizeCache::build_extra(self_size, last_size, scrolling));
+    pub(crate) fn build_cache(&mut self, self_size: Vec2, last_size: Vec2, scrolling: XY<bool>) {
+        self.size_cache = Some(SizeCache::build_extra(self_size, last_size, scrolling));
     }
 
     /// Makes sure the viewport is within the content.
     pub(crate) fn update_offset(&mut self) {
         // Keep the offset in the valid range.
-        self.offset = self.offset.or_min(
-            self.inner_size.saturating_sub(self.last_available_size()),
-        );
+        self.offset = self
+            .offset
+            .or_min(self.inner_size.saturating_sub(self.last_available_size()));
 
         // Possibly update the offset if we're following a specific strategy.
         self.adjust_scroll();
@@ -266,12 +247,8 @@ impl Core {
     }
 
     /// Performs `View::call_on_any()`
-    pub fn call_on_any<F>(
-        &mut self,
-        selector: &Selector,
-        cb: AnyCb,
-        inner_call_on_any: F,
-    ) where
+    pub fn call_on_any<F>(&mut self, selector: &Selector, cb: AnyCb, inner_call_on_any: F)
+    where
         F: FnOnce(&Selector, AnyCb),
     {
         inner_call_on_any(selector, cb)
@@ -315,10 +292,7 @@ impl Core {
     }
 
     /// Sets the padding between content and scrollbar.
-    pub fn set_scrollbar_padding<V: Into<Vec2>>(
-        &mut self,
-        scrollbar_padding: V,
-    ) {
+    pub fn set_scrollbar_padding<V: Into<Vec2>>(&mut self, scrollbar_padding: V) {
         self.scrollbar_padding = scrollbar_padding.into();
     }
 
@@ -326,10 +300,7 @@ impl Core {
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn scrollbar_padding<V: Into<Vec2>>(
-        self,
-        scrollbar_padding: V,
-    ) -> Self {
+    pub fn scrollbar_padding<V: Into<Vec2>>(self, scrollbar_padding: V) -> Self {
         self.with(|s| s.set_scrollbar_padding(scrollbar_padding))
     }
 
@@ -378,8 +349,7 @@ impl Core {
     where
         S: Into<Vec2>,
     {
-        let max_offset =
-            self.inner_size.saturating_sub(self.last_available_size());
+        let max_offset = self.inner_size.saturating_sub(self.last_available_size());
 
         self.offset = offset.into().or_min(max_offset);
     }
@@ -434,8 +404,8 @@ impl Core {
     /// Scrolls until the given rect is in view.
     pub fn scroll_to_rect(&mut self, important_area: Rect) {
         // The furthest top-left we can go
-        let top_left = (important_area.bottom_right() + (1, 1))
-            .saturating_sub(self.last_available_size());
+        let top_left =
+            (important_area.bottom_right() + (1, 1)).saturating_sub(self.last_available_size());
         // The furthest bottom-right we can go
         let bottom_right = important_area.top_left();
 
@@ -589,9 +559,7 @@ impl Core {
     /// Returns `true` if vertical scrolling is enabled, and if we are not at
     /// the bottom already.
     pub fn can_scroll_down(&self) -> bool {
-        self.enabled.y
-            && (self.offset.y + self.last_available_size().y
-                < self.inner_size.y)
+        self.enabled.y && (self.offset.y + self.last_available_size().y < self.inner_size.y)
     }
 
     /// Checks if we can scroll to the right.
@@ -599,9 +567,7 @@ impl Core {
     /// Returns `true` if horizontal scrolling is enabled, and if we are not at
     /// the right edge already.
     pub fn can_scroll_right(&self) -> bool {
-        self.enabled.x
-            && (self.offset.x + self.last_available_size().x
-                < self.inner_size.x)
+        self.enabled.x && (self.offset.x + self.last_available_size().x < self.inner_size.x)
     }
     /// Starts scrolling from the cursor position.
     ///
@@ -650,10 +616,7 @@ impl Core {
     pub fn drag(&mut self, position: Vec2) {
         // Only do something if we grabbed something before.
         if let Some((orientation, grab)) = self.thumb_grab {
-            self.scroll_to_thumb(
-                orientation,
-                position.get(orientation).saturating_sub(grab),
-            );
+            self.scroll_to_thumb(orientation, position.get(orientation).saturating_sub(grab));
         }
     }
 
@@ -667,17 +630,14 @@ impl Core {
 
         // The new offset is:
         // thumb_pos * (content + 1 - available) / (available + 1 - thumb size)
-        let extra =
-            (available + (1, 1)).saturating_sub(lengths).or_max((1, 1));
+        let extra = (available + (1, 1)).saturating_sub(lengths).or_max((1, 1));
 
         // We're dividing by this value, so make sure it's positive!
         assert!(extra > Vec2::zero());
 
         let new_offset =
-            ((self.inner_size + (1, 1)).saturating_sub(available) * thumb_pos)
-                .div_up(extra);
-        let max_offset =
-            self.inner_size.saturating_sub(self.last_available_size());
+            ((self.inner_size + (1, 1)).saturating_sub(available) * thumb_pos).div_up(extra);
+        let max_offset = self.inner_size.saturating_sub(self.last_available_size());
         self.offset
             .set_axis_from(orientation, &new_offset.or_min(max_offset));
     }
@@ -685,10 +645,7 @@ impl Core {
     /// Tries to apply the cache to the current constraint.
     ///
     /// Returns the cached value if it works, or `None`.
-    pub(crate) fn try_cache(
-        &self,
-        constraint: Vec2,
-    ) -> Option<(Vec2, Vec2, XY<bool>)> {
+    pub(crate) fn try_cache(&self, constraint: Vec2) -> Option<(Vec2, Vec2, XY<bool>)> {
         self.size_cache.and_then(|cache| {
             if cache.zip_map(constraint, SizeCache::accept).both() {
                 Some((

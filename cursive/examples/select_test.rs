@@ -4,9 +4,7 @@
 // cargo test --example select_test -- --nocapture
 
 fn main() {
-    print!(
-        "To run this example call:\n$ cargo test --bin select_test -- --nocapture\n"
-    );
+    print!("To run this example call:\n$ cargo test --bin select_test -- --nocapture\n");
 }
 
 #[cfg(test)]
@@ -104,9 +102,7 @@ pub mod tests {
     fn show_next_window(siv: &mut Cursive, city: &str) {
         siv.pop_layer();
         let text = format!("{} is a great city!", city);
-        siv.add_layer(
-            Dialog::around(TextView::new(text)).button("Quit", |s| s.quit()),
-        );
+        siv.add_layer(Dialog::around(TextView::new(text)).button("Quit", |s| s.quit()));
     }
 
     #[test]

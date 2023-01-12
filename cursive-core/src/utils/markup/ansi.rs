@@ -28,10 +28,7 @@ where
 /// Useful if you need to parse something in the middle of a large text.
 ///
 /// Returns the parsed string, and the ending style.
-pub fn parse_with_starting_style<S>(
-    current_style: Style,
-    input: S,
-) -> (StyledString, Style)
+pub fn parse_with_starting_style<S>(current_style: Style, input: S) -> (StyledString, Style)
 where
     S: Into<String>,
 {
@@ -145,28 +142,22 @@ impl<'a> Parser<'a> {
                     self.current_style.effects.remove(Effect::Strikethrough);
                 }
                 30..=37 => {
-                    self.current_style.color.front =
-                        BaseColor::from(byte - 30).dark().into();
+                    self.current_style.color.front = BaseColor::from(byte - 30).dark().into();
                 }
                 38 => {
-                    self.current_style.color.front =
-                        parse_color(&mut bytes)?.into();
+                    self.current_style.color.front = parse_color(&mut bytes)?.into();
                 }
                 39 => {
-                    self.current_style.color.front =
-                        Color::TerminalDefault.into();
+                    self.current_style.color.front = Color::TerminalDefault.into();
                 }
                 40..=47 => {
-                    self.current_style.color.back =
-                        BaseColor::from(byte - 40).dark().into();
+                    self.current_style.color.back = BaseColor::from(byte - 40).dark().into();
                 }
                 48 => {
-                    self.current_style.color.back =
-                        parse_color(&mut bytes)?.into();
+                    self.current_style.color.back = parse_color(&mut bytes)?.into();
                 }
                 49 => {
-                    self.current_style.color.back =
-                        Color::TerminalDefault.into();
+                    self.current_style.color.back = Color::TerminalDefault.into();
                 }
                 58 => {
                     // Set underline color.
@@ -174,12 +165,10 @@ impl<'a> Parser<'a> {
                     parse_color(&mut bytes)?;
                 }
                 90..=97 => {
-                    self.current_style.color.front =
-                        BaseColor::from(byte - 90).light().into();
+                    self.current_style.color.front = BaseColor::from(byte - 90).light().into();
                 }
                 100..=107 => {
-                    self.current_style.color.back =
-                        BaseColor::from(byte - 100).light().into();
+                    self.current_style.color.back = BaseColor::from(byte - 100).light().into();
                 }
                 _ => (),
             }
@@ -203,9 +192,7 @@ impl<'a> Iterator for Parser<'a> {
                     });
                 }
                 ansi_parser::Output::Escape(sequence) => {
-                    if let ansi_parser::AnsiSequence::SetGraphicsMode(bytes) =
-                        sequence
-                    {
+                    if let ansi_parser::AnsiSequence::SetGraphicsMode(bytes) = sequence {
                         self.parse_sequence(&bytes);
                     }
                     // Nothing else to handle? Maybe SetMode/ResetMode?

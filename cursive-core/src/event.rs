@@ -144,10 +144,7 @@ impl EventTrigger {
         let other_trigger = other.trigger;
         let tag = (self.tag, "or", other.tag);
 
-        Self::from_fn_and_tag(
-            move |e| self_trigger(e) || other_trigger(e),
-            tag,
-        )
+        Self::from_fn_and_tag(move |e| self_trigger(e) || other_trigger(e), tag)
     }
 }
 
@@ -304,19 +301,15 @@ impl EventResult {
     #[must_use]
     pub fn and(self, other: Self) -> Self {
         match (self, other) {
-            (EventResult::Ignored, result)
-            | (result, EventResult::Ignored) => result,
+            (EventResult::Ignored, result) | (result, EventResult::Ignored) => result,
             (EventResult::Consumed(None), EventResult::Consumed(cb))
-            | (EventResult::Consumed(cb), EventResult::Consumed(None)) => {
-                EventResult::Consumed(cb)
+            | (EventResult::Consumed(cb), EventResult::Consumed(None)) => EventResult::Consumed(cb),
+            (EventResult::Consumed(Some(cb1)), EventResult::Consumed(Some(cb2))) => {
+                EventResult::with_cb(move |siv| {
+                    (cb1)(siv);
+                    (cb2)(siv);
+                })
             }
-            (
-                EventResult::Consumed(Some(cb1)),
-                EventResult::Consumed(Some(cb2)),
-            ) => EventResult::with_cb(move |siv| {
-                (cb1)(siv);
-                (cb2)(siv);
-            }),
         }
     }
 }
@@ -458,9 +451,7 @@ impl MouseEvent {
     /// Returns `None` if `self` is `WheelUp` or `WheelDown`.
     pub fn button(self) -> Option<MouseButton> {
         match self {
-            MouseEvent::Press(btn)
-            | MouseEvent::Release(btn)
-            | MouseEvent::Hold(btn) => Some(btn),
+            MouseEvent::Press(btn) | MouseEvent::Release(btn) | MouseEvent::Hold(btn) => Some(btn),
             _ => None,
         }
     }

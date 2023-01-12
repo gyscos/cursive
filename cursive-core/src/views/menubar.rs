@@ -119,12 +119,7 @@ impl Menubar {
     }
 
     /// Insert a new item at the given position.
-    pub fn insert_subtree<S>(
-        &mut self,
-        i: usize,
-        title: S,
-        menu: menu::Tree,
-    ) -> &mut Self
+    pub fn insert_subtree<S>(&mut self, i: usize, title: S, menu: menu::Tree) -> &mut Self
     where
         S: Into<StyledString>,
     {
@@ -230,9 +225,7 @@ impl Menubar {
                 );
                 // Since the closure will be called multiple times,
                 // we also need a new Rc on every call.
-                EventResult::with_cb(move |s| {
-                    show_child(s, offset, Rc::clone(&menu))
-                })
+                EventResult::with_cb(move |s| show_child(s, offset, Rc::clone(&menu)))
             }
             _ => EventResult::Ignored,
         }
@@ -258,9 +251,7 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<menu::Tree>) {
             s.select_menubar();
             // Act as if we sent "Right" then "Down"
             s.menubar().on_event(Event::Key(Key::Right)).process(s);
-            if let EventResult::Consumed(Some(cb)) =
-                s.menubar().on_event(Event::Key(Key::Down))
-            {
+            if let EventResult::Consumed(Some(cb)) = s.menubar().on_event(Event::Key(Key::Down)) {
                 cb(s);
             }
         })
@@ -269,9 +260,7 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<menu::Tree>) {
             s.select_menubar();
             // Act as if we sent "Left" then "Down"
             s.menubar().on_event(Event::Key(Key::Left)).process(s);
-            if let EventResult::Consumed(Some(cb)) =
-                s.menubar().on_event(Event::Key(Key::Down))
-            {
+            if let EventResult::Consumed(Some(cb)) = s.menubar().on_event(Event::Key(Key::Down)) {
                 cb(s);
             }
         }),
@@ -291,13 +280,11 @@ impl View for Menubar {
 
                 // We print disabled items differently, except delimiters,
                 // which are still white.
-                let enabled = printer.enabled
-                    && (item.is_enabled() || item.is_delimiter());
+                let enabled = printer.enabled && (item.is_enabled() || item.is_delimiter());
 
                 // We don't want to show HighlightInactive when we're not selected,
                 // because it's ugly on the menubar.
-                let selected =
-                    (self.state != State::Inactive) && (i == self.focus);
+                let selected = (self.state != State::Inactive) && (i == self.focus);
 
                 let style = if !enabled {
                     PaletteStyle::Secondary
@@ -394,10 +381,7 @@ impl View for Menubar {
         EventResult::Consumed(None)
     }
 
-    fn take_focus(
-        &mut self,
-        _: direction::Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, _: direction::Direction) -> Result<EventResult, CannotFocus> {
         self.state = State::Selected;
         Ok(EventResult::consumed())
     }

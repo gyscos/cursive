@@ -1,9 +1,7 @@
 use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
-    view::{
-        scroll, CannotFocus, ScrollStrategy, Selector, View, ViewNotFound,
-    },
+    view::{scroll, CannotFocus, ScrollStrategy, Selector, View, ViewNotFound},
     Cursive, Printer, Rect, Vec2, With,
 };
 
@@ -81,10 +79,7 @@ impl<V> ScrollView<V> {
     ///
     /// It is reset to `ScrollStrategy::KeepRow` whenever the user scrolls
     /// manually.
-    pub fn set_scroll_strategy(
-        &mut self,
-        strategy: ScrollStrategy,
-    ) -> EventResult
+    pub fn set_scroll_strategy(&mut self, strategy: ScrollStrategy) -> EventResult
     where
         V: View,
     {
@@ -209,8 +204,7 @@ impl<V> ScrollView<V> {
         V: View,
     {
         self.scroll_operation(|s| {
-            let important_area =
-                s.inner.important_area(s.core.last_outer_size());
+            let important_area = s.inner.important_area(s.core.last_outer_size());
             s.core.scroll_to_rect(important_area)
         })
     }
@@ -231,8 +225,7 @@ impl<V> ScrollView<V> {
     where
         F: FnMut(&mut Self, Rect) -> EventResult + 'static,
     {
-        self.on_scroll =
-            Rc::new(immut2!(on_scroll; else EventResult::Ignored));
+        self.on_scroll = Rc::new(immut2!(on_scroll; else EventResult::Ignored));
     }
 
     /// Sets a callback to be run whenever scrolling happens.
@@ -240,8 +233,7 @@ impl<V> ScrollView<V> {
     where
         F: FnMut(&mut Cursive, Rect) + 'static,
     {
-        let on_scroll: Rc<ScrollCallback> =
-            std::rc::Rc::new(immut2!(on_scroll));
+        let on_scroll: Rc<ScrollCallback> = std::rc::Rc::new(immut2!(on_scroll));
 
         self.set_on_scroll_inner(move |_, rect| {
             let on_scroll = std::rc::Rc::clone(&on_scroll);
@@ -277,9 +269,7 @@ impl<V> ScrollView<V> {
         F: FnMut(&mut Self, Rect) -> EventResult + 'static,
         V: 'static,
     {
-        self.set_on_scroll_inner(Self::skip_unchanged(on_scroll, || {
-            EventResult::Ignored
-        }));
+        self.set_on_scroll_inner(Self::skip_unchanged(on_scroll, || EventResult::Ignored));
     }
 
     /// Sets a callback to be run whenever the scroll offset changes.
@@ -387,12 +377,9 @@ where
     }
 
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
-        scroll::required_size(
-            self,
-            constraint,
-            self.inner.needs_relayout(),
-            |s, c| s.inner.required_size(c),
-        )
+        scroll::required_size(self, constraint, self.inner.needs_relayout(), |s, c| {
+            s.inner.required_size(c)
+        })
     }
 
     fn call_on_any(&mut self, selector: &Selector, cb: AnyCb) {
@@ -401,20 +388,14 @@ where
         self.inner.call_on_any(selector, cb)
     }
 
-    fn focus_view(
-        &mut self,
-        selector: &Selector,
-    ) -> Result<EventResult, ViewNotFound> {
+    fn focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
         self.inner.focus_view(selector).map(|res| {
             self.scroll_to_important_area();
             res
         })
     }
 
-    fn take_focus(
-        &mut self,
-        source: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, source: Direction) -> Result<EventResult, CannotFocus> {
         // If the inner view takes focus, re-align the important area.
         match self.inner.take_focus(source) {
             Ok(res) => {

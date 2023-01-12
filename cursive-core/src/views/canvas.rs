@@ -11,10 +11,8 @@ type Draw<T> = dyn Fn(&T, &Printer);
 type OnEvent<T> = dyn FnMut(&mut T, Event) -> EventResult;
 type RequestSize<T> = dyn FnMut(&mut T, Vec2) -> Vec2;
 type Layout<T> = dyn FnMut(&mut T, Vec2);
-type TakeFocus<T> =
-    dyn FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>;
-type FocusView<T> =
-    dyn FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>;
+type TakeFocus<T> = dyn FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>;
+type FocusView<T> = dyn FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>;
 type CallOnAny<T> = dyn FnMut(&mut T, &Selector, AnyCb);
 type ImportantArea<T> = dyn Fn(&T, Vec2) -> Rect;
 
@@ -96,9 +94,7 @@ impl<T> Canvas<T> {
             needs_relayout: Box::new(|_| true),
             focus_view: Box::new(|_, _| Err(ViewNotFound)),
             call_on_any: Box::new(|_, _, _| ()),
-            important_area: Box::new(|_, size| {
-                Rect::from_corners((0, 0), size)
-            }),
+            important_area: Box::new(|_, size| Rect::from_corners((0, 0), size)),
         }
     }
 
@@ -186,8 +182,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `take_focus(Direction)`.
     pub fn set_take_focus<F>(&mut self, f: F)
     where
-        F: 'static
-            + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>,
+        F: 'static + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>,
     {
         self.take_focus = Box::new(f);
     }
@@ -198,8 +193,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_take_focus<F>(self, f: F) -> Self
     where
-        F: 'static
-            + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>,
+        F: 'static + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>,
     {
         self.with(|s| s.set_take_focus(f))
     }
@@ -264,8 +258,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `focus_view()`.
     pub fn set_focus_view<F>(&mut self, f: F)
     where
-        F: 'static
-            + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>,
+        F: 'static + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>,
     {
         self.focus_view = Box::new(f);
     }
@@ -276,8 +269,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_focus_view<F>(self, f: F) -> Self
     where
-        F: 'static
-            + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>,
+        F: 'static + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>,
     {
         self.with(|s| s.set_focus_view(f))
     }
@@ -300,10 +292,7 @@ impl<T: 'static> View for Canvas<T> {
         (self.layout)(&mut self.state, size);
     }
 
-    fn take_focus(
-        &mut self,
-        source: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, source: Direction) -> Result<EventResult, CannotFocus> {
         (self.take_focus)(&mut self.state, source)
     }
 
@@ -311,10 +300,7 @@ impl<T: 'static> View for Canvas<T> {
         (self.needs_relayout)(&self.state)
     }
 
-    fn focus_view(
-        &mut self,
-        selector: &Selector,
-    ) -> Result<EventResult, ViewNotFound> {
+    fn focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
         (self.focus_view)(&mut self.state, selector)
     }
 

@@ -97,14 +97,9 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
         }
     }
 
-    fn wrap_focus_view(
-        &mut self,
-        selector: &Selector,
-    ) -> Result<EventResult, ViewNotFound> {
+    fn wrap_focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
         match selector {
-            &Selector::Name(name) if name == self.name => {
-                Ok(EventResult::Consumed(None))
-            }
+            &Selector::Name(name) if name == self.name => Ok(EventResult::Consumed(None)),
             s => self
                 .view
                 .try_borrow_mut()

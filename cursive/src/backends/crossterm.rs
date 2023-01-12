@@ -15,19 +15,15 @@ pub use crossterm;
 use crossterm::{
     cursor,
     event::{
-        poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent,
-        KeyCode, KeyEvent as CKeyEvent, KeyModifiers,
-        MouseButton as CMouseButton, MouseEvent as CMouseEvent,
-        MouseEventKind,
+        poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode,
+        KeyEvent as CKeyEvent, KeyModifiers, MouseButton as CMouseButton,
+        MouseEvent as CMouseEvent, MouseEventKind,
     },
     execute, queue,
-    style::{
-        Attribute, Color, Print, SetAttribute, SetBackgroundColor,
-        SetForegroundColor,
-    },
+    style::{Attribute, Color, Print, SetAttribute, SetBackgroundColor, SetForegroundColor},
     terminal::{
-        self, disable_raw_mode, enable_raw_mode, Clear, ClearType,
-        EnterAlternateScreen, LeaveAlternateScreen,
+        self, disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
+        LeaveAlternateScreen,
     },
 };
 
@@ -82,15 +78,12 @@ fn translate_key(code: KeyCode) -> Option<Key> {
 }
 
 fn translate_event(event: CKeyEvent) -> Option<Event> {
-    const CTRL_ALT: KeyModifiers = KeyModifiers::from_bits_truncate(
-        KeyModifiers::CONTROL.bits() | KeyModifiers::ALT.bits(),
-    );
-    const CTRL_SHIFT: KeyModifiers = KeyModifiers::from_bits_truncate(
-        KeyModifiers::CONTROL.bits() | KeyModifiers::SHIFT.bits(),
-    );
-    const ALT_SHIFT: KeyModifiers = KeyModifiers::from_bits_truncate(
-        KeyModifiers::ALT.bits() | KeyModifiers::SHIFT.bits(),
-    );
+    const CTRL_ALT: KeyModifiers =
+        KeyModifiers::from_bits_truncate(KeyModifiers::CONTROL.bits() | KeyModifiers::ALT.bits());
+    const CTRL_SHIFT: KeyModifiers =
+        KeyModifiers::from_bits_truncate(KeyModifiers::CONTROL.bits() | KeyModifiers::SHIFT.bits());
+    const ALT_SHIFT: KeyModifiers =
+        KeyModifiers::from_bits_truncate(KeyModifiers::ALT.bits() | KeyModifiers::SHIFT.bits());
 
     Some(match event {
         // Handle Char + modifier.
@@ -180,9 +173,18 @@ fn translate_color(base_color: theme::Color) -> Color {
         theme::Color::Light(theme::BaseColor::White) => Color::White,
         theme::Color::Rgb(r, g, b) => Color::Rgb { r, g, b },
         theme::Color::RgbLowRes(r, g, b) => {
-            debug_assert!(r <= 5, "Red color fragment (r = {r}) is out of bound. Make sure r ≤ 5.");
-            debug_assert!(g <= 5, "Green color fragment (g = {g}) is out of bound. Make sure g ≤ 5.");
-            debug_assert!(b <= 5, "Blue color fragment (b = {b}) is out of bound. Make sure b ≤ 5.");
+            debug_assert!(
+                r <= 5,
+                "Red color fragment (r = {r}) is out of bound. Make sure r ≤ 5."
+            );
+            debug_assert!(
+                g <= 5,
+                "Green color fragment (g = {g}) is out of bound. Make sure g ≤ 5."
+            );
+            debug_assert!(
+                b <= 5,
+                "Blue color fragment (b = {b}) is out of bound. Make sure b ≤ 5."
+            );
 
             Color::AnsiValue(16 + 36 * r + 6 * g + b)
         }
@@ -207,8 +209,7 @@ impl Backend {
         )?;
 
         #[cfg(unix)]
-        let stdout =
-            RefCell::new(BufWriter::new(std::fs::File::create("/dev/tty")?));
+        let stdout = RefCell::new(BufWriter::new(std::fs::File::create("/dev/tty")?));
 
         #[cfg(windows)]
         let stdout = RefCell::new(BufWriter::new(io::stdout()));
@@ -253,15 +254,9 @@ impl Backend {
             }) => {
                 let position = (column, row).into();
                 let event = match kind {
-                    MouseEventKind::Down(button) => {
-                        MouseEvent::Press(translate_button(button))
-                    }
-                    MouseEventKind::Up(button) => {
-                        MouseEvent::Release(translate_button(button))
-                    }
-                    MouseEventKind::Drag(button) => {
-                        MouseEvent::Hold(translate_button(button))
-                    }
+                    MouseEventKind::Down(button) => MouseEvent::Press(translate_button(button)),
+                    MouseEventKind::Up(button) => MouseEvent::Release(translate_button(button)),
+                    MouseEventKind::Drag(button) => MouseEvent::Hold(translate_button(button)),
                     MouseEventKind::Moved => {
                         return None;
                     }
@@ -320,9 +315,7 @@ impl backend::Backend for Backend {
     }
 
     fn set_title(&mut self, title: String) {
-        self.with_stdout(|stdout| {
-            execute!(stdout, terminal::SetTitle(title)).unwrap()
-        });
+        self.with_stdout(|stdout| execute!(stdout, terminal::SetTitle(title)).unwrap());
     }
 
     fn refresh(&mut self) {
@@ -353,8 +346,7 @@ impl backend::Backend for Backend {
     fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
         if repetitions > 0 {
             self.with_stdout(|out| {
-                queue!(out, cursor::MoveTo(pos.x as u16, pos.y as u16))
-                    .unwrap();
+                queue!(out, cursor::MoveTo(pos.x as u16, pos.y as u16)).unwrap();
 
                 out.write_all(text.as_bytes()).unwrap();
 
@@ -373,9 +365,7 @@ impl backend::Backend for Backend {
             back: color,
         });
 
-        self.with_stdout(|stdout| {
-            queue!(stdout, Clear(ClearType::All)).unwrap()
-        });
+        self.with_stdout(|stdout| queue!(stdout, Clear(ClearType::All)).unwrap());
     }
 
     fn set_color(&self, color: theme::ColorPair) -> theme::ColorPair {
@@ -397,9 +387,7 @@ impl backend::Backend for Backend {
             theme::Effect::Bold => self.set_attr(Attribute::Bold),
             theme::Effect::Blink => self.set_attr(Attribute::SlowBlink),
             theme::Effect::Italic => self.set_attr(Attribute::Italic),
-            theme::Effect::Strikethrough => {
-                self.set_attr(Attribute::CrossedOut)
-            }
+            theme::Effect::Strikethrough => self.set_attr(Attribute::CrossedOut),
             theme::Effect::Underline => self.set_attr(Attribute::Underlined),
         }
     }
@@ -408,14 +396,10 @@ impl backend::Backend for Backend {
         match effect {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.set_attr(Attribute::NoReverse),
-            theme::Effect::Dim | theme::Effect::Bold => {
-                self.set_attr(Attribute::NormalIntensity)
-            }
+            theme::Effect::Dim | theme::Effect::Bold => self.set_attr(Attribute::NormalIntensity),
             theme::Effect::Blink => self.set_attr(Attribute::NoBlink),
             theme::Effect::Italic => self.set_attr(Attribute::NoItalic),
-            theme::Effect::Strikethrough => {
-                self.set_attr(Attribute::NotCrossedOut)
-            }
+            theme::Effect::Strikethrough => self.set_attr(Attribute::NotCrossedOut),
             theme::Effect::Underline => self.set_attr(Attribute::NoUnderline),
         }
     }

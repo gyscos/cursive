@@ -84,8 +84,7 @@ impl ScrollBase {
         // eprintln!("Setting heights: {} in {}", content_height, view_height);
 
         if self.scrollable() {
-            self.start_line =
-                min(self.start_line, self.content_height - self.view_height);
+            self.start_line = min(self.start_line, self.content_height - self.view_height);
         } else {
             self.start_line = 0;
         }
@@ -132,10 +131,7 @@ impl ScrollBase {
     /// Never further than the bottom of the view.
     pub fn scroll_down(&mut self, n: usize) {
         if self.scrollable() {
-            self.start_line = min(
-                self.start_line + n,
-                self.content_height - self.view_height,
-            );
+            self.start_line = min(self.start_line + n, self.content_height - self.view_height);
         }
     }
 
@@ -238,8 +234,7 @@ impl ScrollBase {
             return;
         }
         // Print the content in a sub_printer
-        let max_y =
-            min(self.view_height, self.content_height - self.start_line);
+        let max_y = min(self.view_height, self.content_height - self.start_line);
         let w = if self.scrollable() {
             // We have to remove the bar width and the padding.
             printer.size.x.saturating_sub(1 + self.right_padding)
@@ -250,10 +245,7 @@ impl ScrollBase {
         for y in 0..max_y {
             // Y is the actual coordinate of the line.
             // The item ID is then Y + self.start_line
-            line_drawer(
-                &printer.offset((0, y)).cropped((w, 1)),
-                y + self.start_line,
-            );
+            line_drawer(&printer.offset((0, y)).cropped((w, 1)), y + self.start_line);
         }
 
         // And draw the scrollbar if needed

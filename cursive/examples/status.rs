@@ -19,17 +19,11 @@ fn main() {
         OnLayoutView::new(
             FixedLayout::new().child(
                 Rect::from_point(Vec2::zero()),
-                Layer::new(
-                    TextView::new("Status: unknown").with_name("status"),
-                )
-                .full_width(),
+                Layer::new(TextView::new("Status: unknown").with_name("status")).full_width(),
             ),
             |layout, size| {
                 // We could also keep the status bar at the top instead.
-                layout.set_child_position(
-                    0,
-                    Rect::from_size((0, size.y - 1), (size.x, 1)),
-                );
+                layout.set_child_position(0, Rect::from_size((0, size.y - 1), (size.x, 1)));
                 layout.layout(size);
             },
         )
@@ -44,8 +38,7 @@ fn main() {
             .button("Change status", |s| {
                 s.call_on_name("status", |text: &mut TextView| {
                     // Flip the current situation.
-                    let nominal =
-                        !text.get_content().source().contains("nominal");
+                    let nominal = !text.get_content().source().contains("nominal");
 
                     text.set_content(make_message(nominal));
                 })

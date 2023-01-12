@@ -86,8 +86,7 @@ impl<T: View> ViewWrapper for ShadowView<T> {
         }
 
         // Skip the first row/column
-        let offset =
-            Vec2::new(self.left_padding as usize, self.top_padding as usize);
+        let offset = Vec2::new(self.left_padding as usize, self.top_padding as usize);
         let printer = &printer.offset(offset);
         if printer.theme.shadow {
             let h = printer.size.y;

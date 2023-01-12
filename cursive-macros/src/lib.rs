@@ -74,10 +74,7 @@ mod builder;
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn callback_helpers(
-    _attrs: TokenStream,
-    item: TokenStream,
-) -> TokenStream {
+pub fn callback_helpers(_attrs: TokenStream, item: TokenStream) -> TokenStream {
     builder::callback_helpers(item)
 }
 

@@ -77,8 +77,7 @@ where
             self.width
         };
 
-        let mut chunks =
-            prefix(&mut self.iter, allowed_width, &mut self.chunk_offset);
+        let mut chunks = prefix(&mut self.iter, allowed_width, &mut self.chunk_offset);
 
         // println!("Chunks..: {:?}", chunks);
 
@@ -96,30 +95,29 @@ where
 
                     // Try to fit part of it?
                     let source = self.source.as_ref();
-                    let graphemes =
-                        chunk.segments.iter().flat_map(move |seg| {
-                            let mut offset = seg.start;
+                    let graphemes = chunk.segments.iter().flat_map(move |seg| {
+                        let mut offset = seg.start;
 
-                            let text = seg.resolve_plain(source);
+                        let text = seg.resolve_plain(source);
 
-                            text.graphemes(true).map(move |g| {
-                                let width = g.width();
-                                let start = offset;
-                                let end = offset + g.len();
-                                offset = end;
-                                Chunk {
+                        text.graphemes(true).map(move |g| {
+                            let width = g.width();
+                            let start = offset;
+                            let end = offset + g.len();
+                            offset = end;
+                            Chunk {
+                                width,
+                                segments: vec![Segment {
                                     width,
-                                    segments: vec![Segment {
-                                        width,
-                                        span_id: seg.span_id,
-                                        start,
-                                        end,
-                                    }],
-                                    hard_stop: false,
-                                    ends_with_space: false, // should we?
-                                }
-                            })
-                        });
+                                    span_id: seg.span_id,
+                                    start,
+                                    end,
+                                }],
+                                hard_stop: false,
+                                ends_with_space: false, // should we?
+                            }
+                        })
+                    });
                     chunks = prefix(
                         &mut graphemes.peekable(),
                         self.width,
@@ -134,8 +132,7 @@ where
                     // We are going to return a part of a chunk.
                     // So remember what we selected,
                     // so we can skip it next time.
-                    let width: usize =
-                        chunks.iter().map(|chunk| chunk.width).sum();
+                    let width: usize = chunks.iter().map(|chunk| chunk.width).sum();
                     let length: usize = chunks
                         .iter()
                         .flat_map(|chunk| chunk.segments.iter())
@@ -150,8 +147,8 @@ where
 
         // We can know text was wrapped if the stop was optional,
         // and there's more coming.
-        let is_wrapped = !chunks.last().map(|c| c.hard_stop).unwrap_or(true)
-            && self.iter.peek().is_some();
+        let is_wrapped =
+            !chunks.last().map(|c| c.hard_stop).unwrap_or(true) && self.iter.peek().is_some();
 
         let width = chunks.iter().map(|c| c.width).sum();
 

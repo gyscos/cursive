@@ -15,8 +15,7 @@ pub struct Dump {
     pub(crate) fps: Option<NonZeroU32>,
 
     pub(crate) menubar: views::Menubar,
-    pub(crate) root_view:
-        views::OnEventView<views::ScreensView<views::StackView>>,
+    pub(crate) root_view: views::OnEventView<views::ScreensView<views::StackView>>,
 
     pub(crate) theme: Theme,
 

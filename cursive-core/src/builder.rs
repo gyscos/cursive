@@ -42,33 +42,28 @@ pub type Config = serde_json::Value;
 pub type Object = serde_json::Map<String, serde_json::Value>;
 
 /// Can build a view from a config.
-pub type BareBuilder =
-    fn(&serde_json::Value, &Context) -> Result<BoxedView, Error>;
+pub type BareBuilder = fn(&serde_json::Value, &Context) -> Result<BoxedView, Error>;
 
 /// Boxed builder
 type BoxedBuilder = Box<dyn Fn(&Config, &Context) -> Result<BoxedView, Error>>;
 
 /// Can build a wrapper from a config.
-pub type BareWrapperBuilder =
-    fn(&serde_json::Value, &Context) -> Result<Wrapper, Error>;
+pub type BareWrapperBuilder = fn(&serde_json::Value, &Context) -> Result<Wrapper, Error>;
 
 /// Boxed wrapper builder
-type BoxedWrapperBuilder =
-    Box<dyn Fn(&serde_json::Value, &Context) -> Result<Wrapper, Error>>;
+type BoxedWrapperBuilder = Box<dyn Fn(&serde_json::Value, &Context) -> Result<Wrapper, Error>>;
 
 /// Can wrap a view.
 pub type Wrapper = Box<dyn FnOnce(BoxedView) -> BoxedView>;
 
 /// Can build a callback
-pub type BareVarBuilder =
-    fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error>;
+pub type BareVarBuilder = fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error>;
 
 /// Boxed variable builder
 ///
 /// If you store a variable of this type, when loading type `T`, it will run
 /// this builder and try to downcast the result to `T`.
-pub type BoxedVarBuilder =
-    Rc<dyn Fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error>>;
+pub type BoxedVarBuilder = Rc<dyn Fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error>>;
 
 /// Everything needed to prepare a view from a config.
 /// - Current recipes
@@ -89,15 +84,9 @@ struct Recipes {
 }
 
 impl Recipes {
-    fn build(
-        &self,
-        name: &str,
-        config: &Config,
-        context: &Context,
-    ) -> Result<BoxedView, Error> {
+    fn build(&self, name: &str, config: &Config, context: &Context) -> Result<BoxedView, Error> {
         if let Some(recipe) = self.recipes.get(name) {
-            (recipe)(config, context)
-                .map_err(|e| Error::RecipeFailed(name.into(), Box::new(e)))
+            (recipe)(config, context).map_err(|e| Error::RecipeFailed(name.into(), Box::new(e)))
         } else {
             match self.parent {
                 Some(ref parent) => parent.build(name, config, context),
@@ -113,13 +102,10 @@ impl Recipes {
         context: &Context,
     ) -> Result<Wrapper, Error> {
         if let Some(recipe) = self.wrappers.get(name) {
-            (recipe)(config, context)
-                .map_err(|e| Error::RecipeFailed(name.into(), Box::new(e)))
+            (recipe)(config, context).map_err(|e| Error::RecipeFailed(name.into(), Box::new(e)))
         } else {
             match self.parent {
-                Some(ref parent) => {
-                    parent.build_wrapper(name, config, context)
-                }
+                Some(ref parent) => parent.build_wrapper(name, config, context),
                 None => Err(Error::RecipeNotFound(name.into())),
             }
         }
@@ -246,10 +232,7 @@ pub struct ConfigError {
 
 impl ConfigError {
     /// Creates a config error if any issue is detected.
-    fn from(
-        duplicate_vars: HashSet<String>,
-        missing_vars: HashSet<String>,
-    ) -> Result<(), Self> {
+    fn from(duplicate_vars: HashSet<String>, missing_vars: HashSet<String>) -> Result<(), Self> {
         if duplicate_vars.is_empty() && missing_vars.is_empty() {
             Ok(())
         } else {
@@ -430,15 +413,10 @@ impl FromConfig for BoxedView {
 }
 
 impl FromConfig for crate::theme::BaseColor {
-    fn from_config(
-        config: &Config,
-        _context: &Context,
-    ) -> Result<Self, Error> {
-        (|| Self::parse(config.as_str()?))().ok_or_else(|| {
-            Error::InvalidConfig {
-                message: "Invalid config for BaseColor".into(),
-                config: config.clone(),
-            }
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
+        (|| Self::parse(config.as_str()?))().ok_or_else(|| Error::InvalidConfig {
+            message: "Invalid config for BaseColor".into(),
+            config: config.clone(),
         })
     }
 }
@@ -552,9 +530,8 @@ where
 {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let vec = Vec::<T>::from_config(config, context)?;
-        vec.try_into().map_err(|_| {
-            Error::invalid_config("Expected array of size {N}", config)
-        })
+        vec.try_into()
+            .map_err(|_| Error::invalid_config("Expected array of size {N}", config))
     }
 }
 
@@ -568,11 +545,8 @@ where
 impl FromConfig for crate::theme::Color {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         Ok(match config {
-            Config::String(config) => {
-                Self::parse(config).ok_or_else(|| {
-                    Error::invalid_config("Could not parse color", config)
-                })?
-            }
+            Config::String(config) => Self::parse(config)
+                .ok_or_else(|| Error::invalid_config("Could not parse color", config))?,
             Config::Object(config) => {
                 // Possibly keywords:
                 // - light
@@ -589,12 +563,7 @@ impl FromConfig for crate::theme::Color {
                         let array: [u8; 3] = context.resolve(value)?;
                         Self::Rgb(array[0], array[1], array[2])
                     }
-                    _ => {
-                        return Err(Error::invalid_config(
-                            "Found unexpected key",
-                            config,
-                        ))
-                    }
+                    _ => return Err(Error::invalid_config("Found unexpected key", config)),
                 }
             }
             Config::Array(_) => {
@@ -602,12 +571,7 @@ impl FromConfig for crate::theme::Color {
                 let array: [u8; 3] = context.resolve(config)?;
                 Self::Rgb(array[0], array[1], array[2])
             }
-            _ => {
-                return Err(Error::invalid_config(
-                    "Found unsupported type",
-                    config,
-                ))
-            }
+            _ => return Err(Error::invalid_config("Found unsupported type", config)),
         })
     }
 }
@@ -616,9 +580,8 @@ impl FromConfig for crate::theme::PaletteColor {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let color: String = context.resolve(config)?;
 
-        crate::theme::PaletteColor::from_str(&color).map_err(|_| {
-            Error::invalid_config("Unrecognized palette color", config)
-        })
+        crate::theme::PaletteColor::from_str(&color)
+            .map_err(|_| Error::invalid_config("Unrecognized palette color", config))
     }
 }
 
@@ -629,29 +592,26 @@ impl FromConfig for crate::theme::ColorType {
         }
 
         match config {
-            Config::String(config) => Self::from_str(config).map_err(|_| {
-                Error::invalid_config("Unrecognized color type", config)
-            }),
+            Config::String(config) => Self::from_str(config)
+                .map_err(|_| Error::invalid_config("Unrecognized color type", config)),
             Config::Object(config) => {
                 // Try to load as a color?
-                let (key, value) = config.iter().next().ok_or_else(|| {
-                    Error::invalid_config("Found empty object", config)
-                })?;
+                let (key, value) = config
+                    .iter()
+                    .next()
+                    .ok_or_else(|| Error::invalid_config("Found empty object", config))?;
                 Ok(match key.as_str() {
                     "palette" => Self::Palette(context.resolve(value)?),
                     "color" => Self::Color(context.resolve(value)?),
                     _ => {
                         return Err(Error::invalid_config(
-                            format!(
-                        "Found unrecognized key `{key}` in color type config"),
+                            format!("Found unrecognized key `{key}` in color type config"),
                             config,
                         ))
                     }
                 })
             }
-            _ => {
-                Err(Error::invalid_config("Expected string or object", config))
-            }
+            _ => Err(Error::invalid_config("Expected string or object", config)),
         }
     }
 }
@@ -677,18 +637,17 @@ impl FromConfig for crate::view::Offset {
             return Ok(Self::Center);
         }
 
-        let config = config.as_object().ok_or_else(|| {
-            Error::invalid_config("Expected `center` or an object.", config)
-        })?;
+        let config = config
+            .as_object()
+            .ok_or_else(|| Error::invalid_config("Expected `center` or an object.", config))?;
 
-        let (key, value) = config.iter().next().ok_or_else(|| {
-            Error::invalid_config("Expected non-empty object.", config)
-        })?;
+        let (key, value) = config
+            .iter()
+            .next()
+            .ok_or_else(|| Error::invalid_config("Expected non-empty object.", config))?;
 
         match key.as_str() {
-            "Absolute" | "absolute" => {
-                Ok(Self::Absolute(context.resolve(value)?))
-            }
+            "Absolute" | "absolute" => Ok(Self::Absolute(context.resolve(value)?)),
             "Parent" | "parent" => Ok(Self::Parent(context.resolve(value)?)),
             _ => Err(Error::invalid_config("Unexpected key `{key}`.", config)),
         }
@@ -698,10 +657,7 @@ impl FromConfig for crate::view::Offset {
 // Literals don't need a context at all
 
 impl FromConfig for String {
-    fn from_config(
-        config: &Config,
-        _context: &Context,
-    ) -> Result<Self, Error> {
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         match config.as_str() {
             Some(config) => Ok(config.into()),
             None => Err(Error::invalid_config("Expected string type", config)),
@@ -710,10 +666,7 @@ impl FromConfig for String {
 }
 
 impl FromConfig for bool {
-    fn from_config(
-        config: &Config,
-        _context: &Context,
-    ) -> Result<Self, Error> {
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         config
             .as_bool()
             .ok_or_else(|| Error::invalid_config("Expected bool type", config))
@@ -723,37 +676,24 @@ impl FromConfig for bool {
 // TODO: Have numbers look for other types as well? (in their from_any)
 // isize/usize?
 impl FromConfig for u8 {
-    fn from_config(
-        config: &Config,
-        _context: &Context,
-    ) -> Result<Self, Error> {
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         match config.as_u64() {
-            Some(config) if config <= u8::max_value() as u64 => {
-                Ok(config as u8)
-            }
-            _ => {
-                Err(Error::invalid_config("Expected unsigned <= 255", config))
-            }
+            Some(config) if config <= u8::max_value() as u64 => Ok(config as u8),
+            _ => Err(Error::invalid_config("Expected unsigned <= 255", config)),
         }
     }
 }
 
 impl FromConfig for u64 {
-    fn from_config(
-        config: &Config,
-        _context: &Context,
-    ) -> Result<Self, Error> {
-        config.as_u64().ok_or_else(|| {
-            Error::invalid_config("Expected unsigned integer type", config)
-        })
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
+        config
+            .as_u64()
+            .ok_or_else(|| Error::invalid_config("Expected unsigned integer type", config))
     }
 }
 
 impl FromConfig for isize {
-    fn from_config(
-        config: &Config,
-        _context: &Context,
-    ) -> Result<Self, Error> {
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         if let Some(config) = config.as_i64() {
             if let Ok(config) = config.try_into() {
                 return Ok(config);
@@ -768,14 +708,9 @@ impl FromConfig for isize {
 }
 
 impl FromConfig for usize {
-    fn from_config(
-        config: &Config,
-        _context: &Context,
-    ) -> Result<Self, Error> {
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         match config.as_u64() {
-            Some(config) if config <= usize::max_value() as u64 => {
-                Ok(config as usize)
-            }
+            Some(config) if config <= usize::max_value() as u64 => Ok(config as usize),
             _ => Err(Error::invalid_config(
                 format!("Expected unsigned <= {}", usize::max_value()),
                 config,
@@ -815,12 +750,7 @@ impl FromConfig for crate::direction::Orientation {
         Ok(match value.as_str() {
             "vertical" => Self::Vertical,
             "horizontal" => Self::Horizontal,
-            _ => {
-                return Err(Error::invalid_config(
-                    "Unrecognized orientation",
-                    config,
-                ))
-            }
+            _ => return Err(Error::invalid_config("Unrecognized orientation", config)),
         })
     }
 }
@@ -838,32 +768,20 @@ impl FromConfig for crate::view::Margins {
                 let n = context.resolve(config)?;
                 Self::lrtb(n, n, n, n)
             }
-            _ => {
-                return Err(Error::invalid_config(
-                    "Expected object or number",
-                    config,
-                ))
-            }
+            _ => return Err(Error::invalid_config("Expected object or number", config)),
         })
     }
 }
 
 impl FromConfig for crate::align::HAlign {
-    fn from_config(
-        config: &Config,
-        _context: &Context,
-    ) -> Result<Self, Error> {
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         // TODO: also resolve single-value configs like strings.
         // Also when resolving a variable with the wrong type, fallback on loading the type with
         // the variable name.
         Ok(match config.as_str() {
             Some(config) if config == "Left" || config == "left" => Self::Left,
-            Some(config) if config == "Center" || config == "center" => {
-                Self::Center
-            }
-            Some(config) if config == "Right" || config == "right" => {
-                Self::Right
-            }
+            Some(config) if config == "Center" || config == "center" => Self::Center,
+            Some(config) if config == "Right" || config == "right" => Self::Right,
             _ => {
                 return Err(Error::invalid_config(
                     "Expected left, center or right",
@@ -926,10 +844,7 @@ impl Context {
     /// Resolve a value.
     ///
     /// Needs to be a reference to a variable.
-    pub fn resolve_as_var<T: 'static + FromConfig>(
-        &self,
-        config: &Config,
-    ) -> Result<T, Error> {
+    pub fn resolve_as_var<T: 'static + FromConfig>(&self, config: &Config) -> Result<T, Error> {
         // Use same strategy as for recipes: always include a "config", potentially null
         if let Some(name) = parse_var(config) {
             // log::info!("Trying to load variable {name:?}");
@@ -938,17 +853,15 @@ impl Context {
         } else if let Some(config) = config.as_object() {
             // Option 2: an object with a key (variable name pointing to a cb
             // recipe) and a body (config for the recipe).
-            let (key, value) =
-                config.iter().next().ok_or_else(|| Error::InvalidConfig {
-                    message: "Expected non-empty body".into(),
-                    config: config.clone().into(),
-                })?;
+            let (key, value) = config.iter().next().ok_or_else(|| Error::InvalidConfig {
+                message: "Expected non-empty body".into(),
+                config: config.clone().into(),
+            })?;
 
-            let key =
-                key.strip_prefix('$').ok_or_else(|| Error::InvalidConfig {
-                    message: "Expected variable as key".into(),
-                    config: config.clone().into(),
-                })?;
+            let key = key.strip_prefix('$').ok_or_else(|| Error::InvalidConfig {
+                message: "Expected variable as key".into(),
+                config: config.clone().into(),
+            })?;
 
             self.load(key, value)
         } else {
@@ -961,10 +874,7 @@ impl Context {
         }
     }
 
-    fn resolve_as_builder<T: FromConfig + 'static>(
-        &self,
-        config: &Config,
-    ) -> Result<T, Error> {
+    fn resolve_as_builder<T: FromConfig + 'static>(&self, config: &Config) -> Result<T, Error> {
         // TODO: return a cheap error here, no allocation
         let config = config
             .as_object()
@@ -972,17 +882,15 @@ impl Context {
 
         // Option 2: an object with a key (variable name pointing to a cb
         // recipe) and a body (config for the recipe).
-        let (key, value) =
-            config.iter().next().ok_or_else(|| Error::InvalidConfig {
-                message: "Expected non-empty body".into(),
-                config: config.clone().into(),
-            })?;
+        let (key, value) = config.iter().next().ok_or_else(|| Error::InvalidConfig {
+            message: "Expected non-empty body".into(),
+            config: config.clone().into(),
+        })?;
 
-        let key =
-            key.strip_prefix('$').ok_or_else(|| Error::InvalidConfig {
-                message: "Expected variable as key".into(),
-                config: config.clone().into(),
-            })?;
+        let key = key.strip_prefix('$').ok_or_else(|| Error::InvalidConfig {
+            message: "Expected variable as key".into(),
+            config: config.clone().into(),
+        })?;
 
         self.load(key, value)
     }
@@ -993,10 +901,7 @@ impl Context {
     ///
     /// Note however that while loading as a config, it may still resolve nested values as
     /// variables.
-    pub fn resolve_as_config<T: FromConfig + 'static>(
-        &self,
-        config: &Config,
-    ) -> Result<T, Error> {
+    pub fn resolve_as_config<T: FromConfig + 'static>(&self, config: &Config) -> Result<T, Error> {
         // First, it could be a variable pointing to a config from a template view
         if let Some(name) = parse_var(config) {
             // Option 1: a simple variable name.
@@ -1021,10 +926,7 @@ impl Context {
 
     // We're fine with only one of them, or both.
     /// Resolve a value
-    pub fn resolve<T: FromConfig + 'static>(
-        &self,
-        config: &Config,
-    ) -> Result<T, Error> {
+    pub fn resolve<T: FromConfig + 'static>(&self, config: &Config) -> Result<T, Error> {
         let var_failure = Box::new(match self.resolve_as_var(config) {
             Ok(value) => return Ok(value),
             Err(err) => err,
@@ -1057,9 +959,7 @@ impl Context {
         if let Some(variables) = Rc::get_mut(&mut self.variables) {
             variables.store(name, entry);
         } else {
-            log::error!(
-                "Context was not available to store variable `{name}`."
-            );
+            log::error!("Context was not available to store variable `{name}`.");
         }
     }
 
@@ -1098,20 +998,12 @@ impl Context {
     }
 
     /// Store a new config.
-    pub fn store_config(
-        &mut self,
-        name: impl Into<String>,
-        config: impl Into<Config>,
-    ) {
+    pub fn store_config(&mut self, name: impl Into<String>, config: impl Into<Config>) {
         self.store_entry(name, VarEntry::config(config));
     }
 
     /// Store a new variable proxy.
-    pub fn store_proxy(
-        &mut self,
-        name: impl Into<String>,
-        new_name: impl Into<String>,
-    ) {
+    pub fn store_proxy(&mut self, name: impl Into<String>, new_name: impl Into<String>) {
         self.store_entry(name, VarEntry::proxy(new_name));
     }
 
@@ -1126,11 +1018,8 @@ impl Context {
     }
 
     /// Register a new wrapper recipe _for this context only_.
-    pub fn register_wrapper_recipe<F>(
-        &mut self,
-        name: impl Into<String>,
-        recipe: F,
-    ) where
+    pub fn register_wrapper_recipe<F>(&mut self, name: impl Into<String>, recipe: F)
+    where
         F: Fn(&Config, &Context) -> Result<Wrapper, Error> + 'static,
     {
         if let Some(recipes) = Rc::get_mut(&mut self.recipes) {
@@ -1187,11 +1076,7 @@ impl Context {
     /// Loads a variable of the given type.
     ///
     /// If a variable with this name is found but is a Config, tries to deserialize it.
-    pub fn load<T: FromConfig + Any>(
-        &self,
-        name: &str,
-        config: &Config,
-    ) -> Result<T, Error> {
+    pub fn load<T: FromConfig + Any>(&self, name: &str, config: &Config) -> Result<T, Error> {
         self.variables.call_on_any(
             name,
             |maker| self.on_maker(maker, name, config),
@@ -1204,12 +1089,10 @@ impl Context {
         // Expect a single key
         let (key, value) = match config {
             Config::String(key) => (key, &Config::Null),
-            Config::Object(config) => {
-                config.into_iter().next().ok_or(Error::InvalidConfig {
-                    message: "Expected non-empty object".into(),
-                    config: config.clone().into(),
-                })?
-            }
+            Config::Object(config) => config.into_iter().next().ok_or(Error::InvalidConfig {
+                message: "Expected non-empty object".into(),
+                config: config.clone().into(),
+            })?,
             _ => {
                 return Err(Error::InvalidConfig {
                     message: "Expected string or object".into(),
@@ -1317,11 +1200,7 @@ impl Context {
     ///
     /// `template` should be a config describing a view, potentially using variables.
     /// Any value in `config` will be stored as a variable when rendering the template.
-    pub fn build_template(
-        &self,
-        config: &Config,
-        template: &Config,
-    ) -> Result<BoxedView, Error> {
+    pub fn build_template(&self, config: &Config, template: &Config) -> Result<BoxedView, Error> {
         let res = self
             .sub_context(|c| {
                 if let Some(config) = config.as_object() {
@@ -1567,8 +1446,7 @@ mod tests {
 
         let foo = "Foo";
 
-        let config: crate::builder::Config =
-            serde_yaml::from_str(config).unwrap();
+        let config: crate::builder::Config = serde_yaml::from_str(config).unwrap();
 
         let mut context = crate::builder::Context::new();
 
@@ -1584,13 +1462,13 @@ mod tests {
         let mut res = context.build(&config).unwrap();
 
         // The top-level view should be a full-screen view
-        assert!(res.downcast_ref::<crate::views::ResizedView<crate::views::BoxedView>>().is_some());
+        assert!(res
+            .downcast_ref::<crate::views::ResizedView<crate::views::BoxedView>>()
+            .is_some());
 
         // The view should be reachable by name
         let content = res
-            .call_on_name("text", |v: &mut crate::views::TextView| {
-                v.get_content()
-            })
+            .call_on_name("text", |v: &mut crate::views::TextView| v.get_content())
             .unwrap();
 
         assert_eq!(content.source(), foo);

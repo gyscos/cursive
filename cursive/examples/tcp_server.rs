@@ -22,10 +22,7 @@ fn main() {
     start_server(Arc::clone(&model));
 
     // Build the UI from the model
-    siv.add_layer(
-        views::Dialog::around(build_ui(Arc::clone(&model)))
-            .button("Quit", |s| s.quit()),
-    );
+    siv.add_layer(views::Dialog::around(build_ui(Arc::clone(&model))).button("Quit", |s| s.quit()));
 
     siv.run();
 }
@@ -160,16 +157,12 @@ fn build_selector(model: Model) -> impl cursive::view::View {
         .child(views::DummyView.fixed_width(1))
         .child(views::Button::new("Update", move |s| {
             if let Some(n) = s
-                .call_on_name("edit", |edit: &mut views::EditView| {
-                    edit.get_content()
-                })
+                .call_on_name("edit", |edit: &mut views::EditView| edit.get_content())
                 .and_then(|content| content.parse().ok())
             {
                 model.lock().unwrap().offset = n;
             } else {
-                s.add_layer(views::Dialog::info(
-                    "Could not parse offset as u8",
-                ));
+                s.add_layer(views::Dialog::info("Could not parse offset as u8"));
             }
         }))
 }
@@ -182,20 +175,14 @@ fn build_tester(model: Model) -> impl cursive::view::View {
         .child(
             views::Canvas::new(model)
                 .with_draw(|model, printer| {
-                    printer.print(
-                        (0, 0),
-                        &format!("{}", model.lock().unwrap().offset),
-                    )
+                    printer.print((0, 0), &format!("{}", model.lock().unwrap().offset))
                 })
                 .with_required_size(|_, _| cursive::Vec2::new(3, 1)),
         )
         .child(views::DummyView.fixed_width(1))
         .child(views::Button::new("Test", |s| {
             if let Err(err) = test_server() {
-                s.add_layer(
-                    views::Dialog::info(format!("{err:?}"))
-                        .title("Error running test."),
-                );
+                s.add_layer(views::Dialog::info(format!("{err:?}")).title("Error running test."));
             }
         }))
 }

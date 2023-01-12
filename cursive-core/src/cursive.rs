@@ -258,9 +258,7 @@ impl Cursive {
     /// siv.add_global_callback('~', Cursive::toggle_debug_console);
     /// ```
     pub fn toggle_debug_console(&mut self) {
-        if let Some(pos) =
-            self.screen_mut().find_layer_from_name(DEBUG_VIEW_NAME)
-        {
+        if let Some(pos) = self.screen_mut().find_layer_from_name(DEBUG_VIEW_NAME) {
             self.screen_mut().remove_layer(pos);
         } else {
             self.show_debug_console();
@@ -298,8 +296,7 @@ impl Cursive {
 
     /// Selects the menubar.
     pub fn select_menubar(&mut self) {
-        if let Ok(res) = self.menubar.take_focus(direction::Direction::none())
-        {
+        if let Ok(res) = self.menubar.take_focus(direction::Direction::none()) {
             res.process(self);
         }
     }
@@ -354,16 +351,10 @@ impl Cursive {
     ///             .subtree(
     ///                 "Help",
     ///                 menu::Tree::new()
-    ///                     .leaf("General", |s| {
-    ///                         s.add_layer(Dialog::info("Help message!"))
-    ///                     })
-    ///                     .leaf("Online", |s| {
-    ///                         s.add_layer(Dialog::info("Online help?"))
-    ///                     }),
+    ///                     .leaf("General", |s| s.add_layer(Dialog::info("Help message!")))
+    ///                     .leaf("Online", |s| s.add_layer(Dialog::info("Online help?"))),
     ///             )
-    ///             .leaf("About", |s| {
-    ///                 s.add_layer(Dialog::info("Cursive v0.0.0"))
-    ///             }),
+    ///             .leaf("About", |s| s.add_layer(Dialog::info("Cursive v0.0.0"))),
     ///     );
     ///
     /// siv.add_global_callback(event::Key::Esc, |s| s.select_menubar());
@@ -415,10 +406,7 @@ impl Cursive {
     ///
     /// Must have the `toml` feature enabled.
     #[cfg(feature = "toml")]
-    pub fn load_theme_file<P: AsRef<Path>>(
-        &mut self,
-        filename: P,
-    ) -> Result<(), theme::Error> {
+    pub fn load_theme_file<P: AsRef<Path>>(&mut self, filename: P) -> Result<(), theme::Error> {
         theme::load_theme_file(filename).map(|theme| self.set_theme(theme))
     }
 
@@ -517,11 +505,7 @@ impl Cursive {
     ///     );
     /// });
     /// ```
-    pub fn call_on<V, F, R>(
-        &mut self,
-        sel: &view::Selector,
-        callback: F,
-    ) -> Option<R>
+    pub fn call_on<V, F, R>(&mut self, sel: &view::Selector, callback: F) -> Option<R>
     where
         V: View,
         F: FnOnce(&mut V) -> R,
@@ -548,11 +532,7 @@ impl Cursive {
     ///     });
     /// });
     /// ```
-    pub fn call_on_name<V, F, R>(
-        &mut self,
-        name: &str,
-        callback: F,
-    ) -> Option<R>
+    pub fn call_on_name<V, F, R>(&mut self, name: &str, callback: F) -> Option<R>
     where
         V: View,
         F: FnOnce(&mut V) -> R,
@@ -624,18 +604,12 @@ impl Cursive {
     /// Moves the focus to the view identified by `name`.
     ///
     /// Convenient method to call `focus` with a [`view::Selector::Name`].
-    pub fn focus_name(
-        &mut self,
-        name: &str,
-    ) -> Result<EventResult, ViewNotFound> {
+    pub fn focus_name(&mut self, name: &str) -> Result<EventResult, ViewNotFound> {
         self.focus(&view::Selector::Name(name))
     }
 
     /// Moves the focus to the view identified by `sel`.
-    pub fn focus(
-        &mut self,
-        sel: &view::Selector,
-    ) -> Result<EventResult, ViewNotFound> {
+    pub fn focus(&mut self, sel: &view::Selector) -> Result<EventResult, ViewNotFound> {
         self.root.focus_view(sel)
     }
 
@@ -799,11 +773,7 @@ impl Cursive {
     }
 
     /// Convenient stub forwarding layer repositioning.
-    pub fn reposition_layer(
-        &mut self,
-        layer: LayerPosition,
-        position: Position,
-    ) {
+    pub fn reposition_layer(&mut self, layer: LayerPosition, position: Position) {
         self.screen_mut().reposition_layer(layer, position);
     }
 
@@ -831,8 +801,7 @@ impl Cursive {
         } else {
             let offset = usize::from(!self.menubar.autohide);
 
-            let result =
-                View::on_event(&mut self.root, event.relativized((0, offset)));
+            let result = View::on_event(&mut self.root, event.relativized((0, offset)));
 
             if let EventResult::Consumed(Some(cb)) = result {
                 cb(self);
@@ -876,10 +845,7 @@ impl Cursive {
     /// The runner will borrow `self`; when dropped, it will clear out the
     /// terminal, and the cursive instance will be ready for another run if
     /// needed.
-    pub fn runner(
-        &mut self,
-        backend: Box<dyn backend::Backend>,
-    ) -> CursiveRunner<&mut Self> {
+    pub fn runner(&mut self, backend: Box<dyn backend::Backend>) -> CursiveRunner<&mut Self> {
         self.running = true;
         CursiveRunner::new(self, backend)
     }
@@ -891,10 +857,7 @@ impl Cursive {
     ///
     /// The runner will embed `self`; when dropped, it will clear out the
     /// terminal, and the cursive instance will be dropped as well.
-    pub fn into_runner(
-        self,
-        backend: Box<dyn backend::Backend>,
-    ) -> CursiveRunner<Self> {
+    pub fn into_runner(self, backend: Box<dyn backend::Backend>) -> CursiveRunner<Self> {
         CursiveRunner::new(self, backend)
     }
 
@@ -944,9 +907,8 @@ impl Cursive {
     /// After calling this, the cursive object will be as if newly created.
     pub fn dump(&mut self) -> crate::Dump {
         let (cb_sink, cb_source) = crossbeam_channel::unbounded();
-        let root = views::OnEventView::new(views::ScreensView::single_screen(
-            views::StackView::new(),
-        ));
+        let root =
+            views::OnEventView::new(views::ScreensView::single_screen(views::StackView::new()));
         Dump {
             cb_sink: std::mem::replace(&mut self.cb_sink, cb_sink),
             cb_source: std::mem::replace(&mut self.cb_source, cb_source),

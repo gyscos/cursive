@@ -16,10 +16,7 @@ fn main() {
     ));
 
     // TextView can natively accept StyledString.
-    siv.add_layer(
-        Dialog::around(TextView::new(styled))
-            .button("Hell yeah!", |s| s.quit()),
-    );
+    siv.add_layer(Dialog::around(TextView::new(styled)).button("Hell yeah!", |s| s.quit()));
 
     siv.run();
 }

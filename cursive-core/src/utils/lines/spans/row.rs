@@ -28,10 +28,7 @@ impl Row {
     }
 
     /// Resolve the row indices into string slices and attributes.
-    pub fn resolve_stream<'a, 'b, T, S>(
-        &'b self,
-        source: S,
-    ) -> impl Iterator<Item = Span<'a, T>>
+    pub fn resolve_stream<'a, 'b, T, S>(&'b self, source: S) -> impl Iterator<Item = Span<'a, T>>
     where
         S: Into<SpannedStr<'a, T>>,
         T: 'a,

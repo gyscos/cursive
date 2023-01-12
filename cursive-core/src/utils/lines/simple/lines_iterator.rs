@@ -42,8 +42,7 @@ impl<'a> LinesIterator<'a> {
     ///
     /// Yields rows of `width` cells or less.
     pub fn new(content: &'a str, width: usize) -> Self {
-        let iter =
-            spans::LinesIterator::new(DummySpannedText::new(content), width);
+        let iter = spans::LinesIterator::new(DummySpannedText::new(content), width);
         LinesIterator { iter, width }
     }
 

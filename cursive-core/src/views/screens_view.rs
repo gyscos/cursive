@@ -126,10 +126,7 @@ where
         }
     }
 
-    fn wrap_focus_view(
-        &mut self,
-        selector: &Selector,
-    ) -> Result<EventResult, ViewNotFound> {
+    fn wrap_focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
         for (i, child) in self.screens.iter_mut().enumerate() {
             if let Ok(res) = child.focus_view(selector) {
                 self.active_screen = i;

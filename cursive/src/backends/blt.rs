@@ -103,20 +103,13 @@ impl Backend {
                         })
                         .unwrap_or_else(|| Event::Unknown(vec![]))
                 }
-                BltEvent::ShiftReleased | BltEvent::ControlReleased => {
-                    Event::Refresh
-                }
+                BltEvent::ShiftReleased | BltEvent::ControlReleased => Event::Refresh,
                 _ => Event::Unknown(vec![]),
             }
         })
     }
 
-    fn blt_keycode_to_ev(
-        &mut self,
-        kc: KeyCode,
-        shift: bool,
-        ctrl: bool,
-    ) -> Event {
+    fn blt_keycode_to_ev(&mut self, kc: KeyCode, shift: bool, ctrl: bool) -> Event {
         match kc {
             KeyCode::F1
             | KeyCode::F2
@@ -282,9 +275,7 @@ impl backend::Backend for Backend {
             //       BLT itself doesn't do this kind of thing,
             //       we'd need the colours in our position,
             //       but `f()` can do whatever
-            Effect::Reverse => {
-                terminal::set_colors(state::background(), state::foreground())
-            }
+            Effect::Reverse => terminal::set_colors(state::background(), state::foreground()),
         }
     }
 
@@ -299,9 +290,7 @@ impl backend::Backend for Backend {
             | Effect::Blink
             | Effect::Simple => {}
             // The process of reversing is the same as unreversing
-            Effect::Reverse => {
-                terminal::set_colors(state::background(), state::foreground())
-            }
+            Effect::Reverse => terminal::set_colors(state::background(), state::foreground()),
         }
     }
 
@@ -315,10 +304,7 @@ impl backend::Backend for Backend {
     }
 
     fn clear(&self, color: Color) {
-        terminal::set_background(colour_to_blt_colour(
-            color,
-            ColorRole::Background,
-        ));
+        terminal::set_background(colour_to_blt_colour(color, ColorRole::Background));
         terminal::clear(None);
     }
 

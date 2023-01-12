@@ -3,8 +3,7 @@ use crate::{
     event::{AnyCb, Event, EventResult},
     theme::PaletteStyle,
     view::{
-        CannotFocus, IntoBoxedView, Offset, Position, Selector, View,
-        ViewNotFound, ViewWrapper,
+        CannotFocus, IntoBoxedView, Offset, Position, Selector, View, ViewNotFound, ViewWrapper,
     },
     views::{BoxedView, CircularFocus, Layer, ShadowView},
     Printer, Vec2, With,
@@ -42,21 +41,14 @@ pub enum LayerPosition {
 }
 
 impl Placement {
-    pub fn compute_offset<S, A, P>(
-        &self,
-        size: S,
-        available: A,
-        parent: P,
-    ) -> Vec2
+    pub fn compute_offset<S, A, P>(&self, size: S, available: A, parent: P) -> Vec2
     where
         S: Into<Vec2>,
         A: Into<Vec2>,
         P: Into<Vec2>,
     {
         match *self {
-            Placement::Floating(ref position) => {
-                position.compute_offset(size, available, parent)
-            }
+            Placement::Floating(ref position) => position.compute_offset(size, available, parent),
             Placement::Fullscreen => Vec2::zero(),
         }
     }
@@ -106,12 +98,8 @@ impl<T: View> ChildWrapper<T> {
     /// Returns a reference to the inner view
     pub fn get_inner(&self) -> &T {
         match *self {
-            ChildWrapper::Shadow(ref shadow) => {
-                shadow.get_inner().get_inner().get_inner()
-            }
-            ChildWrapper::Backfilled(ref background) => {
-                background.get_inner().get_inner()
-            }
+            ChildWrapper::Shadow(ref shadow) => shadow.get_inner().get_inner().get_inner(),
+            ChildWrapper::Backfilled(ref background) => background.get_inner().get_inner(),
             ChildWrapper::Plain(ref layer) => layer.get_inner(),
         }
     }
@@ -164,10 +152,7 @@ impl<T: View> View for ChildWrapper<T> {
         }
     }
 
-    fn take_focus(
-        &mut self,
-        source: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, source: Direction) -> Result<EventResult, CannotFocus> {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.take_focus(source),
             ChildWrapper::Backfilled(ref mut v) => v.take_focus(source),
@@ -177,22 +162,13 @@ impl<T: View> View for ChildWrapper<T> {
 
     fn call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
         match *self {
-            ChildWrapper::Shadow(ref mut v) => {
-                v.call_on_any(selector, callback)
-            }
-            ChildWrapper::Backfilled(ref mut v) => {
-                v.call_on_any(selector, callback)
-            }
-            ChildWrapper::Plain(ref mut v) => {
-                v.call_on_any(selector, callback)
-            }
+            ChildWrapper::Shadow(ref mut v) => v.call_on_any(selector, callback),
+            ChildWrapper::Backfilled(ref mut v) => v.call_on_any(selector, callback),
+            ChildWrapper::Plain(ref mut v) => v.call_on_any(selector, callback),
         }
     }
 
-    fn focus_view(
-        &mut self,
-        selector: &Selector,
-    ) -> Result<EventResult, ViewNotFound> {
+    fn focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
         match *self {
             ChildWrapper::Shadow(ref mut v) => v.focus_view(selector),
             ChildWrapper::Backfilled(ref mut v) => v.focus_view(selector),
@@ -255,9 +231,7 @@ impl StackView {
     {
         let boxed = BoxedView::boxed(view);
         self.layers.push(Child {
-            view: ChildWrapper::Backfilled(Layer::new(
-                CircularFocus::new(boxed).wrap_tab(),
-            )),
+            view: ChildWrapper::Backfilled(Layer::new(CircularFocus::new(boxed).wrap_tab())),
             size: Vec2::zero(),
             placement: Placement::Fullscreen,
             virgin: true,
@@ -285,9 +259,8 @@ impl StackView {
 
     /// Returns a reference to the layer at the given position.
     pub fn get(&self, pos: LayerPosition) -> Option<&dyn View> {
-        self.get_index(pos).and_then(|i| {
-            self.layers.get(i).map(|child| &**child.view.get_inner())
-        })
+        self.get_index(pos)
+            .and_then(|i| self.layers.get(i).map(|child| &**child.view.get_inner()))
     }
 
     /// Returns a mutable reference to the layer at the given position.
@@ -319,7 +292,10 @@ impl StackView {
     /// stack.add_layer(Dialog::around(TextView::new("Middle").with_name("text")));
     /// stack.add_layer(TextView::new("Front"));
     ///
-    /// assert_eq!(stack.find_layer_from_name("text"), Some(LayerPosition::FromBack(1)));
+    /// assert_eq!(
+    ///     stack.find_layer_from_name("text"),
+    ///     Some(LayerPosition::FromBack(1))
+    /// );
     /// ```
     pub fn find_layer_from_name(&mut self, id: &str) -> Option<LayerPosition> {
         let selector = Selector::Name(id);
@@ -366,11 +342,9 @@ impl StackView {
         self.layers.push(Child {
             // Skip padding for absolute/parent-placed views
             view: ChildWrapper::Shadow(
-                ShadowView::new(Layer::new(
-                    CircularFocus::new(boxed).wrap_tab(),
-                ))
-                .top_padding(position.y == Offset::Center)
-                .left_padding(position.x == Offset::Center),
+                ShadowView::new(Layer::new(CircularFocus::new(boxed).wrap_tab()))
+                    .top_padding(position.y == Offset::Center)
+                    .left_padding(position.x == Offset::Center),
             ),
             size: Vec2::new(0, 0),
             placement: Placement::Floating(position),
@@ -450,10 +424,7 @@ impl StackView {
     }
 
     /// Computes the offset of the current top view.
-    #[deprecated(
-        since = "0.17.0",
-        note = "Use StackView::layer_offset instead."
-    )]
+    #[deprecated(since = "0.17.0", note = "Use StackView::layer_offset instead.")]
     pub fn offset(&self) -> Vec2 {
         self.layer_offsets().last().unwrap_or_else(Vec2::zero)
     }
@@ -466,9 +437,7 @@ impl StackView {
     fn get_index(&self, pos: LayerPosition) -> Option<usize> {
         match pos {
             LayerPosition::FromBack(i) => Some(i),
-            LayerPosition::FromFront(i) => {
-                self.layers.len().checked_sub(i + 1)
-            }
+            LayerPosition::FromFront(i) => self.layers.len().checked_sub(i + 1),
         }
     }
 
@@ -512,11 +481,7 @@ impl StackView {
     /// # Panics
     ///
     /// If `layer` is out of bounds.
-    pub fn reposition_layer(
-        &mut self,
-        layer: LayerPosition,
-        position: Position,
-    ) {
+    pub fn reposition_layer(&mut self, layer: LayerPosition, position: Position) {
         let i = self.get_index(layer).unwrap();
         let child = &mut self.layers[i];
         match child.placement {
@@ -558,8 +523,7 @@ impl StackView {
         let last = self.layers.len();
         printer.with_style(PaletteStyle::Background, |printer| {
             for (i, (v, offset)) in
-                StackPositionIterator::new(self.layers.iter(), printer.size)
-                    .enumerate()
+                StackPositionIterator::new(self.layers.iter(), printer.size).enumerate()
             {
                 v.view.draw(
                     &printer
@@ -604,11 +568,9 @@ where
 
     fn next(&mut self) -> Option<(I::Item, Vec2)> {
         self.inner.next().map(|v| {
-            let offset = v.placement.compute_offset(
-                v.size,
-                self.total_size,
-                self.previous,
-            );
+            let offset = v
+                .placement
+                .compute_offset(v.size, self.total_size, self.previous);
 
             self.previous = offset;
 
@@ -633,12 +595,7 @@ impl View for StackView {
         }
         // Use the stack position iterator to get the offset of the top layer.
         // TODO: save it instead when drawing?
-        match StackPositionIterator::new(
-            self.layers.iter_mut(),
-            self.last_size,
-        )
-        .last()
-        {
+        match StackPositionIterator::new(self.layers.iter_mut(), self.last_size).last() {
             None => EventResult::Ignored,
             Some((v, offset)) => v.view.on_event(event.relativized(offset)),
         }
@@ -679,10 +636,7 @@ impl View for StackView {
             .fold(Vec2::new(1, 1), Vec2::max)
     }
 
-    fn take_focus(
-        &mut self,
-        source: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, source: Direction) -> Result<EventResult, CannotFocus> {
         match self.layers.last_mut() {
             None => Err(CannotFocus),
             Some(v) => v.view.take_focus(source),
@@ -695,10 +649,7 @@ impl View for StackView {
         }
     }
 
-    fn focus_view(
-        &mut self,
-        selector: &Selector,
-    ) -> Result<EventResult, ViewNotFound> {
+    fn focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
         for layer in &mut self.layers {
             if layer.view.focus_view(selector).is_ok() {
                 return Ok(EventResult::Consumed(None));
@@ -743,21 +694,12 @@ mod tests {
         // Try moving views around, make sure we have the expected result
 
         // 1,2,3,4
-        stack.move_layer(
-            LayerPosition::FromFront(0),
-            LayerPosition::FromBack(0),
-        );
+        stack.move_layer(LayerPosition::FromFront(0), LayerPosition::FromBack(0));
 
         // 4,1,2,3
-        stack.move_layer(
-            LayerPosition::FromBack(0),
-            LayerPosition::FromFront(0),
-        );
+        stack.move_layer(LayerPosition::FromBack(0), LayerPosition::FromFront(0));
         // 1,2,3,4
-        stack.move_layer(
-            LayerPosition::FromFront(1),
-            LayerPosition::FromFront(0),
-        );
+        stack.move_layer(LayerPosition::FromFront(1), LayerPosition::FromFront(0));
         // 1,2,4,3
 
         let layer = stack.pop_layer().unwrap();
@@ -808,26 +750,17 @@ crate::raw_recipe!(StackView, |config, context| {
     use crate::builder::{Config, Context, Error, FromConfig};
 
     impl FromConfig for Placement {
-        fn from_config(
-            config: &Config,
-            context: &Context,
-        ) -> Result<Self, Error> {
+        fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
             match config.as_str() {
-                Some("fullscreen" | "Fullscreen" | "FullScreen") => {
-                    Ok(Self::Fullscreen)
-                }
+                Some("fullscreen" | "Fullscreen" | "FullScreen") => Ok(Self::Fullscreen),
                 _ => Ok(Self::Floating(context.resolve(config)?)),
             }
         }
     }
 
     impl FromConfig for Child {
-        fn from_config(
-            config: &Config,
-            context: &Context,
-        ) -> Result<Self, Error> {
-            let view: crate::views::BoxedView =
-                context.resolve(&config["child"])?;
+        fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+            let view: crate::views::BoxedView = context.resolve(&config["child"])?;
 
             let placement = context.resolve(&config["placement"])?;
             let position: Position = context.resolve(&config["position"])?;
@@ -835,11 +768,9 @@ crate::raw_recipe!(StackView, |config, context| {
             // Right now only plain layer+shadow views are allowed in configs.
             Ok(Child {
                 view: ChildWrapper::Shadow(
-                    ShadowView::new(Layer::new(
-                        CircularFocus::new(view).wrap_tab(),
-                    ))
-                    .top_padding(position.y == Offset::Center)
-                    .left_padding(position.x == Offset::Center),
+                    ShadowView::new(Layer::new(CircularFocus::new(view).wrap_tab()))
+                        .top_padding(position.y == Offset::Center)
+                        .left_padding(position.x == Offset::Center),
                 ),
                 size: Vec2::zero(),
                 placement,

@@ -35,9 +35,7 @@ fn main() {
 
     siv.add_global_callback('t', |s| {
         let theme_names: Vec<_> = s
-            .with_user_data(|s: &mut Rc<State>| {
-                s.themes.themes.keys().cloned().collect()
-            })
+            .with_user_data(|s: &mut Rc<State>| s.themes.themes.keys().cloned().collect())
             .unwrap();
 
         s.add_layer(
@@ -112,9 +110,7 @@ fn apply_theme(siv: &mut cursive::Cursive, theme_name: &str) {
     let content = include_str!("parse.rs");
 
     // Parse the content and highlight it
-    let styled =
-        cursive_syntect::parse(content, &mut highlighter, &state.syntax_set)
-            .unwrap();
+    let styled = cursive_syntect::parse(content, &mut highlighter, &state.syntax_set).unwrap();
 
     siv.call_on_name("content", |t: &mut cursive::views::TextView| {
         t.set_content(styled);

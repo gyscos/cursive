@@ -158,41 +158,31 @@ impl<T: View> ViewWrapper for CircularFocus<T> {
                     .take_focus(Direction::front())
                     .unwrap_or(EventResult::Ignored)
             }
-            (EventResult::Ignored, Event::Shift(Key::Tab))
-                if self.wrap_tab =>
-            {
+            (EventResult::Ignored, Event::Shift(Key::Tab)) if self.wrap_tab => {
                 // Focus comes back!
                 self.view
                     .take_focus(Direction::back())
                     .unwrap_or(EventResult::Ignored)
             }
-            (EventResult::Ignored, Event::Key(Key::Right))
-                if self.wrap_left_right =>
-            {
+            (EventResult::Ignored, Event::Key(Key::Right)) if self.wrap_left_right => {
                 // Focus comes back!
                 self.view
                     .take_focus(Direction::left())
                     .unwrap_or(EventResult::Ignored)
             }
-            (EventResult::Ignored, Event::Key(Key::Left))
-                if self.wrap_left_right =>
-            {
+            (EventResult::Ignored, Event::Key(Key::Left)) if self.wrap_left_right => {
                 // Focus comes back!
                 self.view
                     .take_focus(Direction::right())
                     .unwrap_or(EventResult::Ignored)
             }
-            (EventResult::Ignored, Event::Key(Key::Up))
-                if self.wrap_up_down =>
-            {
+            (EventResult::Ignored, Event::Key(Key::Up)) if self.wrap_up_down => {
                 // Focus comes back!
                 self.view
                     .take_focus(Direction::down())
                     .unwrap_or(EventResult::Ignored)
             }
-            (EventResult::Ignored, Event::Key(Key::Down))
-                if self.wrap_up_down =>
-            {
+            (EventResult::Ignored, Event::Key(Key::Down)) if self.wrap_up_down => {
                 // Focus comes back!
                 self.view
                     .take_focus(Direction::up())

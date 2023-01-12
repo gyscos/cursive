@@ -84,9 +84,7 @@ impl View for BufferView {
 
     fn draw(&self, printer: &Printer) {
         // Print the end of the buffer
-        for (i, line) in
-            self.buffer.iter().rev().take(printer.size.y).enumerate()
-        {
+        for (i, line) in self.buffer.iter().rev().take(printer.size.y).enumerate() {
             printer.print((0, printer.size.y - 1 - i), line);
         }
     }

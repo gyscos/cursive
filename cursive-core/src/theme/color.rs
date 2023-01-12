@@ -183,16 +183,12 @@ impl Color {
         }
 
         // "light " prefix?
-        if let Some(base) =
-            value.strip_prefix("light ").and_then(BaseColor::parse)
-        {
+        if let Some(base) = value.strip_prefix("light ").and_then(BaseColor::parse) {
             return Some(Color::Light(base));
         }
 
         // "dark " prefix is optional.
-        if let Some(base) =
-            BaseColor::parse(value.strip_prefix("dark ").unwrap_or(value))
-        {
+        if let Some(base) = BaseColor::parse(value.strip_prefix("dark ").unwrap_or(value)) {
             return Some(Color::Dark(base));
         }
 
@@ -226,8 +222,7 @@ fn parse_hex_color(value: &str) -> Option<Color> {
     } else if value.len() == 3 {
         // RGB values between 0 and 5 maybe?
         // Like 050 for green
-        let rgb: Vec<_> =
-            value.chars().map(|c| c as i16 - '0' as i16).collect();
+        let rgb: Vec<_> = value.chars().map(|c| c as i16 - '0' as i16).collect();
 
         assert_eq!(rgb.len(), 3);
         if rgb.iter().all(|i| (0..6).contains(i)) {
@@ -296,15 +291,9 @@ mod tests {
     fn test_parse() {
         assert_eq!(Color::parse("#fff"), Some(Color::Rgb(255, 255, 255)));
 
-        assert_eq!(
-            Color::parse("#abcdef"),
-            Some(Color::Rgb(0xab, 0xcd, 0xef))
-        );
+        assert_eq!(Color::parse("#abcdef"), Some(Color::Rgb(0xab, 0xcd, 0xef)));
 
-        assert_eq!(
-            Color::parse("0xFEDCBA"),
-            Some(Color::Rgb(0xfe, 0xdc, 0xba))
-        );
+        assert_eq!(Color::parse("0xFEDCBA"), Some(Color::Rgb(0xfe, 0xdc, 0xba)));
     }
 
     #[test]

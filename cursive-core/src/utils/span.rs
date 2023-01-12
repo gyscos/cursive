@@ -117,9 +117,7 @@ where
     /// Gives access to the parsed styled spans.
     pub fn spans<'b>(
         &'b self,
-    ) -> impl DoubleEndedIterator<Item = Span<'a, T>>
-           + ExactSizeIterator<Item = Span<'a, T>>
-           + 'b
+    ) -> impl DoubleEndedIterator<Item = Span<'a, T>> + ExactSizeIterator<Item = Span<'a, T>> + 'b
     where
         'a: 'b,
     {
@@ -305,8 +303,7 @@ impl<T> SpannedString<T> {
     /// Iterates on the resolved spans.
     pub fn spans(
         &self,
-    ) -> impl DoubleEndedIterator<Item = Span<'_, T>>
-           + ExactSizeIterator<Item = Span<'_, T>> {
+    ) -> impl DoubleEndedIterator<Item = Span<'_, T>> + ExactSizeIterator<Item = Span<'_, T>> {
         let source = &self.source;
         self.spans.iter().map(move |span| span.resolve(source))
     }
@@ -355,9 +352,7 @@ impl<T> SpannedString<T> {
 }
 
 impl<T> FromIterator<SpannedString<T>> for SpannedString<T> {
-    fn from_iter<I: IntoIterator<Item = SpannedString<T>>>(
-        iter: I,
-    ) -> SpannedString<T> {
+    fn from_iter<I: IntoIterator<Item = SpannedString<T>>>(iter: I) -> SpannedString<T> {
         // It would look simpler to always fold(), starting with an empty string.
         // But this here lets us re-use the allocation from the first string, which is a small win.
         let mut iter = iter.into_iter();

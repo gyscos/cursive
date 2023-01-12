@@ -286,9 +286,7 @@ impl TextArea {
     // next line. To show that, we need to add a fake "ghost" row, just for
     // the cursor.
     fn fix_ghost_row(&mut self) {
-        if self.rows.is_empty()
-            || self.rows.last().unwrap().end != self.content.len()
-        {
+        if self.rows.is_empty() || self.rows.last().unwrap().end != self.content.len() {
             // Add a fake, empty row at the end.
             self.rows.push(Row {
                 start: self.content.len(),
@@ -423,8 +421,7 @@ impl TextArea {
         let last_byte = self.content[self.cursor..]
             .find('\n')
             .map(|i| 1 + i + self.cursor);
-        let last_row = last_byte
-            .map_or(self.rows.len(), |last_byte| self.row_at(last_byte));
+        let last_row = last_byte.map_or(self.rows.len(), |last_byte| self.row_at(last_byte));
         let last_byte = last_byte.unwrap_or(self.content.len());
 
         debug!("Content: `{}` (len={})", self.content, self.content.len());
@@ -442,13 +439,11 @@ impl TextArea {
 
         // First attempt, if scrollbase status didn't change.
         debug!("Rows: {:?}", self.rows);
-        let new_rows =
-            make_rows(&self.content[first_byte..last_byte], available);
+        let new_rows = make_rows(&self.content[first_byte..last_byte], available);
         // How much did this add?
         debug!("New rows: {:?}", new_rows);
         debug!("{}-{}", first_row, last_row);
-        let new_row_count =
-            self.rows.len() + new_rows.len() + first_row - last_row;
+        let new_row_count = self.rows.len() + new_rows.len() + first_row - last_row;
         if !scrollable && new_row_count > size.y {
             // We just changed scrollable status.
             // This changes everything.
@@ -461,8 +456,7 @@ impl TextArea {
 
         // Otherwise, replace stuff.
         let affected_rows = first_row..last_row;
-        let replacement_rows =
-            new_rows.into_iter().map(|row| row.shifted(first_byte));
+        let replacement_rows = new_rows.into_iter().map(|row| row.shifted(first_byte));
         self.rows.splice(affected_rows, replacement_rows);
         self.fix_ghost_row();
         self.scrollbase.set_heights(size.y, self.rows.len());
@@ -547,36 +541,24 @@ impl View for TextArea {
             Event::Char(ch) => self.insert(ch),
             Event::Key(Key::Enter) => self.insert('\n'),
             Event::Key(Key::Backspace) if self.cursor > 0 => self.backspace(),
-            Event::Key(Key::Del) if self.cursor < self.content.len() => {
-                self.delete()
-            }
+            Event::Key(Key::Del) if self.cursor < self.content.len() => self.delete(),
 
             Event::Key(Key::End) => {
                 let row = self.selected_row();
                 self.cursor = self.rows[row].end;
-                if row + 1 < self.rows.len()
-                    && self.cursor == self.rows[row + 1].start
-                {
+                if row + 1 < self.rows.len() && self.cursor == self.rows[row + 1].start {
                     self.move_left();
                 }
             }
             Event::Ctrl(Key::Home) => self.cursor = 0,
             Event::Ctrl(Key::End) => self.cursor = self.content.len(),
-            Event::Key(Key::Home) => {
-                self.cursor = self.rows[self.selected_row()].start
-            }
+            Event::Key(Key::Home) => self.cursor = self.rows[self.selected_row()].start,
             Event::Key(Key::Up) if self.selected_row() > 0 => self.move_up(),
-            Event::Key(Key::Down)
-                if self.selected_row() + 1 < self.rows.len() =>
-            {
-                self.move_down()
-            }
+            Event::Key(Key::Down) if self.selected_row() + 1 < self.rows.len() => self.move_down(),
             Event::Key(Key::PageUp) => self.page_up(),
             Event::Key(Key::PageDown) => self.page_down(),
             Event::Key(Key::Left) if self.cursor > 0 => self.move_left(),
-            Event::Key(Key::Right) if self.cursor < self.content.len() => {
-                self.move_right()
-            }
+            Event::Key(Key::Right) if self.cursor < self.content.len() => self.move_right(),
             Event::Mouse {
                 event: MouseEvent::WheelUp,
                 ..
@@ -597,9 +579,7 @@ impl View for TextArea {
                 offset,
             } if position
                 .checked_sub(offset)
-                .map(|position| {
-                    self.scrollbase.start_drag(position, self.last_size.x)
-                })
+                .map(|position| self.scrollbase.start_drag(position, self.last_size.x))
                 .unwrap_or(false) =>
             {
                 fix_scroll = false;
@@ -617,9 +597,7 @@ impl View for TextArea {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
-            } if !self.rows.is_empty()
-                && position.fits_in_rect(offset, self.last_size) =>
-            {
+            } if !self.rows.is_empty() && position.fits_in_rect(offset, self.last_size) => {
                 if let Some(position) = position.checked_sub(offset) {
                     #[allow(deprecated)]
                     let y = position.y + self.scrollbase.start_line;
@@ -643,10 +621,7 @@ impl View for TextArea {
         EventResult::Consumed(None)
     }
 
-    fn take_focus(
-        &mut self,
-        _: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
         self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 
@@ -669,10 +644,7 @@ impl View for TextArea {
                 .width()
         };
 
-        Rect::from_size(
-            (self.selected_col(), self.selected_row()),
-            (char_width, 1),
-        )
+        Rect::from_size((self.selected_col(), self.selected_row()), (char_width, 1))
     }
 }
 

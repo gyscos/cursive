@@ -31,8 +31,7 @@ fn boxed(e: impl std::error::Error + 'static) -> Box<dyn std::error::Error> {
 /// * Pancurses
 /// * Ncurses
 /// * Dummy
-pub fn try_default(
-) -> Result<Box<dyn cursive_core::backend::Backend>, Box<dyn std::error::Error>>
+pub fn try_default() -> Result<Box<dyn cursive_core::backend::Backend>, Box<dyn std::error::Error>>
 {
     cfg_if::cfg_if! {
         if #[cfg(feature = "blt-backend")] {

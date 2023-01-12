@@ -4,8 +4,8 @@ use crate::backend::Backend;
 use crate::direction::Orientation;
 use crate::rect::Rect;
 use crate::theme::{
-    BorderStyle, Color, ColorPair, ColorStyle, Effect, PaletteColor,
-    PaletteStyle, Style, StyleType, Theme,
+    BorderStyle, Color, ColorPair, ColorStyle, Effect, PaletteColor, PaletteStyle, Style,
+    StyleType, Theme,
 };
 use crate::utils::lines::simple::{prefix, suffix};
 use crate::with::With;
@@ -75,11 +75,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// But nobody needs to know that.
     #[doc(hidden)]
-    pub fn new<T: Into<Vec2>>(
-        size: T,
-        theme: &'a Theme,
-        backend: &'b dyn Backend,
-    ) -> Self {
+    pub fn new<T: Into<Vec2>>(size: T, theme: &'a Theme, backend: &'b dyn Backend) -> Self {
         let size = size.into();
         Printer {
             offset: Vec2::zero(),
@@ -207,8 +203,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
             // TODO: use a different prefix method that is *at least* the width
             // (and not *at most*)
-            let tail =
-                suffix(text.graphemes(true), text_width - hidden_part.x, "");
+            let tail = suffix(text.graphemes(true), text_width - hidden_part.x, "");
             let skipped_len = text.len() - tail.length;
             let skipped_width = text_width - tail.width;
             assert_eq!(text[..skipped_len].width(), skipped_width);
@@ -245,12 +240,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     }
 
     /// Prints a vertical line using the given character.
-    pub fn print_vline<T: Into<Vec2>>(
-        &self,
-        start: T,
-        height: usize,
-        c: &str,
-    ) {
+    pub fn print_vline<T: Into<Vec2>>(&self, start: T, height: usize, c: &str) {
         let start = start.into();
 
         // Here again, we can abort if we're trying to print too far right or
@@ -447,12 +437,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// # let printer = Printer::new((6,4), &t, &*b);
     /// printer.print_box((0, 0), (6, 4), false);
     /// ```
-    pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(
-        &self,
-        start: T,
-        size: S,
-        invert: bool,
-    ) {
+    pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S, invert: bool) {
         let start = start.into();
         let size = size.into();
 

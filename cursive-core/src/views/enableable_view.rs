@@ -9,21 +9,22 @@ use crate::Printer;
 /// # Examples
 ///
 /// ```
-/// use cursive_core::Cursive;
-/// use cursive_core::views::{Button, EnableableView, Checkbox, LinearLayout};
 /// use cursive_core::traits::Nameable;
+/// use cursive_core::views::{Button, Checkbox, EnableableView, LinearLayout};
+/// use cursive_core::Cursive;
 ///
 /// let mut siv = Cursive::new();
 ///
-/// siv.add_layer(LinearLayout::vertical()
-///     .child(EnableableView::new(Checkbox::new()).with_name("my_view"))
-///     .child(Button::new("Toggle", |s| {
-///         s.call_on_name("my_view", |v: &mut EnableableView<Checkbox>| {
-///             // This will disable (or re-enable) the checkbox, preventing the user from
-///             // interacting with it.
-///             v.set_enabled(!v.is_enabled());
-///         });
-///     }))
+/// siv.add_layer(
+///     LinearLayout::vertical()
+///         .child(EnableableView::new(Checkbox::new()).with_name("my_view"))
+///         .child(Button::new("Toggle", |s| {
+///             s.call_on_name("my_view", |v: &mut EnableableView<Checkbox>| {
+///                 // This will disable (or re-enable) the checkbox, preventing the user from
+///                 // interacting with it.
+///                 v.set_enabled(!v.is_enabled());
+///             });
+///         })),
 /// );
 /// ```
 pub struct EnableableView<V> {

@@ -9,7 +9,9 @@ fn main() {
     log::info!("Starting!");
 
     let mut siv = cursive::default();
-    siv.add_layer(cursive::views::Dialog::text("Press ~ to open the console.\nPress l to generate logs.\nPress q to quit."));
+    siv.add_layer(cursive::views::Dialog::text(
+        "Press ~ to open the console.\nPress l to generate logs.\nPress q to quit.",
+    ));
     siv.add_global_callback('q', cursive::Cursive::quit);
     siv.add_global_callback('~', cursive::Cursive::toggle_debug_console);
 

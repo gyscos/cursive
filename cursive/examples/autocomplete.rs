@@ -88,7 +88,5 @@ fn on_submit(siv: &mut Cursive, query: &str) {
 fn show_next_window(siv: &mut Cursive, city: &str) {
     siv.pop_layer();
     let text = format!("{city} is a great city!");
-    siv.add_layer(
-        Dialog::around(TextView::new(text)).button("Quit", |s| s.quit()),
-    );
+    siv.add_layer(Dialog::around(TextView::new(text)).button("Quit", |s| s.quit()));
 }

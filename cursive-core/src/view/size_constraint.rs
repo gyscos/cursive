@@ -25,13 +25,9 @@ impl SizeConstraint {
     /// When `available` is offered to the `ResizedView`.
     pub fn available(self, available: usize) -> usize {
         match self {
-            SizeConstraint::Free
-            | SizeConstraint::Full
-            | SizeConstraint::AtLeast(_) => available,
+            SizeConstraint::Free | SizeConstraint::Full | SizeConstraint::AtLeast(_) => available,
             // If the available space is too small, always give in.
-            SizeConstraint::Fixed(value) | SizeConstraint::AtMost(value) => {
-                min(value, available)
-            }
+            SizeConstraint::Fixed(value) | SizeConstraint::AtMost(value) => min(value, available),
         }
     }
 
@@ -41,7 +37,7 @@ impl SizeConstraint {
     pub fn result(self, (result, available): (usize, usize)) -> usize {
         match self {
             SizeConstraint::AtLeast(value) if result < value => value, /* max(result, value) */
-            SizeConstraint::AtMost(value) if result > value => value, /* min(result, value) */
+            SizeConstraint::AtMost(value) if result > value => value,  /* min(result, value) */
             SizeConstraint::Fixed(value) => value,
             // Explanation required: why return result if result > available?
             SizeConstraint::Full if available > result => available,

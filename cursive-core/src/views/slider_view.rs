@@ -166,12 +166,8 @@ impl SliderView {
 impl View for SliderView {
     fn draw(&self, printer: &Printer) {
         match self.orientation {
-            Orientation::Vertical => {
-                printer.print_vline((0, 0), self.max_value, "|")
-            }
-            Orientation::Horizontal => {
-                printer.print_hline((0, 0), self.max_value, "-")
-            }
+            Orientation::Vertical => printer.print_vline((0, 0), self.max_value, "|"),
+            Orientation::Horizontal => printer.print_hline((0, 0), self.max_value, "-"),
         }
 
         let style = if printer.focused {
@@ -191,26 +187,14 @@ impl View for SliderView {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
-            Event::Key(Key::Left)
-                if self.orientation == Orientation::Horizontal =>
-            {
+            Event::Key(Key::Left) if self.orientation == Orientation::Horizontal => {
                 self.slide_minus()
             }
-            Event::Key(Key::Right)
-                if self.orientation == Orientation::Horizontal =>
-            {
+            Event::Key(Key::Right) if self.orientation == Orientation::Horizontal => {
                 self.slide_plus()
             }
-            Event::Key(Key::Up)
-                if self.orientation == Orientation::Vertical =>
-            {
-                self.slide_minus()
-            }
-            Event::Key(Key::Down)
-                if self.orientation == Orientation::Vertical =>
-            {
-                self.slide_plus()
-            }
+            Event::Key(Key::Up) if self.orientation == Orientation::Vertical => self.slide_minus(),
+            Event::Key(Key::Down) if self.orientation == Orientation::Vertical => self.slide_plus(),
             Event::Key(Key::Enter) if self.on_enter.is_some() => {
                 let value = self.value;
                 let cb = self.on_enter.clone().unwrap();
@@ -225,10 +209,7 @@ impl View for SliderView {
             } if self.dragging => {
                 let position = position.saturating_sub(offset);
                 let position = self.orientation.get(&position);
-                let position = ::std::cmp::min(
-                    position,
-                    self.max_value.saturating_sub(1),
-                );
+                let position = ::std::cmp::min(position, self.max_value.saturating_sub(1));
                 self.value = position;
                 self.get_change_result()
             }
@@ -254,10 +235,7 @@ impl View for SliderView {
         }
     }
 
-    fn take_focus(
-        &mut self,
-        _: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
         Ok(EventResult::Consumed(None))
     }
 }

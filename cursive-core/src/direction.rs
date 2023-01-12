@@ -88,12 +88,8 @@ impl Orientation {
     /// * For a vertical view, returns `(Max(x), Sum(y))`.
     pub fn stack<T: Iterator<Item = Vec2>>(self, iter: T) -> Vec2 {
         match self {
-            Orientation::Horizontal => {
-                iter.fold(Vec2::zero(), |a, b| a.stack_horizontal(&b))
-            }
-            Orientation::Vertical => {
-                iter.fold(Vec2::zero(), |a, b| a.stack_vertical(&b))
-            }
+            Orientation::Horizontal => iter.fold(Vec2::zero(), |a, b| a.stack_horizontal(&b)),
+            Orientation::Vertical => iter.fold(Vec2::zero(), |a, b| a.stack_vertical(&b)),
         }
     }
 
@@ -288,8 +284,9 @@ impl Absolute {
     /// orientation (ex: `Left` and `Vertical`).
     pub fn relative(self, orientation: Orientation) -> Option<Relative> {
         match (orientation, self) {
-            (Orientation::Horizontal, Absolute::Left)
-            | (Orientation::Vertical, Absolute::Up) => Some(Relative::Front),
+            (Orientation::Horizontal, Absolute::Left) | (Orientation::Vertical, Absolute::Up) => {
+                Some(Relative::Front)
+            }
             (Orientation::Horizontal, Absolute::Right)
             | (Orientation::Vertical, Absolute::Down) => Some(Relative::Back),
             _ => None,

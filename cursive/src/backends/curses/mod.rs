@@ -124,9 +124,7 @@ fn find_closest(color: Color, max_colors: i16) -> i16 {
             let b = i16::from(b > 127);
             r + 2 * g + 4 * b
         }
-        Color::RgbLowRes(r, g, b) if max_colors >= 256 => {
-            i16::from(16 + 36 * r + 6 * g + b)
-        }
+        Color::RgbLowRes(r, g, b) if max_colors >= 256 => i16::from(16 + 36 * r + 6 * g + b),
         Color::RgbLowRes(r, g, b) => {
             let r = i16::from(r > 2);
             let g = i16::from(g > 2);

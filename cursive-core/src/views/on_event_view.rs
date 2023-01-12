@@ -164,21 +164,24 @@ impl<T> OnEventView<T> {
     /// ```rust
     /// # use cursive_core::views::{DummyView, OnEventView};
     /// # use cursive_core::event::{Event, EventTrigger, MouseEvent, EventResult};
-    /// let view = OnEventView::new(DummyView)
-    ///     .on_event_inner(
-    ///         EventTrigger::mouse(),
-    ///         |d: &mut DummyView, e: &Event| {
-    ///             if let &Event::Mouse { event: MouseEvent::Press(_), .. } = e {
-    ///                 // Do something on mouse press
-    ///                 Some(EventResult::with_cb(|s| {
-    ///                     s.pop_layer();
-    ///                 }))
-    ///             } else {
-    ///                 // Otherwise, don't do anything
-    ///                 None
-    ///             }
+    /// let view = OnEventView::new(DummyView).on_event_inner(
+    ///     EventTrigger::mouse(),
+    ///     |d: &mut DummyView, e: &Event| {
+    ///         if let &Event::Mouse {
+    ///             event: MouseEvent::Press(_),
+    ///             ..
+    ///         } = e
+    ///         {
+    ///             // Do something on mouse press
+    ///             Some(EventResult::with_cb(|s| {
+    ///                 s.pop_layer();
+    ///             }))
+    ///         } else {
+    ///             // Otherwise, don't do anything
+    ///             None
     ///         }
-    ///     );
+    ///     },
+    /// );
     /// ```
     #[must_use]
     pub fn on_event_inner<F, E>(self, trigger: E, cb: F) -> Self
@@ -196,9 +199,7 @@ impl<T> OnEventView<T> {
         F: Fn(&mut Cursive) + 'static,
     {
         let cb = Callback::from_fn(cb);
-        let action = move |_: &mut T, _: &Event| {
-            Some(EventResult::Consumed(Some(cb.clone())))
-        };
+        let action = move |_: &mut T, _: &Event| Some(EventResult::Consumed(Some(cb.clone())));
 
         self.set_on_event_inner(trigger, action);
     }
@@ -213,9 +214,7 @@ impl<T> OnEventView<T> {
     {
         let cb = Callback::from_fn(cb);
         // We want to clone the Callback every time we call the closure
-        let action = move |_: &mut T, _: &Event| {
-            Some(EventResult::Consumed(Some(cb.clone())))
-        };
+        let action = move |_: &mut T, _: &Event| Some(EventResult::Consumed(Some(cb.clone())));
 
         self.set_on_pre_event_inner(trigger, action);
     }
@@ -305,9 +304,7 @@ impl<T: View> ViewWrapper for OnEventView<T> {
                 // Let's have a closer look then, shall we?
                 callbacks
                     .iter()
-                    .filter(|&(_, action)| {
-                        action.phase == TriggerPhase::AfterChild
-                    })
+                    .filter(|&(_, action)| action.phase == TriggerPhase::AfterChild)
                     .filter(|&(trigger, _)| trigger.apply(&event))
                     .filter_map(|(_, action)| (*action.callback)(view, &event))
                     .fold(EventResult::Ignored, EventResult::and)

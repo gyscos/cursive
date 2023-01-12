@@ -106,11 +106,7 @@ impl<T: 'static> RadioGroup<T> {
     /// Adds a new button to the group.
     ///
     /// The button will display `label` next to it, and will embed `value`.
-    pub fn button<S: Into<StyledString>>(
-        &mut self,
-        value: T,
-        label: S,
-    ) -> RadioButton<T> {
+    pub fn button<S: Into<StyledString>>(&mut self, value: T, label: S) -> RadioButton<T> {
         let count = self.state.borrow().values.len();
         self.state.borrow_mut().values.push(Rc::new(value));
         RadioButton::new(Rc::clone(&self.state), count, label.into())
@@ -133,10 +129,7 @@ impl<T: 'static> RadioGroup<T> {
     }
 
     /// Sets a callback to be used when the selection changes.
-    pub fn set_on_change<F: 'static + Fn(&mut Cursive, &T)>(
-        &mut self,
-        on_change: F,
-    ) {
+    pub fn set_on_change<F: 'static + Fn(&mut Cursive, &T)>(&mut self, on_change: F) {
         self.state.borrow_mut().on_change = Some(Rc::new(on_change));
     }
 
@@ -144,10 +137,7 @@ impl<T: 'static> RadioGroup<T> {
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn on_change<F: 'static + Fn(&mut Cursive, &T)>(
-        self,
-        on_change: F,
-    ) -> Self {
+    pub fn on_change<F: 'static + Fn(&mut Cursive, &T)>(self, on_change: F) -> Self {
         // We need .with for the thread local, so we can't import the With trait...
         crate::With::with(self, |s| s.set_on_change(on_change))
     }
@@ -155,10 +145,7 @@ impl<T: 'static> RadioGroup<T> {
 
 impl RadioGroup<String> {
     /// Adds a button, using the label itself as value.
-    pub fn button_str<S: Into<String>>(
-        &mut self,
-        text: S,
-    ) -> RadioButton<String> {
+    pub fn button_str<S: Into<String>>(&mut self, text: S) -> RadioButton<String> {
         let text = text.into();
         self.button(text.clone(), text)
     }
@@ -192,11 +179,7 @@ pub struct RadioButton<T> {
 impl<T: 'static> RadioButton<T> {
     impl_enabled!(self.enabled);
 
-    fn new(
-        state: Rc<RefCell<SharedState<T>>>,
-        id: usize,
-        label: StyledString,
-    ) -> Self {
+    fn new(state: Rc<RefCell<SharedState<T>>>, id: usize, label: StyledString) -> Self {
         RadioButton {
             state,
             id,
@@ -208,11 +191,7 @@ impl<T: 'static> RadioButton<T> {
     /// Create a new button on the global group pool.
     ///
     /// If no group exist for the given `key` and type `T`, one will be created.
-    pub fn global<S: Into<StyledString>>(
-        key: &str,
-        value: T,
-        label: S,
-    ) -> Self {
+    pub fn global<S: Into<StyledString>>(key: &str, value: T, label: S) -> Self {
         RadioGroup::with_global(key, move |group| group.button(value, label))
     }
 
@@ -269,11 +248,7 @@ impl<T: 'static> RadioButton<T> {
     /// Build a button from a radio group.
     ///
     /// Equivalent to `group.button(value, label)`
-    pub fn from_group<S: Into<String>>(
-        group: &mut RadioGroup<T>,
-        value: T,
-        label: S,
-    ) -> Self {
+    pub fn from_group<S: Into<String>>(group: &mut RadioGroup<T>, value: T, label: S) -> Self {
         group.button(value, label)
     }
 }
@@ -282,10 +257,7 @@ impl RadioButton<String> {
     /// Build a button from a radio group.
     ///
     /// Equivalent to `group.button_str(label)`
-    pub fn from_group_str<S: Into<String>>(
-        group: &mut RadioGroup<String>,
-        label: S,
-    ) -> Self {
+    pub fn from_group_str<S: Into<String>>(group: &mut RadioGroup<String>, label: S) -> Self {
         group.button_str(label)
     }
 }
@@ -295,18 +267,13 @@ impl<T: 'static> View for RadioButton<T> {
         self.req_size()
     }
 
-    fn take_focus(
-        &mut self,
-        _: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
         self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 
     fn draw(&self, printer: &Printer) {
         if self.enabled && printer.enabled {
-            printer.with_selection(printer.focused, |printer| {
-                self.draw_internal(printer)
-            });
+            printer.with_selection(printer.focused, |printer| self.draw_internal(printer));
         } else {
             printer.with_style(PaletteStyle::Secondary, |printer| {
                 self.draw_internal(printer)
@@ -325,9 +292,7 @@ impl<T: 'static> View for RadioButton<T> {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, self.req_size()) => {
-                self.select()
-            }
+            } if position.fits_in_rect(offset, self.req_size()) => self.select(),
             _ => EventResult::Ignored,
         }
     }

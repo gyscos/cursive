@@ -1,9 +1,6 @@
 use std::iter::FromIterator;
 
-use super::{
-    Color, ColorPair, ColorStyle, ColorType, Effect, Palette, PaletteColor,
-    PaletteStyle,
-};
+use super::{Color, ColorPair, ColorStyle, ColorType, Effect, Palette, PaletteColor, PaletteStyle};
 use enumset::EnumSet;
 
 /// Combine a color and an effect.

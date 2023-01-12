@@ -70,33 +70,22 @@ impl<'a> Iterator for Parser<'a> {
             match next {
                 Event::Start(tag) => match tag {
                     // Add to the stack!
-                    Tag::Emphasis => {
-                        self.stack.push(Style::from(Effect::Italic))
-                    }
+                    Tag::Emphasis => self.stack.push(Style::from(Effect::Italic)),
                     Tag::Heading(level, ..) => {
-                        return Some(
-                            self.literal(format!(
-                                "{} ",
-                                heading(level as usize)
-                            )),
-                        )
+                        return Some(self.literal(format!("{} ", heading(level as usize))))
                     }
                     Tag::BlockQuote => return Some(self.literal("> ")),
                     Tag::Link(_, _, _) => return Some(self.literal("[")),
                     Tag::CodeBlock(_) => return Some(self.literal("```")),
                     Tag::Strong => self.stack.push(Style::from(Effect::Bold)),
-                    Tag::Paragraph if !self.first => {
-                        return Some(self.literal("\n\n"))
-                    }
+                    Tag::Paragraph if !self.first => return Some(self.literal("\n\n")),
                     _ => (),
                 },
                 Event::End(tag) => match tag {
                     // Remove from stack!
                     Tag::Paragraph if self.first => self.first = false,
                     Tag::Heading(..) => return Some(self.literal("\n\n")),
-                    Tag::Link(_, link, _) => {
-                        return Some(self.literal(format!("]({link})")))
-                    }
+                    Tag::Link(_, link, _) => return Some(self.literal(format!("]({link})"))),
                     Tag::CodeBlock(_) => return Some(self.literal("```")),
                     Tag::Emphasis | Tag::Strong => {
                         self.stack.pop().unwrap();
@@ -152,8 +141,7 @@ Attention
 ====
 I *really* love __Cursive__!";
         let spans = parse_spans(input);
-        let spans: Vec<_> =
-            spans.iter().map(|span| span.resolve(input)).collect();
+        let spans: Vec<_> = spans.iter().map(|span| span.resolve(input)).collect();
 
         // println!("{:?}", spans);
         assert_eq!(

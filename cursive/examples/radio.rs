@@ -1,6 +1,4 @@
-use cursive::views::{
-    Dialog, DummyView, LinearLayout, RadioButton, RadioGroup,
-};
+use cursive::views::{Dialog, DummyView, LinearLayout, RadioButton, RadioGroup};
 
 // This example uses radio buttons.
 #[derive(Debug)]

@@ -180,11 +180,7 @@ impl ColorStyle {
     }
 
     /// Return the color pair that this style represents.
-    pub fn resolve(
-        &self,
-        palette: &Palette,
-        previous: ColorPair,
-    ) -> ColorPair {
+    pub fn resolve(&self, palette: &Palette, previous: ColorPair) -> ColorPair {
         ColorPair {
             front: self.front.resolve(palette, previous.front),
             back: self.back.resolve(palette, previous.back),
@@ -310,11 +306,7 @@ impl FromStr for ColorType {
     type Err = super::NoSuchColor;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s == "inherit_parent"
-            || s == "InheritParent"
-            || s == "inherit parent"
-            || s == "parent"
-        {
+        if s == "inherit_parent" || s == "InheritParent" || s == "inherit parent" || s == "parent" {
             return Ok(ColorType::InheritParent);
         }
 

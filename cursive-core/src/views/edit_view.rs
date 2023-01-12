@@ -52,9 +52,7 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 ///         )
 ///         .button("Ok", |s| {
 ///             let name = s
-///                 .call_on_name("name", |view: &mut EditView| {
-///                     view.get_content()
-///                 })
+///                 .call_on_name("name", |view: &mut EditView| view.get_content())
 ///                 .unwrap();
 ///             show_popup(s, &name);
 ///         }),
@@ -66,10 +64,7 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 ///     } else {
 ///         let content = format!("Hello {}!", name);
 ///         s.pop_layer();
-///         s.add_layer(
-///             Dialog::around(TextView::new(content))
-///                 .button("Quit", |s| s.quit()),
-///         );
+///         s.add_layer(Dialog::around(TextView::new(content)).button("Quit", |s| s.quit()));
 ///     }
 /// }
 /// ```
@@ -477,11 +472,8 @@ impl EditView {
             // Look at the content before the cursor (we will print its tail).
             // From the end, count the length until we reach `available`.
             // Then sum the byte lengths.
-            let suffix_length = simple_suffix(
-                &self.content[self.offset..self.cursor],
-                available,
-            )
-            .length;
+            let suffix_length =
+                simple_suffix(&self.content[self.offset..self.cursor], available).length;
 
             assert!(suffix_length <= self.cursor);
             self.offset = self.cursor - suffix_length;
@@ -492,8 +484,7 @@ impl EditView {
         // If we have too much space
         if self.content[self.offset..].width() < self.last_length {
             assert!(self.last_length >= 1);
-            let suffix_length =
-                simple_suffix(&self.content, self.last_length - 1).length;
+            let suffix_length = simple_suffix(&self.content, self.last_length - 1).length;
 
             assert!(self.content.len() >= suffix_length);
             self.offset = self.content.len() - suffix_length;
@@ -534,13 +525,8 @@ impl View for EditView {
                     } else {
                         printer.print((0, 0), &self.content);
                     }
-                    let filler_len =
-                        (printer.size.x - width) / self.filler.width();
-                    printer.print_hline(
-                        (width, 0),
-                        filler_len,
-                        self.filler.as_str(),
-                    );
+                    let filler_len = (printer.size.x - width) / self.filler.width();
+                    printer.print_hline((width, 0), filler_len, self.filler.as_str());
                 } else {
                     let content = &self.content[self.offset..];
                     let display_bytes = content
@@ -566,13 +552,8 @@ impl View for EditView {
                     }
 
                     if width < self.last_length {
-                        let filler_len =
-                            (self.last_length - width) / self.filler.width();
-                        printer.print_hline(
-                            (width, 0),
-                            filler_len,
-                            self.filler.as_str(),
-                        );
+                        let filler_len = (self.last_length - width) / self.filler.width();
+                        printer.print_hline((width, 0), filler_len, self.filler.as_str());
                     }
                 }
             });
@@ -608,10 +589,7 @@ impl View for EditView {
         self.last_length = size.x;
     }
 
-    fn take_focus(
-        &mut self,
-        _: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
         self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 
@@ -679,11 +657,7 @@ impl View for EditView {
             } if position.fits_in_rect(offset, (self.last_length, 1)) => {
                 if let Some(position) = position.checked_sub(offset) {
                     self.cursor = self.offset
-                        + simple_prefix(
-                            &self.content[self.offset..],
-                            position.x,
-                        )
-                        .length;
+                        + simple_prefix(&self.content[self.offset..], position.x).length;
                 }
             }
             _ => return EventResult::Ignored,
@@ -763,14 +737,13 @@ crate::var_recipe!("EditView.with_content", |config, context| {
 
         // Hopefully resolving this config as callback is what will pull the
         // "content" variable we just set.
-        let callback: Rc<dyn Fn(&mut Cursive)> =
-            match context.resolve(&callback) {
-                Ok(callback) => callback,
-                Err(err) => {
-                    log::error!("Could not resolve callback: {err:?}");
-                    return;
-                }
-            };
+        let callback: Rc<dyn Fn(&mut Cursive)> = match context.resolve(&callback) {
+            Ok(callback) => callback,
+            Err(err) => {
+                log::error!("Could not resolve callback: {err:?}");
+                return;
+            }
+        };
 
         (*callback)(s);
     });

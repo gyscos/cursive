@@ -45,9 +45,7 @@ impl Backend {
             prev_frame: RefCell::new(None),
             current_frame: RefCell::new(ObservedScreen::new(size)),
             size: Cell::new(size),
-            current_style: RefCell::new(Rc::new(
-                DEFAULT_OBSERVED_STYLE.clone(),
-            )),
+            current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE.clone())),
             screen_channel: crossbeam_channel::unbounded(),
         };
 
@@ -88,8 +86,7 @@ impl backend::Backend for Backend {
 
     fn refresh(&mut self) {
         let size = self.size.get();
-        let current_frame =
-            self.current_frame.replace(ObservedScreen::new(size));
+        let current_frame = self.current_frame.replace(ObservedScreen::new(size));
         self.prev_frame.replace(Some(current_frame.clone()));
         self.screen_channel.0.send(current_frame).unwrap();
     }
@@ -118,8 +115,7 @@ impl backend::Backend for Backend {
             for _ in 0..grapheme.width() - 1 {
                 offset += 1;
                 let spos = pos + Vec2::new(idx + offset, 0);
-                screen[spos] =
-                    Some(ObservedCell::new(spos, style.clone(), None));
+                screen[spos] = Some(ObservedCell::new(spos, style.clone(), None));
             }
         }
     }

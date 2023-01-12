@@ -61,9 +61,8 @@ impl<T> SizeCache<T> {
     ///
     /// Similar to `build()`, but includes the extra field.
     pub fn build_extra(size: Vec2, req: Vec2, extra: XY<T>) -> XY<Self> {
-        XY::zip3(size, req, extra).map(|(size, req, extra)| {
-            SizeCache::new_extra(size, size >= req, extra)
-        })
+        XY::zip3(size, req, extra)
+            .map(|(size, req, extra)| SizeCache::new_extra(size, size >= req, extra))
     }
 
     /// Returns `true` if `self` is still valid for the given `request`.

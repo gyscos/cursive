@@ -30,10 +30,9 @@ impl View for DebugView {
         // Only print the last logs, so skip what doesn't fit
         let skipped = logs.len().saturating_sub(printer.size.y);
 
-        let format = time::format_description::parse(
-            "[hour]:[minute]:[second].[subsecond digits:3]",
-        )
-        .unwrap();
+        let format =
+            time::format_description::parse("[hour]:[minute]:[second].[subsecond digits:3]")
+                .unwrap();
 
         for (i, record) in logs.iter().skip(skipped).enumerate() {
             // TODO: Apply style to message? (Ex: errors in bold?)

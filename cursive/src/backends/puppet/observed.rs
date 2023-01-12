@@ -65,11 +65,7 @@ pub struct ObservedCell {
 
 impl ObservedCell {
     /// Constructor
-    pub fn new(
-        pos: Vec2,
-        style: Rc<ObservedStyle>,
-        letter: Option<String>,
-    ) -> Self {
+    pub fn new(pos: Vec2, style: Rc<ObservedStyle>, letter: Option<String>) -> Self {
         let letter: GraphemePart = match letter {
             Some(s) => GraphemePart::Begin(s),
             None => GraphemePart::Continuation,
@@ -205,20 +201,16 @@ impl ObservedScreen {
                         .graphemes(true)
                         .nth(pattern_cursor)
                         .unwrap_or_else(|| {
-                            panic!(
-                                "Found no char at cursor {} in {}",
-                                pattern_cursor, &pattern
-                            )
+                            panic!("Found no char at cursor {} in {}", pattern_cursor, &pattern)
                         });
 
                     let pos_it = Vec2::new(x + pos_cursor, y);
 
-                    let found_symbol: Option<&String> =
-                        if let Some(ref cell) = self[pos_it] {
-                            cell.letter.as_option()
-                        } else {
-                            None
-                        };
+                    let found_symbol: Option<&String> = if let Some(ref cell) = self[pos_it] {
+                        cell.letter.as_option()
+                    } else {
+                        None
+                    };
 
                     match found_symbol {
                         Some(screen_symbol) => {
@@ -245,11 +237,7 @@ impl ObservedScreen {
                 }
 
                 if pattern_cursor == pattern.graphemes(true).count() {
-                    hits.push(ObservedLine::new(
-                        self,
-                        Vec2::new(x, y),
-                        pos_cursor,
-                    ));
+                    hits.push(ObservedLine::new(self, Vec2::new(x, y), pos_cursor));
                 }
             }
         }
@@ -301,11 +289,7 @@ pub trait ObservedPieceInterface {
         assert!(self.max().x + down_right.x <= self.parent().size.x);
         assert!(self.max().y + down_right.y <= self.parent().size.y);
 
-        ObservedPiece::new(
-            self.parent(),
-            self.min() - up_left,
-            self.max() + down_right,
-        )
+        ObservedPiece::new(self.parent(), self.min() - up_left, self.max() + down_right)
     }
 }
 
@@ -358,11 +342,7 @@ pub struct ObservedLine<'a> {
 }
 
 impl<'a> ObservedLine<'a> {
-    fn new(
-        parent: &'a ObservedScreen,
-        line_start: Vec2,
-        line_len: usize,
-    ) -> Self {
+    fn new(parent: &'a ObservedScreen, line_start: Vec2, line_len: usize) -> Self {
         ObservedLine {
             line_start,
             line_len,
@@ -376,9 +356,7 @@ impl<'a> ObservedLine<'a> {
     #[must_use]
     pub fn expanded_line(&self, left: usize, right: usize) -> Self {
         assert!(left <= self.line_start.x);
-        assert!(
-            self.line_start.x + self.line_len + right <= self.parent.size.x
-        );
+        assert!(self.line_start.x + self.line_len + right <= self.parent.size.x);
 
         ObservedLine {
             line_start: Vec2::new(self.line_start.x - left, self.line_start.y),
@@ -443,8 +421,7 @@ mod tests {
 
     /// Expecting fake_screen to be square, # will be replaced with blank.
     fn get_observed_screen(fake_screen: &Vec<&str>) -> ObservedScreen {
-        let observed_style: Rc<ObservedStyle> =
-            Rc::new(DEFAULT_OBSERVED_STYLE.clone());
+        let observed_style: Rc<ObservedStyle> = Rc::new(DEFAULT_OBSERVED_STYLE.clone());
 
         let height = fake_screen.len();
         let width = fake_screen[0].width();
@@ -475,8 +452,7 @@ mod tests {
 
     #[test]
     fn test_test() {
-        let fake_screen: Vec<&'static str> =
-            vec!["..hello***", "!!##$$$$$*", ".hello^^^^"];
+        let fake_screen: Vec<&'static str> = vec!["..hello***", "!!##$$$$$*", ".hello^^^^"];
 
         let os = get_observed_screen(&fake_screen);
 
@@ -489,8 +465,7 @@ mod tests {
 
     #[test]
     fn find_occurrences_no_blanks() {
-        let fake_screen: Vec<&'static str> =
-            vec!["..hello***", "!!##$$$$$*", ".hello^^^^"];
+        let fake_screen: Vec<&'static str> = vec!["..hello***", "!!##$$$$$*", ".hello^^^^"];
 
         let os = get_observed_screen(&fake_screen);
 

@@ -22,10 +22,7 @@ fn main() {
                             running: true,
                         })
                         .with_draw(|s, printer| {
-                            printer.print(
-                                (0, 1),
-                                &format!("{:.2?}", s.elapsed()),
-                            );
+                            printer.print((0, 1), &format!("{:.2?}", s.elapsed()));
                         })
                         .with_name("stopwatch")
                         .fixed_size((8, 3)),

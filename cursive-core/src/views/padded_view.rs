@@ -31,13 +31,7 @@ impl<V> PaddedView<V> {
     }
 
     /// Wraps `view` in a new `PaddedView` with the given margins.
-    pub fn lrtb(
-        left: usize,
-        right: usize,
-        top: usize,
-        bottom: usize,
-        view: V,
-    ) -> Self {
+    pub fn lrtb(left: usize, right: usize, top: usize, bottom: usize, view: V) -> Self {
         Self::new(Margins::lrtb(left, right, top, bottom), view)
     }
 

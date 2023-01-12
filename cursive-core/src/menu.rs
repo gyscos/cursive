@@ -88,9 +88,7 @@ impl Item {
     pub fn label(&self) -> &str {
         match *self {
             Item::Delimiter => "│",
-            Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => {
-                label.source()
-            }
+            Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => label.source(),
         }
     }
 
@@ -99,9 +97,7 @@ impl Item {
     /// Only labels and subtrees can be enabled. Delimiters
     pub fn is_enabled(&self) -> bool {
         match *self {
-            Item::Leaf { enabled, .. } | Item::Subtree { enabled, .. } => {
-                enabled
-            }
+            Item::Leaf { enabled, .. } | Item::Subtree { enabled, .. } => enabled,
             Item::Delimiter => false,
         }
     }

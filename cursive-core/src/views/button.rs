@@ -40,11 +40,8 @@ impl Button {
         S: Into<StyledString>,
     {
         let label = label.into();
-        let label: StyledString = StyledString::concatenate([
-            StyledString::plain("<"),
-            label,
-            StyledString::plain(">"),
-        ]);
+        let label: StyledString =
+            StyledString::concatenate([StyledString::plain("<"), label, StyledString::plain(">")]);
 
         Self::new_raw(label, cb)
     }
@@ -149,8 +146,7 @@ impl View for Button {
             PaletteStyle::Primary
         };
 
-        let offset =
-            HAlign::Center.get_offset(self.label.width(), printer.size.x);
+        let offset = HAlign::Center.get_offset(self.label.width(), printer.size.x);
 
         printer.with_style(style, |printer| {
             // TODO: do we want to "fill" the button highlight color to the full given size?
@@ -185,26 +181,19 @@ impl View for Button {
         let width = self.label.width();
         let self_offset = HAlign::Center.get_offset(width, self.last_size.x);
         match event {
-            Event::Key(Key::Enter) => {
-                EventResult::Consumed(Some(self.callback.clone()))
-            }
+            Event::Key(Key::Enter) => EventResult::Consumed(Some(self.callback.clone())),
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if position
-                .fits_in_rect(offset + (self_offset, 0), self.req_size()) =>
-            {
+            } if position.fits_in_rect(offset + (self_offset, 0), self.req_size()) => {
                 EventResult::Consumed(Some(self.callback.clone()))
             }
             _ => EventResult::Ignored,
         }
     }
 
-    fn take_focus(
-        &mut self,
-        _: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
         self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 

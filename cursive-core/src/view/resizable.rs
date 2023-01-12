@@ -7,11 +7,7 @@ use crate::Vec2;
 /// [`ResizedView`]: ../views/struct.ResizedView.html
 pub trait Resizable: View + Sized {
     /// Wraps `self` in a `ResizedView` with the given size constraints.
-    fn resized(
-        self,
-        width: SizeConstraint,
-        height: SizeConstraint,
-    ) -> ResizedView<Self> {
+    fn resized(self, width: SizeConstraint, height: SizeConstraint) -> ResizedView<Self> {
         ResizedView::new(width, height, self)
     }
 

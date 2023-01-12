@@ -17,8 +17,7 @@ fn main() {
     // We add the P callback on the textview only (and not globally),
     // so that we can't call it when the popup is already visible.
     siv.add_layer(
-        OnEventView::new(TextView::new(content).with_name("text"))
-            .on_event('p', show_popup),
+        OnEventView::new(TextView::new(content).with_name("text")).on_event('p', show_popup),
     );
 
     siv.run();

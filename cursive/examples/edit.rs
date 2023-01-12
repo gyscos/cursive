@@ -53,9 +53,6 @@ fn show_popup(s: &mut Cursive, name: &str) {
         // Remove the initial popup
         s.pop_layer();
         // And put a new one instead
-        s.add_layer(
-            Dialog::around(TextView::new(content))
-                .button("Quit", |s| s.quit()),
-        );
+        s.add_layer(Dialog::around(TextView::new(content)).button("Quit", |s| s.quit()));
     }
 }

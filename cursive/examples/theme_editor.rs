@@ -1,6 +1,4 @@
-use cursive::theme::{
-    BaseColor, BorderStyle, Color, Palette, PaletteColor, Theme,
-};
+use cursive::theme::{BaseColor, BorderStyle, Color, Palette, PaletteColor, Theme};
 use cursive::traits::{Finder, Nameable, Resizable, With};
 
 #[derive(Clone, Copy)]
@@ -10,11 +8,7 @@ enum ColorKind {
     Rgb,
 }
 
-fn set_color_subtree(
-    v: &mut cursive::views::LinearLayout,
-    kind: &ColorKind,
-    title: &str,
-) {
+fn set_color_subtree(v: &mut cursive::views::LinearLayout, kind: &ColorKind, title: &str) {
     // First, clean out all child views here.
     while v.len() > 1 {
         v.remove_child(1);
@@ -28,10 +22,7 @@ fn set_color_subtree(
             v.add_child(
                 cursive::views::SelectView::new()
                     .popup()
-                    .with_all(
-                        BaseColor::all()
-                            .map(|color| (format!("{color:?}"), color)),
-                    )
+                    .with_all(BaseColor::all().map(|color| (format!("{color:?}"), color)))
                     .on_submit(|s, _| apply(s))
                     .with_name(format!("{title}_base")),
             );
@@ -70,10 +61,7 @@ fn set_color_subtree(
     }
 }
 
-fn make_color_selection(
-    title: &str,
-    starting_color: Color,
-) -> impl cursive::View {
+fn make_color_selection(title: &str, starting_color: Color) -> impl cursive::View {
     cursive::views::LinearLayout::horizontal()
         .child(
             cursive::views::SelectView::new()
@@ -85,12 +73,9 @@ fn make_color_selection(
                     let title = title.to_string();
                     move |s, kind| {
                         let title = &title;
-                        s.call_on_name(
-                            title,
-                            move |v: &mut cursive::views::LinearLayout| {
-                                set_color_subtree(v, kind, title);
-                            },
-                        )
+                        s.call_on_name(title, move |v: &mut cursive::views::LinearLayout| {
+                            set_color_subtree(v, kind, title);
+                        })
                         .unwrap();
                         apply(s);
                     }
@@ -108,8 +93,7 @@ fn make_color_selection(
                 let is_lowres = matches!(starting_color, Color::RgbLowRes(..));
                 set_color_subtree(v, &ColorKind::Rgb, title);
 
-                for (primary, value) in [("red", r), ("green", g), ("blue", b)]
-                {
+                for (primary, value) in [("red", r), ("green", g), ("blue", b)] {
                     v.call_on_name(
                         &format!("{title}_{primary}"),
                         |e: &mut cursive::views::EditView| {
@@ -169,10 +153,7 @@ fn make_dialog(theme: &Theme) -> impl cursive::View {
                             "Borders",
                             cursive::views::SelectView::new()
                                 .popup()
-                                .with_all(
-                                    BorderStyle::all()
-                                        .map(|b| (format!("{b:?}"), b)),
-                                )
+                                .with_all(BorderStyle::all().map(|b| (format!("{b:?}"), b)))
                                 .selected(theme.borders as usize)
                                 .on_submit(|s, _| apply(s))
                                 .with_name("borders")
@@ -186,10 +167,7 @@ fn make_dialog(theme: &Theme) -> impl cursive::View {
                                     let color = format!("{color:?}");
                                     l.add_child(
                                         &color,
-                                        make_color_selection(
-                                            &color,
-                                            current_color,
-                                        ),
+                                        make_color_selection(&color, current_color),
                                     );
                                 }
                             }),
@@ -197,12 +175,10 @@ fn make_dialog(theme: &Theme) -> impl cursive::View {
                 )
                 .child(cursive::views::DummyView)
                 .child(
-                    cursive::views::TextView::new(
-                        "Press R to reset the theme.",
-                    )
-                    .style(BaseColor::Red.light())
-                    .h_align(cursive::align::HAlign::Center)
-                    .with_name("status"),
+                    cursive::views::TextView::new("Press R to reset the theme.")
+                        .style(BaseColor::Red.light())
+                        .h_align(cursive::align::HAlign::Center)
+                        .with_name("status"),
                 ),
         )
         .fixed_width(80)
@@ -238,10 +214,7 @@ fn get_checkbox(siv: &mut cursive::Cursive, name: &str) -> bool {
         .unwrap()
 }
 
-fn get_selection<T: Copy + 'static>(
-    siv: &mut cursive::Cursive,
-    name: &str,
-) -> T {
+fn get_selection<T: Copy + 'static>(siv: &mut cursive::Cursive, name: &str) -> T {
     siv.call_on_name(name, |s: &mut cursive::views::SelectView<T>| {
         *s.selection().unwrap()
     })
@@ -253,8 +226,7 @@ fn find_color(siv: &mut cursive::Cursive, title: &str) -> Option<Color> {
     Some(match get_selection(siv, &format!("{title}_kind")) {
         ColorKind::TerminalDefault => Color::TerminalDefault,
         ColorKind::Base => {
-            let base_color: BaseColor =
-                get_selection(siv, &format!("{title}_base"));
+            let base_color: BaseColor = get_selection(siv, &format!("{title}_base"));
             let light = get_checkbox(siv, &format!("{title}_light"));
             if light {
                 base_color.light()
@@ -273,9 +245,12 @@ fn find_color(siv: &mut cursive::Cursive, title: &str) -> Option<Color> {
                         if let Some(color) = Color::low_res(r, g, b) {
                             color
                         } else {
-                            siv.call_on_name("status", |t: &mut cursive::views::TextView| t.set_content(
-                                format!("Low-resolution values can only be <= 5 for {title}.")
-                            )).unwrap();
+                            siv.call_on_name("status", |t: &mut cursive::views::TextView| {
+                                t.set_content(format!(
+                                    "Low-resolution values can only be <= 5 for {title}."
+                                ))
+                            })
+                            .unwrap();
                             return None;
                         }
                     } else {
@@ -284,14 +259,9 @@ fn find_color(siv: &mut cursive::Cursive, title: &str) -> Option<Color> {
                 }
                 _ => {
                     // invalid!
-                    siv.call_on_name(
-                        "status",
-                        |t: &mut cursive::views::TextView| {
-                            t.set_content(format!(
-                                "Invalid R/G/B values for {title}."
-                            ))
-                        },
-                    );
+                    siv.call_on_name("status", |t: &mut cursive::views::TextView| {
+                        t.set_content(format!("Invalid R/G/B values for {title}."))
+                    });
                     return None;
                 }
             }
@@ -306,17 +276,13 @@ fn apply(siv: &mut cursive::Cursive) {
     .unwrap();
 
     let shadow = siv
-        .call_on_name("shadows", |c: &mut cursive::views::Checkbox| {
-            c.is_checked()
-        })
+        .call_on_name("shadows", |c: &mut cursive::views::Checkbox| c.is_checked())
         .unwrap();
 
     let borders = siv
         .call_on_name(
             "borders",
-            |c: &mut cursive::views::SelectView<BorderStyle>| {
-                *c.selection().unwrap()
-            },
+            |c: &mut cursive::views::SelectView<BorderStyle>| *c.selection().unwrap(),
         )
         .unwrap();
 

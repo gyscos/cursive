@@ -15,9 +15,7 @@ use cursive_core::reexports::enumset::EnumSet;
 use unicode_width::UnicodeWidthStr;
 
 /// Translate a syntect font style into a set of cursive effects.
-pub fn translate_effects(
-    font_style: syntect::highlighting::FontStyle,
-) -> EnumSet<theme::Effect> {
+pub fn translate_effects(font_style: syntect::highlighting::FontStyle) -> EnumSet<theme::Effect> {
     let mut effects = EnumSet::new();
 
     for &(style, effect) in &[

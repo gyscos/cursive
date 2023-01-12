@@ -35,9 +35,7 @@ type SelectCallback<T> = dyn Fn(&mut Cursive, &T);
 /// time_select.set_on_submit(|s, time| {
 ///     s.pop_layer();
 ///     let text = format!("You will wait for {} minutes...", time);
-///     s.add_layer(
-///         Dialog::around(TextView::new(text)).button("Quit", |s| s.quit()),
-///     );
+///     s.add_layer(Dialog::around(TextView::new(text)).button("Quit", |s| s.quit()));
 /// });
 ///
 /// let mut siv = Cursive::new();
@@ -353,10 +351,7 @@ impl<T: 'static> SelectView<T> {
     }
 
     /// Gets a mut item at given idx or None.
-    pub fn get_item_mut(
-        &mut self,
-        i: usize,
-    ) -> Option<(&mut StyledString, &mut T)> {
+    pub fn get_item_mut(&mut self, i: usize) -> Option<(&mut StyledString, &mut T)> {
         if i >= self.items.len() {
             None
         } else {
@@ -379,9 +374,7 @@ impl<T: 'static> SelectView<T> {
     /// `Rc<T>` is still alive after calling `SelectView::selection()`).
     ///
     /// If `T` does not implement `Clone`, check `SelectView::try_iter_mut()`.
-    pub fn iter_mut(
-        &mut self,
-    ) -> impl Iterator<Item = (&mut StyledString, &mut T)>
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&mut StyledString, &mut T)>
     where
         T: Clone,
     {
@@ -397,9 +390,7 @@ impl<T: 'static> SelectView<T> {
     ///
     /// Some items may not be returned mutably, for example if a `Rc<T>` is
     /// still alive after calling `SelectView::selection()`.
-    pub fn try_iter_mut(
-        &mut self,
-    ) -> impl Iterator<Item = (&mut StyledString, Option<&mut T>)> {
+    pub fn try_iter_mut(&mut self) -> impl Iterator<Item = (&mut StyledString, Option<&mut T>)> {
         self.last_required_size = None;
         self.items
             .iter_mut()
@@ -486,8 +477,8 @@ impl<T: 'static> SelectView<T> {
     /// use cursive_core::views::SelectView;
     ///
     /// // Create a SelectView with 100 items
-    /// let select_view = SelectView::new()
-    ///     .with_all((1u8..100).into_iter().map(|i| (format!("Item {}", i), i)));
+    /// let select_view =
+    ///     SelectView::new().with_all((1u8..100).into_iter().map(|i| (format!("Item {}", i), i)));
     /// ```
     #[must_use]
     pub fn with_all<S, I>(self, iter: I) -> Self
@@ -697,9 +688,11 @@ impl<T: 'static> SelectView<T> {
             let lower_c: Vec<char> = c.to_lowercase().collect();
             let lower_c: &[char] = &lower_c;
 
-            if let Some((i, _)) = iter.enumerate().skip(self.focus() + 1).find(
-                |&(_, (label, _))| label.to_lowercase().starts_with(lower_c),
-            ) {
+            if let Some((i, _)) = iter
+                .enumerate()
+                .skip(self.focus() + 1)
+                .find(|&(_, (label, _))| label.to_lowercase().starts_with(lower_c))
+            {
                 i % self.len()
             } else {
                 return EventResult::Ignored;
@@ -715,24 +708,18 @@ impl<T: 'static> SelectView<T> {
     fn on_event_regular(&mut self, event: Event) -> EventResult {
         match event {
             Event::Key(Key::Up) if self.focus() > 0 => self.focus_up(1),
-            Event::Key(Key::Down) if self.focus() + 1 < self.items.len() => {
-                self.focus_down(1)
-            }
+            Event::Key(Key::Down) if self.focus() + 1 < self.items.len() => self.focus_down(1),
             Event::Key(Key::PageUp) => self.focus_up(10),
             Event::Key(Key::PageDown) => self.focus_down(10),
             Event::Key(Key::Home) => self.focus.set(0),
-            Event::Key(Key::End) => {
-                self.focus.set(self.items.len().saturating_sub(1))
-            }
+            Event::Key(Key::End) => self.focus.set(self.items.len().saturating_sub(1)),
             Event::Mouse {
                 event: MouseEvent::Press(_),
                 position,
                 offset,
             } if position
                 .checked_sub(offset)
-                .map(|position| {
-                    position < self.last_size && position.y < self.len()
-                })
+                .map(|position| position < self.last_size && position.y < self.len())
                 .unwrap_or(false) =>
             {
                 self.focus.set(position.y - offset.y)
@@ -744,9 +731,7 @@ impl<T: 'static> SelectView<T> {
             } if self.on_submit.is_some()
                 && position
                     .checked_sub(offset)
-                    .map(|position| {
-                        position < self.last_size && position.y == self.focus()
-                    })
+                    .map(|position| position < self.last_size && position.y == self.focus())
                     .unwrap_or(false) =>
             {
                 return self.submit();
@@ -819,10 +804,8 @@ impl<T: 'static> SelectView<T> {
                 .unwrap_or_else(Vec2::zero);
             let offset = offset.signed() - current_offset;
             // And finally, put the view in view!
-            s.screen_mut().add_layer_at(
-                Position::parent(offset),
-                MenuPopup::new(tree).focus(focus),
-            );
+            s.screen_mut()
+                .add_layer_at(Position::parent(offset), MenuPopup::new(tree).focus(focus));
         })
     }
 
@@ -835,9 +818,7 @@ impl<T: 'static> SelectView<T> {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if position.fits_in_rect(offset, self.last_size) => {
-                self.open_popup()
-            }
+            } if position.fits_in_rect(offset, self.last_size) => self.open_popup(),
             _ => EventResult::Ignored,
         }
     }
@@ -962,12 +943,9 @@ impl<T: 'static> View for SelectView<T> {
                 printer.print((0, 0), "<");
                 printer.print((x, 0), ">");
 
-                if let Some(label) =
-                    self.items.get(focus).map(|item| &item.label)
-                {
+                if let Some(label) = self.items.get(focus).map(|item| &item.label) {
                     // And center the text?
-                    let offset =
-                        HAlign::Center.get_offset(label.width(), x + 1);
+                    let offset = HAlign::Center.get_offset(label.width(), x + 1);
 
                     printer.print_styled((offset, 0), label);
                 }
@@ -1045,10 +1023,7 @@ impl<T: 'static> View for SelectView<T> {
         }
     }
 
-    fn take_focus(
-        &mut self,
-        source: direction::Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, source: direction::Direction) -> Result<EventResult, CannotFocus> {
         (self.enabled && !self.items.is_empty())
             .then(|| {
                 if !self.popup {
@@ -1056,9 +1031,7 @@ impl<T: 'static> View for SelectView<T> {
                         direction::Direction::Abs(direction::Absolute::Up) => {
                             self.focus.set(0);
                         }
-                        direction::Direction::Abs(
-                            direction::Absolute::Down,
-                        ) => {
+                        direction::Direction::Abs(direction::Absolute::Down) => {
                             self.focus.set(self.items.len().saturating_sub(1));
                         }
                         _ => (),

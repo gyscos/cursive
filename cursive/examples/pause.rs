@@ -3,10 +3,7 @@ use cursive::{self, views};
 fn main() {
     let mut siv = cursive::default();
 
-    siv.add_layer(
-        views::Dialog::text("Please write your message.")
-            .button("Ok", |s| s.quit()),
-    );
+    siv.add_layer(views::Dialog::text("Please write your message.").button("Ok", |s| s.quit()));
 
     siv.run();
     // At this point the terminal is cleaned up.
@@ -20,8 +17,7 @@ fn main() {
 
     // And we can start another event loop later on.
     siv.add_layer(
-        views::Dialog::text(format!("Your message was:\n{line}"))
-            .button("I guess?", |s| s.quit()),
+        views::Dialog::text(format!("Your message was:\n{line}")).button("I guess?", |s| s.quit()),
     );
     siv.run();
 }

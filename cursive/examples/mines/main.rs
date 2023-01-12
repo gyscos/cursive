@@ -186,9 +186,7 @@ impl cursive::view::View for BoardView {
             let text = match *cell {
                 Cell::Unknown => "[]",
                 Cell::Flag => "()",
-                Cell::Visible(n) => {
-                    ["  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"][n]
-                }
+                Cell::Visible(n) => ["  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"][n],
             };
 
             let color = match *cell {
@@ -212,10 +210,7 @@ impl cursive::view::View for BoardView {
         }
     }
 
-    fn take_focus(
-        &mut self,
-        _: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
         Ok(EventResult::Consumed(None))
     }
 
@@ -274,10 +269,7 @@ fn new_game(siv: &mut Cursive, options: game::Options) {
     siv.add_layer(
         Dialog::new()
             .title("Minesweeper")
-            .content(
-                LinearLayout::horizontal()
-                    .child(Panel::new(BoardView::new(options))),
-            )
+            .content(LinearLayout::horizontal().child(Panel::new(BoardView::new(options))))
             .button("Quit game", |s| {
                 s.pop_layer();
             }),

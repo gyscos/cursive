@@ -65,10 +65,7 @@ impl TextContent {
 ///
 /// This keeps the content locked. Do not store this!
 pub struct TextContentRef {
-    _handle: OwningHandle<
-        ArcRef<Mutex<TextContentInner>>,
-        MutexGuard<'static, TextContentInner>,
-    >,
+    _handle: OwningHandle<ArcRef<Mutex<TextContentInner>>, MutexGuard<'static, TextContentInner>>,
     // We also need to keep a copy of Arc so `deref` can return
     // a reference to the `StyledString`
     data: Arc<StyledString>,
@@ -153,12 +150,10 @@ struct TextContentInner {
 impl TextContentInner {
     /// From a shareable content (Arc + Mutex), return a
     fn get_content(content: &Arc<Mutex<TextContentInner>>) -> TextContentRef {
-        let arc_ref: ArcRef<Mutex<TextContentInner>> =
-            ArcRef::new(Arc::clone(content));
+        let arc_ref: ArcRef<Mutex<TextContentInner>> = ArcRef::new(Arc::clone(content));
 
-        let _handle = OwningHandle::new_with_fn(arc_ref, |mutex| unsafe {
-            (*mutex).lock().unwrap()
-        });
+        let _handle =
+            OwningHandle::new_with_fn(arc_ref, |mutex| unsafe { (*mutex).lock().unwrap() });
 
         let data = Arc::clone(&_handle.content_value);
 
@@ -380,8 +375,7 @@ impl TextView {
             return;
         }
 
-        self.rows =
-            LinesIterator::new(content.get_cache().as_ref(), size.x).collect();
+        self.rows = LinesIterator::new(content.get_cache().as_ref(), size.x).collect();
 
         // Desired width
         self.width = if self.rows.iter().any(|row| row.is_wrapped) {

@@ -1,9 +1,6 @@
 use cursive::{
     traits::*,
-    views::{
-        Checkbox, Dialog, EditView, LinearLayout, ListView, SelectView,
-        TextArea, TextView,
-    },
+    views::{Checkbox, Dialog, EditView, LinearLayout, ListView, SelectView, TextArea, TextView},
 };
 
 // This example uses a ListView.

@@ -51,8 +51,7 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
 /// Since this is not going to be used often, we can afford to re-open the
 /// file every time.
 fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
-    let mut tty_output =
-        File::create("/dev/tty").expect("cursive can only run with a tty");
+    let mut tty_output = File::create("/dev/tty").expect("cursive can only run with a tty");
     tty_output.write_all(bytes)?;
     // tty_output will be flushed automatically at the end of the function.
     Ok(())
@@ -120,8 +119,7 @@ impl Backend {
         ncurses::mouseinterval(0);
         // Listen to all mouse events.
         ncurses::mousemask(
-            (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION)
-                as mmask_t,
+            (ncurses::ALL_MOUSE_EVENTS | ncurses::REPORT_MOUSE_POSITION) as mmask_t,
             None,
         );
         // Enable non-blocking input, so getch() immediately returns.
@@ -154,11 +152,7 @@ impl Backend {
     }
 
     /// Save a new color pair.
-    fn insert_color(
-        &self,
-        pairs: &mut HashMap<(i16, i16), i16>,
-        (front, back): (i16, i16),
-    ) -> i16 {
+    fn insert_color(&self, pairs: &mut HashMap<(i16, i16), i16>, (front, back): (i16, i16)) -> i16 {
         let n = 1 + pairs.len() as i16;
 
         let target = if ncurses::COLOR_PAIRS() > i32::from(n) {
@@ -241,20 +235,15 @@ impl Backend {
             z: 0,
             bstate: 0,
         };
-        if ncurses::getmouse(&mut mevent as *mut ncurses::MEVENT)
-            == ncurses::OK
-        {
+        if ncurses::getmouse(&mut mevent as *mut ncurses::MEVENT) == ncurses::OK {
             // Currently unused
             let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
-            let _shift =
-                (mevent.bstate & ncurses::BUTTON_SHIFT as mmask_t) != 0;
+            let _shift = (mevent.bstate & ncurses::BUTTON_SHIFT as mmask_t) != 0;
             let _alt = (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
 
             // Keep the base state, without the modifiers
-            mevent.bstate &= !(ncurses::BUTTON_SHIFT
-                | ncurses::BUTTON_ALT
-                | ncurses::BUTTON_CTRL)
-                as mmask_t;
+            mevent.bstate &=
+                !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT | ncurses::BUTTON_CTRL) as mmask_t;
 
             // This makes a full `Event` from a `MouseEvent`.
             let make_event = |event| Event::Mouse {
@@ -272,8 +261,7 @@ impl Backend {
                     .or_else(|| {
                         // In legacy mode, some buttons overlap,
                         // so we need to disambiguate.
-                        (mevent.bstate
-                            == ncurses::BUTTON5_DOUBLE_CLICKED as mmask_t)
+                        (mevent.bstate == ncurses::BUTTON5_DOUBLE_CLICKED as mmask_t)
                             .then_some(MouseEvent::WheelDown)
                     })
                     .map(make_event)
@@ -466,12 +454,12 @@ where
 {
     let button = get_mouse_button(bare_event);
     match bare_event {
-        ncurses::BUTTON1_RELEASED
-        | ncurses::BUTTON2_RELEASED
-        | ncurses::BUTTON3_RELEASED => f(MouseEvent::Release(button)),
-        ncurses::BUTTON1_PRESSED
-        | ncurses::BUTTON2_PRESSED
-        | ncurses::BUTTON3_PRESSED => f(MouseEvent::Press(button)),
+        ncurses::BUTTON1_RELEASED | ncurses::BUTTON2_RELEASED | ncurses::BUTTON3_RELEASED => {
+            f(MouseEvent::Release(button))
+        }
+        ncurses::BUTTON1_PRESSED | ncurses::BUTTON2_PRESSED | ncurses::BUTTON3_PRESSED => {
+            f(MouseEvent::Press(button))
+        }
         ncurses::BUTTON4_PRESSED => f(MouseEvent::WheelUp),
         ncurses::BUTTON5_PRESSED => f(MouseEvent::WheelDown),
         // BUTTON4_RELEASED? BUTTON5_RELEASED?

@@ -39,8 +39,7 @@ pub fn log(record: &log::Record) {
     logs.push_back(Record {
         level: record.level(),
         message: format!("{}", record.args()),
-        time: time::OffsetDateTime::now_local()
-            .unwrap_or_else(|_| time::OffsetDateTime::now_utc()),
+        time: time::OffsetDateTime::now_local().unwrap_or_else(|_| time::OffsetDateTime::now_utc()),
     });
 }
 

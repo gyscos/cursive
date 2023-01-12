@@ -207,17 +207,15 @@ impl MenuPopup {
             let action_cb = action_cb.clone();
             s.screen_mut().add_layer_at(
                 Position::parent(offset),
-                OnEventView::new(MenuPopup::new(Rc::clone(&tree)).on_action(
-                    move |s| {
-                        // This will happen when the subtree popup
-                        // activates something;
-                        // First, remove ourselve.
-                        s.pop_layer();
-                        if let Some(ref action_cb) = action_cb {
-                            action_cb.clone()(s);
-                        }
-                    },
-                ))
+                OnEventView::new(MenuPopup::new(Rc::clone(&tree)).on_action(move |s| {
+                    // This will happen when the subtree popup
+                    // activates something;
+                    // First, remove ourselve.
+                    s.pop_layer();
+                    if let Some(ref action_cb) = action_cb {
+                        action_cb.clone()(s);
+                    }
+                }))
                 .on_event(Key::Left, |s| {
                     s.pop_layer();
                 }),
@@ -236,23 +234,15 @@ impl MenuPopup {
             Event::Key(Key::PageDown) => self.scroll_down(5, false),
 
             Event::Key(Key::Home) => self.focus = 0,
-            Event::Key(Key::End) => {
-                self.focus = self.menu.children.len().saturating_sub(1)
-            }
+            Event::Key(Key::End) => self.focus = self.menu.children.len().saturating_sub(1),
 
-            Event::Key(Key::Right)
-                if self.menu.children[self.focus].is_subtree() =>
-            {
+            Event::Key(Key::Right) if self.menu.children[self.focus].is_subtree() => {
                 return match self.menu.children[self.focus] {
-                    menu::Item::Subtree { ref tree, .. } => {
-                        self.make_subtree_cb(tree)
-                    }
+                    menu::Item::Subtree { ref tree, .. } => self.make_subtree_cb(tree),
                     _ => unreachable!("Child is a subtree"),
                 };
             }
-            Event::Key(Key::Enter)
-                if self.menu.children[self.focus].is_enabled() =>
-            {
+            Event::Key(Key::Enter) if self.menu.children[self.focus].is_enabled() => {
                 return self.submit();
             }
             Event::Mouse {
@@ -264,9 +254,7 @@ impl MenuPopup {
                 if let Some(position) = position.checked_sub(offset) {
                     // Now `position` is relative to the top-left of the content.
                     let focus = position.y;
-                    if focus < self.menu.len()
-                        && self.menu.children[focus].is_enabled()
-                    {
+                    if focus < self.menu.len() && self.menu.children[focus].is_enabled() {
                         self.focus = focus;
                     }
                 }
@@ -341,8 +329,7 @@ impl View for MenuPopup {
 
         scroll::draw_lines(self, &printer, |s, printer, i| {
             let item = &s.menu.children[i];
-            let enabled =
-                printer.enabled && (item.is_enabled() || item.is_delimiter());
+            let enabled = printer.enabled && (item.is_enabled() || item.is_delimiter());
             let style = if !enabled {
                 PaletteStyle::Secondary
             } else if i == s.focus {
@@ -409,10 +396,7 @@ impl View for MenuPopup {
                     // They can be on the border, or entirely outside of the popup.
 
                     // Mouse clicks outside of the popup should dismiss it.
-                    if !position.fits_in_rect(
-                        offset,
-                        self.scroll_core.last_outer_size() + (2, 2),
-                    ) {
+                    if !position.fits_in_rect(offset, self.scroll_core.last_outer_size() + (2, 2)) {
                         let dismiss_cb = self.on_dismiss.clone();
                         return EventResult::with_cb(move |s| {
                             if let Some(ref cb) = dismiss_cb {

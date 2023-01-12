@@ -100,11 +100,7 @@ impl ListView {
     }
 
     /// Adds a view to the end of the list.
-    pub fn add_child<V: IntoBoxedView + 'static>(
-        &mut self,
-        label: impl Into<String>,
-        view: V,
-    ) {
+    pub fn add_child<V: IntoBoxedView + 'static>(&mut self, label: impl Into<String>, view: V) {
         let view = view.into_boxed_view();
 
         // Why were we doing this here?
@@ -123,11 +119,7 @@ impl ListView {
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn child<V: IntoBoxedView + 'static>(
-        self,
-        label: &str,
-        view: V,
-    ) -> Self {
+    pub fn child<V: IntoBoxedView + 'static>(self, label: &str, view: V) -> Self {
         self.with(|s| s.add_child(label, view))
     }
 
@@ -223,11 +215,7 @@ impl ListView {
         }
     }
 
-    fn move_focus(
-        &mut self,
-        n: usize,
-        source: direction::Direction,
-    ) -> EventResult {
+    fn move_focus(&mut self, n: usize, source: direction::Direction) -> EventResult {
         let (i, res) = if let Some((i, res)) = source
             .relative(direction::Orientation::Vertical)
             .and_then(|rel| {
@@ -333,9 +321,7 @@ impl View for ListView {
         let mut y = 0;
 
         debug!("Offset: {}", offset);
-        for (i, (child, &height)) in
-            self.children.iter().zip(&self.children_heights).enumerate()
-        {
+        for (i, (child, &height)) in self.children.iter().zip(&self.children_heights).enumerate() {
             match child {
                 ListChild::Row(ref label, ref view) => {
                     printer.print((0, y), label);
@@ -362,12 +348,11 @@ impl View for ListView {
             .max()
             .unwrap_or(0);
 
-        let view_size = direction::Orientation::Vertical.stack(
-            self.children.iter_mut().map(|c| match c {
+        let view_size =
+            direction::Orientation::Vertical.stack(self.children.iter_mut().map(|c| match c {
                 ListChild::Delimiter => Vec2::new(0, 1),
                 ListChild::Row(_, ref mut view) => view.required_size(req),
-            }),
-        );
+            }));
 
         view_size + (1 + label_width, 0)
     }
@@ -390,9 +375,7 @@ impl View for ListView {
 
         self.children_heights.resize(self.children.len(), 0);
 
-        for (child, height) in
-            self.children.iter_mut().zip(&mut self.children_heights)
-        {
+        for (child, height) in self.children.iter_mut().zip(&mut self.children_heights) {
             match child.view() {
                 Some(child) => {
                     *height = child.required_size(size).y;
@@ -434,30 +417,21 @@ impl View for ListView {
             Event::Key(Key::Down) if self.focus + 1 < self.children.len() => {
                 self.move_focus(1, direction::Direction::up())
             }
-            Event::Key(Key::PageUp) => {
-                self.move_focus(10, direction::Direction::down())
+            Event::Key(Key::PageUp) => self.move_focus(10, direction::Direction::down()),
+            Event::Key(Key::PageDown) => self.move_focus(10, direction::Direction::up()),
+            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => {
+                self.move_focus(usize::max_value(), direction::Direction::back())
             }
-            Event::Key(Key::PageDown) => {
-                self.move_focus(10, direction::Direction::up())
+            Event::Key(Key::End) | Event::Ctrl(Key::End) => {
+                self.move_focus(usize::max_value(), direction::Direction::front())
             }
-            Event::Key(Key::Home) | Event::Ctrl(Key::Home) => self
-                .move_focus(usize::max_value(), direction::Direction::back()),
-            Event::Key(Key::End) | Event::Ctrl(Key::End) => self
-                .move_focus(usize::max_value(), direction::Direction::front()),
-            Event::Key(Key::Tab) => {
-                self.move_focus(1, direction::Direction::front())
-            }
-            Event::Shift(Key::Tab) => {
-                self.move_focus(1, direction::Direction::back())
-            }
+            Event::Key(Key::Tab) => self.move_focus(1, direction::Direction::front()),
+            Event::Shift(Key::Tab) => self.move_focus(1, direction::Direction::back()),
             _ => EventResult::Ignored,
         })
     }
 
-    fn take_focus(
-        &mut self,
-        source: direction::Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, source: direction::Direction) -> Result<EventResult, CannotFocus> {
         let rel = source.relative(direction::Orientation::Vertical);
         let (i, res) = if let Some((i, res)) = self
             .iter_mut(rel.is_none(), rel.unwrap_or(direction::Relative::Front))
@@ -477,10 +451,7 @@ impl View for ListView {
         }
     }
 
-    fn focus_view(
-        &mut self,
-        selector: &Selector,
-    ) -> Result<EventResult, ViewNotFound> {
+    fn focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
         // Try to focus each view. Skip over delimiters.
         if let Some((i, res)) = self
             .children
@@ -505,8 +476,7 @@ impl View for ListView {
         // This is the size of the focused view
         let area = match self.children[self.focus] {
             ListChild::Row(_, ref view) => {
-                let available =
-                    Vec2::new(size.x.saturating_sub(labels_width + 1), 1);
+                let available = Vec2::new(size.x.saturating_sub(labels_width + 1), 1);
                 view.important_area(available) + (labels_width, 0)
             }
             ListChild::Delimiter => Rect::from_size((0, 0), (size.x, 1)),
@@ -514,8 +484,7 @@ impl View for ListView {
 
         // This is how far down the focused view is.
         // (The size of everything above.)
-        let y_offset: usize =
-            self.children_heights[..self.focus].iter().copied().sum();
+        let y_offset: usize = self.children_heights[..self.focus].iter().copied().sum();
 
         area + (0, y_offset)
     }

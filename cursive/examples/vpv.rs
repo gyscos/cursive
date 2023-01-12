@@ -47,38 +47,22 @@ fn main() {
                                 let duration = now - start;
 
                                 let seconds = duration.as_secs() as f64
-                                    + f64::from(duration.subsec_nanos())
-                                        * 1e-9;
+                                    + f64::from(duration.subsec_nanos()) * 1e-9;
 
                                 let speed = ticks / seconds;
 
                                 // Print ETA if we have a file size
                                 // Otherwise prints elapsed time.
                                 if let Some(len) = len {
-                                    let remaining =
-                                        (len as f64 - ticks) / speed;
-                                    printer.print(
-                                        (0, 0),
-                                        &format!(
-                                            "ETA:     {remaining:.1} seconds"
-                                        ),
-                                    );
+                                    let remaining = (len as f64 - ticks) / speed;
+                                    printer
+                                        .print((0, 0), &format!("ETA:     {remaining:.1} seconds"));
                                 } else {
-                                    printer.print(
-                                        (0, 0),
-                                        &format!(
-                                            "Elapsed: {seconds:.1} seconds",
-                                        ),
-                                    );
+                                    printer
+                                        .print((0, 0), &format!("Elapsed: {seconds:.1} seconds",));
                                 }
-                                printer.print(
-                                    (0, 1),
-                                    &format!("Copied:  {}", convert(ticks)),
-                                );
-                                printer.print(
-                                    (0, 2),
-                                    &format!("Speed:   {}/s", convert(speed)),
-                                );
+                                printer.print((0, 1), &format!("Copied:  {}", convert(ticks)));
+                                printer.print((0, 2), &format!("Speed:   {}/s", convert(speed)));
                             })
                             .fixed_size((25, 3)),
                     )
@@ -117,8 +101,7 @@ cargo run --example vpv </dev/zero >/dev/null",
                     // Copy from stdin - lock it for better performance.
                     let stdin = io::stdin();
                     let stdin = stdin.lock();
-                    let mut reader =
-                        utils::ProgressReader::new(counter_copy, stdin);
+                    let mut reader = utils::ProgressReader::new(counter_copy, stdin);
 
                     // And copy!
                     io::copy(&mut reader, &mut stdout).unwrap();
@@ -126,8 +109,7 @@ cargo run --example vpv </dev/zero >/dev/null",
                 Some(source) => {
                     // Copy from stdin - lock it for better performance.
                     let input = std::fs::File::open(source).unwrap();
-                    let mut reader =
-                        utils::ProgressReader::new(counter_copy, input);
+                    let mut reader = utils::ProgressReader::new(counter_copy, input);
 
                     // And copy!
                     io::copy(&mut reader, &mut stdout).unwrap();

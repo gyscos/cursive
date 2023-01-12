@@ -1,8 +1,6 @@
 use crate::{backend, backends, Cursive, CursiveRunner};
 
-type Initializer =
-    dyn FnMut()
-        -> Result<Box<dyn backend::Backend>, Box<dyn std::error::Error>>;
+type Initializer = dyn FnMut() -> Result<Box<dyn backend::Backend>, Box<dyn std::error::Error>>;
 
 /// A runnable wrapper around `Cursive`, bundling the backend initializer.
 ///
@@ -125,9 +123,7 @@ impl CursiveRunnable {
     ///
     /// The runner will embed `self`; when dropped, it will clear out the
     /// terminal, and the cursive instance will be dropped as well.
-    pub fn try_into_runner(
-        mut self,
-    ) -> Result<CursiveRunner<Self>, Box<dyn std::error::Error>> {
+    pub fn try_into_runner(mut self) -> Result<CursiveRunner<Self>, Box<dyn std::error::Error>> {
         let backend = (self.backend_init)()?;
         Ok(CursiveRunner::new(self, backend))
     }
@@ -151,9 +147,7 @@ impl CursiveRunnable {
     ///
     /// Nothing will actually be output when calling `.run()`.
     pub fn dummy() -> Self {
-        Self::new::<std::convert::Infallible, _>(|| {
-            Ok(cursive_core::backend::Dummy::init())
-        })
+        Self::new::<std::convert::Infallible, _>(|| Ok(cursive_core::backend::Dummy::init()))
     }
 
     /// Creates a new Cursive wrapper using the ncurses backend.
@@ -198,8 +192,6 @@ impl CursiveRunnable {
     #[cfg(feature = "blt-backend")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
     pub fn blt() -> Self {
-        Self::new::<std::convert::Infallible, _>(|| {
-            Ok(backends::blt::Backend::init())
-        })
+        Self::new::<std::convert::Infallible, _>(|| Ok(backends::blt::Backend::init()))
     }
 }

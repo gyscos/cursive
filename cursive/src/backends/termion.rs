@@ -32,8 +32,7 @@ use std::sync::Arc;
 /// Backend using termion
 pub struct Backend {
     // Do we want to make this generic on the writer?
-    terminal:
-        RefCell<AlternateScreen<MouseTerminal<RawTerminal<BufWriter<File>>>>>,
+    terminal: RefCell<AlternateScreen<MouseTerminal<RawTerminal<BufWriter<File>>>>>,
     current_style: Cell<theme::ColorPair>,
 
     // Inner state required to parse input
@@ -77,10 +76,7 @@ pub struct Backend {
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 /// SOFTWARE.
 #[cfg(unix)]
-fn set_blocking(
-    fd: std::os::unix::io::RawFd,
-    blocking: bool,
-) -> std::io::Result<()> {
+fn set_blocking(fd: std::os::unix::io::RawFd, blocking: bool) -> std::io::Result<()> {
     use libc::{fcntl, F_GETFL, F_SETFL, O_NONBLOCK};
 
     let flags = unsafe { fcntl(fd, F_GETFL, 0) };
@@ -106,20 +102,14 @@ impl Backend {
     ///
     /// Uses `/dev/tty` for input and output.
     pub fn init() -> std::io::Result<Box<dyn backend::Backend>> {
-        Self::init_with_files(
-            File::open("/dev/tty")?,
-            File::create("/dev/tty")?,
-        )
+        Self::init_with_files(File::open("/dev/tty")?, File::create("/dev/tty")?)
     }
 
     /// Creates a new termion-based backend.
     ///
     /// Uses `stdin` and `stdout` for input/output.
     pub fn init_stdio() -> std::io::Result<Box<dyn backend::Backend>> {
-        Self::init_with_files(
-            File::open("/dev/stdin")?,
-            File::create("/dev/stdout")?,
-        )
+        Self::init_with_files(File::open("/dev/stdin")?, File::create("/dev/stdout")?)
     }
 
     /// Creates a new termion-based backend using the given input and output files.
@@ -139,11 +129,8 @@ impl Backend {
         // Use a ~8MB buffer
         // Should be enough for a single screen most of the time.
         let terminal = RefCell::new(
-            MouseTerminal::from(
-                BufWriter::with_capacity(8_000_000, output_file)
-                    .into_raw_mode()?,
-            )
-            .into_alternate_screen()?,
+            MouseTerminal::from(BufWriter::with_capacity(8_000_000, output_file).into_raw_mode()?)
+                .into_alternate_screen()?,
         );
 
         write!(terminal.borrow_mut(), "{}", termion::cursor::Hide)?;
@@ -151,10 +138,7 @@ impl Backend {
         let (resize_sender, resize_receiver) = crossbeam_channel::bounded(0);
         let running = Arc::new(AtomicBool::new(true));
         #[cfg(unix)]
-        backends::resize::start_resize_thread(
-            resize_sender,
-            Arc::clone(&running),
-        );
+        backends::resize::start_resize_thread(resize_sender, Arc::clone(&running));
 
         let c = Backend {
             terminal,
@@ -203,12 +187,8 @@ impl Backend {
 
                 let event = match btn {
                     TMouseButton::Left => MouseEvent::Press(MouseButton::Left),
-                    TMouseButton::Middle => {
-                        MouseEvent::Press(MouseButton::Middle)
-                    }
-                    TMouseButton::Right => {
-                        MouseEvent::Press(MouseButton::Right)
-                    }
+                    TMouseButton::Middle => MouseEvent::Press(MouseButton::Middle),
+                    TMouseButton::Right => MouseEvent::Press(MouseButton::Right),
                     TMouseButton::WheelUp => MouseEvent::WheelUp,
                     TMouseButton::WheelDown => MouseEvent::WheelDown,
                 };
@@ -223,9 +203,7 @@ impl Backend {
                     offset: Vec2::zero(),
                 }
             }
-            TEvent::Mouse(TMouseEvent::Release(x, y))
-                if self.last_button.is_some() =>
-            {
+            TEvent::Mouse(TMouseEvent::Release(x, y)) if self.last_button.is_some() => {
                 let event = MouseEvent::Release(self.last_button.unwrap());
                 let position = (x - 1, y - 1).into();
                 Event::Mouse {
@@ -234,9 +212,7 @@ impl Backend {
                     offset: Vec2::zero(),
                 }
             }
-            TEvent::Mouse(TMouseEvent::Hold(x, y))
-                if self.last_button.is_some() =>
-            {
+            TEvent::Mouse(TMouseEvent::Hold(x, y)) if self.last_button.is_some() => {
                 let event = MouseEvent::Hold(self.last_button.unwrap());
                 let position = (x - 1, y - 1).into();
                 Event::Mouse {
@@ -320,9 +296,7 @@ impl backend::Backend for Backend {
         match effect {
             theme::Effect::Simple => (),
             theme::Effect::Reverse => self.write(tstyle::NoInvert),
-            theme::Effect::Dim | theme::Effect::Bold => {
-                self.write(tstyle::NoFaint)
-            }
+            theme::Effect::Dim | theme::Effect::Bold => self.write(tstyle::NoFaint),
             theme::Effect::Blink => self.write(tstyle::NoBlink),
             theme::Effect::Italic => self.write(tstyle::NoItalic),
             theme::Effect::Strikethrough => self.write(tstyle::NoCrossedOut),
@@ -411,19 +385,13 @@ where
         theme::Color::Light(theme::BaseColor::Black) => f(&tcolor::LightBlack),
         theme::Color::Light(theme::BaseColor::Red) => f(&tcolor::LightRed),
         theme::Color::Light(theme::BaseColor::Green) => f(&tcolor::LightGreen),
-        theme::Color::Light(theme::BaseColor::Yellow) => {
-            f(&tcolor::LightYellow)
-        }
+        theme::Color::Light(theme::BaseColor::Yellow) => f(&tcolor::LightYellow),
         theme::Color::Light(theme::BaseColor::Blue) => f(&tcolor::LightBlue),
-        theme::Color::Light(theme::BaseColor::Magenta) => {
-            f(&tcolor::LightMagenta)
-        }
+        theme::Color::Light(theme::BaseColor::Magenta) => f(&tcolor::LightMagenta),
         theme::Color::Light(theme::BaseColor::Cyan) => f(&tcolor::LightCyan),
         theme::Color::Light(theme::BaseColor::White) => f(&tcolor::LightWhite),
 
         theme::Color::Rgb(r, g, b) => f(&tcolor::Rgb(r, g, b)),
-        theme::Color::RgbLowRes(r, g, b) => {
-            f(&tcolor::AnsiValue::rgb(r, g, b))
-        }
+        theme::Color::RgbLowRes(r, g, b) => f(&tcolor::AnsiValue::rgb(r, g, b)),
     }
 }

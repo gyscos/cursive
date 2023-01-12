@@ -1,7 +1,7 @@
-edition = "2018"
+edition = "2021"
 fn_args_layout = "Tall"
 format_code_in_doc_comments = true
-max_width = 79
+max_width = 100
 merge_derives = true
 reorder_imports = true
 reorder_modules = true

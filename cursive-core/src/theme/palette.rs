@@ -193,16 +193,12 @@ impl Palette {
     pub fn merge(&self, namespace: &str) -> Self {
         let mut result = self.clone();
 
-        if let Some(PaletteNode::Namespace(palette)) =
-            self.custom.get(namespace)
-        {
+        if let Some(PaletteNode::Namespace(palette)) = self.custom.get(namespace) {
             // Merge `result` and `palette`
             for (key, value) in palette.iter() {
                 match *value {
                     PaletteNode::Color(color) => result.set_color(key, color),
-                    PaletteNode::Namespace(ref map) => {
-                        result.add_namespace(key, map.clone())
-                    }
+                    PaletteNode::Namespace(ref map) => result.add_namespace(key, map.clone()),
                 }
             }
         }
@@ -232,11 +228,7 @@ impl Palette {
     }
 
     /// Adds a color namespace to this palette.
-    pub fn add_namespace(
-        &mut self,
-        key: &str,
-        namespace: HashMap<String, PaletteNode>,
-    ) {
+    pub fn add_namespace(&mut self, key: &str, namespace: HashMap<String, PaletteNode>) {
         self.custom
             .insert(key.to_string(), PaletteNode::Namespace(namespace));
     }
@@ -301,9 +293,7 @@ impl Default for Palette {
 
 // Iterate over a toml
 #[cfg(feature = "toml")]
-fn iterate_toml_colors(
-    table: &toml::value::Table,
-) -> impl Iterator<Item = (&str, PaletteNode)> {
+fn iterate_toml_colors(table: &toml::value::Table) -> impl Iterator<Item = (&str, PaletteNode)> {
     table.iter().flat_map(|(key, value)| {
         let node = match value {
             toml::Value::Table(table) => {
@@ -331,10 +321,7 @@ fn iterate_toml_colors(
             }
             other => {
                 // Other - error?
-                warn!(
-                    "Found unexpected value in theme: {} = {:?}",
-                    key, other
-                );
+                warn!("Found unexpected value in theme: {} = {:?}", key, other);
                 None
             }
         };

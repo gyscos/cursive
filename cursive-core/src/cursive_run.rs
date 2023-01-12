@@ -89,9 +89,8 @@ where
         }
 
         if self.needs_clear {
-            self.backend.clear(
-                self.current_theme().palette[theme::PaletteColor::Background],
-            );
+            self.backend
+                .clear(self.current_theme().palette[theme::PaletteColor::Background]);
             self.needs_clear = false;
         }
 

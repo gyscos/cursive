@@ -2,11 +2,7 @@ use super::chunk::{Chunk, ChunkPart};
 use std::iter::Peekable;
 
 /// Concatenates chunks as long as they fit in the given width.
-pub fn prefix<I>(
-    tokens: &mut Peekable<I>,
-    width: usize,
-    offset: &mut ChunkPart,
-) -> Vec<Chunk>
+pub fn prefix<I>(tokens: &mut Peekable<I>, width: usize, offset: &mut ChunkPart) -> Vec<Chunk>
 where
     I: Iterator<Item = Chunk>,
 {

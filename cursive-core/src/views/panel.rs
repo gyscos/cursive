@@ -69,14 +69,12 @@ impl<V> Panel<V> {
 
     fn draw_title(&self, printer: &Printer) {
         if !self.title.is_empty() {
-            let available = match printer.size.x.checked_sub(2 * TITLE_SPACING)
-            {
+            let available = match printer.size.x.checked_sub(2 * TITLE_SPACING) {
                 Some(available) => available,
                 None => return, /* Panel is too small to even write the decoration. */
             };
             let len = std::cmp::min(self.title.width(), available);
-            let x =
-                TITLE_SPACING + self.title_position.get_offset(len, available);
+            let x = TITLE_SPACING + self.title_position.get_offset(len, available);
 
             printer
                 .offset((x, 0))

@@ -15,20 +15,15 @@ fn main() {
 fn show_dialog(s: &mut cursive::Cursive) {
     // Let's build a green theme
     let theme = s.current_theme().clone().with(|theme| {
-        theme.palette[theme::PaletteColor::View] =
-            theme::Color::Dark(theme::BaseColor::Black);
-        theme.palette[theme::PaletteColor::Primary] =
-            theme::Color::Light(theme::BaseColor::Green);
+        theme.palette[theme::PaletteColor::View] = theme::Color::Dark(theme::BaseColor::Black);
+        theme.palette[theme::PaletteColor::Primary] = theme::Color::Light(theme::BaseColor::Green);
         theme.palette[theme::PaletteColor::TitlePrimary] =
             theme::Color::Light(theme::BaseColor::Green);
-        theme.palette[theme::PaletteColor::Highlight] =
-            theme::Color::Dark(theme::BaseColor::Green);
+        theme.palette[theme::PaletteColor::Highlight] = theme::Color::Dark(theme::BaseColor::Green);
     });
 
     s.add_layer(views::ThemedView::new(
         theme,
-        views::Layer::new(
-            views::Dialog::info("Colors!").title("Themed Dialog"),
-        ),
+        views::Layer::new(views::Dialog::info("Colors!").title("Themed Dialog")),
     ));
 }

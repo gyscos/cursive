@@ -120,10 +120,7 @@ impl ProgressBar {
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn with_task<F: FnOnce(Counter) + Send + 'static>(
-        self,
-        task: F,
-    ) -> Self {
+    pub fn with_task<F: FnOnce(Counter) + Send + 'static>(self, task: F) -> Self {
         self.with(|s| s.start(task))
     }
 
@@ -153,10 +150,7 @@ impl ProgressBar {
     /// The given function will be called with `(value, (min, max))`.
     /// Its output will be used as the label to print inside the progress bar.
     #[crate::callback_helpers]
-    pub fn set_label<F: Fn(usize, (usize, usize)) -> String + 'static>(
-        &mut self,
-        label_maker: F,
-    ) {
+    pub fn set_label<F: Fn(usize, (usize, usize)) -> String + 'static>(&mut self, label_maker: F) {
         self.label_maker = Box::new(label_maker);
     }
 
@@ -297,8 +291,7 @@ impl View for ProgressBar {
         let label = (self.label_maker)(value, (self.min, self.max));
         let offset = HAlign::Center.get_offset(label.len(), printer.size.x);
 
-        let color_style =
-            ColorStyle::new(PaletteColor::HighlightText, self.color);
+        let color_style = ColorStyle::new(PaletteColor::HighlightText, self.color);
 
         printer.with_color(color_style, |printer| {
             // TODO: Instead, write it with self.color and inherit_parent background?

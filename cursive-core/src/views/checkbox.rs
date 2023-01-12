@@ -43,10 +43,7 @@ impl Checkbox {
 
     /// Sets a callback to be used when the state changes.
     #[crate::callback_helpers]
-    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(
-        &mut self,
-        on_change: F,
-    ) {
+    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(&mut self, on_change: F) {
         self.on_change = Some(Rc::new(on_change));
     }
 
@@ -54,10 +51,7 @@ impl Checkbox {
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(
-        self,
-        on_change: F,
-    ) -> Self {
+    pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(self, on_change: F) -> Self {
         self.with(|s| s.set_on_change(on_change))
     }
 
@@ -148,18 +142,13 @@ impl View for Checkbox {
         Vec2::new(3, 1)
     }
 
-    fn take_focus(
-        &mut self,
-        _: Direction,
-    ) -> Result<EventResult, CannotFocus> {
+    fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
         self.enabled.then(EventResult::consumed).ok_or(CannotFocus)
     }
 
     fn draw(&self, printer: &Printer) {
         if self.enabled && printer.enabled {
-            printer.with_selection(printer.focused, |printer| {
-                self.draw_internal(printer)
-            });
+            printer.with_selection(printer.focused, |printer| self.draw_internal(printer));
         } else {
             printer.with_style(PaletteStyle::Secondary, |printer| {
                 self.draw_internal(printer)
