@@ -65,13 +65,13 @@ impl Placement {
 /// A child view can be wrapped in multiple ways.
 enum ChildWrapper<T: View> {
     // Some views include a shadow around.
-    Shadow(ShadowView<Layer<CircularFocus<T>>>),
+    Shadow(ShadowView<Layer<T>>),
 
     // Some include only include a background.
-    Backfilled(Layer<CircularFocus<T>>),
+    Backfilled(Layer<T>),
 
     // Some views don't even have a background (they'll be transparent).
-    Plain(CircularFocus<T>),
+    Plain(T),
 }
 
 impl<T: View> ChildWrapper<T> {
@@ -202,14 +202,24 @@ impl<T: View> View for ChildWrapper<T> {
 }
 
 struct Child {
-    view: ChildWrapper<BoxedView>,
+    /// The view itself
+    view: CircularFocus<ChildWrapper<BoxedView>>,
+
+    /// Last given size.
     size: Vec2,
+
+    /// Where the view should be in the terminal (center, relative to previous layer, ...)
     placement: Placement,
 
-    // We cannot call `take_focus` until we've called `layout()`
-    // (for instance, a textView must know it will scroll to be focusable).
-    // So we want to call `take_focus` right after the first call to `layout`.
-    // This flag remembers when we've done that.
+    /// If true, prevents ignored events from reaching lower layers.
+    modal: bool,
+
+    /// True until the first call to layout(), then false.
+    ///
+    /// We cannot call `take_focus` until we've called `layout()`
+    /// (for instance, a textView must know it will scroll to be focusable).
+    /// So we want to call `take_focus` right after the first call to `layout`.
+    /// This flag remembers when we've done that.
     virgin: bool,
 }
 
@@ -255,9 +265,11 @@ impl StackView {
     {
         let boxed = BoxedView::boxed(view);
         self.layers.push(Child {
-            view: ChildWrapper::Backfilled(Layer::new(
-                CircularFocus::new(boxed).wrap_tab(),
-            )),
+            view: CircularFocus::new(ChildWrapper::Backfilled(Layer::new(
+                boxed,
+            )))
+            .wrap_tab(),
+            modal: false,
             size: Vec2::zero(),
             placement: Placement::Fullscreen,
             virgin: true,
