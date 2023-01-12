@@ -51,6 +51,9 @@ struct Watch {
 
 impl Watch {
     fn start(&mut self) {
+        if self.running {
+            return;
+        }
         self.running = true;
         self.last_started = Instant::now();
     }
