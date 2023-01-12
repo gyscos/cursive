@@ -93,7 +93,7 @@ mod scroll_view;
 mod select_view;
 mod shadow_view;
 mod slider_view;
-mod stack_view;
+pub mod stack_view;
 mod text_area;
 mod text_view;
 mod themed_view;

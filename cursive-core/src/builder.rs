@@ -1416,6 +1416,7 @@ var_recipe!("concat", |config, context| {
         .collect::<Result<String, _>>()
 });
 
+#[cfg(feature = "builder")]
 #[cfg(test)]
 mod tests {
 
