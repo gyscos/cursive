@@ -713,7 +713,7 @@ impl View for EditView {
     }
 }
 
-#[cursive_macros::recipe(EditView::new())]
+#[crate::recipe(EditView::new())]
 struct Recipe {
     content: Option<String>,
 

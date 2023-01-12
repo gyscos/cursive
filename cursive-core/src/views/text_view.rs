@@ -448,7 +448,7 @@ impl View for TextView {
 }
 
 // Need: a name, a base (potential dependencies), setters
-#[cursive_macros::recipe(TextView::empty())]
+#[crate::recipe(TextView::empty())]
 enum Recipe {
     // We accept `TextView` without even a body
     Empty,

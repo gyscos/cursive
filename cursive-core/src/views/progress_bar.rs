@@ -316,7 +316,7 @@ impl View for ProgressBar {
     }
 }
 
-#[cursive_macros::recipe(ProgressBar::new())]
+#[crate::recipe(ProgressBar::new())]
 struct Recipe {
     min: Option<usize>,
     max: Option<usize>,

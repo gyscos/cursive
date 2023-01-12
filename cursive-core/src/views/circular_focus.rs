@@ -125,6 +125,7 @@ impl<T: View> CircularFocus<T> {
         self.wrap_left_right = wrap_left_right;
     }
 
+    #[allow(unused)]
     fn set_wrap(&mut self, wrap_kind: WrapKind, wrap: bool) {
         match wrap_kind {
             WrapKind::Tab => self.set_wrap_tab(wrap),
@@ -138,6 +139,7 @@ impl<T: View> CircularFocus<T> {
 }
 
 #[derive(Hash)]
+#[allow(unused)]
 enum WrapKind {
     Tab,
     Arrows,
@@ -202,7 +204,7 @@ impl<T: View> ViewWrapper for CircularFocus<T> {
 }
 /*
 
-#[cursive_macros::recipe(with = "circular_focus", CircularFocus::new)]
+#[crate::recipe(with = "circular_focus", CircularFocus::new)]
 enum Recipe {
     #[recipe(
         set_wrap(wrap_kind, true),

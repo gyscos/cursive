@@ -771,7 +771,7 @@ impl View for LinearLayout {
 }
 
 /*
-#[cursive_macros::recipe(LinearLayout::new(orientation))]
+#[crate::recipe(LinearLayout::new(orientation))]
 struct Recipe {
     orientation: direction::Orientation,
 

@@ -263,7 +263,7 @@ impl View for SliderView {
 }
 
 // TODO: Rename the view itself as Slider to match the config?
-#[cursive_macros::recipe(SliderView::new(orientation, max_value))]
+#[crate::recipe(SliderView::new(orientation, max_value))]
 struct Recipe {
     orientation: Orientation,
     max_value: usize,

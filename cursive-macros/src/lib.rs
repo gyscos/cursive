@@ -1,7 +1,6 @@
 use proc_macro::TokenStream;
 
-mod callback_helper;
-mod recipe;
+mod builder;
 
 /// Generate two helper functions to help working with cursive recipes.
 ///
@@ -79,11 +78,11 @@ pub fn callback_helpers(
     _attrs: TokenStream,
     item: TokenStream,
 ) -> TokenStream {
-    callback_helper::callback_helpers(item)
+    builder::callback_helpers(item)
 }
 
 /// Defines a recipe for creating a view from config.
 #[proc_macro_attribute]
 pub fn recipe(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    recipe::recipe(attrs, item)
+    builder::recipe(attrs, item)
 }

@@ -17,6 +17,7 @@
 //! This crate includes:
 //! - A public part, always enabled.
 //! - An implementation module, conditionally compiled.
+#![cfg_attr(not(feature = "builder"), allow(unused))]
 use crate::views::BoxedView;
 
 use std::collections::{HashMap, HashSet};
@@ -879,22 +880,34 @@ impl Context {
     /// Prepare a new context using registered recipes.
     pub fn new() -> Self {
         // Collect a distributed set of recipes.
+        #[cfg(feature = "builder")]
         let recipes = inventory::iter::<Recipe>()
             .map(|recipe| recipe.as_tuple())
             .collect();
+
+        #[cfg(not(feature = "builder"))]
+        let recipes = Default::default();
 
         // for (recipe, _) in &recipes {
         //     eprintln!("{recipe:?}");
         // }
 
+        #[cfg(feature = "builder")]
         let wrappers = inventory::iter::<WrapperRecipe>()
             .map(|recipe| recipe.as_tuple())
             .collect();
 
+        #[cfg(not(feature = "builder"))]
+        let wrappers = Default::default();
+
         // Store callback recipes as variables for now.
+        #[cfg(feature = "builder")]
         let variables = inventory::iter::<CallbackRecipe>()
             .map(|recipe| recipe.as_tuple())
             .collect();
+
+        #[cfg(not(feature = "builder"))]
+        let variables = Default::default();
 
         let recipes = Rc::new(Recipes {
             recipes,
@@ -1429,8 +1442,11 @@ impl WrapperRecipe {
     }
 }
 
+#[cfg(feature = "builder")]
 inventory::collect!(Recipe);
+#[cfg(feature = "builder")]
 inventory::collect!(CallbackRecipe);
+#[cfg(feature = "builder")]
 inventory::collect!(WrapperRecipe);
 
 #[macro_export]

@@ -65,9 +65,9 @@ optional = true
 version = "0.9"
 
 [features]
-default = ["builder"]
+default = []
 doc-cfg = []
-builder = ["inventory"]
+builder = ["inventory", "cursive-macros/builder"]
 markdown = ["pulldown-cmark"]
 ansi = ["ansi-parser"]
 unstable_scroll = []  # Deprecated feature, remove in next version

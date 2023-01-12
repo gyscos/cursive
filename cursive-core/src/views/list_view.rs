@@ -93,8 +93,8 @@ impl ListView {
         &mut self.children[id]
     }
 
-    /// Setter for the recipe.
-    fn set_children(&mut self, children: Vec<ListChild>) {
+    /// Sets the children for this view.
+    pub fn set_children(&mut self, children: Vec<ListChild>) {
         self.children_heights.resize(children.len(), 0);
         self.children = children;
     }
@@ -533,7 +533,7 @@ impl FromConfig for ListChild {
     }
 }
 
-#[cursive_macros::recipe(ListView::new())]
+#[crate::recipe(ListView::new())]
 struct Recipe {
     children: Vec<ListChild>,
 

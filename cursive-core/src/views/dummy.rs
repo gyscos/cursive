@@ -4,6 +4,7 @@ use crate::Printer;
 /// Dummy view.
 ///
 /// Doesn't print anything. Minimal size is (1,1).
+#[derive(Default, Debug, Clone, Copy)]
 pub struct DummyView;
 
 impl DummyView {
@@ -21,7 +22,7 @@ impl View for DummyView {
     }
 }
 
-#[cursive_macros::recipe(DummyView::new())]
+#[crate::recipe(DummyView::new())]
 struct Recipe;
 
 // crate::raw_recipe!(DummyView, |_config, _context| { Ok(DummyView) });

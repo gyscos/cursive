@@ -1093,7 +1093,7 @@ impl<T> Item<T> {
     }
 }
 
-#[cursive_macros::recipe(SelectView::<String>::new())]
+#[crate::recipe(SelectView::<String>::new())]
 struct Recipe {
     autojump: Option<bool>,
     popup: Option<bool>,

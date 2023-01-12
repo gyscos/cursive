@@ -81,7 +81,7 @@ impl<V: View> ViewWrapper for PaddedView<V> {
     }
 }
 
-#[cursive_macros::recipe(PaddedView::new(margins, child))]
+#[crate::recipe(PaddedView::new(margins, child))]
 struct Recipe {
     margins: Margins,
     child: crate::views::BoxedView,

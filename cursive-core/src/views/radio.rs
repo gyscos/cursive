@@ -341,7 +341,7 @@ impl FromConfig for RadioGroup<String> {
     }
 }
 
-#[cursive_macros::recipe(RadioButton::from_group_str(&mut group, label))]
+#[crate::recipe(RadioButton::from_group_str(&mut group, label))]
 struct Recipe {
     group: RadioGroup<String>,
     label: String,

@@ -421,7 +421,7 @@ pub fn recipe(attrs: TokenStream, item: TokenStream) -> TokenStream {
         });
     };
 
-    eprintln!("Res: {result}");
+    // eprintln!("Res: {result}");
 
     result.into()
 }

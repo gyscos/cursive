@@ -183,7 +183,7 @@ impl View for Checkbox {
     }
 }
 
-#[cursive_macros::recipe(Checkbox::new())]
+#[crate::recipe(Checkbox::new())]
 struct Recipe {
     on_change: Option<_>,
 

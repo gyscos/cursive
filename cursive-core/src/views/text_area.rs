@@ -676,7 +676,7 @@ impl View for TextArea {
     }
 }
 
-#[cursive_macros::recipe(TextArea::new())]
+#[crate::recipe(TextArea::new())]
 struct Recipe {
     content: Option<String>,
 }

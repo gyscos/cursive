@@ -140,7 +140,7 @@ impl<V: View> ViewWrapper for Panel<V> {
     }
 }
 
-#[cursive_macros::recipe(Panel::new(child))]
+#[crate::recipe(Panel::new(child))]
 struct Recipe {
     child: crate::views::BoxedView,
 
