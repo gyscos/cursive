@@ -24,6 +24,8 @@ pub struct StackView {
     last_size: Vec2,
     // Flag indicates if undrawn areas of the background are exposed
     // and therefore need redrawing.
+    // TODO: this is broken! Transparent views could change their content and lead to weirdness.
+    // Instead, just rely on buffered backend.
     bg_dirty: cell::Cell<bool>,
 }
 
@@ -507,6 +509,7 @@ impl StackView {
     ///
     /// If the given position is out of bounds.
     pub fn remove_layer(&mut self, position: LayerPosition) -> Box<dyn View> {
+        self.bg_dirty.set(true);
         let i = self.get_index(position).unwrap();
         self.layers
             .remove(i)
@@ -617,6 +620,13 @@ impl StackView {
             }
             Placement::Fullscreen => (),
         }
+    }
+
+    /// Make the given layer (non-)modal.
+    pub fn set_modal(&mut self, layer: LayerPosition, modal: bool) {
+        let i = self.get_index(layer).unwrap();
+        let child = &mut self.layers[i];
+        child.modal = modal;
     }
 
     /// Background drawing
