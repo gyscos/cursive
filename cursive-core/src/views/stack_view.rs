@@ -30,7 +30,7 @@ pub struct StackView {
 }
 
 // This is a poor man's optional parameter, or kinda builder pattern.
-// We can give either `view`, or `NonModal(view)`, or `LayerAt(position, NoShadow(view))`.
+// We can give either `view`, or `Modeless(view)`, or `LayerAt(position, NoShadow(view))`.
 
 /// Configuration for a layer in a `StackView`.
 pub struct LayerConfig<V> {
@@ -43,7 +43,7 @@ pub struct LayerConfig<V> {
 /// Make the layer non-modal.
 ///
 /// If this layer ignores events, it will go to the layer behind it.
-pub struct NonModal<T>(pub T);
+pub struct Modeless<T>(pub T);
 
 /// Make a layer full-screen.
 ///
@@ -105,11 +105,11 @@ where
     }
 }
 
-impl<T, V> From<NonModal<T>> for LayerConfig<V>
+impl<T, V> From<Modeless<T>> for LayerConfig<V>
 where
     T: Into<LayerConfig<V>>,
 {
-    fn from(other: NonModal<T>) -> Self {
+    fn from(other: Modeless<T>) -> Self {
         other.0.into().with(|config| config.modal = false)
     }
 }
