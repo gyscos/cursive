@@ -56,6 +56,8 @@ pub struct NoShadow<T>(pub T);
 /// Make the layer transparent.
 ///
 /// No background will be filled.
+///
+/// This implicitly also removes shadows.
 pub struct Transparent<T>(pub T);
 
 /// Place the layer at the given position.
@@ -78,7 +80,10 @@ where
 {
     fn from(other: NoShadow<T>) -> Self {
         other.0.into().with(|config| {
-            config.wrapper = WrapperType::Backfilled;
+            if let WrapperType::Shadow = config.wrapper {
+                // We don't want to undo a transparent specifier.
+                config.wrapper = WrapperType::Backfilled;
+            }
         })
     }
 }
@@ -339,7 +344,7 @@ impl StackView {
     where
         T: IntoBoxedView,
     {
-        self.add_layer(Fullscreen(view));
+        self.add_layer(NoShadow(Fullscreen(view)));
     }
 
     /// Adds new view on top of the stack in the center of the screen.
@@ -918,11 +923,12 @@ crate::raw_recipe!(StackView, |config, context| {
 
             // Right now only plain layer+shadow views are allowed in configs.
             Ok(Child {
-                view: ChildWrapper::Shadow(
+                view: CircularFocus::new(ChildWrapper::Shadow(
                     ShadowView::new(Layer::new(view))
                         .top_padding(position.y == Offset::Center)
                         .left_padding(position.x == Offset::Center),
-                ),
+                ))
+                .wrap_tab(),
                 modal: modal.unwrap_or(true),
                 size: Vec2::zero(),
                 placement,
