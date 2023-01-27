@@ -1,5 +1,5 @@
 edition = "2021"
-fn_args_layout = "Tall"
+fn_params_layout = "Tall"
 format_code_in_doc_comments = true
 max_width = 100
 merge_derives = true
