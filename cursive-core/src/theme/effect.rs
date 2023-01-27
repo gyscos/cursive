@@ -2,7 +2,7 @@ use enumset::EnumSetType;
 use std::str::FromStr;
 
 /// Text effect
-#[allow(clippy::derive_hash_xor_eq)] // We do derive it through EnumSetType
+#[allow(clippy::derived_hash_with_manual_eq)] // We do derive it through EnumSetType
 #[derive(EnumSetType, Debug, Hash)]
 pub enum Effect {
     /// No effect
