@@ -393,19 +393,12 @@ impl backend::Backend for Backend {
         ncurses::refresh();
     }
 
-    fn print_at(&self, pos: Vec2, text: &str) {
-        ncurses::mvaddstr(pos.y as i32, pos.x as i32, text);
+    fn move_to(&self, pos: Vec2) {
+        ncurses::mv(pos.y as i32, pos.x as i32);
     }
 
-    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
-        if repetitions > 0 {
-            ncurses::mvaddstr(pos.y as i32, pos.x as i32, text);
-            let mut dupes_left = repetitions - 1;
-            while dupes_left > 0 {
-                ncurses::addstr(text);
-                dupes_left -= 1;
-            }
-        }
+    fn print(&self, text: &str) {
+        ncurses::addstr(text);
     }
 }
 

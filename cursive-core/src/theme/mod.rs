@@ -208,7 +208,7 @@ pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::Effect;
 pub use self::palette::{Palette, PaletteColor, PaletteNode, PaletteStyle};
-pub use self::style::{Style, StyleType};
+pub use self::style::{ConcreteStyle, Style, StyleType};
 #[cfg(feature = "toml")]
 use std::fs::File;
 use std::io;

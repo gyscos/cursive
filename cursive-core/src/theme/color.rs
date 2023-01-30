@@ -130,6 +130,12 @@ pub enum Color {
     RgbLowRes(u8, u8, u8),
 }
 
+impl Default for Color {
+    fn default() -> Self {
+        Color::RgbLowRes(0, 0, 0)
+    }
+}
+
 impl Color {
     /// Creates a color from its ID in the 256 colors list.
     ///

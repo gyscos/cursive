@@ -3,26 +3,30 @@ use std::iter::FromIterator;
 use super::{Color, ColorPair, ColorStyle, ColorType, Effect, Palette, PaletteColor, PaletteStyle};
 use enumset::EnumSet;
 
-/// Combine a color and an effect.
+/// Combine a color and effects.
 ///
 /// Represents any transformation that can be applied to text.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Style {
+    // TODO: Support "Inherit Parent" effect?
+    // Maybe a mapping of effect type to (Yes, No, Inherit)?
     /// Effect to apply.
-    ///
-    /// `None` to keep using previous effects.
     pub effects: EnumSet<Effect>,
 
     /// Color style to apply.
-    ///
-    /// `None` to keep using the previous colors.
     pub color: ColorStyle,
 }
 
-impl Default for Style {
-    fn default() -> Self {
-        Self::none()
-    }
+/// Combine a concrete color and effects.
+///
+/// This is a rendered version of `Style` or `StyleType`, which does not depend on the current theme.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
+pub struct ConcreteStyle {
+    /// Effect to apply.
+    pub effects: EnumSet<Effect>,
+
+    /// Color style to apply.
+    pub color: ColorPair,
 }
 
 impl Style {
@@ -138,6 +142,14 @@ impl Style {
         let color = ColorStyle::parse(table)?;
 
         Some(Style { effects, color })
+    }
+
+    /// Resolve a style to a concrete style.
+    pub fn resolve(&self, palette: &Palette, previous: ColorPair) -> ConcreteStyle {
+        ConcreteStyle {
+            effects: self.effects,
+            color: self.color.resolve(palette, previous),
+        }
     }
 }
 
@@ -269,6 +281,15 @@ impl StyleType {
     /// Returns an inactive highlight style.
     pub const fn highlight_inactive() -> Self {
         Self::Palette(PaletteStyle::HighlightInactive)
+    }
+}
+
+impl From<ColorPair> for ConcreteStyle {
+    fn from(color: ColorPair) -> Self {
+        ConcreteStyle {
+            effects: Default::default(),
+            color,
+        }
     }
 }
 
