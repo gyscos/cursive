@@ -22,6 +22,10 @@ pub struct SpannedStr<'a, T> {
     spans: &'a [IndexedSpan<T>],
 }
 
+// What we don't have: (&str, Vec<IndexedSpan<T>>)
+// To style an existing text.
+// Maybe replace `String` in `SpannedString` with `<S>`?
+
 /// Describes an object that appears like a `SpannedStr`.
 pub trait SpannedText {
     /// Type of span returned by `SpannedText::spans()`.

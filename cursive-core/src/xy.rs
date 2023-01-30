@@ -11,6 +11,12 @@ pub struct XY<T> {
     pub y: T,
 }
 
+impl<T: PartialEq> PartialEq<(T, T)> for XY<T> {
+    fn eq(&self, &(ref x, ref y): &(T, T)) -> bool {
+        &self.x == x && &self.y == y
+    }
+}
+
 impl<T> IntoIterator for XY<T> {
     type Item = T;
     type IntoIter = iter::Chain<iter::Once<T>, iter::Once<T>>;

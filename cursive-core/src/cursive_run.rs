@@ -1,4 +1,5 @@
-use crate::{backend, event::Event, theme, Cursive, Vec2};
+use crate::{backend, buffer, event, theme, Cursive, Vec2};
+use parking_lot::RwLock;
 use std::borrow::{Borrow, BorrowMut};
 use std::time::Duration;
 
@@ -13,7 +14,10 @@ const INPUT_POLL_DELAY_MS: u64 = 30;
 /// The `C` type is usually either `Cursive` or `&mut Cursive`.
 pub struct CursiveRunner<C> {
     siv: C,
+
     backend: Box<dyn backend::Backend>,
+    buffer: RwLock<buffer::PrintBuffer>,
+
     boring_frame_count: u32,
     // Last layer sizes of the stack view.
     // If it changed, clear the screen.
@@ -46,6 +50,7 @@ impl<C> CursiveRunner<C> {
         CursiveRunner {
             siv,
             backend,
+            buffer: RwLock::new(buffer::PrintBuffer::new()),
             boring_frame_count: 0,
             last_sizes: Vec::new(),
         }
@@ -94,9 +99,9 @@ where
             self.needs_clear = false;
         }
 
-        let size = self.screen_size();
-
-        self.siv.borrow_mut().draw(size, &*self.backend);
+        self.buffer.write().resize(self.screen_size());
+        self.siv.borrow_mut().draw(&self.buffer);
+        self.buffer.write().flush(&*self.backend);
     }
 
     /// Performs the first half of `Self::step()`.
@@ -167,7 +172,7 @@ where
 
             if boring {
                 // We're only here because of a timeout.
-                self.on_event(Event::Refresh);
+                self.on_event(event::Event::Refresh);
                 self.process_pending_backend_calls();
             }
 

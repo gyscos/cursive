@@ -4,6 +4,7 @@ use std::num::NonZeroU32;
 use std::path::Path;
 
 use crossbeam_channel::{self, Receiver, Sender};
+use parking_lot::RwLock;
 
 use crate::{
     backend,
@@ -122,7 +123,8 @@ impl Cursive {
         self.root.layout(size);
     }
 
-    pub(crate) fn draw(&mut self, size: Vec2, backend: &dyn backend::Backend) {
+    pub(crate) fn draw(&mut self, backend: &RwLock<crate::buffer::PrintBuffer>) {
+        let size = backend.read().size();
         let printer = Printer::new(size, &self.theme, backend);
 
         let selected = self.menubar.receive_events();
