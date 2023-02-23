@@ -730,9 +730,16 @@ impl Cursive {
         self.root.clear_event(event);
     }
 
+    /// Clear all currently-registered global callbacks.
+    ///
+    /// You may want to call `reset_default_callbacks()` afterwards.
+    pub fn clear_all_global_callbacks(&mut self) {
+        self.root.clear_callbacks();
+    }
+
     /// This resets the default callbacks.
     ///
-    /// Currently this mostly includes exiting on Ctrl-C.
+    /// Currently this mostly includes exiting on Ctrl-C, and handling window resize.
     pub fn reset_default_callbacks(&mut self) {
         self.set_on_pre_event(Event::CtrlChar('c'), |s| s.quit());
         self.set_on_pre_event(Event::Exit, |s| s.quit());
