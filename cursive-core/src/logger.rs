@@ -39,19 +39,11 @@ impl CursiveLogger {
     /// If CURSIVE_LOG is set, then the internal log level is set to match
     /// Remember to call `init()` to install with `log` backend
     pub fn new() -> Self {
-        let mut logger = CursiveLogger {
+        CursiveLogger {
             int_filter_level: log::LevelFilter::Trace,
             ext_filter_level: log::LevelFilter::Trace,
             log_size: 1000,
-        };
-        if let Some(filter_level) = get_env_log_level("RUST_LOG") {
-            logger.int_filter_level = filter_level;
-            logger.ext_filter_level = filter_level;
         }
-        if let Some(filter_level) = get_env_log_level("CURSIVE_LOG") {
-            logger.int_filter_level = filter_level;
-        }
-        logger
     }
 
     /// sets the internal log filter level
@@ -63,6 +55,18 @@ impl CursiveLogger {
     /// sets the external log filter level
     pub fn with_ext_filter_level(mut self, level: log::LevelFilter) -> Self {
         self.ext_filter_level = level;
+        self
+    }
+
+    /// sets log filter levels based on environment variables `RUST_LOG` and `CURSIVE_LOG`
+    pub fn with_env(mut self) -> Self {
+        if let Some(filter_level) = get_env_log_level("RUST_LOG") {
+            self.int_filter_level = filter_level;
+            self.ext_filter_level = filter_level;
+        }
+        if let Some(filter_level) = get_env_log_level("CURSIVE_LOG") {
+            self.int_filter_level = filter_level;
+        }
         self
     }
 
