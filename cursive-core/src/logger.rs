@@ -76,7 +76,7 @@ impl CursiveLogger {
     /// calling twice will panic
     pub fn init(self) {
         reserve_logs(self.log_size);
-        log::set_boxed_logger(Box::new(self)).unwrap();
+        log::set_logger(Box::leak(Box::new(self))).unwrap();
         log::set_max_level(log::LevelFilter::Trace);
     }
 }

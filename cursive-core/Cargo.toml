@@ -24,7 +24,7 @@ repository = "gyscos/cursive"
 [dependencies]
 enum-map = "2.0"
 enumset = "1.0.4"
-log = { version = "0.4", features = ["std"] }
+log = "0.4"
 owning_ref = "0.4"
 unicode-segmentation = "1"
 unicode-width = "0.1"
