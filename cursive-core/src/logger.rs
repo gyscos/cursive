@@ -12,6 +12,8 @@ pub struct CursiveLogger {
     int_filter_level: log::LevelFilter,
     /// Log filter level for log messages from sources outside of cursive
     ext_filter_level: log::LevelFilter,
+    /// Size of log queue
+    log_size: usize
 }
 
 fn get_env_log_level(env_var_name: &str) -> Option<log::LevelFilter> {
@@ -40,6 +42,7 @@ impl CursiveLogger {
         let mut logger = CursiveLogger {
             int_filter_level: log::LevelFilter::Trace,
             ext_filter_level: log::LevelFilter::Trace,
+            log_size: 1000,
         };
         if let Some(filter_level) = get_env_log_level("RUST_LOG") {
             logger.int_filter_level = filter_level;
@@ -63,9 +66,16 @@ impl CursiveLogger {
         self
     }
 
+    /// sets the size of the log queue
+    pub fn with_log_size(mut self, log_size: usize) -> Self {
+        self.log_size = log_size;
+        self
+    }
+
     /// installs the logger with log
     /// calling twice will panic
     pub fn init(self) {
+        reserve_logs(self.log_size);
         log::set_boxed_logger(Box::new(self)).unwrap();
         log::set_max_level(log::LevelFilter::Trace);
     }
@@ -128,9 +138,6 @@ impl log::Log for CursiveLogger {
 /// Use a [`DebugView`](crate::views::DebugView) to see the logs, or use
 /// [`Cursive::toggle_debug_console()`](crate::Cursive::toggle_debug_console()).
 pub fn init() {
-    // TODO: Configure the deque size?
-    reserve_logs(1_000);
-
     // This will panic if `set_logger` was already called.
     CursiveLogger::new().init();
 }
@@ -141,7 +148,6 @@ pub fn init() {
 ///
 /// An easier alternative might be to use [`init()`].
 pub fn get_logger() -> CursiveLogger {
-    reserve_logs(1_000);
     CursiveLogger::new()
 }
 
