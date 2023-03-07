@@ -2,8 +2,8 @@
 
 use lazy_static::lazy_static;
 use std::collections::VecDeque;
-use std::sync::Mutex;
 use std::str::FromStr;
+use std::sync::Mutex;
 
 /// Saves all log records in a global deque.
 ///
@@ -45,7 +45,7 @@ pub struct CursiveLogger {
     // Log filter level for log messages from sources outside of cursive
     ext_filter_level: log::LevelFilter,
     // Size of log queue
-    log_size: usize
+    log_size: usize,
 }
 
 impl CursiveLogger {
