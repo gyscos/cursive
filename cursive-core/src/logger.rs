@@ -1,6 +1,7 @@
 //! Logging utilities.
 
 use lazy_static::lazy_static;
+use std::cmp::Ord;
 use std::collections::VecDeque;
 use std::str::FromStr;
 use std::sync::Mutex;
@@ -99,8 +100,8 @@ impl CursiveLogger {
     /// Installs the logger with log. Calling twice will panic.
     pub fn init(self) {
         reserve_logs(self.log_size);
+        log::set_max_level(self.int_filter_level.max(self.ext_filter_level));
         log::set_logger(Box::leak(Box::new(self))).unwrap();
-        log::set_max_level(log::LevelFilter::Trace);
     }
 }
 
