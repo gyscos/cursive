@@ -139,7 +139,7 @@ pub fn log(record: &log::Record) {
 
 impl log::Log for CursiveLogger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        if metadata.target().contains("cursive_core") {
+        if metadata.target().starts_with("cursive_core::") {
             metadata.level() <= self.int_filter_level
         } else {
             metadata.level() <= self.ext_filter_level
