@@ -7,12 +7,43 @@ use std::sync::Mutex;
 /// Saves all log records in a global deque.
 ///
 /// Uses a `DebugView` to access it.
+///
+/// # Examples
+///
+/// Set log levels from env vars
+///
+/// ```
+/// # use cursive_core::logger::CursiveLogger;
+/// CursiveLogger::new()
+///     .with_env()
+///     .init();
+/// ```
+///
+/// Set log levels explicitly.
+///
+/// ```
+/// # use cursive_core::logger::CursiveLogger;
+/// # use log::LevelFilter;
+/// CursiveLogger::new()
+///     .with_int_filter_level(LevelFilter::Warn)
+///     .with_ext_filter_level(LevelFilter::Debug)
+///     .init();
+/// ```
+///
+/// Set log queue size.
+///
+/// ```
+/// # use cursive_core::logger::CursiveLogger;
+/// CursiveLogger::new()
+///     .with_log_size(10_000)
+///     .init();
+/// ```
 pub struct CursiveLogger {
-    /// Log filter level for log messages from within cursive
+    // Log filter level for log messages from within cursive
     int_filter_level: log::LevelFilter,
-    /// Log filter level for log messages from sources outside of cursive
+    // Log filter level for log messages from sources outside of cursive
     ext_filter_level: log::LevelFilter,
-    /// Size of log queue
+    // Size of log queue
     log_size: usize
 }
 
@@ -34,10 +65,8 @@ fn get_env_log_level(env_var_name: &str) -> Option<log::LevelFilter> {
 }
 
 impl CursiveLogger {
-    /// Creates a new CursiveLogger with default log filter levels of log::LevelFilter::Trace
-    /// If RUST_LOG is set, then both internal and external log levels are set to match
-    /// If CURSIVE_LOG is set, then the internal log level is set to match
-    /// Remember to call `init()` to install with `log` backend
+    /// Creates a new CursiveLogger with default log filter levels of `log::LevelFilter::Trace`.
+    /// Remember to call `init()` to install with `log` backend.
     pub fn new() -> Self {
         CursiveLogger {
             int_filter_level: log::LevelFilter::Trace,
@@ -46,19 +75,22 @@ impl CursiveLogger {
         }
     }
 
-    /// sets the internal log filter level
+    /// Sets the internal log filter level.
     pub fn with_int_filter_level(mut self, level: log::LevelFilter) -> Self {
         self.int_filter_level = level;
         self
     }
 
-    /// sets the external log filter level
+    /// Sets the external log filter level.
     pub fn with_ext_filter_level(mut self, level: log::LevelFilter) -> Self {
         self.ext_filter_level = level;
         self
     }
 
-    /// sets log filter levels based on environment variables `RUST_LOG` and `CURSIVE_LOG`
+    /// Sets log filter levels based on environment variables `RUST_LOG` and `CURSIVE_LOG`.
+    /// If `RUST_LOG` is set, then both internal and external log levels are set to match.
+    /// If `CURSIVE_LOG` is set, then the internal log level is set to match with precedence over
+    /// `RUST_LOG`.
     pub fn with_env(mut self) -> Self {
         if let Some(filter_level) = get_env_log_level("RUST_LOG") {
             self.int_filter_level = filter_level;
@@ -70,14 +102,13 @@ impl CursiveLogger {
         self
     }
 
-    /// sets the size of the log queue
+    /// Sets the size of the log queue
     pub fn with_log_size(mut self, log_size: usize) -> Self {
         self.log_size = log_size;
         self
     }
 
-    /// installs the logger with log
-    /// calling twice will panic
+    /// Installs the logger with log. Calling twice will panic.
     pub fn init(self) {
         reserve_logs(self.log_size);
         log::set_logger(Box::leak(Box::new(self))).unwrap();
