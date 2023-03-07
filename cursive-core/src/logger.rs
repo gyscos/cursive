@@ -3,6 +3,7 @@
 use lazy_static::lazy_static;
 use std::collections::VecDeque;
 use std::sync::Mutex;
+use std::str::FromStr;
 
 /// Saves all log records in a global deque.
 ///
@@ -47,23 +48,6 @@ pub struct CursiveLogger {
     log_size: usize
 }
 
-fn get_env_log_level(env_var_name: &str) -> Option<log::LevelFilter> {
-    match std::env::var(env_var_name) {
-        Ok(mut log_level_str) => {
-            log_level_str.make_ascii_uppercase();
-            match log_level_str {
-                level if level == "TRACE" => Some(log::LevelFilter::Trace),
-                level if level == "DEBUG" => Some(log::LevelFilter::Debug),
-                level if level == "INFO" => Some(log::LevelFilter::Info),
-                level if level == "WARN" => Some(log::LevelFilter::Warn),
-                level if level == "ERROR" => Some(log::LevelFilter::Error),
-                _ => None,
-            }
-        }
-        Err(_) => None,
-    }
-}
-
 impl CursiveLogger {
     /// Creates a new CursiveLogger with default log filter levels of `log::LevelFilter::Trace`.
     /// Remember to call `init()` to install with `log` backend.
@@ -92,12 +76,16 @@ impl CursiveLogger {
     /// If `CURSIVE_LOG` is set, then the internal log level is set to match with precedence over
     /// `RUST_LOG`.
     pub fn with_env(mut self) -> Self {
-        if let Some(filter_level) = get_env_log_level("RUST_LOG") {
-            self.int_filter_level = filter_level;
-            self.ext_filter_level = filter_level;
+        if let Ok(rust_log) = std::env::var("RUST_LOG") {
+            if let Ok(filter_level) = log::LevelFilter::from_str(&rust_log) {
+                self.int_filter_level = filter_level;
+                self.ext_filter_level = filter_level;
+            }
         }
-        if let Some(filter_level) = get_env_log_level("CURSIVE_LOG") {
-            self.int_filter_level = filter_level;
+        if let Ok(cursive_log) = std::env::var("CURSIVE_LOG") {
+            if let Ok(filter_level) = log::LevelFilter::from_str(&cursive_log) {
+                self.int_filter_level = filter_level;
+            }
         }
         self
     }
