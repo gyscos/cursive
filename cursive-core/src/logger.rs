@@ -101,7 +101,7 @@ impl CursiveLogger {
     pub fn init(self) {
         reserve_logs(self.log_size);
         log::set_max_level(self.int_filter_level.max(self.ext_filter_level));
-        log::set_logger(Box::leak(Box::new(self))).unwrap();
+        log::set_boxed_logger(Box::new(self)).unwrap();
     }
 }
 
