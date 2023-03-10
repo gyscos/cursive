@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use std::cmp::Ord;
 use std::collections::VecDeque;
 use std::str::FromStr;
-use std::sync::Mutex;
+use std::sync::{Mutex, RwLock};
 
 /// Saves all log records in a global deque.
 ///
@@ -15,93 +15,55 @@ use std::sync::Mutex;
 /// Set log levels from env vars
 ///
 /// ```
-/// # use cursive_core::logger::CursiveLogger;
-/// CursiveLogger::new()
-///     .with_env()
-///     .init();
+/// # use cursive_core::*;
+/// logger::set_filter_levels_with_env();
+/// logger::init();
 /// ```
 ///
 /// Set log levels explicitly.
 ///
 /// ```
-/// # use cursive_core::logger::CursiveLogger;
+/// # use cursive_core::*;
 /// # use log::LevelFilter;
-/// CursiveLogger::new()
-///     .with_int_filter_level(LevelFilter::Warn)
-///     .with_ext_filter_level(LevelFilter::Debug)
-///     .init();
+/// logger::set_int_filter_level(LevelFilter::Warn);
+/// logger::set_ext_filter_level(LevelFilter::Debug);
+/// logger::init();
 /// ```
-///
-/// Set log queue size.
-///
-/// ```
-/// # use cursive_core::logger::CursiveLogger;
-/// CursiveLogger::new()
-///     .with_log_size(10_000)
-///     .init();
-/// ```
-pub struct CursiveLogger {
+
+pub struct CursiveLogger;
+
+lazy_static! {
     // Log filter level for log messages from within cursive
-    int_filter_level: log::LevelFilter,
+    static ref INT_FILTER_LEVEL: RwLock<log::LevelFilter> = RwLock::new(log::LevelFilter::Trace);
     // Log filter level for log messages from sources outside of cursive
-    ext_filter_level: log::LevelFilter,
-    // Size of log queue
-    log_size: usize,
+    static ref EXT_FILTER_LEVEL: RwLock<log::LevelFilter> = RwLock::new(log::LevelFilter::Trace);
 }
 
-impl CursiveLogger {
-    /// Creates a new CursiveLogger with default log filter levels of `log::LevelFilter::Trace`.
-    /// Remember to call `init()` to install with `log` backend.
-    pub fn new() -> Self {
-        CursiveLogger {
-            int_filter_level: log::LevelFilter::Trace,
-            ext_filter_level: log::LevelFilter::Trace,
-            log_size: 1000,
+/// Sets the internal log filter level.
+pub fn set_int_filter_level(level: log::LevelFilter) {
+    *INT_FILTER_LEVEL.write().unwrap() = level;
+}
+
+/// Sets the external log filter level.
+pub fn set_ext_filter_level(level: log::LevelFilter) {
+    *EXT_FILTER_LEVEL.write().unwrap() = level;
+}
+
+/// Sets log filter levels based on environment variables `RUST_LOG` and `CURSIVE_LOG`.
+/// If `RUST_LOG` is set, then both internal and external log levels are set to match.
+/// If `CURSIVE_LOG` is set, then the internal log level is set to match with precedence over
+/// `RUST_LOG`.
+pub fn set_filter_levels_with_env() {
+    if let Ok(rust_log) = std::env::var("RUST_LOG") {
+        if let Ok(filter_level) = log::LevelFilter::from_str(&rust_log) {
+            set_int_filter_level(filter_level);
+            set_ext_filter_level(filter_level);
         }
     }
-
-    /// Sets the internal log filter level.
-    pub fn with_int_filter_level(mut self, level: log::LevelFilter) -> Self {
-        self.int_filter_level = level;
-        self
-    }
-
-    /// Sets the external log filter level.
-    pub fn with_ext_filter_level(mut self, level: log::LevelFilter) -> Self {
-        self.ext_filter_level = level;
-        self
-    }
-
-    /// Sets log filter levels based on environment variables `RUST_LOG` and `CURSIVE_LOG`.
-    /// If `RUST_LOG` is set, then both internal and external log levels are set to match.
-    /// If `CURSIVE_LOG` is set, then the internal log level is set to match with precedence over
-    /// `RUST_LOG`.
-    pub fn with_env(mut self) -> Self {
-        if let Ok(rust_log) = std::env::var("RUST_LOG") {
-            if let Ok(filter_level) = log::LevelFilter::from_str(&rust_log) {
-                self.int_filter_level = filter_level;
-                self.ext_filter_level = filter_level;
-            }
+    if let Ok(cursive_log) = std::env::var("CURSIVE_LOG") {
+        if let Ok(filter_level) = log::LevelFilter::from_str(&cursive_log) {
+            set_int_filter_level(filter_level);
         }
-        if let Ok(cursive_log) = std::env::var("CURSIVE_LOG") {
-            if let Ok(filter_level) = log::LevelFilter::from_str(&cursive_log) {
-                self.int_filter_level = filter_level;
-            }
-        }
-        self
-    }
-
-    /// Sets the size of the log queue
-    pub fn with_log_size(mut self, log_size: usize) -> Self {
-        self.log_size = log_size;
-        self
-    }
-
-    /// Installs the logger with log. Calling twice will panic.
-    pub fn init(self) {
-        reserve_logs(self.log_size);
-        log::set_max_level(self.int_filter_level.max(self.ext_filter_level));
-        log::set_boxed_logger(Box::new(self)).unwrap();
     }
 }
 
@@ -140,9 +102,9 @@ pub fn log(record: &log::Record) {
 impl log::Log for CursiveLogger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
         if metadata.target().starts_with("cursive_core::") {
-            metadata.level() <= self.int_filter_level
+            metadata.level() <= *INT_FILTER_LEVEL.read().unwrap()
         } else {
-            metadata.level() <= self.ext_filter_level
+            metadata.level() <= *EXT_FILTER_LEVEL.read().unwrap()
         }
     }
 
@@ -162,8 +124,13 @@ impl log::Log for CursiveLogger {
 /// Use a [`DebugView`](crate::views::DebugView) to see the logs, or use
 /// [`Cursive::toggle_debug_console()`](crate::Cursive::toggle_debug_console()).
 pub fn init() {
+    // ensure that the log queue capacity has been set
+    if LOGS.lock().unwrap().capacity() == 0 {
+        reserve_logs(1_000);
+    }
+    log::set_max_level((*INT_FILTER_LEVEL.read().unwrap()).max(*EXT_FILTER_LEVEL.read().unwrap()));
     // This will panic if `set_logger` was already called.
-    CursiveLogger::new().init();
+    log::set_logger(&CursiveLogger).unwrap();
 }
 
 /// Return a logger that stores records in cursive's log queue.
@@ -172,7 +139,11 @@ pub fn init() {
 ///
 /// An easier alternative might be to use [`init()`].
 pub fn get_logger() -> CursiveLogger {
-    CursiveLogger::new()
+    // ensure that the log queue capacity has been set
+    if LOGS.lock().unwrap().capacity() == 0 {
+        reserve_logs(1_000);
+    }
+    CursiveLogger
 }
 
 /// Adds `n` more entries to cursive's log queue.
