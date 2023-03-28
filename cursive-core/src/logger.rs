@@ -16,7 +16,7 @@ use std::sync::{Mutex, RwLock};
 ///
 /// ```
 /// # use cursive_core::*;
-/// logger::set_filter_levels_with_env();
+/// logger::set_filter_levels_from_env();
 /// logger::init();
 /// ```
 ///
@@ -53,7 +53,7 @@ pub fn set_ext_filter_level(level: log::LevelFilter) {
 /// If `RUST_LOG` is set, then both internal and external log levels are set to match.
 /// If `CURSIVE_LOG` is set, then the internal log level is set to match with precedence over
 /// `RUST_LOG`.
-pub fn set_filter_levels_with_env() {
+pub fn set_filter_levels_from_env() {
     if let Ok(rust_log) = std::env::var("RUST_LOG") {
         if let Ok(filter_level) = log::LevelFilter::from_str(&rust_log) {
             set_int_filter_level(filter_level);
