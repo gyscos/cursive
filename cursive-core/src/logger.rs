@@ -33,6 +33,12 @@ use std::sync::{Mutex, RwLock};
 pub struct CursiveLogger;
 
 lazy_static! {
+    /// Circular buffer for logs. Use it to implement [`DebugView`].
+    ///
+    /// [`DebugView`]: ../views/struct.DebugView.html
+    pub static ref LOGS: Mutex<VecDeque<Record>> =
+        Mutex::new(VecDeque::new());
+
     // Log filter level for log messages from within cursive
     static ref INT_FILTER_LEVEL: RwLock<log::LevelFilter> = RwLock::new(log::LevelFilter::Trace);
     // Log filter level for log messages from sources outside of cursive
@@ -75,14 +81,6 @@ pub struct Record {
     pub time: time::OffsetDateTime,
     /// Message content
     pub message: String,
-}
-
-lazy_static! {
-    /// Circular buffer for logs. Use it to implement [`DebugView`].
-    ///
-    /// [`DebugView`]: ../views/struct.DebugView.html
-    pub static ref LOGS: Mutex<VecDeque<Record>> =
-        Mutex::new(VecDeque::new());
 }
 
 /// Log a record in cursive's log queue.
