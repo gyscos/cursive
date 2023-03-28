@@ -25,8 +25,8 @@ use std::sync::{Mutex, RwLock};
 /// ```
 /// # use cursive_core::*;
 /// # use log::LevelFilter;
-/// logger::set_int_filter_level(LevelFilter::Warn);
-/// logger::set_ext_filter_level(LevelFilter::Debug);
+/// logger::set_internal_filter_level(LevelFilter::Warn);
+/// logger::set_external_filter_level(LevelFilter::Debug);
 /// logger::init();
 /// ```
 
@@ -40,12 +40,12 @@ lazy_static! {
 }
 
 /// Sets the internal log filter level.
-pub fn set_int_filter_level(level: log::LevelFilter) {
+pub fn set_internal_filter_level(level: log::LevelFilter) {
     *INT_FILTER_LEVEL.write().unwrap() = level;
 }
 
 /// Sets the external log filter level.
-pub fn set_ext_filter_level(level: log::LevelFilter) {
+pub fn set_external_filter_level(level: log::LevelFilter) {
     *EXT_FILTER_LEVEL.write().unwrap() = level;
 }
 
@@ -56,13 +56,13 @@ pub fn set_ext_filter_level(level: log::LevelFilter) {
 pub fn set_filter_levels_from_env() {
     if let Ok(rust_log) = std::env::var("RUST_LOG") {
         if let Ok(filter_level) = log::LevelFilter::from_str(&rust_log) {
-            set_int_filter_level(filter_level);
-            set_ext_filter_level(filter_level);
+            set_internal_filter_level(filter_level);
+            set_external_filter_level(filter_level);
         }
     }
     if let Ok(cursive_log) = std::env::var("CURSIVE_LOG") {
         if let Ok(filter_level) = log::LevelFilter::from_str(&cursive_log) {
-            set_int_filter_level(filter_level);
+            set_internal_filter_level(filter_level);
         }
     }
 }
