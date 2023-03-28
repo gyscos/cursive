@@ -61,14 +61,20 @@ pub fn set_external_filter_level(level: log::LevelFilter) {
 /// `RUST_LOG`.
 pub fn set_filter_levels_from_env() {
     if let Ok(rust_log) = std::env::var("RUST_LOG") {
-        if let Ok(filter_level) = log::LevelFilter::from_str(&rust_log) {
-            set_internal_filter_level(filter_level);
-            set_external_filter_level(filter_level);
+        match log::LevelFilter::from_str(&rust_log) {
+            Ok(filter_level) => {
+                set_internal_filter_level(filter_level);
+                set_external_filter_level(filter_level);
+            }
+            Err(e) => log::warn!("Could not parse RUST_LOG: {}", e),
         }
     }
     if let Ok(cursive_log) = std::env::var("CURSIVE_LOG") {
-        if let Ok(filter_level) = log::LevelFilter::from_str(&cursive_log) {
-            set_internal_filter_level(filter_level);
+        match log::LevelFilter::from_str(&cursive_log) {
+            Ok(filter_level) => {
+                set_internal_filter_level(filter_level);
+            }
+            Err(e) => log::warn!("Could not parse CURSIVE_LOG: {}", e),
         }
     }
 }
