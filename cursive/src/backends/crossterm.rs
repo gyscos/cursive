@@ -10,6 +10,9 @@ use std::{
     time::Duration,
 };
 
+#[cfg(unix)]
+use std::fs::File;
+
 pub use crossterm;
 
 use crossterm::{
@@ -198,26 +201,45 @@ impl Backend {
     where
         Self: Sized,
     {
+        #[cfg(unix)]
+        let stdout = std::fs::File::create("/dev/tty")?;
+
+        #[cfg(windows)]
+        let stdout = io::stdout();
+
+        Self::init_with_stdout(stdout)
+    }
+
+    fn init_with_stdout(
+        mut stdout: Stdout,
+    ) -> Result<Box<dyn backend::Backend>, crossterm::ErrorKind>
+    where
+        Self: Sized,
+    {
         enable_raw_mode()?;
 
-        // TODO: Use the stdout we define down there
         execute!(
-            io::stdout(),
+            stdout,
             EnterAlternateScreen,
             EnableMouseCapture,
             cursor::Hide
         )?;
 
-        #[cfg(unix)]
-        let stdout = RefCell::new(BufWriter::new(std::fs::File::create("/dev/tty")?));
-
-        #[cfg(windows)]
-        let stdout = RefCell::new(BufWriter::new(io::stdout()));
-
         Ok(Box::new(Backend {
             current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
-            stdout,
+            stdout: RefCell::new(BufWriter::new(stdout)),
         }))
+    }
+
+    /// Create a new crossterm backend with provided output file. Unix only
+    #[cfg(unix)]
+    pub fn init_with_stdout_file(
+        outfile: File,
+    ) -> Result<Box<dyn backend::Backend>, crossterm::ErrorKind>
+    where
+        Self: Sized,
+    {
+        Self::init_with_stdout(outfile)
     }
 
     fn apply_colors(&self, colors: theme::ColorPair) {
