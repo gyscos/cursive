@@ -37,7 +37,7 @@ lazy_static! {
     ///
     /// [`DebugView`]: ../views/struct.DebugView.html
     pub static ref LOGS: Mutex<VecDeque<Record>> =
-        Mutex::new(VecDeque::new());
+        Mutex::new(VecDeque::with_capacity(1_000));
 
     // Log filter level for log messages from within cursive
     static ref INT_FILTER_LEVEL: RwLock<log::LevelFilter> = RwLock::new(log::LevelFilter::Trace);
@@ -122,10 +122,6 @@ impl log::Log for CursiveLogger {
 /// Use a [`DebugView`](crate::views::DebugView) to see the logs, or use
 /// [`Cursive::toggle_debug_console()`](crate::Cursive::toggle_debug_console()).
 pub fn init() {
-    // ensure that the log queue capacity has been set
-    if LOGS.lock().unwrap().capacity() == 0 {
-        reserve_logs(1_000);
-    }
     log::set_max_level((*INT_FILTER_LEVEL.read().unwrap()).max(*EXT_FILTER_LEVEL.read().unwrap()));
     // This will panic if `set_logger` was already called.
     log::set_logger(&CursiveLogger).unwrap();
@@ -137,18 +133,12 @@ pub fn init() {
 ///
 /// An easier alternative might be to use [`init()`].
 pub fn get_logger() -> CursiveLogger {
-    // ensure that the log queue capacity has been set
-    if LOGS.lock().unwrap().capacity() == 0 {
-        reserve_logs(1_000);
-    }
     CursiveLogger
 }
 
 /// Adds `n` more entries to cursive's log queue.
 ///
 /// Most of the time you don't need to use this directly.
-///
-/// You should call this if you're not using `init()` nor `get_logger()`.
 pub fn reserve_logs(n: usize) {
     LOGS.lock().unwrap().reserve(n);
 }
