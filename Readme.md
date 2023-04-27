@@ -105,6 +105,7 @@ Here are some cool applications using cursive:
 * [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
 * [wiki-tui](https://github.com/Builditluc/wiki-tui): A simple and easy to use Wikipedia Text User Interface
+* [game2048-rs](https://github.com/genieCS/game2048-rs): a tui game2048 using Rust and cursive.
 
 ## Goals
 
