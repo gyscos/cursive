@@ -48,6 +48,8 @@ cursive = "*"
 Finally, update `src/main.rs` to import it:
 
 ```rust,no_run
+use cursive;
+
 fn main() {
 }
 ```
