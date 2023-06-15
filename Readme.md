@@ -105,6 +105,7 @@ Here are some cool applications using cursive:
 * [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
 * [wiki-tui](https://github.com/Builditluc/wiki-tui): A simple and easy to use Wikipedia Text User Interface
+* [retris](https://github.com/genieCS/retris): A simple implementation of the classic tetris game.
 
 ## Goals
 
