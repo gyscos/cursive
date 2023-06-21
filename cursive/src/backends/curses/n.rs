@@ -527,7 +527,7 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     for c in 1..=26 {
         let event = match c {
             // Ctrl-i and Ctrl-j are special, they use the same codes as Tab
-            // and Enter respecively. There's just no way to detect them. :(
+            // and Enter respectively. There's just no way to detect them. :(
             9 => Event::Key(Key::Tab),
             10 => Event::Key(Key::Enter),
             other => Event::CtrlChar((b'a' - 1 + other as u8) as char),

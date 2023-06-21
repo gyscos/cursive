@@ -2,7 +2,7 @@
 //!
 //! Views are the main building blocks of your UI.
 //!
-//! A view can delegate part or all of its responsabilities to child views,
+//! A view can delegate part or all of its responsibilities to child views,
 //! forming a view tree. The root of this tree is a `StackView` handled
 //! directly by the `Cursive` element.
 //!

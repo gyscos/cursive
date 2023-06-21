@@ -62,7 +62,7 @@ impl Backend {
         self.current_style.borrow().clone()
     }
 
-    /// Ouput stream of consecutive frames rendered by Puppet backend
+    /// Output stream of consecutive frames rendered by Puppet backend
     pub fn stream(&self) -> Receiver<ObservedScreen> {
         self.screen_channel.1.clone()
     }

@@ -317,14 +317,14 @@ impl Core {
         self.enabled
     }
 
-    /// Control whether scroll bars are visibile.
+    /// Control whether scroll bars are visible.
     ///
     /// Defaults to `true`.
     pub fn set_show_scrollbars(&mut self, show_scrollbars: bool) {
         self.show_scrollbars = show_scrollbars;
     }
 
-    /// Control whether scroll bars are visibile.
+    /// Control whether scroll bars are visible.
     ///
     /// Chainable variant
     #[must_use]

@@ -36,7 +36,7 @@ pub struct Printer<'a, 'b> {
     /// Size of the area we are allowed to draw on.
     ///
     /// Anything outside of this should be discarded.\
-    /// The view being drawn can ingore this, but anything further than that
+    /// The view being drawn can ignore this, but anything further than that
     /// will be ignored.
     pub output_size: Vec2,
 

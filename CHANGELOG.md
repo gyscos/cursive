@@ -373,7 +373,7 @@
 
 ### Breaking changes
 
-- Update `enum-map` fron 0.5 to 0.6
+- Update `enum-map` from 0.5 to 0.6
 
 ### API updates
 
@@ -392,7 +392,7 @@
 ### Bugfixes
 
 - Fix a possible panic when a TextView is updated asynchronously while it's
-  being layed out.
+  being laid out.
 - Fixed weird behaviour of `SizeConstraint::Full` with `ScrollView`.
 
 ## 0.12.0

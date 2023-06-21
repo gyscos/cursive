@@ -636,7 +636,7 @@ impl StackView {
 
     /// Background drawing
     ///
-    /// Drawing functions are split into forground and background to
+    /// Drawing functions are split into foreground and background to
     /// ease inserting layers under the stackview but above its background.
     ///
     /// You probably just want to call draw()
@@ -656,7 +656,7 @@ impl StackView {
 
     /// Foreground drawing
     ///
-    /// Drawing functions are split into forground and background to
+    /// Drawing functions are split into foreground and background to
     /// ease inserting layers under the stackview but above its background.
     ///
     /// you probably just want to call draw()
@@ -724,7 +724,7 @@ where
 impl View for StackView {
     fn draw(&self, printer: &Printer) {
         // This function is included for compat with the view trait,
-        // it should behave the same as calling them seperately, but does
+        // it should behave the same as calling them separately, but does
         // not pause to let you insert in between the layers.
         self.draw_bg(printer);
         self.draw_fg(printer);
@@ -825,7 +825,7 @@ mod tests {
         // Start with a simple stack
         let mut stack = StackView::new().layer(TextView::new("1"));
 
-        // And keep poping and re-pushing the view
+        // And keep popping and re-pushing the view
         for _ in 0..20 {
             let layer = stack.pop_layer().unwrap();
             stack.add_layer(layer);

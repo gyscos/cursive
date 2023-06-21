@@ -10,7 +10,7 @@
 
 /// Wraps a `FnMut` into a `Fn`
 ///
-/// This can be used to use a `FnMut` when a callack expects a `Fn`.
+/// This can be used to use a `FnMut` when a callback expects a `Fn`.
 ///
 /// # Note
 ///

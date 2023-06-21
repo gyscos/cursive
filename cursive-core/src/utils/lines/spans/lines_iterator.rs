@@ -10,7 +10,7 @@ use std::rc::Rc;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-/// Generates rows of text in constrainted width.
+/// Generates rows of text in constrained width.
 ///
 /// Works on spans of text.
 pub struct LinesIterator<S>

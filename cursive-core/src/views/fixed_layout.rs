@@ -78,7 +78,7 @@ impl FixedLayout {
         self.focus
     }
 
-    /// Attemps to set the focus on the given child.
+    /// Attempts to set the focus on the given child.
     ///
     /// Returns `Err(())` if `index >= self.len()`, or if the view at the
     /// given index does not accept focus.

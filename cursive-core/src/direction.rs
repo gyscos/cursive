@@ -273,7 +273,7 @@ pub enum Absolute {
 
     /// No real direction.
     ///
-    /// Used when the "direction" is accross layers for instance.
+    /// Used when the "direction" is across layers for instance.
     None,
 }
 

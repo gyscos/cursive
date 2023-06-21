@@ -392,7 +392,7 @@ impl TextArea {
 
     /// Fix a damage located at the cursor.
     ///
-    /// The only damages are assumed to have occured around the cursor.
+    /// The only damages are assumed to have occurred around the cursor.
     ///
     /// This is an optimization to not re-compute the entire rows when an
     /// insert happened.

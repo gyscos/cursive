@@ -195,7 +195,7 @@ impl Rect {
         self.bottom_right.x
     }
 
-    /// Returns the Y value of the botton edge of the rectangle.
+    /// Returns the Y value of the bottom edge of the rectangle.
     ///
     /// This is inclusive.
     pub fn bottom(self) -> usize {

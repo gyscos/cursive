@@ -89,7 +89,7 @@ This example draws a colorful square to show off true color support.
 
 ## [`refcell_view`](./refcell_view.rs)
 
-Here we show how to access multiple views concurently through their name.
+Here we show how to access multiple views concurrently through their name.
 
 ## [`progress`](./progress.rs)
 
