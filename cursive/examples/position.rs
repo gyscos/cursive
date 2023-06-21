@@ -10,7 +10,7 @@ fn move_top(c: &mut Cursive, x_in: isize, y_in: isize) {
     let s = c.screen_mut();
     let l = LayerPosition::FromFront(0);
 
-    // Step 2. add the specifed amount
+    // Step 2. add the specified amount
     let pos = s
         .layer_offset(LayerPosition::FromFront(0))
         .unwrap()

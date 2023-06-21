@@ -133,7 +133,7 @@ impl TextContent {
     }
 }
 
-/// Internel representation of the content for a `TextView`.
+/// Internal representation of the content for a `TextView`.
 ///
 /// This is mostly just a `StyledString`.
 ///

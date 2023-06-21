@@ -76,7 +76,7 @@ impl ScrollBase {
         self
     }
 
-    /// Call this method whem the content or the view changes.
+    /// Call this method when the content or the view changes.
     pub fn set_heights(&mut self, view_height: usize, content_height: usize) {
         self.view_height = view_height;
         self.content_height = content_height;

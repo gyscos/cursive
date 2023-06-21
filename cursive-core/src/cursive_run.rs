@@ -184,9 +184,9 @@ where
     pub fn refresh(&mut self) {
         self.boring_frame_count = 0;
 
-        // Do we need to redraw everytime?
+        // Do we need to redraw every time?
         // Probably, actually.
-        // TODO: Do we need to re-layout everytime?
+        // TODO: Do we need to re-layout every time?
         self.layout();
 
         // TODO: Do we need to redraw every view every time?

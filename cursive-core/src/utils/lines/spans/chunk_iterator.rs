@@ -8,7 +8,7 @@ use xi_unicode::LineBreakLeafIter;
 
 /// Iterator that returns non-breakable chunks of text.
 ///
-/// Works accross spans of text.
+/// Works across spans of text.
 pub struct ChunkIterator<S> {
     /// Input that we want to chunk.
     source: Rc<S>,
@@ -33,7 +33,7 @@ impl<S> ChunkIterator<S> {
 
 /// This iterator produces chunks of non-breakable text.
 ///
-/// These chunks may go accross spans (a single word may be broken into more
+/// These chunks may go across spans (a single word may be broken into more
 /// than one span, for instance if parts of it are marked up differently).
 impl<S> Iterator for ChunkIterator<S>
 where

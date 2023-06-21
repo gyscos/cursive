@@ -141,7 +141,7 @@
 //! ```
 //!
 //! To use the theme in your application, load it with [`Cursive::load_toml`]
-//! method (or use [`theme::load_theme_file`] to aquire the theme object).
+//! method (or use [`theme::load_theme_file`] to acquire the theme object).
 //!
 //! ```rust,ignore
 //! let mut siv = Cursive::new();
@@ -292,12 +292,12 @@ impl Theme {
 /// Possible error returned when loading a theme.
 #[derive(Debug)]
 pub enum Error {
-    /// An error occured when reading the file.
+    /// An error occurred when reading the file.
     Io(io::Error),
 
     #[cfg(feature = "toml")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "toml")))]
-    /// An error occured when parsing the toml content.
+    /// An error occurred when parsing the toml content.
     Parse(toml::de::Error),
 }
 

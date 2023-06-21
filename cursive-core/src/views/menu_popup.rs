@@ -210,7 +210,7 @@ impl MenuPopup {
                 OnEventView::new(MenuPopup::new(Rc::clone(&tree)).on_action(move |s| {
                     // This will happen when the subtree popup
                     // activates something;
-                    // First, remove ourselve.
+                    // First, remove ourself.
                     s.pop_layer();
                     if let Some(ref action_cb) = action_cb {
                         action_cb.clone()(s);

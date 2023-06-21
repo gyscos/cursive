@@ -755,7 +755,7 @@ impl<T: 'static> SelectView<T> {
     }
 
     fn open_popup(&mut self) -> EventResult {
-        // Build a shallow menu tree to mimick the items array.
+        // Build a shallow menu tree to mimic the items array.
         // TODO: cache it?
         let mut tree = menu::Tree::new();
         for (i, item) in self.items.iter().enumerate() {

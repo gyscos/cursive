@@ -5,7 +5,7 @@
 //!
 //! This module defines the [`Backend`] trait, as well as a few implementations
 //! using some common libraries. Each of those included backends needs a
-//! corresonding feature to be enabled.
+//! corresponding feature to be enabled.
 //!
 //! [`Backend`]: ../backend/trait.Backend.html
 #[cfg(unix)]

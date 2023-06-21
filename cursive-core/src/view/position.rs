@@ -61,7 +61,7 @@ pub enum Offset {
 }
 
 impl Offset {
-    /// Computes a single-dimension offset requred to draw a view.
+    /// Computes a single-dimension offset required to draw a view.
     pub fn compute_offset(&self, size: usize, available: usize, parent: usize) -> usize {
         if size > available {
             0

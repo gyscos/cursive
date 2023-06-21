@@ -189,7 +189,7 @@ impl<T> SpannedString<T> {
         let source = source.into();
 
         // Make sure the spans are within bounds.
-        // This should disapear when compiled in release mode.
+        // This should disappear when compiled in release mode.
         for span in &spans {
             if let IndexedCow::Borrowed { end, .. } = span.content {
                 assert!(end <= source.len());

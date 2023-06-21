@@ -179,7 +179,7 @@ impl ObservedScreen {
         println!("{self}")
     }
 
-    /// Returns occurences of given string pattern
+    /// Returns occurrences of given string pattern
     pub fn find_occurences(&self, pattern: &str) -> Vec<ObservedLine> {
         // TODO(njskalski): test for two-cell letters.
         // TODO(njskalski): fails with whitespaces like "\t".

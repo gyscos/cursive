@@ -43,7 +43,7 @@ pub trait View: Any + AnyView {
     ///
     /// View groups should propagate the information to their children.
     ///
-    /// At this point, the given size is final and cannot be negociated.
+    /// At this point, the given size is final and cannot be negotiated.
     /// It is guaranteed to be the size available for the call to `draw()`.
     fn layout(&mut self, _: Vec2) {}
 

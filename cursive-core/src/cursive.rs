@@ -165,7 +165,7 @@ impl Cursive {
         self.user_data.downcast_mut()
     }
 
-    /// Attemps to take by value the current user-data.
+    /// Attempts to take by value the current user-data.
     ///
     /// If successful, this will replace the current user-data with the unit
     /// type `()`.
@@ -643,7 +643,7 @@ impl Cursive {
         self.root.set_on_event(trigger, crate::immut1!(cb));
     }
 
-    /// Registers a priotity callback.
+    /// Registers a priority callback.
     ///
     /// If an event matches the given trigger, it will not be sent to the view
     /// tree and will go to the given callback instead.

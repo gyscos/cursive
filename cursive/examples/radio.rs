@@ -36,7 +36,7 @@ fn main() {
                         LinearLayout::vertical()
                             // For the size, we store a number separately
                             .child(size_group.button(5, "Small"))
-                            // The initial selection can also be overriden
+                            // The initial selection can also be overridden
                             .child(size_group.button(15, "Medium").selected())
                             // The large size is out of stock, sorry!
                             .child(size_group.button(25, "Large").disabled()),

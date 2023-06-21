@@ -37,7 +37,7 @@ impl Chunk {
                 self.width -= to_remove.width;
                 break;
             } else {
-                // This segment is too small, so it'll disapear entirely.
+                // This segment is too small, so it'll disappear entirely.
                 to_remove.length -= segment.end - segment.start;
                 to_remove.width -= segment.width;
                 self.width -= segment.width;

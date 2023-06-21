@@ -209,7 +209,7 @@ impl FromStr for Color {
     }
 }
 
-/// Parses a hex represenation of a color.
+/// Parses a hex representation of a color.
 ///
 /// Optionally prefixed with `#` or `0x`.
 fn parse_hex_color(value: &str) -> Option<Color> {
