@@ -92,6 +92,7 @@ Here are some cool applications using cursive:
 * [checkline](https://github.com/sixarm/checkline-rust-crate): Checkbox line picker from stdin to stdout.
 * [clock-cli](https://github.com/TianyiShi2001/clock-cli-rs): A clock with stopwatch and countdown timer functionalities.
 * [fui](https://github.com/xliiv/fui): Add CLI & form interface to your program.
+* [game2048-rs](https://github.com/genieCS/game2048-rs): a tui game2048 using Rust and cursive.
 * [git-branchless](https://github.com/arxanas/git-branchless): Branchless workflow for Git.
 * [grin-tui](https://github.com/mimblewimble/grin): Minimal implementation of the MimbleWimble protocol.
 * [kakikun](https://github.com/file-acomplaint/kakikun): A paint and ASCII art application for the terminal.
@@ -99,13 +100,13 @@ Here are some cool applications using cursive:
 * [mythra](https://github.com/deven96/mythra): CLI to search for music.
 * [ncspot](https://github.com/hrkfdn/ncspot): Cross-platform ncurses Spotify client.
 * [rbmenu-tui](https://github.com/DevHyperCoder/rbmenu-tui): A TUI for bookmark management.
+* [retris](https://github.com/genieCS/retris): A simple implementation of the classic tetris game.
 * [ripasso](https://github.com/cortex/ripasso): A simple password manager written in Rust.
 * [rusty-man](https://sr.ht/~ireas/rusty-man): Browse rustdoc documentation.
 * [saci-rs](https://gitlab.com/ihercowitz/saci-rs): Simple API Client Interface. 
 * [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
 * [wiki-tui](https://github.com/Builditluc/wiki-tui): A simple and easy to use Wikipedia Text User Interface
-* [game2048-rs](https://github.com/genieCS/game2048-rs): a tui game2048 using Rust and cursive.
 
 ## Goals
 
