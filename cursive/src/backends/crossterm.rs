@@ -19,7 +19,7 @@ use crossterm::{
     cursor,
     event::{
         poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode,
-        KeyEvent as CKeyEvent, KeyModifiers, MouseButton as CMouseButton,
+        KeyEvent as CKeyEvent, KeyEventKind, KeyModifiers, MouseButton as CMouseButton,
         MouseEvent as CMouseEvent, MouseEventKind,
     },
     execute, queue,
@@ -88,72 +88,76 @@ fn translate_event(event: CKeyEvent) -> Option<Event> {
     const ALT_SHIFT: KeyModifiers =
         KeyModifiers::from_bits_truncate(KeyModifiers::ALT.bits() | KeyModifiers::SHIFT.bits());
 
-    Some(match event {
-        // Handle Char + modifier.
-        CKeyEvent {
-            modifiers: KeyModifiers::CONTROL,
-            code: KeyCode::Char(c),
-            ..
-        } => Event::CtrlChar(c),
-        CKeyEvent {
-            modifiers: KeyModifiers::ALT,
-            code: KeyCode::Char(c),
-            ..
-        } => Event::AltChar(c),
-        CKeyEvent {
-            modifiers: KeyModifiers::SHIFT,
-            code: KeyCode::Char(c),
-            ..
-        } => Event::Char(c),
-        CKeyEvent {
-            code: KeyCode::Char(c),
-            ..
-        } => Event::Char(c),
-        // From now on, assume the key is never a `Char`.
+    if event.kind == KeyEventKind::Press {
+        Some(match event {
+            // Handle Char + modifier.
+            CKeyEvent {
+                modifiers: KeyModifiers::CONTROL,
+                code: KeyCode::Char(c),
+                ..
+            } => Event::CtrlChar(c),
+            CKeyEvent {
+                modifiers: KeyModifiers::ALT,
+                code: KeyCode::Char(c),
+                ..
+            } => Event::AltChar(c),
+            CKeyEvent {
+                modifiers: KeyModifiers::SHIFT,
+                code: KeyCode::Char(c),
+                ..
+            } => Event::Char(c),
+            CKeyEvent {
+                code: KeyCode::Char(c),
+                ..
+            } => Event::Char(c),
+            // From now on, assume the key is never a `Char`.
 
-        // Explicitly handle 'backtab' since crossterm does not sent SHIFT alongside the back tab key.
-        CKeyEvent {
-            code: KeyCode::BackTab,
-            ..
-        } => Event::Shift(Key::Tab),
+            // Explicitly handle 'backtab' since crossterm does not sent SHIFT alongside the back tab key.
+            CKeyEvent {
+                code: KeyCode::BackTab,
+                ..
+            } => Event::Shift(Key::Tab),
 
-        // Handle key + multiple modifiers
-        CKeyEvent {
-            modifiers: CTRL_ALT,
-            code,
-            ..
-        } => Event::CtrlAlt(translate_key(code)?),
-        CKeyEvent {
-            modifiers: CTRL_SHIFT,
-            code,
-            ..
-        } => Event::CtrlShift(translate_key(code)?),
-        CKeyEvent {
-            modifiers: ALT_SHIFT,
-            code,
-            ..
-        } => Event::AltShift(translate_key(code)?),
+            // Handle key + multiple modifiers
+            CKeyEvent {
+                modifiers: CTRL_ALT,
+                code,
+                ..
+            } => Event::CtrlAlt(translate_key(code)?),
+            CKeyEvent {
+                modifiers: CTRL_SHIFT,
+                code,
+                ..
+            } => Event::CtrlShift(translate_key(code)?),
+            CKeyEvent {
+                modifiers: ALT_SHIFT,
+                code,
+                ..
+            } => Event::AltShift(translate_key(code)?),
 
-        // Handle key + single modifier
-        CKeyEvent {
-            modifiers: KeyModifiers::CONTROL,
-            code,
-            ..
-        } => Event::Ctrl(translate_key(code)?),
-        CKeyEvent {
-            modifiers: KeyModifiers::ALT,
-            code,
-            ..
-        } => Event::Alt(translate_key(code)?),
-        CKeyEvent {
-            modifiers: KeyModifiers::SHIFT,
-            code,
-            ..
-        } => Event::Shift(translate_key(code)?),
+            // Handle key + single modifier
+            CKeyEvent {
+                modifiers: KeyModifiers::CONTROL,
+                code,
+                ..
+            } => Event::Ctrl(translate_key(code)?),
+            CKeyEvent {
+                modifiers: KeyModifiers::ALT,
+                code,
+                ..
+            } => Event::Alt(translate_key(code)?),
+            CKeyEvent {
+                modifiers: KeyModifiers::SHIFT,
+                code,
+                ..
+            } => Event::Shift(translate_key(code)?),
 
-        // All other keys.
-        CKeyEvent { code, .. } => Event::Key(translate_key(code)?),
-    })
+            // All other keys.
+            CKeyEvent { code, .. } => Event::Key(translate_key(code)?),
+        })
+    } else {
+        None
+    }
 }
 
 fn translate_color(base_color: theme::Color) -> Color {
