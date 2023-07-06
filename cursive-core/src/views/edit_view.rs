@@ -430,7 +430,7 @@ impl EditView {
     /// You should run this callback with a `&mut Cursive`.
     pub fn remove(&mut self, len: usize) -> Callback {
         let start = self.cursor;
-        let end = self.cursor + len;
+        let end = self.cursor + len.min(self.content.len() - self.cursor);
         for _ in Rc::make_mut(&mut self.content).drain(start..end) {}
 
         self.keep_cursor_in_view();
