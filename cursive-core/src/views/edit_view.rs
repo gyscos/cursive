@@ -381,6 +381,11 @@ impl EditView {
         self
     }
 
+    /// Returns the currest cursor position.
+    pub fn get_cursor(&self) -> usize {
+        self.cursor
+    }
+
     /// Sets the cursor position.
     pub fn set_cursor(&mut self, cursor: usize) {
         self.cursor = cursor;
