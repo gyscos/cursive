@@ -766,3 +766,36 @@ crate::var_recipe!("EditView.with_content", |config, context| {
 
     Ok(result)
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ctrl_key_events() {
+        let mut view = EditView::new().content("foobarbaz");
+        view.set_cursor(0);
+
+        view.on_event(Event::CtrlChar('f'));
+        assert_eq!(view.get_cursor(), 1);
+
+        view.on_event(Event::CtrlChar('b'));
+        assert_eq!(view.get_cursor(), 0);
+
+        view.on_event(Event::CtrlChar('e'));
+        assert_eq!(view.get_cursor(), view.get_content().len());
+
+        view.on_event(Event::CtrlChar('a'));
+        assert_eq!(view.get_cursor(), 0);
+
+        view.set_cursor(3);
+        view.on_event(Event::CtrlChar('u'));
+        assert_eq!(view.get_cursor(), 0);
+        assert_eq!(*view.get_content(), "barbaz");
+
+        view.set_cursor(3);
+        view.on_event(Event::CtrlChar('k'));
+        assert_eq!(view.get_cursor(), 3);
+        assert_eq!(*view.get_content(), "bar");
+    }
+}
