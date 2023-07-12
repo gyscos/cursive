@@ -1,9 +1,10 @@
 use crate::{backend, event::Event, theme, Cursive, Vec2};
 use std::borrow::{Borrow, BorrowMut};
-use std::time::Duration;
+use web_sys::console;
+use js_sys::Date;
 
 // How long we wait between two empty input polls
-const INPUT_POLL_DELAY_MS: u64 = 30;
+const INPUT_POLL_DELAY_MS: i32 = 30;
 
 /// Event loop runner for a cursive instance.
 ///
@@ -18,6 +19,7 @@ pub struct CursiveRunner<C> {
     // Last layer sizes of the stack view.
     // If it changed, clear the screen.
     last_sizes: Vec<Vec2>,
+    last_refresh_time: f64,
 }
 
 impl<C> std::ops::Deref for CursiveRunner<C>
@@ -48,6 +50,7 @@ impl<C> CursiveRunner<C> {
             backend,
             boring_frame_count: 0,
             last_sizes: Vec::new(),
+            last_refresh_time: Date::now(),
         }
     }
 
@@ -175,9 +178,21 @@ where
         }
 
         if boring {
-            std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
+            self.sleep();
             self.boring_frame_count += 1;
         }
+    }
+
+    fn sleep(&mut self) {
+        // console::log_1(&"sleep start".into());
+        let mut now = Date::now();
+        let mut elapsed = now - self.last_refresh_time;
+        while elapsed < 1000.0 {
+            now = Date::now();
+            elapsed = now - self.last_refresh_time;
+        }
+        self.last_refresh_time = now;
+        // console::log_1(&"sleep end".into());
     }
 
     /// Refresh the screen with the current view tree state.
