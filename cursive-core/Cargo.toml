@@ -34,14 +34,6 @@ lazy_static = "1"
 ahash = "0.8"
 serde_json = "1.0.85"
 serde_yaml = "0.9.11"
-wasm-bindgen = "0.2.83"
-js-sys = "0.3.64"
-
-[dependencies.web-sys]
-version = "0.3.64"
-features = [
-    "console",
-]
 
 [dependencies.cursive-macros]
 path = "../cursive-macros"
@@ -72,13 +64,18 @@ default-features = false
 optional = true
 version = "0.9"
 
+[dependencies.js-sys]
+version = "0.3.64"
+optional = true
+
 [features]
-default = []
+default = ["wasm"]
 doc-cfg = []
 builder = ["inventory", "cursive-macros/builder"]
 markdown = ["pulldown-cmark"]
 ansi = ["ansi-parser"]
 unstable_scroll = []  # Deprecated feature, remove in next version
+wasm = ["js-sys"]
 
 [lib]
 name = "cursive_core"
