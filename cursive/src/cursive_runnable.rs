@@ -194,4 +194,12 @@ impl CursiveRunnable {
     pub fn blt() -> Self {
         Self::new::<std::convert::Infallible, _>(|| Ok(backends::blt::Backend::init()))
     }
+
+    /// Creates a new Cursive wrapper using the wasm backend.
+    ///
+    /// _Requires the `wasm-backend` feature._
+    #[cfg(feature = "wasm-backend")]
+    pub fn wasm() -> Self {
+        Self::new(backends::wasm::Backend::init)
+    }
 }

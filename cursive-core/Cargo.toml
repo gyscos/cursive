@@ -68,6 +68,11 @@ version = "0.9"
 version = "0.3.64"
 optional = true
 
+[dependencies.getrandom]
+optional = true
+version = "0.2"
+features = ["js"] 
+
 [features]
 default = ["wasm"]
 doc-cfg = []
@@ -75,7 +80,7 @@ builder = ["inventory", "cursive-macros/builder"]
 markdown = ["pulldown-cmark"]
 ansi = ["ansi-parser"]
 unstable_scroll = []  # Deprecated feature, remove in next version
-wasm = ["js-sys"]
+wasm = ["js-sys", "getrandom"]
 
 [lib]
 name = "cursive_core"

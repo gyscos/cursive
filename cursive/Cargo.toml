@@ -48,11 +48,33 @@ version = "2"
 optional = true
 version = "0.26"
 
+[dependencies.wasm-bindgen]
+optional = true
+version = "0.2.63"
+
+[dependencies.web-sys]
+optional = true
+version = "0.3.64"
+features = [
+    "HtmlCanvasElement",
+    "CanvasRenderingContext2d",
+    "KeyboardEvent",
+    "TextMetrics",
+    "Window",
+    "Document",
+]
+
+[dependencies.getrandom]
+optional = true
+version = "0.2"
+features = ["js"] 
+
+
 [features]
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.
 builder = ["cursive_core/builder"]
 blt-backend = ["bear-lib-terminal"]
-default = ["ncurses-backend"]
+default = ["wasm-backend"]
 ncurses-backend = ["ncurses", "maplit"]
 pancurses-backend = ["pancurses", "maplit"]
 termion-backend = ["termion"]
@@ -61,6 +83,7 @@ markdown = ["cursive_core/markdown"]
 ansi = ["cursive_core/ansi"]
 unstable_scroll = []  # Deprecated feature, remove in next version
 toml = ["cursive_core/toml"]
+wasm-backend = ["wasm-bindgen", "web-sys", "cursive_core/wasm", "getrandom"]
 
 [lib]
 name = "cursive"
