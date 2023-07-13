@@ -38,10 +38,10 @@ impl Backend {
                 std::io::ErrorKind::Other,
                 "Failed to get document",
             ))?;
-        let canvas = document.create_element("canvas")
-            .map_err(|_| std::io::Error::new(
+        let canvas = document.get_element_by_id("cursive-wasm-canvas")
+            .ok_or(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                "Failed to create canvas",
+                "Failed to get window",
             ))?
             .dyn_into::<HtmlCanvasElement>()
             .map_err(|_| std::io::Error::new(
@@ -70,8 +70,8 @@ impl Backend {
         ctx.set_font(&format!("{}px monospace", font_height));
 
         let color = RefCell::new(cursive_to_color_pair(theme::ColorPair {
-            front: theme::Color::Light(theme::BaseColor::White),
-            back:theme::Color::Dark(theme::BaseColor::Black),
+            front: theme::Color::Light(theme::BaseColor::Black),
+            back:theme::Color::Dark(theme::BaseColor::Green),
         }));
 
         let events = Rc::new(RefCell::new(VecDeque::new()));

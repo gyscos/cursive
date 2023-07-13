@@ -73,6 +73,25 @@ optional = true
 version = "0.2"
 features = ["js"] 
 
+[dependencies.async-std]
+optional = true
+version = "1.12.0"
+
+[dependencies.web-sys]
+optional = true
+version = "0.3.64"
+features = [
+    "Window",
+]
+
+[dependencies.wasm-bindgen]
+optional = true
+version = "0.2.87"
+
+[dependencies.wasm-bindgen-futures]
+optional = true
+version = "0.4.37"
+
 [features]
 default = ["wasm"]
 doc-cfg = []
@@ -80,7 +99,7 @@ builder = ["inventory", "cursive-macros/builder"]
 markdown = ["pulldown-cmark"]
 ansi = ["ansi-parser"]
 unstable_scroll = []  # Deprecated feature, remove in next version
-wasm = ["js-sys", "getrandom"]
+wasm = ["js-sys", "getrandom", "async-std", "web-sys", "wasm-bindgen", "wasm-bindgen-futures"]
 
 [lib]
 name = "cursive_core"

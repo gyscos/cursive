@@ -3,9 +3,6 @@ use std::borrow::{Borrow, BorrowMut};
 #[cfg(not(feature = "wasm"))]
 use std::time::Duration;
 
-#[cfg(feature = "wasm")]
-use js_sys::Date;
-
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;
 
@@ -191,11 +188,24 @@ where
 
     #[cfg(feature = "wasm")]
     fn sleep(&self) {
-        let start = Date::now();
-        let mut now = start;
-        while (now - start) < INPUT_POLL_DELAY_MS as f64 {
-            now = Date::now();
-        }
+        use wasm_bindgen::prelude::*;
+
+        async_std::task::block_on(async move {
+            let promise = js_sys::Promise::resolve({
+                let closure = Closure::new(move || {}) as Closure<dyn FnMut()>;
+                let timeout_id = web_sys::window()
+                    .expect("window is None for sleep")
+                    .set_timeout_with_callback_and_timeout_and_arguments_0(
+                        closure.as_ref().unchecked_ref(),
+                        INPUT_POLL_DELAY_MS as i32,
+                    )
+                    .expect("should register timeout for sleep");
+                closure.forget();
+                &JsValue::from_f64(timeout_id as f64)
+            });
+            let js_future = wasm_bindgen_futures::JsFuture::from(promise);
+            js_future.await.expect("should await sleep");
+        });
     }
 
     /// Refresh the screen with the current view tree state.
