@@ -1,6 +1,10 @@
 use crate::{backend, event::Event, theme, Cursive, Vec2};
 use std::borrow::{Borrow, BorrowMut};
+#[cfg(not(feature = "wasm"))]
 use std::time::Duration;
+
+#[cfg(feature = "wasm")]
+use js_sys::Date;
 
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;
@@ -175,8 +179,22 @@ where
         }
 
         if boring {
-            std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
+            self.sleep();
             self.boring_frame_count += 1;
+        }
+    }
+
+    #[cfg(not(feature = "wasm"))]
+    fn sleep(&self) {
+        std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
+    }
+
+    #[cfg(feature = "wasm")]
+    fn sleep(&self) {
+        let start = Date::now();
+        let mut now = start;
+        while (now - start) < INPUT_POLL_DELAY_MS as f64 {
+            now = Date::now();
         }
     }
 

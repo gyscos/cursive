@@ -16,6 +16,8 @@ pub mod crossterm;
 pub mod curses;
 pub mod puppet;
 pub mod termion;
+/// Provides a backend using the `wasm`.
+pub mod wasm;
 
 #[allow(dead_code)]
 fn boxed(e: impl std::error::Error + 'static) -> Box<dyn std::error::Error> {
@@ -30,6 +32,7 @@ fn boxed(e: impl std::error::Error + 'static) -> Box<dyn std::error::Error> {
 /// * Crossterm
 /// * Pancurses
 /// * Ncurses
+/// * wasm
 /// * Dummy
 pub fn try_default() -> Result<Box<dyn cursive_core::backend::Backend>, Box<dyn std::error::Error>>
 {
@@ -44,6 +47,8 @@ pub fn try_default() -> Result<Box<dyn cursive_core::backend::Backend>, Box<dyn 
             curses::pan::Backend::init().map_err(boxed)
         } else if #[cfg(feature = "ncurses-backend")] {
             curses::n::Backend::init().map_err(boxed)
+        } else if #[cfg(feature = "wasm-backend")] {
+            wasm::Backend::init().map_err(boxed)
         } else {
             log::warn!("No built-it backend, falling back to Dummy backend.");
             Ok(cursive_core::backend::Dummy::init())
