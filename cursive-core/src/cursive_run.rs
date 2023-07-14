@@ -1,6 +1,5 @@
 use crate::{backend, event::Event, theme, Cursive, Vec2};
 use std::borrow::{Borrow, BorrowMut};
-#[cfg(not(feature = "wasm"))]
 use std::time::Duration;
 
 // How long we wait between two empty input polls
@@ -181,31 +180,59 @@ where
         }
     }
 
-    #[cfg(not(feature = "wasm"))]
+    /// post_events asynchronously
+    #[cfg(feature = "wasm")]
+    pub async fn post_events_async(&mut self, received_something: bool) {
+        let boring = !received_something;
+        // How many times should we try if it's still boring?
+        // Total duration will be INPUT_POLL_DELAY_MS * repeats
+        // So effectively fps = 1000 / INPUT_POLL_DELAY_MS / repeats
+        if !boring
+            || self
+                .fps()
+                .map(|fps| 1000 / INPUT_POLL_DELAY_MS as u32 / fps.get())
+                .map(|repeats| self.boring_frame_count >= repeats)
+                .unwrap_or(false)
+        {
+            // We deserve to draw something!
+
+            if boring {
+                // We're only here because of a timeout.
+                self.on_event(Event::Refresh);
+                self.process_pending_backend_calls();
+            }
+
+            self.refresh();
+        }
+
+        if boring {
+            self.sleep_async().await;
+            self.boring_frame_count += 1;
+        }
+    }
+
     fn sleep(&self) {
         std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
     }
 
     #[cfg(feature = "wasm")]
-    fn sleep(&self) {
+    async fn sleep_async(&self) {
         use wasm_bindgen::prelude::*;
-
-        async_std::task::block_on(async move {
-            let promise = js_sys::Promise::resolve({
-                let closure = Closure::new(move || {}) as Closure<dyn FnMut()>;
-                let timeout_id = web_sys::window()
-                    .expect("window is None for sleep")
-                    .set_timeout_with_callback_and_timeout_and_arguments_0(
-                        closure.as_ref().unchecked_ref(),
-                        INPUT_POLL_DELAY_MS as i32,
-                    )
-                    .expect("should register timeout for sleep");
-                closure.forget();
-                &JsValue::from_f64(timeout_id as f64)
-            });
-            let js_future = wasm_bindgen_futures::JsFuture::from(promise);
-            js_future.await.expect("should await sleep");
+        let promise = js_sys::Promise::new(&mut |resolve, _| {
+            let closure = Closure::new(move || {
+                resolve.call0(&JsValue::null()).unwrap();
+            }) as Closure<dyn FnMut()>;
+            web_sys::window()
+                .expect("window is None for sleep")
+                .set_timeout_with_callback_and_timeout_and_arguments_0(
+                    closure.as_ref().unchecked_ref(),
+                    INPUT_POLL_DELAY_MS as i32,
+                )
+                .expect("should register timeout for sleep");
+            closure.forget();
         });
+        let js_future = wasm_bindgen_futures::JsFuture::from(promise);
+        js_future.await.expect("should await sleep");
     }
 
     /// Refresh the screen with the current view tree state.
@@ -245,6 +272,14 @@ where
         received_something
     }
 
+    /// step asynchronously
+    #[cfg(feature = "wasm")]
+    pub async fn step_async(&mut self) -> bool {
+        let received_something = self.process_events();
+        self.post_events_async(received_something).await;
+        received_something
+    }
+
     /// Runs the event loop.
     ///
     /// It will wait for user input (key presses)
@@ -266,4 +301,15 @@ where
             self.step();
         }
     }
+
+    /// Runs the event loop asynchronously.
+    #[cfg(feature = "wasm")]
+    pub async fn run_async(&mut self) {
+        self.refresh();
+
+        // And the big event loop begins!
+        while self.is_running() {
+            self.step_async().await;
+        }
+    }    
 }

@@ -122,7 +122,7 @@ impl cursive_core::backend::Backend for Backend {
     fn print_at(self: &Backend, pos: Vec2, text: &str) {
         let color = self.color.borrow();
         self.ctx.set_fill_style(&JsValue::from_str(&color.back));
-        self.ctx.fill_rect((pos.x * self.font_width) as f64, (pos.y * self.font_height) as f64, (self.font_width * text.len()) as f64, self.font_height as f64);
+        self.ctx.fill_rect((pos.x * self.font_width) as f64, (pos.y * self.font_height) as f64, ((self.font_width + 3) * text.len()) as f64, self.font_height as f64);
         self.ctx.set_fill_style(&JsValue::from_str(&color.front));
         self.ctx.fill_text(text, (pos.x * self.font_width) as f64, (pos.y * self.font_height + self.font_height * 3/4) as f64).unwrap();
     }
