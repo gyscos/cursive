@@ -1,6 +1,5 @@
 use crate::{backend, event::Event, theme, Cursive, Vec2};
 use std::borrow::{Borrow, BorrowMut};
-use std::time::Duration;
 
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;
@@ -151,7 +150,7 @@ where
     /// [1]: CursiveRunner::run()
     /// [2]: CursiveRunner::step()
     /// [3]: CursiveRunner::process_events()
-    pub fn post_events(&mut self, received_something: bool) {
+    pub async fn post_events(&mut self, received_something: bool) {
         let boring = !received_something;
         // How many times should we try if it's still boring?
         // Total duration will be INPUT_POLL_DELAY_MS * repeats
@@ -175,48 +174,23 @@ where
         }
 
         if boring {
-            self.sleep();
+            self.sleep().await;
             self.boring_frame_count += 1;
         }
     }
 
-    /// post_events asynchronously
-    #[cfg(feature = "wasm")]
-    pub async fn post_events_async(&mut self, received_something: bool) {
-        let boring = !received_something;
-        // How many times should we try if it's still boring?
-        // Total duration will be INPUT_POLL_DELAY_MS * repeats
-        // So effectively fps = 1000 / INPUT_POLL_DELAY_MS / repeats
-        if !boring
-            || self
-                .fps()
-                .map(|fps| 1000 / INPUT_POLL_DELAY_MS as u32 / fps.get())
-                .map(|repeats| self.boring_frame_count >= repeats)
-                .unwrap_or(false)
-        {
-            // We deserve to draw something!
-
-            if boring {
-                // We're only here because of a timeout.
-                self.on_event(Event::Refresh);
-                self.process_pending_backend_calls();
+    async fn sleep(&self) {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "wasm")] {
+                self.sleep_wasm().await;
+            } else {
+                std::thread::sleep(std::time::Duration::from_millis(INPUT_POLL_DELAY_MS));
             }
-
-            self.refresh();
         }
-
-        if boring {
-            self.sleep_async().await;
-            self.boring_frame_count += 1;
-        }
-    }
-
-    fn sleep(&self) {
-        std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
     }
 
     #[cfg(feature = "wasm")]
-    async fn sleep_async(&self) {
+    async fn sleep_wasm(&self) {
         use wasm_bindgen::prelude::*;
         let promise = js_sys::Promise::new(&mut |resolve, _| {
             let closure = Closure::new(move || {
@@ -266,17 +240,9 @@ where
     /// during this step, and `false` otherwise.
     ///
     /// [`run(&mut self)`]: #method.run
-    pub fn step(&mut self) -> bool {
+    pub async fn step(&mut self) -> bool {
         let received_something = self.process_events();
-        self.post_events(received_something);
-        received_something
-    }
-
-    /// step asynchronously
-    #[cfg(feature = "wasm")]
-    pub async fn step_async(&mut self) -> bool {
-        let received_something = self.process_events();
-        self.post_events_async(received_something).await;
+        self.post_events(received_something).await;
         received_something
     }
 
@@ -293,23 +259,24 @@ where
     ///
     /// [`step(&mut self)`]: #method.step
     /// [`quit(&mut self)`]: #method.quit
+    #[cfg(not(feature = "async"))]
     pub fn run(&mut self) {
         self.refresh();
 
         // And the big event loop begins!
         while self.is_running() {
-            self.step();
+            futures::executor::block_on(self.step());
         }
     }
 
     /// Runs the event loop asynchronously.
-    #[cfg(feature = "wasm")]
-    pub async fn run_async(&mut self) {
+    #[cfg(feature = "async")]
+    pub async fn run(&mut self) {
         self.refresh();
 
         // And the big event loop begins!
         while self.is_running() {
-            self.step_async().await;
+            self.step().await;
         }
     }    
 }
