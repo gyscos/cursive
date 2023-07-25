@@ -880,6 +880,17 @@ impl Cursive {
 
     /// Initialize the backend and runs the event loop.
     ///
+    /// Used for infallible backend initializers.
+    #[cfg(feature = "wasm")]
+    pub async fn run_with_async<F>(&mut self, backend_init: F)
+    where
+        F: FnOnce() -> Box<dyn backend::Backend>,
+    {
+        self.try_run_with_async::<(), _>(|| Ok(backend_init())).await.unwrap();
+    }
+
+    /// Initialize the backend and runs the event loop.
+    ///
     /// Returns an error if initializing the backend fails.
     pub fn try_run_with<E, F>(&mut self, backend_init: F) -> Result<(), E>
     where
@@ -888,6 +899,19 @@ impl Cursive {
         let mut runner = self.runner(backend_init()?);
 
         runner.run();
+
+        Ok(())
+    }
+
+    /// try run with async
+    #[cfg(feature = "wasm")]
+    pub async fn try_run_with_async<E, F>(&mut self, backend_init: F) -> Result<(), E>
+    where
+        F: FnOnce() -> Result<Box<dyn backend::Backend>, E>,
+    {
+        let mut runner = self.runner(backend_init()?);
+
+        runner.run_async().await;
 
         Ok(())
     }

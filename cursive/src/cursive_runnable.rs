@@ -93,6 +93,13 @@ impl CursiveRunnable {
         self.siv.try_run_with(&mut self.backend_init)
     }
 
+
+    /// try_run_ asynchronously
+    #[cfg(feature = "wasm-backend")]
+    pub async fn try_run_async(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.siv.try_run_with_async(&mut self.backend_init).await
+    }
+
     /// Gets a runner with the registered backend.
     ///
     /// Used to manually control the event loop. In most cases, running

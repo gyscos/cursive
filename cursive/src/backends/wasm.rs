@@ -8,22 +8,57 @@ use cursive_core::{
 use std::collections::VecDeque;
 use std::rc::Rc;
 use std::cell::RefCell;
-use web_sys::{
-    HtmlCanvasElement,
-    CanvasRenderingContext2d,
-};
+use web_sys::HtmlCanvasElement;
 use wasm_bindgen::prelude::*;
 use crate::backend;
 
+#[wasm_bindgen]
+#[derive(Debug, PartialEq)]
+#[repr(C)]
+struct TextColorPair  {
+    text: char,
+    color: ColorPair,
+}
+
+impl TextColorPair {
+    pub fn new(text: char, color: ColorPair) -> Self {
+        Self {
+            text,
+            color,
+        }
+    }
+}
+
+fn text_color_pairs_to_bytes(buffer: &Vec<TextColorPair>) -> &[u8] {
+    unsafe {
+        std::slice::from_raw_parts(
+            buffer.as_ptr() as *const u8,
+            buffer.len() * std::mem::size_of::<TextColorPair>(),
+        )
+    }
+}
+
+impl Clone for TextColorPair {
+    fn clone(&self) -> Self {
+        Self {
+            text: self.text,
+            color: self.color.clone(),
+        }
+    }
+}
+
+
+#[wasm_bindgen(module = "/src/backends/canvas.js")]
+extern "C" {
+    fn paint(buffer: &[u8]);
+}
 
 /// Backend using wasm.
 pub struct Backend {
     canvas: HtmlCanvasElement,
-    ctx: CanvasRenderingContext2d,
     color: RefCell<ColorPair>,
-    font_height: usize,
-    font_width: usize,
     events: Rc<RefCell<VecDeque<Event>>>,
+    buffer: RefCell<Vec<TextColorPair>>,
 }
 impl Backend {
     /// Creates a new Cursive root using a wasm backend.
@@ -38,10 +73,10 @@ impl Backend {
                 std::io::ErrorKind::Other,
                 "Failed to get document",
             ))?;
-        let canvas = document.create_element("canvas")
-            .map_err(|_| std::io::Error::new(
+        let canvas = document.get_element_by_id("cursive-wasm-canvas")
+            .ok_or(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                "Failed to create canvas",
+                "Failed to get window",
             ))?
             .dyn_into::<HtmlCanvasElement>()
             .map_err(|_| std::io::Error::new(
@@ -51,28 +86,10 @@ impl Backend {
         canvas.set_width(1000);
         canvas.set_height(1000);
 
-        let font_width = 12;     
-        let font_height = font_width * 2;
-        let ctx: CanvasRenderingContext2d = canvas.get_context("2d")
-            .map_err(|_| std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to get canvas context",
-            ))?
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to get canvas context",
-            ))?
-            .dyn_into::<CanvasRenderingContext2d>()
-            .map_err(|_| std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to cast canvas context",
-            ))?;
-        ctx.set_font(&format!("{}px monospace", font_height));
-
-        let color = RefCell::new(cursive_to_color_pair(theme::ColorPair {
-            front: theme::Color::Light(theme::BaseColor::White),
-            back:theme::Color::Dark(theme::BaseColor::Black),
-        }));
+        let color = cursive_to_color_pair(theme::ColorPair {
+            front: theme::Color::Light(theme::BaseColor::Black),
+            back:theme::Color::Dark(theme::BaseColor::Green),
+        });
 
         let events = Rc::new(RefCell::new(VecDeque::new()));
          let cloned = events.clone();
@@ -88,13 +105,13 @@ impl Backend {
             ))?;
          closure.forget();
 
-         let c = Backend { 
+        let buffer = vec![TextColorPair::new(' ', color.clone()); 1_000_000];
+
+        let c = Backend {
             canvas,
-            ctx,
-            color,
-            font_height,
-            font_width,
+            color: RefCell::new(color),
             events,     
+            buffer: RefCell::new(buffer),
          };
         Ok(Box::new(c))
     }
@@ -109,7 +126,10 @@ impl cursive_core::backend::Backend for Backend {
         self.canvas.set_title(&title);
     }
 
-    fn refresh(self: &mut Backend) {}
+    fn refresh(self: &mut Backend) {
+        let data = self.buffer.borrow().clone();
+        paint(text_color_pairs_to_bytes(&data));
+    }
 
     fn has_colors(self: &Backend) -> bool {
         true
@@ -120,15 +140,15 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn print_at(self: &Backend, pos: Vec2, text: &str) {
-        let color = self.color.borrow();
-        self.ctx.set_fill_style(&JsValue::from_str(&color.back));
-        self.ctx.fill_rect((pos.x * self.font_width) as f64, (pos.y * self.font_height) as f64, (self.font_width * text.len()) as f64, self.font_height as f64);
-        self.ctx.set_fill_style(&JsValue::from_str(&color.front));
-        self.ctx.fill_text(text, (pos.x * self.font_width) as f64, (pos.y * self.font_height + self.font_height * 3/4) as f64).unwrap();
+        let color = (*self.color.borrow()).clone();
+        let mut buffer = self.buffer.borrow_mut();
+        for (i, c) in text.chars().enumerate() {
+            let x = pos.x + i;
+            buffer[1000 * pos.y + x] = TextColorPair::new(c, color.clone());
+        }
     }
 
-    fn clear(self: &Backend, color: cursive_core::theme::Color) {
-        self.ctx.set_fill_style(&JsValue::from_str(&cursive_to_color(color)));
+    fn clear(self: &Backend, _color: cursive_core::theme::Color) {
     }
 
     fn set_color(self: &Backend, color_pair: cursive_core::theme::ColorPair) -> cursive_core::theme::ColorPair {
@@ -149,10 +169,28 @@ impl cursive_core::backend::Backend for Backend {
 }
 
 
-/// Type of hex color which starts with #.
-pub type Color = String;
+/// Type of hex color which is r,g,b
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Color {
+    red: u8, 
+    green: u8,
+    blue: u8
+}
 
-/// Type of color pair. 
+impl Color {
+    /// Creates a new `Color` with the given red, green, and blue values.
+    pub fn new(red: u8, green: u8, blue: u8) -> Self {
+        Self {
+            red,
+            green,
+            blue,
+        }
+    }
+}
+
+/// Type of color pair.
+#[derive(Clone, Debug, PartialEq, Eq)] 
 pub struct ColorPair {
     /// Foreground text color.
     pub front: Color,
@@ -163,25 +201,25 @@ pub struct ColorPair {
 /// Convert cursive color to hex color.
 pub fn cursive_to_color(color: theme::Color) -> Color {
     match color {
-        theme::Color::Dark(theme::BaseColor::Black) => "#000000".to_string(),
-        theme::Color::Dark(theme::BaseColor::Red) => "#800000".to_string(),
-        theme::Color::Dark(theme::BaseColor::Green) => "#008000".to_string(),
-        theme::Color::Dark(theme::BaseColor::Yellow) => "#808000".to_string(),
-        theme::Color::Dark(theme::BaseColor::Blue) => "#000080".to_string(),
-        theme::Color::Dark(theme::BaseColor::Magenta) => "#800080".to_string(),
-        theme::Color::Dark(theme::BaseColor::Cyan) => "#008080".to_string(),
-        theme::Color::Dark(theme::BaseColor::White) => "#c0c0c0".to_string(),
-        theme::Color::Light(theme::BaseColor::Black) => "#808080".to_string(),
-        theme::Color::Light(theme::BaseColor::Red) => "#ff0000".to_string(),
-        theme::Color::Light(theme::BaseColor::Green) => "#00ff00".to_string(),
-        theme::Color::Light(theme::BaseColor::Yellow) => "#ffff00".to_string(),
-        theme::Color::Light(theme::BaseColor::Blue) => "#0000ff".to_string(),
-        theme::Color::Light(theme::BaseColor::Magenta) => "#ff00ff".to_string(),
-        theme::Color::Light(theme::BaseColor::Cyan) => "#00ffff".to_string(),
-        theme::Color::Light(theme::BaseColor::White) => "#ffffff".to_string(),
-        theme::Color::Rgb(r, g, b) => format!("#{:02x}{:02x}{:02x}", r, g, b).to_string(),
-        theme::Color::RgbLowRes(r,g ,b ) => format!("#{:01x}{:01x}{:01x}", r, g, b).to_string(),
-        theme::Color::TerminalDefault => "#00ff00".to_string(),
+        theme::Color::Dark(theme::BaseColor::Black) => Color::new(0,0,0),
+        theme::Color::Dark(theme::BaseColor::Red) => Color::new(128,0,0),
+        theme::Color::Dark(theme::BaseColor::Green) => Color::new(0,128,0),
+        theme::Color::Dark(theme::BaseColor::Yellow) => Color::new(128,128,0),
+        theme::Color::Dark(theme::BaseColor::Blue) => Color::new(0,0,128),
+        theme::Color::Dark(theme::BaseColor::Magenta) => Color::new(128,0,128),
+        theme::Color::Dark(theme::BaseColor::Cyan) => Color::new(0,128,128),
+        theme::Color::Dark(theme::BaseColor::White) => Color::new(182,182,182),
+        theme::Color::Light(theme::BaseColor::Black) => Color::new(128,128,128),
+        theme::Color::Light(theme::BaseColor::Red) => Color::new(255,0,0),
+        theme::Color::Light(theme::BaseColor::Green) => Color::new(0,0,255),
+        theme::Color::Light(theme::BaseColor::Yellow) => Color::new(255,255,0),
+        theme::Color::Light(theme::BaseColor::Blue) => Color::new(0,0,255),
+        theme::Color::Light(theme::BaseColor::Magenta) => Color::new(255,0,255),
+        theme::Color::Light(theme::BaseColor::Cyan) => Color::new(0,255,255),
+        theme::Color::Light(theme::BaseColor::White) => Color::new(255,255,255),
+        theme::Color::Rgb(r, g, b) =>  Color::new(r,g,b),
+        theme::Color::RgbLowRes(r,g ,b ) =>  Color::new(r,g,b),
+        theme::Color::TerminalDefault =>  Color::new(0,255,0),
     }
 }
 
