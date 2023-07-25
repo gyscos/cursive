@@ -137,8 +137,10 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn refresh(self: &mut Backend) {
+        web_sys::console::time_with_label("refresh");
         let data = self.buffer.borrow().clone();
         paint(text_color_pairs_to_bytes(&data));
+        web_sys::console::time_end_with_label("refresh");
     }
 
     fn has_colors(self: &Backend) -> bool {

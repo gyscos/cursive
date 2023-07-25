@@ -62,6 +62,7 @@ features = [
     "TextMetrics",
     "Window",
     "Document",
+    "console",
 ]
 
 [dependencies.getrandom]
