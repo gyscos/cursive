@@ -1,7 +1,7 @@
 #![cfg(feature = "wasm-backend")]
 
 use cursive_core::{
-    event::Event,
+    event::{ Event, Key },
     Vec2,
     theme,
 };
@@ -94,11 +94,21 @@ impl Backend {
         let events = Rc::new(RefCell::new(VecDeque::new()));
          let cloned = events.clone();
          let closure = Closure::wrap(Box::new(move |event: web_sys::KeyboardEvent| {
-             for c in event.key().chars() {
-                cloned.borrow_mut().push_back(Event::Char(c));
-             }
+            match event.key_code() {
+                8 => cloned.borrow_mut().push_back(Event::Key(Key::Backspace)),
+                13 => cloned.borrow_mut().push_back(Event::Key(Key::Enter)),
+                37 => cloned.borrow_mut().push_back(Event::Key(Key::Left)),
+                38 => cloned.borrow_mut().push_back(Event::Key(Key::Up)),
+                39 => cloned.borrow_mut().push_back(Event::Key(Key::Right)),
+                40 => cloned.borrow_mut().push_back(Event::Key(Key::Down)),
+                code => {
+                    if let Some(c) = std::char::from_u32(code) {
+                        cloned.borrow_mut().push_back(Event::Char(c));
+                    }
+                }            
+            }
          }) as Box<dyn FnMut(_)>);
-         canvas.add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref())
+         document.add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref())
             .map_err(|_| std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "Failed to add event listener",

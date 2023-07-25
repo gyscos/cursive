@@ -2,8 +2,7 @@ use crate::{backend, event::Event, theme, Cursive, Vec2};
 use std::borrow::{Borrow, BorrowMut};
 use std::time::Duration;
 
-#[cfg(feature = "wasm")]
-use js_sys::Date;
+
 
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;
