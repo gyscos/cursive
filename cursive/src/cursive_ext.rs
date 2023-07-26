@@ -24,8 +24,6 @@
 /// siv.run_crossterm().unwrap();
 /// #[cfg(feature = "blt-backend")]
 /// siv.run_blt();
-/// #[cfg(feature="wasm-backend")]
-/// siv.run_wasm().unwrap();
 /// ```
 pub trait CursiveExt {
     /// Tries to use one of the enabled backends.
@@ -61,10 +59,6 @@ pub trait CursiveExt {
     #[cfg(feature = "blt-backend")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
     fn run_blt(&mut self);
-
-    /// Creates a new Cursive root using a wasm backend.
-    #[cfg(feature = "wasm-backend")]
-    fn run_wasm(&mut self) -> std::io::Result<()>;
 }
 
 impl CursiveExt for cursive_core::Cursive {
@@ -80,8 +74,6 @@ impl CursiveExt for cursive_core::Cursive {
                 self.run_pancurses().unwrap()
             } else if #[cfg(feature = "ncurses-backend")] {
                 self.run_ncurses().unwrap()
-            } else if #[cfg(feature = "wasm-backend")] {
-                self.run_wasm().unwrap()
             } else {
                 log::warn!("No built-it backend, falling back to Cursive::dummy().");
                 self.run_dummy()
@@ -117,10 +109,5 @@ impl CursiveExt for cursive_core::Cursive {
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
     fn run_blt(&mut self) {
         self.run_with(crate::backends::blt::Backend::init)
-    }
-
-    #[cfg(feature = "wasm-backend")]
-    fn run_wasm(&mut self) -> std::io::Result<()> {
-        self.try_run_with(crate::backends::wasm::Backend::init)
     }
 }

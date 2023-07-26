@@ -1,8 +1,7 @@
 use crate::{backend, event::Event, theme, Cursive, Vec2};
 use std::borrow::{Borrow, BorrowMut};
+#[cfg(not(feature = "async"))]
 use std::time::Duration;
-
-
 
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;
@@ -153,6 +152,7 @@ where
     /// [1]: CursiveRunner::run()
     /// [2]: CursiveRunner::step()
     /// [3]: CursiveRunner::process_events()
+    #[cfg(not(feature = "async"))]
     pub fn post_events(&mut self, received_something: bool) {
         let boring = !received_something;
         // How many times should we try if it's still boring?
@@ -183,8 +183,8 @@ where
     }
 
     /// post_events asynchronously
-    #[cfg(feature = "wasm")]
-    pub async fn post_events_async(&mut self, received_something: bool) {
+    #[cfg(feature = "async")]
+    pub async fn post_events(&mut self, received_something: bool) {
         let boring = !received_something;
         // How many times should we try if it's still boring?
         // Total duration will be INPUT_POLL_DELAY_MS * repeats
@@ -208,17 +208,18 @@ where
         }
 
         if boring {
-            self.sleep_async().await;
+            self.sleep().await;
             self.boring_frame_count += 1;
         }
     }
 
+    #[cfg(not(feature = "async"))]
     fn sleep(&self) {
         std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
     }
 
-    #[cfg(feature = "wasm")]
-    async fn sleep_async(&self) {
+    #[cfg(feature = "async")]
+    async fn sleep(&self) {
         use wasm_bindgen::prelude::*;
         let promise = js_sys::Promise::new(&mut |resolve, _| {
             let closure = Closure::new(move || {
@@ -268,6 +269,7 @@ where
     /// during this step, and `false` otherwise.
     ///
     /// [`run(&mut self)`]: #method.run
+    #[cfg(not(feature = "async"))]
     pub fn step(&mut self) -> bool {
         let received_something = self.process_events();
         self.post_events(received_something);
@@ -275,10 +277,10 @@ where
     }
 
     /// step asynchronously
-    #[cfg(feature = "wasm")]
-    pub async fn step_async(&mut self) -> bool {
+    #[cfg(feature = "async")]
+    pub async fn step(&mut self) -> bool {
         let received_something = self.process_events();
-        self.post_events_async(received_something).await;
+        self.post_events(received_something).await;
         received_something
     }
 
@@ -295,6 +297,7 @@ where
     ///
     /// [`step(&mut self)`]: #method.step
     /// [`quit(&mut self)`]: #method.quit
+    #[cfg(not(feature = "async"))]
     pub fn run(&mut self) {
         self.refresh();
 
@@ -305,13 +308,13 @@ where
     }
 
     /// Runs the event loop asynchronously.
-    #[cfg(feature = "wasm")]
-    pub async fn run_async(&mut self) {
+    #[cfg(feature = "async")]
+    pub async fn run(&mut self) {
         self.refresh();
 
         // And the big event loop begins!
         while self.is_running() {
-            self.step_async().await;
+            self.step().await;
         }
     }    
 }
