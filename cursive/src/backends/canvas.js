@@ -3,11 +3,11 @@ const fontHeight = fontWidth * 2;
 const textColorPairSize = 12;
 
 export function paint(buffer) {
-    console.time('paint');
+    // console.time('paint');
     const data = new Uint8Array(buffer);
     const canvas = document.getElementById('cursive-wasm-canvas');
     const context = canvas.getContext('2d');
-    context.font = `${fontHeight}px monospace`;
+    context.font = `${fontHeight - 2}px monospace`;
     for (let x = 0; x < 1000; x++) {
         for (let y = 0; y < 1000; y++) {
             const n = 1000 * y + x;
@@ -23,7 +23,7 @@ export function paint(buffer) {
             }
         }
     }
-    console.timeEnd('paint');
+    // console.timeEnd('paint');
 }
 
 function byte_to_hex_string(bytes) {

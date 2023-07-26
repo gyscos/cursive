@@ -137,10 +137,10 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn refresh(self: &mut Backend) {
-        web_sys::console::time_with_label("refresh");
+        // web_sys::console::time_with_label("refresh");
         let data = self.buffer.borrow().clone();
         paint(text_color_pairs_to_bytes(&data));
-        web_sys::console::time_end_with_label("refresh");
+        // web_sys::console::time_end_with_label("refresh");
     }
 
     fn has_colors(self: &Backend) -> bool {
@@ -223,7 +223,7 @@ pub fn cursive_to_color(color: theme::Color) -> Color {
         theme::Color::Dark(theme::BaseColor::White) => Color::new(182,182,182),
         theme::Color::Light(theme::BaseColor::Black) => Color::new(128,128,128),
         theme::Color::Light(theme::BaseColor::Red) => Color::new(255,0,0),
-        theme::Color::Light(theme::BaseColor::Green) => Color::new(0,0,255),
+        theme::Color::Light(theme::BaseColor::Green) => Color::new(0,255, 0),
         theme::Color::Light(theme::BaseColor::Yellow) => Color::new(255,255,0),
         theme::Color::Light(theme::BaseColor::Blue) => Color::new(0,0,255),
         theme::Color::Light(theme::BaseColor::Magenta) => Color::new(255,0,255),
