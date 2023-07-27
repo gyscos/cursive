@@ -115,7 +115,7 @@ impl Backend {
             ))?;
          closure.forget();
 
-        let buffer = vec![TextColorPair::new(' ', color.clone()); 1_000_000];
+        let buffer = vec![TextColorPair::new(' ', color.clone()); 10_000];
 
         let c = Backend {
             canvas,
@@ -148,7 +148,7 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn screen_size(self: &Backend) -> Vec2 {
-        Vec2::new(self.canvas.width() as usize, self.canvas.height() as usize)
+        Vec2::new(100, 100)
     }
 
     fn print_at(self: &Backend, pos: Vec2, text: &str) {
@@ -156,7 +156,7 @@ impl cursive_core::backend::Backend for Backend {
         let mut buffer = self.buffer.borrow_mut();
         for (i, c) in text.chars().enumerate() {
             let x = pos.x + i;
-            buffer[1000 * pos.y + x] = TextColorPair::new(c, color.clone());
+            buffer[100 * pos.y + x] = TextColorPair::new(c, color.clone());
         }
     }
 

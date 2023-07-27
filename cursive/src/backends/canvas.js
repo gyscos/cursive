@@ -8,9 +8,9 @@ export function paint(buffer) {
     const canvas = document.getElementById('cursive-wasm-canvas');
     const context = canvas.getContext('2d');
     context.font = `${fontHeight - 2}px monospace`;
-    for (let x = 0; x < 1000; x++) {
-        for (let y = 0; y < 1000; y++) {
-            const n = 1000 * y + x;
+    for (let x = 0; x < 100; x++) {
+        for (let y = 0; y < 100; y++) {
+            const n = 100 * y + x;
             const textColorPair = data.slice(n * textColorPairSize, (n + 1) * textColorPairSize);
             const text = String.fromCharCode(textColorPair[0] + (2**8) *textColorPair[1] + (2**16)* textColorPair[2] + (2 ** 24) + textColorPair[3]);
             const front = byte_to_hex_string(textColorPair.slice(4, 7));
