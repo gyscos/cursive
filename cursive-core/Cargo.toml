@@ -69,12 +69,6 @@ version = "0.9"
 version = "0.3.64"
 optional = true
 
-[dependencies.getrandom]
-optional = true
-version = "0.2"
-features = ["js"] 
-
-
 [dependencies.web-sys]
 optional = true
 version = "0.3.64"
@@ -91,13 +85,13 @@ optional = true
 version = "0.4.37"
 
 [features]
-default = ["wasm"]
+default = []
 doc-cfg = []
 builder = ["inventory", "cursive-macros/builder"]
 markdown = ["pulldown-cmark"]
 ansi = ["ansi-parser"]
 unstable_scroll = []  # Deprecated feature, remove in next version
-wasm = ["js-sys", "getrandom", "web-sys", "wasm-bindgen", "wasm-bindgen-futures", "async"]
+wasm = ["js-sys", "web-sys", "wasm-bindgen", "wasm-bindgen-futures", "async"]
 async = []
 
 [lib]
