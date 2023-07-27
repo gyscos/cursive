@@ -61,6 +61,59 @@ pub struct Backend {
     buffer: RefCell<Vec<TextColorPair>>,
 }
 impl Backend {
+    /// Creates a new Cursive root using a wasm backend and given HTML canvas.
+    pub fn new(canvas: HtmlCanvasElement) -> std::io::Result<Box<dyn backend::Backend>> {
+        let document = web_sys::window()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to get window",
+            ))?
+            .document()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to get document",
+            ))?;
+
+        let color = cursive_to_color_pair(theme::ColorPair {
+            front: theme::Color::Light(theme::BaseColor::Black),
+            back:theme::Color::Dark(theme::BaseColor::Green),
+        });
+
+        let events = Rc::new(RefCell::new(VecDeque::new()));
+        let cloned = events.clone();
+        let closure = Closure::wrap(Box::new(move |event: web_sys::KeyboardEvent| {
+            match event.key_code() {
+                8 => cloned.borrow_mut().push_back(Event::Key(Key::Backspace)),
+                13 => cloned.borrow_mut().push_back(Event::Key(Key::Enter)),
+                37 => cloned.borrow_mut().push_back(Event::Key(Key::Left)),
+                38 => cloned.borrow_mut().push_back(Event::Key(Key::Up)),
+                39 => cloned.borrow_mut().push_back(Event::Key(Key::Right)),
+                40 => cloned.borrow_mut().push_back(Event::Key(Key::Down)),
+                code => {
+                    if let Some(c) = std::char::from_u32(code) {
+                        cloned.borrow_mut().push_back(Event::Char(c));
+                    }
+                }            
+            }
+        }) as Box<dyn FnMut(_)>);
+        document.add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref())
+            .map_err(|_| std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to add event listener",
+            ))?;
+        closure.forget();
+
+        let buffer = vec![TextColorPair::new(' ', color.clone()); 10_000];
+
+        let c = Backend {
+            canvas,
+            color: RefCell::new(color),
+            events,     
+            buffer: RefCell::new(buffer),
+        };
+        Ok(Box::new(c))
+    }
+
     /// Creates a new Cursive root using a wasm backend.
     pub fn init() -> std::io::Result<Box<dyn backend::Backend>> {
         let document = web_sys::window()
@@ -86,44 +139,7 @@ impl Backend {
         canvas.set_width(1000);
         canvas.set_height(1000);
 
-        let color = cursive_to_color_pair(theme::ColorPair {
-            front: theme::Color::Light(theme::BaseColor::Black),
-            back:theme::Color::Dark(theme::BaseColor::Green),
-        });
-
-        let events = Rc::new(RefCell::new(VecDeque::new()));
-         let cloned = events.clone();
-         let closure = Closure::wrap(Box::new(move |event: web_sys::KeyboardEvent| {
-            match event.key_code() {
-                8 => cloned.borrow_mut().push_back(Event::Key(Key::Backspace)),
-                13 => cloned.borrow_mut().push_back(Event::Key(Key::Enter)),
-                37 => cloned.borrow_mut().push_back(Event::Key(Key::Left)),
-                38 => cloned.borrow_mut().push_back(Event::Key(Key::Up)),
-                39 => cloned.borrow_mut().push_back(Event::Key(Key::Right)),
-                40 => cloned.borrow_mut().push_back(Event::Key(Key::Down)),
-                code => {
-                    if let Some(c) = std::char::from_u32(code) {
-                        cloned.borrow_mut().push_back(Event::Char(c));
-                    }
-                }            
-            }
-         }) as Box<dyn FnMut(_)>);
-         document.add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref())
-            .map_err(|_| std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to add event listener",
-            ))?;
-         closure.forget();
-
-        let buffer = vec![TextColorPair::new(' ', color.clone()); 10_000];
-
-        let c = Backend {
-            canvas,
-            color: RefCell::new(color),
-            events,     
-            buffer: RefCell::new(buffer),
-         };
-        Ok(Box::new(c))
+        Self::new(canvas)
     }
 }
 
