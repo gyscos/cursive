@@ -56,6 +56,8 @@ extern "C" {
 /// Backend using wasm.
 pub struct Backend {
     canvas: HtmlCanvasElement,
+    width: usize,
+    height: usize,
     color: RefCell<ColorPair>,
     events: Rc<RefCell<VecDeque<Event>>>,
     buffer: RefCell<Vec<TextColorPair>>,
@@ -104,11 +106,15 @@ impl Backend {
         closure.forget();
 
         let buffer = vec![TextColorPair::new(' ', color.clone()); 10_000];
+        let width = canvas.width() as usize;
+        let height = canvas.height() as usize;
 
         let c = Backend {
             canvas,
+            width,
+            height,
             color: RefCell::new(color),
-            events,     
+            events,
             buffer: RefCell::new(buffer),
         };
         Ok(Box::new(c))
@@ -164,7 +170,7 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn screen_size(self: &Backend) -> Vec2 {
-        Vec2::new(100, 100)
+        Vec2::new(self.width, self.height)
     }
 
     fn print_at(self: &Backend, pos: Vec2, text: &str) {
@@ -172,7 +178,7 @@ impl cursive_core::backend::Backend for Backend {
         let mut buffer = self.buffer.borrow_mut();
         for (i, c) in text.chars().enumerate() {
             let x = pos.x + i;
-            buffer[100 * pos.y + x] = TextColorPair::new(c, color.clone());
+            buffer[self.width * pos.y + x] = TextColorPair::new(c, color.clone());
         }
     }
 
