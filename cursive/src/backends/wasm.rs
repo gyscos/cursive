@@ -85,7 +85,7 @@ impl Backend {
         let cloned = events.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::KeyboardEvent| {
             let event = Self::to_cursive_event(event);
-            if (event != Event::Unknown) {
+            if event != Event::Unknown(Vec::new()) {
                 cloned.borrow_mut().push_back(event);
             }
         }) as Box<dyn FnMut(_)>);
@@ -172,7 +172,7 @@ impl Backend {
             code => {
                 if let Some(c) = std::char::from_u32(code) {
                     Event::Char(c)
-                } else { Event::Unknown }
+                } else { Event::Unknown(Vec::new()) }
             }  
         }
     }
@@ -212,9 +212,14 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn clear(self: &Backend, _color: cursive_core::theme::Color) {
+        let color = cursive_to_color(_color);
+        let pair = ColorPair {
+            front: color,
+            back: color,
+        };
         let mut buffer = self.buffer.borrow_mut();
         for i in 0..self.width * self.height {
-            buffer[i] = TextColorPair::new(' ', _color.clone());
+            buffer[i] = TextColorPair::new(' ', pair.clone());
         }
     }
 
