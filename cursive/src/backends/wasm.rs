@@ -84,18 +84,9 @@ impl Backend {
         let events = Rc::new(RefCell::new(VecDeque::new()));
         let cloned = events.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::KeyboardEvent| {
-            match event.key_code() {
-                8 => cloned.borrow_mut().push_back(Event::Key(Key::Backspace)),
-                13 => cloned.borrow_mut().push_back(Event::Key(Key::Enter)),
-                37 => cloned.borrow_mut().push_back(Event::Key(Key::Left)),
-                38 => cloned.borrow_mut().push_back(Event::Key(Key::Up)),
-                39 => cloned.borrow_mut().push_back(Event::Key(Key::Right)),
-                40 => cloned.borrow_mut().push_back(Event::Key(Key::Down)),
-                code => {
-                    if let Some(c) = std::char::from_u32(code) {
-                        cloned.borrow_mut().push_back(Event::Char(c));
-                    }
-                }            
+            let event = Self::to_cursive_event(event);
+            if (event != Event::Unknown) {
+                cloned.borrow_mut().push_back(event);
             }
         }) as Box<dyn FnMut(_)>);
         document.add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref())
@@ -146,6 +137,44 @@ impl Backend {
         canvas.set_height(1000);
 
         Self::new(canvas)
+    }
+
+    fn to_cursive_event(event: web_sys::KeyboardEvent) -> Event {
+        match event.key_code() {
+            8 => Event::Key(Key::Backspace),
+            9 => Event::Key(Key::Tab),
+            13 => Event::Key(Key::Enter),
+            19 => Event::Key(Key::PauseBreak),
+            27 => Event::Key(Key::Esc),
+            33 => Event::Key(Key::PageUp),
+            34 => Event::Key(Key::PageDown),
+            35 => Event::Key(Key::End),
+            36 => Event::Key(Key::Home),
+            37 => Event::Key(Key::Left),
+            38 => Event::Key(Key::Up),
+            39 => Event::Key(Key::Right),
+            40 => Event::Key(Key::Down),
+            45 => Event::Key(Key::Ins),
+            46 => Event::Key(Key::Del),
+            101 => Event::Key(Key::NumpadCenter),
+            112 => Event::Key(Key::F1),
+            113 => Event::Key(Key::F2),
+            114 => Event::Key(Key::F3),
+            115 => Event::Key(Key::F4),
+            116 => Event::Key(Key::F5),
+            117 => Event::Key(Key::F6),
+            118 => Event::Key(Key::F7),
+            119 => Event::Key(Key::F8),
+            120 => Event::Key(Key::F9),
+            121 => Event::Key(Key::F10),
+            122 => Event::Key(Key::F11),
+            123 => Event::Key(Key::F12),
+            code => {
+                if let Some(c) = std::char::from_u32(code) {
+                    Event::Char(c)
+                } else { Event::Unknown }
+            }  
+        }
     }
 }
 
