@@ -212,6 +212,10 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn clear(self: &Backend, _color: cursive_core::theme::Color) {
+        let mut buffer = self.buffer.borrow_mut();
+        for i in 0..self.width * self.height {
+            buffer[i] = TextColorPair::new(' ', _color.clone());
+        }
     }
 
     fn set_color(self: &Backend, color_pair: cursive_core::theme::ColorPair) -> cursive_core::theme::ColorPair {
