@@ -533,6 +533,15 @@ pub enum Event {
 }
 
 impl Event {
+    /// Returns the character, if `self` is a char event.
+    pub fn char(&self) -> Option<char> {
+        if let Event::Char(c) = *self {
+            Some(c)
+        } else {
+            None
+        }
+    }
+    
     /// Returns the position of the mouse, if `self` is a mouse event.
     pub fn mouse_position(&self) -> Option<Vec2> {
         if let Event::Mouse { position, .. } = *self {
@@ -542,7 +551,7 @@ impl Event {
         }
     }
 
-    /// Returns a mutable reference to the position of the mouse/
+    /// Returns a mutable reference to the position of the mouse.
     ///
     /// Returns `None` if `self` is not a mouse event.
     pub fn mouse_position_mut(&mut self) -> Option<&mut Vec2> {
