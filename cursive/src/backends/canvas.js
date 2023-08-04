@@ -1,16 +1,17 @@
-const fontWidth = 12;
+const fontWidth = 7;
 const fontHeight = fontWidth * 2;
 const textColorPairSize = 12;
 
-export function paint(buffer, width, height) {
-    // console.time('paint');
+export function paint(buffer) {
     const data = new Uint8Array(buffer);
     const canvas = document.getElementById('cursive-wasm-canvas');
     const context = canvas.getContext('2d');
+    const WIDTH = 100;
+    const HEIGHT = 100;
     context.font = `${fontHeight - 2}px monospace`;
-    for (let x = 0; x < width; x++) {
-        for (let y = 0; y < height; y++) {
-            const n = width * y + x;
+    for (let x = 0; x < WIDTH; x++) {
+        for (let y = 0; y < HEIGHT; y++) {
+            const n = WIDTH * y + x;
             const textColorPair = data.slice(n * textColorPairSize, (n + 1) * textColorPairSize);
             const text = String.fromCharCode(textColorPair[0] + (2**8) *textColorPair[1] + (2**16)* textColorPair[2] + (2 ** 24) + textColorPair[3]);
             const front = byte_to_hex_string(textColorPair.slice(4, 7));
@@ -23,7 +24,6 @@ export function paint(buffer, width, height) {
             }
         }
     }
-    // console.timeEnd('paint');
 }
 
 function byte_to_hex_string(bytes) {

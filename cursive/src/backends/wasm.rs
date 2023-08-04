@@ -47,6 +47,8 @@ impl Clone for TextColorPair {
     }
 }
 
+const WIDTH: usize = 100;
+const HEIGHT: usize = 100;
 
 #[wasm_bindgen(module = "/src/backends/canvas.js")]
 extern "C" {
@@ -56,8 +58,6 @@ extern "C" {
 /// Backend using wasm.
 pub struct Backend {
     canvas: HtmlCanvasElement,
-    width: usize,
-    height: usize,
     color: RefCell<ColorPair>,
     events: Rc<RefCell<VecDeque<Event>>>,
     buffer: RefCell<Vec<TextColorPair>>,
@@ -96,14 +96,10 @@ impl Backend {
             ))?;
         closure.forget();
 
-        let buffer = vec![TextColorPair::new(' ', color.clone()); 10_000];
-        let width = canvas.width() as usize;
-        let height = canvas.height() as usize;
-
+        let buffer = vec![TextColorPair::new(' ', color.clone()); WIDTH * HEIGHT];
+        
         let c = Backend {
             canvas,
-            width,
-            height,
             color: RefCell::new(color),
             events,
             buffer: RefCell::new(buffer),
@@ -123,6 +119,7 @@ impl Backend {
                 std::io::ErrorKind::Other,
                 "Failed to get document",
             ))?;
+
         let canvas = document.get_element_by_id("cursive-wasm-canvas")
             .ok_or(std::io::Error::new(
                 std::io::ErrorKind::Other,
@@ -188,10 +185,8 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn refresh(self: &mut Backend) {
-        // web_sys::console::time_with_label("refresh");
         let data = self.buffer.borrow().clone();
         paint(text_color_pairs_to_bytes(&data));
-        // web_sys::console::time_end_with_label("refresh");
     }
 
     fn has_colors(self: &Backend) -> bool {
@@ -199,7 +194,7 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn screen_size(self: &Backend) -> Vec2 {
-        Vec2::new(self.width, self.height)
+        Vec2::new(WIDTH, HEIGHT)
     }
 
     fn print_at(self: &Backend, pos: Vec2, text: &str) {
@@ -207,20 +202,20 @@ impl cursive_core::backend::Backend for Backend {
         let mut buffer = self.buffer.borrow_mut();
         for (i, c) in text.chars().enumerate() {
             let x = pos.x + i;
-            buffer[self.width * pos.y + x] = TextColorPair::new(c, color.clone());
+            buffer[WIDTH * pos.y + x] = TextColorPair::new(c, color.clone());
         }
     }
 
-    fn clear(self: &Backend, _color: cursive_core::theme::Color) {
-        let color = cursive_to_color(_color);
+    fn clear(self: &Backend, color: cursive_core::theme::Color) {
+        let color = cursive_to_color(color);
         let pair = ColorPair {
             front: color,
             back: color,
         };
-        let mut buffer = self.buffer.borrow_mut();
-        for i in 0..self.width * self.height {
-            buffer[i] = TextColorPair::new(' ', pair.clone());
-        }
+
+        self.buffer
+        .borrow_mut()
+        .fill(TextColorPair::new(' ', pair.clone()));
     }
 
     fn set_color(self: &Backend, color_pair: cursive_core::theme::ColorPair) -> cursive_core::theme::ColorPair {
