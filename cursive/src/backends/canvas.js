@@ -1,4 +1,4 @@
-const fontWidth = 7;
+const fontWidth = 12;
 const fontHeight = fontWidth * 2;
 const textColorPairSize = 12;
 
