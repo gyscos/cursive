@@ -103,9 +103,10 @@ Here are some cool applications using cursive:
 * [retris](https://github.com/genieCS/retris): A simple implementation of the classic tetris game.
 * [ripasso](https://github.com/cortex/ripasso): A simple password manager written in Rust.
 * [rusty-man](https://sr.ht/~ireas/rusty-man): Browse rustdoc documentation.
-* [saci-rs](https://gitlab.com/ihercowitz/saci-rs): Simple API Client Interface. 
+* [saci-rs](https://gitlab.com/ihercowitz/saci-rs): Simple API Client Interface.
 * [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
+* [tap](https://github.com/timdubbins/tap): An audio player for the terminal with fuzzy finder.
 * [wiki-tui](https://github.com/Builditluc/wiki-tui): A simple and easy to use Wikipedia Text User Interface
 
 ## Goals
