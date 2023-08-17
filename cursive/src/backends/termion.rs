@@ -179,6 +179,7 @@ impl Backend {
             TEvent::Key(TKey::F(j)) => Event::Unknown(vec![j]),
             TEvent::Key(TKey::Char('\n')) => Event::Key(Key::Enter),
             TEvent::Key(TKey::Char('\t')) => Event::Key(Key::Tab),
+            TEvent::Key(TKey::BackTab) => Event::Shift(Key::Tab),
             TEvent::Key(TKey::Char(c)) => Event::Char(c),
             TEvent::Key(TKey::Ctrl(c)) => Event::CtrlChar(c),
             TEvent::Key(TKey::Alt(c)) => Event::AltChar(c),
