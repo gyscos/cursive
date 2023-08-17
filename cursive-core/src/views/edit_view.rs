@@ -381,6 +381,11 @@ impl EditView {
         self
     }
 
+    /// Returns the currest cursor position.
+    pub fn get_cursor(&self) -> usize {
+        self.cursor
+    }
+
     /// Sets the cursor position.
     pub fn set_cursor(&mut self, cursor: usize) {
         self.cursor = cursor;
@@ -425,7 +430,7 @@ impl EditView {
     /// You should run this callback with a `&mut Cursive`.
     pub fn remove(&mut self, len: usize) -> Callback {
         let start = self.cursor;
-        let end = self.cursor + len;
+        let end = self.cursor + len.min(self.content.len() - self.cursor);
         for _ in Rc::make_mut(&mut self.content).drain(start..end) {}
 
         self.keep_cursor_in_view();
@@ -601,14 +606,25 @@ impl View for EditView {
             Event::Char(ch) => {
                 return EventResult::Consumed(Some(self.insert(ch)));
             }
-            // TODO: handle ctrl-key?
-            Event::Key(Key::Home) => self.set_cursor(0),
-            Event::Key(Key::End) => {
+            Event::CtrlChar('u') => {
+                // kill-to-front
+                let content = self.content[self.cursor..].to_owned();
+                let callback = self.set_content(content);
+                self.set_cursor(0);
+                return EventResult::Consumed(Some(callback));
+            }
+            Event::CtrlChar('k') => {
+                // kill-to-end
+                let content = self.content[..self.cursor].to_owned();
+                return EventResult::Consumed(Some(self.set_content(content)));
+            }
+            Event::Key(Key::Home) | Event::CtrlChar('a') => self.set_cursor(0),
+            Event::Key(Key::End) | Event::CtrlChar('e') => {
                 // When possible, NLL to the rescue!
                 let len = self.content.len();
                 self.set_cursor(len);
             }
-            Event::Key(Key::Left) if self.cursor > 0 => {
+            Event::Key(Key::Left) | Event::CtrlChar('b') if self.cursor > 0 => {
                 let len = self.content[..self.cursor]
                     .graphemes(true)
                     .last()
@@ -617,7 +633,7 @@ impl View for EditView {
                 let cursor = self.cursor - len;
                 self.set_cursor(cursor);
             }
-            Event::Key(Key::Right) if self.cursor < self.content.len() => {
+            Event::Key(Key::Right) | Event::CtrlChar('f') if self.cursor < self.content.len() => {
                 let len = self.content[self.cursor..]
                     .graphemes(true)
                     .next()
@@ -750,3 +766,36 @@ crate::var_recipe!("EditView.with_content", |config, context| {
 
     Ok(result)
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ctrl_key_events() {
+        let mut view = EditView::new().content("foobarbaz");
+        view.set_cursor(0);
+
+        view.on_event(Event::CtrlChar('f'));
+        assert_eq!(view.get_cursor(), 1);
+
+        view.on_event(Event::CtrlChar('b'));
+        assert_eq!(view.get_cursor(), 0);
+
+        view.on_event(Event::CtrlChar('e'));
+        assert_eq!(view.get_cursor(), view.get_content().len());
+
+        view.on_event(Event::CtrlChar('a'));
+        assert_eq!(view.get_cursor(), 0);
+
+        view.set_cursor(3);
+        view.on_event(Event::CtrlChar('u'));
+        assert_eq!(view.get_cursor(), 0);
+        assert_eq!(*view.get_content(), "barbaz");
+
+        view.set_cursor(3);
+        view.on_event(Event::CtrlChar('k'));
+        assert_eq!(view.get_cursor(), 3);
+        assert_eq!(*view.get_content(), "bar");
+    }
+}
