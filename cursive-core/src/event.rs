@@ -535,13 +535,14 @@ pub enum Event {
 impl Event {
     /// Returns the character, if `self` is a char event.
     pub fn char(&self) -> Option<char> {
-        if let Event::Char(c) = *self {
-            Some(c)
-        } else {
-            None
+        match *self {
+            Event::Char(c) => Some(c),
+            Event::AltChar(c) => Some(c),
+            Event::CtrlChar(c) => Some(c),
+            _ => None,
         }
     }
-    
+
     /// Returns the position of the mouse, if `self` is a mouse event.
     pub fn mouse_position(&self) -> Option<Vec2> {
         if let Event::Mouse { position, .. } = *self {
