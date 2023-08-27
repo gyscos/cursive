@@ -6,7 +6,7 @@
 
 use std::{
     cell::{Cell, RefCell, RefMut},
-    io::{self, BufWriter, Write},
+    io::{BufWriter, Write},
     time::Duration,
 };
 
@@ -37,7 +37,7 @@ use crate::{
 };
 
 #[cfg(windows)]
-type Stdout = io::Stdout;
+type Stdout = std::io::Stdout;
 
 #[cfg(unix)]
 type Stdout = std::fs::File;
@@ -209,7 +209,7 @@ impl Backend {
         let stdout = std::fs::File::create("/dev/tty")?;
 
         #[cfg(windows)]
-        let stdout = io::stdout();
+        let stdout = std::io::stdout();
 
         Self::init_with_stdout(stdout)
     }
