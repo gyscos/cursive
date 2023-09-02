@@ -25,6 +25,7 @@ libc = "0.2"
 maplit = { version = "1.0", optional = true }
 log = "0.4"
 ahash = "0.8"
+async-trait = "0.1.73"
 
 [dependencies.bear-lib-terminal]
 optional = true
@@ -78,8 +79,7 @@ markdown = ["cursive_core/markdown"]
 ansi = ["cursive_core/ansi"]
 unstable_scroll = []  # Deprecated feature, remove in next version
 toml = ["cursive_core/toml"]
-wasm-backend = ["wasm-bindgen", "web-sys", "cursive_core/wasm", "async"]
-async = ["cursive_core/async"]
+wasm-backend = ["wasm-bindgen", "web-sys", "cursive_core/wasm"]
 
 [lib]
 name = "cursive"

@@ -152,38 +152,6 @@ where
     /// [1]: CursiveRunner::run()
     /// [2]: CursiveRunner::step()
     /// [3]: CursiveRunner::process_events()
-    #[cfg(not(feature = "async"))]
-    pub fn post_events(&mut self, received_something: bool) {
-        let boring = !received_something;
-        // How many times should we try if it's still boring?
-        // Total duration will be INPUT_POLL_DELAY_MS * repeats
-        // So effectively fps = 1000 / INPUT_POLL_DELAY_MS / repeats
-        if !boring
-            || self
-                .fps()
-                .map(|fps| 1000 / INPUT_POLL_DELAY_MS as u32 / fps.get())
-                .map(|repeats| self.boring_frame_count >= repeats)
-                .unwrap_or(false)
-        {
-            // We deserve to draw something!
-
-            if boring {
-                // We're only here because of a timeout.
-                self.on_event(Event::Refresh);
-                self.process_pending_backend_calls();
-            }
-
-            self.refresh();
-        }
-
-        if boring {
-            self.sleep();
-            self.boring_frame_count += 1;
-        }
-    }
-
-    /// post_events asynchronously
-    #[cfg(feature = "async")]
     pub async fn post_events(&mut self, received_something: bool) {
         let boring = !received_something;
         // How many times should we try if it's still boring?
@@ -213,12 +181,12 @@ where
         }
     }
 
-    #[cfg(not(feature = "async"))]
-    fn sleep(&self) {
+    #[cfg(not(feature = "wasm"))]
+    async fn sleep(&self) {
         std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "wasm")]
     async fn sleep(&self) {
         use wasm_bindgen::prelude::*;
         let promise = js_sys::Promise::new(&mut |resolve, _| {
@@ -269,15 +237,6 @@ where
     /// during this step, and `false` otherwise.
     ///
     /// [`run(&mut self)`]: #method.run
-    #[cfg(not(feature = "async"))]
-    pub fn step(&mut self) -> bool {
-        let received_something = self.process_events();
-        self.post_events(received_something);
-        received_something
-    }
-
-    /// step asynchronously
-    #[cfg(feature = "async")]
     pub async fn step(&mut self) -> bool {
         let received_something = self.process_events();
         self.post_events(received_something).await;
@@ -297,18 +256,6 @@ where
     ///
     /// [`step(&mut self)`]: #method.step
     /// [`quit(&mut self)`]: #method.quit
-    #[cfg(not(feature = "async"))]
-    pub fn run(&mut self) {
-        self.refresh();
-
-        // And the big event loop begins!
-        while self.is_running() {
-            self.step();
-        }
-    }
-
-    /// Runs the event loop asynchronously.
-    #[cfg(feature = "async")]
     pub async fn run(&mut self) {
         self.refresh();
 

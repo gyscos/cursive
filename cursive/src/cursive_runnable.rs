@@ -84,26 +84,11 @@ impl CursiveRunnable {
     /// # Panics
     ///
     /// If the backend initialization fails.
-    #[cfg(not(feature = "async"))]
-    pub fn run(&mut self) {
-        self.try_run().unwrap();
-    }
-
-    /// run asynchronously
-    #[cfg(feature = "async")]
     pub async fn run(&mut self) {
         self.try_run().await.unwrap();
     }
 
     /// Runs the event loop with the registered backend initializer.
-    #[cfg(not(feature = "async"))]
-    pub fn try_run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        self.siv.try_run_with(&mut self.backend_init)
-    }
-
-
-    /// try_run asynchronously
-    #[cfg(feature = "async")]
     pub async fn try_run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.siv.try_run_with(&mut self.backend_init).await
     }
