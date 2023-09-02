@@ -18,13 +18,13 @@ use async_trait::async_trait;
 ///
 /// // Or explicitly use a specific backend
 /// #[cfg(feature = "ncurses-backend")]
-/// siv.run_ncurses().unwrap();
+/// siv.run_ncurses();
 /// #[cfg(feature = "panncurses-backend")]
-/// siv.run_pancurses().unwrap();
+/// siv.run_pancurses();
 /// #[cfg(feature = "termion-backend")]
-/// siv.run_termion().unwrap();
+/// siv.run_termion();
 /// #[cfg(feature = "crossterm-backend")]
-/// siv.run_crossterm().unwrap();
+/// siv.run_crossterm();
 /// #[cfg(feature = "blt-backend")]
 /// siv.run_blt();
 /// #[cfg(feature = "wasm-backend")]
