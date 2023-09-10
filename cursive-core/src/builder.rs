@@ -1328,11 +1328,22 @@ inventory::collect!(CallbackRecipe);
 #[cfg(feature = "builder")]
 inventory::collect!(WrapperRecipe);
 
+#[cfg(not(feature = "builder"))]
 #[macro_export]
 /// Define a recipe to build this view from a config file.
 macro_rules! raw_recipe {
     ($name:ident from $config_builder:expr) => {
-        #[cfg(feature = "builder")]
+    };
+    (with $name:ident, $builder:expr) => {
+    };
+    ($name:ident, $builder:expr) => {
+    };
+}
+#[cfg(feature = "builder")]
+#[macro_export]
+/// Define a recipe to build this view from a config file.
+macro_rules! raw_recipe {
+    ($name:ident from $config_builder:expr) => {
         $crate::submit! {
             $crate::builder::Recipe {
                 name: stringify!($name),
@@ -1344,12 +1355,11 @@ macro_rules! raw_recipe {
         }
     };
     (with $name:ident, $builder:expr) => {
-        #[cfg(feature = "builder")]
         $crate::submit! {
             $crate::builder::WrapperRecipe {
                 name: stringify!($name),
                 builder: |config, context| {
-                    let builder: fn(&::serde_json::Value, &$crate::builder::Context) -> Result<_, $crate::builder::Error> = $builder;
+                    let builder: fn(&$crate::reexports::serde_json::Value, &$crate::builder::Context) -> Result<_, $crate::builder::Error> = $builder;
                     let wrapper = (builder)(config, context)?;
 
                     Ok(Box::new(move |view| {
@@ -1361,12 +1371,11 @@ macro_rules! raw_recipe {
         }
     };
     ($name:ident, $builder:expr) => {
-        #[cfg(feature = "builder")]
         $crate::submit! {
             $crate::builder::Recipe {
                 name: stringify!($name),
                 builder: |config, context| {
-                    let builder: fn(&::serde_json::Value, &$crate::builder::Context) -> Result<_,$crate::builder::Error> = $builder;
+                    let builder: fn(&$crate::reexports::serde_json::Value, &$crate::builder::Context) -> Result<_,$crate::builder::Error> = $builder;
                     (builder)(config, context).map($crate::views::BoxedView::boxed)
                 },
             }
@@ -1374,11 +1383,19 @@ macro_rules! raw_recipe {
     };
 }
 
+#[cfg(not(feature = "builder"))]
 #[macro_export]
 /// Define a macro for a variable builder.
 macro_rules! var_recipe {
     ($name: expr, $builder:expr) => {
-        #[cfg(feature = "builder")]
+    };
+}
+
+#[cfg(feature = "builder")]
+#[macro_export]
+/// Define a macro for a variable builder.
+macro_rules! var_recipe {
+    ($name: expr, $builder:expr) => {
         $crate::submit! {
             $crate::builder::CallbackRecipe {
                 name: $name,
