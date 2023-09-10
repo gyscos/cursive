@@ -1,7 +1,7 @@
 #![cfg(feature = "wasm-backend")]
 
-use wasm_bindgen::prelude::*;
 use crate::backend;
+use wasm_bindgen::prelude::*;
 
 const BUFFER_WIDTH: usize = 100;
 const BUFFER_HEIGHT: usize = 100;
@@ -9,17 +9,14 @@ const BUFFER_HEIGHT: usize = 100;
 #[wasm_bindgen]
 #[derive(Debug, PartialEq)]
 #[repr(C)]
-struct ScreenChar  {
+struct ScreenChar {
     text: char,
     color: ColorPair,
 }
 
 impl ScreenChar {
     pub fn new(text: char, color: ColorPair) -> Self {
-        Self {
-            text,
-            color,
-        }
+        Self { text, color }
     }
 }
 
@@ -66,7 +63,10 @@ impl Writer {
     pub fn write(self: &mut Writer, pos: Vec2, text: &str) {
         for (i, c) in text.chars().enumerate() {
             let x = pos.x + i;
-            self.buffer.set(BUFFER_WIDTH * pos.y + x, ScreenChar::new(c, self.color.clone()));
+            self.buffer.set(
+                BUFFER_WIDTH * pos.y + x,
+                ScreenChar::new(c, self.color.clone()),
+            );
         }
     }
 
@@ -93,46 +93,42 @@ impl Writer {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(C)]
 struct Color {
-    red: u8, 
+    red: u8,
     green: u8,
-    blue: u8
+    blue: u8,
 }
 
 impl Color {
     /// Creates a new `Color` with the given red, green, and blue values.
     pub fn new(red: u8, green: u8, blue: u8) -> Self {
-        Self {
-            red,
-            green,
-            blue,
-        }
+        Self { red, green, blue }
     }
 }
 
-use cursive_core::theme::{ Color as CColor, BaseColor as CBaseColor };
+use cursive_core::theme::{BaseColor as CBaseColor, Color as CColor};
 
 /// Convert cursive color to hex color.
 fn cursive_to_color(color: CColor) -> Color {
     match color {
-        CColor::Dark(CBaseColor::Black) => Color::new(0,0,0),
-        CColor::Dark(CBaseColor::Red) => Color::new(128,0,0),
-        CColor::Dark(CBaseColor::Green) => Color::new(0,128,0),
-        CColor::Dark(CBaseColor::Yellow) => Color::new(128,128,0),
-        CColor::Dark(CBaseColor::Blue) => Color::new(0,0,128),
-        CColor::Dark(CBaseColor::Magenta) => Color::new(128,0,128),
-        CColor::Dark(CBaseColor::Cyan) => Color::new(0,128,128),
-        CColor::Dark(CBaseColor::White) => Color::new(182,182,182),
-        CColor::Light(CBaseColor::Black) => Color::new(128,128,128),
-        CColor::Light(CBaseColor::Red) => Color::new(255,0,0),
-        CColor::Light(CBaseColor::Green) => Color::new(0,255, 0),
-        CColor::Light(CBaseColor::Yellow) => Color::new(255,255,0),
-        CColor::Light(CBaseColor::Blue) => Color::new(0,0,255),
-        CColor::Light(CBaseColor::Magenta) => Color::new(255,0,255),
-        CColor::Light(CBaseColor::Cyan) => Color::new(0,255,255),
-        CColor::Light(CBaseColor::White) => Color::new(255,255,255),
-        CColor::Rgb(r, g, b) =>  Color::new(r,g,b),
-        CColor::RgbLowRes(r,g ,b ) =>  Color::new(r,g,b),
-        CColor::TerminalDefault =>  Color::new(0,255,0),
+        CColor::Dark(CBaseColor::Black) => Color::new(0, 0, 0),
+        CColor::Dark(CBaseColor::Red) => Color::new(128, 0, 0),
+        CColor::Dark(CBaseColor::Green) => Color::new(0, 128, 0),
+        CColor::Dark(CBaseColor::Yellow) => Color::new(128, 128, 0),
+        CColor::Dark(CBaseColor::Blue) => Color::new(0, 0, 128),
+        CColor::Dark(CBaseColor::Magenta) => Color::new(128, 0, 128),
+        CColor::Dark(CBaseColor::Cyan) => Color::new(0, 128, 128),
+        CColor::Dark(CBaseColor::White) => Color::new(182, 182, 182),
+        CColor::Light(CBaseColor::Black) => Color::new(128, 128, 128),
+        CColor::Light(CBaseColor::Red) => Color::new(255, 0, 0),
+        CColor::Light(CBaseColor::Green) => Color::new(0, 255, 0),
+        CColor::Light(CBaseColor::Yellow) => Color::new(255, 255, 0),
+        CColor::Light(CBaseColor::Blue) => Color::new(0, 0, 255),
+        CColor::Light(CBaseColor::Magenta) => Color::new(255, 0, 255),
+        CColor::Light(CBaseColor::Cyan) => Color::new(0, 255, 255),
+        CColor::Light(CBaseColor::White) => Color::new(255, 255, 255),
+        CColor::Rgb(r, g, b) => Color::new(r, g, b),
+        CColor::RgbLowRes(r, g, b) => Color::new(r, g, b),
+        CColor::TerminalDefault => Color::new(0, 255, 0),
     }
 }
 
@@ -149,10 +145,7 @@ struct ColorPair {
 impl ColorPair {
     /// Creates a new `ColorPair` with the given foreground and background colors.
     pub fn new(front: Color, back: Color) -> Self {
-        Self {
-            front,
-            back,
-        }
+        Self { front, back }
     }
 }
 
@@ -167,8 +160,8 @@ fn cursive_to_color_pair(c: CColorPair) -> ColorPair {
 
 fn terminal_default_color_pair() -> ColorPair {
     cursive_to_color_pair(CColorPair {
-    front: CColor::Light(CBaseColor::Black),
-    back:CColor::Dark(CBaseColor::Green),
+        front: CColor::Light(CBaseColor::Black),
+        back: CColor::Dark(CBaseColor::Green),
     })
 }
 
@@ -177,10 +170,10 @@ extern "C" {
     fn paint(buffer: &[u8]);
 }
 
+use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
-use std::cell::RefCell;
-use web_sys::{ Document, HtmlCanvasElement };
+use web_sys::{Document, HtmlCanvasElement};
 
 /// Backend using wasm.
 pub struct Backend {
@@ -190,9 +183,9 @@ pub struct Backend {
 }
 
 use cursive_core::{
-    event::{ Event, Key },
-    Vec2,
+    event::{Event, Key},
     theme::Effect,
+    Vec2,
 };
 
 impl Backend {
@@ -207,13 +200,13 @@ impl Backend {
                 cloned.borrow_mut().push_back(event);
             }
         }) as Box<dyn FnMut(_)>);
-        document.add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref())
-            .map_err(|_| std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to add event listener",
-            ))?;
+        document
+            .add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref())
+            .map_err(|_| {
+                std::io::Error::new(std::io::ErrorKind::Other, "Failed to add event listener")
+            })?;
         closure.forget();
-        
+
         let c = Backend {
             canvas,
             events,
@@ -252,10 +245,7 @@ impl Backend {
                 "Failed to get window",
             ))?
             .dyn_into::<HtmlCanvasElement>()
-            .map_err(|_| std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to cast canvas",
-            ))
+            .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "Failed to cast canvas"))
     }
 
     fn terminal_default_color() -> ColorPair {
@@ -295,8 +285,10 @@ impl Backend {
             code => {
                 if let Some(c) = std::char::from_u32(code) {
                     Event::Char(c)
-                } else { Event::Unknown(Vec::new()) }
-            }  
+                } else {
+                    Event::Unknown(Vec::new())
+                }
+            }
         }
     }
 
@@ -312,6 +304,7 @@ impl Backend {
     }
 }
 
+#[async_trait::async_trait(?Send)]
 impl cursive_core::backend::Backend for Backend {
     fn poll_event(self: &mut Backend) -> Option<Event> {
         self.events.borrow_mut().pop_front()
@@ -333,6 +326,25 @@ impl cursive_core::backend::Backend for Backend {
         Vec2::new(BUFFER_WIDTH, BUFFER_HEIGHT)
     }
 
+    async fn sleep(&self, duration_ms: u32) {
+        use wasm_bindgen::prelude::*;
+        let promise = js_sys::Promise::new(&mut |resolve, _| {
+            let closure = Closure::new(move || {
+                resolve.call0(&JsValue::null()).unwrap();
+            }) as Closure<dyn FnMut()>;
+            web_sys::window()
+                .expect("window is None for sleep")
+                .set_timeout_with_callback_and_timeout_and_arguments_0(
+                    closure.as_ref().unchecked_ref(),
+                    INPUT_POLL_DELAY_MS as i32,
+                )
+                .expect("should register timeout for sleep");
+            closure.forget();
+        });
+        let js_future = wasm_bindgen_futures::JsFuture::from(promise);
+        js_future.await.expect("should await sleep");
+    }
+
     fn print_at(self: &Backend, pos: Vec2, text: &str) {
         self.writer.borrow_mut().write(pos, text);
     }
@@ -342,15 +354,15 @@ impl cursive_core::backend::Backend for Backend {
     }
 
     fn set_color(self: &Backend, color_pair: CColorPair) -> CColorPair {
-        self.writer.borrow_mut().set_color(cursive_to_color_pair(color_pair));
+        self.writer
+            .borrow_mut()
+            .set_color(cursive_to_color_pair(color_pair));
         color_pair
     }
 
-    fn set_effect(self: &Backend, _: Effect) {
-    }
+    fn set_effect(self: &Backend, _: Effect) {}
 
-    fn unset_effect(self: &Backend, _: Effect) {
-    }
+    fn unset_effect(self: &Backend, _: Effect) {}
 
     fn name(&self) -> &str {
         "cursive-wasm-backend"

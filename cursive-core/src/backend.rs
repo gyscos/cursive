@@ -30,6 +30,7 @@ use unicode_width::UnicodeWidthStr;
 ///
 /// [1]: ../struct.Cursive.html#method.new
 /// [`Event`]: ../event/enum.Event.html
+#[async_trait::async_trait(?Send)]
 pub trait Backend {
     /// Polls the backend for any input.
     ///
@@ -50,6 +51,13 @@ pub trait Backend {
     /// A backend could, for example, buffer any print command, and apply
     /// everything when refresh() is called.
     fn refresh(&mut self);
+
+    /// Sleep for some time.
+    ///
+    /// Browser-based backends may need to use some wasm/js-specific logic.
+    async fn sleep(&self, duration_ms: u32) {
+        std::thread::sleep(std::time::Duration::from_millis(duration_ms as u64));
+    }
 
     /// Should return `true` if this backend supports colors.
     fn has_colors(&self) -> bool;

@@ -1,7 +1,5 @@
 use crate::{backend, event::Event, theme, Cursive, Vec2};
 use std::borrow::{Borrow, BorrowMut};
-#[cfg(not(feature = "async"))]
-use std::time::Duration;
 
 // How long we wait between two empty input polls
 const INPUT_POLL_DELAY_MS: u64 = 30;
@@ -152,7 +150,21 @@ where
     /// [1]: CursiveRunner::run()
     /// [2]: CursiveRunner::step()
     /// [3]: CursiveRunner::process_events()
-    pub async fn post_events(&mut self, received_something: bool) {
+    pub fn post_events(&mut self, received_something: bool) {
+        futures::executor::block_on(self.post_events_async(received_something));
+    }
+
+    /// Performs the second half of `Self::step()`.
+    ///
+    /// This is an advanced method for fine-tuned manual stepping;
+    /// you probably want [`run`][1] or [`step`][2].
+    ///
+    /// You should call this after [`process_events`][3].
+    ///
+    /// [1]: CursiveRunner::run()
+    /// [2]: CursiveRunner::step()
+    /// [3]: CursiveRunner::process_events()
+    pub async fn post_events_async(&mut self, received_something: bool) {
         let boring = !received_something;
         // How many times should we try if it's still boring?
         // Total duration will be INPUT_POLL_DELAY_MS * repeats
@@ -176,34 +188,9 @@ where
         }
 
         if boring {
-            self.sleep().await;
+            self.backend.sleep(INPUT_POLL_DELAY_MS as u32).await;
             self.boring_frame_count += 1;
         }
-    }
-
-    #[cfg(not(feature = "wasm"))]
-    async fn sleep(&self) {
-        std::thread::sleep(Duration::from_millis(INPUT_POLL_DELAY_MS));
-    }
-
-    #[cfg(feature = "wasm")]
-    async fn sleep(&self) {
-        use wasm_bindgen::prelude::*;
-        let promise = js_sys::Promise::new(&mut |resolve, _| {
-            let closure = Closure::new(move || {
-                resolve.call0(&JsValue::null()).unwrap();
-            }) as Closure<dyn FnMut()>;
-            web_sys::window()
-                .expect("window is None for sleep")
-                .set_timeout_with_callback_and_timeout_and_arguments_0(
-                    closure.as_ref().unchecked_ref(),
-                    INPUT_POLL_DELAY_MS as i32,
-                )
-                .expect("should register timeout for sleep");
-            closure.forget();
-        });
-        let js_future = wasm_bindgen_futures::JsFuture::from(promise);
-        js_future.await.expect("should await sleep");
     }
 
     /// Refresh the screen with the current view tree state.
@@ -237,9 +224,9 @@ where
     /// during this step, and `false` otherwise.
     ///
     /// [`run(&mut self)`]: #method.run
-    pub async fn step(&mut self) -> bool {
+    pub fn step(&mut self) -> bool {
         let received_something = self.process_events();
-        self.post_events(received_something).await;
+        self.post_events(received_something);
         received_something
     }
 
@@ -256,12 +243,12 @@ where
     ///
     /// [`step(&mut self)`]: #method.step
     /// [`quit(&mut self)`]: #method.quit
-    pub async fn run(&mut self) {
+    pub fn run(&mut self) {
         self.refresh();
 
         // And the big event loop begins!
         while self.is_running() {
-            self.step().await;
+            self.step();
         }
-    }    
+    }
 }
