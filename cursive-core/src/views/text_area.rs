@@ -97,13 +97,15 @@ impl TextArea {
         self.cursor
     }
 
-    /// Moves the cursor to the given position.
+    /// Moves the cursor to the given byte position.
     ///
     /// # Panics
     ///
-    /// This method panics if `cursor` is not the beginning of a character in
+    /// This method panics if `cursor` is not the starting byte of a character in
     /// the content string.
     pub fn set_cursor(&mut self, cursor: usize) {
+        // TODO: What to do if we fall inside a multi-codepoint grapheme?
+        // Move back to the start of the grapheme?
         self.cursor = cursor;
 
         let focus = self.selected_row();
