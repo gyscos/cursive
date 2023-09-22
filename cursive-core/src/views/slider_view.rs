@@ -90,7 +90,9 @@ impl SliderView {
         })
     }
 
-    /// Sets the min value.
+    /// Sets the min value, adjusting the current value if needed.
+    ///
+    /// Returns `false` if the new `min_value` is greater than or equal to `max_value`.
     pub fn set_min_value(&mut self, min_value: usize) -> bool {
         if min_value >= self.max_value {
             return false;
