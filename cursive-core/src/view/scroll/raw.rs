@@ -297,11 +297,13 @@ pub fn on_event<Model: ?Sized>(
                     get_scroller(model).scroll_up(1);
                 }
                 Event::Key(Key::PageUp) if get_scroller(model).can_scroll_up() => {
-                    get_scroller(model).scroll_up(5);
+                    let scroller = get_scroller(model);
+                    scroller.scroll_up(scroller.last_available_size().y);
                 }
                 Event::Key(Key::PageDown) if get_scroller(model).can_scroll_down() => {
                     // No `min` check here - we allow going over the edge.
-                    get_scroller(model).scroll_down(5);
+                    let scroller = get_scroller(model);
+                    scroller.scroll_down(scroller.last_available_size().y);
                 }
                 Event::Ctrl(Key::Down) | Event::Key(Key::Down)
                     if get_scroller(model).can_scroll_down() =>
