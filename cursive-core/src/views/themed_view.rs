@@ -29,7 +29,7 @@ impl<T: View> ViewWrapper for ThemedView<T> {
     wrap_impl!(self.view: T);
 
     fn wrap_draw(&self, printer: &crate::Printer) {
-        // Hack: We need to re-apply the Primary style.
+        // Hack: We need to re-apply the View (+Primary) style.
         //
         // InheritParent would not be enough because it re-uses the previous _concrete color_
         // (after the theme is applied), so it would not pick up the theme new colors.
@@ -37,7 +37,7 @@ impl<T: View> ViewWrapper for ThemedView<T> {
         // but that's not easy for now.
         printer
             .theme(&self.theme)
-            .with_style(crate::theme::PaletteStyle::Primary, |printer| {
+            .with_style(crate::theme::PaletteStyle::View, |printer| {
                 self.view.draw(printer);
             });
     }
