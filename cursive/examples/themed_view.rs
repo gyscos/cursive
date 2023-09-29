@@ -1,4 +1,4 @@
-use cursive::{self, theme, views, With};
+use cursive::{views, With};
 
 fn main() {
     let mut cursive = cursive::default();
@@ -15,13 +15,17 @@ fn main() {
 fn show_dialog(s: &mut cursive::Cursive) {
     // Let's build a green theme
     let theme = s.current_theme().clone().with(|theme| {
-        theme.palette[theme::PaletteColor::View] = theme::Color::Dark(theme::BaseColor::Black);
-        theme.palette[theme::PaletteColor::Primary] = theme::Color::Light(theme::BaseColor::Green);
-        theme.palette[theme::PaletteColor::TitlePrimary] =
-            theme::Color::Light(theme::BaseColor::Green);
-        theme.palette[theme::PaletteColor::Highlight] = theme::Color::Dark(theme::BaseColor::Green);
+        // Just for this function, import all color names for convenience.
+        use cursive::theme::{BaseColor::*, PaletteColor::*};
+
+        theme.palette[View] = Black.dark();
+        theme.palette[Primary] = Green.light();
+        theme.palette[TitlePrimary] = Green.light();
+        theme.palette[Highlight] = Green.dark();
+        theme.palette[HighlightText] = Green.light();
     });
 
+    // We wrap the `Dialog` inside a `Layer` so it fills the entire view with the new `View` color.
     s.add_layer(views::ThemedView::new(
         theme,
         views::Layer::new(views::Dialog::info("Colors!").title("Themed Dialog")),

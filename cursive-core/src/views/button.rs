@@ -139,10 +139,13 @@ impl View for Button {
         }
 
         let style = if !(self.enabled && printer.enabled) {
+            // Disabled button goes blue
             PaletteStyle::Secondary
         } else if printer.focused {
+            // Selected button is highlighted
             PaletteStyle::Highlight
         } else {
+            // Looks like regular text if not selected
             PaletteStyle::Primary
         };
 
