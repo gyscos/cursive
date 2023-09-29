@@ -9,6 +9,7 @@ use crate::{
     xy::XY,
     Printer, Vec2,
 };
+use std::cmp::max;
 
 /// Implements `View::draw` over the `model`.
 pub fn draw<Model, GetScroller, Draw>(
@@ -298,12 +299,14 @@ pub fn on_event<Model: ?Sized>(
                 }
                 Event::Key(Key::PageUp) if get_scroller(model).can_scroll_up() => {
                     let scroller = get_scroller(model);
-                    scroller.scroll_up(scroller.last_available_size().y);
+                    let height = max(scroller.last_available_size().y - 1, 1);
+                    scroller.scroll_up(height);
                 }
                 Event::Key(Key::PageDown) if get_scroller(model).can_scroll_down() => {
                     // No `min` check here - we allow going over the edge.
                     let scroller = get_scroller(model);
-                    scroller.scroll_down(scroller.last_available_size().y);
+                    let height = max(scroller.last_available_size().y - 1, 1);
+                    scroller.scroll_down(height);
                 }
                 Event::Ctrl(Key::Down) | Event::Key(Key::Down)
                     if get_scroller(model).can_scroll_down() =>
