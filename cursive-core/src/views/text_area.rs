@@ -3,7 +3,7 @@ use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     rect::Rect,
-    theme::{Effect, PaletteStyle},
+    theme::PaletteStyle,
     utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row},
     view::{CannotFocus, ScrollBase, SizeCache, View},
     Vec2, {Printer, With, XY},
