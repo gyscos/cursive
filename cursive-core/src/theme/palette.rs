@@ -107,6 +107,12 @@ fn default_styles() -> EnumMap<PaletteStyle, Style> {
             color: ColorStyle::highlight_inactive().invert(),
             effects: enumset::enum_set!(Effect::Reverse),
         },
+        EditableText => Style {
+            color: ColorStyle::secondary(),
+            effects: enumset::enum_set!(Effect::Reverse),
+        },
+        EditableTextCursor => ColorStyle::secondary().into(),
+        EditableTextInactive => ColorStyle::secondary().into(),
     }
 }
 
@@ -360,6 +366,24 @@ pub enum PaletteColor {
 }
 
 /// Style entry in a palette.
+///
+/// This represents a color "role". The palette will resolve this to a `Style`.
+///
+/// For example, `PaletteStyle::Highlight` should be used when drawing highlighted text.
+/// In the default palette, it will resolve to a `Style` made of:
+/// * The `Reverse` effect (front and background will be swapped).
+/// * A front color of `PaletteColor::Highlight` (but with the reverse effect,
+///   it will become the background color).
+/// * A back color of `PaletteColor::HighlightText` (will become the front color).
+///
+/// From there, the `PaletteColor::Highlight` and `PaletteColor::HighlightText` will be resolved to
+/// concrete colors (or possibly to `InheritParent`, which will inherit the previous concrete
+/// color).
+///
+/// To override the look of highlighted text, you can either:
+/// * Change the palette entries for `PaletteColor::Highlight`/`PaletteColor::HighlightText`.
+/// * Change the palette entry for `PaletteStyle::Highlight`, possibly using different palette
+///   colors instead (or directly specifying a concrete color there).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Enum)]
 pub enum PaletteStyle {
     /// Style used for regular text.
@@ -380,8 +404,17 @@ pub enum PaletteStyle {
     Highlight,
     /// Style used for inactive highlighted text.
     HighlightInactive,
-    /// Style used to draw the shadows.
+
+    /// Style used to draw the drop shadows (1-cell border to the bottom/right
+    /// of views).
     Shadow,
+
+    /// Style used for editable text (TextArea, EditView).
+    EditableText,
+    /// Style used for the selected character in editable text.
+    EditableTextCursor,
+    /// Style used for editable text when inactive.
+    EditableTextInactive,
 }
 
 impl PaletteStyle {
@@ -415,6 +448,7 @@ impl FromStr for PaletteStyle {
         use PaletteStyle::*;
 
         Ok(match s {
+            // TODO: make a macro for this?
             "Background" | "background" => Background,
             "Shadow" | "shadow" => Shadow,
             "View" | "view" => View,
@@ -425,6 +459,9 @@ impl FromStr for PaletteStyle {
             "TitleSecondary" | "title_secondary" => TitleSecondary,
             "Highlight" | "highlight" => Highlight,
             "HighlightInactive" | "highlight_inactive" => HighlightInactive,
+            "EditableText" | "editable_text" => EditableText,
+            "EditableTextCursor" | "editable_text_cursor" => EditableTextCursor,
+            "EditableTextInactive" | "editable_text_inactive" => EditableTextInactive,
             _ => return Err(NoSuchColor),
         })
     }

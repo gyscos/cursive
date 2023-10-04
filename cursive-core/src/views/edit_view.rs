@@ -105,7 +105,9 @@ pub struct EditView {
 
     enabled: bool,
 
-    style: StyleType,
+    regular_style: StyleType,
+    inactive_style: StyleType,
+    cursor_style: StyleType,
 }
 
 new_default!(EditView);
@@ -126,7 +128,9 @@ impl EditView {
             secret: false,
             filler: "_".to_string(),
             enabled: true,
-            style: PaletteStyle::Secondary.into(),
+            regular_style: PaletteStyle::EditableText.into(),
+            inactive_style: PaletteStyle::EditableTextInactive.into(),
+            cursor_style: PaletteStyle::EditableTextCursor.into(),
         }
     }
 
@@ -192,7 +196,9 @@ impl EditView {
     ///
     /// Defaults to `ColorStyle::Secondary`.
     pub fn set_style<S: Into<StyleType>>(&mut self, style: S) {
-        self.style = style.into();
+        let style = style.into();
+        self.regular_style = style;
+        // TODO: Also update cursor and inactive styles?
     }
 
     /// Sets the style used for this view.
@@ -503,6 +509,11 @@ impl EditView {
 /// Best used for single character replacement.
 fn make_small_stars(length: usize) -> &'static str {
     // TODO: be able to use any character as hidden mode?
+    assert!(
+        length <= 4,
+        "Can only generate stars for one grapheme at a time."
+    );
+
     &"****"[..length]
 }
 
@@ -514,80 +525,81 @@ impl View for EditView {
             self.last_length, printer.size.x
         );
 
+        let (style, cursor_style) = if self.enabled && printer.enabled {
+            (self.regular_style, self.cursor_style)
+        } else {
+            (self.inactive_style, self.inactive_style)
+        };
+
         let width = self.content.width();
-        printer.with_style(self.style, |printer| {
-            let effect = if self.enabled && printer.enabled {
-                Effect::Reverse
-            } else {
-                Effect::Simple
-            };
-            printer.with_effect(effect, |printer| {
-                if width < self.last_length {
-                    // No problem, everything fits.
-                    assert!(printer.size.x >= width);
-                    if self.secret {
-                        printer.print_hline((0, 0), width, "*");
-                    } else {
-                        printer.print((0, 0), &self.content);
-                    }
-                    let filler_len = (printer.size.x - width) / self.filler.width();
-                    printer.print_hline((width, 0), filler_len, self.filler.as_str());
+        printer.with_style(style, |printer| {
+            if width < self.last_length {
+                // No problem, everything fits.
+                assert!(printer.size.x >= width);
+                if self.secret {
+                    printer.print_hline((0, 0), width, "*");
                 } else {
-                    let content = &self.content[self.offset..];
-                    let display_bytes = content
-                        .graphemes(true)
-                        .scan(0, |w, g| {
-                            *w += g.width();
-                            if *w > self.last_length {
-                                None
-                            } else {
-                                Some(g)
-                            }
-                        })
-                        .map(str::len)
-                        .sum();
-
-                    let content = &content[..display_bytes];
-                    let width = content.width();
-
-                    if self.secret {
-                        printer.print_hline((0, 0), width, "*");
-                    } else {
-                        printer.print((0, 0), content);
-                    }
-
-                    if width < self.last_length {
-                        let filler_len = (self.last_length - width) / self.filler.width();
-                        printer.print_hline((width, 0), filler_len, self.filler.as_str());
-                    }
+                    printer.print((0, 0), &self.content);
                 }
-            });
+                let filler_len = (printer.size.x - width) / self.filler.width();
+                printer.print_hline((width, 0), filler_len, self.filler.as_str());
+            } else {
+                let content = &self.content[self.offset..];
+                let display_bytes = content
+                    .graphemes(true)
+                    .scan(0, |w, g| {
+                        *w += g.width();
+                        if *w > self.last_length {
+                            None
+                        } else {
+                            Some(g)
+                        }
+                    })
+                    .map(str::len)
+                    .sum();
 
-            // Now print cursor
-            if printer.focused {
-                let c: &str = if self.cursor == self.content.len() {
-                    &self.filler
+                let content = &content[..display_bytes];
+                let width = content.width();
+
+                if self.secret {
+                    printer.print_hline((0, 0), width, "*");
                 } else {
-                    // Get the char from the string... Is it so hard?
-                    let selected = self.content[self.cursor..]
-                        .graphemes(true)
-                        .next()
-                        .unwrap_or_else(|| {
-                            panic!(
-                                "Found no char at cursor {} in {}",
-                                self.cursor, &self.content
-                            )
-                        });
-                    if self.secret {
-                        make_small_stars(selected.width())
-                    } else {
-                        selected
-                    }
-                };
-                let offset = self.content[self.offset..self.cursor].width();
-                printer.print((offset, 0), c);
+                    printer.print((0, 0), content);
+                }
+
+                if width < self.last_length {
+                    let filler_len = (self.last_length - width) / self.filler.width();
+                    printer.print_hline((width, 0), filler_len, self.filler.as_str());
+                }
             }
         });
+
+        // Now print cursor
+        if printer.focused {
+            let c: &str = if self.cursor == self.content.len() {
+                &self.filler
+            } else {
+                // Get the char from the string... Is it so hard?
+                let selected = self.content[self.cursor..]
+                    .graphemes(true)
+                    .next()
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "Found no char at cursor {} in {}",
+                            self.cursor, &self.content
+                        )
+                    });
+                if self.secret {
+                    make_small_stars(selected.width())
+                } else {
+                    selected
+                }
+            };
+            let offset = self.content[self.offset..self.cursor].width();
+            printer.with_style(cursor_style, |printer| {
+                printer.print((offset, 0), c);
+            });
+        }
     }
 
     fn layout(&mut self, size: Vec2) {

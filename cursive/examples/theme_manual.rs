@@ -32,26 +32,35 @@ fn main() {
                 use cursive::theme::PaletteStyle::*;
                 use cursive::theme::Style;
                 palette[Highlight] = Style::from(Blue.light()).combine(Bold);
+                palette[EditableTextCursor] = Style::secondary().combine(Reverse).combine(Underline)
             }
         }),
     });
 
     let layout = LinearLayout::vertical()
         .child(TextView::new("This is a dynamic theme example!"))
-        .child(EditView::new().content("Woo! colors!"));
+        .child(EditView::new().content("Woo! colors!").filler(" "));
 
     siv.add_layer(
         Dialog::around(layout)
             .title("Theme example")
             .button("Change", |s| {
+                use cursive::theme::BaseColor::*;
+                use cursive::theme::Color::TerminalDefault;
+                use cursive::theme::PaletteColor::*;
                 // Change _something_ when the button is pressed.
                 let mut theme = s.current_theme().clone();
 
                 theme.shadow = !theme.shadow;
                 theme.borders = match theme.borders {
-                    BorderStyle::Simple => BorderStyle::Outset,
-                    BorderStyle::Outset => BorderStyle::None,
-                    BorderStyle::None => BorderStyle::Simple,
+                    BorderStyle::None => {
+                        theme.palette[View] = TerminalDefault;
+                        BorderStyle::Simple
+                    }
+                    _ => {
+                        theme.palette[View] = Black.light();
+                        BorderStyle::None
+                    }
                 };
 
                 s.set_theme(theme);

@@ -487,49 +487,52 @@ impl View for TextArea {
     }
 
     fn draw(&self, printer: &Printer) {
-        printer.with_style(PaletteStyle::Secondary, |printer| {
-            let effect = if self.enabled && printer.enabled {
-                Effect::Reverse
-            } else {
-                Effect::Simple
-            };
+        let (style, cursor_style) = if self.enabled && printer.enabled {
+            (PaletteStyle::EditableText, PaletteStyle::EditableTextCursor)
+        } else {
+            (
+                PaletteStyle::EditableTextInactive,
+                PaletteStyle::EditableTextInactive,
+            )
+        };
 
-            let w = if self.scrollbase.scrollable() {
-                printer.size.x.saturating_sub(1)
-            } else {
-                printer.size.x
-            };
-            printer.with_effect(effect, |printer| {
-                for y in 0..printer.size.y {
-                    printer.print_hline((0, y), w, " ");
-                }
+        let w = if self.scrollbase.scrollable() {
+            printer.size.x.saturating_sub(1)
+        } else {
+            printer.size.x
+        };
+        printer.with_style(style, |printer| {
+            for y in 0..printer.size.y {
+                printer.print_hline((0, y), w, " ");
+            }
+        });
+
+        debug!("Content: `{}`", &self.content);
+        self.scrollbase.draw(printer, |printer, i| {
+            debug!("Drawing row {}", i);
+            let row = &self.rows[i];
+            debug!("row: {:?}", row);
+            let text = &self.content[row.start..row.end];
+            debug!("row text: `{}`", text);
+            printer.with_style(style, |printer| {
+                printer.print((0, 0), text);
             });
 
-            debug!("Content: `{}`", &self.content);
-            self.scrollbase.draw(printer, |printer, i| {
-                debug!("Drawing row {}", i);
-                let row = &self.rows[i];
-                debug!("row: {:?}", row);
-                let text = &self.content[row.start..row.end];
-                debug!("row text: `{}`", text);
-                printer.with_effect(effect, |printer| {
-                    printer.print((0, 0), text);
-                });
-
-                if printer.focused && i == self.selected_row() {
-                    let cursor_offset = self.cursor - row.start;
-                    let c = if cursor_offset == text.len() {
-                        "_"
-                    } else {
-                        text[cursor_offset..]
-                            .graphemes(true)
-                            .next()
-                            .expect("Found no char!")
-                    };
-                    let offset = text[..cursor_offset].width();
+            if printer.focused && i == self.selected_row() {
+                let cursor_offset = self.cursor - row.start;
+                let c = if cursor_offset == text.len() {
+                    "_"
+                } else {
+                    text[cursor_offset..]
+                        .graphemes(true)
+                        .next()
+                        .expect("Found no char!")
+                };
+                let offset = text[..cursor_offset].width();
+                printer.with_style(cursor_style, |printer| {
                     printer.print((offset, 0), c);
-                }
-            });
+                });
+            }
         });
     }
 
