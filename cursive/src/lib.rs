@@ -130,6 +130,12 @@ pub fn blt() -> CursiveRunnable {
     CursiveRunnable::blt()
 }
 
+/// Creates a new Cursive root using a crossterm backend.
+#[cfg(feature = "wasm-backend")]
+pub fn wasm() -> CursiveRunnable {
+    CursiveRunnable::wasm()
+}
+
 /// Creates a new Cursive root using a dummy backend.
 ///
 /// Nothing will be output. This is mostly here for tests.

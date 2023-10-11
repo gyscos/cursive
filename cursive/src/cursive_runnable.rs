@@ -84,13 +84,13 @@ impl CursiveRunnable {
     /// # Panics
     ///
     /// If the backend initialization fails.
-    pub fn run(&mut self) {
-        self.try_run().unwrap();
+    pub async fn run(&mut self) {
+        self.try_run().await.unwrap();
     }
 
     /// Runs the event loop with the registered backend initializer.
-    pub fn try_run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        self.siv.try_run_with(&mut self.backend_init)
+    pub async fn try_run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.siv.try_run_with(&mut self.backend_init).await
     }
 
     /// Gets a runner with the registered backend.
@@ -193,5 +193,13 @@ impl CursiveRunnable {
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
     pub fn blt() -> Self {
         Self::new::<std::convert::Infallible, _>(|| Ok(backends::blt::Backend::init()))
+    }
+
+    /// Creates a new Cursive wrapper using the wasm backend.
+    ///
+    /// _Requires the `wasm-backend` feature._
+    #[cfg(feature = "wasm-backend")]
+    pub fn wasm() -> Self {
+        Self::new(backends::wasm::Backend::init)
     }
 }

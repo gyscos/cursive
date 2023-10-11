@@ -840,8 +840,8 @@ impl Cursive {
     /// Runs a dummy event loop.
     ///
     /// Initializes a dummy backend for the event loop.
-    pub fn run_dummy(&mut self) {
-        self.run_with(backend::Dummy::init)
+    pub async fn run_dummy(&mut self) {
+        self.run_with(backend::Dummy::init).await
     }
 
     /// Returns a new runner on the given backend.
@@ -871,23 +871,23 @@ impl Cursive {
     /// Initialize the backend and runs the event loop.
     ///
     /// Used for infallible backend initializers.
-    pub fn run_with<F>(&mut self, backend_init: F)
+    pub async fn run_with<F>(&mut self, backend_init: F)
     where
         F: FnOnce() -> Box<dyn backend::Backend>,
     {
-        self.try_run_with::<(), _>(|| Ok(backend_init())).unwrap();
+        self.try_run_with::<(), _>(|| Ok(backend_init())).await.unwrap();
     }
 
     /// Initialize the backend and runs the event loop.
     ///
     /// Returns an error if initializing the backend fails.
-    pub fn try_run_with<E, F>(&mut self, backend_init: F) -> Result<(), E>
+    pub async fn try_run_with<E, F>(&mut self, backend_init: F) -> Result<(), E>
     where
         F: FnOnce() -> Result<Box<dyn backend::Backend>, E>,
     {
         let mut runner = self.runner(backend_init()?);
 
-        runner.run();
+        runner.run().await;
 
         Ok(())
     }

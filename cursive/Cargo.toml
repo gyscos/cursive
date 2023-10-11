@@ -25,6 +25,7 @@ libc = "0.2"
 maplit = { version = "1.0", optional = true }
 log = "0.4"
 ahash = "0.8"
+async-trait = "0.1.73"
 
 [dependencies.bear-lib-terminal]
 optional = true
@@ -48,6 +49,23 @@ version = "2"
 optional = true
 version = "0.26"
 
+[dependencies.wasm-bindgen]
+optional = true
+version = "0.2.63"
+
+[dependencies.web-sys]
+optional = true
+version = "0.3.64"
+features = [
+    "HtmlCanvasElement",
+    "CanvasRenderingContext2d",
+    "KeyboardEvent",
+    "TextMetrics",
+    "Window",
+    "Document",
+    "console",
+]
+
 [features]
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.
 builder = ["cursive_core/builder"]
@@ -61,6 +79,7 @@ markdown = ["cursive_core/markdown"]
 ansi = ["cursive_core/ansi"]
 unstable_scroll = []  # Deprecated feature, remove in next version
 toml = ["cursive_core/toml"]
+wasm-backend = ["wasm-bindgen", "web-sys", "cursive_core/wasm"]
 
 [lib]
 name = "cursive"
