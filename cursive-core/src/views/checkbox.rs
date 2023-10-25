@@ -3,7 +3,7 @@ use crate::{
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     theme::PaletteStyle,
     view::{CannotFocus, View},
-    Cursive, Printer, Vec2, With,
+    Cursive, Printer, Vec2, With, utils::markup::StyledString,
 };
 use std::rc::Rc;
 
@@ -25,6 +25,8 @@ pub struct Checkbox {
     enabled: bool,
 
     on_change: Option<Rc<Callback>>,
+
+    label: StyledString,
 }
 
 new_default!(Checkbox);
@@ -32,12 +34,23 @@ new_default!(Checkbox);
 impl Checkbox {
     impl_enabled!(self.enabled);
 
-    /// Creates a new, unchecked checkbox.
+    /// Creates a new, unlabelled, unchecked checkbox.
     pub fn new() -> Self {
         Checkbox {
             checked: false,
             enabled: true,
             on_change: None,
+            label: StyledString::new(),
+        }
+    }
+
+    /// Creates a new, labelled, unchecked checkbox.
+    pub fn labelled(label: StyledString) -> Self {
+        Checkbox {
+            checked: false,
+            enabled: true,
+            on_change: None,
+            label
         }
     }
 
@@ -134,12 +147,26 @@ impl Checkbox {
         if self.checked {
             printer.print((1, 0), "X");
         }
+
+        if !self.label.is_empty() {
+            // We want the space to be highlighted if focused
+            printer.print((3, 0), " ");
+            printer.print_styled((4, 0), &self.label);
+        }
+    }
+
+    fn req_size(&self) -> Vec2 {
+        if self.label.is_empty() {
+            Vec2::new(3, 1)
+        } else {
+            Vec2::new(3 + 1 + self.label.width(), 1)
+        }
     }
 }
 
 impl View for Checkbox {
     fn required_size(&mut self, _: Vec2) -> Vec2 {
-        Vec2::new(3, 1)
+        self.req_size()
     }
 
     fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
