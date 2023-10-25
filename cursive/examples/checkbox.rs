@@ -1,6 +1,6 @@
-use std::{cell::RefCell, collections::HashSet, fmt::Display, rc::Rc};
-
-use cursive::views::{Checkbox, Dialog, DummyView, LinearLayout};
+use std::{cell::RefCell, fmt::Display, rc::Rc};
+use ahash::HashSet;
+use cursive::views::{Checkbox, MultiChoiceGroup, Dialog, DummyView, LinearLayout};
 
 // This example uses checkboxes.
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -8,6 +8,13 @@ enum Toppings {
     ChocolateSprinkles,
     CrushedAlmonds,
     StrawberrySauce,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+enum Extras {
+    Tissues,
+    DarkCone,
+    ChocolateFlake,
 }
 
 impl Display for Toppings {
@@ -20,49 +27,69 @@ impl Display for Toppings {
     }
 }
 
+impl Display for Extras {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Extras::Tissues => write!(f, "Tissues"),
+            Extras::DarkCone => write!(f, "Dark Cone"),
+            Extras::ChocolateFlake => write!(f, "Chocolate Flake"),
+        }
+    }
+}
+
 fn main() {
     let mut siv = cursive::default();
 
-    // TODO: placeholder for MultiChoiceGroup.
-
     // Application wide container w/toppings choices.
-    let toppings: Rc<RefCell<HashSet<Toppings>>> = Rc::new(RefCell::new(HashSet::new()));
+    let toppings: Rc<RefCell<HashSet<Toppings>>> = Rc::new(RefCell::new(HashSet::default()));
+
+    // The `MultiChoiceGroup<T>` can be used to maintain multiple choices.
+    let mut multichoice: MultiChoiceGroup<Extras> = MultiChoiceGroup::new();
 
     siv.add_layer(
         Dialog::new()
             .title("Make your selections")
             .content(
-                LinearLayout::vertical()
-                    .child(Checkbox::labelled("Chocolate Sprinkles".into()).on_change({
-                        let toppings = toppings.clone();
-                        move |_, checked| {
-                            if checked {
-                                toppings.borrow_mut().insert(Toppings::ChocolateSprinkles);
-                            } else {
-                                toppings.borrow_mut().remove(&Toppings::ChocolateSprinkles);
+                LinearLayout::horizontal()
+                .child(
+                    LinearLayout::vertical()
+                        .child(Checkbox::labelled("Chocolate Sprinkles").on_change({
+                            let toppings = toppings.clone();
+                            move |_, checked| {
+                                if checked {
+                                    toppings.borrow_mut().insert(Toppings::ChocolateSprinkles);
+                                } else {
+                                    toppings.borrow_mut().remove(&Toppings::ChocolateSprinkles);
+                                }
                             }
-                        }
-                    }))
-                    .child(Checkbox::labelled("Crushed Almonds".into()).on_change({
-                        let toppings = toppings.clone();
-                        move |_, checked| {
-                            if checked {
-                                toppings.borrow_mut().insert(Toppings::CrushedAlmonds);
-                            } else {
-                                toppings.borrow_mut().remove(&Toppings::CrushedAlmonds);
+                        }))
+                        .child(Checkbox::labelled("Crushed Almonds").on_change({
+                            let toppings = toppings.clone();
+                            move |_, checked| {
+                                if checked {
+                                    toppings.borrow_mut().insert(Toppings::CrushedAlmonds);
+                                } else {
+                                    toppings.borrow_mut().remove(&Toppings::CrushedAlmonds);
+                                }
                             }
-                        }
-                    }))
-                    .child(Checkbox::labelled("Strawberry Sauce".into()).on_change({
-                        let toppings = toppings.clone();
-                        move |_, checked| {
-                            if checked {
-                                toppings.borrow_mut().insert(Toppings::StrawberrySauce);
-                            } else {
-                                toppings.borrow_mut().remove(&Toppings::StrawberrySauce);
+                        }))
+                        .child(Checkbox::labelled("Strawberry Sauce").on_change({
+                            let toppings = toppings.clone();
+                            move |_, checked| {
+                                if checked {
+                                    toppings.borrow_mut().insert(Toppings::StrawberrySauce);
+                                } else {
+                                    toppings.borrow_mut().remove(&Toppings::StrawberrySauce);
+                                }
                             }
-                        }
-                    })),
+                        })),
+                    )
+                .child(DummyView)
+                .child(LinearLayout::vertical()
+                    .child(multichoice.checkbox(Extras::ChocolateFlake, "Chocolate Flake"))
+                    .child(multichoice.checkbox(Extras::DarkCone, "Dark Cone"))
+                    .child(multichoice.checkbox(Extras::Tissues, "Tissues"))
+                )
             )
             .button("Ok", move |s| {
                 s.pop_layer();
@@ -72,7 +99,12 @@ fn main() {
                     .map(|t| t.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
-                let text = format!("Toppings: {toppings}");
+                let extras = multichoice.selections()
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                let text = format!("Toppings: {toppings}\nExtras: {extras}");
                 s.add_layer(Dialog::text(text).button("Ok", |s| s.quit()));
             }),
     );

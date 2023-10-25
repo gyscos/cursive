@@ -103,7 +103,7 @@ pub use self::{
     boxed_view::BoxedView,
     button::Button,
     canvas::Canvas,
-    checkbox::Checkbox,
+    checkbox::{Checkbox, MultiChoiceGroup},
     circular_focus::CircularFocus,
     debug_view::DebugView,
     dialog::{Dialog, DialogFocus},

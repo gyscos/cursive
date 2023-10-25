@@ -1,3 +1,5 @@
+use ahash::{HashSet, HashSetExt};
+
 use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
@@ -5,9 +7,103 @@ use crate::{
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With, utils::markup::StyledString,
 };
-use std::rc::Rc;
+use std::{rc::Rc, cell::RefCell};
+use std::hash::Hash;
 
+type GroupCallback<T> = dyn Fn(&mut Cursive, &HashSet<Rc<T>>);
 type Callback = dyn Fn(&mut Cursive, bool);
+
+struct SharedState<T> {
+    selections: HashSet<Rc<T>>,
+    values: Vec<Rc<T>>,
+
+    on_change: Option<Rc<GroupCallback<T>>>
+}
+
+impl<T> SharedState<T> {
+    pub fn selections(&self) -> &HashSet<Rc<T>> {
+        &self.selections
+    }
+}
+
+/// Group to coordinate multiple checkboxes.
+///
+/// A `MultiChoiceGroup` can be used to create and manage multiple [`Checkbox`]es.
+///
+/// A `MultiChoiceGroup` can be cloned; it will keep shared state (pointing to the same group).
+pub struct MultiChoiceGroup<T> {
+    // Given to every child button
+    state: Rc<RefCell<SharedState<T>>>,
+}
+
+// We have to manually implement Clone.
+// Using derive(Clone) would add am unwanted `T: Clone` where-clause.
+impl<T> Clone for MultiChoiceGroup<T> {
+    fn clone(&self) -> Self {
+        Self {
+            state: Rc::clone(&self.state),
+        }
+    }
+}
+
+impl<T: 'static + Hash + Eq> Default for MultiChoiceGroup<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T: 'static + Hash + Eq> MultiChoiceGroup<T> {
+    /// Creates an empty group for check boxes.
+    pub fn new() -> Self {
+        Self {
+            state: Rc::new(RefCell::new(SharedState {
+                selections: HashSet::new(),
+                values: Vec::new(),
+                on_change: None,
+            })),
+        }
+    }
+
+    // TODO: Handling of the global state
+
+    /// Adds a new checkbox to the group.
+    /// 
+    /// The checkbox will display `label` next to it, and will ~embed~ `value`.
+    pub fn checkbox<S: Into<StyledString>>(&mut self, value: T, label: S) -> Checkbox {
+        let element = Rc::new(value);
+        self.state.borrow_mut().values.push(element.clone());
+        Checkbox::labelled(label).on_change({ // TODO: consider consequences
+            let selectable = Rc::downgrade(&element);
+            let groupstate = self.state.clone();
+            move |_, checked| if checked {
+                if let Some(v) = selectable.upgrade() {
+                    groupstate.borrow_mut().selections.insert(v);
+                }
+            } else {
+                if let Some(v) = selectable.upgrade() {
+                    groupstate.borrow_mut().selections.remove(&v);
+                }
+            }
+        })
+    }
+
+    /// Returns the reference to a set associated with the selected checkboxes.
+    pub fn selections(&self) -> HashSet<Rc<T>> {
+        self.state.borrow().selections().clone()
+    }
+
+    /// Sets a callback to be user when choices change.
+    pub fn set_on_change<F: 'static + Fn(&mut Cursive, &HashSet<Rc<T>>)>(&mut self, on_change: F) {
+        self.state.borrow_mut().on_change = Some(Rc::new(on_change));
+    }
+
+    /// Set a callback to use used when choices change.
+    /// 
+    /// Chainable variant.
+    pub fn on_change<F: 'static + Fn(&mut Cursive, &HashSet<Rc<T>>)>(self, on_change: F) -> Self {
+        crate::With::with(self, |s| s.set_on_change(on_change))
+    }
+}
 
 /// Checkable box.
 ///
@@ -45,12 +141,12 @@ impl Checkbox {
     }
 
     /// Creates a new, labelled, unchecked checkbox.
-    pub fn labelled(label: StyledString) -> Self {
+    pub fn labelled<S: Into<StyledString>>(label: S) -> Self {
         Checkbox {
             checked: false,
             enabled: true,
             on_change: None,
-            label
+            label: label.into()
         }
     }
 
