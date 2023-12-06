@@ -46,7 +46,7 @@ version = "2"
 
 [dependencies.crossterm]
 optional = true
-version = "0.26"
+version = "0.27"
 
 [features]
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.

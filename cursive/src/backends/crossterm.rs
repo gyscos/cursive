@@ -201,7 +201,7 @@ fn translate_color(base_color: theme::Color) -> Color {
 
 impl Backend {
     /// Creates a new crossterm backend.
-    pub fn init() -> Result<Box<dyn backend::Backend>, crossterm::ErrorKind>
+    pub fn init() -> Result<Box<dyn backend::Backend>, std::io::Error>
     where
         Self: Sized,
     {
@@ -214,9 +214,7 @@ impl Backend {
         Self::init_with_stdout(stdout)
     }
 
-    fn init_with_stdout(
-        mut stdout: Stdout,
-    ) -> Result<Box<dyn backend::Backend>, crossterm::ErrorKind>
+    fn init_with_stdout(mut stdout: Stdout) -> Result<Box<dyn backend::Backend>, std::io::Error>
     where
         Self: Sized,
     {
@@ -237,9 +235,7 @@ impl Backend {
 
     /// Create a new crossterm backend with provided output file. Unix only
     #[cfg(unix)]
-    pub fn init_with_stdout_file(
-        outfile: File,
-    ) -> Result<Box<dyn backend::Backend>, crossterm::ErrorKind>
+    pub fn init_with_stdout_file(outfile: File) -> Result<Box<dyn backend::Backend>, std::io::Error>
     where
         Self: Sized,
     {
@@ -288,6 +284,10 @@ impl Backend {
                     }
                     MouseEventKind::ScrollDown => MouseEvent::WheelDown,
                     MouseEventKind::ScrollUp => MouseEvent::WheelUp,
+                    MouseEventKind::ScrollLeft | MouseEventKind::ScrollRight => {
+                        // TODO: Currently unsupported.
+                        return None;
+                    }
                 };
 
                 Event::Mouse {
