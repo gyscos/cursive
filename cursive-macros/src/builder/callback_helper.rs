@@ -25,6 +25,9 @@ fn find_arg_name<'a>(signature: &'a syn::Signature, type_name: &'a syn::Ident) -
     panic!("Could not find argument with type {type_name}.");
 }
 
+// Return a stream of all generics involved in this type.
+//
+// We'll want to wrap the function, and we need to make it just as generic.
 fn find_dependent_generics(
     signature: &syn::Signature,
     bound: &syn::TraitBound,
@@ -39,7 +42,10 @@ fn find_dependent_generics(
                     for argument in &arguments.args {
                         match argument {
                             syn::GenericArgument::Type(t) => visit_type_idents(t, f),
-                            syn::GenericArgument::Binding(b) => visit_type_idents(&b.ty, f),
+                            syn::GenericArgument::AssocType(t) => visit_type_idents(&t.ty, f),
+                            syn::GenericArgument::AssocConst(c) => {
+                                unimplemented!("associated constant not supported yet")
+                            }
                             _ => (),
                         }
                     }
@@ -129,6 +135,8 @@ fn find_dependent_generics(
     }
 
     // Look for links in the where clause.
+    // For example there could be `where T: Into<U>`, in which case if we need T, we need `U`.
+    //
     // if let Some(ref where_clause) = signature.generics.where_clause {
     //     for pred in &where_clause.predicates {
     //         match pred {
@@ -274,7 +282,7 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 /// callback.
 ///
 /// In this case, the recipe loading the variable and the user storing the variable need
-/// to use the exact same type, or downcasting will not work. This is made complicated by Rust's
+/// to use the exact same type (otherwise, downcasting will not work). This is made complicated by Rust's
 /// closures, where each closure is a unique anonymous type: if the user directly stores a closure,
 /// there will be no way to identify its exact type to downcast it in the recipe.
 ///
@@ -292,16 +300,19 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 /// generates two helper functions:
 /// * A _maker_ function, to be used when storing variables. This function takes a generic type
 /// implementing the same `Fn` trait as the desired callback, and returns it wrapped in the correct
-/// trait object.
+/// trait object. It will be named `{name}_cb`, where `{name}` is the name of the original function
+/// this macro is attached to.
 /// * A _setter_ function, to be used when writing recipes. This function wraps the original
 /// function, but takes a trait-object instead of a generic `Fn` type, and unwraps it internally.
+/// It will be named `{name}_with_cb`, where `{name}` is the name of the original function this
+/// macro is attached to.
 ///
 /// # Notes
 ///
 /// * The wrapped function doesn't even have to take `self`, it can be a "static"
 /// constructor method.
 /// * The `maker` function always takes a `Fn`, not a `FnMut` or `FnOnce`.
-/// Use the `cursive::immut1!` (and others) macros to wrap a `FnMut` if you need it.
+/// Use the `cursive::immut1!` (and others) macros to wrap a `FnMut` into a `Fn` if you need it.
 ///
 /// # Examples
 ///
@@ -311,6 +322,10 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 /// }
 ///
 /// impl Foo {
+///     // This will generate 2 extra functions:
+///     // * `new_cb` to wrap a closure into the proper "shareable" type.
+///     // * `new_with_cb` that takes the "shareable" type instead of `F`, and internally calls
+///     //   `new` itself.
 ///     #[cursive::callback_helpers]
 ///     pub fn new<F>(callback: F) -> Self
 ///     where
@@ -322,6 +337,7 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 /// }
 ///
 /// cursive::recipe!(Foo, |config, context| {
+///     // In a recipe, we use `new_with_cb` to resolve the proper callback type.
 ///     let foo =
 ///         Foo::new_with_cb(context.resolve(config["callback"])?);
 ///
@@ -332,19 +348,26 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 /// fn foo() {
 ///     let mut context = cursive::builder::Context::new();
 ///
+///     // When storing the callback, we use `new_cb` to wrap it into a shareable type.
 ///     context.store("callback", Foo::new_cb(|s| s.quit()));
 /// }
 /// ```
 pub fn callback_helpers(item: TokenStream) -> TokenStream {
     // Read the tokens. Should be a function.
-    let input = syn::parse_macro_input!(item as syn::ImplItemMethod);
+    let input = syn::parse_macro_input!(item as syn::ImplItemFn);
 
     // TODO: use attrs to customize the setter/maker names
+    // * Set the wrapper name
+    // * Set the setter name
+    // * Specify the generic parameter to wrap.
 
     // eprintln!("{:#?}", input.sig);
 
-    // This function should have (at least) one generic type parameter.
+    // The wrapped function should have (at least) one generic type parameter.
     // This type parameter should include a function bound.
+    let (fn_bound, cb_arg_name, type_ident) =
+        find_fn_generic(&input.sig).expect("Could not find function-like generic parameter.");
+    // It could be specified in many ways: impl Fn, <F: Fn>, where F: Fn...
     let (fn_bound, cb_arg_name, type_ident) =
         find_fn_generic(&input.sig).expect("Could not find function-like generic parameter.");
 
@@ -352,7 +375,7 @@ pub fn callback_helpers(item: TokenStream) -> TokenStream {
     let mut fn_bound = fn_bound.clone();
     fn_bound.path.segments.last_mut().unwrap().ident = syn::Ident::new("Fn", Span::call_site());
 
-    // We will deduce a dyn-able type from this bound (a Arc<dyn Fn() -> ...)
+    // We will deduce a dyn-able type from this bound (a Arc<dyn Fn(Input) -> Output)
     let dyn_type = bound_to_dyn(&fn_bound);
 
     // set_on_foo | new
@@ -371,10 +394,12 @@ pub fn callback_helpers(item: TokenStream) -> TokenStream {
     let maker_ident = syn::Ident::new(&maker_name, Span::call_site());
 
     // TODO: There may be extra generics for F, such as a generic argument.
-    // So find all the generics that are referenced by F
+    // So find all the generics that are referenced by F (but not F itself, since we are getting
+    // rid of it)
     let maker_generics = find_dependent_generics(&input.sig, &fn_bound);
 
     // And all bounds that apply to these generics
+    // TODO: implement it
     let maker_bounds = quote!(); // find_dependent_bounds(&maker_generics);
 
     // And keep them in the maker.

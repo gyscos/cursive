@@ -44,10 +44,7 @@ fn parse_attributes(base: &syn::ExprCall) -> (String, HashSet<String>) {
     (name, parameters)
 }
 
-fn is_single_generic<'a>(
-    path: &'a syn::Path,
-    name: &str,
-) -> Option<&'a syn::Type> {
+fn is_single_generic<'a>(path: &'a syn::Path, name: &str) -> Option<&'a syn::Type> {
     if path.segments.len() != 1 {
         return None;
     }
@@ -107,12 +104,8 @@ fn parse_enum(
                                 // String! With name of variant as ident?
                                 // variant.ident
                                 // The match case
-                                let consumer = parse_struct(
-                                    &variant.fields,
-                                    params,
-                                    &variant_name,
-                                    base,
-                                );
+                                let consumer =
+                                    parse_struct(&variant.fields, params, &variant_name, base);
                                 cases.push(quote! {
                                     crate::builder::Config::String(_) => {
                                         #consumer
@@ -129,8 +122,7 @@ fn parse_enum(
             }
             syn::Fields::Named(_) => {
                 // An object.
-                let consumer =
-                    parse_struct(&variant.fields, params, &variant_name, base);
+                let consumer = parse_struct(&variant.fields, params, &variant_name, base);
                 cases.push(quote! {
                     crate::builder::Config::Object(_) => {
                         #consumer
@@ -170,13 +162,7 @@ fn consumer_for_type(
         syn::Type::Paren(syn::TypeParen { ref elem, .. })
         | syn::Type::Group(syn::TypeGroup { ref elem, .. }) => {
             // Just some recursive boilerplate.
-            consumer_for_type(
-                &elem,
-                field_name,
-                field_ident,
-                base_ident,
-                context,
-            )
+            consumer_for_type(&elem, field_name, field_ident, base_ident, context)
         }
         syn::Type::Infer(_) => {
             let function_name = format!("set_{field_name}_cb");
@@ -188,13 +174,7 @@ fn consumer_for_type(
         syn::Type::Path(syn::TypePath { ref path, .. }) => {
             // Case A: ty = Option<T>. Recurse.
             if let Some(ty) = is_option(path) {
-                let consumer = consumer_for_type(
-                    ty,
-                    field_name,
-                    field_ident,
-                    base_ident,
-                    context,
-                );
+                let consumer = consumer_for_type(ty, field_name, field_ident, base_ident, context);
                 return quote! {
                     if let Some(#field_ident) = #field_ident {
                         #consumer
@@ -204,13 +184,8 @@ fn consumer_for_type(
 
             if let Some(_) = &context.foreach {
                 if let Some(ty) = is_vec(path) {
-                    let consumer = consumer_for_type(
-                        ty,
-                        field_name,
-                        field_ident,
-                        base_ident,
-                        context,
-                    );
+                    let consumer =
+                        consumer_for_type(ty, field_name, field_ident, base_ident, context);
                     return quote! {
                         for #field_ident in #field_ident {
                             #consumer
@@ -277,27 +252,23 @@ fn parse_struct(
             // eprintln!("Found attr: {attr:?}");
             // Found one!
             // Parse `attr.tokens` into... key=value pairs
-            if let Ok(syn::Meta::List(meta)) = attr.parse_meta() {
-                // eprintln!("Found meta: {meta:?}");
-                if !meta.path.is_ident("recipe") {
-                    continue;
-                }
-
-                for meta in &meta.nested {
-                    if let syn::NestedMeta::Meta(syn::Meta::List(meta)) = meta
-                    {
-                        if meta.path.is_ident("foreach") {
-                            if let syn::NestedMeta::Meta(syn::Meta::Path(
-                                meta,
-                            )) = &meta.nested[0]
-                            {
-                                context.foreach =
-                                    Some(meta.get_ident().unwrap().clone());
-                            }
-                        }
-                    }
-                }
+            // eprintln!("Found meta: {meta:?}");
+            if !attr.path().is_ident("recipe") {
+                continue;
             }
+
+            attr.parse_nested_meta(|meta| {
+                // #[recipe(foreach = "")]
+                if meta.path.is_ident("foreach") {
+                    meta.parse_nested_meta(|meta| {
+                        context.foreach =
+                            Some(meta.path.get_ident().expect("could not get ident").clone());
+                        Ok(())
+                    })?;
+                }
+                Ok(())
+            })
+            .expect("Could not parse meta");
         }
 
         // For each field, derive a few things:
@@ -339,13 +310,8 @@ fn parse_struct(
             // TODO: Look for any attribute on the field to override consumer.
             // Build the consumer based on the type.
             let field_ident = syn::Ident::new(&param_name, Span::call_site());
-            let consumer = consumer_for_type(
-                &field.ty,
-                &param_name,
-                &field_ident,
-                &base_ident,
-                &context,
-            );
+            let consumer =
+                consumer_for_type(&field.ty, &param_name, &field_ident, &base_ident, &context);
 
             setters.push(quote! {
                 #loader
