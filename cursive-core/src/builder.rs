@@ -21,12 +21,12 @@
 use crate::views::BoxedView;
 
 use std::collections::{HashMap, HashSet};
-use std::rc::Rc;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use std::any::Any;
 
-type MakerTrait<T> = dyn Fn(&Config, &Context) -> Result<T, Error>;
+type MakerTrait<T> = dyn Fn(&Config, &Context) -> Result<T, Error> + Send + Sync;
 
 /// Type of a trait-object that can build.
 ///
@@ -45,16 +45,17 @@ pub type Object = serde_json::Map<String, serde_json::Value>;
 pub type BareBuilder = fn(&serde_json::Value, &Context) -> Result<BoxedView, Error>;
 
 /// Boxed builder
-type BoxedBuilder = Box<dyn Fn(&Config, &Context) -> Result<BoxedView, Error>>;
+type BoxedBuilder = Box<dyn Fn(&Config, &Context) -> Result<BoxedView, Error> + Send + Sync>;
 
 /// Can build a wrapper from a config.
 pub type BareWrapperBuilder = fn(&serde_json::Value, &Context) -> Result<Wrapper, Error>;
 
 /// Boxed wrapper builder
-type BoxedWrapperBuilder = Box<dyn Fn(&serde_json::Value, &Context) -> Result<Wrapper, Error>>;
+type BoxedWrapperBuilder =
+    Box<dyn Fn(&serde_json::Value, &Context) -> Result<Wrapper, Error> + Send + Sync>;
 
 /// Can wrap a view.
-pub type Wrapper = Box<dyn FnOnce(BoxedView) -> BoxedView>;
+pub type Wrapper = Box<dyn FnOnce(BoxedView) -> BoxedView + Send + Sync>;
 
 /// Can build a callback
 pub type BareVarBuilder = fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error>;
@@ -63,7 +64,8 @@ pub type BareVarBuilder = fn(&serde_json::Value, &Context) -> Result<Box<dyn Any
 ///
 /// If you store a variable of this type, when loading type `T`, it will run
 /// this builder and try to downcast the result to `T`.
-pub type BoxedVarBuilder = Rc<dyn Fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error>>;
+pub type BoxedVarBuilder =
+    Arc<dyn Fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error> + Send + Sync>;
 
 /// Everything needed to prepare a view from a config.
 /// - Current recipes
@@ -73,14 +75,14 @@ pub struct Context {
     // TODO: Merge variables and recipes?
     // TODO: Use RefCell? Or even Arc<Mutex>?
     // So we can still modify the context when sub-context are alive.
-    variables: Rc<Variables>,
-    recipes: Rc<Recipes>,
+    variables: Arc<Variables>,
+    recipes: Arc<Recipes>,
 }
 
 struct Recipes {
     recipes: HashMap<String, BoxedBuilder>,
     wrappers: HashMap<String, BoxedWrapperBuilder>,
-    parent: Option<Rc<Recipes>>,
+    parent: Option<Arc<Recipes>>,
 }
 
 impl Recipes {
@@ -114,7 +116,7 @@ impl Recipes {
 
 enum VarEntry {
     // Proxy variable used for sub-templates
-    Proxy(Rc<String>),
+    Proxy(Arc<String>),
 
     // Regular variable set by user or recipe
     //
@@ -130,7 +132,7 @@ enum VarEntry {
 
 impl VarEntry {
     fn proxy(var_name: impl Into<String>) -> Self {
-        VarEntry::Proxy(Rc::new(var_name.into()))
+        VarEntry::Proxy(Arc::new(var_name.into()))
     }
 
     fn maker(maker: AnyMaker) -> Self {
@@ -150,7 +152,7 @@ struct Variables {
     variables: HashMap<String, VarEntry>,
 
     // If something is not found in this scope, try the next one!
-    parent: Option<Rc<Variables>>,
+    parent: Option<Arc<Variables>>,
 }
 
 /// Error during config parsing.
@@ -321,7 +323,7 @@ macro_rules! impl_fn_from_config {
     ) => {
         // The leaf node is the actual implementation
         #[allow(coherence_leak_check)]
-        impl<Res, $($letters $(: ?$unbound)?),* > $trait for Rc<dyn Fn($($args),*) -> Res> {}
+        impl<Res, $($letters $(: ?$unbound)?),* > $trait for Arc<dyn Fn($($args),*) -> Res + Send + Sync> {}
     };
     (
         $trait:ident
@@ -491,12 +493,12 @@ where
     }
 }
 
-impl<T> FromConfig for Rc<T>
+impl<T> FromConfig for Arc<T>
 where
     T: 'static + FromConfig,
 {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
-        Ok(Rc::new(T::from_config(config, context)?))
+        Ok(Arc::new(T::from_config(config, context)?))
     }
 
     fn from_any(any: Box<dyn Any>) -> Option<Self> {
@@ -827,13 +829,13 @@ impl Context {
         #[cfg(not(feature = "builder"))]
         let variables = Default::default();
 
-        let recipes = Rc::new(Recipes {
+        let recipes = Arc::new(Recipes {
             recipes,
             wrappers,
             parent: None,
         });
 
-        let variables = Rc::new(Variables {
+        let variables = Arc::new(Variables {
             variables,
             parent: None,
         });
@@ -956,7 +958,7 @@ impl Context {
         // This will fail if there are any sub_context alive.
         // On the other hand, would anyone store variables after the fact?
         let name = name.into();
-        if let Some(variables) = Rc::get_mut(&mut self.variables) {
+        if let Some(variables) = Arc::get_mut(&mut self.variables) {
             variables.store(name, entry);
         } else {
             log::error!("Context was not available to store variable `{name}`.");
@@ -967,7 +969,7 @@ impl Context {
     pub fn store_with<T: 'static>(
         &mut self,
         name: impl Into<String>,
-        maker: impl 'static + Fn(&Config, &Context) -> Result<T, Error>,
+        maker: impl 'static + Fn(&Config, &Context) -> Result<T, Error> + Send + Sync,
     ) {
         let name = name.into();
         // eprintln!(
@@ -992,7 +994,7 @@ impl Context {
     pub fn store<S, T: 'static>(&mut self, name: S, value: T)
     where
         S: Into<String>,
-        T: Clone,
+        T: Clone + Send + Sync,
     {
         self.store_with(name, move |_, _| Ok(value.clone()));
     }
@@ -1010,9 +1012,9 @@ impl Context {
     /// Register a new recipe _for this context only_.
     pub fn register_recipe<F>(&mut self, name: impl Into<String>, recipe: F)
     where
-        F: Fn(&Config, &Context) -> Result<BoxedView, Error> + 'static,
+        F: Fn(&Config, &Context) -> Result<BoxedView, Error> + 'static + Send + Sync,
     {
-        if let Some(recipes) = Rc::get_mut(&mut self.recipes) {
+        if let Some(recipes) = Arc::get_mut(&mut self.recipes) {
             recipes.recipes.insert(name.into(), Box::new(recipe));
         }
     }
@@ -1020,9 +1022,9 @@ impl Context {
     /// Register a new wrapper recipe _for this context only_.
     pub fn register_wrapper_recipe<F>(&mut self, name: impl Into<String>, recipe: F)
     where
-        F: Fn(&Config, &Context) -> Result<Wrapper, Error> + 'static,
+        F: Fn(&Config, &Context) -> Result<Wrapper, Error> + 'static + Send + Sync,
     {
-        if let Some(recipes) = Rc::get_mut(&mut self.recipes) {
+        if let Some(recipes) = Arc::get_mut(&mut self.recipes) {
             recipes.wrappers.insert(name.into(), Box::new(recipe));
         }
     }
@@ -1180,15 +1182,15 @@ impl Context {
     where
         F: FnOnce(&mut Context),
     {
-        let variables = Rc::new(Variables {
+        let variables = Arc::new(Variables {
             variables: HashMap::new(),
-            parent: Some(Rc::clone(&self.variables)),
+            parent: Some(Arc::clone(&self.variables)),
         });
 
-        let recipes = Rc::new(Recipes {
+        let recipes = Arc::new(Recipes {
             recipes: HashMap::new(),
             wrappers: HashMap::new(),
-            parent: Some(Rc::clone(&self.recipes)),
+            parent: Some(Arc::clone(&self.recipes)),
         });
 
         let mut context = Context { recipes, variables };
@@ -1256,7 +1258,7 @@ impl Variables {
     {
         let new_name = match self.variables.get(name) {
             None => None,
-            Some(VarEntry::Proxy(proxy)) => Some(Rc::clone(proxy)),
+            Some(VarEntry::Proxy(proxy)) => Some(Arc::clone(proxy)),
             Some(VarEntry::Maker(maker)) => return (on_maker)(maker),
             Some(VarEntry::Config(config)) => return (on_config)(config),
         };
@@ -1332,12 +1334,9 @@ inventory::collect!(WrapperRecipe);
 #[macro_export]
 /// Define a recipe to build this view from a config file.
 macro_rules! raw_recipe {
-    ($name:ident from $config_builder:expr) => {
-    };
-    (with $name:ident, $builder:expr) => {
-    };
-    ($name:ident, $builder:expr) => {
-    };
+    ($name:ident from $config_builder:expr) => {};
+    (with $name:ident, $builder:expr) => {};
+    ($name:ident, $builder:expr) => {};
 }
 #[cfg(feature = "builder")]
 #[macro_export]
@@ -1387,8 +1386,7 @@ macro_rules! raw_recipe {
 #[macro_export]
 /// Define a macro for a variable builder.
 macro_rules! var_recipe {
-    ($name: expr, $builder:expr) => {
-    };
+    ($name: expr, $builder:expr) => {};
 }
 
 #[cfg(feature = "builder")]

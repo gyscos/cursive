@@ -7,7 +7,7 @@ use crate::{
     Cursive, Printer, Vec2, With,
 };
 use log::debug;
-use std::rc::Rc;
+use std::sync::Arc;
 use unicode_width::UnicodeWidthStr;
 
 /// Represents a child from a [`ListView`].
@@ -34,7 +34,7 @@ impl ListChild {
     }
 }
 
-type ListCallback = dyn Fn(&mut Cursive, &String);
+type ListCallback = dyn Fn(&mut Cursive, &String) + Send + Sync;
 
 /// Displays a list of elements.
 pub struct ListView {
@@ -45,7 +45,7 @@ pub struct ListView {
     // Which child is focused? Should index into the `children` list.
     focus: usize,
     // This callback is called when the selection is changed.
-    on_select: Option<Rc<ListCallback>>,
+    on_select: Option<Arc<ListCallback>>,
 }
 
 // Implement `Default` around `ListView::new`
@@ -151,9 +151,9 @@ impl ListView {
     #[crate::callback_helpers]
     pub fn set_on_select<F>(&mut self, cb: F)
     where
-        F: Fn(&mut Cursive, &String) + 'static,
+        F: Fn(&mut Cursive, &String) + 'static + Send + Sync,
     {
-        self.on_select = Some(Rc::new(cb));
+        self.on_select = Some(Arc::new(cb));
     }
 
     /// Sets a callback to be used when an item is selected.
@@ -162,7 +162,7 @@ impl ListView {
     #[must_use]
     pub fn on_select<F>(self, cb: F) -> Self
     where
-        F: Fn(&mut Cursive, &String) + 'static,
+        F: Fn(&mut Cursive, &String) + 'static + Send + Sync,
     {
         self.with(|s| s.set_on_select(cb))
     }

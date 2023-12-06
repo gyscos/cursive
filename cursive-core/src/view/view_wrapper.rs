@@ -20,7 +20,7 @@ use crate::{
 /// child view).
 ///
 /// [`wrap_impl!`]: crate::wrap_impl!
-pub trait ViewWrapper: 'static {
+pub trait ViewWrapper: Send + 'static {
     /// Type that this view wraps.
     type V: View + ?Sized;
 

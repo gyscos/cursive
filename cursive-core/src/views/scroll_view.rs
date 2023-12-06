@@ -5,10 +5,10 @@ use crate::{
     Cursive, Printer, Rect, Vec2, With,
 };
 
-use std::rc::Rc;
+use std::sync::Arc;
 
-type InnerScrollCallback<V> = dyn Fn(&mut ScrollView<V>, Rect) -> EventResult;
-type ScrollCallback = dyn Fn(&mut Cursive, Rect);
+type InnerScrollCallback<V> = dyn Fn(&mut ScrollView<V>, Rect) -> EventResult + Send + Sync;
+type ScrollCallback = dyn Fn(&mut Cursive, Rect) + Send + Sync;
 
 /// Wraps a view in a scrollable area.
 pub struct ScrollView<V> {
@@ -17,7 +17,7 @@ pub struct ScrollView<V> {
 
     core: scroll::Core,
 
-    on_scroll: Rc<InnerScrollCallback<V>>,
+    on_scroll: Arc<InnerScrollCallback<V>>,
 }
 
 new_default!(ScrollView<V: Default>);
@@ -30,7 +30,7 @@ impl<V> ScrollView<V> {
         ScrollView {
             inner,
             core: scroll::Core::new(),
-            on_scroll: Rc::new(|_, _| EventResult::Ignored),
+            on_scroll: Arc::new(|_, _| EventResult::Ignored),
         }
     }
 
@@ -223,20 +223,20 @@ impl<V> ScrollView<V> {
     /// `set_on_scroll`.
     pub fn set_on_scroll_inner<F>(&mut self, on_scroll: F)
     where
-        F: FnMut(&mut Self, Rect) -> EventResult + 'static,
+        F: FnMut(&mut Self, Rect) -> EventResult + 'static + Send + Sync,
     {
-        self.on_scroll = Rc::new(immut2!(on_scroll; else EventResult::Ignored));
+        self.on_scroll = Arc::new(immut2!(on_scroll; else EventResult::Ignored));
     }
 
     /// Sets a callback to be run whenever scrolling happens.
     pub fn set_on_scroll<F>(&mut self, on_scroll: F)
     where
-        F: FnMut(&mut Cursive, Rect) + 'static,
+        F: FnMut(&mut Cursive, Rect) + 'static + Send + Sync,
     {
-        let on_scroll: Rc<ScrollCallback> = std::rc::Rc::new(immut2!(on_scroll));
+        let on_scroll: Arc<ScrollCallback> = Arc::new(immut2!(on_scroll));
 
         self.set_on_scroll_inner(move |_, rect| {
-            let on_scroll = std::rc::Rc::clone(&on_scroll);
+            let on_scroll = Arc::clone(&on_scroll);
             EventResult::with_cb(move |siv| on_scroll(siv, rect))
         })
     }
@@ -247,10 +247,10 @@ impl<V> ScrollView<V> {
     fn skip_unchanged<F, T, R, I>(
         mut f: F,
         mut if_skipped: I,
-    ) -> impl for<'a> FnMut(&'a mut T, Rect) -> R
+    ) -> impl for<'a> FnMut(&'a mut T, Rect) -> R + Send + Sync
     where
-        F: for<'a> FnMut(&'a mut T, Rect) -> R + 'static,
-        I: FnMut() -> R + 'static,
+        F: for<'a> FnMut(&'a mut T, Rect) -> R + 'static + Send + Sync,
+        I: FnMut() -> R + 'static + Send + Sync,
     {
         let mut previous = Rect::from_size((0, 0), (0, 0));
         move |t, r| {
@@ -266,7 +266,7 @@ impl<V> ScrollView<V> {
     /// Sets a callback to be run whenever the scroll offset changes.
     pub fn set_on_scroll_change_inner<F>(&mut self, on_scroll: F)
     where
-        F: FnMut(&mut Self, Rect) -> EventResult + 'static,
+        F: FnMut(&mut Self, Rect) -> EventResult + 'static + Send + Sync,
         V: 'static,
     {
         self.set_on_scroll_inner(Self::skip_unchanged(on_scroll, || EventResult::Ignored));
@@ -275,7 +275,7 @@ impl<V> ScrollView<V> {
     /// Sets a callback to be run whenever the scroll offset changes.
     pub fn set_on_scroll_change<F>(&mut self, on_scroll: F)
     where
-        F: FnMut(&mut Cursive, Rect) + 'static,
+        F: FnMut(&mut Cursive, Rect) + 'static + Send + Sync,
         V: 'static,
     {
         self.set_on_scroll(Self::skip_unchanged(on_scroll, || ()));
@@ -293,7 +293,7 @@ impl<V> ScrollView<V> {
     #[must_use]
     pub fn on_scroll_inner<F>(self, on_scroll: F) -> Self
     where
-        F: Fn(&mut Self, Rect) -> EventResult + 'static,
+        F: Fn(&mut Self, Rect) -> EventResult + 'static + Send + Sync,
     {
         self.with(|s| s.set_on_scroll_inner(on_scroll))
     }
@@ -304,7 +304,7 @@ impl<V> ScrollView<V> {
     #[must_use]
     pub fn on_scroll<F>(self, on_scroll: F) -> Self
     where
-        F: FnMut(&mut crate::Cursive, Rect) + 'static,
+        F: FnMut(&mut crate::Cursive, Rect) + 'static + Send + Sync,
     {
         self.with(|s| s.set_on_scroll(on_scroll))
     }
@@ -334,7 +334,7 @@ impl<V> ScrollView<V> {
     /// Run any callback after scrolling.
     fn on_scroll_callback(&mut self) -> EventResult {
         let viewport = self.content_viewport();
-        let on_scroll = Rc::clone(&self.on_scroll);
+        let on_scroll = Arc::clone(&self.on_scroll);
         (on_scroll)(self, viewport)
     }
 

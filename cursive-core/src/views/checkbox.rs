@@ -5,9 +5,9 @@ use crate::{
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
-use std::rc::Rc;
+use std::sync::Arc;
 
-type Callback = dyn Fn(&mut Cursive, bool);
+type Callback = dyn Fn(&mut Cursive, bool) + Send + Sync;
 
 /// Checkable box.
 ///
@@ -24,7 +24,7 @@ pub struct Checkbox {
     checked: bool,
     enabled: bool,
 
-    on_change: Option<Rc<Callback>>,
+    on_change: Option<Arc<Callback>>,
 }
 
 new_default!(Checkbox);
@@ -43,15 +43,21 @@ impl Checkbox {
 
     /// Sets a callback to be used when the state changes.
     #[crate::callback_helpers]
-    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(&mut self, on_change: F) {
-        self.on_change = Some(Rc::new(on_change));
+    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool) + Send + Sync>(
+        &mut self,
+        on_change: F,
+    ) {
+        self.on_change = Some(Arc::new(on_change));
     }
 
     /// Sets a callback to be used when the state changes.
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(self, on_change: F) -> Self {
+    pub fn on_change<F: 'static + Fn(&mut Cursive, bool) + Send + Sync>(
+        self,
+        on_change: F,
+    ) -> Self {
         self.with(|s| s.set_on_change(on_change))
     }
 
@@ -112,7 +118,7 @@ impl Checkbox {
     pub fn set_checked(&mut self, checked: bool) -> EventResult {
         self.checked = checked;
         if let Some(ref on_change) = self.on_change {
-            let on_change = Rc::clone(on_change);
+            let on_change = Arc::clone(on_change);
             EventResult::with_cb(move |s| on_change(s, checked))
         } else {
             EventResult::Consumed(None)

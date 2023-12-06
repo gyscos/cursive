@@ -14,7 +14,7 @@
 //! [menubar]: ../struct.Cursive.html#method.menubar
 
 use crate::{event::Callback, utils::markup::StyledString, Cursive, With};
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Root of a menu tree.
 #[derive(Default, Clone)]
@@ -43,7 +43,7 @@ pub enum Item {
         /// Text displayed for this entry.
         label: StyledString,
         /// Subtree under this item.
-        tree: Rc<Tree>,
+        tree: Arc<Tree>,
         /// Whether this item is enabled.
         ///
         /// Disabled items cannot be selected and are displayed grayed out.
@@ -59,7 +59,7 @@ impl Item {
     pub fn leaf<S, F>(label: S, cb: F) -> Self
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         let label = label.into();
         let cb = Callback::from_fn(cb);
@@ -73,7 +73,7 @@ impl Item {
         S: Into<StyledString>,
     {
         let label = label.into();
-        let tree = Rc::new(tree);
+        let tree = Arc::new(tree);
         let enabled = true;
         Item::Subtree {
             label,
@@ -145,7 +145,7 @@ impl Item {
     /// Returns `None` if `self` is not a `Item::Subtree`.
     pub fn as_subtree(&mut self) -> Option<&mut Tree> {
         match *self {
-            Item::Subtree { ref mut tree, .. } => Some(Rc::make_mut(tree)),
+            Item::Subtree { ref mut tree, .. } => Some(Arc::make_mut(tree)),
             _ => None,
         }
     }
@@ -188,7 +188,7 @@ impl Tree {
     pub fn add_leaf<S, F>(&mut self, label: S, cb: F)
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         let i = self.children.len();
         self.insert_leaf(i, label, cb);
@@ -198,7 +198,7 @@ impl Tree {
     pub fn insert_leaf<S, F>(&mut self, i: usize, label: S, cb: F)
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         let label = label.into();
         self.insert(
@@ -216,7 +216,7 @@ impl Tree {
     pub fn leaf<S, F>(self, label: S, cb: F) -> Self
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         self.with(|menu| menu.add_leaf(label, cb))
     }
@@ -229,7 +229,7 @@ impl Tree {
         let label = label.into();
         let tree = Item::Subtree {
             label,
-            tree: Rc::new(tree),
+            tree: Arc::new(tree),
             enabled: true,
         };
         self.insert(i, tree);

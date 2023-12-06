@@ -39,7 +39,7 @@ pub struct ProgressBar {
     value: Counter,
     color: ColorType,
     // TODO: use a Promise instead?
-    label_maker: Box<dyn Fn(usize, (usize, usize)) -> String>,
+    label_maker: Box<dyn Fn(usize, (usize, usize)) -> String + Send + Sync>,
 }
 
 fn make_percentage(value: usize, (min, max): (usize, usize)) -> String {
@@ -138,7 +138,7 @@ impl ProgressBar {
     /// }
     /// ```
     #[must_use]
-    pub fn with_label<F: Fn(usize, (usize, usize)) -> String + 'static>(
+    pub fn with_label<F: Fn(usize, (usize, usize)) -> String + 'static + Send + Sync>(
         self,
         label_maker: F,
     ) -> Self {
@@ -150,7 +150,10 @@ impl ProgressBar {
     /// The given function will be called with `(value, (min, max))`.
     /// Its output will be used as the label to print inside the progress bar.
     #[crate::callback_helpers]
-    pub fn set_label<F: Fn(usize, (usize, usize)) -> String + 'static>(&mut self, label_maker: F) {
+    pub fn set_label<F: Fn(usize, (usize, usize)) -> String + 'static + Send + Sync>(
+        &mut self,
+        label_maker: F,
+    ) {
         self.label_maker = Box::new(label_maker);
     }
 

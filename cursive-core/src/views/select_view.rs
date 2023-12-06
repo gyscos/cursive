@@ -11,11 +11,11 @@ use crate::{
     Cursive, Printer, Vec2, With,
 };
 use std::borrow::Borrow;
-use std::cell::Cell;
 use std::cmp::{min, Ordering};
-use std::rc::Rc;
+use std::sync::atomic::AtomicUsize;
+use std::sync::{Arc, Mutex};
 
-type SelectCallback<T> = dyn Fn(&mut Cursive, &T);
+type SelectCallback<T> = dyn Fn(&mut Cursive, &T) + Send + Sync;
 
 /// View to select an item among a list.
 ///
@@ -43,14 +43,14 @@ type SelectCallback<T> = dyn Fn(&mut Cursive, &T);
 /// ```
 pub struct SelectView<T = String> {
     // The core of the view: we store a list of items
-    // `Item` is more or less a `(String, Rc<T>)`.
+    // `Item` is more or less a `(String, Arc<T>)`.
     items: Vec<Item<T>>,
 
     // When disabled, we cannot change selection.
     enabled: bool,
 
     // Callbacks may need to manipulate focus, so give it some mutability.
-    focus: Rc<Cell<usize>>,
+    focus: Arc<AtomicUsize>,
 
     // If true, highlight the selection even when inactive (not focused).
     // If false, selection will be drawn like regular text if inactive.
@@ -58,11 +58,11 @@ pub struct SelectView<T = String> {
 
     // This is a custom callback to include a &T.
     // It will be called whenever "Enter" is pressed or when an item is clicked.
-    on_submit: Option<Rc<SelectCallback<T>>>,
+    on_submit: Option<Arc<SelectCallback<T>>>,
 
     // This callback is called when the selection is changed.
     // TODO: add the previous selection? Indices?
-    on_select: Option<Rc<SelectCallback<T>>>,
+    on_select: Option<Arc<SelectCallback<T>>>,
 
     // If `true`, when a character is pressed, jump to the next item starting
     // with this character.
@@ -75,20 +75,20 @@ pub struct SelectView<T = String> {
 
     // We need the last offset to place the popup window
     // We "cache" it during the draw, so we need interior mutability.
-    last_offset: Cell<Vec2>,
+    last_offset: Mutex<Vec2>,
     last_size: Vec2,
 
     // Cache of required_size. Set to None when it needs to be recomputed.
     last_required_size: Option<Vec2>,
 }
 
-impl<T: 'static> Default for SelectView<T> {
+impl<T: 'static + Send + Sync> Default for SelectView<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: 'static> SelectView<T> {
+impl<T: 'static + Send + Sync> SelectView<T> {
     impl_enabled!(self.enabled);
 
     /// Creates a new empty SelectView.
@@ -96,14 +96,14 @@ impl<T: 'static> SelectView<T> {
         SelectView {
             items: Vec::new(),
             enabled: true,
-            focus: Rc::new(Cell::new(0)),
+            focus: Arc::new(AtomicUsize::new(0)),
             inactive_highlight: true,
             on_select: None,
             on_submit: None,
             align: Align::top_left(),
             popup: false,
             autojump: false,
-            last_offset: Cell::new(Vec2::zero()),
+            last_offset: Mutex::new(Vec2::zero()),
             last_size: Vec2::zero(),
             last_required_size: None,
         }
@@ -171,9 +171,9 @@ impl<T: 'static> SelectView<T> {
     #[crate::callback_helpers]
     pub fn set_on_select<F>(&mut self, cb: F)
     where
-        F: Fn(&mut Cursive, &T) + 'static,
+        F: Fn(&mut Cursive, &T) + 'static + Send + Sync,
     {
-        self.on_select = Some(Rc::new(cb));
+        self.on_select = Some(Arc::new(cb));
     }
 
     /// Sets a callback to be used when an item is selected.
@@ -208,7 +208,7 @@ impl<T: 'static> SelectView<T> {
     #[must_use]
     pub fn on_select<F>(self, cb: F) -> Self
     where
-        F: Fn(&mut Cursive, &T) + 'static,
+        F: Fn(&mut Cursive, &T) + 'static + Send + Sync,
     {
         self.with(|s| s.set_on_select(cb))
     }
@@ -222,10 +222,10 @@ impl<T: 'static> SelectView<T> {
     /// Here, `V` can be `T` itself, or a type that can be borrowed from `T`.
     pub fn set_on_submit<F, V: ?Sized>(&mut self, cb: F)
     where
-        F: 'static + Fn(&mut Cursive, &V),
+        F: 'static + Fn(&mut Cursive, &V) + Send + Sync,
         T: Borrow<V>,
     {
-        self.on_submit = Some(Rc::new(move |s, t| {
+        self.on_submit = Some(Arc::new(move |s, t| {
             cb(s, t.borrow());
         }));
     }
@@ -260,7 +260,7 @@ impl<T: 'static> SelectView<T> {
     #[must_use]
     pub fn on_submit<F, V: ?Sized>(self, cb: F) -> Self
     where
-        F: Fn(&mut Cursive, &V) + 'static,
+        F: Fn(&mut Cursive, &V) + 'static + Send + Sync,
         T: Borrow<V>,
     {
         self.with(|s| s.set_on_submit(cb))
@@ -305,19 +305,19 @@ impl<T: 'static> SelectView<T> {
     /// Returns the value of the currently selected item.
     ///
     /// Returns `None` if the list is empty.
-    pub fn selection(&self) -> Option<Rc<T>> {
+    pub fn selection(&self) -> Option<Arc<T>> {
         let focus = self.focus();
         if self.len() <= focus {
             None
         } else {
-            Some(Rc::clone(&self.items[focus].value))
+            Some(Arc::clone(&self.items[focus].value))
         }
     }
 
     /// Removes all items from this view.
     pub fn clear(&mut self) {
         self.items.clear();
-        self.focus.set(0);
+        self.focus.store(0, std::sync::atomic::Ordering::Relaxed);
         self.last_required_size = None;
     }
 
@@ -357,7 +357,7 @@ impl<T: 'static> SelectView<T> {
         } else {
             self.last_required_size = None;
             let item = &mut self.items[i];
-            if let Some(t) = Rc::get_mut(&mut item.value) {
+            if let Some(t) = Arc::get_mut(&mut item.value) {
                 let label = &mut item.label;
                 Some((label, t))
             } else {
@@ -371,7 +371,7 @@ impl<T: 'static> SelectView<T> {
     /// Returns an iterator with each item and their labels.
     ///
     /// In some cases some items will need to be cloned (for example if a
-    /// `Rc<T>` is still alive after calling `SelectView::selection()`).
+    /// `Arc<T>` is still alive after calling `SelectView::selection()`).
     ///
     /// If `T` does not implement `Clone`, check `SelectView::try_iter_mut()`.
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (&mut StyledString, &mut T)>
@@ -381,20 +381,20 @@ impl<T: 'static> SelectView<T> {
         self.last_required_size = None;
         self.items
             .iter_mut()
-            .map(|item| (&mut item.label, Rc::make_mut(&mut item.value)))
+            .map(|item| (&mut item.label, Arc::make_mut(&mut item.value)))
     }
 
     /// Try to iterate mutably on the items in this view.
     ///
     /// Returns an iterator with each item and their labels.
     ///
-    /// Some items may not be returned mutably, for example if a `Rc<T>` is
+    /// Some items may not be returned mutably, for example if a `Arc<T>` is
     /// still alive after calling `SelectView::selection()`.
     pub fn try_iter_mut(&mut self) -> impl Iterator<Item = (&mut StyledString, Option<&mut T>)> {
         self.last_required_size = None;
         self.items
             .iter_mut()
-            .map(|item| (&mut item.label, Rc::get_mut(&mut item.value)))
+            .map(|item| (&mut item.label, Arc::get_mut(&mut item.value)))
     }
 
     /// Iterate on the items in this view.
@@ -417,7 +417,7 @@ impl<T: 'static> SelectView<T> {
         let focus = self.focus();
         (focus >= id && focus > 0)
             .then(|| {
-                self.focus.set(focus - 1);
+                self.set_focus(focus - 1);
                 self.make_select_cb()
             })
             .flatten()
@@ -434,7 +434,7 @@ impl<T: 'static> SelectView<T> {
         let focus = self.focus();
         // Do not increase focus if we were empty with focus=0.
         if focus >= index && !self.items.is_empty() {
-            self.focus.set(focus + 1);
+            self.set_focus(focus + 1);
         }
         self.last_required_size = None;
     }
@@ -551,7 +551,12 @@ impl<T: 'static> SelectView<T> {
     }
 
     fn focus(&self) -> usize {
-        self.focus.get()
+        self.focus.load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    fn set_focus(&mut self, focus: usize) {
+        self.focus
+            .store(focus, std::sync::atomic::Ordering::Relaxed);
     }
 
     /// Sort the current items lexicographically by their label.
@@ -611,7 +616,7 @@ impl<T: 'static> SelectView<T> {
         } else {
             min(i, self.len() - 1)
         };
-        self.focus.set(i);
+        self.set_focus(i);
 
         self.make_select_cb().unwrap_or_else(Callback::dummy)
     }
@@ -659,17 +664,17 @@ impl<T: 'static> SelectView<T> {
 
     fn focus_up(&mut self, n: usize) {
         let focus = self.focus().saturating_sub(n);
-        self.focus.set(focus);
+        self.set_focus(focus);
     }
 
     fn focus_down(&mut self, n: usize) {
         let focus = min(self.focus() + n, self.items.len().saturating_sub(1));
-        self.focus.set(focus);
+        self.set_focus(focus);
     }
 
     fn submit(&mut self) -> EventResult {
         let cb = self.on_submit.clone().unwrap();
-        // We return a Callback Rc<|s| cb(s, &*v)>
+        // We return a Callback Arc<|s| cb(s, &*v)>
         EventResult::Consumed(
             self.selection()
                 .map(|v| Callback::from_fn(move |s| cb(s, &v))),
@@ -699,7 +704,7 @@ impl<T: 'static> SelectView<T> {
             }
         };
 
-        self.focus.set(i);
+        self.set_focus(i);
         // Apply modulo in case we have a hit from the chained iterator
         let cb = self.set_selection(i);
         EventResult::Consumed(Some(cb))
@@ -711,8 +716,8 @@ impl<T: 'static> SelectView<T> {
             Event::Key(Key::Down) if self.focus() + 1 < self.items.len() => self.focus_down(1),
             Event::Key(Key::PageUp) => self.focus_up(10),
             Event::Key(Key::PageDown) => self.focus_down(10),
-            Event::Key(Key::Home) => self.focus.set(0),
-            Event::Key(Key::End) => self.focus.set(self.items.len().saturating_sub(1)),
+            Event::Key(Key::Home) => self.set_focus(0),
+            Event::Key(Key::End) => self.set_focus(self.items.len().saturating_sub(1)),
             Event::Mouse {
                 event: MouseEvent::Press(_),
                 position,
@@ -722,7 +727,7 @@ impl<T: 'static> SelectView<T> {
                 .map(|position| position < self.last_size && position.y < self.len())
                 .unwrap_or(false) =>
             {
-                self.focus.set(position.y - offset.y)
+                self.set_focus(position.y - offset.y)
             }
             Event::Mouse {
                 event: MouseEvent::Release(MouseButton::Left),
@@ -759,12 +764,12 @@ impl<T: 'static> SelectView<T> {
         // TODO: cache it?
         let mut tree = menu::Tree::new();
         for (i, item) in self.items.iter().enumerate() {
-            let focus = Rc::clone(&self.focus);
+            let focus = Arc::clone(&self.focus);
             let on_submit = self.on_submit.as_ref().cloned();
-            let value = Rc::clone(&item.value);
+            let value = Arc::clone(&item.value);
             tree.add_leaf(item.label.source(), move |s| {
                 // TODO: What if an item was removed in the meantime?
-                focus.set(i);
+                focus.store(i, std::sync::atomic::Ordering::Relaxed);
                 if let Some(ref on_submit) = on_submit {
                     on_submit(s, &value);
                 }
@@ -772,7 +777,7 @@ impl<T: 'static> SelectView<T> {
         }
         // Let's keep the tree around,
         // the callback will want to use it.
-        let tree = Rc::new(tree);
+        let tree = Arc::new(tree);
 
         let focus = self.focus();
         // This is the offset for the label text.
@@ -785,15 +790,15 @@ impl<T: 'static> SelectView<T> {
         // * shifted to the right of the text offset
         // * shifted to the top of the focus (so the line matches)
         // * shifted top-left of the border+padding of the popup
-        let offset = self.last_offset.get();
+        let offset = *self.last_offset.lock().unwrap();
         let offset = offset + (text_offset, 0);
         let offset = offset.saturating_sub((0, focus));
         let offset = offset.saturating_sub((2, 1));
 
         // And now, we can return the callback that will create the popup.
         EventResult::with_cb(move |s| {
-            // The callback will want to work with a fresh Rc
-            let tree = Rc::clone(&tree);
+            // The callback will want to work with a fresh Arc
+            let tree = Arc::clone(&tree);
             // We'll relativise the absolute position,
             // So that we are locked to the parent view.
             // A nice effect is that window resizes will keep both
@@ -914,9 +919,9 @@ where
     }
 }
 
-impl<T: 'static> View for SelectView<T> {
+impl<T: 'static + Send + Sync> View for SelectView<T> {
     fn draw(&self, printer: &Printer) {
-        self.last_offset.set(printer.offset);
+        *self.last_offset.lock().unwrap() = printer.offset;
 
         let focus = self.focus();
 
@@ -1029,10 +1034,10 @@ impl<T: 'static> View for SelectView<T> {
                 if !self.popup {
                     match source {
                         direction::Direction::Abs(direction::Absolute::Up) => {
-                            self.focus.set(0);
+                            self.set_focus(0);
                         }
                         direction::Direction::Abs(direction::Absolute::Down) => {
-                            self.focus.set(self.items.len().saturating_sub(1));
+                            self.set_focus(self.items.len().saturating_sub(1));
                         }
                         _ => (),
                     }
@@ -1053,15 +1058,15 @@ impl<T: 'static> View for SelectView<T> {
     }
 }
 
-// We wrap each value in a `Rc` and add a label
+// We wrap each value in a `Arc` and add a label
 struct Item<T> {
     label: StyledString,
-    value: Rc<T>,
+    value: Arc<T>,
 }
 
 impl<T> Item<T> {
     fn new(label: StyledString, value: T) -> Self {
-        let value = Rc::new(value);
+        let value = Arc::new(value);
         Item { label, value }
     }
 }
@@ -1093,13 +1098,13 @@ mod tests {
 
         // ... should observe the items in sorted order.
         // And focus is NOT changed by the sorting, so the first item is "X".
-        assert_eq!(view.selection(), Some(Rc::new(String::from("X"))));
+        assert_eq!(view.selection(), Some(Arc::new(String::from("X"))));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(String::from("Y"))));
+        assert_eq!(view.selection(), Some(Arc::new(String::from("Y"))));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(String::from("Z"))));
+        assert_eq!(view.selection(), Some(Arc::new(String::from("Z"))));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(String::from("Z"))));
+        assert_eq!(view.selection(), Some(Arc::new(String::from("Z"))));
     }
 
     #[test]
@@ -1115,13 +1120,13 @@ mod tests {
 
         // ... should observe the items in sorted order.
         // And focus is NOT changed by the sorting, so the first item is "X".
-        assert_eq!(view.selection(), Some(Rc::new(1)));
+        assert_eq!(view.selection(), Some(Arc::new(1)));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(2)));
+        assert_eq!(view.selection(), Some(Arc::new(2)));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(3)));
+        assert_eq!(view.selection(), Some(Arc::new(3)));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(3)));
+        assert_eq!(view.selection(), Some(Arc::new(3)));
     }
 
     #[test]
@@ -1142,13 +1147,13 @@ mod tests {
 
         // ... should observe the items in sorted order.
         // And focus is NOT changed by the sorting, so the first item is "X".
-        assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 1 })));
+        assert_eq!(view.selection(), Some(Arc::new(MyStruct { key: 1 })));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 2 })));
+        assert_eq!(view.selection(), Some(Arc::new(MyStruct { key: 2 })));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 3 })));
+        assert_eq!(view.selection(), Some(Arc::new(MyStruct { key: 3 })));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(MyStruct { key: 3 })));
+        assert_eq!(view.selection(), Some(Arc::new(MyStruct { key: 3 })));
     }
 
     #[test]
@@ -1164,12 +1169,12 @@ mod tests {
 
         // ... should observe the items in sorted order.
         // And focus is NOT changed by the sorting, so the first item is "X".
-        assert_eq!(view.selection(), Some(Rc::new(1)));
+        assert_eq!(view.selection(), Some(Arc::new(1)));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(2)));
+        assert_eq!(view.selection(), Some(Arc::new(2)));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(3)));
+        assert_eq!(view.selection(), Some(Arc::new(3)));
         view.on_event(Event::Key(Key::Down));
-        assert_eq!(view.selection(), Some(Rc::new(3)));
+        assert_eq!(view.selection(), Some(Arc::new(3)));
     }
 }

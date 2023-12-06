@@ -627,7 +627,7 @@ impl Cursive {
     /// ```
     pub fn add_global_callback<F, E: Into<Event>>(&mut self, event: E, cb: F)
     where
-        F: FnMut(&mut Cursive) + 'static,
+        F: FnMut(&mut Cursive) + 'static + Send + Sync,
     {
         self.set_on_post_event(event.into(), cb);
     }
@@ -637,7 +637,7 @@ impl Cursive {
     /// This is the same as `add_global_callback`, but can register any `EventTrigger`.
     pub fn set_on_post_event<F, E>(&mut self, trigger: E, cb: F)
     where
-        F: FnMut(&mut Cursive) + 'static,
+        F: FnMut(&mut Cursive) + 'static + Send + Sync,
         E: Into<crate::event::EventTrigger>,
     {
         self.root.set_on_event(trigger, crate::immut1!(cb));
@@ -652,7 +652,7 @@ impl Cursive {
     /// these events.
     pub fn set_on_pre_event<F, E>(&mut self, trigger: E, cb: F)
     where
-        F: FnMut(&mut Cursive) + 'static,
+        F: FnMut(&mut Cursive) + 'static + Send + Sync,
         E: Into<crate::event::EventTrigger>,
     {
         self.root.set_on_pre_event(trigger, crate::immut1!(cb));
@@ -666,7 +666,7 @@ impl Cursive {
     pub fn set_on_pre_event_inner<E, F>(&mut self, trigger: E, cb: F)
     where
         E: Into<crate::event::EventTrigger>,
-        F: Fn(&Event) -> Option<EventResult> + 'static,
+        F: Fn(&Event) -> Option<EventResult> + 'static + Send + Sync,
     {
         self.root
             .set_on_pre_event_inner(trigger, move |_, event| cb(event));
@@ -680,7 +680,7 @@ impl Cursive {
     pub fn set_on_event_inner<E, F>(&mut self, trigger: E, cb: F)
     where
         E: Into<crate::event::EventTrigger>,
-        F: Fn(&Event) -> Option<EventResult> + 'static,
+        F: Fn(&Event) -> Option<EventResult> + 'static + Send + Sync,
     {
         self.root
             .set_on_event_inner(trigger, move |_, event| cb(event));
@@ -693,7 +693,7 @@ impl Cursive {
     /// See also [`Cursive::add_global_callback`].
     pub fn set_global_callback<F, E: Into<Event>>(&mut self, event: E, cb: F)
     where
-        F: FnMut(&mut Cursive) + 'static,
+        F: FnMut(&mut Cursive) + 'static + Send + Sync,
     {
         let event = event.into();
         self.clear_global_callbacks(event.clone());
@@ -951,6 +951,6 @@ impl Cursive {
 
 // Callback recipe
 crate::var_recipe!("Cursive.quit", |_config, _context| {
-    let cb: std::rc::Rc<dyn Fn(&mut Cursive)> = std::rc::Rc::new(|s| s.quit());
+    let cb: std::sync::Arc<dyn Fn(&mut Cursive) + Send + Sync> = std::sync::Arc::new(|s| s.quit());
     Ok(cb)
 });

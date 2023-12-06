@@ -9,31 +9,29 @@ use crate::{
 };
 use std::any::Any;
 use std::any::TypeId;
-use std::cell::RefCell;
 use std::collections::BTreeMap;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
-type Callback<T> = dyn Fn(&mut Cursive, &T);
+type Callback<T> = dyn Fn(&mut Cursive, &T) + Send + Sync;
 
 // Maps keys (strings) to RadioGroup<T> (wrapped in a Box<Any>).
 // So with a key: &str and a concrete T, we can get the matching `RadioGroup<T>`, or create one.
 //
 // TODO: should we use thread local instead of a static mutex?
-thread_local! {
-    static GROUPS: RefCell<BTreeMap<(String, TypeId), Box<dyn Any>>> =
-        RefCell::new(BTreeMap::new());
-}
+
+static GROUPS: Mutex<BTreeMap<(String, TypeId), Box<dyn Any + Send + Sync>>> =
+    Mutex::new(BTreeMap::new());
 
 struct SharedState<T> {
     selection: usize,
-    values: Vec<Rc<T>>,
+    values: Vec<Arc<T>>,
 
-    on_change: Option<Rc<Callback<T>>>,
+    on_change: Option<Arc<Callback<T>>>,
 }
 
 impl<T> SharedState<T> {
-    pub fn selection(&self) -> Rc<T> {
-        Rc::clone(&self.values[self.selection])
+    pub fn selection(&self) -> Arc<T> {
+        Arc::clone(&self.values[self.selection])
     }
 }
 
@@ -44,7 +42,7 @@ impl<T> SharedState<T> {
 /// A `RadioGroup` can be cloned; it will keep pointing to the same group.
 pub struct RadioGroup<T> {
     // Given to every child button
-    state: Rc<RefCell<SharedState<T>>>,
+    state: Arc<Mutex<SharedState<T>>>,
 }
 
 // We have to manually implement Clone.
@@ -52,22 +50,22 @@ pub struct RadioGroup<T> {
 impl<T> Clone for RadioGroup<T> {
     fn clone(&self) -> Self {
         Self {
-            state: Rc::clone(&self.state),
+            state: Arc::clone(&self.state),
         }
     }
 }
 
-impl<T: 'static> Default for RadioGroup<T> {
+impl<T: 'static + Send + Sync> Default for RadioGroup<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: 'static> RadioGroup<T> {
+impl<T: 'static + Send + Sync> RadioGroup<T> {
     /// Creates an empty group for radio buttons.
     pub fn new() -> Self {
         RadioGroup {
-            state: Rc::new(RefCell::new(SharedState {
+            state: Arc::new(Mutex::new(SharedState {
                 selection: 0,
                 values: Vec::new(),
                 on_change: None,
@@ -89,34 +87,33 @@ impl<T: 'static> RadioGroup<T> {
     {
         let type_id = TypeId::of::<T>();
 
-        GROUPS.with(|groups| {
-            let mut groups = groups.borrow_mut();
+        let mut groups = GROUPS.lock().unwrap();
 
-            let group = groups
-                .entry((key.into(), type_id))
-                .or_insert(Box::new(RadioGroup::<T>::new()));
+        let group = groups
+            .entry((key.into(), type_id))
+            .or_insert(Box::new(RadioGroup::<T>::new()));
 
-            // Because we key by TypeId we _know_ it'll be the correct type.
-            let group = group.downcast_mut().unwrap();
+        // Because we key by TypeId we _know_ it'll be the correct type.
+        let group = group.downcast_mut().unwrap();
 
-            f(group)
-        })
+        f(group)
     }
 
     /// Adds a new button to the group.
     ///
     /// The button will display `label` next to it, and will embed `value`.
     pub fn button<S: Into<StyledString>>(&mut self, value: T, label: S) -> RadioButton<T> {
-        let count = self.state.borrow().values.len();
-        self.state.borrow_mut().values.push(Rc::new(value));
-        RadioButton::new(Rc::clone(&self.state), count, label.into())
+        let mut state = self.state.lock().unwrap();
+        let count = state.values.len();
+        state.values.push(Arc::new(value));
+        RadioButton::new(Arc::clone(&self.state), count, label.into())
     }
 
     /// Returns the id of the selected button.
     ///
     /// Buttons are indexed in the order they are created, starting from 0.
     pub fn selected_id(&self) -> usize {
-        self.state.borrow().selection
+        self.state.lock().unwrap().selection
     }
 
     /// Returns the value associated with the selected button.
@@ -124,20 +121,20 @@ impl<T: 'static> RadioGroup<T> {
     /// # Panics
     ///
     /// If the group is empty (no button).
-    pub fn selection(&self) -> Rc<T> {
-        self.state.borrow().selection()
+    pub fn selection(&self) -> Arc<T> {
+        self.state.lock().unwrap().selection()
     }
 
     /// Sets a callback to be used when the selection changes.
-    pub fn set_on_change<F: 'static + Fn(&mut Cursive, &T)>(&mut self, on_change: F) {
-        self.state.borrow_mut().on_change = Some(Rc::new(on_change));
+    pub fn set_on_change<F: 'static + Fn(&mut Cursive, &T) + Send + Sync>(&mut self, on_change: F) {
+        self.state.lock().unwrap().on_change = Some(Arc::new(on_change));
     }
 
     /// Sets a callback to be used when the selection changes.
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn on_change<F: 'static + Fn(&mut Cursive, &T)>(self, on_change: F) -> Self {
+    pub fn on_change<F: 'static + Fn(&mut Cursive, &T) + Send + Sync>(self, on_change: F) -> Self {
         // We need .with for the thread local, so we can't import the With trait...
         crate::With::with(self, |s| s.set_on_change(on_change))
     }
@@ -170,16 +167,16 @@ impl RadioButton<String> {
 /// `RadioButton`s are not created directly, but through
 /// [`RadioGroup::button`].
 pub struct RadioButton<T> {
-    state: Rc<RefCell<SharedState<T>>>,
+    state: Arc<Mutex<SharedState<T>>>,
     id: usize,
     enabled: bool,
     label: StyledString,
 }
 
-impl<T: 'static> RadioButton<T> {
+impl<T: 'static + Send + Sync> RadioButton<T> {
     impl_enabled!(self.enabled);
 
-    fn new(state: Rc<RefCell<SharedState<T>>>, id: usize, label: StyledString) -> Self {
+    fn new(state: Arc<Mutex<SharedState<T>>>, id: usize, label: StyledString) -> Self {
         RadioButton {
             state,
             id,
@@ -197,15 +194,15 @@ impl<T: 'static> RadioButton<T> {
 
     /// Returns `true` if this button is selected.
     pub fn is_selected(&self) -> bool {
-        self.state.borrow().selection == self.id
+        self.state.lock().unwrap().selection == self.id
     }
 
     /// Selects this button, un-selecting any other in the same group.
     pub fn select(&mut self) -> EventResult {
-        let mut state = self.state.borrow_mut();
+        let mut state = self.state.lock().unwrap();
         state.selection = self.id;
         if let Some(ref on_change) = state.on_change {
-            let on_change = Rc::clone(on_change);
+            let on_change = Arc::clone(on_change);
             let value = state.selection();
             EventResult::with_cb(move |s| on_change(s, &value))
         } else {
@@ -262,7 +259,7 @@ impl RadioButton<String> {
     }
 }
 
-impl<T: 'static> View for RadioButton<T> {
+impl<T: 'static + Send + Sync> View for RadioButton<T> {
     fn required_size(&mut self, _: Vec2) -> Vec2 {
         self.req_size()
     }

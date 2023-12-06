@@ -2,10 +2,7 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 
-fn find_arg_name<'a>(
-    signature: &'a syn::Signature,
-    type_name: &'a syn::Ident,
-) -> &'a syn::Ident {
+fn find_arg_name<'a>(signature: &'a syn::Signature, type_name: &'a syn::Ident) -> &'a syn::Ident {
     for arg in &signature.inputs {
         let arg = match arg {
             syn::FnArg::Typed(arg) => arg,
@@ -41,12 +38,8 @@ fn find_dependent_generics(
                 syn::PathArguments::AngleBracketed(arguments) => {
                     for argument in &arguments.args {
                         match argument {
-                            syn::GenericArgument::Type(t) => {
-                                visit_type_idents(t, f)
-                            }
-                            syn::GenericArgument::Binding(b) => {
-                                visit_type_idents(&b.ty, f)
-                            }
+                            syn::GenericArgument::Type(t) => visit_type_idents(t, f),
+                            syn::GenericArgument::Binding(b) => visit_type_idents(&b.ty, f),
                             _ => (),
                         }
                     }
@@ -178,10 +171,7 @@ fn find_fn_generic(
                 None => continue,
             };
 
-            if segment.ident == "Fn"
-                || segment.ident == "FnMut"
-                || segment.ident == "FnOnce"
-            {
+            if segment.ident == "Fn" || segment.ident == "FnMut" || segment.ident == "FnOnce" {
                 let arg_name = find_arg_name(signature, &param.ident);
                 // This is it!
                 return Some((bound, arg_name, Some(&param.ident)));
@@ -207,10 +197,7 @@ fn find_fn_generic(
                 None => continue,
             };
 
-            if segment.ident == "Fn"
-                || segment.ident == "FnMut"
-                || segment.ident == "FnOnce"
-            {
+            if segment.ident == "Fn" || segment.ident == "FnMut" || segment.ident == "FnOnce" {
                 // This is it!
                 let ident = match &predicate.bounded_ty {
                     syn::Type::Path(path) => path
@@ -250,10 +237,7 @@ fn find_fn_generic(
                 None => continue,
             };
 
-            if segment.ident == "Fn"
-                || segment.ident == "FnMut"
-                || segment.ident == "FnOnce"
-            {
+            if segment.ident == "Fn" || segment.ident == "FnMut" || segment.ident == "FnOnce" {
                 // Found it!
                 let arg_name = match arg.pat.as_ref() {
                     syn::Pat::Ident(ident) => &ident.ident,
@@ -268,7 +252,7 @@ fn find_fn_generic(
 }
 
 fn bound_to_dyn(bound: &syn::TraitBound) -> proc_macro2::TokenStream {
-    quote!(::std::rc::Rc<dyn #bound>)
+    quote!(::std::sync::Arc<dyn #bound + Send + Sync>)
 }
 
 fn get_arity(bound: &syn::TraitBound) -> usize {
@@ -295,12 +279,12 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 /// there will be no way to identify its exact type to downcast it in the recipe.
 ///
 /// Instead, both sides (recipe and user) need to agree to use a fixed type, for example a trait
-/// object like `Rc<dyn Fn(&mut Cursive)>` (we use `Rc` rather than `Box` because we want variables
+/// object like `Arc<dyn Fn(&mut Cursive)>` (we use `Arc` rather than `Box` because we want variables
 /// to be cloneable).
 ///
-/// It's a bit cumbersome having to write the exact type including the `Rc` whenever we want to
+/// It's a bit cumbersome having to write the exact type including the `Arc` whenever we want to
 /// store a callback for a recipe. Similarly, it's a bit annoying when writing the recipe to make
-/// sure the correct `Rc<...>` type is fetched and converted to a type directly usable as callback.
+/// sure the correct `Arc<...>` type is fetched and converted to a type directly usable as callback.
 ///
 /// # Solution
 ///
@@ -323,7 +307,7 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 ///
 /// ```rust,ignore
 /// struct Foo {
-///     callback: Box<dyn Fn(&mut Cursive)>,
+///     callback: Box<dyn Fn(&mut Cursive) + Send + Sync>,
 /// }
 ///
 /// impl Foo {
@@ -361,15 +345,14 @@ pub fn callback_helpers(item: TokenStream) -> TokenStream {
 
     // This function should have (at least) one generic type parameter.
     // This type parameter should include a function bound.
-    let (fn_bound, cb_arg_name, type_ident) = find_fn_generic(&input.sig)
-        .expect("Could not find function-like generic parameter.");
+    let (fn_bound, cb_arg_name, type_ident) =
+        find_fn_generic(&input.sig).expect("Could not find function-like generic parameter.");
 
     // Fn-ify the function bound
     let mut fn_bound = fn_bound.clone();
-    fn_bound.path.segments.last_mut().unwrap().ident =
-        syn::Ident::new("Fn", Span::call_site());
+    fn_bound.path.segments.last_mut().unwrap().ident = syn::Ident::new("Fn", Span::call_site());
 
-    // We will deduce a dyn-able type from this bound (a Rc<dyn Fn() -> ...)
+    // We will deduce a dyn-able type from this bound (a Arc<dyn Fn() -> ...)
     let dyn_type = bound_to_dyn(&fn_bound);
 
     // set_on_foo | new
@@ -403,11 +386,11 @@ This is mostly useful when using this view in a template."#
     let maker_fn = quote! {
         #[doc = #maker_doc]
         pub fn #maker_ident
-            <F: #fn_bound + 'static, #maker_generics>
+            <F: #fn_bound + 'static + Send + Sync, #maker_generics>
             ( #cb_arg_name: F ) -> #dyn_type
             where #maker_bounds
         {
-            ::std::rc::Rc::new(#cb_arg_name)
+            ::std::sync::Arc::new(#cb_arg_name)
         }
     };
 
@@ -444,8 +427,7 @@ This is mostly useful when using this view in a template."#
     // a,b,c... for as many arguments as the function takes.
     let n_args = get_arity(&fn_bound);
 
-    let cb_args: Vec<_> =
-        (0..n_args).map(|i| quote::format_ident!("a{i}")).collect();
+    let cb_args: Vec<_> = (0..n_args).map(|i| quote::format_ident!("a{i}")).collect();
     let cb_args = quote! {
         #(#cb_args),*
     };
@@ -509,8 +491,7 @@ This is mostly useful when using this view in a template."#
                         ..
                     }) = predicate
                     {
-                        type_ident
-                            .map_or(false, |ident| !path.path.is_ident(ident))
+                        type_ident.map_or(false, |ident| !path.path.is_ident(ident))
                     } else {
                         false
                     }
@@ -525,7 +506,7 @@ This is mostly useful when using this view in a template."#
 
     // TODO: omit the Function's trait bound when we forward it
     // TODO: decide:
-    // - should we just take a Rc<dyn Fn> instead of impl Fn?
+    // - should we just take a Arc<dyn Fn> instead of impl Fn?
     // - or should we take (config, context) and parse there instead? And maybe do nothing on null?
     let setter_doc = format!(
         r#"Helper method to call [`Self::{fn_ident}`] with a variable from a config.

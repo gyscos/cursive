@@ -9,7 +9,7 @@ use crate::{
     views::{MenuPopup, OnEventView},
     Cursive, Printer, Vec2,
 };
-use std::rc::Rc;
+use std::sync::Arc;
 use unicode_width::UnicodeWidthStr;
 
 /// Current state of the menubar
@@ -112,7 +112,7 @@ impl Menubar {
     pub fn add_leaf<S, F>(&mut self, title: S, cb: F) -> &mut Self
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         let i = self.root.len();
         self.insert_leaf(i, title, cb)
@@ -141,7 +141,7 @@ impl Menubar {
     pub fn insert_leaf<S, F>(&mut self, i: usize, title: S, cb: F) -> &mut Self
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         self.root.insert_leaf(i, title, cb);
         self
@@ -211,9 +211,9 @@ impl Menubar {
                 EventResult::Consumed(Some(cb.clone()))
             }
             menu::Item::Subtree { ref tree, .. } => {
-                // First, we need a new Rc to send the callback,
+                // First, we need a new Arc to send the callback,
                 // since we don't know when it will be called.
-                let menu = Rc::clone(tree);
+                let menu = Arc::clone(tree);
 
                 self.state = State::Submenu;
                 let offset = Vec2::new(
@@ -224,15 +224,15 @@ impl Menubar {
                     usize::from(self.autohide),
                 );
                 // Since the closure will be called multiple times,
-                // we also need a new Rc on every call.
-                EventResult::with_cb(move |s| show_child(s, offset, Rc::clone(&menu)))
+                // we also need a new Arc on every call.
+                EventResult::with_cb(move |s| show_child(s, offset, Arc::clone(&menu)))
             }
             _ => EventResult::Ignored,
         }
     }
 }
 
-fn show_child(s: &mut Cursive, offset: Vec2, menu: Rc<menu::Tree>) {
+fn show_child(s: &mut Cursive, offset: Vec2, menu: Arc<menu::Tree>) {
     // Adds a new layer located near the item title with the menu popup.
     // Also adds two key callbacks on this new view, to handle `left` and
     // `right` key presses.

@@ -8,8 +8,8 @@ use crate::{
 /// Detects focus events for a view.
 pub struct FocusTracker<T> {
     view: T,
-    on_focus_lost: Box<dyn FnMut(&mut T) -> EventResult>,
-    on_focus: Box<dyn FnMut(&mut T) -> EventResult>,
+    on_focus_lost: Box<dyn FnMut(&mut T) -> EventResult + Send>,
+    on_focus: Box<dyn FnMut(&mut T) -> EventResult + Send>,
 }
 
 impl<T: 'static> FocusTracker<T> {
@@ -26,7 +26,7 @@ impl<T: 'static> FocusTracker<T> {
     #[must_use]
     pub fn on_focus<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T) -> EventResult,
+        F: 'static + FnMut(&mut T) -> EventResult + Send,
     {
         self.with(|s| s.set_on_focus(f))
     }
@@ -35,7 +35,7 @@ impl<T: 'static> FocusTracker<T> {
     #[crate::callback_helpers]
     pub fn set_on_focus<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T) -> EventResult,
+        F: 'static + FnMut(&mut T) -> EventResult + Send,
     {
         self.on_focus = Box::new(f);
     }
@@ -44,7 +44,7 @@ impl<T: 'static> FocusTracker<T> {
     #[must_use]
     pub fn on_focus_lost<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T) -> EventResult,
+        F: 'static + FnMut(&mut T) -> EventResult + Send,
     {
         self.with(|s| s.set_on_focus_lost(f))
     }
@@ -53,7 +53,7 @@ impl<T: 'static> FocusTracker<T> {
     #[crate::callback_helpers]
     pub fn set_on_focus_lost<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T) -> EventResult,
+        F: 'static + FnMut(&mut T) -> EventResult + Send,
     {
         self.on_focus_lost = Box::new(f);
     }

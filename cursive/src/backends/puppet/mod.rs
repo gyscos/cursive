@@ -9,7 +9,7 @@ use crate::event::Event;
 use crate::theme;
 use crate::Vec2;
 use std::cell::{Cell, RefCell};
-use std::rc::Rc;
+use std::sync::Arc;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
@@ -26,7 +26,7 @@ pub struct Backend {
     prev_frame: RefCell<Option<ObservedScreen>>,
     current_frame: RefCell<ObservedScreen>,
     size: Cell<Vec2>,
-    current_style: RefCell<Rc<ObservedStyle>>,
+    current_style: RefCell<Arc<ObservedStyle>>,
     screen_channel: (Sender<ObservedScreen>, Receiver<ObservedScreen>),
 }
 
@@ -45,7 +45,7 @@ impl Backend {
             prev_frame: RefCell::new(None),
             current_frame: RefCell::new(ObservedScreen::new(size)),
             size: Cell::new(size),
-            current_style: RefCell::new(Rc::new(DEFAULT_OBSERVED_STYLE.clone())),
+            current_style: RefCell::new(Arc::new(DEFAULT_OBSERVED_STYLE.clone())),
             screen_channel: crossbeam_channel::unbounded(),
         };
 
@@ -58,7 +58,7 @@ impl Backend {
     }
 
     /// Returns current ObservedStyle
-    pub fn current_style(&self) -> Rc<ObservedStyle> {
+    pub fn current_style(&self) -> Arc<ObservedStyle> {
         self.current_style.borrow().clone()
     }
 
@@ -124,7 +124,7 @@ impl backend::Backend for Backend {
         let mut cloned_style = (*self.current_style()).clone();
         let mut screen = self.current_frame.borrow_mut();
         cloned_style.colors.back = clear_color;
-        screen.clear(&Rc::new(cloned_style))
+        screen.clear(&Arc::new(cloned_style))
     }
 
     // This sets the Colours and returns the previous colours
@@ -133,7 +133,7 @@ impl backend::Backend for Backend {
         let mut copied_style = (*self.current_style()).clone();
         let old_colors = copied_style.colors;
         copied_style.colors = new_colors;
-        self.current_style.replace(Rc::new(copied_style));
+        self.current_style.replace(Arc::new(copied_style));
 
         old_colors
     }
@@ -141,12 +141,12 @@ impl backend::Backend for Backend {
     fn set_effect(&self, effect: theme::Effect) {
         let mut copied_style = (*self.current_style()).clone();
         copied_style.effects.insert(effect);
-        self.current_style.replace(Rc::new(copied_style));
+        self.current_style.replace(Arc::new(copied_style));
     }
 
     fn unset_effect(&self, effect: theme::Effect) {
         let mut copied_style = (*self.current_style()).clone();
         copied_style.effects.remove(effect);
-        self.current_style.replace(Rc::new(copied_style));
+        self.current_style.replace(Arc::new(copied_style));
     }
 }

@@ -1,6 +1,6 @@
 use crate::{view::ViewWrapper, Vec2, View};
 
-type Callback<V> = dyn FnMut(&mut V, Vec2);
+type Callback<V> = dyn FnMut(&mut V, Vec2) + Send + Sync;
 
 /// View wrapper overriding the `View::layout` method.
 pub struct OnLayoutView<V> {
@@ -26,7 +26,7 @@ impl<V: 'static> OnLayoutView<V> {
     /// ```
     pub fn new<F>(view: V, on_layout: F) -> Self
     where
-        F: FnMut(&mut V, Vec2) + 'static,
+        F: FnMut(&mut V, Vec2) + 'static + Send + Sync,
     {
         let on_layout = Box::new(on_layout);
         OnLayoutView { view, on_layout }
@@ -48,7 +48,7 @@ impl<V: 'static> OnLayoutView<V> {
     #[crate::callback_helpers]
     pub fn set_on_layout<F>(&mut self, on_layout: F)
     where
-        F: FnMut(&mut V, Vec2) + 'static,
+        F: FnMut(&mut V, Vec2) + 'static + Send + Sync,
     {
         self.on_layout = Box::new(on_layout);
     }

@@ -29,7 +29,7 @@ struct ChildButton {
 impl ChildButton {
     fn new<F>(label: StyledString, cb: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         ChildButton {
             button: LastSizeView::new(Button::new(label, cb)),
@@ -203,7 +203,7 @@ impl Dialog {
     #[must_use]
     pub fn button<F, S: Into<StyledString>>(self, label: S, cb: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         self.with(|s| s.add_button(label, cb))
     }
@@ -212,7 +212,7 @@ impl Dialog {
     #[crate::callback_helpers]
     pub fn add_button<F, S: Into<StyledString>>(&mut self, label: S, cb: F)
     where
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         self.buttons.push(ChildButton::new(label.into(), cb));
         self.invalidate();
@@ -912,7 +912,7 @@ crate::raw_recipe!(Dialog, |config, context| {
 
     struct Btn {
         key: String,
-        value: std::rc::Rc<dyn Fn(&mut Cursive)>,
+        value: std::sync::Arc<dyn Fn(&mut Cursive) + Send + Sync>,
     }
 
     impl FromConfig for Btn {
