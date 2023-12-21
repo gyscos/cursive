@@ -719,6 +719,7 @@ struct Recipe {
     content: Option<String>,
 
     on_edit: Option<_>,
+
     on_submit: Option<_>,
 }
 

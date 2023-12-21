@@ -50,7 +50,9 @@ fn main() {
     let config = serde_yaml::from_str(CONFIG).unwrap();
 
     // And build the view
-    let view = context.build(&config).unwrap();
+    let view = context.build(&config).unwrap_or_else(|e| {
+        panic!("{e:#?}");
+    });
 
     let mut siv = cursive::default();
     siv.add_global_callback('~', cursive::Cursive::toggle_debug_console);

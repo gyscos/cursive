@@ -17,10 +17,11 @@ proc-macro = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+find-crate = { optional = true, version = "0.6.3" }
 proc-macro2 = "1.0.47"
-quote = "1.0.21"
-syn = { version = "2", features = ["full"] }
+quote = {version = "1.0.21", optional = true }
+syn = { version = "2", features = ["full"], optional = true }
 
 
 [features]
-builder = []
+builder = ["find-crate", "syn", "quote"]

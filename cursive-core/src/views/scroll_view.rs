@@ -439,7 +439,7 @@ crate::raw_recipe!(with scroll, |config, context| {
     // - XY<bool>
     //      - Array of booleans
     //      - x: bool, y: bool
-    // TODO: Simplify? Re-use FromConfig for XY<bool>?
+    // TODO: Simplify? Re-use Resolvable for XY<bool>?
     let (x, y) = match config {
         Config::Null => (false, true),
         Config::Bool(b) => (false, *b),

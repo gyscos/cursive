@@ -902,9 +902,9 @@ mod tests {
 }
 
 crate::raw_recipe!(StackView, |config, context| {
-    use crate::builder::{Config, Context, Error, FromConfig};
+    use crate::builder::{Config, Context, Error, Resolvable};
 
-    impl FromConfig for Placement {
+    impl Resolvable for Placement {
         fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
             match config.as_str() {
                 Some("fullscreen" | "Fullscreen" | "FullScreen") => Ok(Self::Fullscreen),
@@ -913,7 +913,7 @@ crate::raw_recipe!(StackView, |config, context| {
         }
     }
 
-    impl FromConfig for Child {
+    impl Resolvable for Child {
         fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
             let view: crate::views::BoxedView = context.resolve(&config["child"])?;
 

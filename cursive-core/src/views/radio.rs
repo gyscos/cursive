@@ -1,4 +1,4 @@
-use crate::builder::{Config, Context, Error, FromConfig};
+use crate::builder::{Config, Context, Error, Resolvable};
 use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
@@ -295,7 +295,7 @@ impl<T: 'static + Send + Sync> View for RadioButton<T> {
     }
 }
 
-impl FromConfig for RadioGroup<String> {
+impl Resolvable for RadioGroup<String> {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let name: String = context.resolve(config)?;
 

@@ -897,17 +897,32 @@ impl View for Dialog {
     }
 }
 
+/*
+#[crate::recipe(Dialog::new())]
+struct Recipe {
+    title: String,
+
+    content: Option<BoxedView>,
+
+    // TODO: buttons?
+    // Define some Button type?
+    // Implement Resolvable as recipe?
+    // Allow recipe(foreach) with multiple arguments?
+    // Ex: foreach(add_button_with_cb( .key, .value ))
+}
+*/
+
 crate::raw_recipe!(Dialog, |config, context| {
-    use crate::builder::{Config, Context, Error, FromConfig};
+    use crate::builder::{Config, Context, Error, Resolvable};
     let mut dialog = Dialog::new();
 
     if let Some(title) = context.resolve(&config["title"])? {
         dialog.set_title::<String>(title);
     }
 
-    let child: Option<BoxedView> = context.resolve(&config["child"])?;
-    if let Some(child) = child {
-        dialog.set_content(child);
+    let content: Option<BoxedView> = context.resolve(&config["content"])?;
+    if let Some(content) = content {
+        dialog.set_content(content);
     }
 
     struct Btn {
@@ -915,7 +930,7 @@ crate::raw_recipe!(Dialog, |config, context| {
         value: std::sync::Arc<dyn Fn(&mut Cursive) + Send + Sync>,
     }
 
-    impl FromConfig for Btn {
+    impl Resolvable for Btn {
         fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
             let config = config
                 .as_object()

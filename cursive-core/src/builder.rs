@@ -22,7 +22,7 @@ use crate::views::BoxedView;
 
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use std::any::Any;
 
@@ -83,6 +83,36 @@ struct Recipes {
     recipes: HashMap<String, BoxedBuilder>,
     wrappers: HashMap<String, BoxedWrapperBuilder>,
     parent: Option<Arc<Recipes>>,
+}
+
+/// Wrapper around a value that makes it Cloneable, but can only be resolved once.
+pub struct ResolveOnce<T>(std::sync::Arc<std::sync::Mutex<Option<T>>>);
+
+/// Return a variable-maker (for use in store_with)
+pub fn resolve_once<T>(value: T) -> impl Fn(&Config, &Context) -> Result<T, Error>
+where
+    T: Send,
+{
+    let value = Mutex::new(Some(value));
+    move |_, _| {
+        value
+            .lock()
+            .unwrap()
+            .take()
+            .ok_or_else(|| Error::MakerFailed("variable was already resolved".to_string()))
+    }
+}
+
+impl<T> ResolveOnce<T> {
+    /// Take the value from self.
+    pub fn take(&self) -> Option<T> {
+        self.0.lock().unwrap().take()
+    }
+
+    /// Check if there is a value still to be resolved in self.
+    pub fn is_some(&self) -> bool {
+        self.0.lock().unwrap().is_some()
+    }
 }
 
 impl Recipes {
@@ -196,6 +226,9 @@ pub enum Error {
     /// This is in direct cause to an error in an actual recipe.
     RecipeFailed(String, Box<Error>),
 
+    /// A maker failed to produce a value.
+    MakerFailed(String),
+
     /// We failed to resolve a value.
     ///
     /// It means we failed to load it as a variable, and also failed to load it as a config.
@@ -268,15 +301,19 @@ fn inspect_variables<F: FnMut(&str)>(config: &Config, on_var: &mut F) {
     }
 }
 
-/// Can be created from config
-pub trait FromConfig {
-    /// Build from a config
+/// Trait for types that can be resolved from a context.
+///
+/// They can be loaded from a config (yaml), or from a stored value (Box<Any>).
+pub trait Resolvable {
+    /// Build from a config (a JSON value).
+    ///
+    /// The default implementation always fails.
     fn from_config(config: &Config, _context: &Context) -> Result<Self, Error>
     where
         Self: Sized,
     {
         Err(Error::CouldNotLoad {
-            expected_type: format!("Foo {}", std::any::type_name::<Self>()),
+            expected_type: std::any::type_name::<Self>().to_string(),
             config: config.clone(),
         })
     }
@@ -301,8 +338,8 @@ pub trait FromConfig {
 //          ...
 //      <> [] (D C B A) to start actual work for 4 args
 //          <D> [D]  (C B A)        |
-//          <D> [&D] (C B A)        | Here we branch and recurse
-//          <D> [&mut D] (C B A)    |
+//          <D: ?Sized> [&D] (C B A)        | Here we branch and recurse
+//          <D: ?Sized> [&mut D] (C B A)    |
 //              ...
 //              <A B C D> [A B C D]  ()          |
 //              ...                              |
@@ -369,17 +406,58 @@ macro_rules! impl_fn_from_config {
     };
 }
 
-// Implement FromConfig for all functions taking 4 or less arguments.
+/// A wrapper around a value that cannot be parsed from config, but can still be stored/retrieved
+/// in a context.
+///
+/// This brings a `Resolvable` implementation that will always fail.
+pub struct NoConfig<T>(pub T);
+
+impl<T> NoConfig<T> {
+    /// Return the wrapped object.
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T> From<T> for NoConfig<T> {
+    fn from(t: T) -> Self {
+        NoConfig(t)
+    }
+}
+
+// Implement Resolvable for the wrapper, so we can resolve it.
+impl<T> Resolvable for NoConfig<T> {
+    // We leave from_config as default (it'll always fail).
+    // As stated in the name, this cannot be loaded from a Config.
+
+    // But when loading from a variable, accept an unwrapped value.
+    //
+    // So users can store a `T` and load it as `NoConfig<T>`.
+    fn from_any(any: Box<dyn Any>) -> Option<Self>
+    where
+        Self: Sized + Any,
+    {
+        // First try an actual NoConfig<T>
+        any.downcast()
+            .map(|b| *b)
+            // Then, try a bare T
+            .or_else(|any| any.downcast::<T>().map(|b| NoConfig(*b)))
+            .ok()
+    }
+}
+
+// TODO: This could be solved with NoConfig instead.
+// Implement Resolvable for all functions taking 4 or less arguments.
 // (They will all fail to deserialize, but at least we can call resolve() on them)
 // We could consider increasing that? It would probably increase compilation time, and clutter the
-// FromConfig doc page. Maybe behind a feature if people really need it?
+// Resolvable doc page. Maybe behind a feature if people really need it?
 // (Ideally we wouldn't need it and we'd have a blanket implementation instead, but that may
 // require specialization.)
-impl_fn_from_config!(FromConfig (D C B A));
+impl_fn_from_config!(Resolvable (D C B A));
 
-impl<T> FromConfig for Option<T>
+impl<T> Resolvable for Option<T>
 where
-    T: FromConfig,
+    T: Resolvable,
 {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         if let Config::Null = config {
@@ -396,25 +474,24 @@ where
         // First try the option, then try bare T.
         any.downcast().map(|b| *b)
              // Here we have a Result<Option<T>, _>
-            .or_else(|any| any.downcast::<T>().map(|b| Some(*b)))
-            .ok()
+            .unwrap_or_else(|any| T::from_any(any).map(|b| Some(b)))
     }
 }
 
-impl FromConfig for Box<dyn crate::view::View> {
+impl Resolvable for Box<dyn crate::view::View> {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let boxed: BoxedView = context.build(config)?;
         Ok(boxed.unwrap())
     }
 }
 
-impl FromConfig for BoxedView {
+impl Resolvable for BoxedView {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         context.build(config)
     }
 }
 
-impl FromConfig for crate::theme::BaseColor {
+impl Resolvable for crate::theme::BaseColor {
     fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         (|| Self::parse(config.as_str()?))().ok_or_else(|| Error::InvalidConfig {
             message: "Invalid config for BaseColor".into(),
@@ -423,7 +500,7 @@ impl FromConfig for crate::theme::BaseColor {
     }
 }
 
-impl FromConfig for crate::theme::Palette {
+impl Resolvable for crate::theme::Palette {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let mut palette = Self::default();
 
@@ -447,7 +524,7 @@ impl FromConfig for crate::theme::Palette {
     }
 }
 
-impl FromConfig for crate::theme::BorderStyle {
+impl Resolvable for crate::theme::BorderStyle {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let borders: String = context.resolve(config)?;
 
@@ -455,7 +532,7 @@ impl FromConfig for crate::theme::BorderStyle {
     }
 }
 
-impl FromConfig for crate::theme::Theme {
+impl Resolvable for crate::theme::Theme {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let mut theme = Self::default();
 
@@ -475,10 +552,10 @@ impl FromConfig for crate::theme::Theme {
     }
 }
 
-// A bunch of `impl From<T: FromConfig>` can easily implement FromConfig
-impl<T> FromConfig for Box<T>
+// A bunch of `impl From<T: Resolvable>` can easily implement Resolvable
+impl<T> Resolvable for Box<T>
 where
-    T: 'static + FromConfig,
+    T: 'static + Resolvable,
 {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         Ok(Box::new(T::from_config(config, context)?))
@@ -486,33 +563,53 @@ where
 
     fn from_any(any: Box<dyn Any>) -> Option<Self> {
         // First try a Box<T>
-        any.downcast::<Self>().map(|b| *b)
-             // Then try a bare T
-            .or_else(|any| any.downcast::<T>())
-            .ok()
+        match any.downcast::<Self>().map(|b| *b) {
+            Ok(res) => Some(res),
+            // If it fails, try T::from_any (unboxed stored value)
+            Err(any) => T::from_any(any).map(Into::into),
+        }
     }
 }
 
-impl<T> FromConfig for Arc<T>
+impl<T> Resolvable for Arc<T>
 where
-    T: 'static + FromConfig,
+    T: 'static + Resolvable,
 {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         Ok(Arc::new(T::from_config(config, context)?))
     }
 
     fn from_any(any: Box<dyn Any>) -> Option<Self> {
-        // First try a Box<T>
-        any.downcast::<Self>().map(|b| *b)
-             // Then try a bare T
-            .or_else(|any| any.downcast::<T>().map(|b| b.into()))
-            .ok()
+        // First try a Arc<T>
+        match any.downcast::<Self>().map(|b| *b) {
+            Ok(res) => Some(res),
+            Err(any) => T::from_any(any).map(Into::into),
+        }
     }
 }
 
-impl<T> FromConfig for Vec<T>
+impl<T> Resolvable for HashMap<String, T>
 where
-    T: 'static + FromConfig,
+    T: 'static + Resolvable,
+{
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        let config = match config {
+            Config::Null => return Ok(HashMap::new()),
+            Config::Object(config) => config,
+            // Missing value get an empty vec
+            _ => return Err(Error::invalid_config("Expected array", config)),
+        };
+
+        config
+            .iter()
+            .map(|(k, v)| context.resolve(v).map(|v| (k.to_string(), v)))
+            .collect()
+    }
+}
+
+impl<T> Resolvable for Vec<T>
+where
+    T: 'static + Resolvable,
 {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let config = match config {
@@ -526,9 +623,9 @@ where
     }
 }
 
-impl<T, const N: usize> FromConfig for [T; N]
+impl<T, const N: usize> Resolvable for [T; N]
 where
-    T: 'static + FromConfig + Clone,
+    T: 'static + Resolvable + Clone,
 {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let vec = Vec::<T>::from_config(config, context)?;
@@ -544,7 +641,7 @@ where
 // color:
 //      rgb: [1, 2, 4]
 // ```
-impl FromConfig for crate::theme::Color {
+impl Resolvable for crate::theme::Color {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         Ok(match config {
             Config::String(config) => Self::parse(config)
@@ -578,7 +675,7 @@ impl FromConfig for crate::theme::Color {
     }
 }
 
-impl FromConfig for crate::theme::PaletteColor {
+impl Resolvable for crate::theme::PaletteColor {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let color: String = context.resolve(config)?;
 
@@ -587,7 +684,7 @@ impl FromConfig for crate::theme::PaletteColor {
     }
 }
 
-impl FromConfig for crate::theme::ColorType {
+impl Resolvable for crate::theme::ColorType {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         if let Ok(color) = context.resolve(config) {
             return Ok(Self::Color(color));
@@ -618,7 +715,7 @@ impl FromConfig for crate::theme::ColorType {
     }
 }
 
-impl FromConfig for crate::theme::ColorStyle {
+impl Resolvable for crate::theme::ColorStyle {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         if let Ok(color) = (|| -> Result<_, Error> {
             let front = context.resolve(&config["front"])?;
@@ -633,7 +730,7 @@ impl FromConfig for crate::theme::ColorStyle {
     }
 }
 
-impl FromConfig for crate::view::Offset {
+impl Resolvable for crate::view::Offset {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         if let Some("center" | "Center") = config.as_str() {
             return Ok(Self::Center);
@@ -658,7 +755,7 @@ impl FromConfig for crate::view::Offset {
 
 // Literals don't need a context at all
 
-impl FromConfig for String {
+impl Resolvable for String {
     fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         match config.as_str() {
             Some(config) => Ok(config.into()),
@@ -667,7 +764,7 @@ impl FromConfig for String {
     }
 }
 
-impl FromConfig for bool {
+impl Resolvable for bool {
     fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         config
             .as_bool()
@@ -675,53 +772,58 @@ impl FromConfig for bool {
     }
 }
 
-// TODO: Have numbers look for other types as well? (in their from_any)
-// isize/usize?
-impl FromConfig for u8 {
-    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
-        match config.as_u64() {
-            Some(config) if config <= u8::max_value() as u64 => Ok(config as u8),
-            _ => Err(Error::invalid_config("Expected unsigned <= 255", config)),
-        }
-    }
-}
-
-impl FromConfig for u64 {
-    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
-        config
-            .as_u64()
-            .ok_or_else(|| Error::invalid_config("Expected unsigned integer type", config))
-    }
-}
-
-impl FromConfig for isize {
-    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
-        if let Some(config) = config.as_i64() {
-            if let Ok(config) = config.try_into() {
-                return Ok(config);
+macro_rules! resolve_unsigned {
+    ($ty:ty) => {
+        impl Resolvable for $ty {
+            fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
+                config
+                    .as_u64()
+                    .and_then(|config| Self::try_from(config).ok())
+                    .ok_or_else(|| {
+                        Error::invalid_config(
+                            format!("Expected unsigned <= {}", Self::max_value()),
+                            config,
+                        )
+                    })
             }
         }
-
-        Err(Error::invalid_config(
-            format!("Expected signed <= {}", usize::max_value()),
-            config,
-        ))
-    }
+    };
 }
-
-impl FromConfig for usize {
-    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
-        match config.as_u64() {
-            Some(config) if config <= usize::max_value() as u64 => Ok(config as usize),
-            _ => Err(Error::invalid_config(
-                format!("Expected unsigned <= {}", usize::max_value()),
-                config,
-            )),
+macro_rules! resolve_signed {
+    ($ty:ty) => {
+        impl Resolvable for $ty {
+            fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
+                config
+                    .as_i64()
+                    .and_then(|config| Self::try_from(config).ok())
+                    .ok_or_else(|| {
+                        Error::invalid_config(
+                            format!(
+                                "Expected {} <= unsigned <= {}",
+                                Self::min_value(),
+                                Self::max_value()
+                            ),
+                            config,
+                        )
+                    })
+            }
         }
-    }
+    };
 }
 
-impl<T: FromConfig + 'static> FromConfig for crate::XY<T> {
+resolve_unsigned!(u8);
+resolve_unsigned!(u16);
+resolve_unsigned!(u32);
+resolve_unsigned!(u64);
+resolve_unsigned!(usize);
+
+resolve_signed!(i8);
+resolve_signed!(i16);
+resolve_signed!(i32);
+resolve_signed!(i64);
+resolve_signed!(isize);
+
+impl<T: Resolvable + 'static> Resolvable for crate::XY<T> {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         Ok(match config {
             Config::Array(config) if config.len() == 2 => {
@@ -746,7 +848,7 @@ impl<T: FromConfig + 'static> FromConfig for crate::XY<T> {
     }
 }
 
-impl FromConfig for crate::direction::Orientation {
+impl Resolvable for crate::direction::Orientation {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let value: String = context.resolve(config)?;
         Ok(match value.as_str() {
@@ -757,7 +859,7 @@ impl FromConfig for crate::direction::Orientation {
     }
 }
 
-impl FromConfig for crate::view::Margins {
+impl Resolvable for crate::view::Margins {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         Ok(match config {
             Config::Object(config) => Self::lrtb(
@@ -775,7 +877,7 @@ impl FromConfig for crate::view::Margins {
     }
 }
 
-impl FromConfig for crate::align::HAlign {
+impl Resolvable for crate::align::HAlign {
     fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         // TODO: also resolve single-value configs like strings.
         // Also when resolving a variable with the wrong type, fallback on loading the type with
@@ -846,7 +948,7 @@ impl Context {
     /// Resolve a value.
     ///
     /// Needs to be a reference to a variable.
-    pub fn resolve_as_var<T: 'static + FromConfig>(&self, config: &Config) -> Result<T, Error> {
+    pub fn resolve_as_var<T: 'static + Resolvable>(&self, config: &Config) -> Result<T, Error> {
         // Use same strategy as for recipes: always include a "config", potentially null
         if let Some(name) = parse_var(config) {
             // log::info!("Trying to load variable {name:?}");
@@ -861,7 +963,7 @@ impl Context {
             })?;
 
             let key = key.strip_prefix('$').ok_or_else(|| Error::InvalidConfig {
-                message: "Expected variable as key".into(),
+                message: format!("Expected variable as $key; but found {key}."),
                 config: config.clone().into(),
             })?;
 
@@ -876,7 +978,7 @@ impl Context {
         }
     }
 
-    fn resolve_as_builder<T: FromConfig + 'static>(&self, config: &Config) -> Result<T, Error> {
+    fn resolve_as_builder<T: Resolvable + 'static>(&self, config: &Config) -> Result<T, Error> {
         // TODO: return a cheap error here, no allocation
         let config = config
             .as_object()
@@ -903,7 +1005,7 @@ impl Context {
     ///
     /// Note however that while loading as a config, it may still resolve nested values as
     /// variables.
-    pub fn resolve_as_config<T: FromConfig + 'static>(&self, config: &Config) -> Result<T, Error> {
+    pub fn resolve_as_config<T: Resolvable + 'static>(&self, config: &Config) -> Result<T, Error> {
         // First, it could be a variable pointing to a config from a template view
         if let Some(name) = parse_var(config) {
             // Option 1: a simple variable name.
@@ -919,16 +1021,8 @@ impl Context {
         T::from_config(config, self)
     }
 
-    // We need can have:
-    // FromConfig + Clone: load from either the config or vars
-    // ... so we'd need a MaybeClone trait? With default implementation (false) and blanket
-    // implementation on T: Clone.
-    // Clone: resolve as var only
-    // FromConfig: Resolve as config only
-
-    // We're fine with only one of them, or both.
     /// Resolve a value
-    pub fn resolve<T: FromConfig + 'static>(&self, config: &Config) -> Result<T, Error> {
+    pub fn resolve<T: Resolvable + 'static>(&self, config: &Config) -> Result<T, Error> {
         let var_failure = Box::new(match self.resolve_as_var(config) {
             Ok(value) => return Ok(value),
             Err(err) => err,
@@ -946,7 +1040,7 @@ impl Context {
     }
 
     /// Resolve a value, using the given default if the key is missing.
-    pub fn resolve_or<T: FromConfig + 'static>(
+    pub fn resolve_or<T: Resolvable + 'static>(
         &self,
         config: &Config,
         if_missing: T,
@@ -963,6 +1057,14 @@ impl Context {
         } else {
             log::error!("Context was not available to store variable `{name}`.");
         }
+    }
+
+    /// Store a new variable that can only be resolved once.
+    pub fn store_once<T>(&mut self, name: impl Into<String>, value: T)
+    where
+        T: Send + 'static,
+    {
+        self.store_with(name, resolve_once(value));
     }
 
     /// Store a new variable maker.
@@ -988,7 +1090,7 @@ impl Context {
         self.store_entry(name, VarEntry::Maker(maker));
     }
 
-    /// Store a new variable for interpolation.
+    /// Store a new variable for resolution.
     ///
     /// Can be a callback, a usize, ...
     pub fn store<S, T: 'static>(&mut self, name: S, value: T)
@@ -997,6 +1099,22 @@ impl Context {
         T: Clone + Send + Sync,
     {
         self.store_with(name, move |_, _| Ok(value.clone()));
+    }
+
+    /// Store a view for resolution.
+    ///
+    /// The view can be resolved as a `BoxedView`.
+    ///
+    /// Note that this will only resolve this view _once_.
+    ///
+    /// If the view should be resolved more than that, consider calling `store_with` and
+    /// re-constructing a `BoxedView` (maybe by cloning your view) every time.
+    pub fn store_view<S, T>(&mut self, name: S, view: T)
+    where
+        S: Into<String>,
+        T: crate::view::IntoBoxedView,
+    {
+        self.store_once(name, BoxedView::new(view.into_boxed_view()));
     }
 
     /// Store a new config.
@@ -1032,7 +1150,7 @@ impl Context {
     /*
     /// Loads a variable of the given type.
     ///
-    /// This does not require FromConfig on `T`, but will also not try to deserialize.
+    /// This does not require Resolvable on `T`, but will also not try to deserialize.
     ///
     /// It should be used for types that simply cannot be parsed from config, like closures.
     pub fn load_as_var<T: Any>(
@@ -1049,7 +1167,7 @@ impl Context {
     */
 
     // Helper function to implement load_as_var and load
-    fn on_maker<T: 'static + FromConfig>(
+    fn on_maker<T: 'static + Resolvable>(
         &self,
         maker: &AnyMaker,
         name: &str,
@@ -1078,7 +1196,9 @@ impl Context {
     /// Loads a variable of the given type.
     ///
     /// If a variable with this name is found but is a Config, tries to deserialize it.
-    pub fn load<T: FromConfig + Any>(&self, name: &str, config: &Config) -> Result<T, Error> {
+    ///
+    /// Note: `config` can be `&Config::Null` for loading simple variables.
+    pub fn load<T: Resolvable + Any>(&self, name: &str, config: &Config) -> Result<T, Error> {
         self.variables.call_on_any(
             name,
             |maker| self.on_maker(maker, name, config),

@@ -1,4 +1,4 @@
-use crate::builder::{Config, Context, Error, FromConfig};
+use crate::builder::{Config, Context, Error, Resolvable};
 use crate::{
     direction,
     event::{AnyCb, Callback, Event, EventResult, Key},
@@ -490,7 +490,7 @@ impl View for ListView {
     }
 }
 
-impl FromConfig for ListChild {
+impl Resolvable for ListChild {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         if config.as_str() == Some("delimiter") {
             Ok(ListChild::Delimiter)

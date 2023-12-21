@@ -1075,9 +1075,10 @@ impl<T> Item<T> {
 struct Recipe {
     autojump: Option<bool>,
     popup: Option<bool>,
+
     on_select: Option<_>,
 
-    #[recipe(foreach(add_item_str))]
+    #[recipe(foreach = add_item_str)]
     items: Vec<String>,
 }
 
