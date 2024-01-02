@@ -1,5 +1,46 @@
 # Changelog
 
+## cursive next (0.21)
+
+### Breaking Changes
+
+- Updates termion to 2.0
+- Updates crossterm to 0.27.0
+- Updates cursive-core to 0.4.0
+
+### Improvements
+
+- Removed unused (and unmaintainted) `term_size` dependency.
+- Added a `status_bar` example.
+
+### Bugfixes
+
+- Crossterm backend: properly reset the color when de-initializing.
+
+## cursive-core next (0.4.0)
+
+### Breaking Changes
+
+- `ViewRef` (as returned by `Cursive::find_name`) no longer implements `DerefMut`.
+  You will need to call `.run(|v| foo(v))` to get mutable access.
+  This is caused by the switch from `owning_ref` to `ouroboros`, which currently does not support this.
+- The `View` now requires `Send + Sync`, to allow accessing or moving views between threads.
+  This prevents using `Rc`/`RefCell`, and may require using `Arc`/`Mutex` instead.
+  This should eventually open the way for more multi-threaded processing of the view tree.
+
+### API updates
+
+- The new experimental `builder` module (enabled via the `builder` feature) enables config-based view instanciation.
+  View trees can be described in config files (yaml/json/...), and resolved, using parameters for interpolation.
+- Added the `EditableText` family of palette styles.
+- Added `Cursive::clear_all_global_callbacks()`.
+- Improved `CursiveLogger`
+- Added `Event::char(&self) -> Option<char>`
+
+## Bugfixes
+
+- Fix shift+tab handling on termion
+
 ## cursive-core 0.3.7
 
 ### API updates
@@ -29,21 +70,6 @@
     - `Layer` now explicitly uses `PaletteColor::View`.
 - `Printer::print_styled` now takes `S: Into<SpannedStr>` rather than a `SpannedStr` directly.
   This lets it directly takes `&StyledString` as input.
-
-## cursive next (0.21)
-
-### Breaking Changes
-
-- Updates termion to 2.0
-
-### Improvements
-
-- Removed unused (and unmaintainted) `term_size` dependency.
-- Added a `status_bar` example.
-
-### Bugfixes
-
-- Crossterm backend: properly reset the color when de-initializing.
 
 ## cursive-core 0.3.6
 
