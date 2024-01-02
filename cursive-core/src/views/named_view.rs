@@ -2,8 +2,8 @@ use crate::{
     event::{AnyCb, EventResult},
     view::{Selector, View, ViewNotFound, ViewWrapper},
 };
-use ouroboros::self_referencing;
-use std::sync::{Arc, Mutex, MutexGuard};
+use parking_lot::Mutex;
+use std::sync::Arc;
 
 /// Wrapper around a view to make it identifiable.
 ///
@@ -20,30 +20,20 @@ pub struct NamedView<V> {
 /// This behaves like a [`MutexGuard`], but without being tied to a lifetime.
 ///
 /// [`MutexGuard`]: std::sync::MutexGuard
-//pub type ViewRef<V> = OwningHandle<ArcRef<Mutex<V>>, MutexGuard<'static, V>>;
-#[self_referencing]
 pub struct ViewRef<V: 'static> {
-    owner: Arc<Mutex<V>>,
-
-    #[borrows(owner)]
-    #[covariant]
-    guard: MutexGuard<'this, V>,
+    guard: parking_lot::lock_api::ArcMutexGuard<parking_lot::RawMutex, V>,
 }
 
 impl<V> std::ops::Deref for ViewRef<V> {
     type Target = V;
     fn deref(&self) -> &Self::Target {
-        self.borrow_guard()
+        self.guard.deref()
     }
 }
 
-impl<V> ViewRef<V> {
-    /// Run the given closure on the targetted view.
-    pub fn run<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut V) -> R,
-    {
-        self.with_guard_mut(|guard| f(guard))
+impl<V> std::ops::DerefMut for ViewRef<V> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.guard.deref_mut()
     }
 }
 
@@ -58,20 +48,15 @@ impl<V> NamedView<V> {
 
     /// Gets mutable access to the inner view.
     ///
-    /// This returns a `ViewRef<V>`, which implement `Deref<Target = V>` for read-only accesses,
-    /// and [`ViewRef::run()`] for mutable access.
+    /// This returns a `ViewRef<V>`, which implement `DerefMut<Target = V>`.
     ///
     /// # Panics
     ///
     /// Panics if another reference for this view already exists.
     pub fn get_mut(&mut self) -> ViewRef<V> {
-        let owner = Arc::clone(&self.view);
+        let guard = self.view.lock_arc();
 
-        ViewRefBuilder {
-            owner,
-            guard_builder: |owner| owner.lock().unwrap(),
-        }
-        .build()
+        ViewRef { guard }
     }
 
     /// Returns the name attached to this view.
@@ -92,14 +77,14 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
     where
         F: FnOnce(&Self::V) -> R,
     {
-        self.view.try_lock().ok().map(|v| f(&*v))
+        self.view.try_lock().map(|v| f(&*v))
     }
 
     fn with_view_mut<F, R>(&mut self, f: F) -> Option<R>
     where
         F: FnOnce(&mut Self::V) -> R,
     {
-        self.view.try_lock().ok().map(|mut v| f(&mut *v))
+        self.view.try_lock().map(|mut v| f(&mut *v))
     }
 
     fn into_inner(mut self) -> Result<Self::V, Self>
@@ -112,7 +97,7 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
                 self.view = rc;
                 Err(self)
             }
-            Ok(cell) => Ok(cell.into_inner().unwrap()),
+            Ok(cell) => Ok(cell.into_inner()),
         }
     }
 
@@ -131,7 +116,7 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
             s => self
                 .view
                 .try_lock()
-                .map_err(|_| ViewNotFound)
+                .ok_or(ViewNotFound)
                 .and_then(|mut v| v.focus_view(s)),
         }
     }

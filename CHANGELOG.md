@@ -21,9 +21,6 @@
 
 ### Breaking Changes
 
-- `ViewRef` (as returned by `Cursive::find_name`) no longer implements `DerefMut`.
-  You will need to call `.run(|v| foo(v))` to get mutable access.
-  This is caused by the switch from `owning_ref` to `ouroboros`, which currently does not support this.
 - The `View` now requires `Send + Sync`, to allow accessing or moving views between threads.
   This prevents using `Rc`/`RefCell`, and may require using `Arc`/`Mutex` instead.
   This should eventually open the way for more multi-threaded processing of the view tree.

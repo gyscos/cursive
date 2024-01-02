@@ -567,7 +567,7 @@ impl Cursive {
     ///
     /// // Could be called in a callback
     /// let mut view: ViewRef<TextView> = siv.find_name("id").unwrap();
-    /// view.run(|v| v.set_content("bar"));
+    /// view.set_content("bar");
     /// ```
     ///
     /// Note that you must specify the exact type for the view you're after; for example, using the
