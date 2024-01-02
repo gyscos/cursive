@@ -20,7 +20,7 @@ proc-macro = true
 find-crate = { optional = true, version = "0.6.3" }
 proc-macro2 = "1.0.47"
 quote = {version = "1.0.21", optional = true }
-syn = { version = "2", features = ["full"], optional = true }
+syn = { version = "2", features = ["full", "extra-traits"], optional = true }
 
 
 [features]

@@ -34,6 +34,7 @@ fn find_dependent_generics(
 ) -> proc_macro2::TokenStream {
     use std::collections::HashMap;
 
+    // Visit all idents in this path.
     fn visit_path_idents(p: &syn::Path, f: &mut impl FnMut(&syn::Ident)) {
         for segment in &p.segments {
             f(&segment.ident);
@@ -43,8 +44,8 @@ fn find_dependent_generics(
                         match argument {
                             syn::GenericArgument::Type(t) => visit_type_idents(t, f),
                             syn::GenericArgument::AssocType(t) => visit_type_idents(&t.ty, f),
-                            syn::GenericArgument::AssocConst(c) => {
-                                unimplemented!("associated constant not supported yet")
+                            syn::GenericArgument::AssocConst(_c) => {
+                                // Visit c.expr ?
                             }
                             _ => (),
                         }
@@ -63,6 +64,7 @@ fn find_dependent_generics(
         }
     }
 
+    // Visit all idents in this type.
     fn visit_type_idents(t: &syn::Type, f: &mut impl FnMut(&syn::Ident)) {
         match t {
             syn::Type::Paren(t) => visit_type_idents(&t.elem, f),
@@ -272,14 +274,14 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
     args.inputs.len()
 }
 
-/// Generate two helper functions to help working with cursive recipes.
+/// Generate two helper functions to help working with callbacks in cursive recipes.
 ///
 /// # Problem to solve
 ///
 /// When writing cursive recipes, it is often necessary to load parameters or variables.
 ///
 /// Some of these have simple types like `u64` or `String`, but in some cases we need to load a
-/// callback.
+/// callback. Most of the time, the existing setter function will take a generic `<F: Fn(...)>`.
 ///
 /// In this case, the recipe loading the variable and the user storing the variable need
 /// to use the exact same type (otherwise, downcasting will not work). This is made complicated by Rust's
@@ -293,10 +295,12 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 /// It's a bit cumbersome having to write the exact type including the `Arc` whenever we want to
 /// store a callback for a recipe. Similarly, it's a bit annoying when writing the recipe to make
 /// sure the correct `Arc<...>` type is fetched and converted to a type directly usable as callback.
+/// Most importantly, it increases the chances of the two sides not using _exactly_ the same type,
+/// leading to failures when attempting to load the variable for the recipe.
 ///
 /// # Solution
 ///
-/// This is where this macro comes into play: from an original function that uses a callback, it
+/// This is where this macro comes into play: from an original function that requires a closure, it
 /// generates two helper functions:
 /// * A _maker_ function, to be used when storing variables. This function takes a generic type
 /// implementing the same `Fn` trait as the desired callback, and returns it wrapped in the correct
@@ -365,8 +369,6 @@ pub fn callback_helpers(item: TokenStream) -> TokenStream {
 
     // The wrapped function should have (at least) one generic type parameter.
     // This type parameter should include a function bound.
-    let (fn_bound, cb_arg_name, type_ident) =
-        find_fn_generic(&input.sig).expect("Could not find function-like generic parameter.");
     // It could be specified in many ways: impl Fn, <F: Fn>, where F: Fn...
     let (fn_bound, cb_arg_name, type_ident) =
         find_fn_generic(&input.sig).expect("Could not find function-like generic parameter.");
