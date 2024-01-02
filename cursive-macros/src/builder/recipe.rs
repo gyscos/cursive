@@ -4,52 +4,6 @@ use quote::quote;
 
 use std::collections::HashSet;
 
-fn parse_arg(arg: &syn::Expr, parameters: &mut HashSet<String>) {
-    match arg {
-        syn::Expr::Lit(syn::ExprLit { .. }) => {
-            // All good
-        }
-        syn::Expr::Path(syn::ExprPath { path, .. }) => {
-            let parameter = path
-                .get_ident()
-                .expect("Expected simple ident as parameter");
-            parameters.insert(parameter.to_string());
-        }
-        syn::Expr::Reference(r) => {
-            parse_arg(&r.expr, parameters);
-        }
-        syn::Expr::MethodCall(c) => {
-            parse_arg(&c.receiver, parameters);
-            for arg in &c.args {
-                parse_arg(arg, parameters);
-            }
-        }
-        _ => (),
-    }
-}
-
-fn parse_attributes(base: &syn::ExprCall) -> (String, HashSet<String>) {
-    let path = match base.func.as_ref() {
-        // We need it to be a path
-        syn::Expr::Path(syn::ExprPath { path, .. }) => path,
-        _ => panic!("Expected method call"),
-    };
-
-    if path.segments.len() != 2 {
-        panic!("Expected Type::method() call with 2 segments.");
-    }
-
-    let name = path.segments[0].ident.to_string();
-
-    let mut parameters = HashSet::new();
-
-    for arg in &base.args {
-        parse_arg(arg, &mut parameters);
-    }
-
-    (name, parameters)
-}
-
 fn is_single_generic<'a>(path: &'a syn::Path, name: &str) -> Option<&'a syn::Type> {
     if path.segments.len() != 1 {
         return None;
@@ -110,7 +64,8 @@ fn looks_inferred(ty: &syn::Type) -> bool {
 fn parse_enum(
     item: &syn::ItemEnum,
     params: &HashSet<String>,
-    base: &syn::ExprCall,
+    base: &syn::Expr,
+    root: &proc_macro2::TokenStream,
 ) -> syn::parse::Result<proc_macro2::TokenStream> {
     // Try to find disjoint set of config targets
     let mut cases = Vec::new();
@@ -133,10 +88,15 @@ fn parse_enum(
                                 // String! With name of variant as ident?
                                 // variant.ident
                                 // The match case
-                                let consumer =
-                                    parse_struct(&variant.fields, params, &variant_name, base)?;
+                                let consumer = parse_struct(
+                                    &variant.fields,
+                                    params,
+                                    &variant_name,
+                                    base,
+                                    root,
+                                )?;
                                 cases.push(quote! {
-                                    crate::builder::Config::String(_) => {
+                                    #root::builder::Config::String(_) => {
                                         #consumer
                                     }
                                 });
@@ -151,9 +111,9 @@ fn parse_enum(
             }
             syn::Fields::Named(_) => {
                 // An object.
-                let consumer = parse_struct(&variant.fields, params, &variant_name, base)?;
+                let consumer = parse_struct(&variant.fields, params, &variant_name, base, root)?;
                 cases.push(quote! {
-                    crate::builder::Config::Object(_) => {
+                    #root::builder::Config::Object(_) => {
                         #consumer
                     }
                 });
@@ -161,7 +121,7 @@ fn parse_enum(
             syn::Fields::Unit => {
                 // Null?
                 cases.push(quote! {
-                    crate::builder::Config::Null => {
+                    #root::builder::Config::Null => {
                         #base
                     }
                 });
@@ -170,7 +130,7 @@ fn parse_enum(
     }
 
     cases.push(quote! {
-        _ => return Err(crate::builder::Error::invalid_config("Unexpected config", config)),
+        _ => return Err(#root::builder::Error::invalid_config("Unexpected config", config)),
     });
 
     Ok(quote! {
@@ -224,7 +184,11 @@ struct Loader {
 }
 
 impl Loader {
-    fn load(&self, ident: &syn::Ident) -> proc_macro2::TokenStream {
+    fn load(
+        &self,
+        ident: &syn::Ident,
+        root: &proc_macro2::TokenStream,
+    ) -> proc_macro2::TokenStream {
         let ty = &self.ty;
         let mut resolve_type = quote! { #ty };
         let mut suffix = quote! {};
@@ -241,7 +205,7 @@ impl Loader {
         }
 
         if self.no_config {
-            resolve_type = quote! { crate::NoConfig<#ty> };
+            resolve_type = quote! { #root::NoConfig<#ty> };
             suffix = quote! { .into_inner() #suffix };
         }
 
@@ -311,8 +275,8 @@ impl VariableSpecs {
 }
 
 impl Variable {
-    fn load(&self) -> proc_macro2::TokenStream {
-        self.loader.load(&self.ident)
+    fn load(&self, root: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+        self.loader.load(&self.ident, root)
     }
 
     fn consume(&self, base_ident: &syn::Ident) -> proc_macro2::TokenStream {
@@ -481,7 +445,8 @@ fn parse_struct(
     fields: &syn::Fields,
     parameter_names: &HashSet<String>,
     struct_name: &str,
-    base: &syn::ExprCall,
+    base: &syn::Expr,
+    root: &proc_macro2::TokenStream,
 ) -> syn::parse::Result<proc_macro2::TokenStream> {
     // Assert: no generic?
 
@@ -505,7 +470,7 @@ fn parse_struct(
         .map(|field| Variable::parse(field, struct_name, parameter_names))
         .collect::<Result<_, _>>()?;
 
-    let loaders: Vec<_> = vars.iter().map(|var| var.load()).collect();
+    let loaders: Vec<_> = vars.iter().map(|var| var.load(root)).collect();
     let consumers: Vec<_> = vars.iter().map(|var| var.consume(&base_ident)).collect();
 
     Ok(quote! {
@@ -519,15 +484,126 @@ fn parse_struct(
     })
 }
 
+// Direct parsing (with minimal processing) of the attributes from a recipe.
+struct RecipeAttributes {
+    // Base expression to build. Ex: `TextView::new()`.
+    // Might rely on variables in base_parameters.
+    base: syn::Expr,
+
+    // Set of parameter names we need for the constructor.
+    // These might not need to be set separately.
+    base_parameters: HashSet<String>,
+
+    // Name for the recipe.
+    name: String,
+}
+
+fn find_parameters(expr: &syn::Expr, parameters: &mut HashSet<String>) {
+    match expr {
+        // Handle the main `View::new(...)` expression.
+        syn::Expr::Call(syn::ExprCall { args, .. }) => {
+            for arg in args {
+                find_parameters(arg, parameters);
+            }
+        }
+        // Handle individual variables given as parameters.
+        syn::Expr::Path(syn::ExprPath { path, .. }) => {
+            if path.segments.len() == 1 {
+                parameters.insert(path.segments[0].ident.to_string());
+            }
+        }
+        // Handle method calls like `var1.to_lowercase()`
+        syn::Expr::MethodCall(syn::ExprMethodCall { receiver, args, .. }) => {
+            find_parameters(receiver, parameters);
+            for arg in args {
+                find_parameters(arg, parameters);
+            }
+        }
+        // Handle `[var1, var2]`
+        syn::Expr::Array(syn::ExprArray { elems, .. }) => {
+            for elem in elems {
+                find_parameters(elem, parameters);
+            }
+        }
+        syn::Expr::Reference(syn::ExprReference { expr, .. }) => find_parameters(expr, parameters),
+        _ => (),
+    }
+}
+
+fn base_default_name(expr: &syn::Expr) -> Option<String> {
+    // From `TextView::new(content)`, return `TextView`.
+    // If the expression is not such a method call, bail.
+    let func = match expr {
+        syn::Expr::Call(syn::ExprCall { func, .. }) => func,
+        _ => return None,
+    };
+
+    let path = match &**func {
+        syn::Expr::Path(syn::ExprPath { path, .. }) => path,
+        _ => return None,
+    };
+
+    let struct_name_id = path.segments.len().checked_sub(2)?;
+    let ident = &path.segments[struct_name_id].ident;
+    Some(ident.to_string())
+}
+
+impl syn::parse::Parse for RecipeAttributes {
+    // Parse attributes for a recipe. Ex:
+    // #[recipe(TextView::new(content), name="Text")]
+    fn parse(input: syn::parse::ParseStream<'_>) -> syn::parse::Result<Self> {
+        let base: syn::Expr = input.parse()?;
+
+        let mut base_parameters = HashSet::new();
+        find_parameters(&base, &mut base_parameters);
+
+        // Compute name and parameters from the expression.
+        let mut name = base_default_name(&base).unwrap_or_else(String::new);
+
+        // We can't parse this as a regular nested meta.
+        // Parse it as a list of `key = value` items.
+        // So far only `name = "Name"` is supported.
+        while input.peek(syn::Token![,]) {
+            let _comma: syn::Token![,] = input.parse()?;
+            let path: syn::Path = input.parse()?;
+            let _equal: syn::Token![=] = input.parse()?;
+            if path.is_ident("name") {
+                let value: syn::LitStr = input.parse()?;
+                name = value.value();
+            }
+        }
+
+        return Ok(RecipeAttributes {
+            base,
+            base_parameters,
+            name,
+        });
+    }
+}
+
 pub fn recipe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(item as syn::Item);
-    let base = syn::parse_macro_input!(attrs as syn::ExprCall);
 
-    // From the attributes we can already build:
-    // * A name
-    // * A list of parameters
-    // * A base function taking the parameters
-    let (name, params) = parse_attributes(&base);
+    // Parse the initial things given to the #[recipe(...)] macro.
+    // We expect:
+    // Positional, first argument: an expression.
+    // Optional, named arguments:
+    // name = "RecipeName"
+    let attributes = syn::parse_macro_input!(attrs as RecipeAttributes);
+
+    // Either cursive or cursive_core are good roots.
+    // If we can't find it, assume it's building cursive_core itself.
+    let root = match find_crate::find_crate(|s| {
+        s == "cursive" || s == "cursive-core" || s == "cursive_core"
+    }) {
+        Ok(cursive) => {
+            let root = syn::Ident::new(&cursive.name, Span::call_site());
+            quote! { ::#root }
+        }
+        Err(_) => {
+            quote! { crate }
+        }
+    };
 
     // Then, from the body, we can get:
     // * A list of setter variables
@@ -555,7 +631,7 @@ pub fn recipe(attrs: TokenStream, item: TokenStream) -> TokenStream {
             //     // Plan B: try enums one by one until one works
             //     unimplemented!();
             // }
-            parse_enum(item, &params, &base).unwrap()
+            parse_enum(item, &attributes.base_parameters, &attributes.base, &root).unwrap()
         }
         syn::Item::Struct(item) => {
             if !item.generics.params.is_empty() {
@@ -563,26 +639,21 @@ pub fn recipe(attrs: TokenStream, item: TokenStream) -> TokenStream {
             }
 
             let struct_name = item.ident.to_string();
-            parse_struct(&item.fields, &params, &struct_name, &base).unwrap()
+            parse_struct(
+                &item.fields,
+                &attributes.base_parameters,
+                &struct_name,
+                &attributes.base,
+                &root,
+            )
+            .unwrap()
         }
         _ => panic!("Expected enum or struct"),
     };
 
-    // Either cursive or cursive_core are good roots.
-    // If we can't find it, assume it's building cursive_core itself.
-    let root = match find_crate::find_crate(|s| s == "cursive" || s == "cursive-core") {
-        Ok(cursive) => {
-            let root = syn::Ident::new(&cursive.name, Span::call_site());
-            quote! { ::#root:: }
-        }
-        Err(_) => {
-            quote! { crate:: }
-        }
-    };
-
-    let ident = syn::Ident::new(&name, Span::call_site());
+    let ident = syn::Ident::new(&attributes.name, Span::call_site());
     let result = quote! {
-        #root raw_recipe!(#ident, |config, context| {
+        #root::raw_recipe!(#ident, |config, context| {
             Ok({ #builder })
         });
     };
