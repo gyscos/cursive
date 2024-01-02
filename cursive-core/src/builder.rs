@@ -303,7 +303,7 @@ fn inspect_variables<F: FnMut(&str)>(config: &Config, on_var: &mut F) {
 
 /// Trait for types that can be resolved from a context.
 ///
-/// They can be loaded from a config (yaml), or from a stored value (Box<Any>).
+/// They can be loaded from a config (yaml), or from a stored value (`Box<Any>`).
 pub trait Resolvable {
     /// Build from a config (a JSON value).
     ///

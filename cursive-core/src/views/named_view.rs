@@ -37,6 +37,16 @@ impl<V> std::ops::Deref for ViewRef<V> {
     }
 }
 
+impl<V> ViewRef<V> {
+    /// Run the given closure on the targetted view.
+    pub fn run<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut V) -> R,
+    {
+        self.with_guard_mut(|guard| f(guard))
+    }
+}
+
 impl<V> NamedView<V> {
     /// Wraps `view` in a new `NamedView`.
     pub fn new<S: Into<String>>(name: S, view: V) -> Self {
@@ -48,7 +58,8 @@ impl<V> NamedView<V> {
 
     /// Gets mutable access to the inner view.
     ///
-    /// This returns a `ViewRef<V>`, which implement `DerefMut<Target = V>`.
+    /// This returns a `ViewRef<V>`, which implement `Deref<Target = V>` for read-only accesses,
+    /// and [`ViewRef::run()`] for mutable access.
     ///
     /// # Panics
     ///
