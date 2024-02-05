@@ -174,10 +174,6 @@ impl VarEntry {
     }
 }
 
-/// Stored variable that indicates we need to load _another_ variable.
-#[derive(Clone)]
-struct VarProxy(String);
-
 struct Variables {
     variables: HashMap<String, VarEntry>,
 
@@ -475,6 +471,21 @@ where
         any.downcast().map(|b| *b)
              // Here we have a Result<Option<T>, _>
             .unwrap_or_else(|any| T::from_any(any).map(|b| Some(b)))
+    }
+}
+
+impl Resolvable for Config {
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
+        Ok(config.clone())
+    }
+}
+
+impl Resolvable for Object {
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
+        config
+            .as_object()
+            .ok_or_else(|| Error::invalid_config("Expected an object", config))
+            .cloned()
     }
 }
 
@@ -852,9 +863,14 @@ impl Resolvable for crate::direction::Orientation {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let value: String = context.resolve(config)?;
         Ok(match value.as_str() {
-            "vertical" => Self::Vertical,
-            "horizontal" => Self::Horizontal,
-            _ => return Err(Error::invalid_config("Unrecognized orientation", config)),
+            "vertical" | "Vertical" => Self::Vertical,
+            "horizontal" | "Horizontal" => Self::Horizontal,
+            _ => {
+                return Err(Error::invalid_config(
+                    "Unrecognized orientation. Should be horizontal or vertical.",
+                    config,
+                ))
+            }
         })
     }
 }
