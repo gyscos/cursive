@@ -21,6 +21,47 @@ pub enum DialogFocus {
     Button(usize),
 }
 
+#[cfg(feature = "builder")]
+impl crate::builder::Resolvable for DialogFocus {
+    fn from_config(
+        config: &crate::builder::Config,
+        context: &crate::builder::Context,
+    ) -> Result<Self, crate::builder::Error> {
+        use crate::builder::{Config, Context, Error, Object};
+        fn _from_config(config: &Config, context: &Context) -> Option<DialogFocus> {
+            // The config can be either:
+            // A string: content
+            // An object: button: i
+            if let Ok(string) = context.resolve::<String>(&config) {
+                if string == "Content" || string == "content" {
+                    return Some(DialogFocus::Content);
+                } else {
+                    return None;
+                }
+            }
+
+            if let Ok(obj) = context.resolve::<Object>(&config) {
+                let (key, value) = obj.iter().next()?;
+
+                if key != "Button" {
+                    return None;
+                }
+                let i = context.resolve(value).ok()?;
+                return Some(DialogFocus::Button(i));
+            }
+
+            None
+        }
+
+        _from_config(config, context).ok_or_else(|| {
+            Error::invalid_config(
+                r#"Expected either the string "Content", or a object with {Button: i}."#,
+                config,
+            )
+        })
+    }
+}
+
 struct ChildButton {
     button: LastSizeView<Button>,
     offset: Cell<Vec2>,
@@ -920,9 +961,17 @@ crate::raw_recipe!(Dialog, |config, context| {
         dialog.set_title::<String>(title);
     }
 
+    if let Some(title_position) = context.resolve(&config["title_position"])? {
+        dialog.set_title_position(title_position);
+    }
+
     let content: Option<BoxedView> = context.resolve(&config["content"])?;
     if let Some(content) = content {
         dialog.set_content(content);
+    }
+
+    if let Some(padding) = context.resolve(&config["padding"])? {
+        dialog.set_padding(padding);
     }
 
     struct Btn {
@@ -951,6 +1000,10 @@ crate::raw_recipe!(Dialog, |config, context| {
     let buttons: Vec<Btn> = context.resolve(&config["buttons"])?;
     for btn in buttons {
         dialog.add_button_with_cb(btn.key, btn.value);
+    }
+
+    if let Some(focus) = context.resolve(&config["focus"])? {
+        dialog.set_focus(focus);
     }
 
     Ok(dialog)
