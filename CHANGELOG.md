@@ -4,7 +4,7 @@
 
 ### Breaking Changes
 
-- Updates termion to 2.0
+- Updates termion to 3.0
 - Updates crossterm to 0.27.0
 - Updates cursive-core to 0.4.0
 
