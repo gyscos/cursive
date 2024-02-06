@@ -25,14 +25,14 @@ use crate::Vec2;
 
 use std::cell::{Cell, RefCell};
 use std::fs::File;
-use std::io::{BufWriter, Write};
+use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 /// Backend using termion
 pub struct Backend {
     // Do we want to make this generic on the writer?
-    terminal: RefCell<AlternateScreen<MouseTerminal<RawTerminal<BufWriter<File>>>>>,
+    terminal: RefCell<AlternateScreen<MouseTerminal<RawTerminal<File>>>>,
     current_style: Cell<theme::ColorPair>,
 
     // Inner state required to parse input
@@ -129,8 +129,7 @@ impl Backend {
         // Use a ~8MB buffer
         // Should be enough for a single screen most of the time.
         let terminal = RefCell::new(
-            MouseTerminal::from(BufWriter::with_capacity(8_000_000, output_file).into_raw_mode()?)
-                .into_alternate_screen()?,
+            MouseTerminal::from(output_file.into_raw_mode()?).into_alternate_screen()?,
         );
 
         write!(terminal.borrow_mut(), "{}", termion::cursor::Hide)?;
