@@ -313,12 +313,14 @@ pub fn on_event<Model: ?Sized>(
                 Event::Ctrl(Key::Left) | Event::Key(Key::Left)
                     if get_scroller(model).can_scroll_left() =>
                 {
-                    get_scroller(model).scroll_left(1);
+                    let scroller = get_scroller(model);
+                    scroller.scroll_left(scroller.last_available_size().x);
                 }
                 Event::Ctrl(Key::Right) | Event::Key(Key::Right)
                     if get_scroller(model).can_scroll_right() =>
                 {
-                    get_scroller(model).scroll_right(1);
+                    let scroller = get_scroller(model);
+                    scroller.scroll_right(scroller.last_available_size().x);
                 }
                 _ => return EventResult::Ignored,
             };
