@@ -61,8 +61,6 @@ impl TextContent {
 /// This can be deref'ed into a [`StyledString`].
 ///
 /// [`StyledString`]: ../utils/markup/type.StyledString.html
-///
-/// This keeps the content locked. Do not store this!
 pub struct TextContentRef {
     // We also need to keep a copy of Arc so `deref` can return
     // a reference to the `StyledString`
