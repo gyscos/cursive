@@ -10,7 +10,7 @@ use crate::theme::{Effect, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
 
-use pulldown_cmark::{self, CowStr, Event, Tag};
+use pulldown_cmark::{self, CowStr, Event, Tag, TagEnd};
 use unicode_width::UnicodeWidthStr;
 
 /// Parses the given string as markdown text.
@@ -30,7 +30,7 @@ pub struct Parser<'a> {
     first: bool,
     stack: Vec<Style>,
     input: &'a str,
-    parser: pulldown_cmark::Parser<'a, 'a>,
+    parser: pulldown_cmark::Parser<'a>,
 }
 
 impl<'a> Parser<'a> {
@@ -71,11 +71,13 @@ impl<'a> Iterator for Parser<'a> {
                 Event::Start(tag) => match tag {
                     // Add to the stack!
                     Tag::Emphasis => self.stack.push(Style::from(Effect::Italic)),
-                    Tag::Heading(level, ..) => {
+                    Tag::Heading { level, .. } => {
                         return Some(self.literal(format!("{} ", heading(level as usize))))
                     }
                     Tag::BlockQuote => return Some(self.literal("> ")),
-                    Tag::Link(_, _, _) => return Some(self.literal("[")),
+                    Tag::Link {
+                        dest_url, title, ..
+                    } => return Some(self.literal(format!("[{title}]({dest_url})"))),
                     Tag::CodeBlock(_) => return Some(self.literal("```")),
                     Tag::Strong => self.stack.push(Style::from(Effect::Bold)),
                     Tag::Paragraph if !self.first => return Some(self.literal("\n\n")),
@@ -83,11 +85,10 @@ impl<'a> Iterator for Parser<'a> {
                 },
                 Event::End(tag) => match tag {
                     // Remove from stack!
-                    Tag::Paragraph if self.first => self.first = false,
-                    Tag::Heading(..) => return Some(self.literal("\n\n")),
-                    Tag::Link(_, link, _) => return Some(self.literal(format!("]({link})"))),
-                    Tag::CodeBlock(_) => return Some(self.literal("```")),
-                    Tag::Emphasis | Tag::Strong => {
+                    TagEnd::Paragraph if self.first => self.first = false,
+                    TagEnd::Heading(..) => return Some(self.literal("\n\n")),
+                    TagEnd::CodeBlock => return Some(self.literal("```")),
+                    TagEnd::Emphasis | TagEnd::Strong => {
                         self.stack.pop().unwrap();
                     }
                     _ => (),
@@ -97,6 +98,7 @@ impl<'a> Iterator for Parser<'a> {
                 Event::HardBreak => return Some(self.literal("\n")),
                 // Treat all text the same
                 Event::FootnoteReference(text)
+                | Event::InlineHtml(text)
                 | Event::Html(text)
                 | Event::Text(text)
                 | Event::Code(text) => {

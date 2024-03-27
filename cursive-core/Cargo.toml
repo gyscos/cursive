@@ -62,7 +62,7 @@ version = "0.4"
 [dependencies.pulldown-cmark]
 default-features = false
 optional = true
-version = "0.9"
+version = "0.10"
 
 [features]
 default = []
