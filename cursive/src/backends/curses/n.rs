@@ -357,28 +357,28 @@ impl backend::Backend for Backend {
 
     fn set_effect(&self, effect: Effect) {
         let style = match effect {
-            Effect::Reverse => ncurses::A_REVERSE(),
-            Effect::Simple => ncurses::A_NORMAL(),
-            Effect::Dim => ncurses::A_DIM(),
-            Effect::Bold => ncurses::A_BOLD(),
-            Effect::Blink => ncurses::A_BLINK(),
-            Effect::Italic => ncurses::A_ITALIC(),
-            Effect::Strikethrough => ncurses::A_NORMAL(),
-            Effect::Underline => ncurses::A_UNDERLINE(),
+            Effect::Reverse => ncurses::A_REVERSE,
+            Effect::Simple => ncurses::A_NORMAL,
+            Effect::Dim => ncurses::A_DIM,
+            Effect::Bold => ncurses::A_BOLD,
+            Effect::Blink => ncurses::A_BLINK,
+            Effect::Italic => ncurses::A_ITALIC,
+            Effect::Strikethrough => ncurses::A_NORMAL,
+            Effect::Underline => ncurses::A_UNDERLINE,
         };
         ncurses::attron(style);
     }
 
     fn unset_effect(&self, effect: Effect) {
         let style = match effect {
-            Effect::Reverse => ncurses::A_REVERSE(),
-            Effect::Simple => ncurses::A_NORMAL(),
-            Effect::Dim => ncurses::A_DIM(),
-            Effect::Bold => ncurses::A_BOLD(),
-            Effect::Blink => ncurses::A_BLINK(),
-            Effect::Italic => ncurses::A_ITALIC(),
-            Effect::Strikethrough => ncurses::A_NORMAL(),
-            Effect::Underline => ncurses::A_UNDERLINE(),
+            Effect::Reverse => ncurses::A_REVERSE,
+            Effect::Simple => ncurses::A_NORMAL,
+            Effect::Dim => ncurses::A_DIM,
+            Effect::Bold => ncurses::A_BOLD,
+            Effect::Blink => ncurses::A_BLINK,
+            Effect::Italic => ncurses::A_ITALIC,
+            Effect::Strikethrough => ncurses::A_NORMAL,
+            Effect::Underline => ncurses::A_UNDERLINE,
         };
         ncurses::attroff(style);
     }
@@ -533,7 +533,7 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     }
 
     // Ncurses provides a F1 variable, but no modifiers
-    add_fn(ncurses::KEY_F1, Event::Key, &mut map);
+    add_fn(ncurses::KEY_F(1), Event::Key, &mut map);
     add_fn(277, Event::Shift, &mut map);
     add_fn(289, Event::Ctrl, &mut map);
     add_fn(301, Event::CtrlShift, &mut map);
