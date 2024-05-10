@@ -83,6 +83,7 @@ Here are a few crates implementing new views for you to use:
 * [cursive_hexview](https://github.com/hellow554/cursive_hexview): A simple hexview.
 * [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view): A basic table view component.
 * [cursive_tree_view](https://github.com/BonsaiDen/cursive_tree_view): A tree view implementation.
+* [cursive-hjkl](https://github.com/gamma-delta/cursive-hjkl): Wraps any view to use Vim-like `hjkl` controls.
 
 ## Showcases
 
@@ -107,6 +108,7 @@ Here are some cool applications using cursive:
 * [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
 * [tap](https://github.com/timdubbins/tap): An audio player for the terminal with fuzzy finder.
+* [ttyloop](https://github.com/gamma-delta/ttyloop): Clone of the mobile game Loop.
 * [wiki-tui](https://github.com/Builditluc/wiki-tui): A simple and easy to use Wikipedia Text User Interface
 
 ## Goals
