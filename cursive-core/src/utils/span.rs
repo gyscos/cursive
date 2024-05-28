@@ -141,6 +141,13 @@ where
     pub fn is_empty(&self) -> bool {
         self.source.is_empty() || self.spans.is_empty()
     }
+
+    /// Returns the width taken by this string.
+    ///
+    /// This is the sum of the width of each span.
+    pub fn width(&self) -> usize {
+        self.spans().map(|s| s.width).sum()
+    }
 }
 
 impl<'a, T> Clone for SpannedStr<'a, T> {

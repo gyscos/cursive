@@ -276,7 +276,7 @@ impl View for Menubar {
             // TODO: draw the rest
             let mut offset = 1;
             for (i, item) in self.root.children.iter().enumerate() {
-                let label = item.label();
+                let label = item.styled_label();
 
                 // We print disabled items differently, except delimiters,
                 // which are still white.
@@ -295,9 +295,14 @@ impl View for Menubar {
                 };
 
                 printer.with_style(style, |printer| {
-                    printer.print((offset, 0), &format!(" {label} "));
+                    let label_width = label.width();
+                    printer.print((offset, 0), " ");
+                    offset += 1;
+                    printer.print_styled((offset, 0), label);
+                    offset += label_width;
+                    printer.print((offset, 0), " ");
+                    offset += 1;
                 });
-                offset += label.width() + 2;
             }
         });
     }

@@ -13,8 +13,25 @@
 //! [`Tree`]: struct.Tree.html
 //! [menubar]: ../struct.Cursive.html#method.menubar
 
-use crate::{event::Callback, utils::markup::StyledString, Cursive, With};
+use crate::utils::span::{IndexedCow, IndexedSpan, SpannedStr};
+use crate::{
+    event::Callback, theme::ColorStyle, theme::ColorType, theme::Style,
+    utils::markup::StyledString, Cursive, With,
+};
+use enumset::EnumSet;
 use std::sync::Arc;
+
+const PLAIN_1CHAR_SPAN: &'static [IndexedSpan<Style>] = &[IndexedSpan {
+    content: IndexedCow::Borrowed { start: 0, end: 1 },
+    attr: Style {
+        effects: EnumSet::EMPTY, // This needs a recent enough `enumset` dependency, we should bump the minimum version to 1.1.0
+        color: ColorStyle {
+            front: ColorType::InheritParent,
+            back: ColorType::InheritParent,
+        },
+    },
+    width: 1,
+}];
 
 /// Root of a menu tree.
 #[derive(Default, Clone)]
@@ -89,6 +106,18 @@ impl Item {
         match *self {
             Item::Delimiter => "│",
             Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => label.source(),
+        }
+    }
+
+    /// Returns the styled lable for this item
+    ///
+    /// Returns a vertical bar string if `self` is a delimiter.
+    pub fn styled_label(&self) -> SpannedStr<Style> {
+        match *self {
+            Item::Delimiter => SpannedStr::new("|", PLAIN_1CHAR_SPAN),
+            Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => {
+                SpannedStr::from(label)
+            }
         }
     }
 
