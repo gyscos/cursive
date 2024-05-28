@@ -23,7 +23,7 @@ repository = "gyscos/cursive"
 
 [dependencies]
 enum-map = "2.0"
-enumset = "1.0.4"
+enumset = "1.1.0"
 log = "0.4"
 unicode-segmentation = "1"
 unicode-width = "0.1"
