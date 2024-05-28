@@ -354,3 +354,55 @@ impl Tree {
         self.children.is_empty()
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::theme::{ColorStyle, ColorType, Style};
+    use crate::utils::span::Span;
+    use enumset::EnumSet;
+
+    #[test]
+    fn test_styled_label_delimiter() {
+        let item = Item::Delimiter;
+        let styled_label = item.styled_label();
+        assert_eq!(styled_label.source(), "|");
+
+        let expected_spans: Vec<Span<Style>> = vec![Span {
+            content: "|",
+            attr: &Style {
+                effects: EnumSet::EMPTY,
+                color: ColorStyle {
+                    front: ColorType::InheritParent,
+                    back: ColorType::InheritParent,
+                },
+            },
+            width: 1,
+        }];
+
+        assert_eq!(styled_label.spans().collect::<Vec<_>>(), expected_spans);
+    }
+
+    #[test]
+    fn test_styled_label_leaf() {
+        let label = StyledString::plain("Leaf");
+        let item = Item::Leaf {
+            label: label.clone(),
+            enabled: true,
+            cb: Callback::from_fn(|_| {}),
+        };
+        let styled_label = item.styled_label();
+        assert_eq!(styled_label.source(), "Leaf");
+    }
+
+    #[test]
+    fn test_styled_label_subtree() {
+        let label = StyledString::plain("Subtree");
+        let item = Item::Subtree {
+            label: label.clone(),
+            tree: Tree::default().into(),
+            enabled: true,
+        };
+        let styled_label = item.styled_label();
+        assert_eq!(styled_label.source(), "Subtree");
+    }
+}

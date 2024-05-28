@@ -611,3 +611,27 @@ impl IndexedCow {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::theme::Style;
+
+    #[test]
+    fn test_spanned_str_width() {
+        let spans = vec![
+            IndexedSpan {
+                content: IndexedCow::Borrowed { start: 0, end: 5 },
+                attr: Style::default(),
+                width: 5,
+            },
+            IndexedSpan {
+                content: IndexedCow::Borrowed { start: 6, end: 11 },
+                attr: Style::default(),
+                width: 5,
+            },
+        ];
+        let spanned_str = SpannedStr::new("Hello World", &spans);
+        assert_eq!(spanned_str.width(), 10);
+    }
+}
