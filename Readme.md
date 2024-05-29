@@ -45,16 +45,16 @@ fn main() {
 }
 ```
 
-[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/main/doc/cursive_example.png)](examples/dialog.rs)
+[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/main/doc/cursive_example.png)](https://github.com/gyscos/cursive/tree/main/cursive/examples/dialog.rs)
 
-Check out the other [examples](https://github.com/gyscos/cursive/tree/main/examples) to get these results, and more:
+Check out the other [examples](https://github.com/gyscos/cursive/tree/main/cursive/examples) to get these results, and more:
 
 <div>
-<a href="https://github.com/gyscos/cursive/blob/main/examples/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
-<a href="https://github.com/gyscos/cursive/blob/main/examples/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
-<a href="https://github.com/gyscos/cursive/blob/main/examples/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
-<a href="https://github.com/gyscos/cursive/blob/main/examples/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
-<a href="https://github.com/gyscos/cursive/blob/main/examples/theme_manual.rs"><img src="https://i.imgur.com/I9V5KRi.png" alt="theme_manual.rs example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/theme_manual.rs"><img src="https://i.imgur.com/I9V5KRi.png" alt="theme_manual.rs example", width="48%" /></a>
 <a href="https://github.com/gyscos/cursive/blob/main/cursive-syntect/examples/parse.rs"><img src="https://i.imgur.com/a8bfe5s.png" alt="syntect example" width="48%" /></a>
 </div>
 
