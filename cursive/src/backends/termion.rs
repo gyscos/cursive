@@ -191,6 +191,9 @@ impl Backend {
                     TMouseButton::Right => MouseEvent::Press(MouseButton::Right),
                     TMouseButton::WheelUp => MouseEvent::WheelUp,
                     TMouseButton::WheelDown => MouseEvent::WheelDown,
+                    // TODO: Support left/right wheel moves?
+                    // Or convert to left/right arrow keys?
+                    TMouseButton::WheelLeft | TMouseButton::WheelRight => return Event::Refresh,
                 };
 
                 if let MouseEvent::Press(btn) = event {

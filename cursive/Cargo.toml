@@ -42,7 +42,7 @@ version = "0.17"
 
 [dependencies.termion]
 optional = true
-version = "3"
+version = "4"
 
 [dependencies.crossterm]
 optional = true
