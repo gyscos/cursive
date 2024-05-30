@@ -141,6 +141,13 @@ where
     pub fn is_empty(&self) -> bool {
         self.source.is_empty() || self.spans.is_empty()
     }
+
+    /// Returns the width taken by this string.
+    ///
+    /// This is the sum of the width of each span.
+    pub fn width(&self) -> usize {
+        self.spans().map(|s| s.width).sum()
+    }
 }
 
 impl<'a, T> Clone for SpannedStr<'a, T> {
@@ -602,5 +609,29 @@ impl IndexedCow {
             *start = start.saturating_sub(offset);
             *end = end.saturating_sub(offset);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::theme::Style;
+
+    #[test]
+    fn test_spanned_str_width() {
+        let spans = vec![
+            IndexedSpan {
+                content: IndexedCow::Borrowed { start: 0, end: 5 },
+                attr: Style::default(),
+                width: 5,
+            },
+            IndexedSpan {
+                content: IndexedCow::Borrowed { start: 6, end: 11 },
+                attr: Style::default(),
+                width: 5,
+            },
+        ];
+        let spanned_str = SpannedStr::new("Hello World", &spans);
+        assert_eq!(spanned_str.width(), 10);
     }
 }

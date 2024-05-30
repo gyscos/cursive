@@ -267,6 +267,7 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Arc<menu::Tree>) {
     );
 }
 
+
 impl View for Menubar {
     fn draw(&self, printer: &Printer) {
         // Draw the bar at the top
@@ -276,8 +277,8 @@ impl View for Menubar {
             // TODO: draw the rest
             let mut offset = 1;
             for (i, item) in self.root.children.iter().enumerate() {
-                let label = item.label();
-
+                let label = item.styled_label();
+                let label_width = label.width();
                 // We print disabled items differently, except delimiters,
                 // which are still white.
                 let enabled = printer.enabled && (item.is_enabled() || item.is_delimiter());
@@ -286,18 +287,20 @@ impl View for Menubar {
                 // because it's ugly on the menubar.
                 let selected = (self.state != State::Inactive) && (i == self.focus);
 
-                let style = if !enabled {
-                    PaletteStyle::Secondary
-                } else if selected {
-                    PaletteStyle::Highlight
-                } else {
-                    PaletteStyle::Primary
+                let style = match (enabled, selected) {
+                    (false, _) => PaletteStyle::Secondary,
+                    (true, true) => PaletteStyle::Highlight,
+                    _ => PaletteStyle::Primary,
                 };
 
                 printer.with_style(style, |printer| {
-                    printer.print((offset, 0), &format!(" {label} "));
+                    printer.print((offset, 0), " ");
+                    offset += 1;
+                    printer.print_styled((offset, 0), label);
+                    offset += label_width;
+                    printer.print((offset, 0), " ");
+                    offset += 1;
                 });
-                offset += label.width() + 2;
             }
         });
     }
