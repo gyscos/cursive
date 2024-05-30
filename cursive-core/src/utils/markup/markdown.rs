@@ -25,6 +25,16 @@ where
     StyledString::with_spans(input, spans)
 }
 
+// Convert a CowStr from pulldown into a regular Cow<str>
+// We lose the inline optimization, but oh well.
+fn cowvert(cow: CowStr) -> Cow<str> {
+    match cow {
+        CowStr::Borrowed(text) => Cow::Borrowed(text),
+        CowStr::Boxed(text) => Cow::Owned(text.into()),
+        CowStr::Inlined(text) => Cow::Owned(text.to_string()),
+    }
+}
+
 /// Iterator that parse a markdown text and outputs styled spans.
 pub struct Parser<'a> {
     first: bool,
@@ -74,7 +84,7 @@ impl<'a> Iterator for Parser<'a> {
                     Tag::Heading { level, .. } => {
                         return Some(self.literal(format!("{} ", heading(level as usize))))
                     }
-                    Tag::BlockQuote => return Some(self.literal("> ")),
+                    Tag::BlockQuote(_) => return Some(self.literal("> ")),
                     Tag::Link {
                         dest_url, title, ..
                     } => return Some(self.literal(format!("[{title}]({dest_url})"))),
@@ -101,12 +111,10 @@ impl<'a> Iterator for Parser<'a> {
                 | Event::InlineHtml(text)
                 | Event::Html(text)
                 | Event::Text(text)
-                | Event::Code(text) => {
-                    let text = match text {
-                        CowStr::Boxed(text) => Cow::Owned(text.into()),
-                        CowStr::Borrowed(text) => Cow::Borrowed(text),
-                        CowStr::Inlined(text) => Cow::Owned(text.to_string()),
-                    };
+                | Event::Code(text)
+                | Event::InlineMath(text)
+                | Event::DisplayMath(text) => {
+                    let text = cowvert(text);
                     let width = text.width();
                     // Return something!
                     return Some(StyledIndexedSpan {
