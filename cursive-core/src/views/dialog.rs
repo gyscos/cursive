@@ -21,6 +21,47 @@ pub enum DialogFocus {
     Button(usize),
 }
 
+#[cfg(feature = "builder")]
+impl crate::builder::Resolvable for DialogFocus {
+    fn from_config(
+        config: &crate::builder::Config,
+        context: &crate::builder::Context,
+    ) -> Result<Self, crate::builder::Error> {
+        use crate::builder::{Config, Context, Error, Object};
+        fn _from_config(config: &Config, context: &Context) -> Option<DialogFocus> {
+            // The config can be either:
+            // A string: content
+            // An object: button: i
+            if let Ok(string) = context.resolve::<String>(&config) {
+                if string == "Content" || string == "content" {
+                    return Some(DialogFocus::Content);
+                } else {
+                    return None;
+                }
+            }
+
+            if let Ok(obj) = context.resolve::<Object>(&config) {
+                let (key, value) = obj.iter().next()?;
+
+                if key != "Button" {
+                    return None;
+                }
+                let i = context.resolve(value).ok()?;
+                return Some(DialogFocus::Button(i));
+            }
+
+            None
+        }
+
+        _from_config(config, context).ok_or_else(|| {
+            Error::invalid_config(
+                r#"Expected either the string "Content", or a object with {Button: i}."#,
+                config,
+            )
+        })
+    }
+}
+
 struct ChildButton {
     button: LastSizeView<Button>,
     offset: Cell<Vec2>,
@@ -29,7 +70,7 @@ struct ChildButton {
 impl ChildButton {
     fn new<F>(label: StyledString, cb: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         ChildButton {
             button: LastSizeView::new(Button::new(label, cb)),
@@ -203,7 +244,7 @@ impl Dialog {
     #[must_use]
     pub fn button<F, S: Into<StyledString>>(self, label: S, cb: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         self.with(|s| s.add_button(label, cb))
     }
@@ -212,7 +253,7 @@ impl Dialog {
     #[crate::callback_helpers]
     pub fn add_button<F, S: Into<StyledString>>(&mut self, label: S, cb: F)
     where
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         self.buttons.push(ChildButton::new(label.into(), cb));
         self.invalidate();
@@ -897,25 +938,48 @@ impl View for Dialog {
     }
 }
 
+/*
+#[crate::recipe(Dialog::new())]
+struct Recipe {
+    title: String,
+
+    content: Option<BoxedView>,
+
+    // TODO: buttons?
+    // Define some Button type?
+    // Implement Resolvable as recipe?
+    // Allow recipe(foreach) with multiple arguments?
+    // Ex: foreach(add_button_with_cb( .key, .value ))
+}
+*/
+
 crate::raw_recipe!(Dialog, |config, context| {
-    use crate::builder::{Config, Context, Error, FromConfig};
+    use crate::builder::{Config, Context, Error, Resolvable};
     let mut dialog = Dialog::new();
 
     if let Some(title) = context.resolve(&config["title"])? {
         dialog.set_title::<String>(title);
     }
 
-    let child: Option<BoxedView> = context.resolve(&config["child"])?;
-    if let Some(child) = child {
-        dialog.set_content(child);
+    if let Some(title_position) = context.resolve(&config["title_position"])? {
+        dialog.set_title_position(title_position);
+    }
+
+    let content: Option<BoxedView> = context.resolve(&config["content"])?;
+    if let Some(content) = content {
+        dialog.set_content(content);
+    }
+
+    if let Some(padding) = context.resolve(&config["padding"])? {
+        dialog.set_padding(padding);
     }
 
     struct Btn {
         key: String,
-        value: std::rc::Rc<dyn Fn(&mut Cursive)>,
+        value: std::sync::Arc<dyn Fn(&mut Cursive) + Send + Sync>,
     }
 
-    impl FromConfig for Btn {
+    impl Resolvable for Btn {
         fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
             let config = config
                 .as_object()
@@ -936,6 +1000,10 @@ crate::raw_recipe!(Dialog, |config, context| {
     let buttons: Vec<Btn> = context.resolve(&config["buttons"])?;
     for btn in buttons {
         dialog.add_button_with_cb(btn.key, btn.value);
+    }
+
+    if let Some(focus) = context.resolve(&config["focus"])? {
+        dialog.set_focus(focus);
     }
 
     Ok(dialog)

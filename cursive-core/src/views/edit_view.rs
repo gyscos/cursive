@@ -7,8 +7,7 @@ use crate::{
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
@@ -16,12 +15,12 @@ use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 ///
 /// Arguments are the `Cursive`, current content of the input and cursor
 /// position
-pub type OnEdit = dyn Fn(&mut Cursive, &str, usize);
+pub type OnEdit = dyn Fn(&mut Cursive, &str, usize) + Send + Sync;
 
 /// Closure type for callbacks when Enter is pressed.
 ///
 /// Arguments are the `Cursive` and the content of the input.
-pub type OnSubmit = dyn Fn(&mut Cursive, &str);
+pub type OnSubmit = dyn Fn(&mut Cursive, &str) + Send + Sync;
 
 /// Input box where the user can enter and edit text.
 ///
@@ -70,8 +69,8 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str);
 /// ```
 pub struct EditView {
     /// Current content.
-    #[allow(clippy::rc_buffer)] // Rc::make_mut is what we want here.
-    content: Rc<String>,
+    #[allow(clippy::rc_buffer)] // Arc::make_mut is what we want here.
+    content: Arc<String>,
 
     /// Cursor position in the content, in bytes.
     cursor: usize,
@@ -92,10 +91,10 @@ pub struct EditView {
     /// Callback when the content is modified.
     ///
     /// Will be called with the current content and the cursor position.
-    on_edit: Option<Rc<OnEdit>>,
+    on_edit: Option<Arc<OnEdit>>,
 
     /// Callback when `<Enter>` is pressed.
-    on_submit: Option<Rc<OnSubmit>>,
+    on_submit: Option<Arc<OnSubmit>>,
 
     /// When `true`, only print `*` instead of the true content.
     secret: bool,
@@ -118,7 +117,7 @@ impl EditView {
     /// Creates a new, empty edit view.
     pub fn new() -> Self {
         EditView {
-            content: Rc::new(String::new()),
+            content: Arc::new(String::new()),
             cursor: 0,
             offset: 0,
             last_length: 0, // scrollable: false,
@@ -223,7 +222,7 @@ impl EditView {
     /// recursive calls, see [`set_on_edit`](#method.set_on_edit).
     pub fn set_on_edit_mut<F>(&mut self, callback: F)
     where
-        F: FnMut(&mut Cursive, &str, usize) + 'static,
+        F: FnMut(&mut Cursive, &str, usize) + 'static + Send + Sync,
     {
         self.set_on_edit(immut3!(callback));
     }
@@ -241,9 +240,9 @@ impl EditView {
     #[crate::callback_helpers]
     pub fn set_on_edit<F>(&mut self, callback: F)
     where
-        F: Fn(&mut Cursive, &str, usize) + 'static,
+        F: Fn(&mut Cursive, &str, usize) + 'static + Send + Sync,
     {
-        self.on_edit = Some(Rc::new(callback));
+        self.on_edit = Some(Arc::new(callback));
     }
 
     /// Sets a mutable callback to be called whenever the content is modified.
@@ -252,7 +251,7 @@ impl EditView {
     #[must_use]
     pub fn on_edit_mut<F>(self, callback: F) -> Self
     where
-        F: FnMut(&mut Cursive, &str, usize) + 'static,
+        F: FnMut(&mut Cursive, &str, usize) + 'static + Send + Sync,
     {
         self.with(|v| v.set_on_edit_mut(callback))
     }
@@ -276,7 +275,7 @@ impl EditView {
     #[must_use]
     pub fn on_edit<F>(self, callback: F) -> Self
     where
-        F: Fn(&mut Cursive, &str, usize) + 'static,
+        F: Fn(&mut Cursive, &str, usize) + 'static + Send + Sync,
     {
         self.with(|v| v.set_on_edit(callback))
     }
@@ -292,14 +291,14 @@ impl EditView {
     /// recursive calls, see [`set_on_submit`](#method.set_on_submit).
     pub fn set_on_submit_mut<F>(&mut self, callback: F)
     where
-        F: FnMut(&mut Cursive, &str) + 'static,
+        F: FnMut(&mut Cursive, &str) + 'static + Send + Sync,
     {
         // TODO: don't duplicate all those methods.
         // Instead, have some generic function immutify()
         // or something that wraps a FnMut closure.
-        let callback = RefCell::new(callback);
+        let callback = Mutex::new(callback);
         self.set_on_submit(move |s, text| {
-            if let Ok(mut f) = callback.try_borrow_mut() {
+            if let Ok(mut f) = callback.try_lock() {
                 (*f)(s, text);
             }
         });
@@ -317,9 +316,9 @@ impl EditView {
     #[crate::callback_helpers]
     pub fn set_on_submit<F>(&mut self, callback: F)
     where
-        F: Fn(&mut Cursive, &str) + 'static,
+        F: Fn(&mut Cursive, &str) + 'static + Send + Sync,
     {
-        self.on_submit = Some(Rc::new(callback));
+        self.on_submit = Some(Arc::new(callback));
     }
 
     /// Sets a mutable callback to be called when `<Enter>` is pressed.
@@ -328,7 +327,7 @@ impl EditView {
     #[must_use]
     pub fn on_submit_mut<F>(self, callback: F) -> Self
     where
-        F: FnMut(&mut Cursive, &str) + 'static,
+        F: FnMut(&mut Cursive, &str) + 'static + Send + Sync,
     {
         self.with(|v| v.set_on_submit_mut(callback))
     }
@@ -349,7 +348,7 @@ impl EditView {
     #[must_use]
     pub fn on_submit<F>(self, callback: F) -> Self
     where
-        F: Fn(&mut Cursive, &str) + 'static,
+        F: Fn(&mut Cursive, &str) + 'static + Send + Sync,
     {
         self.with(|v| v.set_on_submit(callback))
     }
@@ -363,7 +362,7 @@ impl EditView {
         let content = content.into();
         let len = content.len();
 
-        self.content = Rc::new(content);
+        self.content = Arc::new(content);
         self.offset = 0;
         self.set_cursor(len);
 
@@ -372,8 +371,8 @@ impl EditView {
 
     /// Get the current text.
     #[allow(clippy::rc_buffer)]
-    pub fn get_content(&self) -> Rc<String> {
-        Rc::clone(&self.content)
+    pub fn get_content(&self) -> Arc<String> {
+        Arc::clone(&self.content)
     }
 
     /// Sets the current content to the given value.
@@ -421,7 +420,7 @@ impl EditView {
         // It means it'll just return a ref if no one else has a ref,
         // and it will clone it into `self.content` otherwise.
 
-        Rc::make_mut(&mut self.content).insert(self.cursor, ch);
+        Arc::make_mut(&mut self.content).insert(self.cursor, ch);
         self.cursor += ch.len_utf8();
 
         self.keep_cursor_in_view();
@@ -437,7 +436,7 @@ impl EditView {
     pub fn remove(&mut self, len: usize) -> Callback {
         let start = self.cursor;
         let end = self.cursor + len.min(self.content.len() - self.cursor);
-        for _ in Rc::make_mut(&mut self.content).drain(start..end) {}
+        for _ in Arc::make_mut(&mut self.content).drain(start..end) {}
 
         self.keep_cursor_in_view();
 
@@ -446,8 +445,8 @@ impl EditView {
 
     fn make_edit_cb(&self) -> Option<Callback> {
         self.on_edit.clone().map(|cb| {
-            // Get a new Rc on the content
-            let content = Rc::clone(&self.content);
+            // Get a new Arc on the content
+            let content = Arc::clone(&self.content);
             let cursor = self.cursor;
 
             Callback::from_fn(move |s| {
@@ -673,7 +672,7 @@ impl View for EditView {
             }
             Event::Key(Key::Enter) if self.on_submit.is_some() => {
                 let cb = self.on_submit.clone().unwrap();
-                let content = Rc::clone(&self.content);
+                let content = Arc::clone(&self.content);
                 return EventResult::with_cb(move |s| {
                     cb(s, &content);
                 });
@@ -720,6 +719,7 @@ struct Recipe {
     content: Option<String>,
 
     on_edit: Option<_>,
+
     on_submit: Option<_>,
 }
 
@@ -752,7 +752,7 @@ crate::var_recipe!("EditView.with_content", |config, context| {
     let callback = config["callback"].clone();
     let context = context.clone();
 
-    let result: Rc<dyn Fn(&mut Cursive)> = Rc::new(move |s| {
+    let result: Arc<dyn Fn(&mut Cursive) + Send + Sync> = Arc::new(move |s| {
         let content: String = s
             .call_on_name(&name, |view: &mut EditView| view.get_content())
             .unwrap()
@@ -765,7 +765,7 @@ crate::var_recipe!("EditView.with_content", |config, context| {
 
         // Hopefully resolving this config as callback is what will pull the
         // "content" variable we just set.
-        let callback: Rc<dyn Fn(&mut Cursive)> = match context.resolve(&callback) {
+        let callback: Arc<dyn Fn(&mut Cursive) + Send + Sync> = match context.resolve(&callback) {
             Ok(callback) => callback,
             Err(err) => {
                 log::error!("Could not resolve callback: {err:?}");

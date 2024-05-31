@@ -10,7 +10,7 @@ use crate::{
     Cursive, Printer, Vec2, With,
 };
 use std::cmp::min;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Popup that shows a list of items.
 ///
@@ -20,7 +20,7 @@ use std::rc::Rc;
 /// [1]: crate::views::SelectView::popup()
 /// [2]: crate::Cursive::menubar()
 pub struct MenuPopup {
-    menu: Rc<menu::Tree>,
+    menu: Arc<menu::Tree>,
     focus: usize,
     scroll_core: scroll::Core,
     align: Align,
@@ -35,7 +35,7 @@ impl_scroller!(MenuPopup::scroll_core);
 
 impl MenuPopup {
     /// Creates a new `MenuPopup` using the given menu tree.
-    pub fn new(menu: Rc<menu::Tree>) -> Self {
+    pub fn new(menu: Arc<menu::Tree>) -> Self {
         MenuPopup {
             menu,
             focus: 0,
@@ -91,14 +91,14 @@ impl MenuPopup {
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn on_dismiss<F: 'static + Fn(&mut Cursive)>(self, f: F) -> Self {
+    pub fn on_dismiss<F: 'static + Fn(&mut Cursive) + Send + Sync>(self, f: F) -> Self {
         self.with(|s| s.set_on_dismiss(f))
     }
 
     /// Sets a callback to be used when this view is actively dismissed.
     ///
     /// (When the user hits `<ESC>`)
-    pub fn set_on_dismiss<F: 'static + Fn(&mut Cursive)>(&mut self, f: F) {
+    pub fn set_on_dismiss<F: 'static + Fn(&mut Cursive) + Send + Sync>(&mut self, f: F) {
         self.on_dismiss = Some(Callback::from_fn(f));
     }
 
@@ -110,7 +110,7 @@ impl MenuPopup {
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn on_action<F: 'static + Fn(&mut Cursive)>(self, f: F) -> Self {
+    pub fn on_action<F: 'static + Fn(&mut Cursive) + Send + Sync>(self, f: F) -> Self {
         self.with(|s| s.set_on_action(f))
     }
 
@@ -119,7 +119,7 @@ impl MenuPopup {
     /// Will also be called if a leaf from a subtree is activated.
     ///
     /// Usually used to hide the parent view.
-    pub fn set_on_action<F: 'static + Fn(&mut Cursive)>(&mut self, f: F) {
+    pub fn set_on_action<F: 'static + Fn(&mut Cursive) + Send + Sync>(&mut self, f: F) {
         self.on_action = Some(Callback::from_fn(f));
     }
 
@@ -191,8 +191,8 @@ impl MenuPopup {
         })
     }
 
-    fn make_subtree_cb(&self, tree: &Rc<menu::Tree>) -> EventResult {
-        let tree = Rc::clone(tree);
+    fn make_subtree_cb(&self, tree: &Arc<menu::Tree>) -> EventResult {
+        let tree = Arc::clone(tree);
         let max_width = 4 + self
             .menu
             .children
@@ -207,7 +207,7 @@ impl MenuPopup {
             let action_cb = action_cb.clone();
             s.screen_mut().add_layer_at(
                 Position::parent(offset),
-                OnEventView::new(MenuPopup::new(Rc::clone(&tree)).on_action(move |s| {
+                OnEventView::new(MenuPopup::new(Arc::clone(&tree)).on_action(move |s| {
                     // This will happen when the subtree popup
                     // activates something;
                     // First, remove ourself.

@@ -4,24 +4,26 @@ use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     theme::PaletteStyle,
+    utils::markup::StyledString,
     view::{CannotFocus, View},
-    Cursive, Printer, Vec2, With, utils::markup::StyledString,
+    Cursive, Printer, Vec2, With,
 };
-use std::{rc::Rc, cell::RefCell};
+use parking_lot::Mutex;
 use std::hash::Hash;
+use std::sync::Arc;
 
-type GroupCallback<T> = dyn Fn(&mut Cursive, &HashSet<Rc<T>>);
-type Callback = dyn Fn(&mut Cursive, bool);
+type GroupCallback<T> = dyn Fn(&mut Cursive, &HashSet<Arc<T>>) + Send + Sync;
+type Callback = dyn Fn(&mut Cursive, bool) + Send + Sync;
 
 struct SharedState<T> {
-    selections: HashSet<Rc<T>>,
-    values: Vec<Rc<T>>,
+    selections: HashSet<Arc<T>>,
+    values: Vec<Arc<T>>,
 
-    on_change: Option<Rc<GroupCallback<T>>>
+    on_change: Option<Arc<GroupCallback<T>>>,
 }
 
 impl<T> SharedState<T> {
-    pub fn selections(&self) -> &HashSet<Rc<T>> {
+    pub fn selections(&self) -> &HashSet<Arc<T>> {
         &self.selections
     }
 }
@@ -33,7 +35,7 @@ impl<T> SharedState<T> {
 /// A `MultiChoiceGroup` can be cloned; it will keep shared state (pointing to the same group).
 pub struct MultiChoiceGroup<T> {
     // Given to every child button
-    state: Rc<RefCell<SharedState<T>>>,
+    state: Arc<Mutex<SharedState<T>>>,
 }
 
 // We have to manually implement Clone.
@@ -41,7 +43,7 @@ pub struct MultiChoiceGroup<T> {
 impl<T> Clone for MultiChoiceGroup<T> {
     fn clone(&self) -> Self {
         Self {
-            state: Rc::clone(&self.state),
+            state: Arc::clone(&self.state),
         }
     }
 }
@@ -56,7 +58,7 @@ impl<T: 'static + Hash + Eq> MultiChoiceGroup<T> {
     /// Creates an empty group for check boxes.
     pub fn new() -> Self {
         Self {
-            state: Rc::new(RefCell::new(SharedState {
+            state: Arc::new(Mutex::new(SharedState {
                 selections: HashSet::new(),
                 values: Vec::new(),
                 on_change: None,
@@ -67,40 +69,52 @@ impl<T: 'static + Hash + Eq> MultiChoiceGroup<T> {
     // TODO: Handling of the global state
 
     /// Adds a new checkbox to the group.
-    /// 
+    ///
     /// The checkbox will display `label` next to it, and will ~embed~ `value`.
-    pub fn checkbox<S: Into<StyledString>>(&mut self, value: T, label: S) -> Checkbox {
-        let element = Rc::new(value);
-        self.state.borrow_mut().values.push(element.clone());
-        Checkbox::labelled(label).on_change({ // TODO: consider consequences
-            let selectable = Rc::downgrade(&element);
+    pub fn checkbox<S: Into<StyledString>>(&mut self, value: T, label: S) -> Checkbox
+    where
+        T: Send + Sync,
+    {
+        let element = Arc::new(value);
+        self.state.lock().values.push(element.clone());
+        Checkbox::labelled(label).on_change({
+            // TODO: consider consequences
+            let selectable = Arc::downgrade(&element);
             let groupstate = self.state.clone();
-            move |_, checked| if checked {
-                if let Some(v) = selectable.upgrade() {
-                    groupstate.borrow_mut().selections.insert(v);
-                }
-            } else {
-                if let Some(v) = selectable.upgrade() {
-                    groupstate.borrow_mut().selections.remove(&v);
+            move |_, checked| {
+                if checked {
+                    if let Some(v) = selectable.upgrade() {
+                        groupstate.lock().selections.insert(v);
+                    }
+                } else {
+                    if let Some(v) = selectable.upgrade() {
+                        groupstate.lock().selections.remove(&v);
+                    }
                 }
             }
         })
     }
 
     /// Returns the reference to a set associated with the selected checkboxes.
-    pub fn selections(&self) -> HashSet<Rc<T>> {
-        self.state.borrow().selections().clone()
+    pub fn selections(&self) -> HashSet<Arc<T>> {
+        self.state.lock().selections().clone()
     }
 
     /// Sets a callback to be user when choices change.
-    pub fn set_on_change<F: 'static + Fn(&mut Cursive, &HashSet<Rc<T>>)>(&mut self, on_change: F) {
-        self.state.borrow_mut().on_change = Some(Rc::new(on_change));
+    pub fn set_on_change<F>(&mut self, on_change: F)
+    where
+        F: Send + Sync + 'static + Fn(&mut Cursive, &HashSet<Arc<T>>),
+    {
+        self.state.lock().on_change = Some(Arc::new(on_change));
     }
 
     /// Set a callback to use used when choices change.
-    /// 
+    ///
     /// Chainable variant.
-    pub fn on_change<F: 'static + Fn(&mut Cursive, &HashSet<Rc<T>>)>(self, on_change: F) -> Self {
+    pub fn on_change<F>(self, on_change: F) -> Self
+    where
+        F: Send + Sync + 'static + Fn(&mut Cursive, &HashSet<Arc<T>>),
+    {
         crate::With::with(self, |s| s.set_on_change(on_change))
     }
 }
@@ -120,7 +134,7 @@ pub struct Checkbox {
     checked: bool,
     enabled: bool,
 
-    on_change: Option<Rc<Callback>>,
+    on_change: Option<Arc<Callback>>,
 
     label: StyledString,
 }
@@ -146,21 +160,27 @@ impl Checkbox {
             checked: false,
             enabled: true,
             on_change: None,
-            label: label.into()
+            label: label.into(),
         }
     }
 
     /// Sets a callback to be used when the state changes.
     #[crate::callback_helpers]
-    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool)>(&mut self, on_change: F) {
-        self.on_change = Some(Rc::new(on_change));
+    pub fn set_on_change<F: 'static + Fn(&mut Cursive, bool) + Send + Sync>(
+        &mut self,
+        on_change: F,
+    ) {
+        self.on_change = Some(Arc::new(on_change));
     }
 
     /// Sets a callback to be used when the state changes.
     ///
     /// Chainable variant.
     #[must_use]
-    pub fn on_change<F: 'static + Fn(&mut Cursive, bool)>(self, on_change: F) -> Self {
+    pub fn on_change<F: 'static + Fn(&mut Cursive, bool) + Send + Sync>(
+        self,
+        on_change: F,
+    ) -> Self {
         self.with(|s| s.set_on_change(on_change))
     }
 
@@ -221,7 +241,7 @@ impl Checkbox {
     pub fn set_checked(&mut self, checked: bool) -> EventResult {
         self.checked = checked;
         if let Some(ref on_change) = self.on_change {
-            let on_change = Rc::clone(on_change);
+            let on_change = Arc::clone(on_change);
             EventResult::with_cb(move |s| on_change(s, checked))
         } else {
             EventResult::Consumed(None)

@@ -17,15 +17,15 @@ use crate::Cursive;
 use crate::Vec2;
 use std::any::Any;
 use std::ops::Deref;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Callback is a function that can be triggered by an event.
 /// It has a mutable access to the cursive root.
 ///
 /// It is meant to be stored in views.
 #[derive(Clone)]
-pub struct Callback(Rc<dyn Fn(&mut Cursive)>);
-// TODO: remove the Box when Box<T: Sized> -> Rc<T> is possible
+pub struct Callback(Arc<dyn Fn(&mut Cursive) + Send + Sync>);
+// TODO: remove the Box when Box<T: Sized> -> Arc<T> is possible
 
 /// A callback that can be run on `&mut dyn View`.
 ///
@@ -36,8 +36,8 @@ pub type AnyCb<'a> = &'a mut dyn FnMut(&mut dyn crate::view::View);
 ///
 /// It is meant to be stored in views.
 pub struct EventTrigger {
-    trigger: Box<dyn Fn(&Event) -> bool>,
-    tag: Box<dyn AnyTag>,
+    trigger: Box<dyn Fn(&Event) -> bool + Send + Sync>,
+    tag: Box<dyn AnyTag + Send + Sync>,
 }
 
 trait AnyTag: Any + std::fmt::Debug {
@@ -57,7 +57,7 @@ impl EventTrigger {
     /// Create a new `EventTrigger` using the given function as filter.
     pub fn from_fn<F>(f: F) -> Self
     where
-        F: 'static + Fn(&Event) -> bool,
+        F: 'static + Fn(&Event) -> bool + Send + Sync,
     {
         EventTrigger::from_fn_and_tag(f, "free function")
     }
@@ -65,8 +65,8 @@ impl EventTrigger {
     /// Create a new `EventTrigger`.
     pub fn from_fn_and_tag<F, T>(f: F, tag: T) -> Self
     where
-        F: 'static + Fn(&Event) -> bool,
-        T: Any + std::fmt::Debug,
+        F: 'static + Fn(&Event) -> bool + Send + Sync,
+        T: Any + std::fmt::Debug + Send + Sync,
     {
         let tag = Box::new(tag);
         let trigger = Box::new(f);
@@ -169,7 +169,7 @@ impl From<Key> for EventTrigger {
 
 impl<F> From<F> for EventTrigger
 where
-    F: 'static + Fn(&Event) -> bool,
+    F: 'static + Fn(&Event) -> bool + Send + Sync,
 {
     fn from(f: F) -> Self {
         Self::from_fn(f)
@@ -180,9 +180,9 @@ impl Callback {
     /// Wraps the given function into a `Callback` object.
     pub fn from_fn<F>(f: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
-        Callback(Rc::new(move |siv| {
+        Callback(Arc::new(move |siv| {
             f(siv);
         }))
     }
@@ -192,7 +192,7 @@ impl Callback {
     /// If this methods tries to call itself, nested calls will be no-ops.
     pub fn from_fn_mut<F>(f: F) -> Self
     where
-        F: 'static + FnMut(&mut Cursive),
+        F: 'static + FnMut(&mut Cursive) + Send + Sync,
     {
         Self::from_fn(crate::immut1!(f))
     }
@@ -202,7 +202,7 @@ impl Callback {
     /// After being called once, the callback will become a no-op.
     pub fn from_fn_once<F>(f: F) -> Self
     where
-        F: 'static + FnOnce(&mut Cursive),
+        F: 'static + FnOnce(&mut Cursive) + Send + Sync,
     {
         Self::from_fn_mut(crate::once1!(f))
     }
@@ -221,15 +221,15 @@ impl Deref for Callback {
     }
 }
 
-impl From<Rc<dyn Fn(&mut Cursive)>> for Callback {
-    fn from(f: Rc<dyn Fn(&mut Cursive)>) -> Self {
+impl From<Arc<dyn Fn(&mut Cursive) + Send + Sync>> for Callback {
+    fn from(f: Arc<dyn Fn(&mut Cursive) + Send + Sync>) -> Self {
         Callback(f)
     }
 }
 
-impl From<Box<dyn Fn(&mut Cursive)>> for Callback {
-    fn from(f: Box<dyn Fn(&mut Cursive)>) -> Self {
-        Callback(Rc::from(f))
+impl From<Box<dyn Fn(&mut Cursive) + Send + Sync>> for Callback {
+    fn from(f: Box<dyn Fn(&mut Cursive) + Send + Sync>) -> Self {
+        Callback(Arc::from(f))
     }
 }
 
@@ -246,7 +246,7 @@ impl EventResult {
     /// Convenient method to create `Consumed(Some(f))`
     pub fn with_cb<F>(f: F) -> Self
     where
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         EventResult::Consumed(Some(Callback::from_fn(f)))
     }
@@ -256,7 +256,7 @@ impl EventResult {
     /// After being called once, the callback will become a no-op.
     pub fn with_cb_once<F>(f: F) -> Self
     where
-        F: 'static + FnOnce(&mut Cursive),
+        F: 'static + FnOnce(&mut Cursive) + Send + Sync,
     {
         EventResult::Consumed(Some(Callback::from_fn_once(f)))
     }
@@ -521,7 +521,7 @@ pub enum Event {
     /// An unknown event was received.
     Unknown(Vec<u8>),
 
-    // Maybe add a `Custom(Rc<Any>)` ?
+    // Maybe add a `Custom(Arc<Any>)` ?
 
     // Having a doc-hidden event prevents people from having exhaustive
     // matches, allowing us to add events in the future.

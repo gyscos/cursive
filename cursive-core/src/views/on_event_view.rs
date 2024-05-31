@@ -2,7 +2,7 @@ use crate::event::{Callback, Event, EventResult, EventTrigger};
 use crate::view::{View, ViewWrapper};
 use crate::Cursive;
 use crate::With;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// A wrapper view that can react to events.
 ///
@@ -45,7 +45,7 @@ pub struct OnEventView<T> {
 
 new_default!(OnEventView<T: Default>);
 
-type InnerCallback<T> = Rc<Box<dyn Fn(&mut T, &Event) -> Option<EventResult>>>;
+type InnerCallback<T> = Arc<Box<dyn Fn(&mut T, &Event) -> Option<EventResult> + Send + Sync>>;
 
 struct Action<T> {
     phase: TriggerPhase,
@@ -56,7 +56,7 @@ impl<T> Clone for Action<T> {
     fn clone(&self) -> Self {
         Action {
             phase: self.phase.clone(),
-            callback: Rc::clone(&self.callback),
+            callback: Arc::clone(&self.callback),
         }
     }
 }
@@ -108,7 +108,7 @@ impl<T> OnEventView<T> {
     pub fn on_event<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         self.with(|s| s.set_on_event(trigger, cb))
     }
@@ -122,7 +122,7 @@ impl<T> OnEventView<T> {
     pub fn on_pre_event<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         self.with(|s| s.set_on_pre_event(trigger, cb))
     }
@@ -141,7 +141,7 @@ impl<T> OnEventView<T> {
     pub fn on_pre_event_inner<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,
-        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static,
+        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static + Send + Sync,
     {
         self.with(|s| s.set_on_pre_event_inner(trigger, cb))
     }
@@ -187,7 +187,7 @@ impl<T> OnEventView<T> {
     pub fn on_event_inner<F, E>(self, trigger: E, cb: F) -> Self
     where
         E: Into<EventTrigger>,
-        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static,
+        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static + Send + Sync,
     {
         self.with(|s| s.set_on_event_inner(trigger, cb))
     }
@@ -196,7 +196,7 @@ impl<T> OnEventView<T> {
     pub fn set_on_event<F, E>(&mut self, trigger: E, cb: F)
     where
         E: Into<EventTrigger>,
-        F: Fn(&mut Cursive) + 'static,
+        F: Fn(&mut Cursive) + 'static + Send + Sync,
     {
         let cb = Callback::from_fn(cb);
         let action = move |_: &mut T, _: &Event| Some(EventResult::Consumed(Some(cb.clone())));
@@ -210,7 +210,7 @@ impl<T> OnEventView<T> {
     pub fn set_on_pre_event<F, E>(&mut self, trigger: E, cb: F)
     where
         E: Into<EventTrigger>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         let cb = Callback::from_fn(cb);
         // We want to clone the Callback every time we call the closure
@@ -230,13 +230,13 @@ impl<T> OnEventView<T> {
     pub fn set_on_pre_event_inner<F, E>(&mut self, trigger: E, cb: F)
     where
         E: Into<EventTrigger>,
-        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static,
+        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static + Send + Sync,
     {
         self.callbacks.push((
             trigger.into(),
             Action {
                 phase: TriggerPhase::BeforeChild,
-                callback: Rc::new(Box::new(cb)),
+                callback: Arc::new(Box::new(cb)),
             },
         ));
     }
@@ -249,13 +249,13 @@ impl<T> OnEventView<T> {
     pub fn set_on_event_inner<F, E>(&mut self, trigger: E, cb: F)
     where
         E: Into<EventTrigger>,
-        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static,
+        F: Fn(&mut T, &Event) -> Option<EventResult> + 'static + Send + Sync,
     {
         self.callbacks.push((
             trigger.into(),
             Action {
                 phase: TriggerPhase::AfterChild,
-                callback: Rc::new(Box::new(cb)),
+                callback: Arc::new(Box::new(cb)),
             },
         ));
     }

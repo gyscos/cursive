@@ -1,8 +1,7 @@
+use parking_lot::Mutex;
 use std::ops::Deref;
 use std::sync::Arc;
-use std::sync::{Mutex, MutexGuard};
 
-use owning_ref::{ArcRef, OwningHandle};
 use unicode_width::UnicodeWidthStr;
 
 use crate::align::*;
@@ -62,10 +61,7 @@ impl TextContent {
 /// This can be deref'ed into a [`StyledString`].
 ///
 /// [`StyledString`]: ../utils/markup/type.StyledString.html
-///
-/// This keeps the content locked. Do not store this!
 pub struct TextContentRef {
-    _handle: OwningHandle<ArcRef<Mutex<TextContentInner>>, MutexGuard<'static, TextContentInner>>,
     // We also need to keep a copy of Arc so `deref` can return
     // a reference to the `StyledString`
     data: Arc<StyledString>,
@@ -123,7 +119,7 @@ impl TextContent {
     where
         F: FnOnce(&mut TextContentInner) -> O,
     {
-        let mut content = self.content.lock().unwrap();
+        let mut content = self.content.lock();
 
         let out = f(&mut content);
 
@@ -150,14 +146,8 @@ struct TextContentInner {
 impl TextContentInner {
     /// From a shareable content (Arc + Mutex), return a
     fn get_content(content: &Arc<Mutex<TextContentInner>>) -> TextContentRef {
-        let arc_ref: ArcRef<Mutex<TextContentInner>> = ArcRef::new(Arc::clone(content));
-
-        let _handle =
-            OwningHandle::new_with_fn(arc_ref, |mutex| unsafe { (*mutex).lock().unwrap() });
-
-        let data = Arc::clone(&_handle.content_value);
-
-        TextContentRef { _handle, data }
+        let data = Arc::clone(&content.lock().content_value);
+        TextContentRef { data }
     }
 
     fn is_cache_valid(&self, size: Vec2) -> bool {
@@ -360,7 +350,7 @@ impl TextView {
     fn compute_rows(&mut self, size: Vec2) {
         let size = if self.wrap { size } else { Vec2::max_value() };
 
-        let mut content = self.content.content.lock().unwrap();
+        let mut content = self.content.content.lock();
         if content.is_cache_valid(size) {
             return;
         }
@@ -394,7 +384,7 @@ impl View for TextView {
         let offset = self.align.v.get_offset(h, printer.size.y);
         let printer = &printer.offset((0, offset));
 
-        let content = self.content.content.lock().unwrap();
+        let content = self.content.content.lock();
 
         printer.with_style(self.style, |printer| {
             for (y, row) in self
@@ -418,7 +408,7 @@ impl View for TextView {
     }
 
     fn needs_relayout(&self) -> bool {
-        let content = self.content.content.lock().unwrap();
+        let content = self.content.content.lock();
         content.size_cache.is_none()
     }
 
@@ -436,7 +426,7 @@ impl View for TextView {
         let my_size = Vec2::new(self.width.unwrap_or(0), self.rows.len());
 
         // Build a fresh cache.
-        let mut content = self.content.content.lock().unwrap();
+        let mut content = self.content.content.lock();
         content.size_cache = Some(SizeCache::build(my_size, size));
     }
 }

@@ -45,17 +45,17 @@ fn main() {
 }
 ```
 
-[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/main/doc/cursive_example.png)](cursive/examples/dialog.rs)
+[![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/main/doc/cursive_example.png)](https://github.com/gyscos/cursive/tree/main/cursive/examples/dialog.rs)
 
 Check out the other [examples](https://github.com/gyscos/cursive/tree/main/cursive/examples) to get these results, and more:
 
 <div>
-<a href="cursive/examples/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
-<a href="cursive/examples/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
-<a href="cursive/examples/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
-<a href="cursive/examples/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
-<a href="cursive/examples/theme_manual.rs"><img src="https://i.imgur.com/I9V5KRi.png" alt="theme_manual.rs example", width="48%" /></a>
-<a href="cursive-syntect/examples/parse.rs"><img src="https://i.imgur.com/a8bfe5s.png" alt="syntect example" width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/lorem.rs"><img src="https://imgur.com/hW9M9MV.png" alt="lorem.rs example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/menubar.rs"><img src="https://imgur.com/xx3lZPz.png" alt="menubar.rs example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/select.rs"><img src="https://imgur.com/couty0n.png" alt="select.rs example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/mines/"><img src="https://imgur.com/vNteYyy.png" alt="mines example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive/examples/theme_manual.rs"><img src="https://i.imgur.com/I9V5KRi.png" alt="theme_manual.rs example", width="48%" /></a>
+<a href="https://github.com/gyscos/cursive/blob/main/cursive-syntect/examples/parse.rs"><img src="https://i.imgur.com/a8bfe5s.png" alt="syntect example" width="48%" /></a>
 </div>
 
 _(Colors may depend on your terminal configuration.)_
@@ -83,6 +83,7 @@ Here are a few crates implementing new views for you to use:
 * [cursive_hexview](https://github.com/hellow554/cursive_hexview): A simple hexview.
 * [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view): A basic table view component.
 * [cursive_tree_view](https://github.com/BonsaiDen/cursive_tree_view): A tree view implementation.
+* [cursive-hjkl](https://github.com/gamma-delta/cursive-hjkl): Wraps any view to use Vim-like `hjkl` controls.
 
 ## Showcases
 
@@ -107,6 +108,7 @@ Here are some cool applications using cursive:
 * [so](https://github.com/samtay/so): A terminal interface for Stack Overflow.
 * [sudoku-tui](https://github.com/TianyiShi2001/sudoku-tui): Play sudoku on the command line.
 * [tap](https://github.com/timdubbins/tap): An audio player for the terminal with fuzzy finder.
+* [ttyloop](https://github.com/gamma-delta/ttyloop): Clone of the mobile game Loop.
 * [wiki-tui](https://github.com/Builditluc/wiki-tui): A simple and easy to use Wikipedia Text User Interface
 
 ## Goals
@@ -137,4 +139,4 @@ There is initial support for [wide characters](https://en.wikipedia.org/wiki/CJK
 ## [Contributing](CONTRIBUTING.md)
 ## Alternatives
 
-See also [tui-rs](https://github.com/fdehau/tui-rs) - and a small [comparison page](https://github.com/gyscos/cursive/wiki/Cursive-vs-tui%E2%80%90rs).
+See also [ratatui](https://github.com/ratatui-org/ratatui) - and a small [comparison page](https://github.com/gyscos/cursive/wiki/Cursive-vs-tui%E2%80%90rs).

@@ -23,9 +23,8 @@ repository = "gyscos/cursive"
 
 [dependencies]
 enum-map = "2.0"
-enumset = "1.0.4"
+enumset = "1.1.0"
 log = "0.4"
-owning_ref = "0.4"
 unicode-segmentation = "1"
 unicode-width = "0.1"
 xi-unicode = "0.3"
@@ -34,6 +33,7 @@ lazy_static = "1"
 ahash = "0.8"
 serde_json = "1.0.85"
 serde_yaml = "0.9.11"
+parking_lot = { version = "0.12.1", features = ["arc_lock"] }
 
 [dependencies.cursive-macros]
 path = "../cursive-macros"
@@ -44,7 +44,7 @@ version = "0.3.1"
 optional = true
 
 [dependencies.ansi-parser]
-version = "0.8.0"
+version = "0.9.0"
 optional = true
 
 [dependencies.time]
@@ -53,7 +53,7 @@ features = ["local-offset", "formatting"]
 
 [dependencies.toml]
 optional = true
-version = "0.7"
+version = "0.8"
 
 [dependencies.num]
 default-features = false
@@ -62,7 +62,7 @@ version = "0.4"
 [dependencies.pulldown-cmark]
 default-features = false
 optional = true
-version = "0.9"
+version = "0.11"
 
 [features]
 default = []

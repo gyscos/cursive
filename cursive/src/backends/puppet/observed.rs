@@ -5,8 +5,8 @@ use crate::theme::Effect;
 use crate::Vec2;
 use std::ops::Index;
 use std::ops::IndexMut;
-use std::rc::Rc;
 use std::string::ToString;
+use std::sync::Arc;
 use std::{fmt, fmt::Display, fmt::Formatter};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -58,14 +58,14 @@ pub struct ObservedCell {
     /// Absolute position
     pub pos: Vec2,
     /// Style
-    pub style: Rc<ObservedStyle>,
+    pub style: Arc<ObservedStyle>,
     /// Part of grapheme - either it's beginning or continuation when character is multi-cell long.
     pub letter: GraphemePart,
 }
 
 impl ObservedCell {
     /// Constructor
-    pub fn new(pos: Vec2, style: Rc<ObservedStyle>, letter: Option<String>) -> Self {
+    pub fn new(pos: Vec2, style: Arc<ObservedStyle>, letter: Option<String>) -> Self {
         let letter: GraphemePart = match letter {
             Some(s) => GraphemePart::Begin(s),
             None => GraphemePart::Continuation,
@@ -154,7 +154,7 @@ impl ObservedScreen {
     }
 
     /// Sets all cells to empty cells with given style
-    pub fn clear(&mut self, style: &Rc<ObservedStyle>) {
+    pub fn clear(&mut self, style: &Arc<ObservedStyle>) {
         for idx in 0..self.contents.len() {
             self.contents[idx] = Some(ObservedCell::new(
                 self.unflatten_index(idx),
@@ -421,7 +421,7 @@ mod tests {
 
     /// Expecting fake_screen to be square, # will be replaced with blank.
     fn get_observed_screen(fake_screen: &Vec<&str>) -> ObservedScreen {
-        let observed_style: Rc<ObservedStyle> = Rc::new(DEFAULT_OBSERVED_STYLE.clone());
+        let observed_style: Arc<ObservedStyle> = Arc::new(DEFAULT_OBSERVED_STYLE.clone());
 
         let height = fake_screen.len();
         let width = fake_screen[0].width();

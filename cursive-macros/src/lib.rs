@@ -17,12 +17,12 @@ mod builder;
 /// there will be no way to identify its exact type to downcast it in the recipe.
 ///
 /// Instead, both sides (recipe and user) need to agree to use a fixed type, for example a trait
-/// object like `Rc<dyn Fn(&mut Cursive)>` (we use `Rc` rather than `Box` because we want variables
+/// object like `Arc<dyn Fn(&mut Cursive)>` (we use `Arc` rather than `Box` because we want variables
 /// to be cloneable).
 ///
-/// It's a bit cumbersome having to write the exact type including the `Rc` whenever we want to
+/// It's a bit cumbersome having to write the exact type including the `Arc` whenever we want to
 /// store a callback for a recipe. Similarly, it's a bit annoying when writing the recipe to make
-/// sure the correct `Rc<...>` type is fetched and converted to a type directly usable as callback.
+/// sure the correct `Arc<...>` type is fetched and converted to a type directly usable as callback.
 ///
 /// # Solution
 ///

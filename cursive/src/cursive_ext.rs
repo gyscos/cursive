@@ -53,7 +53,7 @@ pub trait CursiveExt {
     /// Creates a new Cursive root using a crossterm backend.
     #[cfg(feature = "crossterm-backend")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "crossterm-backend")))]
-    fn run_crossterm(&mut self) -> Result<(), crossterm::ErrorKind>;
+    fn run_crossterm(&mut self) -> Result<(), std::io::Error>;
 
     /// Creates a new Cursive root using a bear-lib-terminal backend.
     #[cfg(feature = "blt-backend")]
@@ -101,7 +101,7 @@ impl CursiveExt for cursive_core::Cursive {
 
     #[cfg(feature = "crossterm-backend")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "crossterm-backend")))]
-    fn run_crossterm(&mut self) -> Result<(), crossterm::ErrorKind> {
+    fn run_crossterm(&mut self) -> Result<(), std::io::Error> {
         self.try_run_with(crate::backends::crossterm::Backend::init)
     }
 

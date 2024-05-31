@@ -13,8 +13,25 @@
 //! [`Tree`]: struct.Tree.html
 //! [menubar]: ../struct.Cursive.html#method.menubar
 
-use crate::{event::Callback, utils::markup::StyledString, Cursive, With};
-use std::rc::Rc;
+use crate::utils::span::{IndexedCow, IndexedSpan, SpannedStr};
+use crate::{
+    event::Callback, theme::ColorStyle, theme::ColorType, theme::Style,
+    utils::markup::StyledString, Cursive, With,
+};
+use enumset::EnumSet;
+use std::sync::Arc;
+
+const PLAIN_1CHAR_SPAN: &'static [IndexedSpan<Style>] = &[IndexedSpan {
+    content: IndexedCow::Borrowed { start: 0, end: 1 },
+    attr: Style {
+        effects: EnumSet::EMPTY, // This needs a recent enough `enumset` dependency, we should bump the minimum version to 1.1.0
+        color: ColorStyle {
+            front: ColorType::InheritParent,
+            back: ColorType::InheritParent,
+        },
+    },
+    width: 1,
+}];
 
 /// Root of a menu tree.
 #[derive(Default, Clone)]
@@ -43,7 +60,7 @@ pub enum Item {
         /// Text displayed for this entry.
         label: StyledString,
         /// Subtree under this item.
-        tree: Rc<Tree>,
+        tree: Arc<Tree>,
         /// Whether this item is enabled.
         ///
         /// Disabled items cannot be selected and are displayed grayed out.
@@ -59,7 +76,7 @@ impl Item {
     pub fn leaf<S, F>(label: S, cb: F) -> Self
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         let label = label.into();
         let cb = Callback::from_fn(cb);
@@ -73,7 +90,7 @@ impl Item {
         S: Into<StyledString>,
     {
         let label = label.into();
-        let tree = Rc::new(tree);
+        let tree = Arc::new(tree);
         let enabled = true;
         Item::Subtree {
             label,
@@ -89,6 +106,18 @@ impl Item {
         match *self {
             Item::Delimiter => "│",
             Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => label.source(),
+        }
+    }
+
+    /// Returns the styled lable for this item
+    ///
+    /// Returns a vertical bar string if `self` is a delimiter.
+    pub fn styled_label(&self) -> SpannedStr<Style> {
+        match *self {
+            Item::Delimiter => SpannedStr::new("|", PLAIN_1CHAR_SPAN),
+            Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => {
+                SpannedStr::from(label)
+            }
         }
     }
 
@@ -145,7 +174,7 @@ impl Item {
     /// Returns `None` if `self` is not a `Item::Subtree`.
     pub fn as_subtree(&mut self) -> Option<&mut Tree> {
         match *self {
-            Item::Subtree { ref mut tree, .. } => Some(Rc::make_mut(tree)),
+            Item::Subtree { ref mut tree, .. } => Some(Arc::make_mut(tree)),
             _ => None,
         }
     }
@@ -188,7 +217,7 @@ impl Tree {
     pub fn add_leaf<S, F>(&mut self, label: S, cb: F)
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         let i = self.children.len();
         self.insert_leaf(i, label, cb);
@@ -198,7 +227,7 @@ impl Tree {
     pub fn insert_leaf<S, F>(&mut self, i: usize, label: S, cb: F)
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         let label = label.into();
         self.insert(
@@ -216,7 +245,7 @@ impl Tree {
     pub fn leaf<S, F>(self, label: S, cb: F) -> Self
     where
         S: Into<StyledString>,
-        F: 'static + Fn(&mut Cursive),
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
         self.with(|menu| menu.add_leaf(label, cb))
     }
@@ -229,7 +258,7 @@ impl Tree {
         let label = label.into();
         let tree = Item::Subtree {
             label,
-            tree: Rc::new(tree),
+            tree: Arc::new(tree),
             enabled: true,
         };
         self.insert(i, tree);
@@ -323,5 +352,57 @@ impl Tree {
     /// Returns `true` if this tree has no children.
     pub fn is_empty(&self) -> bool {
         self.children.is_empty()
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::theme::{ColorStyle, ColorType, Style};
+    use crate::utils::span::Span;
+    use enumset::EnumSet;
+
+    #[test]
+    fn test_styled_label_delimiter() {
+        let item = Item::Delimiter;
+        let styled_label = item.styled_label();
+        assert_eq!(styled_label.source(), "|");
+
+        let expected_spans: Vec<Span<Style>> = vec![Span {
+            content: "|",
+            attr: &Style {
+                effects: EnumSet::EMPTY,
+                color: ColorStyle {
+                    front: ColorType::InheritParent,
+                    back: ColorType::InheritParent,
+                },
+            },
+            width: 1,
+        }];
+
+        assert_eq!(styled_label.spans().collect::<Vec<_>>(), expected_spans);
+    }
+
+    #[test]
+    fn test_styled_label_leaf() {
+        let label = StyledString::plain("Leaf");
+        let item = Item::Leaf {
+            label: label.clone(),
+            enabled: true,
+            cb: Callback::from_fn(|_| {}),
+        };
+        let styled_label = item.styled_label();
+        assert_eq!(styled_label.source(), "Leaf");
+    }
+
+    #[test]
+    fn test_styled_label_subtree() {
+        let label = StyledString::plain("Subtree");
+        let item = Item::Subtree {
+            label: label.clone(),
+            tree: Tree::default().into(),
+            enabled: true,
+        };
+        let styled_label = item.styled_label();
+        assert_eq!(styled_label.source(), "Subtree");
     }
 }

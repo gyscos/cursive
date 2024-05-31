@@ -214,7 +214,7 @@ fn get_checkbox(siv: &mut cursive::Cursive, name: &str) -> bool {
         .unwrap()
 }
 
-fn get_selection<T: Copy + 'static>(siv: &mut cursive::Cursive, name: &str) -> T {
+fn get_selection<T: Send + Sync + Copy + 'static>(siv: &mut cursive::Cursive, name: &str) -> T {
     siv.call_on_name(name, |s: &mut cursive::views::SelectView<T>| {
         *s.selection().unwrap()
     })

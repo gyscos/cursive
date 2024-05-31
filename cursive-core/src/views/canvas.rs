@@ -7,14 +7,15 @@ use crate::{
 };
 
 // Define these types separately to appease the Clippy god
-type Draw<T> = dyn Fn(&T, &Printer);
-type OnEvent<T> = dyn FnMut(&mut T, Event) -> EventResult;
-type RequestSize<T> = dyn FnMut(&mut T, Vec2) -> Vec2;
-type Layout<T> = dyn FnMut(&mut T, Vec2);
-type TakeFocus<T> = dyn FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>;
-type FocusView<T> = dyn FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>;
-type CallOnAny<T> = dyn FnMut(&mut T, &Selector, AnyCb);
-type ImportantArea<T> = dyn Fn(&T, Vec2) -> Rect;
+type Draw<T> = dyn Fn(&T, &Printer) + Send + Sync;
+type OnEvent<T> = dyn FnMut(&mut T, Event) -> EventResult + Send + Sync;
+type RequestSize<T> = dyn FnMut(&mut T, Vec2) -> Vec2 + Send + Sync;
+type Layout<T> = dyn FnMut(&mut T, Vec2) + Send + Sync;
+type NeedsRelayout<T> = dyn Fn(&T) -> bool + Send + Sync;
+type TakeFocus<T> = dyn FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus> + Send + Sync;
+type FocusView<T> = dyn FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound> + Send + Sync;
+type CallOnAny<T> = dyn FnMut(&mut T, &Selector, AnyCb) + Send + Sync;
+type ImportantArea<T> = dyn Fn(&T, Vec2) -> Rect + Send + Sync;
 
 /// A blank view that forwards calls to closures.
 ///
@@ -57,7 +58,7 @@ pub struct Canvas<T> {
     required_size: Box<RequestSize<T>>,
     layout: Box<Layout<T>>,
     take_focus: Box<TakeFocus<T>>,
-    needs_relayout: Box<dyn Fn(&T) -> bool>,
+    needs_relayout: Box<NeedsRelayout<T>>,
     focus_view: Box<FocusView<T>>,
     call_on_any: Box<CallOnAny<T>>,
     important_area: Box<ImportantArea<T>>,
@@ -106,7 +107,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `draw(&Printer)`.
     pub fn set_draw<F>(&mut self, f: F)
     where
-        F: 'static + Fn(&T, &Printer),
+        F: 'static + Fn(&T, &Printer) + Send + Sync,
     {
         self.draw = Box::new(f);
     }
@@ -117,7 +118,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_draw<F>(self, f: F) -> Self
     where
-        F: 'static + Fn(&T, &Printer),
+        F: 'static + Fn(&T, &Printer) + Send + Sync,
     {
         self.with(|s| s.set_draw(f))
     }
@@ -125,7 +126,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `on_event(Event)`.
     pub fn set_on_event<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, Event) -> EventResult,
+        F: 'static + FnMut(&mut T, Event) -> EventResult + Send + Sync,
     {
         self.on_event = Box::new(f);
     }
@@ -136,7 +137,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_on_event<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, Event) -> EventResult,
+        F: 'static + FnMut(&mut T, Event) -> EventResult + Send + Sync,
     {
         self.with(|s| s.set_on_event(f))
     }
@@ -144,7 +145,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `required_size(Vec2)`.
     pub fn set_required_size<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, Vec2) -> Vec2,
+        F: 'static + FnMut(&mut T, Vec2) -> Vec2 + Send + Sync,
     {
         self.required_size = Box::new(f);
     }
@@ -155,7 +156,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_required_size<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, Vec2) -> Vec2,
+        F: 'static + FnMut(&mut T, Vec2) -> Vec2 + Send + Sync,
     {
         self.with(|s| s.set_required_size(f))
     }
@@ -163,7 +164,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `layout(Vec2)`.
     pub fn set_layout<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, Vec2),
+        F: 'static + FnMut(&mut T, Vec2) + Send + Sync,
     {
         self.layout = Box::new(f);
     }
@@ -174,7 +175,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_layout<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, Vec2),
+        F: 'static + FnMut(&mut T, Vec2) + Send + Sync,
     {
         self.with(|s| s.set_layout(f))
     }
@@ -182,7 +183,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `take_focus(Direction)`.
     pub fn set_take_focus<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>,
+        F: 'static + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus> + Send + Sync,
     {
         self.take_focus = Box::new(f);
     }
@@ -193,7 +194,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_take_focus<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus>,
+        F: 'static + FnMut(&mut T, Direction) -> Result<EventResult, CannotFocus> + Send + Sync,
     {
         self.with(|s| s.set_take_focus(f))
     }
@@ -201,7 +202,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `needs_relayout()`.
     pub fn set_needs_relayout<F>(&mut self, f: F)
     where
-        F: 'static + Fn(&T) -> bool,
+        F: 'static + Fn(&T) -> bool + Send + Sync,
     {
         self.needs_relayout = Box::new(f);
     }
@@ -212,7 +213,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_needs_relayout<F>(self, f: F) -> Self
     where
-        F: 'static + Fn(&T) -> bool,
+        F: 'static + Fn(&T) -> bool + Send + Sync,
     {
         self.with(|s| s.set_needs_relayout(f))
     }
@@ -220,7 +221,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `call_on_any()`.
     pub fn set_call_on_any<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, &Selector, AnyCb),
+        F: 'static + FnMut(&mut T, &Selector, AnyCb) + Send + Sync,
     {
         self.call_on_any = Box::new(f);
     }
@@ -231,7 +232,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_call_on_any<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, &Selector, AnyCb),
+        F: 'static + FnMut(&mut T, &Selector, AnyCb) + Send + Sync,
     {
         self.with(|s| s.set_call_on_any(f))
     }
@@ -239,7 +240,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `important_area()`.
     pub fn set_important_area<F>(&mut self, f: F)
     where
-        F: 'static + Fn(&T, Vec2) -> Rect,
+        F: 'static + Fn(&T, Vec2) -> Rect + Send + Sync,
     {
         self.important_area = Box::new(f);
     }
@@ -250,7 +251,7 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_important_area<F>(self, f: F) -> Self
     where
-        F: 'static + Fn(&T, Vec2) -> Rect,
+        F: 'static + Fn(&T, Vec2) -> Rect + Send + Sync,
     {
         self.with(|s| s.set_important_area(f))
     }
@@ -258,7 +259,7 @@ impl<T> Canvas<T> {
     /// Sets the closure for `focus_view()`.
     pub fn set_focus_view<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>,
+        F: 'static + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound> + Send + Sync,
     {
         self.focus_view = Box::new(f);
     }
@@ -269,13 +270,13 @@ impl<T> Canvas<T> {
     #[must_use]
     pub fn with_focus_view<F>(self, f: F) -> Self
     where
-        F: 'static + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound>,
+        F: 'static + FnMut(&mut T, &Selector) -> Result<EventResult, ViewNotFound> + Send + Sync,
     {
         self.with(|s| s.set_focus_view(f))
     }
 }
 
-impl<T: 'static> View for Canvas<T> {
+impl<T: 'static + Send> View for Canvas<T> {
     fn draw(&self, printer: &Printer) {
         (self.draw)(&self.state, printer);
     }

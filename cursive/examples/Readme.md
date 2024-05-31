@@ -45,6 +45,10 @@ This example uses a `LinearView` to put multiple views side-by-side.
 Here we learn how to create a menubar at the top of the screen, and populate
 it with static and dynamic entried.
 
+## [`menubar_styles`](./menubar_styles.rs)
+
+Example of using StyledString in menubar lables.
+
 ## [`logs`](./logs.rs)
 
 This example defines a custom view to display asynchronous input from a

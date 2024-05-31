@@ -48,9 +48,11 @@ pub mod reexports {
 
     #[cfg(feature = "ansi")]
     pub use ansi_parser;
-    
+
     pub use serde_json;
 }
+
+// use crate as cursive;
 
 pub use cursive_macros::{callback_helpers, recipe};
 
@@ -77,7 +79,7 @@ pub use inventory::submit;
 #[macro_use]
 pub mod builder;
 
-mod cursive;
+mod cursive_root;
 mod cursive_run;
 mod dump;
 mod printer;
@@ -87,7 +89,7 @@ mod xy;
 
 mod div;
 
-pub use self::cursive::{CbSink, Cursive, ScreenId};
+pub use self::cursive_root::{CbSink, Cursive, ScreenId};
 pub use self::cursive_run::CursiveRunner;
 pub use self::dump::Dump;
 pub use self::printer::Printer;
