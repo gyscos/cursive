@@ -412,6 +412,7 @@ impl Key {
 
 /// One of the buttons present on the mouse
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
+#[non_exhaustive]
 pub enum MouseButton {
     /// The left button, used for main actions.
     Left,
@@ -425,7 +426,7 @@ pub enum MouseButton {
     /// Fifth button if the mouse supports it.
     Button5,
 
-    // TODO: handle more buttons?
+    // TODO: handle more buttons? Wheel left/right?
     #[doc(hidden)]
     Other,
 }

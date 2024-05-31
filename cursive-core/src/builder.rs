@@ -1109,10 +1109,10 @@ impl Context {
     /// Store a new variable for resolution.
     ///
     /// Can be a callback, a usize, ...
-    pub fn store<S, T: 'static>(&mut self, name: S, value: T)
+    pub fn store<S, T>(&mut self, name: S, value: T)
     where
         S: Into<String>,
-        T: Clone + Send + Sync,
+        T: Clone + Send + Sync + 'static,
     {
         self.store_with(name, move |_, _| Ok(value.clone()));
     }

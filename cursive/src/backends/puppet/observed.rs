@@ -5,7 +5,6 @@ use crate::theme::Effect;
 use crate::Vec2;
 use std::ops::Index;
 use std::ops::IndexMut;
-use std::string::ToString;
 use std::sync::Arc;
 use std::{fmt, fmt::Display, fmt::Formatter};
 use unicode_segmentation::UnicodeSegmentation;
@@ -380,9 +379,9 @@ impl<'a> ObservedPieceInterface for ObservedLine<'a> {
     }
 }
 
-impl<'a> ToString for ObservedLine<'a> {
-    fn to_string(&self) -> String {
-        self.as_strings().remove(0)
+impl<'a> Display for ObservedLine<'a> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.as_strings().remove(0))
     }
 }
 

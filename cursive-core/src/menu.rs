@@ -21,7 +21,7 @@ use crate::{
 use enumset::EnumSet;
 use std::sync::Arc;
 
-const PLAIN_1CHAR_SPAN: &'static [IndexedSpan<Style>] = &[IndexedSpan {
+const PLAIN_1CHAR_SPAN: &[IndexedSpan<Style>] = &[IndexedSpan {
     content: IndexedCow::Borrowed { start: 0, end: 1 },
     attr: Style {
         effects: EnumSet::EMPTY, // This needs a recent enough `enumset` dependency, we should bump the minimum version to 1.1.0
