@@ -56,7 +56,7 @@ fn main() {
                     .child(
                         LinearLayout::vertical()
                             .child(Checkbox::labelled("Chocolate Sprinkles").on_change({
-                                let toppings = toppings.clone();
+                                let toppings = Arc::clone(&toppings);
                                 move |_, checked| {
                                     if checked {
                                         toppings.lock().insert(Toppings::ChocolateSprinkles);
@@ -66,7 +66,7 @@ fn main() {
                                 }
                             }))
                             .child(Checkbox::labelled("Crushed Almonds").on_change({
-                                let toppings = toppings.clone();
+                                let toppings = Arc::clone(&toppings);
                                 move |_, checked| {
                                     if checked {
                                         toppings.lock().insert(Toppings::CrushedAlmonds);
@@ -76,7 +76,7 @@ fn main() {
                                 }
                             }))
                             .child(Checkbox::labelled("Strawberry Sauce").on_change({
-                                let toppings = toppings.clone();
+                                let toppings = Arc::clone(&toppings);
                                 move |_, checked| {
                                     if checked {
                                         toppings.lock().insert(Toppings::StrawberrySauce);

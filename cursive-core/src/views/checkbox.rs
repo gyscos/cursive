@@ -86,10 +86,8 @@ impl<T: 'static + Hash + Eq> MultiChoiceGroup<T> {
                     if let Some(v) = selectable.upgrade() {
                         groupstate.lock().selections.insert(v);
                     }
-                } else {
-                    if let Some(v) = selectable.upgrade() {
-                        groupstate.lock().selections.remove(&v);
-                    }
+                } else if let Some(v) = selectable.upgrade() {
+                    groupstate.lock().selections.remove(&v);
                 }
             }
         })
