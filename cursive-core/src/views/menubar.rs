@@ -267,7 +267,6 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Arc<menu::Tree>) {
     );
 }
 
-
 impl View for Menubar {
     fn draw(&self, printer: &Printer) {
         // Draw the bar at the top
