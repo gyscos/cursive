@@ -3,14 +3,11 @@ use cursive::traits::Scrollable;
 use cursive::view::{Nameable, Resizable};
 use cursive::views::{Dialog, EditView, LinearLayout, SelectView, TextView};
 use cursive::Cursive;
-use lazy_static::lazy_static;
 
 // This example shows a way to implement a (Google-like) autocomplete search box.
 // Try entering "tok"!
 
-lazy_static! {
-    static ref CITIES: &'static str = include_str!("assets/cities.txt");
-}
+static CITIES: &'static str = include_str!("assets/cities.txt");
 
 fn main() {
     let mut siv = cursive::default();
