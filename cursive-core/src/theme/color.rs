@@ -40,12 +40,12 @@ pub enum BaseColor {
 
 impl BaseColor {
     /// Returns the regular (dark) version of this base color.
-    pub fn dark(self) -> Color {
+    pub const fn dark(self) -> Color {
         Color::Dark(self)
     }
 
     /// Returns the light version of this base color.
-    pub fn light(self) -> Color {
+    pub const fn light(self) -> Color {
         Color::Light(self)
     }
 
@@ -68,10 +68,13 @@ impl BaseColor {
             _ => return None,
         })
     }
-}
 
-impl From<u8> for BaseColor {
-    fn from(n: u8) -> Self {
+    /// Convert a `u8` into a `BaseColor`.
+    ///
+    /// For values 0 to 7, the right-most 3 bits map to (red, green, blue).
+    ///
+    /// Other values are considered modulo 8.
+    pub const fn from_u8(n: u8) -> Self {
         match n % 8 {
             0 => BaseColor::Black,
             1 => BaseColor::Red,
@@ -83,6 +86,12 @@ impl From<u8> for BaseColor {
             7 => BaseColor::White,
             _ => unreachable!(),
         }
+    }
+}
+
+impl From<u8> for BaseColor {
+    fn from(n: u8) -> Self {
+        Self::from_u8(n)
     }
 }
 
@@ -128,11 +137,11 @@ impl Color {
     /// * Colors 8-15 are base light colors.
     /// * Colors 16-231 are rgb colors with 6 values per channel (216 colors).
     /// * Colors 232-255 are grayscale colors.
-    pub fn from_256colors(n: u8) -> Self {
+    pub const fn from_256colors(n: u8) -> Self {
         if n < 8 {
-            Color::Dark(BaseColor::from(n))
+            Color::Dark(BaseColor::from_u8(n))
         } else if n < 16 {
-            Color::Light(BaseColor::from(n))
+            Color::Light(BaseColor::from_u8(n))
         } else if n >= 232 {
             let n = n - 232;
             let value = 8 + 10 * n;
@@ -161,7 +170,7 @@ impl Color {
     /// blue.
     ///
     /// Returns `None` if any of the values exceeds 5.
-    pub fn low_res(r: u8, g: u8, b: u8) -> Option<Self> {
+    pub const fn low_res(r: u8, g: u8, b: u8) -> Option<Self> {
         if r <= 5 && g <= 5 && b <= 5 {
             Some(Color::RgbLowRes(r, g, b))
         } else {

@@ -28,18 +28,19 @@ mod builder;
 ///
 /// This is where this macro comes into play: from an original function that uses a callback, it
 /// generates two helper functions:
+///
 /// * A _maker_ function, to be used when storing variables. This function takes a generic type
-/// implementing the same `Fn` trait as the desired callback, and returns it wrapped in the correct
-/// trait object.
+///   implementing the same `Fn` trait as the desired callback, and returns it wrapped in the correct
+///   trait object.
 /// * A _setter_ function, to be used when writing recipes. This function wraps the original
-/// function, but takes a trait-object instead of a generic `Fn` type, and unwraps it internally.
+///   function, but takes a trait-object instead of a generic `Fn` type, and unwraps it internally.
 ///
 /// # Notes
 ///
 /// * The wrapped function doesn't even have to take `self`, it can be a "static"
-/// constructor method.
+///   constructor method.
 /// * The `maker` function always takes a `Fn`, not a `FnMut` or `FnOnce`.
-/// Use the `cursive::immut1!` (and others) macros to wrap a `FnMut` if you need it.
+///   Use the `cursive::immut1!` (and others) macros to wrap a `FnMut` if you need it.
 ///
 /// # Examples
 ///

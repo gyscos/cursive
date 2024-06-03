@@ -8,6 +8,7 @@ use crate::theme::{
     StyleType, Theme,
 };
 use crate::utils::lines::simple::{prefix, suffix};
+use crate::utils::span::IndexedSpan;
 use crate::with::With;
 use crate::Vec2;
 
@@ -104,14 +105,14 @@ impl<'a, 'b> Printer<'a, 'b> {
     }
 
     /// Prints some styled text at the given position.
-    pub fn print_styled<'c, V, S>(&self, start: V, text: S)
+    pub fn print_styled<V, S>(&self, start: V, text: S)
     where
         V: Into<Vec2>,
-        S: Into<crate::utils::span::SpannedStr<'c, Style>>,
+        S: crate::utils::span::SpannedText<S = IndexedSpan<Style>>,
     {
-        let text = text.into();
         let Vec2 { mut x, y } = start.into();
         for span in text.spans() {
+            let span = span.resolve(text.source());
             self.with_style(*span.attr, |printer| {
                 printer.print_with_width((x, y), span.content, |_| span.width);
                 x += span.width;
@@ -124,7 +125,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// # Parameters
     /// * `start` is the offset used to print the text in the view.
     /// * `text` is a string to print on the screen. It must be a single line, no line wrapping
-    /// will be done.
+    ///   will be done.
     ///
     /// # Description
     /// Prints some text at the given position.

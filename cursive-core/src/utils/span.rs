@@ -25,6 +25,8 @@ pub struct SpannedStr<'a, T> {
 /// Describes an object that appears like a `SpannedStr`.
 pub trait SpannedText {
     /// Type of span returned by `SpannedText::spans()`.
+    ///
+    /// Most of the time it'll be `IndexedSpan`.
     type S: AsRef<IndexedCow>;
 
     /// Returns the source text.
@@ -110,8 +112,13 @@ where
     T: 'a,
 {
     /// Creates a new `SpannedStr` from the given references.
-    pub fn new(source: &'a str, spans: &'a [IndexedSpan<T>]) -> Self {
+    pub const fn new(source: &'a str, spans: &'a [IndexedSpan<T>]) -> Self {
         SpannedStr { source, spans }
+    }
+
+    /// Creates a new empty `SpannedStr`.
+    pub const fn empty() -> Self {
+        Self::new("", &[])
     }
 
     /// Gives access to the parsed styled spans.
@@ -126,19 +133,19 @@ where
     }
 
     /// Returns a reference to the indexed spans.
-    pub fn spans_raw(&self) -> &'a [IndexedSpan<T>] {
+    pub const fn spans_raw(&self) -> &'a [IndexedSpan<T>] {
         self.spans
     }
 
     /// Returns a reference to the source (non-parsed) string.
-    pub fn source(&self) -> &'a str {
+    pub const fn source(&self) -> &'a str {
         self.source
     }
 
     /// Returns `true` if `self` is empty.
     ///
     /// Can be caused by an empty source, or no span.
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.source.is_empty() || self.spans.is_empty()
     }
 
@@ -147,6 +154,18 @@ where
     /// This is the sum of the width of each span.
     pub fn width(&self) -> usize {
         self.spans().map(|s| s.width).sum()
+    }
+
+    /// Create a new `SpannedStr` by borrowing from a `SpannedText`.
+    pub fn from_spanned_text<'b, S>(text: &'b S) -> Self
+    where
+        S: SpannedText<S = IndexedSpan<T>>,
+        'b: 'a,
+    {
+        Self {
+            source: text.source(),
+            spans: text.spans(),
+        }
     }
 }
 

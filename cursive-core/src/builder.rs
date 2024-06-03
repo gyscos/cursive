@@ -791,10 +791,7 @@ macro_rules! resolve_unsigned {
                     .as_u64()
                     .and_then(|config| Self::try_from(config).ok())
                     .ok_or_else(|| {
-                        Error::invalid_config(
-                            format!("Expected unsigned <= {}", Self::max_value()),
-                            config,
-                        )
+                        Error::invalid_config(format!("Expected unsigned <= {}", Self::MAX), config)
                     })
             }
         }
@@ -809,11 +806,7 @@ macro_rules! resolve_signed {
                     .and_then(|config| Self::try_from(config).ok())
                     .ok_or_else(|| {
                         Error::invalid_config(
-                            format!(
-                                "Expected {} <= unsigned <= {}",
-                                Self::min_value(),
-                                Self::max_value()
-                            ),
+                            format!("Expected {} <= unsigned <= {}", Self::MIN, Self::MAX,),
                             config,
                         )
                     })

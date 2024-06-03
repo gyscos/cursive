@@ -29,7 +29,7 @@ impl Style {
     /// Returns a new `Style` that doesn't apply anything.
     ///
     /// Same as [`Style::inherit_parent()`].
-    pub fn none() -> Self {
+    pub const fn none() -> Self {
         Self::inherit_parent()
     }
 
@@ -50,58 +50,66 @@ impl Style {
         Self::merge(&[self, other.into()])
     }
 
+    /// Create a new `Style` from a single `ColorStyle` and no effect.
+    pub const fn from_color_style(color: ColorStyle) -> Self {
+        Style {
+            effects: EnumSet::EMPTY,
+            color,
+        }
+    }
+
     /// Uses `ColorType::InheritParent` for both front and background.
-    pub fn inherit_parent() -> Self {
-        ColorStyle::inherit_parent().into()
+    pub const fn inherit_parent() -> Self {
+        Self::from_color_style(ColorStyle::inherit_parent())
     }
 
     /// Style set by terminal before entering a Cursive program.
-    pub fn terminal_default() -> Self {
-        ColorStyle::terminal_default().into()
+    pub const fn terminal_default() -> Self {
+        Self::from_color_style(ColorStyle::terminal_default())
     }
 
     /// Application background, where no view is present.
-    pub fn background() -> Self {
-        ColorStyle::background().into()
+    pub const fn background() -> Self {
+        Self::from_color_style(ColorStyle::background())
     }
 
     /// Color used by view shadows. Only background matters.
-    pub fn shadow() -> Self {
-        ColorStyle::shadow().into()
+    pub const fn shadow() -> Self {
+        Self::from_color_style(ColorStyle::shadow())
     }
 
     /// Style used for views.
-    pub fn view() -> Self {
-        ColorStyle::view().into()
+    pub const fn view() -> Self {
+        Self::from_color_style(ColorStyle::view())
     }
 
     /// Main text with default background.
-    pub fn primary() -> Self {
-        ColorStyle::primary().into()
+    pub const fn primary() -> Self {
+        Self::from_color_style(ColorStyle::primary())
     }
 
     /// Secondary text color, with default background.
-    pub fn secondary() -> Self {
-        ColorStyle::secondary().into()
+    pub const fn secondary() -> Self {
+        Self::from_color_style(ColorStyle::secondary())
     }
 
     /// Tertiary text color, with default background.
-    pub fn tertiary() -> Self {
-        ColorStyle::tertiary().into()
+    pub const fn tertiary() -> Self {
+        Self::from_color_style(ColorStyle::tertiary())
     }
 
     /// Title text color with default background.
-    pub fn title_primary() -> Self {
-        ColorStyle::title_primary().into()
+    pub const fn title_primary() -> Self {
+        Self::from_color_style(ColorStyle::title_primary())
     }
 
     /// Alternative color for a title.
-    pub fn title_secondary() -> Self {
-        ColorStyle::title_secondary().into()
+    pub const fn title_secondary() -> Self {
+        Self::from_color_style(ColorStyle::title_secondary())
     }
 
     /// Returns a highlight style.
-    pub fn highlight() -> Self {
+    pub const fn highlight() -> Self {
         Style {
             color: ColorStyle::highlight().invert(),
             effects: enumset::enum_set!(Effect::Reverse),
@@ -109,7 +117,7 @@ impl Style {
     }
 
     /// Returns an inactive highlight style.
-    pub fn highlight_inactive() -> Self {
+    pub const fn highlight_inactive() -> Self {
         Style {
             color: ColorStyle::highlight_inactive().invert(),
             effects: enumset::enum_set!(Effect::Reverse),
@@ -204,63 +212,63 @@ impl StyleType {
     }
 
     /// Uses `ColorType::InheritParent` for both front and background.
-    pub fn inherit_parent() -> Self {
-        Style::inherit_parent().into()
+    pub const fn inherit_parent() -> Self {
+        Self::Style(Style::inherit_parent())
     }
 
     /// Style set by terminal before entering a Cursive program.
-    pub fn terminal_default() -> Self {
-        Style::terminal_default().into()
+    pub const fn terminal_default() -> Self {
+        Self::Style(Style::terminal_default())
     }
 
     /// Application background, where no view is present.
-    pub fn background() -> Self {
-        PaletteStyle::Background.into()
+    pub const fn background() -> Self {
+        Self::Palette(PaletteStyle::Background)
     }
 
     /// Color used by view shadows. Only background matters.
-    pub fn shadow() -> Self {
-        PaletteStyle::Shadow.into()
+    pub const fn shadow() -> Self {
+        Self::Palette(PaletteStyle::Shadow)
     }
 
     /// Style used for views.
-    pub fn view() -> Self {
-        PaletteStyle::View.into()
+    pub const fn view() -> Self {
+        Self::Palette(PaletteStyle::View)
     }
 
     /// Main text with default background.
-    pub fn primary() -> Self {
-        PaletteStyle::Primary.into()
+    pub const fn primary() -> Self {
+        Self::Palette(PaletteStyle::Primary)
     }
 
     /// Secondary text color, with default background.
-    pub fn secondary() -> Self {
-        PaletteStyle::Secondary.into()
+    pub const fn secondary() -> Self {
+        Self::Palette(PaletteStyle::Secondary)
     }
 
     /// Tertiary text color, with default background.
-    pub fn tertiary() -> Self {
-        PaletteStyle::Tertiary.into()
+    pub const fn tertiary() -> Self {
+        Self::Palette(PaletteStyle::Tertiary)
     }
 
     /// Title text color with default background.
-    pub fn title_primary() -> Self {
-        PaletteStyle::TitlePrimary.into()
+    pub const fn title_primary() -> Self {
+        Self::Palette(PaletteStyle::TitlePrimary)
     }
 
     /// Alternative color for a title.
-    pub fn title_secondary() -> Self {
-        PaletteStyle::TitleSecondary.into()
+    pub const fn title_secondary() -> Self {
+        Self::Palette(PaletteStyle::TitleSecondary)
     }
 
     /// Returns a highlight style.
-    pub fn highlight() -> Self {
-        PaletteStyle::Highlight.into()
+    pub const fn highlight() -> Self {
+        Self::Palette(PaletteStyle::Highlight)
     }
 
     /// Returns an inactive highlight style.
-    pub fn highlight_inactive() -> Self {
-        PaletteStyle::HighlightInactive.into()
+    pub const fn highlight_inactive() -> Self {
+        Self::Palette(PaletteStyle::HighlightInactive)
     }
 }
 
