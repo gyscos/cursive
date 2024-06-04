@@ -1,4 +1,4 @@
-use crate::{backend, buffer, event, theme, Cursive, Vec2};
+use crate::{backend, buffer, event, Cursive, Vec2};
 use parking_lot::RwLock;
 use std::borrow::{Borrow, BorrowMut};
 use std::time::Duration;
@@ -91,12 +91,6 @@ where
             // Or if the positions change?
             self.clear();
             self.last_sizes = sizes;
-        }
-
-        if self.needs_clear {
-            self.backend
-                .clear(self.current_theme().palette[theme::PaletteColor::Background]);
-            self.needs_clear = false;
         }
 
         self.buffer.write().resize(self.screen_size());

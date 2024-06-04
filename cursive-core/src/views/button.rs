@@ -151,6 +151,7 @@ impl View for Button {
 
         let offset = HAlign::Center.get_offset(self.label.width(), printer.size.x);
 
+        // eprintln!("Button style: {style:?}");
         printer.with_style(style, |printer| {
             // TODO: do we want to "fill" the button highlight color to the full given size?
             // printer.print_hline((0, 0), offset, " ");
