@@ -12,7 +12,7 @@ pub struct XY<T> {
 }
 
 impl<T: PartialEq> PartialEq<(T, T)> for XY<T> {
-    fn eq(&self, &(ref x, ref y): &(T, T)) -> bool {
+    fn eq(&self, (x, y): &(T, T)) -> bool {
         &self.x == x && &self.y == y
     }
 }

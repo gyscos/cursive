@@ -89,6 +89,12 @@ pub struct PrintBuffer {
     size: Vec2,
 }
 
+impl Default for PrintBuffer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PrintBuffer {
     pub const fn new() -> Self {
         PrintBuffer {
@@ -150,7 +156,7 @@ impl PrintBuffer {
     }
 
     pub fn print_at(&mut self, start: Vec2, text: &str, style: ConcreteStyle) {
-        if !(start < self.size) {
+        if !(start.strictly_lt(self.size)) {
             return;
         }
 
