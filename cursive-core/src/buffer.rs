@@ -246,6 +246,7 @@ impl PrintBuffer {
         let terminal_width = self.size.x;
 
         let mut current_pos = Vec2::zero();
+        backend.move_to(current_pos);
 
         for (i, (active, frozen)) in self
             .active_buffer
@@ -262,6 +263,8 @@ impl PrintBuffer {
                 // Let's not change this cell.
                 continue;
             }
+
+            // eprintln!("Non matching: {frozen:?} -> {active:?}");
 
             // Skip empty cells.
             let Some(Cell { style, text, width }) = active else {
