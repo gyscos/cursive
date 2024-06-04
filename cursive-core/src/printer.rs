@@ -361,11 +361,15 @@ impl<'a, 'b> Printer<'a, 'b> {
     where
         T: Into<StyleType>,
     {
+        let style = style.into();
+        // eprintln!("Setting style for subprinter to {style:?}");
+
         let old = self.current_style();
         let style = style
-            .into()
             .resolve(&self.theme.palette)
-            .resolve(&self.theme.palette, old.color);
+            .resolve(&self.theme.palette, old);
+
+        // eprintln!("Style resolved to {style:?}");
 
         self.current_style.set(style);
     }

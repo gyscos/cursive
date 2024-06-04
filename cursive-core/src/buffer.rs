@@ -84,6 +84,8 @@ pub struct PrintBuffer {
     // Used to compute the diff between active and frozen when flushing.
     frozen_buffer: Vec<Option<Cell>>,
 
+    current_style: ConcreteStyle,
+
     size: Vec2,
 }
 
@@ -92,6 +94,7 @@ impl PrintBuffer {
         PrintBuffer {
             active_buffer: Vec::new(),
             frozen_buffer: Vec::new(),
+            current_style : ConcreteStyle::terminal_default(),
             size: Vec2::ZERO,
         }
     }
@@ -236,7 +239,6 @@ impl PrintBuffer {
     pub fn flush(&mut self, backend: &dyn Backend) {
         let terminal_width = self.size.x;
 
-        let mut current_style = ConcreteStyle::default();
         let mut current_pos = Vec2::zero();
 
         for (i, (active, frozen)) in self
@@ -270,8 +272,9 @@ impl PrintBuffer {
             }
 
             // Make sure we have the correct style
-            apply_diff(&current_style, style, backend);
-            current_style = *style;
+            // eprintln!("Applying {style:?} over {:?} for {text} @ {x}:{y}", self.current_style);
+            apply_diff(&self.current_style, style, backend);
+            self.current_style = *style;
 
             backend.print(text);
 
@@ -287,8 +290,24 @@ impl PrintBuffer {
 }
 
 fn apply_diff(old: &ConcreteStyle, new: &ConcreteStyle, backend: &dyn Backend) {
-    // TODO: Apply partial styles?
     if old.color != new.color {
+        // TODO: flush front/back colors separately?
         backend.set_color(new.color);
+    }
+
+    // Check the diff between two effect sets:
+    // - Effects in new but not in old
+    for effect in new.effects.iter() {
+        if old.effects.contains(effect) {
+            continue;
+        }
+        backend.set_effect(effect);
+    }
+    // - Effects in old but not in new
+    for effect in old.effects.iter() {
+        if new.effects.contains(effect) {
+            continue;
+        }
+        backend.unset_effect(effect);
     }
 }

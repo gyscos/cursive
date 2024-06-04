@@ -29,6 +29,16 @@ pub struct ConcreteStyle {
     pub color: ColorPair,
 }
 
+impl ConcreteStyle {
+    /// Return a new concrete style that uses the terminal default colors.
+    pub const fn terminal_default() -> Self {
+        ConcreteStyle {
+            effects: EnumSet::EMPTY,
+            color: ColorPair::terminal_default(),
+        }
+    }
+}
+
 impl Style {
     /// Returns a new `Style` that doesn't apply anything.
     ///
@@ -145,12 +155,23 @@ impl Style {
     }
 
     /// Resolve a style to a concrete style.
-    pub fn resolve(&self, palette: &Palette, previous: ColorPair) -> ConcreteStyle {
+    pub fn resolve(&self, palette: &Palette, previous: ConcreteStyle) -> ConcreteStyle {
         ConcreteStyle {
-            effects: self.effects,
-            color: self.color.resolve(palette, previous),
+            effects: xor_effects(previous.effects, self.effects),
+            color: self.color.resolve(palette, previous.color),
         }
     }
+}
+
+fn xor_effects(mut a: EnumSet<Effect>, b: EnumSet<Effect>) -> EnumSet<Effect> {
+    for effect in b {
+        if a.contains(effect) {
+            a.remove(effect);
+        } else {
+            a.insert(effect);
+        }
+    }
+    a
 }
 
 impl From<Effect> for Style {
@@ -351,7 +372,18 @@ impl<'a> FromIterator<&'a Style> for Style {
 
         for style in iter {
             color = ColorStyle::merge(color, style.color);
-            effects.insert_all(style.effects);
+            // Here we XOR the effects.
+            for effect in style.effects {
+                if effects.contains(effect) {
+                    effects.remove(effect);
+                } else {
+                    effects.insert(effect);
+                }
+            }
+
+            // Or should we just combine all effects?
+            // Once we move to tertiary effects we'll need to properly merge them.
+            // effects.insert_all(style.effects);
         }
 
         Style { effects, color }

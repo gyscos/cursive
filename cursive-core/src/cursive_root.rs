@@ -123,9 +123,17 @@ impl Cursive {
         self.root.layout(size);
     }
 
-    pub(crate) fn draw(&mut self, backend: &RwLock<crate::buffer::PrintBuffer>) {
-        let size = backend.read().size();
-        let printer = Printer::new(size, &self.theme, backend);
+    pub(crate) fn draw(&mut self, buffer: &RwLock<crate::buffer::PrintBuffer>) {
+        let size = buffer.read().size();
+
+        let printer = Printer::new(size, &self.theme, buffer);
+
+        if self.needs_clear {
+            printer.clear();
+            self.needs_clear = false;
+        }
+
+
 
         let selected = self.menubar.receive_events();
 
