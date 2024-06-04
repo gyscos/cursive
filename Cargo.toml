@@ -2,3 +2,7 @@
 
 members = ["cursive", "cursive-core", "cursive-syntect", "cursive-macros"]
 resolver = "2"
+
+[profile.dev]
+incremental = false
+
