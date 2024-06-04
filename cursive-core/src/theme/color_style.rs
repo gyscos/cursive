@@ -129,7 +129,7 @@ impl ColorStyle {
     /// Application background, where no view is present.
     pub const fn background() -> Self {
         Self {
-            front: ColorType::primary(),
+            front: ColorType::background(),
             back: ColorType::background(),
         }
     }
