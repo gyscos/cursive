@@ -405,7 +405,9 @@ impl backend::Backend for Backend {
     }
 
     fn print(&self, text: &str) {
-        ncurses::addstr(text);
+        // &str is assured it doesn't contain any \0 aka nuls here due to PR 786
+        // thus we can ignore the return value and avoid warning: unused `Result` that must be used
+        let _ = ncurses::addstr(text);
     }
 }
 
