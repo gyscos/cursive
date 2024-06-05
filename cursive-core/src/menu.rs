@@ -14,7 +14,7 @@
 //! [menubar]: ../struct.Cursive.html#method.menubar
 
 use crate::utils::markup::PlainStr;
-use crate::utils::span::SpannedStr;
+use crate::utils::span::{SpannedStr, SpannedText as _};
 use crate::{event::Callback, theme::Style, utils::markup::StyledString, Cursive, With};
 use std::sync::Arc;
 
@@ -91,7 +91,7 @@ impl Item {
     /// Returns a vertical bar string if `self` is a delimiter.
     pub fn label(&self) -> &str {
         match *self {
-            Item::Delimiter => "│",
+            Item::Delimiter => DELIMITER.source(),
             Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => label.source(),
         }
     }
@@ -354,10 +354,10 @@ mod tests {
     fn test_styled_label_delimiter() {
         let item = Item::Delimiter;
         let styled_label = item.styled_label();
-        assert_eq!(styled_label.source(), "│");
+        assert_eq!(styled_label.source(), DELIMITER.source());
 
         let expected_spans: Vec<Span<Style>> = vec![Span {
-            content: "│",
+            content: DELIMITER.source(),
             attr: &Style {
                 effects: EnumSet::EMPTY,
                 color: ColorStyle {
