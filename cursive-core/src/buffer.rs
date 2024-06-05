@@ -27,7 +27,7 @@ impl CellWidth {
         match width {
             1 => CellWidth::Single,
             2 => CellWidth::Double,
-            _ => panic!("expected width of 1 or 2 only."),
+            n => panic!("expected width of 1 or 2 only. Got {n}."),
         }
     }
 
