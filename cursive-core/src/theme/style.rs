@@ -1,6 +1,9 @@
 use std::iter::FromIterator;
 
-use super::{Color, ColorPair, ColorStyle, ColorType, Effect, Palette, PaletteColor, PaletteStyle};
+use super::{
+    Color, ColorPair, ColorStyle, ColorType, ConcreteEffects, Effect, Effects, Palette,
+    PaletteColor, PaletteStyle,
+};
 use enumset::EnumSet;
 
 /// Combine a color and effects.
@@ -8,10 +11,8 @@ use enumset::EnumSet;
 /// Represents any transformation that can be applied to text.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Style {
-    // TODO: Support "Inherit Parent" effect?
-    // Maybe a mapping of effect type to (Yes, No, Inherit)?
-    /// Effect to apply.
-    pub effects: EnumSet<Effect>,
+    /// Effects to apply.
+    pub effects: Effects,
 
     /// Color style to apply.
     pub color: ColorStyle,
@@ -23,7 +24,7 @@ pub struct Style {
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 pub struct ConcreteStyle {
     /// Effect to apply.
-    pub effects: EnumSet<Effect>,
+    pub effects: ConcreteEffects,
 
     /// Color style to apply.
     pub color: ColorPair,
@@ -67,7 +68,7 @@ impl Style {
     /// Create a new `Style` from a single `ColorStyle` and no effect.
     pub const fn from_color_style(color: ColorStyle) -> Self {
         Style {
-            effects: EnumSet::EMPTY,
+            effects: Effects::empty(),
             color,
         }
     }
@@ -126,7 +127,7 @@ impl Style {
     pub const fn highlight() -> Self {
         Style {
             color: ColorStyle::highlight().invert(),
-            effects: enumset::enum_set!(Effect::Reverse),
+            effects: Effects::only(Effect::Reverse),
         }
     }
 
@@ -134,7 +135,7 @@ impl Style {
     pub const fn highlight_inactive() -> Self {
         Style {
             color: ColorStyle::highlight_inactive().invert(),
-            effects: enumset::enum_set!(Effect::Reverse),
+            effects: Effects::only(Effect::Reverse),
         }
     }
 
@@ -142,7 +143,7 @@ impl Style {
     #[cfg(feature = "toml")]
     pub(crate) fn parse(table: &toml::Value) -> Option<Self> {
         let table = table.as_table()?;
-        let mut effects: EnumSet<Effect> = EnumSet::new();
+        let mut effects = Effects::empty();
 
         for effect in table.get("effects")?.as_array()? {
             let effect = effect.as_str()?.parse().ok()?;
@@ -157,27 +158,16 @@ impl Style {
     /// Resolve a style to a concrete style.
     pub fn resolve(&self, palette: &Palette, previous: ConcreteStyle) -> ConcreteStyle {
         ConcreteStyle {
-            effects: xor_effects(previous.effects, self.effects),
+            effects: self.effects.resolve(previous.effects),
             color: self.color.resolve(palette, previous.color),
         }
     }
 }
 
-fn xor_effects(mut a: EnumSet<Effect>, b: EnumSet<Effect>) -> EnumSet<Effect> {
-    for effect in b {
-        if a.contains(effect) {
-            a.remove(effect);
-        } else {
-            a.insert(effect);
-        }
-    }
-    a
-}
-
 impl From<Effect> for Style {
     fn from(effect: Effect) -> Self {
         Style {
-            effects: EnumSet::only(effect),
+            effects: Effects::only(effect),
             color: ColorStyle::inherit_parent(),
         }
     }
@@ -186,7 +176,7 @@ impl From<Effect> for Style {
 impl From<ColorStyle> for Style {
     fn from(color: ColorStyle) -> Self {
         Style {
-            effects: EnumSet::new(),
+            effects: Effects::default(),
             color,
         }
     }
@@ -368,22 +358,11 @@ impl From<PaletteStyle> for StyleType {
 impl<'a> FromIterator<&'a Style> for Style {
     fn from_iter<I: IntoIterator<Item = &'a Style>>(iter: I) -> Style {
         let mut color = ColorStyle::inherit_parent();
-        let mut effects = EnumSet::new();
+        let mut effects = Effects::empty();
 
         for style in iter {
             color = ColorStyle::merge(color, style.color);
-            // Here we XOR the effects.
-            for effect in style.effects {
-                if effects.contains(effect) {
-                    effects.remove(effect);
-                } else {
-                    effects.insert(effect);
-                }
-            }
-
-            // Or should we just combine all effects?
-            // Once we move to tertiary effects we'll need to properly merge them.
-            // effects.insert_all(style.effects);
+            effects = Effects::merge(effects, style.effects);
         }
 
         Style { effects, color }

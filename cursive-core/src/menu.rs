@@ -346,9 +346,8 @@ impl Tree {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::theme::{ColorStyle, ColorType, Style};
+    use crate::theme::{ColorStyle, ColorType, Effects, Style};
     use crate::utils::span::Span;
-    use enumset::EnumSet;
 
     #[test]
     fn test_styled_label_delimiter() {
@@ -359,7 +358,7 @@ mod tests {
         let expected_spans: Vec<Span<Style>> = vec![Span {
             content: DELIMITER.source(),
             attr: &Style {
-                effects: EnumSet::EMPTY,
+                effects: Effects::EMPTY,
                 color: ColorStyle {
                     front: ColorType::InheritParent,
                     back: ColorType::InheritParent,

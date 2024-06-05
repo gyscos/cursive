@@ -206,7 +206,7 @@ pub use self::border_style::BorderStyle;
 pub use self::color::{BaseColor, Color};
 pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
-pub use self::effect::Effect;
+pub use self::effect::{ConcreteEffects, Effect, EffectStatus, Effects};
 pub use self::palette::{Palette, PaletteColor, PaletteNode, PaletteStyle};
 pub use self::style::{ConcreteStyle, Style, StyleType};
 #[cfg(feature = "toml")]

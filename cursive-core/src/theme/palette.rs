@@ -1,4 +1,4 @@
-use super::{Color, NoSuchColor, Style};
+use super::{Color, Effects, NoSuchColor, Style};
 use enum_map::{enum_map, Enum, EnumMap};
 #[cfg(feature = "toml")]
 use log::warn;
@@ -101,15 +101,15 @@ fn default_styles() -> EnumMap<PaletteStyle, Style> {
         TitleSecondary => ColorStyle::title_secondary().into(),
         Highlight => Style {
             color: ColorStyle::highlight().invert(),
-            effects: enumset::enum_set!(Effect::Reverse),
+            effects: Effects::only(Effect::Reverse),
         },
         HighlightInactive => Style {
             color: ColorStyle::highlight_inactive().invert(),
-            effects: enumset::enum_set!(Effect::Reverse),
+            effects: Effects::only(Effect::Reverse),
         },
         EditableText => Style {
             color: ColorStyle::secondary(),
-            effects: enumset::enum_set!(Effect::Reverse),
+            effects: Effects::only(Effect::Reverse),
         },
         EditableTextCursor => ColorStyle::secondary().into(),
         EditableTextInactive => ColorStyle::secondary().into(),
@@ -258,6 +258,7 @@ impl Palette {
     pub(crate) fn load_toml_styles(&mut self, table: &toml::value::Table) {
         // TODO: use serde for that?
         for (key, value) in table {
+            // Find out which palette style this defines.
             let key = match key.parse() {
                 Ok(key) => key,
                 _ => {

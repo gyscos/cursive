@@ -90,7 +90,7 @@ impl Orientation {
         }
     }
 
-    /// Same as [`get_mut`].
+    /// Same as [`Self::get_mut()`].
     #[deprecated]
     pub fn get_ref<T>(self, v: &mut XY<T>) -> &mut T {
         self.get_mut(v)
