@@ -45,8 +45,6 @@ fn test_line_breaks() {
 
     let rows: Vec<_> = iter.map(|row| row.resolve(&input)).collect();
 
-    // println!("{:?}", rows);
-
     assert_eq!(
         &rows[..],
         &[

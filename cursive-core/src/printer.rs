@@ -409,13 +409,11 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// ```rust
     /// # use cursive_core::Printer;
     /// # use cursive_core::theme;
-    /// # use cursive_core::buffer;
-    /// # let b = buffer::Dummy::init();
-    /// # let t = theme::load_default();
-    /// # let printer = Printer::new((6,4), &t, &*b);
+    /// # fn with_printer(printer: &Printer) {
     /// printer.with_style(theme::PaletteStyle::Highlight, |printer| {
     ///     printer.print((0, 0), "This text is highlighted!");
     /// });
+    /// # }
     /// ```
     pub fn with_style<F, T>(&self, style: T, f: F)
     where
@@ -485,12 +483,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// ```rust
     /// # use cursive_core::Printer;
-    /// # use cursive_core::theme;
-    /// # use cursive_core::buffer;
-    /// # let b = buffer::Dummy::init();
-    /// # let t = theme::load_default();
-    /// # let printer = Printer::new((6,4), &t, &*b);
+    /// # fn with_printer(printer: &Printer) {
     /// printer.print_box((0, 0), (6, 4), false);
+    /// # }
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S, invert: bool) {
         let start = start.into();

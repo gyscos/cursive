@@ -100,7 +100,7 @@ impl PrintBuffer {
         PrintBuffer {
             active_buffer: Vec::new(),
             frozen_buffer: Vec::new(),
-            current_style : ConcreteStyle::terminal_default(),
+            current_style: ConcreteStyle::terminal_default(),
             size: Vec2::ZERO,
         }
     }
@@ -183,7 +183,10 @@ impl PrintBuffer {
         // TODO: Use some WithWidth(&str, usize) to not re-compute width a thousand times
         for g in text.graphemes(true) {
             let width = g.width();
-            self.set_cell(pos, g, width, style);
+            if width == 0 {
+                continue;
+            }
+            self.set_cell(pos, g, CellWidth::from_usize(width), style);
             pos.x += width;
         }
     }
@@ -207,8 +210,8 @@ impl PrintBuffer {
     /// Set a cell.
     ///
     /// width _must_ be grapheme.width().
-    fn set_cell(&mut self, pos: Vec2, grapheme: &str, width: usize, style: ConcreteStyle) {
-        debug_assert_eq!(width, grapheme.width());
+    fn set_cell(&mut self, pos: Vec2, grapheme: &str, width: CellWidth, style: ConcreteStyle) {
+        debug_assert_eq!(width.as_usize(), grapheme.width());
 
         let id = self.cell_id(pos);
 
@@ -216,10 +219,10 @@ impl PrintBuffer {
         cell.style = style;
         cell.text.clear();
         cell.text.push_str(grapheme);
-        cell.width = CellWidth::from_usize(width);
+        cell.width = width;
 
         // If this is a double-wide grapheme, mark the next cell as blocked.
-        for dx in 1..width {
+        for dx in 1..width.as_usize() {
             if pos.x + dx >= self.size.x {
                 break;
             }

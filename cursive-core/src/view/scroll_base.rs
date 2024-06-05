@@ -216,15 +216,14 @@ impl ScrollBase {
     /// # Examples
     ///
     /// ```rust
+    /// # #[allow(deprecated)]
+    /// # fn with_printer(printer: &cursive_core::Printer) {
     /// # let scrollbase = cursive_core::view::ScrollBase::new();
-    /// # let b = cursive_core::backend::Dummy::init();
-    /// # let t = cursive_core::theme::load_default();
-    /// # let printer = &cursive_core::Printer::new((5,1), &t, &*b);
-    /// # let printer = &printer;
     /// let lines = ["Line 1", "Line number 2"];
     /// scrollbase.draw(printer, |printer, i| {
     ///     printer.print((0, 0), lines[i]);
     /// });
+    /// # }
     /// ```
     pub fn draw<F>(&self, printer: &Printer, line_drawer: F)
     where
