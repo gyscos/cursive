@@ -18,6 +18,8 @@ fn input() -> StyledString {
 
 #[test]
 fn test_next_line_char() {
+    use unicode_width::UnicodeWidthStr;
+
     // From https://github.com/gyscos/cursive/issues/489
     let d: Vec<u8> = vec![194, 133, 45, 127, 29, 127, 127];
     let text = std::str::from_utf8(&d).unwrap();
@@ -31,7 +33,8 @@ fn test_next_line_char() {
             vec![Span {
                 content: "-\u{7f}\u{1d}\u{7f}\u{7f}",
                 attr: &Style::none(),
-                width: 1,
+                // This is 1 with unicode_width < 1.1.13, 5 after.
+                width: "-\u{7f}\u{1d}\u{7f}\u{7f}".width(),
             }],
         ],
     );
