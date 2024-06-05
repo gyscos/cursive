@@ -133,8 +133,6 @@ impl Cursive {
             self.needs_clear = false;
         }
 
-
-
         let selected = self.menubar.receive_events();
 
         let offset = usize::from(!self.menubar.autohide);
