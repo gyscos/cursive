@@ -179,14 +179,32 @@ impl PrintBuffer {
 
         let mut pos = start;
 
+        fn is_control_char(g: &str) -> bool {
+            g.chars().all(|c| {
+                (
+                    c <= '\u{001F}'
+                    //&& (c != '\u{0009}' && c != '\u{000A}') //TODO: special case for tab or newline?
+                ) || (c >= '\u{007F}' && c <= '\u{009F}')
+            })
+        }
         // Fill our active buffer
         // TODO: Use some WithWidth(&str, usize) to not re-compute width a thousand times
         for g in text.graphemes(true) {
             let width = g.width();
+            //if (width == 0) || ("\0" == g) {
             if width == 0 {
                 continue;
             }
-            self.set_cell(pos, g, CellWidth::from_usize(width), style);
+            if is_control_char(g) {
+                debug_assert_eq!(
+                    1, width,
+                    "Control character '{g}' should've had a width of 1"
+                );
+                debug_assert_eq!(1, "\u{FFFD}".width(), "\\0 should've had a width of 1");
+                self.set_cell(pos, "\u{fffd}", CellWidth::from_usize(width), style);
+            } else {
+                self.set_cell(pos, g, CellWidth::from_usize(width), style);
+            }
             pos.x += width;
         }
     }
