@@ -354,10 +354,10 @@ mod tests {
     fn test_styled_label_delimiter() {
         let item = Item::Delimiter;
         let styled_label = item.styled_label();
-        assert_eq!(styled_label.source(), "|");
+        assert_eq!(styled_label.source(), "│");
 
         let expected_spans: Vec<Span<Style>> = vec![Span {
-            content: "|",
+            content: "│",
             attr: &Style {
                 effects: EnumSet::EMPTY,
                 color: ColorStyle {
