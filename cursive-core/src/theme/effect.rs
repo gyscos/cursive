@@ -91,6 +91,11 @@ impl Effects {
         }
     }
 
+    /// Sets the given effect to be `InheritParent`.
+    pub fn remove(&mut self, effect: Effect) {
+        self.statuses[effect] = EffectStatus::InheritParent;
+    }
+
     /// Sets the given effect to be `OppositeParent`.
     pub fn insert(&mut self, effect: Effect) {
         self.statuses[effect] = EffectStatus::OppositeParent;
