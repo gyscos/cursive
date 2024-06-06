@@ -202,9 +202,9 @@ impl PrintBuffer {
                 // practice width = 1).
                 debug_assert_eq!(
                     1, width,
-                    "Control character '{g}' should've had a width of 1"
+                    "Control character '{g:?}' should've had a width of 1"
                 );
-                debug_assert_eq!(1, "\u{FFFD}".width(), "\\0 should've had a width of 1");
+                debug_assert_eq!(1, "\u{FFFD}".width(), "\u{FFFD} should've had a width of 1");
                 self.set_cell(pos, "\u{fffd}", CellWidth::from_usize(width), style);
             } else {
                 self.set_cell(pos, g, CellWidth::from_usize(width), style);
