@@ -4,7 +4,7 @@
 // cargo test --example select_test -- --nocapture
 
 fn main() {
-    print!("To run this example call:\n$ cargo test --bin select_test -- --nocapture\n");
+    println!("To run this example call:\n$ cargo test --example select_test -- --nocapture");
 }
 
 #[cfg(test)]

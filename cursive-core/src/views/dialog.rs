@@ -32,7 +32,7 @@ impl crate::builder::Resolvable for DialogFocus {
             // The config can be either:
             // A string: content
             // An object: button: i
-            if let Ok(string) = context.resolve::<String>(&config) {
+            if let Ok(string) = context.resolve::<String>(config) {
                 if string == "Content" || string == "content" {
                     return Some(DialogFocus::Content);
                 } else {
@@ -40,7 +40,7 @@ impl crate::builder::Resolvable for DialogFocus {
                 }
             }
 
-            if let Ok(obj) = context.resolve::<Object>(&config) {
+            if let Ok(obj) = context.resolve::<Object>(config) {
                 let (key, value) = obj.iter().next()?;
 
                 if key != "Button" {

@@ -74,9 +74,7 @@ fn main() {
 // Just a regular callback for EditView::on_edit
 fn on_edit_callback(siv: &mut cursive::Cursive, text: &str, cursor: usize) {
     siv.call_on_name("status", |v: &mut TextView| {
-        let spaces: String = std::iter::repeat(" ")
-            .take(cursor + "You wrote `".len())
-            .collect();
+        let spaces: String = " ".repeat(cursor + "You wrote `".len());
         v.set_content(format!("You wrote `{text}`\n{spaces}^"));
     })
     .unwrap();
