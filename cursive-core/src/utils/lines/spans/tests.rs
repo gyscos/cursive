@@ -17,7 +17,7 @@ fn input() -> StyledString {
 }
 
 #[test]
-fn test_replacement_have_width_1() {
+fn test_replacement_char_has_width_1() {
     use unicode_width::UnicodeWidthStr;
 
     let replacement_char = "\u{FFFD}";
