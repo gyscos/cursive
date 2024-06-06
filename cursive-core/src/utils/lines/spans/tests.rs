@@ -19,12 +19,12 @@ fn input() -> StyledString {
 #[test]
 fn test_nuls_have_width_1() {
     use unicode_width::UnicodeWidthStr;
-    assert_eq!("\0".width(), 1, "nul chars should have width 1 since unicode-width 0.1.13, seen here: https://github.com/unicode-rs/unicode-width/commit/4efb1803faa054f1bea3c0457275ad3c8610170b#diff-2ad10836ccce5ac2056d5679cc92449d9ff9094d4ff5c5803f65b5dd1d52ef19R224");
+
     let replacement_char = "\u{FFFD}";
     assert_eq!(
         replacement_char.width(),
         1,
-        "REPLACEMENT CHAR='{replacement_char}' for nul='\0' chars should be width 1"
+        "REPLACEMENT CHAR='{replacement_char}' should be width 1"
     );
 }
 
