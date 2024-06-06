@@ -419,7 +419,7 @@ mod tests {
     use crate::backends::puppet::DEFAULT_OBSERVED_STYLE;
 
     /// Expecting fake_screen to be square, # will be replaced with blank.
-    fn get_observed_screen(fake_screen: &Vec<&str>) -> ObservedScreen {
+    fn get_observed_screen(fake_screen: &[&str]) -> ObservedScreen {
         let observed_style: Arc<ObservedStyle> = Arc::new(DEFAULT_OBSERVED_STYLE.clone());
 
         let height = fake_screen.len();
