@@ -351,7 +351,7 @@ impl Variable {
         };
 
         // Some types have special handling
-        if let Some(_) = is_option_type(&field.ty) {
+        if is_option_type(&field.ty).is_some() {
             consumer = Consumer::Opt(Box::new(consumer));
         }
 
@@ -558,7 +558,7 @@ impl syn::parse::Parse for RecipeAttributes {
         find_parameters(&base, &mut base_parameters);
 
         // Compute name and parameters from the expression.
-        let mut name = base_default_name(&base).unwrap_or_else(String::new);
+        let mut name = base_default_name(&base).unwrap_or_default();
 
         // We can't parse this as a regular nested meta.
         // Parse it as a list of `key = value` items.
@@ -573,11 +573,11 @@ impl syn::parse::Parse for RecipeAttributes {
             }
         }
 
-        return Ok(RecipeAttributes {
+        Ok(RecipeAttributes {
             base,
             base_parameters,
             name,
-        });
+        })
     }
 }
 
