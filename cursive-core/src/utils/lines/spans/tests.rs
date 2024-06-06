@@ -52,7 +52,7 @@ fn test_control_chars_have_width_1() {
             "it's supposed to be a string of 1 char"
         );
         let unicode_escape = format!("\\u{{{:04X}}}", c.chars().last().unwrap() as u32);
-        debug_assert_eq!(
+        assert_eq!(
             width, 1,
             "Width of control character {} is not 1",
             unicode_escape
