@@ -1,5 +1,6 @@
 mod game;
 
+use crate::game::{AutoRevealResult, CellContent, RevealResult};
 use cursive::{
     direction::Direction,
     event::{Event, EventResult, MouseButton, MouseEvent},
@@ -8,6 +9,8 @@ use cursive::{
     views::{Button, Dialog, LinearLayout, Panel, SelectView},
     Cursive, Printer, Vec2,
 };
+use std::ops::{Index, IndexMut};
+use cursive_core::traits::Nameable;
 
 fn main() {
     let mut siv = cursive::default();
@@ -22,7 +25,15 @@ fn main() {
                     .child(Button::new_raw(" Best scores ", |s| {
                         s.add_layer(Dialog::info("Not yet!").title("Scores"))
                     }))
-                    .child(Button::new_raw("    Exit     ", |s| s.quit())),
+                    .child(Button::new_raw("  Controls   ", |s| {
+                        s.add_layer(Dialog::info(
+                            "Controls:
+Reveal cell:                  left click
+Mark as mine:                 right-click
+Reveal nearby unmarked cells: middle-click",
+                        ).title("Controls"))
+                    }))
+                    .child(Button::new_raw("     Exit    ", |s| s.quit())),
             ),
     );
 
@@ -67,9 +78,33 @@ fn show_options(siv: &mut Cursive) {
 
 #[derive(Clone, Copy, PartialEq)]
 enum Cell {
-    Visible(usize),
-    Flag,
     Unknown,
+    Flag,
+    Visible(usize),
+    Bomb,
+}
+
+// NOTE: coordinates [y][x]
+struct Overlay(Vec<Vec<Cell>>);
+
+impl Overlay {
+    pub fn new(size: Vec2) -> Self {
+        Self(vec![vec![Cell::Unknown; size.x]; size.y])
+    }
+}
+
+impl Index<Vec2> for Overlay {
+    type Output = Cell;
+
+    fn index(&self, pos: Vec2) -> &Self::Output {
+        &self.0[pos.y][pos.x]
+    }
+}
+
+impl IndexMut<Vec2> for Overlay {
+    fn index_mut(&mut self, pos: Vec2) -> &mut Self::Output {
+        &mut self.0[pos.y][pos.x]
+    }
 }
 
 struct BoardView {
@@ -77,7 +112,7 @@ struct BoardView {
     board: game::Board,
 
     // Visible board
-    overlay: Vec<Cell>,
+    overlay: Overlay,
 
     focused: Option<Vec2>,
     _missing_mines: usize,
@@ -85,108 +120,121 @@ struct BoardView {
 
 impl BoardView {
     pub fn new(options: game::Options) -> Self {
-        let overlay = vec![Cell::Unknown; options.size.x * options.size.y];
         let board = game::Board::new(options);
         BoardView {
             board,
-            overlay,
+            overlay: Overlay::new(options.size),
             focused: None,
             _missing_mines: options.mines,
         }
     }
 
     fn get_cell(&self, mouse_pos: Vec2, offset: Vec2) -> Option<Vec2> {
-        mouse_pos
-            .checked_sub(offset)
-            .map(|pos| pos.map_x(|x| x / 2))
-            .and_then(|pos| {
-                if pos.fits_in(self.board.size) {
-                    Some(pos)
-                } else {
-                    None
-                }
-            })
+        let pos = mouse_pos.checked_sub(offset)?;
+        let pos = pos.map_x(|x| x / 2);
+        if pos.fits_in(self.board.size - (1, 1)) {
+            Some(pos)
+        } else {
+            None
+        }
     }
 
     fn flag(&mut self, pos: Vec2) {
-        if let Some(i) = self.board.cell_id(pos) {
-            let new_cell = match self.overlay[i] {
-                Cell::Unknown => Cell::Flag,
-                Cell::Flag => Cell::Unknown,
-                other => other,
-            };
-            self.overlay[i] = new_cell;
-        }
+        let new_cell = match self.overlay[pos] {
+            Cell::Unknown => Cell::Flag,
+            Cell::Flag => Cell::Unknown,
+            other => other,
+        };
+        self.overlay[pos] = new_cell;
     }
 
     fn reveal(&mut self, pos: Vec2) -> EventResult {
-        if let Some(i) = self.board.cell_id(pos) {
-            if self.overlay[i] != Cell::Unknown {
-                return EventResult::Consumed(None);
-            }
+        if self.overlay[pos] != Cell::Unknown {
+            return EventResult::Consumed(None);
+        }
 
-            // Action!
-            match self.board.cells[i] {
-                game::Cell::Bomb => {
-                    return EventResult::with_cb(|s| {
-                        s.add_layer(Dialog::text("BOOOM").button("Ok", |s| {
-                            s.pop_layer();
-                            s.pop_layer();
-                        }));
-                    })
-                }
-                game::Cell::Free(n) => {
-                    self.overlay[i] = Cell::Visible(n);
-                    if n == 0 {
-                        // Reveal all surrounding cells
-                        for p in self.board.neighbours(pos) {
-                            self.reveal(p);
-                        }
-                    }
-                }
+        match self.board.reveal(pos) {
+            RevealResult::Revealed(opened_cells) => {
+                self.open_cells(opened_cells);
+                EventResult::Consumed(None)
+            }
+            RevealResult::Loss => {
+                self.open_all_mines();
+                Self::result_loss()
+            }
+            RevealResult::Victory => {
+                self.open_all_cells();
+                Self::result_victory()
             }
         }
-        EventResult::Consumed(None)
     }
 
     fn auto_reveal(&mut self, pos: Vec2) -> EventResult {
-        if let Some(i) = self.board.cell_id(pos) {
-            if let Cell::Visible(n) = self.overlay[i] {
-                // First: is every possible cell tagged?
-                let neighbours = self.board.neighbours(pos);
-                let tagged = neighbours
-                    .iter()
-                    .filter_map(|&pos| self.board.cell_id(pos))
-                    .map(|i| self.overlay[i])
-                    .filter(|&cell| cell == Cell::Flag)
-                    .count();
-                if tagged != n {
-                    return EventResult::Consumed(None);
-                }
-
-                for p in neighbours {
-                    let result = self.reveal(p);
-                    if result.has_callback() {
-                        return result;
-                    }
-                }
+        match self.board.auto_reveal(pos) {
+            AutoRevealResult::Revealed(opened_cells) => {
+                self.open_cells(opened_cells);
+                return EventResult::Consumed(None);
+            }
+            AutoRevealResult::Victory => {
+                self.open_all_cells();
+                Self::result_victory()
             }
         }
+    }
 
-        EventResult::Consumed(None)
+    fn result_loss() -> EventResult {
+        EventResult::with_cb(|s| Self::change_board_button_label(s, "Defeted"))
+    }
+
+    fn result_victory() -> EventResult {
+        EventResult::with_cb(|s| Self::change_board_button_label(s, "Victory!"))
+    }
+
+    fn change_board_button_label(s: &mut Cursive, label: &str) {
+        s.call_on_name("board", |d: &mut Dialog| {
+            d.buttons_mut().last().expect("button must exists").set_label(label);
+        });
+    }
+
+    fn open_cells(&mut self, opened_cells: Vec<Vec2>) {
+        for pos in opened_cells {
+            let CellContent::Free(near_bombs) = self.board[pos].content else {
+                panic!("must be variant CellContent::Free()")
+            };
+
+            self.overlay[pos] = Cell::Visible(near_bombs);
+        }
+    }
+
+    fn open_all_cells(&mut self) {
+        for pos in self.board.field.all_cell_pos_iter() {
+            self.overlay[pos] = match self.board[pos].content {
+                CellContent::Bomb => Cell::Bomb,
+                CellContent::Free(near_bombs) => Cell::Visible(near_bombs),
+            };
+        }
+    }
+
+    fn open_all_mines(&mut self) {
+        for pos in self.board.field.all_cell_pos_iter() {
+            if let Cell::Bomb = self.overlay[pos] {
+                self.overlay[pos] = Cell::Bomb;
+            }
+        }
     }
 }
 
 impl cursive::view::View for BoardView {
     fn draw(&self, printer: &Printer) {
-        for (i, cell) in self.overlay.iter().enumerate() {
+        for (i, cell) in self.overlay.0.iter().flatten().enumerate() {
             let x = (i % self.board.size.x) * 2;
             let y = i / self.board.size.x;
 
             let text = match *cell {
-                Cell::Unknown => "[]",
-                Cell::Flag => "()",
+                Cell::Unknown => " □",
+                Cell::Flag => " ■",
                 Cell::Visible(n) => ["  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"][n],
+                Cell::Bomb => "\u{01F4A3} "
             };
 
             let color = match *cell {
@@ -242,9 +290,7 @@ impl cursive::view::View for BoardView {
                                 self.flag(pos);
                                 return EventResult::Consumed(None);
                             }
-                            MouseButton::Middle => {
-                                return self.auto_reveal(pos);
-                            }
+                            MouseButton::Middle => return self.auto_reveal(pos),
                             _ => (),
                         }
                     }
@@ -266,19 +312,11 @@ impl cursive::view::View for BoardView {
 fn new_game(siv: &mut Cursive, options: game::Options) {
     let _board = game::Board::new(options);
 
-    siv.add_layer(
-        Dialog::new()
-            .title("Minesweeper")
-            .content(LinearLayout::horizontal().child(Panel::new(BoardView::new(options))))
-            .button("Quit game", |s| {
-                s.pop_layer();
-            }),
-    );
+    let dialog = Dialog::new()
+        .title("Minesweeper")
+        .content(LinearLayout::horizontal().child(Panel::new(BoardView::new(options))))
+        .button("Quit game", |s| { s.pop_layer(); })
+        .with_name("board");
 
-    siv.add_layer(Dialog::info(
-        "Controls:
-Reveal cell:                  left click
-Mark as mine:                 right-click
-Reveal nearby unmarked cells: middle-click",
-    ));
+    siv.add_layer(dialog);
 }

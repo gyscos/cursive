@@ -1,6 +1,8 @@
+use rand::seq::SliceRandom;
+use std::ops::{Index, IndexMut};
+use ahash::AHashSet;
 use cursive::Vec2;
-use rand::{thread_rng, Rng};
-// use std::cmp::max;
+use cursive_core::Rect;
 
 #[derive(Clone, Copy)]
 pub struct Options {
@@ -8,15 +10,141 @@ pub struct Options {
     pub mines: usize,
 }
 
-#[derive(Clone, Copy)]
-pub enum Cell {
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum CellContent {
     Bomb,
+    // numer of near bombs
     Free(usize),
 }
 
+#[derive(Copy, Clone)]
+pub struct Cell {
+    is_opened: bool,
+    pub content: CellContent,
+}
+
+impl Cell {
+    pub fn new(content: CellContent) -> Self {
+        Self {
+            is_opened: false,
+            content,
+        }
+    }
+}
+
+pub struct Field {
+    size: Vec2,
+    cells: Vec<Cell>,
+}
+
+impl Field {
+    fn new(size: Vec2) -> Self {
+        Self {
+            size,
+            // init stub for cells, see method `Field::place_bombs()` details
+            cells: vec![Cell::new(CellContent::Free(0)); size.x * size.y],
+        }
+    }
+
+    fn pos_to_cell_idx(&self, pos: Vec2) -> usize {
+        pos.x + pos.y * self.size.x
+    }
+
+    fn place_bombs(&mut self, click_pos: Vec2, bombs_count: usize) {
+        // For avoiding losing on first player's move we should place bombs excluding
+        // position where player clicked and it's neighbours
+
+        // calculation cells from starting rect
+        let rect = self.neighbours_rect(click_pos);
+        let exclusion_cells: Vec<_> = (rect.top()..rect.bottom())
+            .flat_map(|y| (rect.left()..rect.right()).map(move |x| Vec2::new(x, y)))
+            .collect();
+
+        // init bombs on board
+        let mut cells = Vec::new();
+        for i in 0..self.cells.len() - exclusion_cells.len() {
+            let cell = if i < bombs_count {
+                Cell::new(CellContent::Bomb)
+            } else {
+                Cell::new(CellContent::Free(0))
+            };
+
+            cells.push(cell);
+        }
+
+        // shuffle them
+        let mut rng = rand::thread_rng();
+        cells.shuffle(&mut rng);
+
+        // push empty cells near of cursor to avoid bombs in this positions
+        for pos in exclusion_cells {
+            cells.insert(self.pos_to_cell_idx(pos), Cell::new(CellContent::Free(0)));
+        }
+
+        self.cells = cells;
+
+        // recalculate near bombs
+        for pos in self.all_cell_pos_iter() {
+            if let CellContent::Free(_) = self[pos].content {
+                self[pos].content = CellContent::Free(self.calc_neighbors_bomb_count(pos));
+            }
+        }
+    }
+
+    pub fn all_cell_pos_iter(&self) -> impl Iterator<Item=Vec2> {
+        let size = self.size;
+        (0..size.y).flat_map(move |x| (0..size.x).map(move |y| Vec2::new(y, x)))
+    }
+
+    fn neighbours_rect(&self, pos: Vec2) -> Rect {
+        let pos_min = pos.saturating_sub((1, 1));
+        let pos_max = (pos + (2, 2)).or_min(self.size);
+
+        Rect::from_corners(pos_min, pos_max)
+    }
+
+    fn neighbours(&self, pos: Vec2) -> impl Iterator<Item=Vec2> {
+        let pos_min = pos.saturating_sub((1, 1));
+        let pos_max = (pos + (2, 2)).or_min(self.size);
+
+        (pos_min.y..pos_max.y)
+            .flat_map(move |x| (pos_min.x..pos_max.x).map(move |y| Vec2::new(y, x)))
+            .filter(move |&p| p != pos)
+    }
+
+    fn calc_neighbors_bomb_count(&self, cell_pos: Vec2) -> usize {
+        let mut bombs_count = 0;
+        for near_pos in self.neighbours(cell_pos) {
+            if self[near_pos].content == CellContent::Bomb {
+                bombs_count += 1;
+            }
+        }
+
+        bombs_count
+    }
+}
+
+impl Index<Vec2> for Field {
+    type Output = Cell;
+
+    fn index(&self, pos: Vec2) -> &Self::Output {
+        &self.cells[self.pos_to_cell_idx(pos)]
+    }
+}
+
+impl IndexMut<Vec2> for Field {
+    fn index_mut(&mut self, pos: Vec2) -> &mut Self::Output {
+        let idx = self.pos_to_cell_idx(pos);
+        &mut self.cells[idx]
+    }
+}
+
+
 pub struct Board {
     pub size: Vec2,
-    pub cells: Vec<Cell>,
+    pub bombs_count: usize,
+    pub field: Field,
+    is_bomb_placed: bool,
 }
 
 impl Board {
@@ -31,56 +159,97 @@ impl Board {
             });
         }
 
-        let mut board = Board {
+        Board {
             size: options.size,
-            cells: vec![Cell::Free(0); n_cells],
-        };
+            bombs_count: options.mines,
+            is_bomb_placed: false,
+            field: Field::new(options.size),
+        }
+    }
 
-        for _ in 0..options.mines {
-            // Find a free cell to put a bomb
-            let i = loop {
-                let i = thread_rng().gen_range(0..n_cells);
+    fn check_victory(&self) -> bool {
+        self.field.cells.iter().filter(|x| matches!(x.content, CellContent::Free(_))).all(|x| x.is_opened)
+    }
 
-                if let Cell::Bomb = board.cells[i] {
-                    continue;
-                }
+    fn place_bombs_if_needed(&mut self, pos: Vec2) {
+        if !self.is_bomb_placed {
+            self.field.place_bombs(pos, self.bombs_count);
 
-                break i;
-            };
+            self.is_bomb_placed = true;
+        }
+    }
 
-            // We know we'll go through since that's how we picked i...
-            board.cells[i] = Cell::Bomb;
-            // Increase count on adjacent cells
+    pub fn reveal(&mut self, pos: Vec2) -> RevealResult {
+        self.place_bombs_if_needed(pos);
 
-            let pos = Vec2::new(i % options.size.x, i / options.size.x);
-            for p in board.neighbours(pos) {
-                if let Some(&mut Cell::Free(ref mut n)) = board.get_mut(p) {
-                    *n += 1;
+        let cell = &mut self.field[pos];
+        match cell.content {
+            CellContent::Bomb => RevealResult::Loss,
+            CellContent::Free(_) => {
+                cell.is_opened = true;
+
+                match self.auto_reveal(pos) {
+                    AutoRevealResult::Victory => RevealResult::Victory,
+                    AutoRevealResult::Revealed(mut opened_poses) => {
+                        opened_poses.push(pos);
+
+                        RevealResult::Revealed(opened_poses)
+                    }
                 }
             }
         }
-
-        board
     }
 
-    fn get_mut(&mut self, pos: Vec2) -> Option<&mut Cell> {
-        self.cell_id(pos).map(move |i| &mut self.cells[i])
-    }
+    pub fn auto_reveal(&mut self, pos: Vec2) -> AutoRevealResult {
+        self.place_bombs_if_needed(pos);
 
-    pub fn cell_id(&self, pos: Vec2) -> Option<usize> {
-        if pos < self.size {
-            Some(pos.x + pos.y * self.size.x)
-        } else {
-            None
+
+        let mut opened = AHashSet::new();
+        if let CellContent::Free(0) = self.field[pos].content {
+            for near_pos in self.field.neighbours(pos) {
+                self.check_neighbours_for_auto_reveal(near_pos, &mut opened);
+            }
+        }
+
+        match self.check_victory() {
+            true => AutoRevealResult::Victory,
+            false => AutoRevealResult::Revealed(opened.into_iter().collect())
         }
     }
 
-    pub fn neighbours(&self, pos: Vec2) -> Vec<Vec2> {
-        let pos_min = pos.saturating_sub((1, 1));
-        let pos_max = (pos + (2, 2)).or_min(self.size);
-        (pos_min.x..pos_max.x)
-            .flat_map(|x| (pos_min.y..pos_max.y).map(move |y| Vec2::new(x, y)))
-            .filter(|&p| p != pos)
-            .collect()
+    fn check_neighbours_for_auto_reveal(&mut self, pos: Vec2, opened: &mut AHashSet<Vec2>) {
+        if self.field[pos].is_opened || self.field[pos].content == CellContent::Bomb || opened.contains(&pos) {
+            return;
+        }
+
+        debug_assert!(matches!(self.field[pos].content, CellContent::Free(_)), "failed logic for auto reveal");
+
+        self.field[pos].is_opened = true;
+        opened.insert(pos);
+
+        if let CellContent::Free(0) = self.field[pos].content {
+            for pos in self.field.neighbours(pos) {
+                self.check_neighbours_for_auto_reveal(pos, opened);
+            }
+        }
     }
+}
+
+impl Index<Vec2> for Board {
+    type Output = Cell;
+
+    fn index(&self, pos: Vec2) -> &Self::Output {
+        &self.field[pos]
+    }
+}
+
+pub enum RevealResult {
+    Revealed(Vec<Vec2>),
+    Loss,
+    Victory,
+}
+
+pub enum AutoRevealResult {
+    Revealed(Vec<Vec2>),
+    Victory,
 }
