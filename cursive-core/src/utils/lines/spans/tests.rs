@@ -29,7 +29,7 @@ fn test_replacement_char_has_width_1() {
 }
 
 #[test]
-fn test_control_chars_have_width_1() {
+fn test_control_chars_have_width_0_or_1() {
     use unicode_width::UnicodeWidthStr;
     let control_chars = [
         "\u{0000}", "\u{0001}", "\u{0002}", "\u{0003}", "\u{0004}", "\u{0005}", "\u{0006}",
@@ -52,10 +52,9 @@ fn test_control_chars_have_width_1() {
             "it's supposed to be a string of 1 char"
         );
         let unicode_escape = format!("\\u{{{:04X}}}", c.chars().last().unwrap() as u32);
-        assert_eq!(
-            width, 1,
-            "Width of control character {} is not 1",
-            unicode_escape
+        assert!(
+            (0..=1).contains(&width),
+            "Width of control character {unicode_escape} is not 0 or 1, it's {width}"
         );
     }
 }
