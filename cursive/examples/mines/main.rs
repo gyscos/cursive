@@ -115,6 +115,7 @@ struct BoardView {
     overlay: Overlay,
 
     focused: Option<Vec2>,
+    enabled: bool,
     _missing_mines: usize,
 }
 
@@ -125,6 +126,7 @@ impl BoardView {
             board,
             overlay: Overlay::new(options.size),
             focused: None,
+            enabled: true,
             _missing_mines: options.mines,
         }
     }
@@ -183,15 +185,19 @@ impl BoardView {
     }
 
     fn result_loss() -> EventResult {
-        EventResult::with_cb(|s| Self::change_board_button_label(s, "Defeted"))
+        EventResult::with_cb(|s| Self::make_end_game_result(s, "Defeted"))
     }
 
     fn result_victory() -> EventResult {
-        EventResult::with_cb(|s| Self::change_board_button_label(s, "Victory!"))
+        EventResult::with_cb(|s| Self::make_end_game_result(s, "Victory!"))
     }
 
-    fn change_board_button_label(s: &mut Cursive, label: &str) {
-        s.call_on_name("board", |d: &mut Dialog| {
+    fn make_end_game_result(s: &mut Cursive, button_label: &'static str) {
+        s.call_on_name("board", |b: &mut BoardView| b.enabled = false);
+        Self::change_game_button_label(s, button_label);
+    }
+    fn change_game_button_label(s: &mut Cursive, label: &str) {
+        s.call_on_name("game", |d: &mut Dialog| {
             d.buttons_mut().last().expect("button must exists").set_label(label);
         });
     }
@@ -263,42 +269,44 @@ impl cursive::view::View for BoardView {
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
-        match event {
-            Event::Mouse {
-                offset,
-                position,
-                event: MouseEvent::Press(_btn),
-            } => {
-                // Get cell for position
-                if let Some(pos) = self.get_cell(position, offset) {
-                    self.focused = Some(pos);
-                    return EventResult::Consumed(None);
-                }
-            }
-            Event::Mouse {
-                offset,
-                position,
-                event: MouseEvent::Release(btn),
-            } => {
-                // Get cell for position
-                if let Some(pos) = self.get_cell(position, offset) {
-                    if self.focused == Some(pos) {
-                        // We got a click here!
-                        match btn {
-                            MouseButton::Left => return self.reveal(pos),
-                            MouseButton::Right => {
-                                self.flag(pos);
-                                return EventResult::Consumed(None);
-                            }
-                            MouseButton::Middle => return self.auto_reveal(pos),
-                            _ => (),
-                        }
+        if self.enabled {
+            match event {
+                Event::Mouse {
+                    offset,
+                    position,
+                    event: MouseEvent::Press(_btn),
+                } => {
+                    // Get cell for position
+                    if let Some(pos) = self.get_cell(position, offset) {
+                        self.focused = Some(pos);
+                        return EventResult::Consumed(None);
                     }
-
-                    self.focused = None;
                 }
+                Event::Mouse {
+                    offset,
+                    position,
+                    event: MouseEvent::Release(btn),
+                } => {
+                    // Get cell for position
+                    if let Some(pos) = self.get_cell(position, offset) {
+                        if self.focused == Some(pos) {
+                            // We got a click here!
+                            match btn {
+                                MouseButton::Left => return self.reveal(pos),
+                                MouseButton::Right => {
+                                    self.flag(pos);
+                                    return EventResult::Consumed(None);
+                                }
+                                MouseButton::Middle => return self.auto_reveal(pos),
+                                _ => (),
+                            }
+                        }
+
+                        self.focused = None;
+                    }
+                }
+                _ => (),
             }
-            _ => (),
         }
 
         EventResult::Ignored
@@ -314,9 +322,9 @@ fn new_game(siv: &mut Cursive, options: game::Options) {
 
     let dialog = Dialog::new()
         .title("Minesweeper")
-        .content(LinearLayout::horizontal().child(Panel::new(BoardView::new(options))))
+        .content(LinearLayout::horizontal().child(Panel::new(BoardView::new(options).with_name("board"))))
         .button("Quit game", |s| { s.pop_layer(); })
-        .with_name("board");
+        .with_name("game");
 
     siv.add_layer(dialog);
 }
