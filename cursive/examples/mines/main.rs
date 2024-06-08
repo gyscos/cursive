@@ -21,23 +21,27 @@ fn main() {
             .padding_lrtb(2, 2, 1, 1)
             .content(
                 LinearLayout::vertical()
-                    .child(Button::new_raw("  New game   ", show_options))
-                    .child(Button::new_raw(" Best scores ", |s| {
-                        s.add_layer(Dialog::info("Not yet!").title("Scores"))
-                    }))
-                    .child(Button::new_raw("  Controls   ", |s| {
-                        s.add_layer(Dialog::info(
-                            "Controls:
-Reveal cell:                  left click
-Mark as mine:                 right-click
-Reveal nearby unmarked cells: middle-click",
-                        ).title("Controls"))
-                    }))
+                    .child(Button::new_raw("   New game  ", show_options))
+                    .child(Button::new_raw("   Controls  ", show_controls))
+                    .child(Button::new_raw("    Scores   ", show_scores))
                     .child(Button::new_raw("     Exit    ", |s| s.quit())),
             ),
     );
 
     siv.run();
+}
+
+fn show_controls(s: &mut Cursive) {
+    s.add_layer(Dialog::info(
+        "Controls:
+Reveal cell:                  left click
+Mark as mine:                 right-click
+Reveal nearby unmarked cells: middle-click",
+    ).title("Controls"))
+}
+
+fn show_scores(s: &mut Cursive) {
+    s.add_layer(Dialog::info("Not yet!").title("Scores"))
 }
 
 fn show_options(siv: &mut Cursive) {
@@ -132,8 +136,7 @@ impl BoardView {
     }
 
     fn get_cell(&self, mouse_pos: Vec2, offset: Vec2) -> Option<Vec2> {
-        let pos = mouse_pos.checked_sub(offset)?;
-        let pos = pos.map_x(|x| x / 2);
+        let pos = mouse_pos.checked_sub(offset)?.map_x(|x| x / 2);
         if pos.fits_in(self.board.size - (1, 1)) {
             Some(pos)
         } else {
