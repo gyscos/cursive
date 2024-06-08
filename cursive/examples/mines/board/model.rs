@@ -1,11 +1,13 @@
 use rand::seq::SliceRandom;
 use std::ops::{Index, IndexMut};
+use std::slice::Iter;
 use ahash::AHashSet;
 use cursive::Vec2;
 use cursive_core::Rect;
+use crate::board::model::CellState::*;
 
 #[derive(Clone, Copy)]
-pub struct Options {
+pub(crate) struct Options {
     pub size: Vec2,
     pub mines: usize,
 }
@@ -17,22 +19,31 @@ pub enum CellContent {
     Free(usize),
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum CellState {
+    Closed,
+    // Marked by user, that this cell contains bomb
+    Marked,
+    Opened,
+}
+
 #[derive(Copy, Clone)]
 pub struct Cell {
-    is_opened: bool,
-    pub content: CellContent,
+    pub(crate) state: CellState,
+
+    pub(crate) content: CellContent,
 }
 
 impl Cell {
     pub fn new(content: CellContent) -> Self {
         Self {
-            is_opened: false,
+            state: Closed,
             content,
         }
     }
 }
 
-pub struct Field {
+pub(crate) struct Field {
     size: Vec2,
     cells: Vec<Cell>,
 }
@@ -145,6 +156,7 @@ pub struct Board {
     pub bombs_count: usize,
     pub field: Field,
     is_bomb_placed: bool,
+    pub is_ended: bool,
 }
 
 impl Board {
@@ -164,11 +176,13 @@ impl Board {
             bombs_count: options.mines,
             is_bomb_placed: false,
             field: Field::new(options.size),
+            is_ended: false,
         }
     }
 
-    fn check_victory(&self) -> bool {
-        self.field.cells.iter().filter(|x| matches!(x.content, CellContent::Free(_))).all(|x| x.is_opened)
+    pub fn iter(&self) -> Iter<'_, Cell>
+    {
+        self.field.cells.iter()
     }
 
     fn place_bombs_if_needed(&mut self, pos: Vec2) {
@@ -184,54 +198,80 @@ impl Board {
 
         let cell = &mut self.field[pos];
         match cell.content {
-            CellContent::Bomb => RevealResult::Loss,
+            CellContent::Bomb => {
+                self.is_ended = true;
+
+                RevealResult::Loss
+            }
             CellContent::Free(_) => {
-                cell.is_opened = true;
+                cell.state = Opened;
 
-                match self.auto_reveal(pos) {
-                    AutoRevealResult::Victory => RevealResult::Victory,
-                    AutoRevealResult::Revealed(mut opened_poses) => {
-                        opened_poses.push(pos);
-
-                        RevealResult::Revealed(opened_poses)
-                    }
-                }
+                self.auto_reveal(pos)
             }
         }
     }
 
-    pub fn auto_reveal(&mut self, pos: Vec2) -> AutoRevealResult {
+    pub(crate) fn auto_reveal(&mut self, pos: Vec2) -> RevealResult {
         self.place_bombs_if_needed(pos);
 
 
         let mut opened = AHashSet::new();
-        if let CellContent::Free(0) = self.field[pos].content {
-            for near_pos in self.field.neighbours(pos) {
-                self.check_neighbours_for_auto_reveal(near_pos, &mut opened);
+        if let CellContent::Free(n) = self.field[pos].content {
+            let market_cells = self.field.neighbours(pos).filter(|pos| self.field[*pos].state == Marked).count();
+            if market_cells == n {
+                for near_pos in self.field.neighbours(pos) {
+                    if !self.check_neighbours_for_auto_reveal(near_pos, &mut opened) {
+                        return RevealResult::Loss;
+                    }
+                }
             }
         }
 
         match self.check_victory() {
-            true => AutoRevealResult::Victory,
-            false => AutoRevealResult::Revealed(opened.into_iter().collect())
+            true => {
+                self.is_ended = true;
+                RevealResult::Victory
+            }
+            false => RevealResult::Revealed
         }
     }
 
-    fn check_neighbours_for_auto_reveal(&mut self, pos: Vec2, opened: &mut AHashSet<Vec2>) {
-        if self.field[pos].is_opened || self.field[pos].content == CellContent::Bomb || opened.contains(&pos) {
-            return;
+    pub(crate) fn toggle_flag(&mut self, pos: Vec2) {
+        self.place_bombs_if_needed(pos);
+
+        let cell = &mut self.field[pos];
+        cell.state = match cell.state {
+            Closed => Marked,
+            Marked => Closed,
+            Opened => Opened,
+        }
+    }
+
+    // NOTE: Returned when was bomb
+    fn check_neighbours_for_auto_reveal(&mut self, pos: Vec2, opened: &mut AHashSet<Vec2>) -> bool {
+        if self.field[pos].state == Opened || opened.contains(&pos) {
+            return true;
         }
 
-        debug_assert!(matches!(self.field[pos].content, CellContent::Free(_)), "failed logic for auto reveal");
-
-        self.field[pos].is_opened = true;
+        self.field[pos].state = Opened;
         opened.insert(pos);
 
-        if let CellContent::Free(0) = self.field[pos].content {
-            for pos in self.field.neighbours(pos) {
-                self.check_neighbours_for_auto_reveal(pos, opened);
+        match self.field[pos].content {
+            CellContent::Bomb => false,
+            CellContent::Free(0) => {
+                for pos in self.field.neighbours(pos) {
+                    if !self.check_neighbours_for_auto_reveal(pos, opened) {
+                        return false;
+                    }
+                }
+                true
             }
+            _ => true,
         }
+    }
+
+    fn check_victory(&self) -> bool {
+        self.field.cells.iter().filter(|x| matches!(x.content, CellContent::Free(_))).all(|x| x.state == Opened)
     }
 }
 
@@ -244,12 +284,7 @@ impl Index<Vec2> for Board {
 }
 
 pub enum RevealResult {
-    Revealed(Vec<Vec2>),
+    Revealed,
     Loss,
-    Victory,
-}
-
-pub enum AutoRevealResult {
-    Revealed(Vec<Vec2>),
     Victory,
 }

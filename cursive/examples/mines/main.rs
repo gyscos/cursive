@@ -5,7 +5,6 @@ use cursive::{
     Cursive,
     Vec2, views::{Button, Dialog, LinearLayout, Panel, SelectView},
 };
-use std::ops::{Index, IndexMut};
 use board::view::BoardView;
 use cursive_core::traits::Nameable;
 
