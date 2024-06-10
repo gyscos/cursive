@@ -270,6 +270,8 @@ impl PrintBuffer {
     pub fn flush(&mut self, backend: &dyn Backend) {
         let terminal_width = self.size.x;
 
+        let persistent = backend.is_persistent();
+
         let mut current_pos = Vec2::zero();
         backend.move_to(current_pos);
 
@@ -279,7 +281,7 @@ impl PrintBuffer {
             .zip(self.frozen_buffer.iter())
             .enumerate()
         {
-            if active == frozen {
+            if persistent && active == frozen {
                 // TODO (optim): it may be pricier to omit printing a letter but to then "move to" the
                 // cell to the right. So there should be a price N for the jump, and wait until we see
                 // N bytes without changes to actually jump. If it changes before that, flush the
