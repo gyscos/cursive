@@ -81,6 +81,14 @@ pub trait Backend {
     /// Any call to `print_at` from now on should use the given effect.
     fn set_effect(&self, effect: theme::Effect);
 
+    /// Returns `true` if the backend has persistent output.
+    ///
+    /// If true, this means that output stays there between calls to
+    /// `refresh()`, so only delta needs to be sent.
+    fn is_persistent(&self) -> bool {
+        false
+    }
+
     /// Disables the given effect.
     fn unset_effect(&self, effect: theme::Effect);
 

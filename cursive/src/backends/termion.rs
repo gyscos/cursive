@@ -267,6 +267,10 @@ impl backend::Backend for Backend {
         "termion"
     }
 
+    fn is_persistent(&self) -> bool {
+        true
+    }
+
     fn set_title(&mut self, title: String) {
         write!(self.terminal.get_mut(), "\x1B]0;{title}\x07").unwrap();
     }

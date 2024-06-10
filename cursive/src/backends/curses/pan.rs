@@ -377,6 +377,10 @@ impl backend::Backend for Backend {
         "pancurses"
     }
 
+    fn is_persistent(&self) -> bool {
+        true
+    }
+
     fn set_title(&mut self, title: String) {
         print!("\x1B]0;{title}\x07");
         stdout().flush().expect("could not flush stdout");

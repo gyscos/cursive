@@ -322,6 +322,10 @@ impl backend::Backend for Backend {
         "ncurses"
     }
 
+    fn is_persistent(&self) -> bool {
+        true
+    }
+
     fn set_title(&mut self, title: String) {
         write_to_tty(format!("\x1B]0;{title}\x07").as_bytes()).unwrap();
     }

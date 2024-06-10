@@ -327,6 +327,10 @@ impl Drop for Backend {
 }
 
 impl backend::Backend for Backend {
+    fn is_persistent(&self) -> bool {
+        true
+    }
+
     fn poll_event(&mut self) -> Option<Event> {
         match poll(Duration::from_millis(1)) {
             Ok(true) => match read() {
