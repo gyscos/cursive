@@ -50,6 +50,7 @@ pub mod tests {
             select.add_item_str("8A\u{008A}\u{008B}\u{008C}\u{008D}\u{008E}\u{008F}\u{0090}\u{0091}\u{0092}\u{0093}thru93");
             select.add_item_str("94\u{0094}\u{0095}\u{0096}\u{0097}\u{0098}\u{0099}\u{009A}\u{009B}\u{009C}\u{009D}thru9D");
             select.add_item_str("9E\u{009E}\u{009F}thru9F");
+            //XXX: can't add more lines here, it would cause them to go off view thus fail the is-it-on-screen tests, unless the dialog is made bigger below!
 
             // Sets the callback for when "Enter" is pressed.
             select.set_on_submit(show_next_window);
@@ -125,68 +126,113 @@ pub mod tests {
     }
 
     #[test]
-    fn nuls_become_replacement_char() {
-        let mut s = BasicSetup::new();
-        s.hit_keystroke(Key::End);
-        let screen = s.last_screen().unwrap();
-        s.dump_debug();
-        assert_eq!(
-            screen
-                .find_occurences("short \u{fffd}nul\u{FFFD} 1str")
-                .len(),
-            1,
-            "nuls aka \\0 in strings are supposed to become the replacement char '\u{fffd}'"
-        );
-    }
-    #[test]
-    fn control_chars_become_replacement_char() {
+    fn control_chars_including_nul_when_on_screen() {
         let mut s = BasicSetup::new();
         s.hit_keystroke(Key::End);
         let screen = s.last_screen().unwrap();
         s.dump_debug();
         let replacement_char = "\u{FFFD} aka \\u{FFFD}";
-        assert_eq!(
-            screen.find_occurences("tab�and�newline").len(),
-            1,
-            "tabs and newline should've been replaced with replacement char {}",
-            replacement_char
-        );
-        assert_eq!(
-            screen.find_occurences("b�����������thru15").len(),
-            1,
-            "control chars \\x0B thru \\x15 should've been replaced with the replacement char {}",
-            replacement_char
-        );
-        assert_eq!(
-            screen.find_occurences("16����������thru1F").len(),
-            1,
-            "control chars \\x16 thru \\x1F should've been replaced with the replacement char {}",
-            replacement_char
-        );
-        assert_eq!(
-            screen.find_occurences("7F�only").len(),
-            1,
-            "control char \\x7F should've been replaced with the replacement char {}",
-            replacement_char
-        );
-        assert_eq!(
-            screen.find_occurences("80����������thru89").len(),
-            1,
-            "control chars \\x80 thru \\x89 should've been replaced with the replacement char {}",
-            replacement_char
-        );
-        assert_eq!(
-            screen.find_occurences("8A����������thru93").len(),
-            1,
-            "control chars \\x8A thru \\x93 should've been replaced with the replacement char {}",
-            replacement_char
-        );
-        assert_eq!(
-            screen.find_occurences("9E��thru9F").len(),
-            1,
-            "control chars \\x9E thru \\x9F should've been replaced with the replacement char {}",
-            replacement_char
-        );
+        use unicode_width::UnicodeWidthStr;
+        let width_of_nul = "\0".width();
+        if !(0..=1).contains(&width_of_nul) {
+            panic!(
+                "nul aka \\0 has a width of '{width_of_nul}' instead of the expected one of 0 or 1"
+            );
+        }
+        //we assume that all other control chars have same width as nul for chosing
+        //which test to perform on them which depends on which unicode-width crate
+        //version was used: the <=0.1.12 (width==0) or >=0.1.13 (width==1)
+        //for width==0 we expect control chars to have been deleted from on-screen output
+        //for width==1 we expect they were replaced with the width 1 replacement char: �
+        if width_of_nul == 1 {
+            // unicode-width version =1.1.13 or maybe later too
+            assert_eq!(
+                screen
+                    .find_occurences("short \u{fffd}nul\u{FFFD} 1str")
+                    .len(),
+                1,
+                "nuls aka \\0 in strings are supposed to become the replacement char '\u{fffd}'"
+            );
+            assert_eq!(
+                screen.find_occurences("tab�and�newline").len(),
+                1,
+                "tabs and newline should've been replaced with replacement char {replacement_char}"
+            );
+            assert_eq!(
+                screen.find_occurences("b�����������thru15").len(),
+                1,
+                "control chars \\x0B thru \\x15 should've been replaced with the replacement char {replacement_char}",
+            );
+            assert_eq!(
+                screen.find_occurences("16����������thru1F").len(),
+                1,
+                "control chars \\x16 thru \\x1F should've been replaced with the replacement char {replacement_char}",
+            );
+            assert_eq!(
+                screen.find_occurences("7F�only").len(),
+                1,
+                "control char \\x7F should've been replaced with the replacement char {replacement_char}",
+            );
+            assert_eq!(
+                screen.find_occurences("80����������thru89").len(),
+                1,
+                "control chars \\x80 thru \\x89 should've been replaced with the replacement char {replacement_char}",
+            );
+            assert_eq!(
+                screen.find_occurences("8A����������thru93").len(),
+                1,
+                "control chars \\x8A thru \\x93 should've been replaced with the replacement char {replacement_char}",
+            );
+            assert_eq!(
+                screen.find_occurences("9E��thru9F").len(),
+                1,
+                "control chars \\x9E thru \\x9F should've been replaced with the replacement char {replacement_char}",
+            );
+        } else if width_of_nul == 0 {
+            // unicode-width version <=1.1.12
+            assert_eq!(
+                screen.find_occurences("short nul 1str").len(),
+                1,
+                "nuls aka \\0 in strings are supposed to deleted from output"
+            );
+            assert_eq!(
+                screen.find_occurences("tabandnewline").len(),
+                1,
+                "tabs and newline should've been deleted from output"
+            );
+            assert_eq!(
+                screen.find_occurences("bthru15").len(),
+                1,
+                "control chars \\x0B thru \\x15 should've been deleted from output"
+            );
+            assert_eq!(
+                screen.find_occurences("16thru1F").len(),
+                1,
+                "control chars \\x16 thru \\x1F should've been deleted from output"
+            );
+            assert_eq!(
+                screen.find_occurences("7Fonly").len(),
+                1,
+                "control char \\x7F should've been deleted from output"
+            );
+            assert_eq!(
+                screen.find_occurences("80thru89").len(),
+                1,
+                "control chars \\x80 thru \\x89 should've been deleted from output"
+            );
+            assert_eq!(
+                screen.find_occurences("8Athru93").len(),
+                1,
+                "control chars \\x8A thru \\x93 should've been deleted from output"
+            );
+            assert_eq!(
+                screen.find_occurences("9Ethru9F").len(),
+                1,
+                "control chars \\x9E thru \\x9F should've been deleted from output"
+            );
+        } else {
+            unreachable!();
+        }
     }
 
     #[test]

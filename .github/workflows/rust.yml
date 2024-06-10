@@ -24,4 +24,4 @@ jobs:
     - name: Run tests
       run: >
         cargo test --features "toml markdown ansi termion-backend crossterm-backend" --no-default-features --verbose &&
-        cargo test --example select_test -- --nocapture
+        cargo test --example select_test

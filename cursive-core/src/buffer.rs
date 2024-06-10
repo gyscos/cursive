@@ -193,12 +193,12 @@ impl PrintBuffer {
             let width = g.width();
             if width == 0 {
                 // Any zero-width grapheme can be ignored.
-                // With unicode_segmentation < 0.1.13, this includes control chars.
+                // With unicode-width < 0.1.13, this includes control chars.
                 continue;
             }
 
             if is_control_char(g) {
-                // With unicode_segmentation >= 0.1.13, control chars have non-zero width (in
+                // With unicode-width >= 0.1.13, control chars have non-zero width (in
                 // practice width = 1).
                 debug_assert_eq!(
                     1, width,
