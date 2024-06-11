@@ -130,7 +130,11 @@ impl MenuPopup {
             } else if cycle {
                 // Only cycle once to prevent endless loop
                 cycle = false;
-                self.focus = self.menu.children.len() - 1;
+                let len = self.menu.children.len();
+                if len == 0 {
+                    break;
+                }
+                self.focus = len - 1;
             } else {
                 break;
             }
@@ -143,12 +147,16 @@ impl MenuPopup {
 
     fn scroll_down(&mut self, mut n: usize, mut cycle: bool) {
         while n > 0 {
-            if self.focus + 1 < self.menu.children.len() {
+            let len = self.menu.children.len();
+            if self.focus + 1 < len {
                 self.focus += 1;
             } else if cycle {
                 // Only cycle once to prevent endless loop
                 cycle = false;
                 self.focus = 0;
+                if len == 0 {
+                    break;
+                }
             } else {
                 // Stop if we're at the bottom.
                 break;
@@ -236,13 +244,19 @@ impl MenuPopup {
             Event::Key(Key::Home) => self.focus = 0,
             Event::Key(Key::End) => self.focus = self.menu.children.len().saturating_sub(1),
 
-            Event::Key(Key::Right) if self.menu.children[self.focus].is_subtree() => {
+            Event::Key(Key::Right)
+                if (self.focus < self.menu.children.len()
+                    && self.menu.children[self.focus].is_subtree()) =>
+            {
                 return match self.menu.children[self.focus] {
                     menu::Item::Subtree { ref tree, .. } => self.make_subtree_cb(tree),
                     _ => unreachable!("Child is a subtree"),
                 };
             }
-            Event::Key(Key::Enter) if self.menu.children[self.focus].is_enabled() => {
+            Event::Key(Key::Enter)
+                if (self.focus < self.menu.children.len()
+                    && self.menu.children[self.focus].is_enabled()) =>
+            {
                 return self.submit();
             }
             Event::Mouse {
@@ -263,7 +277,8 @@ impl MenuPopup {
                 event: MouseEvent::Release(MouseButton::Left),
                 position,
                 offset,
-            } if self.menu.children[self.focus].is_enabled()
+            } if (self.focus < self.menu.children.len()
+                && self.menu.children[self.focus].is_enabled())
                 && position
                     .checked_sub(offset)
                     .map(|position| position.y == self.focus)
@@ -320,7 +335,13 @@ impl View for MenuPopup {
         scroll::draw_box_frame(
             self,
             printer,
-            |s, y| s.menu.children[y].is_delimiter(),
+            |s, y| {
+                if s.menu.children.len() > y {
+                    s.menu.children[y].is_delimiter()
+                } else {
+                    false
+                }
+            },
             |_s, _x| false,
         );
 
