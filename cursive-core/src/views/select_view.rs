@@ -838,7 +838,20 @@ impl SelectView<String> {
         self.add_item(label.clone(), label);
     }
 
-    /// Chainable variant of add_item_str
+    /// Convenient method to use the label unstyled text as value.
+    pub fn add_item_styled<S: Into<StyledString>>(&mut self, label: S) {
+        let label = label.into();
+
+        // Accumulate the content of each span.
+        let mut content = String::new();
+        for span in label.spans() {
+            content.push_str(span.content);
+        }
+
+        self.add_item(label, content);
+    }
+
+    /// Chainable variant of `add_item_str`.
     ///
     /// # Examples
     ///
@@ -853,6 +866,12 @@ impl SelectView<String> {
     #[must_use]
     pub fn item_str<S: Into<String>>(self, label: S) -> Self {
         self.with(|s| s.add_item_str(label))
+    }
+
+    /// Chainable variant of `add_item_styled`.
+    #[must_use]
+    pub fn item_styled<S: Into<StyledString>>(self, label: S) -> Self {
+        self.with(|s| s.add_item_styled(label))
     }
 
     /// Convenient method to use the label as value.
