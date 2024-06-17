@@ -3,6 +3,7 @@
 //! Each module is optional and relies on a feature.
 
 pub mod ansi;
+pub mod cursup;
 pub mod markdown;
 
 use crate::theme::Style;

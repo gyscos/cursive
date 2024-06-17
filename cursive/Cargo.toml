@@ -52,6 +52,7 @@ version = "0.27"
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.
 builder = ["cursive_core/builder"]
 blt-backend = ["bear-lib-terminal"]
+cursup = ["cursive_core/cursup"]
 default = ["ncurses-backend"]
 ncurses-backend = ["ncurses", "maplit"]
 pancurses-backend = ["pancurses", "maplit"]
@@ -79,6 +80,10 @@ required-features = ["ansi"]
 [[example]]
 name = "builder"
 required-features = ["builder"]
+
+[[example]]
+name = "mockup"
+required-features = ["cursup"]
 
 [dev-dependencies]
 rand = "0.8"

@@ -1,4 +1,5 @@
 use std::iter::FromIterator;
+use std::str::FromStr;
 
 use super::{
     Color, ColorPair, ColorStyle, ColorType, ConcreteEffects, Effect, Effects, Palette,
@@ -161,6 +162,22 @@ impl Style {
             effects: self.effects.resolve(previous.effects),
             color: self.color.resolve(palette, previous.color),
         }
+    }
+}
+
+impl FromStr for Style {
+    type Err = super::NoSuchColor;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(front) = s.parse::<ColorType>() {
+            return Ok(front.into());
+        }
+
+        if let Ok(effect) = s.parse::<Effect>() {
+            return Ok(effect.into());
+        }
+
+        Err(super::NoSuchColor)
     }
 }
 
