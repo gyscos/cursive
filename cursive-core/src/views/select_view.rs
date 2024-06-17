@@ -814,7 +814,8 @@ impl<T: 'static + Send + Sync> SelectView<T> {
         })
     }
 
-    // A popup view only does one thing: open the popup on Enter.
+    // A popup view opens the popup on Enter, and also applies autojump if
+    // enabled.
     fn on_event_popup(&mut self, event: Event) -> EventResult {
         match event {
             // TODO: add Left/Right support for quick-switch?
@@ -824,6 +825,7 @@ impl<T: 'static + Send + Sync> SelectView<T> {
                 position,
                 offset,
             } if position.fits_in_rect(offset, self.last_size) => self.open_popup(),
+            Event::Char(c) if self.autojump => return self.on_char_event(c),
             _ => EventResult::Ignored,
         }
     }
