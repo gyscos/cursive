@@ -81,10 +81,6 @@ required-features = ["ansi"]
 name = "builder"
 required-features = ["builder"]
 
-[[example]]
-name = "mockup"
-required-features = ["cursup"]
-
 [dev-dependencies]
 rand = "0.8"
 atty = "0.2"
