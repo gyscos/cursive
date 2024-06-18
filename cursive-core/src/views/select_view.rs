@@ -15,6 +15,8 @@ use std::cmp::{min, Ordering};
 use std::sync::atomic::AtomicUsize;
 use std::sync::{Arc, Mutex};
 
+use unicode_width::UnicodeWidthStr;
+
 type SelectCallback<T> = dyn Fn(&mut Cursive, &T) + Send + Sync;
 
 /// View to select an item among a list.
@@ -72,6 +74,8 @@ pub struct SelectView<T = String> {
 
     // `true` if we show a one-line view, with popup on selection.
     popup: bool,
+    // Decorators to draw around the popup button.
+    decorators: [String; 2],
 
     // We need the last offset to place the popup window
     // We "cache" it during the draw, so we need interior mutability.
@@ -102,6 +106,7 @@ impl<T: 'static + Send + Sync> SelectView<T> {
             on_submit: None,
             align: Align::top_left(),
             popup: false,
+            decorators: ["<".to_string(), ">".to_string()],
             autojump: false,
             last_offset: Mutex::new(Vec2::zero()),
             last_size: Vec2::zero(),
@@ -165,6 +170,19 @@ impl<T: 'static + Send + Sync> SelectView<T> {
     pub fn set_popup(&mut self, popup: bool) {
         self.popup = popup;
         self.last_required_size = None;
+    }
+
+    /// Use custom decorators around the popup button instead of "<" and ">".
+    ///
+    /// Chainable variant.
+    #[must_use]
+    pub fn decorators<S: Into<String>>(self, start: S, end: S) -> Self {
+        self.with(|s| s.set_decorators(start, end))
+    }
+
+    /// Use custom decorators around the popup button instead of "<" and ">".
+    pub fn set_decorators<S: Into<String>>(&mut self, start: S, end: S) {
+        self.decorators = [start.into(), end.into()];
     }
 
     /// Sets a callback to be used when an item is selected.
@@ -784,7 +802,13 @@ impl<T: 'static + Send + Sync> SelectView<T> {
         // We'll want to show the popup so that the text matches.
         // It'll be soo cool.
         let item_length = self.items[focus].label.width();
-        let text_offset = (self.last_size.x.saturating_sub(item_length)) / 2;
+        let text_offset = self
+            .last_size
+            .x
+            .saturating_sub(self.decorators_width())
+            .saturating_sub(item_length)
+            / 2
+            + self.decorators[0].width();
         // The total offset for the window is:
         // * the last absolute offset at which we drew this view
         // * shifted to the right of the text offset
@@ -825,9 +849,13 @@ impl<T: 'static + Send + Sync> SelectView<T> {
                 position,
                 offset,
             } if position.fits_in_rect(offset, self.last_size) => self.open_popup(),
-            Event::Char(c) if self.autojump => return self.on_char_event(c),
+            Event::Char(c) if self.autojump => self.on_char_event(c),
             _ => EventResult::Ignored,
         }
+    }
+
+    fn decorators_width(&self) -> usize {
+        self.decorators.iter().map(|d| d.width()).sum()
     }
 }
 
@@ -957,21 +985,23 @@ impl<T: 'static + Send + Sync> View for SelectView<T> {
                 PaletteStyle::Primary
             };
 
-            let x = match printer.size.x.checked_sub(1) {
-                Some(x) => x,
+            let available = match printer.size.x.checked_sub(self.decorators_width()) {
+                Some(available) => available,
                 None => return,
             };
 
             printer.with_style(style, |printer| {
-                // Prepare the entire background
-                printer.print_hline((1, 0), x, " ");
-                // Draw the borders
-                printer.print((0, 0), "<");
-                printer.print((x, 0), ">");
+                let decorator0_width = self.decorators[0].width();
+                // Prepare the label background
+                printer.print_hline((decorator0_width, 0), available, " ");
+                // Draw the decorators
+                printer.print((0, 0), &self.decorators[0]);
+                printer.print((decorator0_width + available, 0), &self.decorators[1]);
 
                 if let Some(label) = self.items.get(focus).map(|item| &item.label) {
                     // And center the text?
-                    let offset = HAlign::Center.get_offset(label.width(), x + 1);
+                    let offset =
+                        decorator0_width + HAlign::Center.get_offset(label.width(), available);
 
                     printer.print_styled((offset, 0), label);
                 }
@@ -1027,7 +1057,7 @@ impl<T: 'static + Send + Sync> View for SelectView<T> {
             .max()
             .unwrap_or(1);
         let size = if self.popup {
-            Vec2::new(w + 2, 1)
+            Vec2::new(w + self.decorators_width(), 1)
         } else {
             let h = self.items.len();
 
