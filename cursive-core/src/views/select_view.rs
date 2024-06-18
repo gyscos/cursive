@@ -825,7 +825,7 @@ impl<T: 'static + Send + Sync> SelectView<T> {
                 position,
                 offset,
             } if position.fits_in_rect(offset, self.last_size) => self.open_popup(),
-            Event::Char(c) if self.autojump => return self.on_char_event(c),
+            Event::Char(c) if self.autojump => self.on_char_event(c),
             _ => EventResult::Ignored,
         }
     }
