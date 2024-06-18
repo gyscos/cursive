@@ -57,6 +57,8 @@ impl<T: 'static> FocusTracker<T> {
     {
         self.on_focus_lost = Box::new(f);
     }
+
+    inner_getters!(self.view: T);
 }
 
 impl<T: View> ViewWrapper for FocusTracker<T> {
