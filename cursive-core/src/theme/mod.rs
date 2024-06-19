@@ -270,7 +270,10 @@ impl Theme {
 
     #[cfg(feature = "toml")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "toml")))]
-    fn load_toml(&mut self, table: &toml::value::Table) {
+    /// Load values from an already parsed toml [`Table`], overwriting previous values.
+    ///
+    /// [`Table`]: https://docs.rs/toml/latest/toml/type.Table.html
+    pub fn load_toml(&mut self, table: &toml::value::Table) {
         if let Some(&toml::Value::Boolean(shadow)) = table.get("shadow") {
             self.shadow = shadow;
         }
