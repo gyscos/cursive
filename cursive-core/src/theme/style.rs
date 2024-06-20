@@ -394,17 +394,17 @@ impl AsRef<Style> for Style {
     }
 }
 
-fn combine_styles<S: AsRef<Style>>(styles: impl IntoIterator<Item=S>) -> Style {
-        let mut color = ColorStyle::inherit_parent();
-        let mut effects = Effects::empty();
+fn combine_styles<S: AsRef<Style>>(styles: impl IntoIterator<Item = S>) -> Style {
+    let mut color = ColorStyle::inherit_parent();
+    let mut effects = Effects::empty();
 
-        for style in styles {
-            let style = style.as_ref();
-            color = ColorStyle::merge(color, style.color);
-            effects = Effects::merge(effects, style.effects);
-        }
+    for style in styles {
+        let style = style.as_ref();
+        color = ColorStyle::merge(color, style.color);
+        effects = Effects::merge(effects, style.effects);
+    }
 
-        Style { effects, color }
+    Style { effects, color }
 }
 
 /// Creates a new `Style` by merging all given styles.

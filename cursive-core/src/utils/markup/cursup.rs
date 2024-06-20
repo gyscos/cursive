@@ -226,7 +226,8 @@ mod tests {
                 Span {
                     content: "bar",
                     width: 3,
-                    attr: &Style::from_color_style(BaseColor::Red.dark().into()).combine(Effect::Bold)
+                    attr: &Style::from_color_style(BaseColor::Red.dark().into())
+                        .combine(Effect::Bold)
                 },
                 Span {
                     content: " baz",

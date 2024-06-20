@@ -35,6 +35,8 @@ impl_scroller!(MenuPopup::scroll_core);
 
 impl MenuPopup {
     /// Creates a new `MenuPopup` using the given menu tree.
+    ///
+    /// The menu tree cannot be modified after this view has been created.
     pub fn new(menu: Arc<menu::Tree>) -> Self {
         MenuPopup {
             menu,
@@ -123,6 +125,11 @@ impl MenuPopup {
         self.on_action = Some(Callback::from_fn(f));
     }
 
+    // Scroll up by `n` rows.
+    //
+    // # Panics
+    //
+    // If `self.menu.children.is_empty()`.
     fn scroll_up(&mut self, mut n: usize, mut cycle: bool) {
         while n > 0 {
             if self.focus > 0 {
@@ -141,6 +148,11 @@ impl MenuPopup {
         }
     }
 
+    // Scroll down by `n` rows.
+    //
+    // # Panics
+    //
+    // If `self.menu.children.is_empty()`.
     fn scroll_down(&mut self, mut n: usize, mut cycle: bool) {
         while n > 0 {
             if self.focus + 1 < self.menu.children.len() {
@@ -160,6 +172,11 @@ impl MenuPopup {
         }
     }
 
+    // Prepare the callback for when an item has been picked.
+    //
+    // # Panics
+    //
+    // If `self.menu.children.is_empty()`.
     fn submit(&mut self) -> EventResult {
         match self.menu.children[self.focus] {
             menu::Item::Leaf { ref cb, .. } => {
@@ -227,6 +244,11 @@ impl MenuPopup {
     ///
     /// Here the event has already been relativized. This means `y=0` points to the first item.
     fn inner_on_event(&mut self, event: Event) -> EventResult {
+        // If there is no item, nothing can be done.
+        if self.menu.children.is_empty() {
+            return EventResult::Ignored;
+        }
+
         match event {
             Event::Key(Key::Up) => self.scroll_up(1, true),
             Event::Key(Key::PageUp) => self.scroll_up(5, false),
@@ -320,7 +342,7 @@ impl View for MenuPopup {
         scroll::draw_box_frame(
             self,
             printer,
-            |s, y| s.menu.children[y].is_delimiter(),
+            |s, y| s.menu.children.get(y).map_or(false, |c| c.is_delimiter()),
             |_s, _x| false,
         );
 
