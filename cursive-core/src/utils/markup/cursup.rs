@@ -66,7 +66,7 @@ pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
             }
             (State::Plain, _) => (),
 
-            (State::Slash(_), b'a'..=b'z' | b'+' | b'.') => (),
+            (State::Slash(_), b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'#' | b'+' | b'.') => (),
             (State::Slash(slash), b'{') => {
                 // Add a candidate.
                 candidates.push(Candidate {
@@ -158,7 +158,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::theme::{BaseColor, Effect, Style};
+    use crate::theme::{BaseColor, Color, Effect, Style};
     use crate::utils::markup::cursup::parse;
     use crate::utils::markup::StyledString;
     use crate::utils::span::Span;
@@ -235,6 +235,20 @@ mod tests {
                     attr: &Style::from_color_style(BaseColor::Red.dark().into())
                 }
             ],
+        );
+    }
+
+    #[test]
+    fn hex_color() {
+        let parsed = parse("/#ff0000{red}");
+        let spans: Vec<_> = parsed.spans().collect();
+        assert_eq!(
+            &spans[..],
+            &[Span {
+                content: "red",
+                width: 3,
+                attr: &Style::from_color_style(Color::Rgb(255, 0, 0).into()),
+            }]
         );
     }
 
