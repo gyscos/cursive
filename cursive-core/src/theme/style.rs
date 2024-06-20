@@ -165,19 +165,29 @@ impl Style {
     }
 }
 
+fn parse_single_style(s: &str) -> Result<Style, super::NoSuchColor> {
+    if let Some(s) = s.strip_prefix("back.") {
+        if let Ok(back) = s.parse::<ColorType>() {
+            return Ok(ColorStyle::back(back).into());
+        }
+    }
+
+    if let Ok(front) = s.parse::<ColorType>() {
+        return Ok(front.into());
+    }
+
+    if let Ok(effect) = s.parse::<Effect>() {
+        return Ok(effect.into());
+    }
+
+    Err(super::NoSuchColor)
+}
+
 impl FromStr for Style {
     type Err = super::NoSuchColor;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Ok(front) = s.parse::<ColorType>() {
-            return Ok(front.into());
-        }
-
-        if let Ok(effect) = s.parse::<Effect>() {
-            return Ok(effect.into());
-        }
-
-        Err(super::NoSuchColor)
+        s.split('+').map(parse_single_style).collect()
     }
 }
 
@@ -374,23 +384,35 @@ impl From<PaletteStyle> for StyleType {
 /// Will use the last non-`None` color, and will combine all effects.
 impl<'a> FromIterator<&'a Style> for Style {
     fn from_iter<I: IntoIterator<Item = &'a Style>>(iter: I) -> Style {
+        combine_styles(iter)
+    }
+}
+
+impl AsRef<Style> for Style {
+    fn as_ref(&self) -> &Style {
+        self
+    }
+}
+
+fn combine_styles<S: AsRef<Style>>(styles: impl IntoIterator<Item=S>) -> Style {
         let mut color = ColorStyle::inherit_parent();
         let mut effects = Effects::empty();
 
-        for style in iter {
+        for style in styles {
+            let style = style.as_ref();
             color = ColorStyle::merge(color, style.color);
             effects = Effects::merge(effects, style.effects);
         }
 
         Style { effects, color }
-    }
 }
 
 /// Creates a new `Style` by merging all given styles.
 ///
 /// Will use the last non-`None` color, and will combine all effects.
 impl<T: Into<Style>> FromIterator<T> for Style {
+    // TODO: Find some common implementation for both?
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Style {
-        iter.into_iter().map(Into::into).collect()
+        combine_styles(iter.into_iter().map(Into::into))
     }
 }

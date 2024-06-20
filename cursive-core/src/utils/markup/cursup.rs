@@ -2,85 +2,146 @@
 //!
 //! # Examples
 //!
-//! ```
+//! ```cursup
 //! /red{This} /green{text} /blue{is} /bold{very} /underline{styled}!
 //! /red+bold{This too!}
 //! ```
-#![cfg(feature = "cursup")]
+//!
+//! ```
+//! # use cursive_core as cursive;
+//! use cursive::utils::markup::cursup;
+//! use cursive::views::Button;
+//!
+//! // Highlight a letter from the word to show a shortcut available.
+//! Button::new(cursup::parse("/red{Q}uit"), |s| s.quit());
+//! ```
 #![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "cursup")))]
+
 use crate::theme::Style;
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
 
 use unicode_width::UnicodeWidthStr;
 
+enum State {
+    Plain,
+    Slash(usize),
+}
+
+struct Candidate {
+    slash: usize,
+    brace: usize,
+}
+
+#[derive(Debug)]
+enum Event {
+    Start(Style),
+    End,
+    StartSkip,
+    Resume,
+}
+
 /// Parse spans for the given text.
 pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
-    let mut result = Vec::new();
+    let mut candidates = Vec::<Candidate>::new();
+    let mut state = State::Plain;
+    let mut events = Vec::new();
 
-    let re = regex::Regex::new(r"\/(?:(\w+)(?:\+(\w+))*)\{(.+)\}").unwrap();
+    for (i, b) in input.bytes().enumerate() {
+        match (&mut state, b) {
+            (State::Plain, b'/') => {
+                state = State::Slash(i);
+            }
+            (State::Plain | State::Slash(_), b'}') if !candidates.is_empty() => {
+                // Validate this span
+                let candidate = candidates.pop().unwrap();
 
-    let mut offset = 0;
-    let mut content = input;
-    while let Some(c) = re.captures(content) {
-        let m = c.get(0).unwrap();
-        let start = m.start();
-        let end = m.end();
+                let action = &input[candidate.slash + 1..candidate.brace];
+                let style = action.parse::<Style>().unwrap_or_default();
 
-        // First, append the entire content up to here.
-        if start != 0 {
-            result.push(StyledIndexedSpan {
-                content: IndexedCow::Borrowed {
-                    start: offset,
-                    end: offset + start,
-                },
-                attr: Style::default(),
-                width: content[..start].width(),
-            });
+                events.push((candidate.slash, Event::StartSkip));
+                events.push((candidate.brace + 1, Event::Start(style)));
+                events.push((i, Event::End));
+                events.push((i + 1, Event::Resume));
+            }
+            (State::Plain, _) => (),
+
+            (State::Slash(_), b'a'..=b'z' | b'+' | b'.') => (),
+            (State::Slash(slash), b'{') => {
+                // Add a candidate.
+                candidates.push(Candidate {
+                    slash: *slash,
+                    brace: i,
+                });
+                state = State::Plain;
+            }
+            (State::Slash(ref mut start), b'/') => {
+                // The previous slash is unusable, try with this one.
+                *start = i;
+            }
+            (State::Slash(_), _) => {
+                // Unsupported char found.
+                state = State::Plain;
+            }
         }
-
-        let len = c.len();
-        assert!(
-            len > 2,
-            "The regex should always yield at least 2 groups (+ the entire match)."
-        );
-        let body = c.get(len - 1).unwrap();
-
-        let mut style = Style::default();
-
-        for i in 1..len - 1 {
-            let Some(action) = c.get(i) else {
-                continue;
-            };
-
-            style = style.combine(action.as_str().parse::<Style>().unwrap());
-        }
-
-        result.push(StyledIndexedSpan {
-            content: IndexedCow::Borrowed {
-                start: offset + body.start(),
-                end: offset + body.end(),
-            },
-            attr: style,
-            width: body.as_str().width(),
-        });
-
-        content = &content[end..];
-        offset += end;
     }
 
-    if !content.is_empty() {
-        result.push(StyledIndexedSpan {
+    events.sort_by_key(|(i, _)| *i);
+
+    let mut spans = Vec::new();
+    let mut style_stack = vec![Style::default()];
+
+    let mut cursor = 0;
+    for (i, event) in events {
+        match event {
+            Event::Start(style) => {
+                // Flush everything between cursor and start.
+                let new_style = style_stack.last().unwrap().combine(style);
+                style_stack.push(new_style);
+            }
+            Event::StartSkip => {
+                // Flush things since cursor
+                if cursor != i {
+                    spans.push(StyledIndexedSpan {
+                        content: IndexedCow::Borrowed {
+                            start: cursor,
+                            end: i,
+                        },
+                        attr: *style_stack.last().unwrap(),
+                        width: input[cursor..i].width(),
+                    });
+                }
+            }
+            Event::End => {
+                // Just like StartSkip, but we pop a style from the stack.
+                if cursor != i {
+                    spans.push(StyledIndexedSpan {
+                        content: IndexedCow::Borrowed {
+                            start: cursor,
+                            end: i,
+                        },
+                        attr: *style_stack.last().unwrap(),
+                        width: input[cursor..i].width(),
+                    });
+                }
+                style_stack.pop();
+            }
+            Event::Resume => {}
+        }
+        cursor = i;
+    }
+    if cursor != input.len() {
+        spans.push(StyledIndexedSpan {
             content: IndexedCow::Borrowed {
-                start: offset,
-                end: offset + content.len(),
+                start: cursor,
+                end: input.len(),
             },
-            attr: Style::default(),
-            width: content.width(),
+            attr: *style_stack.last().unwrap(),
+            width: input[cursor..].width(),
         });
     }
 
-    result
+    spans
 }
 
 /// Parse the given text into a styled string.
@@ -93,4 +154,92 @@ where
     let spans = parse_spans(&input);
 
     StyledString::with_spans(input, spans)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::theme::{BaseColor, Effect, Style};
+    use crate::utils::markup::cursup::parse;
+    use crate::utils::markup::StyledString;
+    use crate::utils::span::Span;
+
+    #[test]
+    fn empty_string() {
+        let parsed = parse("");
+        assert_eq!(parsed, StyledString::new());
+    }
+
+    #[test]
+    fn plain() {
+        let parsed = parse("abc");
+        assert_eq!(parsed, StyledString::plain("abc"));
+    }
+
+    #[test]
+    fn single_span() {
+        let parsed = parse("/red{red}");
+        let spans: Vec<_> = parsed.spans().collect();
+        assert_eq!(
+            &spans,
+            &[Span {
+                content: "red",
+                width: 3,
+                attr: &Style::from_color_style(BaseColor::Red.dark().into())
+            }]
+        );
+    }
+
+    #[test]
+    fn span_and_plain() {
+        let parsed = parse("/red{Q}uit");
+        let spans: Vec<_> = parsed.spans().collect();
+        assert_eq!(
+            &spans,
+            &[
+                Span {
+                    content: "Q",
+                    width: 1,
+                    attr: &Style::from_color_style(BaseColor::Red.dark().into())
+                },
+                Span {
+                    content: "uit",
+                    width: 3,
+                    attr: &Style::default(),
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn nested() {
+        let parsed = parse("/red{foo /bold{bar} baz}");
+
+        let spans: Vec<_> = parsed.spans().collect();
+        assert_eq!(
+            spans,
+            &[
+                Span {
+                    content: "foo ",
+                    width: 4,
+                    attr: &Style::from_color_style(BaseColor::Red.dark().into())
+                },
+                Span {
+                    content: "bar",
+                    width: 3,
+                    attr: &Style::from_color_style(BaseColor::Red.dark().into()).combine(Effect::Bold)
+                },
+                Span {
+                    content: " baz",
+                    width: 4,
+                    attr: &Style::from_color_style(BaseColor::Red.dark().into())
+                }
+            ],
+        );
+    }
+
+    #[test]
+    fn invalid_span_as_plain_text() {
+        let parsed = parse("/red{red");
+        assert_eq!(parsed, StyledString::plain("/red{red"));
+    }
 }

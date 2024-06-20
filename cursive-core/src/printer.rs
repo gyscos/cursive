@@ -300,6 +300,13 @@ impl<'a, 'b> Printer<'a, 'b> {
         }
     }
 
+    /// Fills a rectangle using the given character.
+    pub fn print_rect(&self, rect: Rect, c: &str) {
+        for y in rect.top()..=rect.bottom() {
+            self.print_hline((rect.left(), y), rect.width(), c);
+        }
+    }
+
     /// Prints a horizontal line using the given character.
     pub fn print_hline<T: Into<Vec2>>(&self, start: T, width: usize, c: &str) {
         let start = start.into();
