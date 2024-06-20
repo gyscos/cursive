@@ -229,7 +229,34 @@ impl<T> SpannedString<T> {
         SpannedString { source, spans }
     }
 
+    /// Compacts and simplifies this string, resulting in a canonical form.
+    ///
+    /// If two styled strings represent the same styled text, they should have equal canonical
+    /// forms.
+    ///
+    /// (The PartialEq implementation for StyledStrings requires both the source and spans to be
+    /// equals, so non-visible changes such as text in the source between spans could cause
+    /// StyledStrings to evaluate as non-equal.)
+    pub fn canonicalize(&mut self)
+    where
+        T: PartialEq,
+    {
+        self.compact();
+        self.simplify();
+    }
+
+    /// Returns the canonical form of this styled string.
+    pub fn canonical(mut self) -> Self
+    where
+        T: PartialEq,
+    {
+        self.canonicalize();
+        self
+    }
+
     /// Compacts the source to only include the spans content.
+    ///
+    /// This does not change the number of spans, but changes the source.
     pub fn compact(&mut self) {
         // Prepare the new source
         let mut source = String::new();
@@ -245,6 +272,36 @@ impl<T> SpannedString<T> {
         }
 
         self.source = source;
+    }
+
+    /// Attemps to reduce the number of spans by merging consecutive similar ones.
+    pub fn simplify(&mut self)
+    where
+        T: PartialEq,
+    {
+        // Now, merge consecutive similar spans.
+        let mut i = 0;
+        while i + 1 < self.spans.len() {
+            let left = &self.spans[i];
+            let right = &self.spans[i + 1];
+            if left.attr != right.attr {
+                i += 1;
+                continue;
+            }
+
+            let (_, left_end) = left.content.as_borrowed().unwrap();
+            let (right_start, right_end) = right.content.as_borrowed().unwrap();
+            let right_width = right.width;
+
+            if left_end != right_start {
+                i += 1;
+                continue;
+            }
+
+            *self.spans[i].content.as_borrowed_mut().unwrap().1 = right_end;
+            self.spans[i].width += right_width;
+            self.spans.remove(i + 1);
+        }
     }
 
     /// Shrink the source to discard any unused suffix.
@@ -552,6 +609,19 @@ impl IndexedCow {
     /// Return the `(start, end)` indexes if `self` is `IndexedCow::Borrowed`.
     pub fn as_borrowed(&self) -> Option<(usize, usize)> {
         if let IndexedCow::Borrowed { start, end } = *self {
+            Some((start, end))
+        } else {
+            None
+        }
+    }
+
+    /// Return the `(start, end)` indexes if `self` is `IndexedCow::Borrowed`.
+    pub fn as_borrowed_mut(&mut self) -> Option<(&mut usize, &mut usize)> {
+        if let IndexedCow::Borrowed {
+            ref mut start,
+            ref mut end,
+        } = *self
+        {
             Some((start, end))
         } else {
             None

@@ -33,12 +33,34 @@ struct Candidate {
     brace: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum Event {
+    StartSkip,
     Start(Style),
     End,
-    StartSkip,
     Resume,
+}
+
+impl PartialOrd for Event {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Event {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match (self, other) {
+            (Event::StartSkip, Event::Start(_) | Event::End | Event::Resume)
+            | (Event::Start(_), Event::End | Event::Resume)
+            | (Event::End, Event::Resume) => std::cmp::Ordering::Less,
+
+            (Event::Start(_) | Event::End | Event::Resume, Event::StartSkip)
+            | (Event::End | Event::Resume, Event::Start(_))
+            | (Event::Resume, Event::End) => std::cmp::Ordering::Greater,
+
+            _ => std::cmp::Ordering::Equal,
+        }
+    }
 }
 
 /// Parse spans for the given text.
@@ -63,6 +85,8 @@ pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
                 events.push((candidate.brace + 1, Event::Start(style)));
                 events.push((i, Event::End));
                 events.push((i + 1, Event::Resume));
+
+                state = State::Plain;
             }
             (State::Plain, _) => (),
 
@@ -89,7 +113,7 @@ pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
         }
     }
 
-    events.sort_by_key(|(i, _)| *i);
+    events.sort();
 
     let mut spans = Vec::new();
     let mut style_stack = vec![Style::default()];
@@ -253,6 +277,18 @@ mod tests {
                 attr: &Style::from_color_style(ColorType::InheritParent.into()),
             }]
         );
+    }
+
+    #[test]
+    fn simple() {
+        let parsed = parse("/{simple}").canonical();
+        assert_eq!(parsed, StyledString::plain("simple"));
+    }
+
+    #[test]
+    fn escape() {
+        let parsed = parse("/{/}red{foo}").canonical();
+        assert_eq!(parsed, StyledString::plain("/red{foo}"));
     }
 
     #[test]
