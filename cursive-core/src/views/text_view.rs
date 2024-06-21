@@ -457,9 +457,9 @@ enum Recipe {
     Empty,
 
     // Inline content
-    Content(String),
+    Content(StyledString),
 
     // Full object with optional content field
     // This is also used to add a `with` block
-    Object { content: Option<String> },
+    Object { content: Option<StyledString> },
 }

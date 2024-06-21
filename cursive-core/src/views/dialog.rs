@@ -958,7 +958,7 @@ crate::raw_recipe!(Dialog, |config, context| {
     let mut dialog = Dialog::new();
 
     if let Some(title) = context.resolve(&config["title"])? {
-        dialog.set_title::<String>(title);
+        dialog.set_title::<StyledString>(title);
     }
 
     if let Some(title_position) = context.resolve(&config["title_position"])? {
@@ -1016,10 +1016,10 @@ struct Info(String);
 
 // We can define some variables
 crate::var_recipe!("Dialog.info", |config, context| {
-    let message: String = context.resolve(config)?;
+    let message: StyledString = context.resolve(config)?;
 
     // We want to return a generic single-argument callback.
     Ok(Dialog::add_button_cb(move |s| {
-        s.add_layer(Dialog::info(&message));
+        s.add_layer(Dialog::info(message.clone()));
     }))
 });

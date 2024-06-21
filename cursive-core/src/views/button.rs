@@ -218,7 +218,7 @@ impl View for Button {
 #[crate::recipe(Button::new_with_cb(label, callback))]
 struct Recipe {
     // Fields mentioned in the initializer will be used there
-    label: String,
+    label: StyledString,
 
     // Callback types can be omitted
     callback: _,
@@ -231,7 +231,7 @@ struct Recipe {
 /*
 crate::raw_recipe!(Button, |config, context| {
     Ok({
-        let label: String = context.resolve(&config["label"])?;
+        let label: StyledString = context.resolve(&config["label"])?;
         let callback: _ = context.resolve(&config["callback"])?;
         let mut button = Button::new_with_cb(label, callback);
 

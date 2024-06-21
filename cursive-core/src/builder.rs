@@ -214,6 +214,14 @@ pub enum Error {
         config: Config,
     },
 
+    /// All variants from a multi-variant recipe failed.
+    AllVariantsFailed {
+        /// Config value that could not be parsed
+        config: Config,
+        /// List of errors for the recipe variants.
+        errors: Vec<Error>,
+    },
+
     /// A recipe was not found
     RecipeNotFound(String),
 
@@ -632,6 +640,8 @@ where
 
         config.iter().map(|v| context.resolve(v)).collect()
     }
+
+    // TODO: Allow loading from `Vec<Box<Any>>` and downcasting one by one?
 }
 
 impl<T, const N: usize> Resolvable for [T; N]
@@ -772,6 +782,28 @@ impl Resolvable for String {
             Some(config) => Ok(config.into()),
             None => Err(Error::invalid_config("Expected string type", config)),
         }
+    }
+}
+
+impl Resolvable for crate::utils::markup::StyledString {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        let text: String = context.resolve(config)?;
+        Ok(Self::plain(text))
+    }
+
+    fn from_any(any: Box<dyn Any>) -> Option<Self>
+    where
+        Self: Sized + Any,
+    {
+        let any = match any.downcast::<Self>().map(|b| *b) {
+            Ok(res) => return Some(res),
+            Err(any) => any,
+        };
+
+        any.downcast::<String>().map(|b| Self::plain(*b)).ok()
     }
 }
 
@@ -1558,6 +1590,12 @@ var_recipe!("concat", |config, context| {
             context.resolve::<String>(value)
         })
         .collect::<Result<String, _>>()
+});
+
+var_recipe!("cursup", |config, context| {
+    let text: String = context.resolve(config)?;
+
+    Ok(crate::utils::markup::cursup::parse(text))
 });
 
 #[cfg(feature = "builder")]
