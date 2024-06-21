@@ -35,32 +35,8 @@ struct Candidate {
 
 #[derive(Debug, PartialEq, Eq)]
 enum Event {
-    StartSkip,
-    Start(Style),
+    Start { style: Style, brace: usize },
     End,
-    Resume,
-}
-
-impl PartialOrd for Event {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Event {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self, other) {
-            (Event::StartSkip, Event::Start(_) | Event::End | Event::Resume)
-            | (Event::Start(_), Event::End | Event::Resume)
-            | (Event::End, Event::Resume) => std::cmp::Ordering::Less,
-
-            (Event::Start(_) | Event::End | Event::Resume, Event::StartSkip)
-            | (Event::End | Event::Resume, Event::Start(_))
-            | (Event::Resume, Event::End) => std::cmp::Ordering::Greater,
-
-            _ => std::cmp::Ordering::Equal,
-        }
-    }
 }
 
 /// Parse spans for the given text.
@@ -81,10 +57,14 @@ pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
                 let action = &input[candidate.slash + 1..candidate.brace];
                 let style = action.parse::<Style>().unwrap_or_default();
 
-                events.push((candidate.slash, Event::StartSkip));
-                events.push((candidate.brace + 1, Event::Start(style)));
+                events.push((
+                    candidate.slash,
+                    Event::Start {
+                        style,
+                        brace: candidate.brace,
+                    },
+                ));
                 events.push((i, Event::End));
-                events.push((i + 1, Event::Resume));
 
                 state = State::Plain;
             }
@@ -113,7 +93,7 @@ pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
         }
     }
 
-    events.sort();
+    events.sort_by_key(|(i, _)| *i);
 
     let mut spans = Vec::new();
     let mut style_stack = vec![Style::default()];
@@ -121,13 +101,8 @@ pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
     let mut cursor = 0;
     for (i, event) in events {
         match event {
-            Event::Start(style) => {
-                // Flush everything between cursor and start.
-                let new_style = style_stack.last().unwrap().combine(style);
-                style_stack.push(new_style);
-            }
-            Event::StartSkip => {
-                // Flush things since cursor
+            Event::Start { style, brace } => {
+                // Flush everything between cursor and i.
                 if cursor != i {
                     spans.push(StyledIndexedSpan {
                         content: IndexedCow::Borrowed {
@@ -138,6 +113,11 @@ pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
                         width: input[cursor..i].width(),
                     });
                 }
+
+                let new_style = style_stack.last().unwrap().combine(style);
+                style_stack.push(new_style);
+
+                cursor = brace + 1;
             }
             Event::End => {
                 // Just like StartSkip, but we pop a style from the stack.
@@ -152,10 +132,9 @@ pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
                     });
                 }
                 style_stack.pop();
+                cursor = i + 1;
             }
-            Event::Resume => {}
         }
-        cursor = i;
     }
     if cursor != input.len() {
         spans.push(StyledIndexedSpan {
@@ -277,6 +256,12 @@ mod tests {
                 attr: &Style::from_color_style(ColorType::InheritParent.into()),
             }]
         );
+    }
+
+    #[test]
+    fn failed_candidates() {
+        let parsed = parse("/{/{/{/{/{/{/{/");
+        assert_eq!(parsed, StyledString::plain("/{/{/{/{/{/{/{/"));
     }
 
     #[test]
