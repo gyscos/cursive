@@ -217,6 +217,22 @@ impl TextView {
         Self::new_with_content(TextContent::new(content))
     }
 
+    /// Convenient function to create a TextView by parsing the given content as cursup.
+    ///
+    /// Shortcut for `TextView::new(cursup::parse(content))`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cursive_core::views::TextView;
+    /// let view = TextView::cursup("/red+bold{warning}");
+    /// ```
+    pub fn cursup<S>(content: S) -> Self
+        where S: Into<String>,
+    {
+        Self::new(crate::utils::markup::cursup::parse(content))
+    }
+
     /// Creates a new TextView using the given `TextContent`.
     ///
     /// If you kept a clone of the given content, you'll be able to update it
