@@ -2,8 +2,7 @@ use rand::seq::SliceRandom;
 use std::ops::{Index, IndexMut};
 use std::slice::Iter;
 use ahash::AHashSet;
-use cursive::Vec2;
-use cursive_core::Rect;
+use cursive::{Rect, Vec2};
 use crate::board::model::CellState::*;
 
 #[derive(Clone, Copy)]
