@@ -17,7 +17,7 @@ pub(crate) struct BoardView {
 }
 
 impl BoardView {
-    pub(crate) fn new(options: Options) -> Self {
+    pub fn new(options: Options) -> Self {
         let board = Board::new(options);
         BoardView {
             board,
