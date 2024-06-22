@@ -6,7 +6,7 @@ use cursive_core::view::CannotFocus;
 use cursive_core::views::Dialog;
 use crate::board::model::{Board, CellContent, CellState, Options, RevealResult};
 
-pub(crate) struct BoardView {
+pub struct BoardView {
     // Actual board, unknown to the player.
     board: Board,
 
