@@ -42,7 +42,7 @@ impl Cell {
     }
 }
 
-pub(crate) struct Field {
+pub struct Field {
     size: Vec2,
     cells: Vec<Cell>,
 }
