@@ -28,9 +28,9 @@ pub enum CellState {
 
 #[derive(Copy, Clone)]
 pub struct Cell {
-    pub(crate) state: CellState,
+    pub state: CellState,
 
-    pub(crate) content: CellContent,
+    pub content: CellContent,
 }
 
 impl Cell {
