@@ -6,7 +6,7 @@ use cursive::{Rect, Vec2};
 use crate::board::model::CellState::*;
 
 #[derive(Clone, Copy)]
-pub(crate) struct Options {
+pub struct Options {
     pub size: Vec2,
     pub mines: usize,
 }
