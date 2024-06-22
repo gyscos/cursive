@@ -77,7 +77,6 @@ fn show_scores(s: &mut Cursive) {
 }
 
 fn new_game(siv: &mut Cursive, options: model::Options) {
-    let _board = model::Board::new(options);
 
     let dialog = Dialog::new()
         .title("Minesweeper")
