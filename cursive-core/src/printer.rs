@@ -1,6 +1,6 @@
 //! Provide higher-level abstraction to draw things on buffers.
 
-use crate::buffer::PrintBuffer;
+use crate::buffer::{PrintBuffer, Window};
 use crate::direction::Orientation;
 use crate::rect::Rect;
 use crate::theme::{
@@ -93,6 +93,18 @@ impl<'a, 'b> Printer<'a, 'b> {
                 effects: EnumSet::EMPTY,
             }),
         }
+    }
+
+    /// Returns the region of the window where this printer can write.
+    pub fn output_window(&self) -> Rect {
+        Rect::from_size(self.offset, self.output_size)
+    }
+
+    /// Returns the size of the entire buffer.
+    ///
+    /// This is the size of the entire terminal, not just the area this printer can write into.
+    pub fn buffer_size(&self) -> Vec2 {
+        self.buffer.read().size()
     }
 
     /// Clear the screen.
@@ -284,6 +296,18 @@ impl<'a, 'b> Printer<'a, 'b> {
                 .write()
                 .print_at(start + (0, y), c, self.current_style());
         }
+    }
+
+    /// Calls a closure on the output window for this printer.
+    pub fn on_window<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut Window<'_>) -> R,
+    {
+        let mut buffer = self.buffer.write();
+        let mut window = buffer
+            .window(self.output_window())
+            .expect("printer size exceeds backend size");
+        f(&mut window)
     }
 
     /// Prints a line using the given character.

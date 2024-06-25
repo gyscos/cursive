@@ -2,7 +2,7 @@
 
 use crate::backend::Backend;
 use crate::theme::ConcreteStyle;
-use crate::Vec2;
+use crate::{Rect, Vec2};
 
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -11,8 +11,11 @@ use unicode_width::UnicodeWidthStr;
 ///
 /// Most characters are single-width. Some asian characters and emojis are double-width.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum CellWidth {
+pub enum CellWidth {
+    /// This character takes a single cell in the grid.
     Single,
+
+    /// This character takes 2 cells in the grid (mostly for emojis and asian characters).
     Double,
 }
 
@@ -23,6 +26,11 @@ impl Default for CellWidth {
 }
 
 impl CellWidth {
+    /// Convert the width as returned from `UnicodeWidthStr::width()` into a `CellWidth`.
+    ///
+    /// # Panics
+    ///
+    /// If `width > 2`.
     pub fn from_usize(width: usize) -> Self {
         match width {
             1 => CellWidth::Single,
@@ -31,11 +39,21 @@ impl CellWidth {
         }
     }
 
+    /// Returns the width as a usize: 1 or 2.
     pub fn as_usize(self) -> usize {
         match self {
             CellWidth::Single => 1,
             CellWidth::Double => 2,
         }
+    }
+
+    /// Returns the width of the given grapheme.
+    ///
+    /// # Panics
+    ///
+    /// If `text` has a width > 2 (it means it is not a single grapheme).
+    pub fn from_grapheme(text: &str) -> Self {
+        Self::from_usize(text.width())
     }
 }
 
@@ -44,7 +62,7 @@ impl CellWidth {
 /// Most characters use 1 cell in the grid. Some wide graphemes use 2 cells
 /// (mostly asian characters and some emojis).
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
-struct Cell {
+pub struct Cell {
     /// Style used for this cell.
     style: ConcreteStyle,
 
@@ -61,6 +79,47 @@ struct Cell {
     ///
     /// TODO: Use a smaller sized integer to reduce the memory footprint?
     width: CellWidth,
+}
+
+impl Cell {
+    /// Returns the text content of this cell.
+    ///
+    /// This should be a single grapheme.
+    pub fn text(&self) -> &str {
+        &self.text
+    }
+
+    /// Returns the width of this cell: either 1 or 2.
+    ///
+    /// If this returns 2, then the next cell in the grid should be empty.
+    pub fn width(&self) -> usize {
+        self.width.as_usize()
+    }
+
+    /// Sets the style for this cell.
+    pub fn set_style(&mut self, style: ConcreteStyle) {
+        self.style = style;
+    }
+
+    /// Sets the content of this cell.
+    ///
+    /// `text` should be a single grapheme, with width 1 or 2.
+    ///
+    /// # Panics
+    ///
+    /// If `text.width() > 2`.
+    pub fn set_text(&mut self, text: &str) {
+        self.text.clear();
+        self.text.push_str(text);
+        self.width = CellWidth::from_grapheme(text);
+    }
+
+    fn set(&mut self, style: ConcreteStyle, text: &str, width: CellWidth) {
+        self.style = style;
+        self.text.clear();
+        self.text.push_str(text);
+        self.width = width;
+    }
 }
 
 /// A buffer for printing stuff.
@@ -84,9 +143,64 @@ pub struct PrintBuffer {
     // Used to compute the diff between active and frozen when flushing.
     frozen_buffer: Vec<Option<Cell>>,
 
+    // This is an internal cache used to remember the last style flushed to the backend.
     current_style: ConcreteStyle,
 
     size: Vec2,
+}
+
+/// A view into a rectangular area of the buffer.
+pub struct Window<'a> {
+    buffer: &'a mut PrintBuffer,
+    viewport: Rect,
+}
+
+impl<'a> Window<'a> {
+    /// Returns the cell at the given location.
+    ///
+    /// Returns `None` if the cell is empty because the previous one was double-wide.
+    pub fn cell_at(&self, pos: Vec2) -> Option<&Cell> {
+        let pos = self.absolute_pos(pos)?;
+
+        self.buffer.cell_at(pos)
+    }
+
+    fn absolute_pos(&self, pos: Vec2) -> Option<Vec2> {
+        if !pos.fits_in(self.viewport.size()) {
+            return None;
+        }
+
+        Some(pos + self.viewport.top_left())
+    }
+
+    /// Iterate on the rows of this window.
+    pub fn rows(&self) -> impl Iterator<Item = &[Option<Cell>]> {
+        self.buffer
+            .rows()
+            .skip(self.viewport.top())
+            .take(self.viewport.height())
+            .map(|row| &row[self.viewport.left()..=self.viewport.right()])
+    }
+
+    /// Returns the viewport this window is covering.
+    pub fn viewport(&self) -> Rect {
+        self.viewport
+    }
+
+    /// Returns the size of this window.
+    pub fn size(&self) -> Vec2 {
+        self.viewport.size()
+    }
+
+    /// Get mutable access to the style at the given cell, if any.
+    pub fn style_at_mut<V>(&mut self, pos: V) -> Option<&mut ConcreteStyle> 
+    where V: Into<Vec2>
+    {
+        let pos = pos.into();
+        let pos = self.absolute_pos(pos)?;
+
+        self.buffer.style_at_mut(pos)
+    }
 }
 
 impl Default for PrintBuffer {
@@ -96,6 +210,7 @@ impl Default for PrintBuffer {
 }
 
 impl PrintBuffer {
+    /// Create a new empty print buffer.
     pub const fn new() -> Self {
         PrintBuffer {
             active_buffer: Vec::new(),
@@ -103,6 +218,11 @@ impl PrintBuffer {
             current_style: ConcreteStyle::terminal_default(),
             size: Vec2::ZERO,
         }
+    }
+
+    /// Iterate on the rows of this buffer.
+    pub fn rows(&self) -> impl Iterator<Item = &[Option<Cell>]> {
+        self.active_buffer.chunks(self.size.x)
     }
 
     /// Clear this buffer.
@@ -120,6 +240,7 @@ impl PrintBuffer {
         reset(&mut self.frozen_buffer);
     }
 
+    /// Fill the buffer with the given text and style.
     pub fn fill(&mut self, text: &str, style: impl Into<ConcreteStyle>) {
         let style = style.into();
         let width = CellWidth::from_usize(text.width());
@@ -136,10 +257,12 @@ impl PrintBuffer {
         }
     }
 
+    /// Returns the current size of the buffer.
     pub fn size(&self) -> Vec2 {
         self.size
     }
 
+    /// Resize the buffer to the given size.
     pub fn resize(&mut self, size: Vec2) {
         if self.size == size {
             return;
@@ -155,6 +278,7 @@ impl PrintBuffer {
         self.frozen_buffer.resize_with(len, Default::default);
     }
 
+    /// Print some text at the given location.
     pub fn print_at(&mut self, start: Vec2, text: &str, style: ConcreteStyle) {
         if !(start.strictly_lt(self.size)) {
             return;
@@ -217,13 +341,44 @@ impl PrintBuffer {
         pos.x + pos.y * self.size.x
     }
 
-    pub fn cell_text(&self, pos: Vec2) -> Option<&str> {
+    /// Get mutable access to the style at the given cell, if any.
+    ///
+    /// Returns `None` if the previous cell was double-wide.
+    pub fn style_at_mut(&mut self, pos: Vec2) -> Option<&mut ConcreteStyle> {
         let id = self.cell_id(pos);
-        self.active_buffer[id]
-            .as_ref()
-            .map(|cell| cell.text.as_str())
+        self.active_buffer[id].as_mut().map(|cell| &mut cell.style)
+        
     }
 
+    /// Returns the cell at the given location.
+    pub fn cell_at(&self, pos: Vec2) -> Option<&Cell> {
+        let id = self.cell_id(pos);
+        self.active_buffer[id].as_ref()
+    }
+
+    /// Returns a mutable access to a sub-region from this buffer.
+    pub fn window(&mut self, viewport: Rect) -> Option<Window<'_>> {
+        if !viewport.bottom_right().fits_in(self.size) {
+            return None;
+        }
+
+        Some(Window {
+            buffer: self,
+            viewport,
+        })
+    }
+
+    /// Get the text at the given position
+    ///
+    /// Returns `None` if there is no text, because the previous cell was double-wide.
+    pub fn cell_text(&self, pos: Vec2) -> Option<&str> {
+        let id = self.cell_id(pos);
+        self.active_buffer[id].as_ref().map(|cell| cell.text())
+    }
+
+    /// Get the style at the given position.
+    ///
+    /// Returns `None` if there is no text, because the previous cell was double-wide.
     pub fn cell_style(&self, pos: Vec2) -> Option<ConcreteStyle> {
         let id = self.cell_id(pos);
         self.active_buffer[id].as_ref().map(|cell| cell.style)
@@ -238,10 +393,7 @@ impl PrintBuffer {
         let id = self.cell_id(pos);
 
         let cell = &mut self.active_buffer[id].get_or_insert_with(Default::default);
-        cell.style = style;
-        cell.text.clear();
-        cell.text.push_str(grapheme);
-        cell.width = width;
+        cell.set(style, grapheme, width);
 
         // If this is a double-wide grapheme, mark the next cell as blocked.
         for dx in 1..width.as_usize() {

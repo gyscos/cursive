@@ -425,6 +425,11 @@ impl<T> SpannedString<T> {
         &self.source
     }
 
+    /// Get the source, consuming this `StyledString`.
+    pub fn into_source(self) -> String {
+        self.source
+    }
+
     /// Returns `true` if self is empty.
     pub fn is_empty(&self) -> bool {
         self.source.is_empty() || self.spans.is_empty()
@@ -603,6 +608,24 @@ impl IndexedCow {
         match *self {
             IndexedCow::Borrowed { start, end } => &source[start..end],
             IndexedCow::Owned(ref content) => content,
+        }
+    }
+
+    /// Gets a new `IndexedCow` for the given range.
+    ///
+    /// The given range is relative to this span.
+    pub fn subcow(&self, range: std::ops::Range<usize>) -> Self {
+        match *self {
+            IndexedCow::Borrowed { start, end } => {
+                if start + range.end > end {
+                    panic!("Attempting to get a subcow larger than itself!");
+                }
+                IndexedCow::Borrowed {
+                    start: start + range.start,
+                    end: start + range.end,
+                }
+            }
+            IndexedCow::Owned(ref content) => IndexedCow::Owned(content[range].into()),
         }
     }
 

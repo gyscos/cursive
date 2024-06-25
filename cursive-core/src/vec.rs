@@ -37,6 +37,16 @@ impl<T: PartialOrd> PartialOrd for XY<T> {
     }
 }
 
+impl XY<f32> {
+    /// Returns the given vector, rotated by an angle in radians.
+    pub fn rotated(self, angle_rad: f32) -> Self {
+        let c = angle_rad.cos();
+        let s = angle_rad.sin();
+
+        Self::new(self.x * c - self.y * s, self.x * s + self.y * c)
+    }
+}
+
 impl XY<usize> {
     /// A `Vec2` with `usize::MAX` in each axis.
     pub const MAX: XY<usize> = XY {
@@ -181,6 +191,18 @@ impl XY<usize> {
     /// ```
     pub const fn signed(self) -> XY<isize> {
         XY::new(self.x as isize, self.y as isize)
+    }
+
+    /// Returns the square distance between `a` and `b`.
+    pub fn sq_distance(a: Self, b: Self) -> usize {
+        (a.signed() - b.signed()).map(|x| (x*x) as usize).sum()
+    }
+}
+
+impl <T: Sub<Output=T> + Mul<Output=T> + Add<Output=T> + Copy> XY<T> {
+    /// Returns the square distance between `a` and `b`.
+    pub fn sq_norm(self) -> T {
+        self.map(|x| (x*x)).sum()
     }
 }
 

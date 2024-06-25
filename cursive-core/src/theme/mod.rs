@@ -201,6 +201,7 @@ mod color_style;
 mod effect;
 mod palette;
 mod style;
+pub mod gradient;
 
 pub use self::border_style::BorderStyle;
 pub use self::color::{BaseColor, Color};

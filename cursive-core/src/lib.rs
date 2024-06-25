@@ -79,7 +79,7 @@ pub use inventory::submit;
 #[macro_use]
 pub mod builder;
 
-mod buffer;
+pub mod buffer;
 mod cursive_root;
 mod cursive_run;
 mod dump;
