@@ -228,7 +228,8 @@ impl TextView {
     /// let view = TextView::cursup("/red+bold{warning}");
     /// ```
     pub fn cursup<S>(content: S) -> Self
-        where S: Into<String>,
+    where
+        S: Into<String>,
     {
         Self::new(crate::utils::markup::cursup::parse(content))
     }

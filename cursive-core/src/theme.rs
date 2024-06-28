@@ -78,8 +78,8 @@
 #[deprecated]
 pub use crate::style::{
     BaseColor, BorderStyle, Color, ColorPair, ColorStyle, ColorType, ConcreteEffects,
-    ConcreteStyle, Effect, EffectStatus, Effects, Palette, PaletteColor, PaletteNode, PaletteStyle, NoSuchColor,
-    Style, StyleType,
+    ConcreteStyle, Effect, EffectStatus, Effects, NoSuchColor, Palette, PaletteColor, PaletteNode,
+    PaletteStyle, Style, StyleType,
 };
 
 #[cfg(feature = "toml")]

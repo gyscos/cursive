@@ -193,8 +193,9 @@ impl<'a> Window<'a> {
     }
 
     /// Get mutable access to the style at the given cell, if any.
-    pub fn style_at_mut<V>(&mut self, pos: V) -> Option<&mut ConcreteStyle> 
-    where V: Into<Vec2>
+    pub fn style_at_mut<V>(&mut self, pos: V) -> Option<&mut ConcreteStyle>
+    where
+        V: Into<Vec2>,
     {
         let pos = pos.into();
         let pos = self.absolute_pos(pos)?;
@@ -347,7 +348,6 @@ impl PrintBuffer {
     pub fn style_at_mut(&mut self, pos: Vec2) -> Option<&mut ConcreteStyle> {
         let id = self.cell_id(pos);
         self.active_buffer[id].as_mut().map(|cell| &mut cell.style)
-        
     }
 
     /// Returns the cell at the given location.

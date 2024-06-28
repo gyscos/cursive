@@ -260,34 +260,44 @@ pub trait Interpolator {
 }
 
 impl Interpolator for Angled {
-    fn interpolate(&self, pos: Vec2, size: Vec2) -> Rgb<f32> {
-        // The starting corner depends on the angle.
-        // angle_rad should be in [0, pi/2].
-        let max_distance = Self::distance_along(self.angle_rad, size);
+    fn interpolate(&self, mut pos: Vec2, mut size: Vec2) -> Rgb<f32> {
+        use std::f32::consts::{FRAC_PI_2, PI, TAU};
 
-        // Compute the distance along the axis.
-        // This means rotate and check the y value.
-        let d = Self::distance_along(self.angle_rad, pos);
+        let mut angle = self.angle_rad;
 
-        self.gradient.interpolate(d / max_distance)
-    }
-}
-impl Angled {
-    fn distance_along(angle: f32, size: Vec2) -> f32 {
-        if angle < 0f32 {
-            return Self::distance_along(angle + std::f32::consts::FRAC_PI_2, size.swap());
+        // First, normalize the angle: add/remove TAU until we are in [0, TAU[
+        while angle < 0f32 {
+            angle += TAU;
         }
 
-        if angle > std::f32::consts::PI {
-            // Over 180 deg rotation
-            return Self::distance_along(angle - std::f32::consts::PI, size);
+        while angle >= TAU {
+            angle -= TAU;
         }
 
-        if angle > std::f32::consts::FRAC_PI_2 {
-            return Self::distance_along(angle - std::f32::consts::FRAC_PI_2, size.swap());
+        // Now there are 4 quadrants we need to handle: [0:PI/2[, [PI/2:PI[, [PI:3PI/2[, [3PI/2, TAU[
+        match angle {
+            _ if angle < FRAC_PI_2 => (),
+            _ if angle < PI => {
+                // Here, pos.x = max.x - pos.
+                pos = Vec2::new(size.y - pos.y, pos.x);
+                size = size.swap();
+                angle -= FRAC_PI_2;
+            }
+            _ if angle < PI + FRAC_PI_2 => {
+                pos = size - pos;
+                angle -= PI;
+            }
+            _ => {
+                pos = Vec2::new(pos.y, size.x - pos.x);
+                size = size.swap();
+                angle -= PI + FRAC_PI_2;
+            }
         }
 
-        size.map(|x| x as f32).rotated(angle).y
+        let d = pos.map(|x| x as f32).rotated(angle).y;
+        let max = size.map(|x| x as f32).rotated(angle).y;
+
+        self.gradient.interpolate(d / max)
     }
 }
 

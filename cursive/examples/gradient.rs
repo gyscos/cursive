@@ -1,28 +1,20 @@
-use cursive::style::gradient::{Linear, Radial, Rgb, Angled, Bilinear};
+use cursive::event::EventResult;
+use cursive::style::gradient::{Angled, Bilinear, Linear, Radial, Rgb};
 use cursive::traits::*;
 use cursive::utils::markup::gradient;
-use cursive::views::{Dialog, GradientView, TextView};
+use cursive::views::{Dialog, GradientView, OnEventView, TextView};
 use cursive::{Cursive, XY};
 
 fn main() {
     let mut siv = cursive::default();
 
-    // We can quit by pressing `q`
-    siv.add_global_callback('q', Cursive::quit);
-
     let text = "So many colors! So little time!";
-    let text =
-        gradient::decorate_front(text, Rgb::new(255, 0, 0), Rgb::new(0, 0, 255));
-    let text =
-        gradient::decorate_back(text, Rgb::new(0, 0, 255), Rgb::new(0, 255, 0));
+    let text = gradient::decorate_front(text, Rgb::new(255, 0, 0), Rgb::new(0, 0, 255));
+    let text = gradient::decorate_back(text, Rgb::new(0, 0, 255), Rgb::new(0, 255, 0));
 
     // Add a simple view
     siv.add_layer(Dialog::new().content(TextView::new(text)).button(
-        gradient::decorate_back(
-            "Moar",
-            Rgb::new(255, 0, 0),
-            Rgb::new(255, 255, 0),
-        ),
+        gradient::decorate_back("Moar", Rgb::new(255, 0, 0), Rgb::new(255, 255, 0)),
         show_more,
     ));
 
@@ -37,10 +29,7 @@ fn show_more(c: &mut cursive::Cursive) {
 
     let interpolator = Radial {
         center: XY::new(-0.1, -0.1),
-        gradient: Linear::new(
-            Rgb::from(0xFFFFFF),
-            Rgb::from(0x000000),
-        ),
+        gradient: Linear::new(Rgb::from(0xFFFFFF), Rgb::from(0x000000)),
     };
 
     c.pop_layer();
@@ -54,14 +43,20 @@ fn show_more_2(c: &mut cursive::Cursive) {
 
     let interpolator = Angled {
         angle_rad: 4f32,
-        gradient: Linear::new(
-            Rgb::from(0xFFFFFF),
-            Rgb::from(0x000000),
-        ),
-
+        gradient: Linear::new(Rgb::from(0xFFFFFF), Rgb::from(0x000000)),
     };
     c.pop_layer();
-    c.add_layer(GradientView::new(dialog, interpolator));
+    c.add_layer(
+        OnEventView::new(GradientView::new(dialog, interpolator))
+            .on_event_inner('q', |g, _| {
+                g.interpolator_mut().angle_rad += 0.1;
+                Some(EventResult::Consumed(None))
+            })
+            .on_event_inner('e', |g, _| {
+                g.interpolator_mut().angle_rad -= 0.1;
+                Some(EventResult::Consumed(None))
+            }),
+    );
 }
 
 fn show_more_3(c: &mut cursive::Cursive) {

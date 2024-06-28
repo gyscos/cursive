@@ -38,6 +38,11 @@ impl<T, I> GradientView<T, I> {
         }
     }
 
+    /// Gives mutable access to the interpolator.
+    pub fn interpolator_mut(&mut self) -> &mut I {
+        &mut self.interpolator
+    }
+
     /// Sets this gradient view to use global coordinates.
     ///
     /// The gradient will be calculated based on the absolute position in the full window.
@@ -86,6 +91,8 @@ where
             CoordinateSystem::Global => (pos + viewport.top_left(), size),
         };
 
+        // Multiply the X axis by 2 because most terminal fonts use cells
+        // approximately twice as tall as they are wide.
         ColorStyle::back(
             self.interpolator
                 .interpolate(pos * Vec2::new(1, 2), size * Vec2::new(1, 2))

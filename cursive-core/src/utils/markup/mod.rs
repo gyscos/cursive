@@ -4,8 +4,8 @@
 
 pub mod ansi;
 pub mod cursup;
-pub mod markdown;
 pub mod gradient;
+pub mod markdown;
 
 use crate::style::Style;
 use crate::utils::span::{IndexedCow, IndexedSpan, Span, SpannedStr, SpannedString, SpannedText};
