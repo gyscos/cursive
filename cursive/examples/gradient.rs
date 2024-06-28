@@ -12,12 +12,12 @@ fn main() {
     let mut siv = cursive::default();
 
     let text = "So many colors! So little time!";
-    let text = gradient::decorate_front(text, Rgb::new(255, 0, 0), Rgb::new(0, 0, 255));
-    let text = gradient::decorate_back(text, Rgb::new(0, 0, 255), Rgb::new(0, 255, 0));
+    let text = gradient::decorate_front(text, (Rgb::new(255, 0, 0), Rgb::new(0, 0, 255)));
+    let text = gradient::decorate_back(text, (Rgb::new(0, 0, 255), Rgb::new(0, 255, 0)));
 
     // Add a simple view
     siv.add_layer(Dialog::new().content(TextView::new(text)).button(
-        gradient::decorate_back("Moar", Rgb::new(255, 0, 0), Rgb::new(255, 255, 0)),
+        gradient::decorate_back("Moar", (Rgb::new(255, 0, 0), Rgb::new(255, 255, 0))),
         show_more,
     ));
 

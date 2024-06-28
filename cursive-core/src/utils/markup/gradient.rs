@@ -66,25 +66,29 @@ where
 }
 
 /// Decorate a text with the given gradient.
-pub fn decorate_front<S>(text: S, start: Rgb, end: Rgb) -> StyledString
+pub fn decorate_front<S, G>(text: S, gradient: G) -> StyledString
 where
     S: Into<StyledString>,
+    G: Into<Linear>,
 {
     let text = text.into();
+    let gradient = gradient.into();
 
-    let spans = decorate_front_with(&text, |x| Linear::new(start, end).interpolate(x).as_u8());
+    let spans = decorate_front_with(&text, |x| gradient.interpolate(x).as_u8());
 
     StyledString::with_spans(text.into_source(), spans)
 }
 
 /// Decorate a text with the given gradient as background.
-pub fn decorate_back<S>(text: S, start: Rgb, end: Rgb) -> StyledString
+pub fn decorate_back<S, G>(text: S, gradient: G) -> StyledString
 where
     S: Into<StyledString>,
+    G: Into<Linear>,
 {
     let text = text.into();
+    let gradient = gradient.into();
 
-    let spans = decorate_back_with(&text, |x| Linear::new(start, end).interpolate(x).as_u8());
+    let spans = decorate_back_with(&text, |x| gradient.interpolate(x).as_u8());
 
     StyledString::with_spans(text.into_source(), spans)
 }
@@ -97,14 +101,14 @@ mod tests {
 
     #[test]
     fn simple() {
-        let gradient = decorate_front("ab", Rgb::new(255, 0, 0), Rgb::new(0, 0, 255));
+        let gradient = decorate_front("ab", (Rgb::new(255, 0, 0), Rgb::new(0, 0, 255)));
 
         assert_eq!(
             gradient,
             cursup::parse("/#FF0000{a}/#0000FF{b}").canonical()
         );
 
-        let gradient = decorate_front("abcde", Rgb::new(255, 0, 0), Rgb::new(0, 0, 255));
+        let gradient = decorate_front("abcde", (Rgb::new(255, 0, 0), Rgb::new(0, 0, 255)));
 
         assert_eq!(
             gradient,

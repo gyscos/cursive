@@ -29,6 +29,29 @@ impl Linear {
         }
     }
 
+    /// Create a simple gradient with evenly spaced colors.
+    ///
+    /// * Returns `None` if `colors` is empty.
+    /// * Returns a constant "gradient" (same start and end) if `colors.len() == 1`.
+    /// * Returns a piecewise gradient between all colors otherwise.
+    pub fn evenly_spaced<R: Copy + Into<Rgb<f32>>>(colors: &[R]) -> Option<Self> {
+        if colors.is_empty() {
+            return None;
+        }
+
+        if colors.len() == 1 {
+            return Some(Self::new(colors[0], colors[0]));
+        }
+
+        let step = 1f32 / (colors.len() - 1) as f32;
+        let mut colors = colors.iter().copied().map(Into::into).enumerate();
+        let (_, start) = colors.next().unwrap();
+        let (_, end) = colors.next_back().unwrap();
+        let middle = colors.map(|(i, color)| (step * i as f32, color)).collect();
+
+        Some(Self { start, middle, end })
+    }
+
     /// Interpolate the color for the given position.
     pub fn interpolate(&self, x: f32) -> Rgb<f32> {
         // Find the segment
@@ -60,6 +83,30 @@ impl Linear {
         std::iter::once((0f32, self.start))
             .chain(self.middle.iter().copied())
             .chain(std::iter::once((1f32, self.end)))
+    }
+}
+
+impl From<(Rgb<f32>, Rgb<f32>)> for Linear {
+    fn from((start, end): (Rgb<f32>, Rgb<f32>)) -> Self {
+        Self::new(start, end)
+    }
+}
+
+impl From<[Rgb<f32>; 2]> for Linear {
+    fn from([start, end]: [Rgb<f32>; 2]) -> Self {
+        Self::new(start, end)
+    }
+}
+
+impl From<(Rgb<u8>, Rgb<u8>)> for Linear {
+    fn from((start, end): (Rgb<u8>, Rgb<u8>)) -> Self {
+        Self::new(start.as_f32(), end.as_f32())
+    }
+}
+
+impl From<[Rgb<u8>; 2]> for Linear {
+    fn from([start, end]: [Rgb<u8>; 2]) -> Self {
+        Self::new(start.as_f32(), end.as_f32())
     }
 }
 
