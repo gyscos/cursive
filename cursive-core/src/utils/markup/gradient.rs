@@ -1,9 +1,6 @@
 //! Generate StyledString with gradients.
 
-use crate::style::{
-    gradient::{Linear, Rgb},
-    ColorStyle, Style,
-};
+use crate::style::{gradient::Linear, ColorStyle, Rgb, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -95,7 +92,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::decorate_front;
-    use crate::style::gradient::Rgb;
+    use crate::style::Rgb;
     use crate::utils::markup::cursup;
 
     #[test]

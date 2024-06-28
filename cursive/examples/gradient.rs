@@ -1,9 +1,12 @@
 use cursive::event::EventResult;
-use cursive::style::gradient::{Angled, Bilinear, Linear, Radial, Rgb};
+use cursive::style::{
+    gradient::{Angled, Bilinear, Linear, Radial},
+    Rgb,
+};
 use cursive::traits::*;
 use cursive::utils::markup::gradient;
 use cursive::views::{Dialog, GradientView, OnEventView, TextView};
-use cursive::{Cursive, XY};
+use cursive::XY;
 
 fn main() {
     let mut siv = cursive::default();

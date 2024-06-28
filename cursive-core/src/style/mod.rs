@@ -134,7 +134,7 @@ mod palette;
 mod style;
 
 pub use self::border_style::BorderStyle;
-pub use self::color::{BaseColor, Color};
+pub use self::color::{BaseColor, Color, Rgb};
 pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::{ConcreteEffects, Effect, EffectStatus, Effects};
