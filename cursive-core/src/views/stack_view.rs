@@ -6,7 +6,7 @@
 use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
-    theme::PaletteStyle,
+    style::PaletteStyle,
     view::{
         CannotFocus, IntoBoxedView, Offset, Position, Selector, View, ViewNotFound, ViewWrapper,
     },

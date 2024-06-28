@@ -7,7 +7,7 @@ pub mod cursup;
 pub mod markdown;
 pub mod gradient;
 
-use crate::theme::Style;
+use crate::style::Style;
 use crate::utils::span::{IndexedCow, IndexedSpan, Span, SpannedStr, SpannedString, SpannedText};
 
 use unicode_width::UnicodeWidthStr;

@@ -3,10 +3,11 @@
 use crate::buffer::{PrintBuffer, Window};
 use crate::direction::Orientation;
 use crate::rect::Rect;
-use crate::theme::{
+use crate::style::{
     BorderStyle, ColorPair, ColorStyle, ConcreteStyle, Effect, PaletteColor, PaletteStyle, Style,
-    StyleType, Theme,
+    StyleType,
 };
+use crate::theme::Theme;
 use crate::utils::lines::simple::{prefix, suffix};
 use crate::utils::span::IndexedSpan;
 use crate::with::With;
@@ -439,9 +440,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// ```rust
     /// # use cursive_core::Printer;
-    /// # use cursive_core::theme;
+    /// # use cursive_core::style;
     /// # fn with_printer(printer: &Printer) {
-    /// printer.with_style(theme::PaletteStyle::Highlight, |printer| {
+    /// printer.with_style(style::PaletteStyle::Highlight, |printer| {
     ///     printer.print((0, 0), "This text is highlighted!");
     /// });
     /// # }

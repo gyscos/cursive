@@ -510,7 +510,7 @@ impl Resolvable for BoxedView {
     }
 }
 
-impl Resolvable for crate::theme::BaseColor {
+impl Resolvable for crate::style::BaseColor {
     fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         (|| Self::parse(config.as_str()?))().ok_or_else(|| Error::InvalidConfig {
             message: "Invalid config for BaseColor".into(),
@@ -519,7 +519,7 @@ impl Resolvable for crate::theme::BaseColor {
     }
 }
 
-impl Resolvable for crate::theme::Palette {
+impl Resolvable for crate::style::Palette {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let mut palette = Self::default();
 
@@ -543,7 +543,7 @@ impl Resolvable for crate::theme::Palette {
     }
 }
 
-impl Resolvable for crate::theme::BorderStyle {
+impl Resolvable for crate::style::BorderStyle {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let borders: String = context.resolve(config)?;
 
@@ -662,7 +662,7 @@ where
 // color:
 //      rgb: [1, 2, 4]
 // ```
-impl Resolvable for crate::theme::Color {
+impl Resolvable for crate::style::Color {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         Ok(match config {
             Config::String(config) => Self::parse(config)
@@ -696,16 +696,16 @@ impl Resolvable for crate::theme::Color {
     }
 }
 
-impl Resolvable for crate::theme::PaletteColor {
+impl Resolvable for crate::style::PaletteColor {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let color: String = context.resolve(config)?;
 
-        crate::theme::PaletteColor::from_str(&color)
+        crate::style::PaletteColor::from_str(&color)
             .map_err(|_| Error::invalid_config("Unrecognized palette color", config))
     }
 }
 
-impl Resolvable for crate::theme::ColorType {
+impl Resolvable for crate::style::ColorType {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         if let Ok(color) = context.resolve(config) {
             return Ok(Self::Color(color));
@@ -736,13 +736,13 @@ impl Resolvable for crate::theme::ColorType {
     }
 }
 
-impl Resolvable for crate::theme::ColorStyle {
+impl Resolvable for crate::style::ColorStyle {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         if let Ok(color) = (|| -> Result<_, Error> {
             let front = context.resolve(&config["front"])?;
             let back = context.resolve(&config["back"])?;
 
-            Ok(crate::theme::ColorStyle { front, back })
+            Ok(crate::style::ColorStyle { front, back })
         })() {
             return Ok(color);
         }

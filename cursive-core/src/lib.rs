@@ -69,6 +69,7 @@ pub mod direction;
 pub mod event;
 pub mod logger;
 pub mod menu;
+pub mod style;
 pub mod theme;
 pub mod traits;
 pub mod vec;

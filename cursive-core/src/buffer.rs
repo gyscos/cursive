@@ -1,7 +1,7 @@
 //! Output buffer
 
 use crate::backend::Backend;
-use crate::theme::ConcreteStyle;
+use crate::style::ConcreteStyle;
 use crate::{Rect, Vec2};
 
 use unicode_segmentation::UnicodeSegmentation;

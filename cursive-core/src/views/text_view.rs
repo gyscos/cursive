@@ -5,7 +5,7 @@ use std::sync::Arc;
 use unicode_width::UnicodeWidthStr;
 
 use crate::align::*;
-use crate::theme::{Effect, StyleType};
+use crate::style::{Effect, StyleType};
 use crate::utils::lines::spans::{LinesIterator, Row};
 use crate::utils::markup::StyledString;
 use crate::view::{SizeCache, View};

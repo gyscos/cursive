@@ -9,7 +9,7 @@
 //! [`Backend`]: trait.Backend.html
 
 use crate::event::Event;
-use crate::theme;
+use crate::style;
 use crate::Vec2;
 
 /// Trait defining the required methods to be a backend.
@@ -67,19 +67,19 @@ pub trait Backend {
     fn print(&self, text: &str);
 
     /// Clears the screen with the given color.
-    fn clear(&self, color: theme::Color);
+    fn clear(&self, color: style::Color);
 
     /// Starts using a new color.
     ///
     /// This should return the previously active color.
     ///
     /// Any call to `print_at` from now on should use the given color.
-    fn set_color(&self, colors: theme::ColorPair) -> theme::ColorPair;
+    fn set_color(&self, colors: style::ColorPair) -> style::ColorPair;
 
     /// Enables the given effect.
     ///
     /// Any call to `print_at` from now on should use the given effect.
-    fn set_effect(&self, effect: theme::Effect);
+    fn set_effect(&self, effect: style::Effect);
 
     /// Returns `true` if the backend has persistent output.
     ///
@@ -90,7 +90,7 @@ pub trait Backend {
     }
 
     /// Disables the given effect.
-    fn unset_effect(&self, effect: theme::Effect);
+    fn unset_effect(&self, effect: style::Effect);
 
     /// Returns a name to identify the backend.
     ///
@@ -138,15 +138,15 @@ impl Backend for Dummy {
     fn move_to(&self, _: Vec2) {}
     fn print(&self, _: &str) {}
 
-    fn clear(&self, _: theme::Color) {}
+    fn clear(&self, _: style::Color) {}
 
     // This sets the Colours and returns the previous colours
     // to allow you to set them back when you're done.
-    fn set_color(&self, colors: theme::ColorPair) -> theme::ColorPair {
+    fn set_color(&self, colors: style::ColorPair) -> style::ColorPair {
         // TODO: actually save a stack of colors?
         colors
     }
 
-    fn set_effect(&self, _: theme::Effect) {}
-    fn unset_effect(&self, _: theme::Effect) {}
+    fn set_effect(&self, _: style::Effect) {}
+    fn unset_effect(&self, _: style::Effect) {}
 }

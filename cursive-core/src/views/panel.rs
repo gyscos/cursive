@@ -1,7 +1,7 @@
 use crate::align::*;
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
-use crate::theme::PaletteStyle;
+use crate::style::PaletteStyle;
 use crate::utils::markup::StyledString;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;

@@ -3,7 +3,7 @@ use crate::{
     direction::{Absolute, Direction, Relative},
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
-    theme::PaletteStyle,
+    style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound},
     views::{BoxedView, Button, DummyView, LastSizeView, TextView},

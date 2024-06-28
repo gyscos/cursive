@@ -147,7 +147,7 @@ impl Cursive {
         // If the menubar is active, nothing else can be.
         if self.menubar.visible() {
             let printer = printer.focused(self.menubar.receive_events());
-            printer.with_color(theme::ColorStyle::primary(), |printer| {
+            printer.with_color(crate::style::ColorStyle::primary(), |printer| {
                 self.menubar.draw(printer)
             });
         }

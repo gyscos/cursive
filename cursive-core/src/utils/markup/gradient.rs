@@ -1,6 +1,6 @@
 //! Generate StyledString with gradients.
 
-use crate::theme::{
+use crate::style::{
     gradient::{Linear, Rgb},
     ColorStyle, Style,
 };
@@ -95,7 +95,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::decorate_front;
-    use crate::theme::gradient::Rgb;
+    use crate::style::gradient::Rgb;
     use crate::utils::markup::cursup;
 
     #[test]

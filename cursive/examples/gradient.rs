@@ -1,4 +1,4 @@
-use cursive::theme::gradient::{Linear, Radial, Rgb, Angled, Bilinear};
+use cursive::style::gradient::{Linear, Radial, Rgb, Angled, Bilinear};
 use cursive::traits::*;
 use cursive::utils::markup::gradient;
 use cursive::views::{Dialog, GradientView, TextView};

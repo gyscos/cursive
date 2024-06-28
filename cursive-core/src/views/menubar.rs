@@ -3,7 +3,7 @@ use crate::{
     event::*,
     menu,
     rect::Rect,
-    theme::PaletteStyle,
+    style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, Position, View},
     views::{MenuPopup, OnEventView},

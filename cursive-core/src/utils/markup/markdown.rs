@@ -6,7 +6,7 @@
 
 use std::borrow::Cow;
 
-use crate::theme::{Effect, Style};
+use crate::style::{Effect, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
 

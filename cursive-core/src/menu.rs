@@ -15,7 +15,7 @@
 
 use crate::utils::markup::PlainStr;
 use crate::utils::span::{SpannedStr, SpannedText as _};
-use crate::{event::Callback, theme::Style, utils::markup::StyledString, Cursive, With};
+use crate::{event::Callback, style::Style, utils::markup::StyledString, Cursive, With};
 use std::sync::Arc;
 
 static DELIMITER: PlainStr = PlainStr::new_with_width("│", 1);
@@ -346,7 +346,7 @@ impl Tree {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::theme::{ColorStyle, ColorType, Effects, Style};
+    use crate::style::{ColorStyle, ColorType, Effects, Style};
     use crate::utils::span::Span;
 
     #[test]

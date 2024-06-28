@@ -2,7 +2,7 @@ use crate::{
     direction::Direction,
     event::{Callback, Event, EventResult, Key, MouseEvent},
     rect::Rect,
-    theme::{PaletteStyle, StyleType},
+    style::{PaletteStyle, StyleType},
     utils::lines::simple::{simple_prefix, simple_suffix},
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,

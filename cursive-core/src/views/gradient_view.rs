@@ -1,5 +1,5 @@
 use crate::{
-    theme::{gradient::Interpolator, ColorStyle, Style},
+    style::{gradient::Interpolator, ColorStyle, Style},
     traits::With,
     Printer, Rect, Vec2, View,
 };

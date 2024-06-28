@@ -731,7 +731,7 @@ impl IndexedCow {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::theme::Style;
+    use crate::style::Style;
 
     #[test]
     fn test_spanned_str_width() {

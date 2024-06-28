@@ -3,7 +3,7 @@ use crate::{
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
     menu,
     rect::Rect,
-    theme::PaletteStyle,
+    style::PaletteStyle,
     view::scroll,
     view::{Position, View},
     views::OnEventView,

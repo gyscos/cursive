@@ -1,5 +1,5 @@
 //! Gradients
-use crate::theme::Color;
+use crate::style::Color;
 use crate::{Vec2, XY};
 
 /// RGB color.

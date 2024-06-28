@@ -1,5 +1,5 @@
 use super::LinesIterator;
-use crate::theme::{Effect, Style};
+use crate::style::{Effect, Style};
 use crate::utils::markup::StyledString;
 use crate::utils::span::Span;
 

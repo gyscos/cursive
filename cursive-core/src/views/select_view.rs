@@ -4,7 +4,7 @@ use crate::{
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
     menu,
     rect::Rect,
-    theme::{PaletteStyle, Style, StyleType},
+    style::{PaletteStyle, Style, StyleType},
     utils::markup::StyledString,
     view::{CannotFocus, Position, View},
     views::{LayerPosition, MenuPopup},

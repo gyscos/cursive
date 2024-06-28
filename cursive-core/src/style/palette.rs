@@ -21,8 +21,8 @@ type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 /// # Example
 ///
 /// ```rust
-/// # use cursive_core::theme::Palette;
-/// use cursive_core::theme::{BaseColor::*, Color::*, PaletteColor::*};
+/// # use cursive_core::style::Palette;
+/// use cursive_core::style::{BaseColor::*, Color::*, PaletteColor::*};
 ///
 /// let mut palette = Palette::default();
 ///
@@ -88,7 +88,7 @@ impl IndexMut<PaletteStyle> for Palette {
 
 fn default_styles() -> EnumMap<PaletteStyle, Style> {
     use self::PaletteStyle::*;
-    use crate::theme::{ColorStyle, Effect};
+    use crate::style::{ColorStyle, Effect};
 
     enum_map! {
         Shadow => ColorStyle::shadow().into(),
@@ -121,7 +121,7 @@ impl Palette {
     /// text color for everything.
     pub fn terminal_default() -> Self {
         use self::PaletteColor::*;
-        use crate::theme::Color::TerminalDefault;
+        use crate::style::Color::TerminalDefault;
 
         Palette {
             basic: enum_map! {
@@ -157,8 +157,8 @@ impl Palette {
     /// * `HighlightText` => `Dark(White)`
     pub fn retro() -> Self {
         use self::PaletteColor::*;
-        use crate::theme::BaseColor::*;
-        use crate::theme::Color::*;
+        use crate::style::BaseColor::*;
+        use crate::style::Color::*;
 
         Palette {
             basic: enum_map! {
@@ -229,7 +229,7 @@ impl Palette {
         &mut self,
         key: &str,
         color: Color,
-    ) -> Result<(), crate::theme::NoSuchColor> {
+    ) -> Result<(), crate::style::NoSuchColor> {
         PaletteColor::from_str(key).map(|c| self.basic[c] = color)
     }
 
@@ -469,7 +469,7 @@ impl FromStr for PaletteStyle {
 }
 
 impl FromStr for PaletteColor {
-    type Err = crate::theme::NoSuchColor;
+    type Err = crate::style::NoSuchColor;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use PaletteColor::*;
@@ -486,7 +486,7 @@ impl FromStr for PaletteColor {
             "Highlight" | "highlight" => Highlight,
             "HighlightInactive" | "highlight_inactive" => HighlightInactive,
             "HighlightText" | "highlight_text" => HighlightText,
-            _ => return Err(crate::theme::NoSuchColor),
+            _ => return Err(crate::style::NoSuchColor),
         })
     }
 }

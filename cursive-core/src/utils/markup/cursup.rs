@@ -17,7 +17,7 @@
 //! ```
 #![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "cursup")))]
 
-use crate::theme::Style;
+use crate::style::Style;
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
 
@@ -164,7 +164,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::theme::{BaseColor, Color, ColorType, Effect, Style};
+    use crate::style::{BaseColor, Color, ColorType, Effect, Style};
     use crate::utils::markup::cursup::parse;
     use crate::utils::markup::StyledString;
     use crate::utils::span::Span;

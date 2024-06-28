@@ -3,7 +3,7 @@ use crate::{
     direction::Direction,
     event::*,
     rect::Rect,
-    theme::PaletteStyle,
+    style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2,

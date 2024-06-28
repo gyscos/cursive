@@ -1,7 +1,7 @@
 use crate::{
     direction::{Direction, Orientation},
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
-    theme::PaletteStyle,
+    style::PaletteStyle,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };

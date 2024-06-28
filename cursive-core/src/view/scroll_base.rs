@@ -1,5 +1,5 @@
 use crate::div::div_up;
-use crate::theme::Style;
+use crate::style::Style;
 use crate::Printer;
 use crate::Vec2;
 use std::cmp::{max, min};

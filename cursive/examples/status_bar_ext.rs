@@ -7,7 +7,7 @@
 //! By Joel Parker Henderson (joel@joelparkerhenderson.com)
 
 use cursive::{
-    theme::Style,
+    style::Style,
     utils::span::SpannedString,
     view::{Nameable, Resizable, View},
     views::{FixedLayout, Layer, OnLayoutView, TextContent, TextContentRef, TextView},

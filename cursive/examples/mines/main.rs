@@ -3,7 +3,7 @@ mod game;
 use cursive::{
     direction::Direction,
     event::{Event, EventResult, MouseButton, MouseEvent},
-    theme::{BaseColor, Color, ColorStyle},
+    style::{BaseColor, Color, ColorStyle},
     view::CannotFocus,
     views::{Button, Dialog, LinearLayout, Panel, SelectView},
     Cursive, Printer, Vec2,

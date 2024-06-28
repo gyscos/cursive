@@ -24,17 +24,17 @@ impl ColorStyle {
     ///
     /// ```rust
     /// # use cursive_core as cursive;
-    /// use cursive::theme::ColorStyle;
+    /// use cursive::style::ColorStyle;
     ///
     /// // `BaseColor` implements `Into<ColorStyle>`
-    /// use cursive::theme::BaseColor::*;
+    /// use cursive::style::BaseColor::*;
     /// let red_on_black = ColorStyle::new(Red, Black);
     ///
     /// // So does `Color`.
     /// let red_on_black = ColorStyle::new(Red.light(), Black.dark());
     ///
     /// // Or `PaletteColor`.
-    /// use cursive::theme::PaletteColor::*;
+    /// use cursive::style::PaletteColor::*;
     /// let primary = ColorStyle::new(Primary, View);
     /// ```
     pub fn new<F, B>(front: F, back: B) -> Self
@@ -53,7 +53,7 @@ impl ColorStyle {
     ///
     /// ```rust
     /// # use cursive_core as cursive;
-    /// use cursive::theme::{BaseColor::*, ColorStyle, ColorType};
+    /// use cursive::style::{BaseColor::*, ColorStyle, ColorType};
     ///
     /// let color = ColorStyle::front(Red.dark());
     ///
@@ -72,7 +72,7 @@ impl ColorStyle {
     ///
     /// ```rust
     /// # use cursive_core as cursive;
-    /// use cursive::theme::{BaseColor::*, ColorStyle, ColorType};
+    /// use cursive::style::{BaseColor::*, ColorStyle, ColorType};
     ///
     /// let color = ColorStyle::back(Black.dark());
     ///
@@ -94,8 +94,8 @@ impl ColorStyle {
     ///
     /// ```rust
     /// # use cursive_core as cursive;
-    /// use cursive::theme::BaseColor::*;
-    /// use cursive::theme::ColorStyle;
+    /// use cursive::style::BaseColor::*;
+    /// use cursive::style::ColorStyle;
     ///
     /// let red_on_black = ColorStyle::new(Red.dark(), Black.dark());
     /// let black_on_red = red_on_black.invert();
