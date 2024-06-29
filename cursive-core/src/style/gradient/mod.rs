@@ -170,7 +170,10 @@ impl Interpolator for Radial {
 pub struct Angled {
     /// Angle of the gradient in radians.
     ///
-    /// 0 = vertical.
+    /// * 0 = vertical from top to bottom.
+    /// * Pi/2 = horizontal from left to right.
+    /// * Pi = vertical from bottom to top.
+    /// * 3.Pi/2 = vertical from bottom to top.
     pub angle_rad: f32,
 
     /// The gradient to apply following the gradient angle.

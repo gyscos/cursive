@@ -5,7 +5,7 @@ use cursive::style::{
 };
 use cursive::traits::*;
 use cursive::utils::markup::gradient;
-use cursive::views::{Dialog, GradientView, OnEventView, TextView};
+use cursive::views::{Dialog, GradientView, OnEventView, PaddedView, TextView};
 use cursive::XY;
 
 fn main() {
@@ -41,11 +41,18 @@ fn show_more(c: &mut cursive::Cursive) {
 
 fn show_more_2(c: &mut cursive::Cursive) {
     let dialog = Dialog::new()
+        .content(PaddedView::lrtb(
+            0,
+            0,
+            8,
+            0,
+            TextView::new("Press Q or E to rotate the gradient"),
+        ))
         .button("Moar", show_more_3)
         .fixed_size((40, 20));
 
     let interpolator = Angled {
-        angle_rad: 4f32,
+        angle_rad: 0f32,
         gradient: Linear::new(Rgb::from(0xFFFFFF), Rgb::from(0x000000)),
     };
     c.pop_layer();
