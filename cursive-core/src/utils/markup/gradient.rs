@@ -112,7 +112,7 @@ mod tests {
 
         assert_eq!(
             gradient,
-            cursup::parse("/#FF0000{a}/#BF003F{b}/#7F007F{c}/#3F00BF{d}/#0000FF{e}").canonical()
+            cursup::parse("/#FF0000{a}/#BF0040{b}/#800080{c}/#4000Bf{d}/#0000FF{e}").canonical()
         );
     }
 }
