@@ -154,8 +154,9 @@ impl Interpolator for Radial {
         // Find the further corner from `size`.
         //
         // TODO: cache this for the same value of `size`?
+        // (Define a type that combines the gradient and the size, to be re-used for a draw cycle?)
         let to_corner = self.center.map(|x| 0.5f32 + (x - 0.5f32).abs()) * size_f32;
-        let max_distance = (to_corner.map(|x| x as isize).sq_norm() as f32).sqrt();
+        let max_distance = (to_corner.map(|x| x as isize).sq_norm() as f32).sqrt().max(1.0);
 
         let center = (self.center * size_f32).map(|x| x as isize);
 
@@ -196,6 +197,7 @@ impl Interpolator for Angled {
         }
 
         // Now there are 4 quadrants we need to handle: [0:PI/2[, [PI/2:PI[, [PI:3PI/2[, [3PI/2, TAU[
+        // TODO: Refactor a bit to only need `pos` at the end (build a 3x3 matrix to apply?)
         match angle {
             _ if angle < FRAC_PI_2 => (),
             _ if angle < PI => {
@@ -216,7 +218,9 @@ impl Interpolator for Angled {
         }
 
         let d = pos.map(|x| x as f32).rotated(angle).y;
-        let max = size.map(|x| x as f32).rotated(angle).y;
+
+        // Define max distance as always at least 1.0 to prevent divide-by-0
+        let max = size.map(|x| x as f32).rotated(angle).y.max(1.0);
 
         self.gradient.interpolate(d / max)
     }
@@ -238,14 +242,18 @@ pub struct Bilinear {
 
 impl Interpolator for Bilinear {
     fn interpolate(&self, pos: Vec2, size: Vec2) -> Rgb<f32> {
-        // TODO: handle size = 0 or 1 in any axis.
-        // Size=0 => doesn't matter
-        // Size=1 => ??? first value?
+        if !Vec2::new(2,2).fits_in(size) {
+            // Size=0 => doesn't matter
+            // Size=1 => ??? first value?
+            return self.top_left;
+        }
+
+        // Here size >= (2.2), so (size - (1,1)) > 0
         let pos = pos.map(|x| x as f32) / size.map(|x| (x - 1) as f32);
 
-        let top = Linear::new(self.top_left, self.top_right).interpolate(pos.x);
-        let bottom = Linear::new(self.bottom_left, self.bottom_right).interpolate(pos.x);
+        let top = Rgb::zip(self.top_left, self.top_right).interpolate(pos.x);
+        let bottom = Rgb::zip(self.bottom_left, self.bottom_right).interpolate(pos.x);
 
-        Linear::new(top, bottom).interpolate(pos.y)
+        Rgb::zip(top, bottom).interpolate(pos.y)
     }
 }
