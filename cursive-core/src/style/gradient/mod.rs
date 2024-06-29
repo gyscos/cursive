@@ -1,7 +1,31 @@
 //! Gradients
+//!
+//! This module defines a few types to help work with gradients:
+//!
+//! * [`Linear`] is a 1-dimensional (linear) piecewise gradient: given a float value between 0 and
+//!   1, it returns the interpolated [`crate::style::Rgb`] color at that point.
+//! * A few 2D gradients assign float values between 0 and 1 to each cell of a grid, and internally
+//!   use a `Linear` gradient to convert that to a color.
+//!   * [`Angled`] applies its linear gradient on the 2D grid at an angle.
+//!   * [`Radial`] applies its linear gradient according to the distance from a center.
+//!   * [`Bilinear`] uses bilinear interpolation between the 4 corners to compute the color for
+//!     each cell.
+//!
+//! Note that this module works with `Rgb<f32>`, where each color has a f32 value between 0 and 1.
+//! Various conversions to/from `Rgb<u8>` and [`crate::style::Color`] are available.
 use crate::{style::Rgb, Vec2, XY};
 
-/// A linear gradient interpolating between 0 and 1.
+/// A 2D color distribution.
+///
+/// Types implementing this trait can assign a color to each point of a grid.
+pub trait Interpolator {
+    /// Get the color for the given position, given the total size of the area to cover.
+    ///
+    /// The resulting value uses floats between 0 and 1.
+    fn interpolate(&self, pos: Vec2, size: Vec2) -> Rgb<f32>;
+}
+
+/// A linear gradient interpolating color for floats between 0 and 1.
 pub struct Linear {
     /// Color for the start of the gradient.
     pub start: Rgb<f32>,
@@ -53,6 +77,8 @@ impl Linear {
     }
 
     /// Interpolate the color for the given position.
+    ///
+    /// The resulting value uses floats between 0 and 1.
     pub fn interpolate(&self, x: f32) -> Rgb<f32> {
         // Find the segment
         if x <= 0f32 {
@@ -149,12 +175,6 @@ pub struct Angled {
 
     /// The gradient to apply following the gradient angle.
     pub gradient: Linear,
-}
-
-/// Something that can interpolate.
-pub trait Interpolator {
-    /// Get the color for the given position, given the total size.
-    fn interpolate(&self, pos: Vec2, size: Vec2) -> Rgb<f32>;
 }
 
 impl Interpolator for Angled {

@@ -97,7 +97,9 @@ impl From<u8> for BaseColor {
 
 /// RGB color.
 ///
-/// If `T = u8` this is a 24-bit color.
+/// If `T = u8` this is the usual 24-bit true color.
+///
+/// If `T = f32` this uses floats between 0 and 1.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Rgb<T = u8> {
     /// Red component.
@@ -161,8 +163,12 @@ impl<T> Rgb<T> {
 
 impl Rgb<f32> {
     /// Casts each component to u8.
+    ///
+    /// Goes from `[0:1]` to `[0:255]` range.
     pub fn as_u8(self) -> Rgb<u8> {
-        self.map(|x| x as u8)
+        // Going from [0:1.0] to [0:255]
+        // We add 0.5 to make sure the float is above the integer we want.
+        self.map(|x| (0.5 + (x.clamp(0.0, 1.0) * 255.0).round()) as u8)
     }
 
     /// Convert to a Color.
@@ -173,6 +179,8 @@ impl Rgb<f32> {
 
 impl Rgb<(f32, f32)> {
     /// Interpolate each component individually.
+    ///
+    /// This is a simple linear interpolation per channel.
     pub fn interpolate(self, x: f32) -> Rgb<f32> {
         self.map(|(a, b)| a * (1f32 - x) + b * x)
     }
@@ -181,7 +189,7 @@ impl Rgb<(f32, f32)> {
 impl Rgb<(u8, u8)> {
     /// Cast each component to a tuple of f32.
     pub fn as_f32(self) -> Rgb<(f32, f32)> {
-        self.map(|(x, y)| (x as f32, y as f32))
+        self.map(|(x, y)| (x as f32 / 255.0, y as f32 / 255.0))
     }
 }
 
@@ -203,7 +211,7 @@ impl Rgb<u8> {
 
     /// Cast each component to f32.
     pub fn as_f32(self) -> Rgb<f32> {
-        self.map(|x| x as f32)
+        self.map(|x| x as f32 / 255.0)
     }
 
     /// Returns a pure red RGB color.
