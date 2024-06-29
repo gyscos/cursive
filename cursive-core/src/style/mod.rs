@@ -131,7 +131,7 @@ mod color_style;
 mod effect;
 pub mod gradient;
 mod palette;
-mod style;
+mod style_types;
 
 pub use self::border_style::BorderStyle;
 pub use self::color::{BaseColor, Color, Rgb};
@@ -139,7 +139,7 @@ pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
 pub use self::effect::{ConcreteEffects, Effect, EffectStatus, Effects};
 pub use self::palette::{Palette, PaletteColor, PaletteNode, PaletteStyle};
-pub use self::style::{ConcreteStyle, Style, StyleType};
+pub use self::style_types::{ConcreteStyle, Style, StyleType};
 
 /// Error parsing a color.
 #[derive(Debug)]
