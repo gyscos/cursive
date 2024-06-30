@@ -841,7 +841,15 @@ mod tests {
 
     use super::Resolvable;
 
-    fn check_resolves<T, R>(value: T, result: R)
+    fn check_resolves_from_conf<R>(config: Config, result: R)
+    where
+        R: Resolvable + PartialEq + std::fmt::Debug + 'static,
+    {
+        let context = Context::new();
+        assert_eq!(result, context.resolve::<R>(&config).unwrap());
+    }
+
+    fn check_resolves_from_any<T, R>(value: T, result: R)
     where
         T: Clone + Send + Sync + 'static,
         R: Resolvable + PartialEq + std::fmt::Debug + 'static,
@@ -854,22 +862,24 @@ mod tests {
 
     #[test]
     fn test_integers() {
-        fn check_integer_types<T>(value: T)
+        fn check_integer_types<T>(result: T)
         where
-            T: Clone + Send + Sync + 'static,
+            T: Clone + Send + Sync + 'static + std::fmt::Debug + PartialEq + Resolvable,
         {
-            check_resolves(value.clone(), 1usize);
-            check_resolves(value.clone(), 1u8);
-            check_resolves(value.clone(), 1u16);
-            check_resolves(value.clone(), 1u32);
-            check_resolves(value.clone(), 1u64);
-            check_resolves(value.clone(), 1u128);
-            check_resolves(value.clone(), 1isize);
-            check_resolves(value.clone(), 1i8);
-            check_resolves(value.clone(), 1i16);
-            check_resolves(value.clone(), 1i32);
-            check_resolves(value.clone(), 1i64);
-            check_resolves(value.clone(), 1i128);
+            check_resolves_from_any(1usize, result.clone());
+            check_resolves_from_any(1u8, result.clone());
+            check_resolves_from_any(1u16, result.clone());
+            check_resolves_from_any(1u32, result.clone());
+            check_resolves_from_any(1u64, result.clone());
+            check_resolves_from_any(1u128, result.clone());
+            check_resolves_from_any(1isize, result.clone());
+            check_resolves_from_any(1i8, result.clone());
+            check_resolves_from_any(1i16, result.clone());
+            check_resolves_from_any(1i32, result.clone());
+            check_resolves_from_any(1i64, result.clone());
+            check_resolves_from_any(1i128, result.clone());
+
+            check_resolves_from_conf(serde_json::json!(1), result.clone());
         }
 
         check_integer_types(1usize);
@@ -888,53 +898,79 @@ mod tests {
 
     #[test]
     fn test_floats() {
-        check_resolves(1.0f32, 1.0f32);
-        check_resolves(1.0f32, 1.0f64);
-        check_resolves(1.0f64, 1.0f32);
-        check_resolves(1.0f64, 1.0f64);
+        check_resolves_from_any(1.0f32, 1.0f32);
+        check_resolves_from_any(1.0f32, 1.0f64);
+        check_resolves_from_any(1.0f64, 1.0f32);
+        check_resolves_from_any(1.0f64, 1.0f64);
+        check_resolves_from_conf(serde_json::json!(1), 1.0f32);
+        check_resolves_from_conf(serde_json::json!(1), 1.0f64);
+        check_resolves_from_conf(serde_json::json!(1.0), 1.0f32);
+        check_resolves_from_conf(serde_json::json!(1.0), 1.0f64);
     }
 
     #[test]
     fn test_vec() {
         // Vec to Vec
-        check_resolves(vec![1u32, 2, 3], vec![1u32, 2, 3]);
+        check_resolves_from_any(vec![1u32, 2, 3], vec![1u32, 2, 3]);
         // Vec to Array
-        check_resolves(vec![1u32, 2, 3], [1u32, 2, 3]);
+        check_resolves_from_any(vec![1u32, 2, 3], [1u32, 2, 3]);
         // Array to Array
-        check_resolves([1u32, 2, 3], [1u32, 2, 3]);
+        check_resolves_from_any([1u32, 2, 3], [1u32, 2, 3]);
+
+        // Both array and Vec can resolve from a config array.
+        check_resolves_from_conf(serde_json::json!([1, 2, 3]), [1u32, 2, 3]);
+        check_resolves_from_conf(serde_json::json!([1, 2, 3]), vec![1u32, 2, 3]);
     }
 
     #[test]
     fn test_option() {
-        check_resolves(Some(42u32), Some(42u32));
-        check_resolves(42u32, Some(42u32));
+        check_resolves_from_any(Some(42u32), Some(42u32));
+        check_resolves_from_any(42u32, Some(42u32));
+        check_resolves_from_conf(serde_json::json!(42), Some(42u32));
+        check_resolves_from_conf(serde_json::json!(null), None::<u32>);
     }
 
     #[test]
     fn test_box() {
-        check_resolves(Box::new(42u32), Box::new(42u32));
-        check_resolves(42u32, Box::new(42u32));
+        check_resolves_from_any(Box::new(42u32), Box::new(42u32));
+        check_resolves_from_any(42u32, Box::new(42u32));
+        check_resolves_from_conf(serde_json::json!(42), Box::new(42u32));
     }
 
     #[test]
     fn test_arc() {
         use std::sync::Arc;
-        check_resolves(Arc::new(42u32), Arc::new(42u32));
-        check_resolves(42u32, Arc::new(42u32));
+        check_resolves_from_any(Arc::new(42u32), Arc::new(42u32));
+        check_resolves_from_any(42u32, Arc::new(42u32));
+        check_resolves_from_conf(serde_json::json!(42), Arc::new(42u32));
     }
 
     #[test]
     fn test_rgb() {
         use crate::style::Rgb;
-        check_resolves(Rgb::new(0u8, 0u8, 255u8), Rgb::new(0u8, 0u8, 255u8));
-        check_resolves(Rgb::new(0f32, 0f32, 1f32), Rgb::new(0u8, 0u8, 255u8));
-        check_resolves(Rgb::new(0u8, 0u8, 255u8), Rgb::new(0f32, 0f32, 1f32));
-        check_resolves(Rgb::new(0f32, 0f32, 1f32), Rgb::new(0f32, 0f32, 1f32));
+        // We can resolve both u8 and f32 from either u8 or f32 stored.
+        check_resolves_from_any(Rgb::new(0u8, 0u8, 255u8), Rgb::new(0u8, 0u8, 255u8));
+        check_resolves_from_any(Rgb::new(0f32, 0f32, 1f32), Rgb::new(0u8, 0u8, 255u8));
+        check_resolves_from_any(Rgb::new(0u8, 0u8, 255u8), Rgb::new(0f32, 0f32, 1f32));
+        check_resolves_from_any(Rgb::new(0f32, 0f32, 1f32), Rgb::new(0f32, 0f32, 1f32));
+
+        // We can resolve both u8 and f32 from either integers or floats in json.
+        check_resolves_from_conf(serde_json::json!([0, 0, 255]), Rgb::new(0u8, 0u8, 255u8));
+        check_resolves_from_conf(serde_json::json!([0, 0, 255]), Rgb::new(0f32, 0f32, 1f32));
+        check_resolves_from_conf(serde_json::json!([0, 0, 1.0]), Rgb::new(0f32, 0f32, 1f32));
+        check_resolves_from_conf(serde_json::json!([0, 0, 1.0]), Rgb::new(0u8, 0u8, 255u8));
+
+        check_resolves_from_conf(serde_json::json!("blue"), Rgb::blue());
+        check_resolves_from_conf(serde_json::json!("#0000FF"), Rgb::blue());
+        check_resolves_from_conf(serde_json::json!("0x0000FF"), Rgb::blue());
+        check_resolves_from_conf(serde_json::json!({"r": 0, "g": 0, "b": 255}), Rgb::blue());
     }
 
     #[test]
     fn test_styled_string() {
-        check_resolves(String::from("foo"), StyledString::plain("foo"));
+        check_resolves_from_any(String::from("foo"), StyledString::plain("foo"));
+        check_resolves_from_any(StyledString::plain("foo"), StyledString::plain("foo"));
+        check_resolves_from_conf(serde_json::json!("foo"), StyledString::plain("foo"));
     }
 
     #[test]
@@ -946,6 +982,6 @@ mod tests {
         #[derive(Clone, PartialEq, Eq, Debug)]
         struct Foo(i32);
 
-        check_resolves(Foo(42), NoConfig(Foo(42)));
+        check_resolves_from_any(Foo(42), NoConfig(Foo(42)));
     }
 }
