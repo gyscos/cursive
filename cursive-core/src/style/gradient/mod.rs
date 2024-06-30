@@ -156,7 +156,9 @@ impl Interpolator for Radial {
         // TODO: cache this for the same value of `size`?
         // (Define a type that combines the gradient and the size, to be re-used for a draw cycle?)
         let to_corner = self.center.map(|x| 0.5f32 + (x - 0.5f32).abs()) * size_f32;
-        let max_distance = (to_corner.map(|x| x as isize).sq_norm() as f32).sqrt().max(1.0);
+        let max_distance = (to_corner.map(|x| x as isize).sq_norm() as f32)
+            .sqrt()
+            .max(1.0);
 
         let center = (self.center * size_f32).map(|x| x as isize);
 
@@ -242,7 +244,7 @@ pub struct Bilinear {
 
 impl Interpolator for Bilinear {
     fn interpolate(&self, pos: Vec2, size: Vec2) -> Rgb<f32> {
-        if !Vec2::new(2,2).fits_in(size) {
+        if !Vec2::new(2, 2).fits_in(size) {
             // Size=0 => doesn't matter
             // Size=1 => ??? first value?
             return self.top_left;
