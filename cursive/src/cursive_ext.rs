@@ -68,12 +68,12 @@ impl CursiveExt for cursive_core::Cursive {
                 self.run_blt()
             } else if #[cfg(feature = "termion-backend")] {
                 self.run_termion().unwrap()
-            } else if #[cfg(feature = "crossterm-backend")] {
-                self.run_crossterm().unwrap()
             } else if #[cfg(feature = "pancurses-backend")] {
                 self.run_pancurses().unwrap()
             } else if #[cfg(feature = "ncurses-backend")] {
                 self.run_ncurses().unwrap()
+            } else if #[cfg(feature = "crossterm-backend")] {
+                self.run_crossterm().unwrap()
             } else {
                 log::warn!("No built-it backend, falling back to Cursive::dummy().");
                 self.run_dummy()

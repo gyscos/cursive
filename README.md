@@ -6,9 +6,11 @@
 [![Gitter chat](https://badges.gitter.im/gyscos/cursive.png)](https://gitter.im/cursive-rs/cursive)
 
 
-Cursive is a TUI (Text User Interface) library for rust. It uses ncurses by default, but [other backends are available](https://github.com/gyscos/cursive/wiki/Backends).
+Cursive is a TUI (Text User Interface) library for rust. It uses the [`crossterm`] backend by default, but [other backends are available](https://github.com/gyscos/cursive/wiki/Backends).
 
 It allows you to build rich user interfaces for terminal applications.
+
+[`crossterm`]: https://github.com/crossterm-rs/crossterm
 
 # [Documentation](http://docs.rs/cursive)
 
@@ -25,8 +27,6 @@ Or to use the latest git version:
 [dependencies]
 cursive = { git = "https://github.com/gyscos/cursive" }
 ```
-
-([You will also need ncurses installed.](https://github.com/gyscos/cursive/wiki/Install-ncurses))
 
 ```rust,no_run
 use cursive::views::{Dialog, TextView};
