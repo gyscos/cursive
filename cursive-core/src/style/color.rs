@@ -219,6 +219,21 @@ impl Rgb<u8> {
         Self::from_u32(0xFF0000)
     }
 
+    /// Returns an orange RGB color.
+    pub const fn orange() -> Self {
+        Self::from_u32(0xFFA500)
+    }
+
+    /// Returns a violet RGB color.
+    pub const fn violet() -> Self {
+        Self::from_u32(0x7F00FF)
+    }
+
+    /// Returns a turquoise color.
+    pub const fn turquoise() -> Self {
+        Self::from_u32(0x40E0D0)
+    }
+
     /// Returns a pure green RGB color.
     pub const fn green() -> Self {
         Self::from_u32(0x00FF00)
@@ -229,15 +244,15 @@ impl Rgb<u8> {
         Self::from_u32(0x0000FF)
     }
 
-    /// Returns a pure yellow RGB color.
+    /// Returns a yellow (red + green) RGB color.
     pub const fn yellow() -> Self {
         Self::from_u32(0xFFFF00)
     }
-    /// Returns a pure magenta RGB color.
+    /// Returns a magenta (red + blue) RGB color.
     pub const fn magenta() -> Self {
         Self::from_u32(0xFF00FF)
     }
-    /// Returns a pure cyan RGB color.
+    /// Returns a cyan (green + blue) RGB color.
     pub const fn cyan() -> Self {
         Self::from_u32(0x00FFFF)
     }

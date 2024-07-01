@@ -11,13 +11,13 @@ use cursive::XY;
 fn main() {
     let mut siv = cursive::default();
 
-    let text = "So many colors! So little time!";
-    let text = gradient::decorate_front(text, (Rgb::new(255, 0, 0), Rgb::new(0, 0, 255)));
-    let text = gradient::decorate_back(text, (Rgb::new(0, 0, 255), Rgb::new(0, 255, 0)));
+    let text = "So many colors! So little time! Let's go through them all!";
+    let text = gradient::decorate_front(text, (Rgb::black(), Rgb::white()));
+    let text = gradient::decorate_back(text, Linear::rainbow());
 
     // Add a simple view
     siv.add_layer(Dialog::new().content(TextView::new(text)).button(
-        gradient::decorate_back("Moar", (Rgb::new(255, 0, 0), Rgb::new(255, 255, 0))),
+        gradient::decorate_back("Moar", Linear::rainbow()),
         show_more,
     ));
 
@@ -32,7 +32,7 @@ fn show_more(c: &mut cursive::Cursive) {
 
     let interpolator = Radial {
         center: XY::new(-0.1, -0.1),
-        gradient: Linear::new(Rgb::from(0xFFFFFF), Rgb::from(0x000000)),
+        gradient: Linear::evenly_spaced(&[Rgb::from(0xFFFFFF), Rgb::from(0x000000)]),
     };
 
     c.pop_layer();
@@ -53,7 +53,7 @@ fn show_more_2(c: &mut cursive::Cursive) {
 
     let interpolator = Angled {
         angle_rad: 0f32,
-        gradient: Linear::new(Rgb::from(0xFFFFFF), Rgb::from(0x000000)),
+        gradient: Linear::evenly_spaced(&[Rgb::from(0xFFFFFF), Rgb::from(0x000000)]),
     };
     c.pop_layer();
     c.add_layer(

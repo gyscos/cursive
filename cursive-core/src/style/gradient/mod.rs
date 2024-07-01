@@ -25,75 +25,158 @@ pub trait Interpolator {
     fn interpolate(&self, pos: Vec2, size: Vec2) -> Rgb<f32>;
 }
 
+/// Dynamic interpolator.
+///
+/// Convenient alias to make sure the proper bounds are applied.
+pub type Dynterpolator = Box<dyn Interpolator + Send + Sync>;
+
+impl Interpolator for Dynterpolator {
+    fn interpolate(&self, pos: Vec2, size: Vec2) -> Rgb<f32> {
+        // Deref first into the ref, then into the box.
+        (**self).interpolate(pos, size)
+    }
+}
+
 /// A linear gradient interpolating color for floats between 0 and 1.
 pub struct Linear {
-    /// Color for the start of the gradient.
-    pub start: Rgb<f32>,
-
-    // No allocation for simple start/end gradients.
     /// List of (position, color) intermediate points in the gradient.
     ///
-    /// Positions should be in [0, 1].
-    /// The values should be sorted by position.
-    pub middle: Vec<(f32, Rgb<f32>)>,
+    /// Invariant: the values should be sorted by position.
+    points: Vec<(f32, Rgb<f32>)>,
+}
 
-    /// Color for the end of the gradient.
-    pub end: Rgb<f32>,
+fn sort_points(points: &mut [(f32, Rgb<f32>)]) {
+    points.sort_by(|(time_a, _), (time_b, _)| time_a.partial_cmp(time_b).unwrap());
 }
 
 impl Linear {
-    /// Create a simple gradient with only a start and end colors.
-    pub fn new(start: impl Into<Rgb<f32>>, end: impl Into<Rgb<f32>>) -> Self {
+    /// Create a gradient from the given points.
+    pub fn new(mut points: Vec<(f32, Rgb<f32>)>) -> Self {
+        sort_points(&mut points);
+        Self { points }
+    }
+
+    /// Creates a simple gradient between the two given colors.
+    pub fn simple<S, E>(start: S, end: E) -> Self
+    where
+        S: Into<Rgb<f32>>,
+        E: Into<Rgb<f32>>,
+    {
         let start = start.into();
         let end = end.into();
-        Linear {
-            start,
-            end,
-            middle: Vec::new(),
+        Self::evenly_spaced(&[start, end])
+    }
+
+    /// Returns a linear gradient mirrored from `self`.
+    pub fn mirror(mut self) -> Self {
+        self.rescale(|t| 1.0 - t);
+
+        self
+    }
+
+    /// Rescale this gradient to cover `[0: 1]`.
+    pub fn normalize(&mut self) {
+        if self.points.is_empty() {
+            return;
         }
+
+        if self.points.len() == 1 {
+            self.points[0].0 = 0f32;
+            return;
+        }
+
+        let start = self.points[0].0;
+        let end = self.points.last().unwrap().0;
+
+        if start == end {
+            // If all the points have the same time, re-scale them evenly over [0:1].
+            let step = (self.points.len() as f32 - 1f32).recip();
+            for (i, &mut (ref mut time, _)) in self.points.iter_mut().enumerate() {
+                *time = step * i as f32;
+            }
+        } else {
+            self.rescale(|x| (x - start) / (end - start));
+        }
+    }
+
+    /// Adjusts the position of the intermediate points.
+    pub fn rescale<F>(&mut self, mut f: F)
+    where
+        F: FnMut(f32) -> f32,
+    {
+        for &mut (ref mut time, _) in &mut self.points {
+            *time = f(*time);
+        }
+
+        sort_points(&mut self.points);
     }
 
     /// Create a simple gradient with evenly spaced colors.
     ///
-    /// * Returns `None` if `colors` is empty.
+    /// * Returns a flat black gradient if `colors` is empty.
     /// * Returns a constant "gradient" (same start and end) if `colors.len() == 1`.
     /// * Returns a piecewise gradient between all colors otherwise.
-    pub fn evenly_spaced<R: Copy + Into<Rgb<f32>>>(colors: &[R]) -> Option<Self> {
-        if colors.is_empty() {
-            return None;
-        }
-
-        if colors.len() == 1 {
-            return Some(Self::new(colors[0], colors[0]));
-        }
-
+    pub fn evenly_spaced<R: Copy + Into<Rgb<f32>>>(colors: &[R]) -> Self {
         let step = 1f32 / (colors.len() - 1) as f32;
-        let mut colors = colors.iter().copied().map(Into::into).enumerate();
-        let (_, start) = colors.next().unwrap();
-        let (_, end) = colors.next_back().unwrap();
-        let middle = colors.map(|(i, color)| (step * i as f32, color)).collect();
-
-        Some(Self { start, middle, end })
+        let colors = colors.iter().copied().map(Into::into).enumerate();
+        let points = colors.map(|(i, color)| (step * i as f32, color)).collect();
+        Self { points }
     }
+
+    /// Returns a simple black-to-white gradient.
+    pub fn black_to_white() -> Self {
+        Self::simple(Rgb::black(), Rgb::white())
+    }
+
+    /// Returns a rainbow gradient.
+    pub fn rainbow() -> Self {
+        // These values are derived from the color spectrum
+        let mut res = Self::new(vec![
+            (4.0, Rgb::violet().into()),
+            (4.7, Rgb::blue().into()),
+            (4.9, Rgb::cyan().into()),
+            (5.3, Rgb::green().into()),
+            (5.75, Rgb::yellow().into()),
+            (6.1, Rgb::orange().into()),
+            (6.9, Rgb::red().into()),
+        ]);
+        res.normalize();
+        res.mirror()
+    }
+
+    // TODO: Implement conversion from an iterator of (f32, Rgb), using an offset + rescaling
+
+    // TODO: Add some preset gradients (rainbow, fire, ...)
+    // For example from uigradients.com
 
     /// Interpolate the color for the given position.
     ///
     /// The resulting value uses floats between 0 and 1.
     pub fn interpolate(&self, x: f32) -> Rgb<f32> {
-        // Find the segment
-        if x <= 0f32 {
-            return self.start;
+        if self.points.is_empty() {
+            return Rgb::black().as_f32();
         }
-        if x >= 1f32 {
-            return self.end;
+        if self.points.len() == 1 {
+            return self.points[0].1;
         }
 
-        let mut last = (0f32, self.start);
+        if x <= self.points[0].0 {
+            return self.points[0].1;
+        }
+
+        let last = self.points.last().unwrap();
+        if x >= last.0 {
+            return last.1;
+        }
+
+        let mut last = self.points[0];
         for point in self.points() {
             if x > point.0 {
-                last = point;
+                last = *point;
                 continue;
             }
+
+            // x is between the previous step and this one.
 
             let d = point.0 - last.0;
             let x = if d == 0f32 { 0f32 } else { (x - last.0) / d };
@@ -105,34 +188,32 @@ impl Linear {
     }
 
     /// Iterates on the points of this gradient.
-    pub fn points(&self) -> impl Iterator<Item = (f32, Rgb<f32>)> + '_ {
-        std::iter::once((0f32, self.start))
-            .chain(self.middle.iter().copied())
-            .chain(std::iter::once((1f32, self.end)))
+    pub fn points(&self) -> &[(f32, Rgb<f32>)] {
+        &self.points
     }
 }
 
 impl From<(Rgb<f32>, Rgb<f32>)> for Linear {
     fn from((start, end): (Rgb<f32>, Rgb<f32>)) -> Self {
-        Self::new(start, end)
+        Self::evenly_spaced(&[start, end])
     }
 }
 
 impl From<[Rgb<f32>; 2]> for Linear {
     fn from([start, end]: [Rgb<f32>; 2]) -> Self {
-        Self::new(start, end)
+        Self::evenly_spaced(&[start, end])
     }
 }
 
 impl From<(Rgb<u8>, Rgb<u8>)> for Linear {
     fn from((start, end): (Rgb<u8>, Rgb<u8>)) -> Self {
-        Self::new(start.as_f32(), end.as_f32())
+        Self::evenly_spaced(&[start.as_f32(), end.as_f32()])
     }
 }
 
 impl From<[Rgb<u8>; 2]> for Linear {
     fn from([start, end]: [Rgb<u8>; 2]) -> Self {
-        Self::new(start.as_f32(), end.as_f32())
+        Self::evenly_spaced(&[start.as_f32(), end.as_f32()])
     }
 }
 

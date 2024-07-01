@@ -474,6 +474,172 @@ impl Resolvable for crate::style::Rgb<u8> {
     }
 }
 
+impl Resolvable for crate::style::gradient::Dynterpolator {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        let config = config
+            .as_object()
+            .ok_or_else(|| Error::invalid_config("Expected object", config))?;
+        match config
+            .iter()
+            .next()
+            .map(|(key, config)| (key.as_str(), config))
+            .ok_or_else(|| Error::invalid_config("Expected non-empty object", config))?
+        {
+            ("radial", config) => {
+                let radial: crate::style::gradient::Radial = context.resolve(config)?;
+                Ok(Box::new(radial))
+            }
+            ("angled", config) => {
+                let angled: crate::style::gradient::Angled = context.resolve(config)?;
+                Ok(Box::new(angled))
+            }
+            ("bilinear", config) => {
+                let bilinear: crate::style::gradient::Bilinear = context.resolve(config)?;
+                Ok(Box::new(bilinear))
+            }
+            // TODO: Allow external libraries to define their own recipes to be used here?
+            // Something like a type-map of recipes?...
+            (key, _) => Err(Error::invalid_config(
+                format!("Received unsupported gradient type {key}."),
+                config,
+            )),
+        }
+    }
+}
+
+impl Resolvable for crate::style::gradient::Bilinear {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        let top_left = context.resolve(&config["top_left"])?;
+        let top_right = context.resolve(&config["top_right"])?;
+        let bottom_right = context.resolve(&config["bottom_right"])?;
+        let bottom_left = context.resolve(&config["bottom_left"])?;
+        Ok(Self {
+            top_left,
+            top_right,
+            bottom_right,
+            bottom_left,
+        })
+    }
+}
+
+impl Resolvable for crate::style::gradient::Angled {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        let angle_rad = match context.resolve(&config["angle_rad"]) {
+            Ok(angle_rad) => angle_rad,
+            Err(err1) => match context.resolve::<f32>(&config["angle_deg"]) {
+                Ok(angle_deg) => angle_deg * std::f32::consts::PI / 180f32,
+                Err(err2) => {
+                    return Err(Error::AllVariantsFailed {
+                        config: config.clone(),
+                        errors: vec![err1, err2],
+                    })
+                }
+            },
+        };
+        let gradient = context.resolve(&config["gradient"])?;
+        Ok(Self {
+            angle_rad,
+            gradient,
+        })
+    }
+}
+
+impl Resolvable for crate::style::gradient::Radial {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        let center = context.resolve(&config["center"])?;
+        let gradient = context.resolve(&config["gradient"])?;
+        Ok(Self { center, gradient })
+    }
+}
+
+impl Resolvable for crate::style::gradient::Linear {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        use crate::style::Rgb;
+
+        // Options:
+        // - A list of Rgb (evenly spaced)
+        // - A list of (f32, Rgb)
+        // - An object with start, end, and optionally middle, with a list of (f32, Rgb)
+        // - Some presets strings? Rainbow?
+        match config {
+            Config::Array(array) => {
+                let mut errors = Vec::new();
+
+                match array
+                    .iter()
+                    .map(|config| context.resolve::<Rgb<f32>>(config))
+                    .collect::<Result<Vec<_>, _>>()
+                {
+                    Ok(colors) => return Ok(Self::evenly_spaced(&colors)),
+                    Err(err) => errors.push(err),
+                }
+
+                match array
+                    .iter()
+                    .map(|config| context.resolve(config))
+                    .collect::<Result<Vec<_>, _>>()
+                {
+                    Ok(points) => return Ok(Self::new(points)),
+                    Err(err) => errors.push(err),
+                }
+
+                return Err(Error::AllVariantsFailed {
+                    config: config.clone(),
+                    errors,
+                });
+            }
+            Config::Object(object) => {
+                if let (Some(start), Some(end)) = (object.get("start"), object.get("end")) {
+                    return Ok(Self::simple(
+                        context.resolve::<Rgb<f32>>(start)?,
+                        context.resolve::<Rgb<f32>>(end)?,
+                    ));
+                }
+
+                if let Some(points) = object.get("points") {
+                    let points = points
+                        .as_array()
+                        .ok_or_else(|| Error::invalid_config("Expected array", config))?;
+
+                    let points = points
+                        .iter()
+                        .map(|config| context.resolve(config))
+                        .collect::<Result<Vec<_>, _>>()?;
+
+                    return Ok(Self::new(points));
+                }
+            }
+            Config::String(string) => match string.as_str() {
+                // TODO: Allow external libs to define their own aliases to resolve here?
+                "rainbow" => return Ok(Self::rainbow()),
+                "black_to_white" | "black to white" => return Ok(Self::black_to_white()),
+                _ => (),
+            },
+            _ => (),
+        }
+
+        Err(Error::invalid_config(
+            "Expected array, object or string",
+            config,
+        ))
+    }
+}
+
 // ```yaml
 // color: red
 // color:
@@ -599,6 +765,45 @@ impl Resolvable for String {
             Some(config) => Ok(config.into()),
             None => Err(Error::invalid_config("Expected string type", config)),
         }
+    }
+}
+
+impl<A, B> Resolvable for (A, B)
+where
+    A: Resolvable + 'static,
+    B: Resolvable + 'static,
+{
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        let config = config
+            .as_array()
+            .ok_or_else(|| Error::invalid_config("Expected array", config))?;
+
+        Ok((context.resolve(&config[0])?, context.resolve(&config[1])?))
+    }
+}
+
+impl<A, B, C> Resolvable for (A, B, C)
+where
+    A: Resolvable + 'static,
+    B: Resolvable + 'static,
+    C: Resolvable + 'static,
+{
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        let config = config
+            .as_array()
+            .ok_or_else(|| Error::invalid_config("Expected array", config))?;
+
+        Ok((
+            context.resolve(&config[0])?,
+            context.resolve(&config[1])?,
+            context.resolve(&config[2])?,
+        ))
     }
 }
 

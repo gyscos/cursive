@@ -127,3 +127,8 @@ where
         });
     }
 }
+
+crate::raw_recipe!(with gradient, |config, context| {
+    let gradient: crate::style::gradient::Dynterpolator = context.resolve(config)?;
+    Ok(move |view| GradientView::new(view, gradient))
+});

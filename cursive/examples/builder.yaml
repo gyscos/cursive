@@ -71,3 +71,9 @@ Dialog:
         right: 2
         top: 1
         bottom: 1
+    - gradient:
+        angled:
+          angle_deg: 45
+          gradient:
+            - "#A0A0A0"
+            - "#505050"

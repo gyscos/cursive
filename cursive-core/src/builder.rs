@@ -108,6 +108,11 @@ where
 }
 
 impl<T> ResolveOnce<T> {
+    /// Create a new `ResolveOnce` which will resolve, once, to the given value.
+    pub fn new(value: T) -> Self {
+        Self(std::sync::Arc::new(std::sync::Mutex::new(Some(value))))
+    }
+
     /// Take the value from self.
     pub fn take(&self) -> Option<T> {
         self.0.lock().unwrap().take()
