@@ -80,7 +80,7 @@ impl cursive::view::View for BoardView {
                 (Closed, _, false) => " □",
                 (Marked, _, false) => " ■",
                 (Opened, Free(n), false) | (_, Free(n), true) => ["  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"][n],
-                (Opened, Bomb, false) | (_, Bomb, true) => "\u{01F4A3} "
+                (Opened, Bomb, false) | (_, Bomb, true) => "\u{01F4A3}"
             };
 
             let color = match (cell.state, cell.content, self.board.is_ended) {
