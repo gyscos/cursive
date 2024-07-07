@@ -403,7 +403,7 @@ impl LinearLayout {
                 self.children.iter_mut(),
                 self.orientation,
                 // TODO: get actual width (not super important)
-                usize::max_value(),
+                usize::MAX,
             )
             .enumerate()
             {
@@ -640,11 +640,8 @@ impl View for LinearLayout {
             .unwrap_or(EventResult::Ignored);
 
         let result = {
-            let mut iterator = ChildIterator::new(
-                self.children.iter_mut(),
-                self.orientation,
-                usize::max_value(),
-            );
+            let mut iterator =
+                ChildIterator::new(self.children.iter_mut(), self.orientation, usize::MAX);
             let item = iterator.nth(self.focus).unwrap();
             let offset = self.orientation.make_vec(item.offset, 0);
             item.child.view.on_event(event.relativized(offset))
@@ -710,7 +707,7 @@ impl View for LinearLayout {
         // Pick the focused item, with its offset
         let item = {
             let mut iterator =
-                ChildIterator::new(self.children.iter(), self.orientation, usize::max_value());
+                ChildIterator::new(self.children.iter(), self.orientation, usize::MAX);
             iterator.nth(self.focus).unwrap()
         };
 

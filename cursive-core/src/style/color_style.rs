@@ -24,17 +24,17 @@ impl ColorStyle {
     ///
     /// ```rust
     /// # use cursive_core as cursive;
-    /// use cursive::theme::ColorStyle;
+    /// use cursive::style::ColorStyle;
     ///
     /// // `BaseColor` implements `Into<ColorStyle>`
-    /// use cursive::theme::BaseColor::*;
+    /// use cursive::style::BaseColor::*;
     /// let red_on_black = ColorStyle::new(Red, Black);
     ///
     /// // So does `Color`.
     /// let red_on_black = ColorStyle::new(Red.light(), Black.dark());
     ///
     /// // Or `PaletteColor`.
-    /// use cursive::theme::PaletteColor::*;
+    /// use cursive::style::PaletteColor::*;
     /// let primary = ColorStyle::new(Primary, View);
     /// ```
     pub fn new<F, B>(front: F, back: B) -> Self
@@ -53,7 +53,7 @@ impl ColorStyle {
     ///
     /// ```rust
     /// # use cursive_core as cursive;
-    /// use cursive::theme::{BaseColor::*, ColorStyle, ColorType};
+    /// use cursive::style::{BaseColor::*, ColorStyle, ColorType};
     ///
     /// let color = ColorStyle::front(Red.dark());
     ///
@@ -72,7 +72,7 @@ impl ColorStyle {
     ///
     /// ```rust
     /// # use cursive_core as cursive;
-    /// use cursive::theme::{BaseColor::*, ColorStyle, ColorType};
+    /// use cursive::style::{BaseColor::*, ColorStyle, ColorType};
     ///
     /// let color = ColorStyle::back(Black.dark());
     ///
@@ -94,8 +94,8 @@ impl ColorStyle {
     ///
     /// ```rust
     /// # use cursive_core as cursive;
-    /// use cursive::theme::BaseColor::*;
-    /// use cursive::theme::ColorStyle;
+    /// use cursive::style::BaseColor::*;
+    /// use cursive::style::ColorStyle;
     ///
     /// let red_on_black = ColorStyle::new(Red.dark(), Black.dark());
     /// let black_on_red = red_on_black.invert();
@@ -103,7 +103,7 @@ impl ColorStyle {
     /// assert_eq!(black_on_red, ColorStyle::new(Black.dark(), Red.dark()));
     /// ```
     #[must_use]
-    pub fn invert(self) -> Self {
+    pub const fn invert(self) -> Self {
         ColorStyle {
             front: self.back,
             back: self.front,
@@ -111,72 +111,111 @@ impl ColorStyle {
     }
 
     /// Uses `ColorType::InheritParent` for both front and background.
-    pub fn inherit_parent() -> Self {
-        Self::new(ColorType::InheritParent, ColorType::InheritParent)
+    pub const fn inherit_parent() -> Self {
+        Self {
+            front: ColorType::InheritParent,
+            back: ColorType::InheritParent,
+        }
     }
 
     /// Style set by terminal before entering a Cursive program.
-    pub fn terminal_default() -> Self {
-        Self::new(Color::TerminalDefault, Color::TerminalDefault)
+    pub const fn terminal_default() -> Self {
+        Self {
+            front: ColorType::terminal_default(),
+            back: ColorType::terminal_default(),
+        }
     }
 
     /// Application background, where no view is present.
-    pub fn background() -> Self {
-        Self::new(PaletteColor::Primary, PaletteColor::Background)
+    pub const fn background() -> Self {
+        Self {
+            front: ColorType::background(),
+            back: ColorType::background(),
+        }
     }
 
     /// Color used by view shadows. Only background matters.
-    pub fn shadow() -> Self {
-        Self::new(PaletteColor::Shadow, PaletteColor::Shadow)
+    pub const fn shadow() -> Self {
+        Self {
+            front: ColorType::shadow(),
+            back: ColorType::shadow(),
+        }
     }
 
     /// Color used by views.
     ///
     /// Primary foreground, View background.
-    pub fn view() -> Self {
-        Self::new(PaletteColor::Primary, PaletteColor::View)
+    pub const fn view() -> Self {
+        Self {
+            front: ColorType::primary(),
+            back: ColorType::view(),
+        }
     }
 
     /// Main text with default background.
-    pub fn primary() -> Self {
-        Self::new(PaletteColor::Primary, ColorType::InheritParent)
+    pub const fn primary() -> Self {
+        Self {
+            front: ColorType::primary(),
+            back: ColorType::InheritParent,
+        }
     }
 
     /// Secondary text color, with default background.
-    pub fn secondary() -> Self {
-        Self::new(PaletteColor::Secondary, ColorType::InheritParent)
+    pub const fn secondary() -> Self {
+        Self {
+            front: ColorType::secondary(),
+            back: ColorType::InheritParent,
+        }
     }
 
     /// Tertiary text color, with default background.
-    pub fn tertiary() -> Self {
-        Self::new(PaletteColor::Tertiary, ColorType::InheritParent)
+    pub const fn tertiary() -> Self {
+        Self {
+            front: ColorType::tertiary(),
+            back: ColorType::InheritParent,
+        }
     }
 
     /// Title text color with default background.
-    pub fn title_primary() -> Self {
-        Self::new(PaletteColor::TitlePrimary, ColorType::InheritParent)
+    pub const fn title_primary() -> Self {
+        Self {
+            front: ColorType::title_primary(),
+            back: ColorType::InheritParent,
+        }
     }
 
     /// Alternative color for a title.
-    pub fn title_secondary() -> Self {
-        Self::new(PaletteColor::TitleSecondary, ColorType::InheritParent)
+    pub const fn title_secondary() -> Self {
+        Self {
+            front: ColorType::title_secondary(),
+            back: ColorType::InheritParent,
+        }
     }
 
     /// Alternate text with highlight background.
-    pub fn highlight() -> Self {
-        Self::new(PaletteColor::HighlightText, PaletteColor::Highlight)
+    pub const fn highlight() -> Self {
+        Self {
+            front: ColorType::highlight_text(),
+            back: ColorType::highlight(),
+        }
     }
 
     /// Highlight color for inactive views (not in focus).
-    pub fn highlight_inactive() -> Self {
-        Self::new(PaletteColor::HighlightText, PaletteColor::HighlightInactive)
+    pub const fn highlight_inactive() -> Self {
+        Self {
+            front: ColorType::highlight_text(),
+            back: ColorType::highlight_inactive(),
+        }
     }
 
     /// Merge the color type `new` over the color type `old`.
     ///
     /// This merges the front and back color types of `a` and `b`.
-    pub fn merge(old: Self, new: Self) -> Self {
-        Self::zip_map(old, new, ColorType::merge)
+    pub const fn merge(old: Self, new: Self) -> Self {
+        Self {
+            front: ColorType::merge(old.front, new.front),
+            back: ColorType::merge(old.back, new.back),
+        }
     }
 
     /// Return the color pair that this style represents.
@@ -294,11 +333,97 @@ impl ColorType {
     ///
     /// This returns `new`, unless `new = ColorType::InheritParent`,
     /// in which case it returns `old`.
-    pub fn merge(old: ColorType, new: ColorType) -> ColorType {
+    pub const fn merge(old: ColorType, new: ColorType) -> ColorType {
         match new {
             ColorType::InheritParent => old,
             new => new,
         }
+    }
+
+    /// Return the `Color::TerminalDefault` color type.
+    pub const fn terminal_default() -> Self {
+        Self::Color(Color::TerminalDefault)
+    }
+
+    /// Return the `Color::Dark(base)` color type.
+    pub const fn dark(base: BaseColor) -> Self {
+        Self::Color(Color::Dark(base))
+    }
+
+    /// Return the `Color::Light(base)` color type.
+    pub const fn light(base: BaseColor) -> Self {
+        Self::Color(Color::Light(base))
+    }
+
+    /// Return the `Color::Rgb(r, g, b)` (true colors) color type.
+    pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
+        Self::Color(Color::Rgb(r, g, b))
+    }
+
+    /// Return the `Color::RgbLowRes(r, g, b)` color type.
+    ///
+    /// Returns `None`
+    pub const fn rgb_low_res(r: u8, g: u8, b: u8) -> Option<Self> {
+        // TODO: Use ? or `.map` once these support const.
+        match Color::low_res(r, g, b) {
+            None => None,
+            Some(color) => Some(Self::Color(color)),
+        }
+    }
+
+    /// Return the `PaletteColor::Background` color type.
+    pub const fn background() -> Self {
+        Self::Palette(PaletteColor::Background)
+    }
+
+    /// Return the `PaletteColor::Shadow` color type.
+    pub const fn shadow() -> Self {
+        Self::Palette(PaletteColor::Shadow)
+    }
+
+    /// Return the `PaletteColor::TitlePrimary` color type.
+    pub const fn title_primary() -> Self {
+        Self::Palette(PaletteColor::TitlePrimary)
+    }
+
+    /// Return the `PaletteColor::TitleSecondary` color type.
+    pub const fn title_secondary() -> Self {
+        Self::Palette(PaletteColor::TitleSecondary)
+    }
+
+    /// Return the `PaletteColor::Primary` color type.
+    pub const fn primary() -> Self {
+        Self::Palette(PaletteColor::Primary)
+    }
+
+    /// Return the `PaletteColor::Secondary` color type.
+    pub const fn secondary() -> Self {
+        Self::Palette(PaletteColor::Secondary)
+    }
+
+    /// Return the `PaletteColor::Tertiary` color type.
+    pub const fn tertiary() -> Self {
+        Self::Palette(PaletteColor::Tertiary)
+    }
+
+    /// Return the `PaletteColor::View` color type.
+    pub const fn view() -> Self {
+        Self::Palette(PaletteColor::View)
+    }
+
+    /// Return the `PaletteColor::HighlightText` color type.
+    pub const fn highlight_text() -> Self {
+        Self::Palette(PaletteColor::HighlightText)
+    }
+
+    /// Return the `PaletteColor::HighlightInactive` color type.
+    pub const fn highlight_inactive() -> Self {
+        Self::Palette(PaletteColor::HighlightInactive)
+    }
+
+    /// Return the `PaletteColor::Highlight` color type.
+    pub const fn highlight() -> Self {
+        Self::Palette(PaletteColor::Highlight)
     }
 }
 

@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  TERM: xterm
 
 jobs:
   build:
@@ -17,8 +18,10 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Check
-      run: cd cursive && cargo check --features "blt-backend ncurses-backend pancurses-backend termion-backend crossterm-backend markdown toml ansi"
+      run: cargo check --features "blt-backend ncurses-backend pancurses-backend termion-backend crossterm-backend markdown toml ansi"
     - name: Build
-      run: cd cursive && cargo build --features "toml markdown ansi termion-backend crossterm-backend" --no-default-features --verbose
+      run: cargo build --features "toml markdown ansi termion-backend crossterm-backend" --no-default-features --verbose
     - name: Run tests
-      run: cd cursive && cargo test --features "toml markdown ansi termion-backend crossterm-backend" --no-default-features --verbose
+      run: >
+        cargo test --features "toml markdown ansi termion-backend crossterm-backend" --no-default-features --verbose &&
+        cargo test --example select_test

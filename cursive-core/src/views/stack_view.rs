@@ -6,7 +6,7 @@
 use crate::{
     direction::Direction,
     event::{AnyCb, Event, EventResult},
-    theme::PaletteStyle,
+    style::PaletteStyle,
     view::{
         CannotFocus, IntoBoxedView, Offset, Position, Selector, View, ViewNotFound, ViewWrapper,
     },
@@ -902,41 +902,6 @@ mod tests {
 }
 
 crate::raw_recipe!(StackView, |config, context| {
-    use crate::builder::{Config, Context, Error, Resolvable};
-
-    impl Resolvable for Placement {
-        fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
-            match config.as_str() {
-                Some("fullscreen" | "Fullscreen" | "FullScreen") => Ok(Self::Fullscreen),
-                _ => Ok(Self::Floating(context.resolve(config)?)),
-            }
-        }
-    }
-
-    impl Resolvable for Child {
-        fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
-            let view: crate::views::BoxedView = context.resolve(&config["child"])?;
-
-            let modal: Option<bool> = context.resolve(&config["modal"])?;
-            let placement = context.resolve(&config["placement"])?;
-            let position: Position = context.resolve(&config["position"])?;
-
-            // Right now only plain layer+shadow views are allowed in configs.
-            Ok(Child {
-                view: CircularFocus::new(ChildWrapper::Shadow(
-                    ShadowView::new(Layer::new(view))
-                        .top_padding(position.y == Offset::Center)
-                        .left_padding(position.x == Offset::Center),
-                ))
-                .wrap_tab(),
-                modal: modal.unwrap_or(true),
-                size: Vec2::zero(),
-                placement,
-                virgin: true,
-            })
-        }
-    }
-
     let mut stack = StackView::new();
 
     // TODO: Use `layers`?
@@ -948,3 +913,44 @@ crate::raw_recipe!(StackView, |config, context| {
 
     Ok(stack)
 });
+
+#[cfg(feature = "builder")]
+impl crate::builder::Resolvable for Placement {
+    fn from_config(
+        config: &crate::builder::Config,
+        context: &crate::builder::Context,
+    ) -> Result<Self, crate::builder::Error> {
+        match config.as_str() {
+            Some("fullscreen" | "Fullscreen" | "FullScreen") => Ok(Self::Fullscreen),
+            _ => Ok(Self::Floating(context.resolve(config)?)),
+        }
+    }
+}
+
+#[cfg(feature = "builder")]
+impl crate::builder::Resolvable for Child {
+    fn from_config(
+        config: &crate::builder::Config,
+        context: &crate::builder::Context,
+    ) -> Result<Self, crate::builder::Error> {
+        let view: crate::views::BoxedView = context.resolve(&config["child"])?;
+
+        let modal: Option<bool> = context.resolve(&config["modal"])?;
+        let placement = context.resolve(&config["placement"])?;
+        let position: Position = context.resolve(&config["position"])?;
+
+        // Right now only plain layer+shadow views are allowed in configs.
+        Ok(Child {
+            view: CircularFocus::new(ChildWrapper::Shadow(
+                ShadowView::new(Layer::new(view))
+                    .top_padding(position.y == Offset::Center)
+                    .left_padding(position.x == Offset::Center),
+            ))
+            .wrap_tab(),
+            modal: modal.unwrap_or(true),
+            size: Vec2::zero(),
+            placement,
+            virgin: true,
+        })
+    }
+}

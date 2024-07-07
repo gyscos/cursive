@@ -1,4 +1,4 @@
-use cursive::theme::{Color, ColorStyle};
+use cursive::style::{Color, ColorStyle};
 use cursive::view::Resizable;
 use cursive::views::Canvas;
 use cursive::Printer;

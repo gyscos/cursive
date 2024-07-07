@@ -3,7 +3,7 @@ use crate::{
     direction::Direction,
     event::*,
     rect::Rect,
-    theme::PaletteStyle,
+    style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2,
@@ -151,6 +151,7 @@ impl View for Button {
 
         let offset = HAlign::Center.get_offset(self.label.width(), printer.size.x);
 
+        // eprintln!("Button style: {style:?}");
         printer.with_style(style, |printer| {
             // TODO: do we want to "fill" the button highlight color to the full given size?
             // printer.print_hline((0, 0), offset, " ");
@@ -217,7 +218,7 @@ impl View for Button {
 #[crate::recipe(Button::new_with_cb(label, callback))]
 struct Recipe {
     // Fields mentioned in the initializer will be used there
-    label: String,
+    label: StyledString,
 
     // Callback types can be omitted
     callback: _,
@@ -230,7 +231,7 @@ struct Recipe {
 /*
 crate::raw_recipe!(Button, |config, context| {
     Ok({
-        let label: String = context.resolve(&config["label"])?;
+        let label: StyledString = context.resolve(&config["label"])?;
         let callback: _ = context.resolve(&config["callback"])?;
         let mut button = Button::new_with_cb(label, callback);
 

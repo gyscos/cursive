@@ -1,4 +1,5 @@
-use cursive::theme::{BaseColor, BorderStyle, Color, Palette, PaletteColor, Theme};
+use cursive::style::{BaseColor, BorderStyle, Color, Palette, PaletteColor};
+use cursive::theme::Theme;
 use cursive::traits::{Finder, Nameable, Resizable, With};
 
 #[derive(Clone, Copy)]

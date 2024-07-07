@@ -4,7 +4,8 @@
 
 ### Breaking Changes
 
-- Updates termion to 3.0
+- Defaults to crossterm backend (instead of ncurses)
+- Updates termion to 4.0
 - Updates crossterm to 0.27.0
 - Updates cursive-core to 0.4.0
 
@@ -24,6 +25,12 @@
 - The `View` now requires `Send + Sync`, to allow accessing or moving views between threads.
   This prevents using `Rc`/`RefCell`, and may require using `Arc`/`Mutex` instead.
   This should eventually open the way for more multi-threaded processing of the view tree.
+- `theme::Style::effects` is now a map from `Effect` to `EffectStatus`.
+- The `Backend` trait was changed:
+    - `print_at` was split into `move_to` and `print`.
+    - `print_at_rep` was removed.
+- Some dependencies were updated:
+    - toml was bumped from 0.5 to 0.8
 
 ### API updates
 
@@ -33,10 +40,29 @@
 - Added `Cursive::clear_all_global_callbacks()`.
 - Improved `CursiveLogger`
 - Added `Event::char(&self) -> Option<char>`
+- Some functions are now callable in const context.
+- Most of `cursive::theme` has moved to a new `cursive::style` module, with a re-export from `cursive::theme` for backward compatibility.
+- Added `cursive::style::{Rgb, gradient}` for better gradient support.
+- Added `GradientView`.
+- Added `cursive::utils::markup::cursup` for a simple cursive-focused markup parser.
+- Added `cursive::utils::markup::gradient` to decorate text with gradients.
+- Made `cursive::theme::Theme::load_toml` public.
+- `SelectView` can now use different decorators instead of `< >`.
 
 ## Bugfixes
 
-- Fix shift+tab handling on termion
+- Fix shift+tab handling on termion.
+- Fix possible panics with empty `MenuPopup`.
+
+## Improvements
+
+- The menubar now properly supports styled entries.
+- The output to the backend is now buffered and delta-patched, resulting in improved performance for most backends.
+- `owning_ref` was replaced with `parking_lot`
+- `pulldown_cmark` was updated to 0.10
+- `ansi-parser` was updated to 0.9
+- Scrollable pages now scroll an entire page on left/right key presses.
+- Fixed example links in Readme.md.
 
 ## cursive-core 0.3.7
 

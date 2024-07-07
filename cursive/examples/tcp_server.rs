@@ -119,7 +119,7 @@ fn build_log_viewer(model: Model) -> impl cursive::view::View {
                 printer.print(
                     (0, i),
                     &format!(
-                        "{:3} '{}'  ->  {:3} '{}'",
+                        "{:3} '{}'  ->  {:3} {:?}",
                         log.input,
                         readable_char(log.input),
                         log.output,

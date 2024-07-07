@@ -1,17 +1,20 @@
-//! Provide higher-level abstraction to draw things on backends.
+//! Provide higher-level abstraction to draw things on buffers.
 
-use crate::backend::Backend;
+use crate::buffer::{PrintBuffer, Window};
 use crate::direction::Orientation;
 use crate::rect::Rect;
-use crate::theme::{
-    BorderStyle, Color, ColorPair, ColorStyle, Effect, PaletteColor, PaletteStyle, Style,
-    StyleType, Theme,
+use crate::style::{
+    BorderStyle, ColorPair, ColorStyle, ConcreteStyle, Effect, PaletteColor, PaletteStyle, Style,
+    StyleType,
 };
+use crate::theme::Theme;
 use crate::utils::lines::simple::{prefix, suffix};
+use crate::utils::span::IndexedSpan;
 use crate::with::With;
 use crate::Vec2;
 
 use enumset::EnumSet;
+use parking_lot::RwLock;
 use std::cell::Cell;
 use std::cmp::min;
 use unicode_segmentation::UnicodeSegmentation;
@@ -63,11 +66,11 @@ pub struct Printer<'a, 'b> {
     /// Currently used theme
     pub theme: &'a Theme,
 
-    /// Current color pair used by the parent view.
-    current_color: Cell<ColorPair>,
+    /// Current style used
+    current_style: Cell<ConcreteStyle>,
 
     /// Backend used to actually draw things
-    backend: &'b dyn Backend,
+    buffer: &'b RwLock<PrintBuffer>,
 }
 
 impl<'a, 'b> Printer<'a, 'b> {
@@ -75,7 +78,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// But nobody needs to know that.
     #[doc(hidden)]
-    pub fn new<T: Into<Vec2>>(size: T, theme: &'a Theme, backend: &'b dyn Backend) -> Self {
+    pub fn new<T: Into<Vec2>>(size: T, theme: &'a Theme, buffer: &'b RwLock<PrintBuffer>) -> Self {
         let size = size.into();
         Printer {
             offset: Vec2::zero(),
@@ -85,12 +88,24 @@ impl<'a, 'b> Printer<'a, 'b> {
             focused: true,
             enabled: true,
             theme,
-            backend,
-            current_color: Cell::new(ColorPair {
-                front: Color::TerminalDefault,
-                back: Color::TerminalDefault,
+            buffer,
+            current_style: Cell::new(ConcreteStyle {
+                color: ColorPair::terminal_default(),
+                effects: EnumSet::EMPTY,
             }),
         }
+    }
+
+    /// Returns the region of the window where this printer can write.
+    pub fn output_window(&self) -> Rect {
+        Rect::from_size(self.offset, self.output_size)
+    }
+
+    /// Returns the size of the entire buffer.
+    ///
+    /// This is the size of the entire terminal, not just the area this printer can write into.
+    pub fn buffer_size(&self) -> Vec2 {
+        self.buffer.read().size()
     }
 
     /// Clear the screen.
@@ -99,19 +114,25 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// Users rarely need to call this directly.
     pub fn clear(&self) {
-        self.backend
-            .clear(self.theme.palette[PaletteColor::Background]);
+        let color = self.theme.palette[PaletteColor::Background];
+        self.buffer.write().fill(
+            " ",
+            ColorPair {
+                front: color,
+                back: color,
+            },
+        );
     }
 
     /// Prints some styled text at the given position.
-    pub fn print_styled<'c, V, S>(&self, start: V, text: S)
+    pub fn print_styled<V, S>(&self, start: V, text: S)
     where
         V: Into<Vec2>,
-        S: Into<crate::utils::span::SpannedStr<'c, Style>>,
+        S: crate::utils::span::SpannedText<S = IndexedSpan<Style>>,
     {
-        let text = text.into();
         let Vec2 { mut x, y } = start.into();
         for span in text.spans() {
+            let span = span.resolve(text.source());
             self.with_style(*span.attr, |printer| {
                 printer.print_with_width((x, y), span.content, |_| span.width);
                 x += span.width;
@@ -124,7 +145,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// # Parameters
     /// * `start` is the offset used to print the text in the view.
     /// * `text` is a string to print on the screen. It must be a single line, no line wrapping
-    /// will be done.
+    ///   will be done.
     ///
     /// # Description
     /// Prints some text at the given position.
@@ -236,7 +257,9 @@ impl<'a, 'b> Printer<'a, 'b> {
         }
 
         let start = start + self.offset;
-        self.backend.print_at(start, text);
+        self.buffer
+            .write()
+            .print_at(start, text, self.current_style());
     }
 
     /// Prints a vertical line using the given character.
@@ -270,8 +293,22 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         let start = start + self.offset;
         for y in 0..height {
-            self.backend.print_at(start + (0, y), c);
+            self.buffer
+                .write()
+                .print_at(start + (0, y), c, self.current_style());
         }
+    }
+
+    /// Calls a closure on the output window for this printer.
+    pub fn on_window<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut Window<'_>) -> R,
+    {
+        let mut buffer = self.buffer.write();
+        let mut window = buffer
+            .window(self.output_window())
+            .expect("printer size exceeds backend size");
+        f(&mut window)
     }
 
     /// Prints a line using the given character.
@@ -285,6 +322,13 @@ impl<'a, 'b> Printer<'a, 'b> {
         match orientation {
             Orientation::Vertical => self.print_vline(start, length, c),
             Orientation::Horizontal => self.print_hline(start, length, c),
+        }
+    }
+
+    /// Fills a rectangle using the given character.
+    pub fn print_rect(&self, rect: Rect, c: &str) {
+        for y in rect.top()..=rect.bottom() {
+            self.print_hline((rect.left(), y), rect.width(), c);
         }
     }
 
@@ -312,34 +356,81 @@ impl<'a, 'b> Printer<'a, 'b> {
         // Don't go too far
         let start = start - self.content_offset;
 
-        // Don't write too much if we're close to the end
-        let repetitions = min(width, self.output_size.x - start.x) / c.width();
+        let c_width = c.width();
 
-        let start = start + self.offset;
-        self.backend.print_at_rep(start, repetitions, c);
+        // Don't write too much if we're close to the end
+        let repetitions = min(width, self.output_size.x - start.x) / c_width;
+
+        let mut start = start + self.offset;
+        let mut buffer = self.buffer.write();
+        let style = self.current_style();
+        for _ in 0..repetitions {
+            buffer.print_at(start, c, style);
+            start.x += c_width;
+        }
     }
 
-    /// Returns the color currently used by the parent view.
+    /// Returns the color currently used by the printer.
     pub fn current_color(&self) -> ColorPair {
-        self.current_color.get()
+        self.current_style().color
+    }
+
+    /// Returns the style currently used by the printer.
+    pub fn current_style(&self) -> ConcreteStyle {
+        self.current_style.get()
+    }
+
+    /// Sets the color used by this printer.
+    pub fn set_color(&mut self, color: ColorStyle) {
+        let style = self.current_style.get();
+        let color = color.resolve(&self.theme.palette, style.color);
+        let style = style.with(|s| s.color = color);
+        self.current_style.set(style);
+    }
+
+    /// Sets the current style used by the printer.
+    pub fn set_style<T>(&mut self, style: T)
+    where
+        T: Into<StyleType>,
+    {
+        let style = style.into();
+        // eprintln!("Setting style for subprinter to {style:?}");
+
+        let old = self.current_style();
+        let style = style
+            .resolve(&self.theme.palette)
+            .resolve(&self.theme.palette, old);
+
+        // eprintln!("Style resolved to {style:?}");
+
+        self.current_style.set(style);
+    }
+
+    /// Deactivate the given effect for this printer.
+    pub fn unset_effect(&mut self, effect: Effect) {
+        let mut style = self.current_style();
+        style.effects.remove(effect);
+        self.current_style.set(style);
+    }
+
+    /// Active the given effect for this printer.
+    pub fn set_effect(&mut self, effect: Effect) {
+        let mut style = self.current_style();
+        style.effects.insert(effect);
+        self.current_style.set(style);
     }
 
     /// Call the given closure with a colored printer,
     /// that will apply the given color on prints.
+    ///
+    /// Does not change the current set of active effects (bold/underline/...).
     pub fn with_color<F>(&self, c: ColorStyle, f: F)
     where
         F: FnOnce(&Printer),
     {
-        let old = self.current_color.get();
-        let new = c.resolve(&self.theme.palette, old);
+        let sub = self.clone().with(|sub| sub.set_color(c));
 
-        self.current_color.set(new);
-        self.backend.set_color(new);
-
-        f(self);
-
-        self.backend.set_color(old);
-        self.current_color.set(old)
+        f(&sub);
     }
 
     /// Call the given closure with a styled printer,
@@ -349,28 +440,21 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// ```rust
     /// # use cursive_core::Printer;
-    /// # use cursive_core::theme;
-    /// # use cursive_core::backend;
-    /// # let b = backend::Dummy::init();
-    /// # let t = theme::load_default();
-    /// # let printer = Printer::new((6,4), &t, &*b);
-    /// printer.with_style(theme::PaletteStyle::Highlight, |printer| {
+    /// # use cursive_core::style;
+    /// # fn with_printer(printer: &Printer) {
+    /// printer.with_style(style::PaletteStyle::Highlight, |printer| {
     ///     printer.print((0, 0), "This text is highlighted!");
     /// });
+    /// # }
     /// ```
     pub fn with_style<F, T>(&self, style: T, f: F)
     where
         F: FnOnce(&Printer),
         T: Into<StyleType>,
     {
-        let style = style.into().resolve(&self.theme.palette);
+        let sub = self.clone().with(|sub| sub.set_style(style));
 
-        let color = style.color;
-        let effects = style.effects;
-
-        self.with_color(color, |printer| {
-            printer.with_effects(effects, f);
-        });
+        f(&sub);
     }
 
     /// Call the given closure with a modified printer
@@ -379,9 +463,8 @@ impl<'a, 'b> Printer<'a, 'b> {
     where
         F: FnOnce(&Printer),
     {
-        self.backend.set_effect(effect);
-        f(self);
-        self.backend.unset_effect(effect);
+        let sub = self.clone().with(|sub| sub.set_effect(effect));
+        f(&sub);
     }
 
     /// Call the given closure with a modified printer
@@ -406,6 +489,8 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     /// Call the given closure with a modified printer
     /// that will apply each given effect on prints.
+    ///
+    /// Note that this does not unset any active effect.
     pub fn with_effects<F>(&self, effects: EnumSet<Effect>, f: F)
     where
         F: FnOnce(&Printer),
@@ -430,12 +515,9 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// ```rust
     /// # use cursive_core::Printer;
-    /// # use cursive_core::theme;
-    /// # use cursive_core::backend;
-    /// # let b = backend::Dummy::init();
-    /// # let t = theme::load_default();
-    /// # let printer = Printer::new((6,4), &t, &*b);
+    /// # fn with_printer(printer: &Printer) {
     /// printer.print_box((0, 0), (6, 4), false);
+    /// # }
     /// ```
     pub fn print_box<T: Into<Vec2>, S: Into<Vec2>>(&self, start: T, size: S, invert: bool) {
         let start = start.into();

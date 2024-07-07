@@ -1,7 +1,7 @@
 use crate::align::*;
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
-use crate::theme::PaletteStyle;
+use crate::style::PaletteStyle;
 use crate::utils::markup::StyledString;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
@@ -142,7 +142,7 @@ impl<V: View> ViewWrapper for Panel<V> {
 struct Recipe {
     child: crate::views::BoxedView,
 
-    title: Option<String>,
+    title: Option<StyledString>,
     title_position: Option<HAlign>,
 }
 
@@ -153,10 +153,10 @@ crate::raw_recipe!(with panel, |config, context| {
         crate::builder::Config::Object(config) => {
             match config.get("title") {
                 Some(title) => context.resolve(title)?,
-                None => String::new()
+                None => StyledString::new()
             }
         }
-        _ => String::new(),
+        _ => StyledString::new(),
     };
 
     let title_position = context.resolve(&config["title_position"])?;

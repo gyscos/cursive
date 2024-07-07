@@ -7,9 +7,10 @@ edition = "2021"
 keywords = ["ncurses", "TUI", "UI"]
 license = "MIT"
 name = "cursive"
-readme = "Readme.md"
+readme = "README.md"
 repository = "https://github.com/gyscos/cursive"
 version = "0.20.0"
+include = ["src/**/*", "LICENSE", "README.md"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -52,7 +53,7 @@ version = "0.27"
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.
 builder = ["cursive_core/builder"]
 blt-backend = ["bear-lib-terminal"]
-default = ["ncurses-backend"]
+default = ["crossterm-backend"]
 ncurses-backend = ["ncurses", "maplit"]
 pancurses-backend = ["pancurses", "maplit"]
 termion-backend = ["termion"]

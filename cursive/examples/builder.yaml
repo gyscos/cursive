@@ -12,7 +12,8 @@ Dialog:
     LinearLayout:
       children:
         # Some view can take a single value as parameter.
-        - TextView: Fancy prompt
+        - TextView:
+            $cursup: /blue+underline{Fancy} /bold+red{prompt}
         # Some view don't even need any parameter at all.
         - DummyView
         # This is a custom recipe defined in our example.
@@ -50,10 +51,14 @@ Dialog:
           callback:
             # In the callback, `$content` will be set to the EditView's content.
             $Dialog.info:
-              $concat:
-                - "This is an example of template-driven callback.\nThe current content is: `"
-                - $content
-                - "`."
+              # We can combine functions to prepare a markup string, then parse it.
+              $cursup:
+                $concat:
+                  - "This is an example of template-driven callback.\nThe current content is: `"
+                  - "/bold{"
+                  - $content
+                  - "}"
+                  - "`."
     # This is another builtin callback
     - Exit: $Cursive.quit
   with:
@@ -66,3 +71,9 @@ Dialog:
         right: 2
         top: 1
         bottom: 1
+    - gradient:
+        angled:
+          angle_deg: 45
+          gradient:
+            - "#A0A0A0"
+            - "#505050"

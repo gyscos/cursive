@@ -5,7 +5,7 @@ use std::sync::Arc;
 use unicode_width::UnicodeWidthStr;
 
 use crate::align::*;
-use crate::theme::{Effect, StyleType};
+use crate::style::{Effect, StyleType};
 use crate::utils::lines::spans::{LinesIterator, Row};
 use crate::utils::markup::StyledString;
 use crate::view::{SizeCache, View};
@@ -135,8 +135,12 @@ impl TextContent {
 ///
 /// Can be shared (through a `Arc<Mutex>`).
 struct TextContentInner {
-    // content: String,
+    // This is what `set_content` changes.
     content_value: InnerContentType,
+
+    // This is what is actually being used to draw.
+    //
+    // This is cloned (ref-counted) from content_value when computing rows.
     content_cache: InnerContentType,
 
     // We keep the cache here so it can be busted when we change the content.
@@ -174,20 +178,35 @@ impl TextContentInner {
 /// siv.add_layer(TextView::new("Hello world!"));
 /// ```
 pub struct TextView {
-    // content: String,
+    // Possibly shared content
     content: TextContent,
+
+    // Pre-computed rows for the content, based on the last view size.
     rows: Vec<Row>,
 
+    // Text alignment
     align: Align,
 
+    // Default style for the text.
+    //
+    // Note that the text itself can be styled, which will override this.
     style: StyleType,
 
     // True if we can wrap long lines.
     wrap: bool,
 
-    // ScrollBase make many scrolling-related things easier
+    // Last requested width.
+    //
+    // Usually the longest row, but if a row had to be wrapped, it may be a bit larger.
     width: Option<usize>,
+    // Selection?
+    // selection: Option<Selection>,
 }
+
+// struct Selection {
+//     segments: Vec<crate::utils::lines::spans::Segment>,
+//     // dragging?
+// }
 
 impl TextView {
     /// Creates a new TextView with the given content.
@@ -196,6 +215,23 @@ impl TextView {
         S: Into<StyledString>,
     {
         Self::new_with_content(TextContent::new(content))
+    }
+
+    /// Convenient function to create a TextView by parsing the given content as cursup.
+    ///
+    /// Shortcut for `TextView::new(cursup::parse(content))`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cursive_core::views::TextView;
+    /// let view = TextView::cursup("/red+bold{warning}");
+    /// ```
+    pub fn cursup<S>(content: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self::new(crate::utils::markup::cursup::parse(content))
     }
 
     /// Creates a new TextView using the given `TextContent`.
@@ -438,9 +474,9 @@ enum Recipe {
     Empty,
 
     // Inline content
-    Content(String),
+    Content(StyledString),
 
     // Full object with optional content field
     // This is also used to add a `with` block
-    Object { content: Option<String> },
+    Object { content: Option<StyledString> },
 }

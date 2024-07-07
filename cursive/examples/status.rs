@@ -1,7 +1,7 @@
 //! This example creates a status bar at the bottom of the screen.
 
 use cursive::{
-    theme::BaseColor,
+    style::BaseColor,
     traits::{Nameable as _, Resizable as _},
     utils::markup::StyledString,
     view::View as _,

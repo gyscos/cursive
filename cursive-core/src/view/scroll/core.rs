@@ -5,7 +5,7 @@ use crate::{
     event::{AnyCb, Event},
     printer::Printer,
     rect::Rect,
-    theme::Style,
+    style::Style,
     view::{ScrollStrategy, Selector, SizeCache, ViewNotFound},
     with::With,
     Vec2, XY,

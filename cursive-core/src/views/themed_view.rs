@@ -37,7 +37,7 @@ impl<T: View> ViewWrapper for ThemedView<T> {
         // but that's not easy for now.
         printer
             .theme(&self.theme)
-            .with_style(crate::theme::PaletteStyle::View, |printer| {
+            .with_style(crate::style::PaletteStyle::View, |printer| {
                 self.view.draw(printer);
             });
     }

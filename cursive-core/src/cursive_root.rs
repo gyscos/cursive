@@ -4,6 +4,7 @@ use std::num::NonZeroU32;
 use std::path::Path;
 
 use crossbeam_channel::{self, Receiver, Sender};
+use parking_lot::RwLock;
 
 use crate::{
     backend,
@@ -122,8 +123,15 @@ impl Cursive {
         self.root.layout(size);
     }
 
-    pub(crate) fn draw(&mut self, size: Vec2, backend: &dyn backend::Backend) {
-        let printer = Printer::new(size, &self.theme, backend);
+    pub(crate) fn draw(&mut self, buffer: &RwLock<crate::buffer::PrintBuffer>) {
+        let size = buffer.read().size();
+
+        let printer = Printer::new(size, &self.theme, buffer);
+
+        if self.needs_clear {
+            printer.clear();
+            self.needs_clear = false;
+        }
 
         let selected = self.menubar.receive_events();
 
@@ -139,7 +147,7 @@ impl Cursive {
         // If the menubar is active, nothing else can be.
         if self.menubar.visible() {
             let printer = printer.focused(self.menubar.receive_events());
-            printer.with_color(theme::ColorStyle::primary(), |printer| {
+            printer.with_color(crate::style::ColorStyle::primary(), |printer| {
                 self.menubar.draw(printer)
             });
         }

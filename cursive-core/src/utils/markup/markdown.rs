@@ -6,7 +6,7 @@
 
 use std::borrow::Cow;
 
-use crate::theme::{Effect, Style};
+use crate::style::{Effect, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
 
@@ -169,7 +169,7 @@ I *really* love __Cursive__!";
                 },
                 Span {
                     content: "\n\n",
-                    width: 0,
+                    width: "\n\n".width(),
                     attr: &Style::none(),
                 },
                 Span {

@@ -267,6 +267,10 @@ impl backend::Backend for Backend {
         "termion"
     }
 
+    fn is_persistent(&self) -> bool {
+        true
+    }
+
     fn set_title(&mut self, title: String) {
         write!(self.terminal.get_mut(), "\x1B]0;{title}\x07").unwrap();
     }
@@ -332,31 +336,17 @@ impl backend::Backend for Backend {
         self.terminal.get_mut().flush().unwrap();
     }
 
-    fn print_at(&self, pos: Vec2, text: &str) {
+    fn move_to(&self, pos: Vec2) {
         write!(
             self.terminal.borrow_mut(),
-            "{}{text}",
+            "{}",
             termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
         )
         .unwrap();
     }
 
-    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
-        if repetitions > 0 {
-            let mut out = self.terminal.borrow_mut();
-            write!(
-                out,
-                "{}{text}",
-                termion::cursor::Goto(1 + pos.x as u16, 1 + pos.y as u16),
-            )
-            .unwrap();
-
-            let mut dupes_left = repetitions - 1;
-            while dupes_left > 0 {
-                write!(out, "{text}").unwrap();
-                dupes_left -= 1;
-            }
-        }
+    fn print(&self, text: &str) {
+        write!(self.terminal.borrow_mut(), "{text}",).unwrap();
     }
 
     fn poll_event(&mut self) -> Option<Event> {

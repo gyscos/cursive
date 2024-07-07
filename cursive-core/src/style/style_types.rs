@@ -1,27 +1,43 @@
 use std::iter::FromIterator;
+use std::str::FromStr;
 
-use super::{Color, ColorPair, ColorStyle, ColorType, Effect, Palette, PaletteColor, PaletteStyle};
+use super::{
+    Color, ColorPair, ColorStyle, ColorType, ConcreteEffects, Effect, Effects, Palette,
+    PaletteColor, PaletteStyle,
+};
 use enumset::EnumSet;
 
-/// Combine a color and an effect.
+/// Combine a color and effects.
 ///
 /// Represents any transformation that can be applied to text.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Style {
-    /// Effect to apply.
-    ///
-    /// `None` to keep using previous effects.
-    pub effects: EnumSet<Effect>,
+    /// Effects to apply.
+    pub effects: Effects,
 
     /// Color style to apply.
-    ///
-    /// `None` to keep using the previous colors.
     pub color: ColorStyle,
 }
 
-impl Default for Style {
-    fn default() -> Self {
-        Self::none()
+/// Combine a concrete color and effects.
+///
+/// This is a rendered version of `Style` or `StyleType`, which does not depend on the current theme.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
+pub struct ConcreteStyle {
+    /// Effect to apply.
+    pub effects: ConcreteEffects,
+
+    /// Color style to apply.
+    pub color: ColorPair,
+}
+
+impl ConcreteStyle {
+    /// Return a new concrete style that uses the terminal default colors.
+    pub const fn terminal_default() -> Self {
+        ConcreteStyle {
+            effects: EnumSet::EMPTY,
+            color: ColorPair::terminal_default(),
+        }
     }
 }
 
@@ -29,7 +45,7 @@ impl Style {
     /// Returns a new `Style` that doesn't apply anything.
     ///
     /// Same as [`Style::inherit_parent()`].
-    pub fn none() -> Self {
+    pub const fn none() -> Self {
         Self::inherit_parent()
     }
 
@@ -50,69 +66,77 @@ impl Style {
         Self::merge(&[self, other.into()])
     }
 
+    /// Create a new `Style` from a single `ColorStyle` and no effect.
+    pub const fn from_color_style(color: ColorStyle) -> Self {
+        Style {
+            effects: Effects::empty(),
+            color,
+        }
+    }
+
     /// Uses `ColorType::InheritParent` for both front and background.
-    pub fn inherit_parent() -> Self {
-        ColorStyle::inherit_parent().into()
+    pub const fn inherit_parent() -> Self {
+        Self::from_color_style(ColorStyle::inherit_parent())
     }
 
     /// Style set by terminal before entering a Cursive program.
-    pub fn terminal_default() -> Self {
-        ColorStyle::terminal_default().into()
+    pub const fn terminal_default() -> Self {
+        Self::from_color_style(ColorStyle::terminal_default())
     }
 
     /// Application background, where no view is present.
-    pub fn background() -> Self {
-        ColorStyle::background().into()
+    pub const fn background() -> Self {
+        Self::from_color_style(ColorStyle::background())
     }
 
     /// Color used by view shadows. Only background matters.
-    pub fn shadow() -> Self {
-        ColorStyle::shadow().into()
+    pub const fn shadow() -> Self {
+        Self::from_color_style(ColorStyle::shadow())
     }
 
     /// Style used for views.
-    pub fn view() -> Self {
-        ColorStyle::view().into()
+    pub const fn view() -> Self {
+        Self::from_color_style(ColorStyle::view())
     }
 
     /// Main text with default background.
-    pub fn primary() -> Self {
-        ColorStyle::primary().into()
+    pub const fn primary() -> Self {
+        Self::from_color_style(ColorStyle::primary())
     }
 
     /// Secondary text color, with default background.
-    pub fn secondary() -> Self {
-        ColorStyle::secondary().into()
+    pub const fn secondary() -> Self {
+        Self::from_color_style(ColorStyle::secondary())
     }
 
     /// Tertiary text color, with default background.
-    pub fn tertiary() -> Self {
-        ColorStyle::tertiary().into()
+    pub const fn tertiary() -> Self {
+        Self::from_color_style(ColorStyle::tertiary())
     }
 
     /// Title text color with default background.
-    pub fn title_primary() -> Self {
-        ColorStyle::title_primary().into()
+    pub const fn title_primary() -> Self {
+        Self::from_color_style(ColorStyle::title_primary())
     }
 
     /// Alternative color for a title.
-    pub fn title_secondary() -> Self {
-        ColorStyle::title_secondary().into()
+    pub const fn title_secondary() -> Self {
+        Self::from_color_style(ColorStyle::title_secondary())
     }
 
     /// Returns a highlight style.
-    pub fn highlight() -> Self {
+    pub const fn highlight() -> Self {
         Style {
             color: ColorStyle::highlight().invert(),
-            effects: enumset::enum_set!(Effect::Reverse),
+            effects: Effects::only(Effect::Reverse),
         }
     }
 
     /// Returns an inactive highlight style.
-    pub fn highlight_inactive() -> Self {
+    pub const fn highlight_inactive() -> Self {
         Style {
             color: ColorStyle::highlight_inactive().invert(),
-            effects: enumset::enum_set!(Effect::Reverse),
+            effects: Effects::only(Effect::Reverse),
         }
     }
 
@@ -120,7 +144,7 @@ impl Style {
     #[cfg(feature = "toml")]
     pub(crate) fn parse(table: &toml::Value) -> Option<Self> {
         let table = table.as_table()?;
-        let mut effects: EnumSet<Effect> = EnumSet::new();
+        let mut effects = Effects::empty();
 
         for effect in table.get("effects")?.as_array()? {
             let effect = effect.as_str()?.parse().ok()?;
@@ -131,12 +155,46 @@ impl Style {
 
         Some(Style { effects, color })
     }
+
+    /// Resolve a style to a concrete style.
+    pub fn resolve(&self, palette: &Palette, previous: ConcreteStyle) -> ConcreteStyle {
+        ConcreteStyle {
+            effects: self.effects.resolve(previous.effects),
+            color: self.color.resolve(palette, previous.color),
+        }
+    }
+}
+
+fn parse_single_style(s: &str) -> Result<Style, super::NoSuchColor> {
+    if let Some(s) = s.strip_prefix("back.") {
+        if let Ok(back) = s.parse::<ColorType>() {
+            return Ok(ColorStyle::back(back).into());
+        }
+    }
+
+    if let Ok(front) = s.parse::<ColorType>() {
+        return Ok(front.into());
+    }
+
+    if let Ok(effect) = s.parse::<Effect>() {
+        return Ok(effect.into());
+    }
+
+    Err(super::NoSuchColor)
+}
+
+impl FromStr for Style {
+    type Err = super::NoSuchColor;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.split('+').map(parse_single_style).collect()
+    }
 }
 
 impl From<Effect> for Style {
     fn from(effect: Effect) -> Self {
         Style {
-            effects: EnumSet::only(effect),
+            effects: Effects::only(effect),
             color: ColorStyle::inherit_parent(),
         }
     }
@@ -145,7 +203,7 @@ impl From<Effect> for Style {
 impl From<ColorStyle> for Style {
     fn from(color: ColorStyle) -> Self {
         Style {
-            effects: EnumSet::new(),
+            effects: Effects::default(),
             color,
         }
     }
@@ -204,63 +262,72 @@ impl StyleType {
     }
 
     /// Uses `ColorType::InheritParent` for both front and background.
-    pub fn inherit_parent() -> Self {
-        Style::inherit_parent().into()
+    pub const fn inherit_parent() -> Self {
+        Self::Style(Style::inherit_parent())
     }
 
     /// Style set by terminal before entering a Cursive program.
-    pub fn terminal_default() -> Self {
-        Style::terminal_default().into()
+    pub const fn terminal_default() -> Self {
+        Self::Style(Style::terminal_default())
     }
 
     /// Application background, where no view is present.
-    pub fn background() -> Self {
-        PaletteStyle::Background.into()
+    pub const fn background() -> Self {
+        Self::Palette(PaletteStyle::Background)
     }
 
     /// Color used by view shadows. Only background matters.
-    pub fn shadow() -> Self {
-        PaletteStyle::Shadow.into()
+    pub const fn shadow() -> Self {
+        Self::Palette(PaletteStyle::Shadow)
     }
 
     /// Style used for views.
-    pub fn view() -> Self {
-        PaletteStyle::View.into()
+    pub const fn view() -> Self {
+        Self::Palette(PaletteStyle::View)
     }
 
     /// Main text with default background.
-    pub fn primary() -> Self {
-        PaletteStyle::Primary.into()
+    pub const fn primary() -> Self {
+        Self::Palette(PaletteStyle::Primary)
     }
 
     /// Secondary text color, with default background.
-    pub fn secondary() -> Self {
-        PaletteStyle::Secondary.into()
+    pub const fn secondary() -> Self {
+        Self::Palette(PaletteStyle::Secondary)
     }
 
     /// Tertiary text color, with default background.
-    pub fn tertiary() -> Self {
-        PaletteStyle::Tertiary.into()
+    pub const fn tertiary() -> Self {
+        Self::Palette(PaletteStyle::Tertiary)
     }
 
     /// Title text color with default background.
-    pub fn title_primary() -> Self {
-        PaletteStyle::TitlePrimary.into()
+    pub const fn title_primary() -> Self {
+        Self::Palette(PaletteStyle::TitlePrimary)
     }
 
     /// Alternative color for a title.
-    pub fn title_secondary() -> Self {
-        PaletteStyle::TitleSecondary.into()
+    pub const fn title_secondary() -> Self {
+        Self::Palette(PaletteStyle::TitleSecondary)
     }
 
     /// Returns a highlight style.
-    pub fn highlight() -> Self {
-        PaletteStyle::Highlight.into()
+    pub const fn highlight() -> Self {
+        Self::Palette(PaletteStyle::Highlight)
     }
 
     /// Returns an inactive highlight style.
-    pub fn highlight_inactive() -> Self {
-        PaletteStyle::HighlightInactive.into()
+    pub const fn highlight_inactive() -> Self {
+        Self::Palette(PaletteStyle::HighlightInactive)
+    }
+}
+
+impl From<ColorPair> for ConcreteStyle {
+    fn from(color: ColorPair) -> Self {
+        ConcreteStyle {
+            effects: Default::default(),
+            color,
+        }
     }
 }
 
@@ -317,23 +384,35 @@ impl From<PaletteStyle> for StyleType {
 /// Will use the last non-`None` color, and will combine all effects.
 impl<'a> FromIterator<&'a Style> for Style {
     fn from_iter<I: IntoIterator<Item = &'a Style>>(iter: I) -> Style {
-        let mut color = ColorStyle::inherit_parent();
-        let mut effects = EnumSet::new();
-
-        for style in iter {
-            color = ColorStyle::merge(color, style.color);
-            effects.insert_all(style.effects);
-        }
-
-        Style { effects, color }
+        combine_styles(iter)
     }
+}
+
+impl AsRef<Style> for Style {
+    fn as_ref(&self) -> &Style {
+        self
+    }
+}
+
+fn combine_styles<S: AsRef<Style>>(styles: impl IntoIterator<Item = S>) -> Style {
+    let mut color = ColorStyle::inherit_parent();
+    let mut effects = Effects::empty();
+
+    for style in styles {
+        let style = style.as_ref();
+        color = ColorStyle::merge(color, style.color);
+        effects = Effects::merge(effects, style.effects);
+    }
+
+    Style { effects, color }
 }
 
 /// Creates a new `Style` by merging all given styles.
 ///
 /// Will use the last non-`None` color, and will combine all effects.
 impl<T: Into<Style>> FromIterator<T> for Style {
+    // TODO: Find some common implementation for both?
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Style {
-        iter.into_iter().map(Into::into).collect()
+        combine_styles(iter.into_iter().map(Into::into))
     }
 }

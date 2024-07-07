@@ -16,7 +16,7 @@ fn show_dialog(s: &mut cursive::Cursive) {
     // Let's build a green theme
     let theme = s.current_theme().clone().with(|theme| {
         // Just for this function, import all color names for convenience.
-        use cursive::theme::{BaseColor::*, PaletteColor::*};
+        use cursive::style::{BaseColor::*, PaletteColor::*};
 
         theme.palette[View] = Black.dark();
         theme.palette[Primary] = Green.light();

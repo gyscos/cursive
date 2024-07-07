@@ -7,7 +7,7 @@ use cursive::Cursive;
 // This example shows a way to implement a (Google-like) autocomplete search box.
 // Try entering "tok"!
 
-static CITIES: &'static str = include_str!("assets/cities.txt");
+static CITIES: &str = include_str!("assets/cities.txt");
 
 fn main() {
     let mut siv = cursive::default();

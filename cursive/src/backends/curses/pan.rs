@@ -377,6 +377,10 @@ impl backend::Backend for Backend {
         "pancurses"
     }
 
+    fn is_persistent(&self) -> bool {
+        true
+    }
+
     fn set_title(&mut self, title: String) {
         print!("\x1B]0;{title}\x07");
         stdout().flush().expect("could not flush stdout");
@@ -443,19 +447,12 @@ impl backend::Backend for Backend {
         self.window.refresh();
     }
 
-    fn print_at(&self, pos: Vec2, text: &str) {
-        self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
+    fn move_to(&self, pos: Vec2) {
+        self.window.mv(pos.y as i32, pos.x as i32);
     }
 
-    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
-        if repetitions > 0 {
-            self.window.mvaddstr(pos.y as i32, pos.x as i32, text);
-            let mut dupes_left = repetitions - 1;
-            while dupes_left > 0 {
-                self.window.addstr(text);
-                dupes_left -= 1;
-            }
-        }
+    fn print(&self, text: &str) {
+        self.window.addstr(text);
     }
 
     fn poll_event(&mut self) -> Option<Event> {

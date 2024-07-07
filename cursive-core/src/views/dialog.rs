@@ -3,7 +3,7 @@ use crate::{
     direction::{Absolute, Direction, Relative},
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
-    theme::PaletteStyle,
+    style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound},
     views::{BoxedView, Button, DummyView, LastSizeView, TextView},
@@ -32,7 +32,7 @@ impl crate::builder::Resolvable for DialogFocus {
             // The config can be either:
             // A string: content
             // An object: button: i
-            if let Ok(string) = context.resolve::<String>(&config) {
+            if let Ok(string) = context.resolve::<String>(config) {
                 if string == "Content" || string == "content" {
                     return Some(DialogFocus::Content);
                 } else {
@@ -40,7 +40,7 @@ impl crate::builder::Resolvable for DialogFocus {
                 }
             }
 
-            if let Ok(obj) = context.resolve::<Object>(&config) {
+            if let Ok(obj) = context.resolve::<Object>(config) {
                 let (key, value) = obj.iter().next()?;
 
                 if key != "Button" {
@@ -958,7 +958,7 @@ crate::raw_recipe!(Dialog, |config, context| {
     let mut dialog = Dialog::new();
 
     if let Some(title) = context.resolve(&config["title"])? {
-        dialog.set_title::<String>(title);
+        dialog.set_title::<StyledString>(title);
     }
 
     if let Some(title_position) = context.resolve(&config["title_position"])? {
@@ -1016,10 +1016,10 @@ struct Info(String);
 
 // We can define some variables
 crate::var_recipe!("Dialog.info", |config, context| {
-    let message: String = context.resolve(config)?;
+    let message: StyledString = context.resolve(config)?;
 
     // We want to return a generic single-argument callback.
     Ok(Dialog::add_button_cb(move |s| {
-        s.add_layer(Dialog::info(&message));
+        s.add_layer(Dialog::info(message.clone()));
     }))
 });

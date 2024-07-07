@@ -1,4 +1,4 @@
-use cursive::theme::{BorderStyle, Palette};
+use cursive::style::{BorderStyle, Palette};
 use cursive::traits::With;
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 use cursive::Cursive;
@@ -11,12 +11,12 @@ fn main() {
         shadow: true,
         borders: BorderStyle::Simple,
         palette: Palette::retro().with(|palette| {
-            use cursive::theme::BaseColor::*;
+            use cursive::style::BaseColor::*;
 
             {
                 // First, override some colors from the base palette.
-                use cursive::theme::Color::TerminalDefault;
-                use cursive::theme::PaletteColor::*;
+                use cursive::style::Color::TerminalDefault;
+                use cursive::style::PaletteColor::*;
 
                 palette[Background] = TerminalDefault;
                 palette[View] = TerminalDefault;
@@ -28,9 +28,9 @@ fn main() {
 
             {
                 // Then override some styles.
-                use cursive::theme::Effect::*;
-                use cursive::theme::PaletteStyle::*;
-                use cursive::theme::Style;
+                use cursive::style::Effect::*;
+                use cursive::style::PaletteStyle::*;
+                use cursive::style::Style;
                 palette[Highlight] = Style::from(Blue.light()).combine(Bold);
                 palette[EditableTextCursor] = Style::secondary().combine(Reverse).combine(Underline)
             }
@@ -45,9 +45,9 @@ fn main() {
         Dialog::around(layout)
             .title("Theme example")
             .button("Change", |s| {
-                use cursive::theme::BaseColor::*;
-                use cursive::theme::Color::TerminalDefault;
-                use cursive::theme::PaletteColor::*;
+                use cursive::style::BaseColor::*;
+                use cursive::style::Color::TerminalDefault;
+                use cursive::style::PaletteColor::*;
                 // Change _something_ when the button is pressed.
                 let mut theme = s.current_theme().clone();
 

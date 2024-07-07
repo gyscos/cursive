@@ -1,7 +1,7 @@
 use super::Color;
 
 /// Combines a front and back color.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 pub struct ColorPair {
     /// Color used for the foreground.
     pub front: Color,
@@ -15,16 +15,24 @@ impl ColorPair {
     ///
     /// With swapped front and back color.
     #[must_use]
-    pub fn invert(self) -> Self {
+    pub const fn invert(self) -> Self {
         ColorPair {
             front: self.back,
             back: self.front,
         }
     }
 
+    /// Return a color with `TerminalDefault` as front and back.
+    pub const fn terminal_default() -> Self {
+        Self {
+            front: Color::TerminalDefault,
+            back: Color::TerminalDefault,
+        }
+    }
+
     /// Creates a new color pair from color IDs.
     #[must_use]
-    pub fn from_256colors(front: u8, back: u8) -> Self {
+    pub const fn from_256colors(front: u8, back: u8) -> Self {
         Self {
             front: Color::from_256colors(front),
             back: Color::from_256colors(back),

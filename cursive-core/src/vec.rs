@@ -37,8 +37,33 @@ impl<T: PartialOrd> PartialOrd for XY<T> {
     }
 }
 
+impl XY<f32> {
+    /// Returns the given vector, rotated by an angle in radians.
+    pub fn rotated(self, angle_rad: f32) -> Self {
+        let c = angle_rad.cos();
+        let s = angle_rad.sin();
+
+        Self::new(self.x * c - self.y * s, self.x * s + self.y * c)
+    }
+}
+
 impl XY<usize> {
-    /// Returns a `Vec2` with `usize::max_value()` in each axis.
+    /// A `Vec2` with `usize::MAX` in each axis.
+    pub const MAX: XY<usize> = XY {
+        x: usize::MAX,
+        y: usize::MAX,
+    };
+
+    /// The origin, `{ x: 0, y: 0 }`.
+    pub const ZERO: XY<usize> = XY { x: 0, y: 0 };
+
+    /// The unit X vector `{ x: 1, y: 0 }`.
+    pub const X: XY<usize> = XY::new(1, 0);
+
+    /// The unit Y vector `{ x: 0, y: 1 }`.
+    pub const Y: XY<usize> = XY::new(0, 1);
+
+    /// Returns a `Vec2` with `usize::MAX` in each axis.
     ///
     /// # Examples
     ///
@@ -47,8 +72,8 @@ impl XY<usize> {
     /// assert!(Vec2::new(9999, 9999) < Vec2::max_value());
     /// ```
     #[must_use]
-    pub fn max_value() -> Self {
-        Self::new(usize::max_value(), usize::max_value())
+    pub const fn max_value() -> Self {
+        Self::new(usize::MAX, usize::MAX)
     }
 
     /// Saturating subtraction. Computes `self - other`, saturating at 0.
@@ -164,8 +189,20 @@ impl XY<usize> {
     /// let u = Vec2::new(3, 4);
     /// assert_eq!(u.saturating_add(v), Vec2::new(0, 1));
     /// ```
-    pub fn signed(self) -> XY<isize> {
-        self.into()
+    pub const fn signed(self) -> XY<isize> {
+        XY::new(self.x as isize, self.y as isize)
+    }
+
+    /// Returns the square distance between `a` and `b`.
+    pub fn sq_distance(a: Self, b: Self) -> usize {
+        (a.signed() - b.signed()).map(|x| (x * x) as usize).sum()
+    }
+}
+
+impl<T: Sub<Output = T> + Mul<Output = T> + Add<Output = T> + Copy> XY<T> {
+    /// Returns the square distance between `a` and `b`.
+    pub fn sq_norm(self) -> T {
+        self.map(|x| (x * x)).sum()
     }
 }
 
@@ -341,7 +378,9 @@ impl<T: Zero + Clone> XY<T> {
     pub fn keep_y(&self) -> Self {
         Self::new(T::zero(), self.y.clone())
     }
+}
 
+impl<T: Zero> XY<T> {
     /// Alias for `Self::new(0,0)`.
     ///
     /// # Examples

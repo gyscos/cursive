@@ -1,4 +1,4 @@
-use crate::theme::ColorStyle;
+use crate::style::ColorStyle;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 

@@ -11,52 +11,52 @@ pub struct Align {
 
 impl Align {
     /// Creates a new Align object from the given alignments.
-    pub fn new(h: HAlign, v: VAlign) -> Self {
+    pub const fn new(h: HAlign, v: VAlign) -> Self {
         Align { h, v }
     }
 
     /// Creates a top-left alignment.
-    pub fn top_left() -> Self {
+    pub const fn top_left() -> Self {
         Align::new(HAlign::Left, VAlign::Top)
     }
 
     /// Creates a top-right alignment.
-    pub fn top_right() -> Self {
+    pub const fn top_right() -> Self {
         Align::new(HAlign::Right, VAlign::Top)
     }
 
     /// Creates a top-center alignment.
-    pub fn top_center() -> Self {
+    pub const fn top_center() -> Self {
         Align::new(HAlign::Center, VAlign::Top)
     }
 
     /// Creates a bottom-left alignment.
-    pub fn bot_left() -> Self {
+    pub const fn bot_left() -> Self {
         Align::new(HAlign::Left, VAlign::Bottom)
     }
 
     /// Creates a bottom-right alignment.
-    pub fn bot_right() -> Self {
+    pub const fn bot_right() -> Self {
         Align::new(HAlign::Right, VAlign::Bottom)
     }
 
     /// Creates a bottom-center alignment.
-    pub fn bot_center() -> Self {
+    pub const fn bot_center() -> Self {
         Align::new(HAlign::Center, VAlign::Bottom)
     }
 
     /// Creates a center-right alignment.
-    pub fn center_left() -> Self {
+    pub const fn center_left() -> Self {
         Align::new(HAlign::Left, VAlign::Center)
     }
 
     /// Creates a center-right alignment.
-    pub fn center_right() -> Self {
+    pub const fn center_right() -> Self {
         Align::new(HAlign::Right, VAlign::Center)
     }
 
     /// Creates an alignment centered both horizontally and vertically.
-    pub fn center() -> Self {
+    pub const fn center() -> Self {
         Align::new(HAlign::Center, VAlign::Center)
     }
 }
@@ -89,7 +89,7 @@ impl HAlign {
     /// When drawing a view with size `content` when the available size is
     /// `container`, printing at the resulting offset will align the view as
     /// desired.
-    pub fn get_offset(&self, content: usize, container: usize) -> usize {
+    pub const fn get_offset(&self, content: usize, container: usize) -> usize {
         if container < content {
             0
         } else {
@@ -108,7 +108,7 @@ impl VAlign {
     /// When drawing a view with size `content` when the available size is
     /// `container`, printing at the resulting offset will align the view as
     /// desired.
-    pub fn get_offset(&self, content: usize, container: usize) -> usize {
+    pub const fn get_offset(&self, content: usize, container: usize) -> usize {
         if container < content {
             0
         } else {

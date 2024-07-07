@@ -1,4 +1,5 @@
-use cursive::theme::{Color, PaletteColor, Theme};
+use cursive::style::{Color, PaletteColor};
+use cursive::theme::Theme;
 use cursive::views::TextView;
 use cursive::Cursive;
 

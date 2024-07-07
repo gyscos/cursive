@@ -1,5 +1,5 @@
 use crate::align::HAlign;
-use crate::theme::{ColorStyle, ColorType, Effect, PaletteColor};
+use crate::style::{ColorStyle, ColorType, Effect, PaletteColor};
 use crate::utils::Counter;
 use crate::view::View;
 use crate::{Printer, With};

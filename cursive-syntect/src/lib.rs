@@ -10,13 +10,11 @@ use cursive_core::theme;
 use cursive_core::utils::markup::{StyledIndexedSpan, StyledString};
 use cursive_core::utils::span::IndexedCow;
 
-use cursive_core::reexports::enumset::EnumSet;
-
 use unicode_width::UnicodeWidthStr;
 
 /// Translate a syntect font style into a set of cursive effects.
-pub fn translate_effects(font_style: syntect::highlighting::FontStyle) -> EnumSet<theme::Effect> {
-    let mut effects = EnumSet::new();
+pub fn translate_effects(font_style: syntect::highlighting::FontStyle) -> theme::Effects {
+    let mut effects = theme::Effects::empty();
 
     for &(style, effect) in &[
         (syntect::highlighting::FontStyle::BOLD, theme::Effect::Bold),
