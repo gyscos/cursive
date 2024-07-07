@@ -71,27 +71,17 @@ impl Field {
             .collect();
 
         // init bombs on board
-        let mut cells = Vec::new();
-        for i in 0..self.cells.len() - exclusion_cells.len() {
-            let cell = if i < bombs_count {
-                Cell::new(CellContent::Bomb)
-            } else {
-                Cell::new(CellContent::Free(0))
-            };
-
-            cells.push(cell);
-        }
-
-        // shuffle them
+        let n_cells = self.cells.len();
+        self.cells.clear();
+        self.cells.resize(bombs_count, Cell:: new(CellContent::Bomb));
+        self.cells.resize(n_cells - exclusion_cells.len(), Cell:: new(CellContent::Free(0)));
         let mut rng = rand::thread_rng();
-        cells.shuffle(&mut rng);
+        self.cells.shuffle(&mut rng);
 
         // push empty cells near of cursor to avoid bombs in this positions
         for pos in exclusion_cells {
-            cells.insert(self.pos_to_cell_idx(pos), Cell::new(CellContent::Free(0)));
+            self.cells.insert(self.pos_to_cell_idx(pos), Cell::new(CellContent::Free(0)));
         }
-
-        self.cells = cells;
 
         // recalculate near bombs
         for pos in self.all_cell_pos_iter() {
