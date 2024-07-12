@@ -110,7 +110,10 @@ impl Backend {
             let path = CString::new(output_path).unwrap();
             unsafe { libc::fopen(path.as_ptr(), mode.as_ptr()) }
         };
-        ncurses::newterm(None, output, input);
+        ncurses::newterm(None, output, input).map_err(|e| {
+            io::Error::new(io::ErrorKind::Other, format!("could not call newterm: {e}"))
+        })?;
+
         // Enable keypad (like arrows)
         ncurses::keypad(ncurses::stdscr(), true);
 
@@ -357,28 +360,28 @@ impl backend::Backend for Backend {
 
     fn set_effect(&self, effect: Effect) {
         let style = match effect {
-            Effect::Reverse => ncurses::A_REVERSE(),
-            Effect::Simple => ncurses::A_NORMAL(),
-            Effect::Dim => ncurses::A_DIM(),
-            Effect::Bold => ncurses::A_BOLD(),
-            Effect::Blink => ncurses::A_BLINK(),
-            Effect::Italic => ncurses::A_ITALIC(),
-            Effect::Strikethrough => ncurses::A_NORMAL(),
-            Effect::Underline => ncurses::A_UNDERLINE(),
+            Effect::Reverse => ncurses::A_REVERSE,
+            Effect::Simple => ncurses::A_NORMAL,
+            Effect::Dim => ncurses::A_DIM,
+            Effect::Bold => ncurses::A_BOLD,
+            Effect::Blink => ncurses::A_BLINK,
+            Effect::Italic => ncurses::A_ITALIC,
+            Effect::Strikethrough => ncurses::A_NORMAL,
+            Effect::Underline => ncurses::A_UNDERLINE,
         };
         ncurses::attron(style);
     }
 
     fn unset_effect(&self, effect: Effect) {
         let style = match effect {
-            Effect::Reverse => ncurses::A_REVERSE(),
-            Effect::Simple => ncurses::A_NORMAL(),
-            Effect::Dim => ncurses::A_DIM(),
-            Effect::Bold => ncurses::A_BOLD(),
-            Effect::Blink => ncurses::A_BLINK(),
-            Effect::Italic => ncurses::A_ITALIC(),
-            Effect::Strikethrough => ncurses::A_NORMAL(),
-            Effect::Underline => ncurses::A_UNDERLINE(),
+            Effect::Reverse => ncurses::A_REVERSE,
+            Effect::Simple => ncurses::A_NORMAL,
+            Effect::Dim => ncurses::A_DIM,
+            Effect::Bold => ncurses::A_BOLD,
+            Effect::Blink => ncurses::A_BLINK,
+            Effect::Italic => ncurses::A_ITALIC,
+            Effect::Strikethrough => ncurses::A_NORMAL,
+            Effect::Underline => ncurses::A_UNDERLINE,
         };
         ncurses::attroff(style);
     }
@@ -402,7 +405,9 @@ impl backend::Backend for Backend {
     }
 
     fn print(&self, text: &str) {
-        ncurses::addstr(text);
+        // &str is assured it doesn't contain any \0 aka nuls here due to PR 786
+        // thus we can ignore the return value and avoid warning: unused `Result` that must be used
+        let _ = ncurses::addstr(text);
     }
 }
 
@@ -533,7 +538,7 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     }
 
     // Ncurses provides a F1 variable, but no modifiers
-    add_fn(ncurses::KEY_F1, Event::Key, &mut map);
+    add_fn(ncurses::KEY_F(1), Event::Key, &mut map);
     add_fn(277, Event::Shift, &mut map);
     add_fn(289, Event::Ctrl, &mut map);
     add_fn(301, Event::CtrlShift, &mut map);
