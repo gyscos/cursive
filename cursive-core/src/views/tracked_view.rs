@@ -39,4 +39,4 @@ impl<T: View> ViewWrapper for TrackedView<T> {
     }
 }
 
-crate::raw_recipe!(with tracked, |_, _| Ok(TrackedView::new));
+crate::manual_blueprint!(with tracked, |_, _| Ok(TrackedView::new));

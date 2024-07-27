@@ -957,8 +957,8 @@ impl Cursive {
     }
 }
 
-// Callback recipe
-crate::var_recipe!("Cursive.quit", |_config, _context| {
+// Callback blueprint
+crate::fn_blueprint!("Cursive.quit", |_config, _context| {
     let cb: std::sync::Arc<dyn Fn(&mut Cursive) + Send + Sync> = std::sync::Arc::new(|s| s.quit());
     Ok(cb)
 });

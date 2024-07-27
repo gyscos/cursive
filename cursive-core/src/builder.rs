@@ -1,14 +1,15 @@
 //! Build views from configuration.
 //!
-//! ## Recipes
+//! ## Blueprints
 //!
-//! Recipes define how to build a view from a json-like config object.
+//! Blueprints define how to build a view from a json-like config object.
 //!
-//! It should be easy for third-party view to define a recipe.
+//! It should be easy for third-party view to define a blueprint.
 //!
 //! ## Builders
 //!
-//! * Users can prepare a builder `Context` to build views, which will collect all available recipes.
+//! * Users can prepare a builder `Context` to build views, which will collect all available
+//!   blueprints.
 //! * They can optionally store named "variables" in the context (callbacks, sizes, ...).
 //! * They can then load a configuration (often a yaml file) and render the view in there.
 //!
@@ -72,21 +73,21 @@ pub type BoxedVarBuilder =
     Arc<dyn Fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error> + Send + Sync>;
 
 /// Everything needed to prepare a view from a config.
-/// - Current recipes
+/// - Current blueprints
 /// - Any stored variables/callbacks
 #[derive(Clone)]
 pub struct Context {
-    // TODO: Merge variables and recipes?
+    // TODO: Merge variables and blueprints?
     // TODO: Use RefCell? Or even Arc<Mutex>?
     // So we can still modify the context when sub-context are alive.
     variables: Arc<Variables>,
-    recipes: Arc<Recipes>,
+    blueprints: Arc<Blueprints>,
 }
 
-struct Recipes {
-    recipes: HashMap<String, BoxedBuilder>,
+struct Blueprints {
+    blueprints: HashMap<String, BoxedBuilder>,
     wrappers: HashMap<String, BoxedWrapperBuilder>,
-    parent: Option<Arc<Recipes>>,
+    parent: Option<Arc<Blueprints>>,
 }
 
 /// Wrapper around a value that makes it Cloneable, but can only be resolved once.
@@ -124,14 +125,15 @@ impl<T> ResolveOnce<T> {
     }
 }
 
-impl Recipes {
+impl Blueprints {
     fn build(&self, name: &str, config: &Config, context: &Context) -> Result<BoxedView, Error> {
-        if let Some(recipe) = self.recipes.get(name) {
-            (recipe)(config, context).map_err(|e| Error::RecipeFailed(name.into(), Box::new(e)))
+        if let Some(blueprint) = self.blueprints.get(name) {
+            (blueprint)(config, context)
+                .map_err(|e| Error::BlueprintFailed(name.into(), Box::new(e)))
         } else {
             match self.parent {
                 Some(ref parent) => parent.build(name, config, context),
-                None => Err(Error::RecipeNotFound(name.into())),
+                None => Err(Error::BlueprintNotFound(name.into())),
             }
         }
     }
@@ -142,12 +144,13 @@ impl Recipes {
         config: &Config,
         context: &Context,
     ) -> Result<Wrapper, Error> {
-        if let Some(recipe) = self.wrappers.get(name) {
-            (recipe)(config, context).map_err(|e| Error::RecipeFailed(name.into(), Box::new(e)))
+        if let Some(blueprint) = self.wrappers.get(name) {
+            (blueprint)(config, context)
+                .map_err(|e| Error::BlueprintFailed(name.into(), Box::new(e)))
         } else {
             match self.parent {
                 Some(ref parent) => parent.build_wrapper(name, config, context),
-                None => Err(Error::RecipeNotFound(name.into())),
+                None => Err(Error::BlueprintNotFound(name.into())),
             }
         }
     }
@@ -157,7 +160,7 @@ enum VarEntry {
     // Proxy variable used for sub-templates
     Proxy(Arc<String>),
 
-    // Regular variable set by user or recipe
+    // Regular variable set by user or blueprint
     //
     // Set by user:
     //  - Clone-able
@@ -166,7 +169,7 @@ enum VarEntry {
 
     // Embedded config by intermediate node
     Config(Config),
-    // Optional: store recipes separately?
+    // Optional: store blueprints separately?
 }
 
 impl VarEntry {
@@ -223,21 +226,21 @@ pub enum Error {
         config: Config,
     },
 
-    /// All variants from a multi-variant recipe failed.
+    /// All variants from a multi-variant blueprint failed.
     AllVariantsFailed {
         /// Config value that could not be parsed
         config: Config,
-        /// List of errors for the recipe variants.
+        /// List of errors for the blueprint variants.
         errors: Vec<Error>,
     },
 
-    /// A recipe was not found
-    RecipeNotFound(String),
+    /// A blueprint was not found
+    BlueprintNotFound(String),
 
-    /// A recipe failed to run.
+    /// A blueprint failed to run.
     ///
-    /// This is in direct cause to an error in an actual recipe.
-    RecipeFailed(String, Box<Error>),
+    /// This is in direct cause to an error in an actual blueprint.
+    BlueprintFailed(String, Box<Error>),
 
     /// A maker failed to produce a value.
     MakerFailed(String),
@@ -316,40 +319,40 @@ fn inspect_variables<F: FnMut(&str)>(config: &Config, on_var: &mut F) {
 new_default!(Context);
 
 impl Context {
-    /// Prepare a new context using registered recipes.
+    /// Prepare a new context using registered blueprints.
     pub fn new() -> Self {
-        // Collect a distributed set of recipes.
+        // Collect a distributed set of blueprints.
         #[cfg(feature = "builder")]
-        let recipes = inventory::iter::<Recipe>()
-            .map(|recipe| recipe.as_tuple())
+        let blueprints = inventory::iter::<Blueprint>()
+            .map(|blueprint| blueprint.as_tuple())
             .collect();
 
         #[cfg(not(feature = "builder"))]
-        let recipes = Default::default();
+        let blueprints = Default::default();
 
-        // for (recipe, _) in &recipes {
-        //     eprintln!("{recipe:?}");
+        // for (blueprint, _) in &blueprints {
+        //     eprintln!("{blueprint:?}");
         // }
 
         #[cfg(feature = "builder")]
-        let wrappers = inventory::iter::<WrapperRecipe>()
-            .map(|recipe| recipe.as_tuple())
+        let wrappers = inventory::iter::<WrapperBlueprint>()
+            .map(|blueprint| blueprint.as_tuple())
             .collect();
 
         #[cfg(not(feature = "builder"))]
         let wrappers = Default::default();
 
-        // Store callback recipes as variables for now.
+        // Store callback blueprints as variables for now.
         #[cfg(feature = "builder")]
-        let variables = inventory::iter::<CallbackRecipe>()
-            .map(|recipe| recipe.as_tuple())
+        let variables = inventory::iter::<CallbackBlueprint>()
+            .map(|blueprint| blueprint.as_tuple())
             .collect();
 
         #[cfg(not(feature = "builder"))]
         let variables = Default::default();
 
-        let recipes = Arc::new(Recipes {
-            recipes,
+        let blueprints = Arc::new(Blueprints {
+            blueprints,
             wrappers,
             parent: None,
         });
@@ -359,21 +362,24 @@ impl Context {
             parent: None,
         });
 
-        Self { recipes, variables }
+        Self {
+            blueprints,
+            variables,
+        }
     }
 
     /// Resolve a value.
     ///
     /// Needs to be a reference to a variable.
     pub fn resolve_as_var<T: 'static + Resolvable>(&self, config: &Config) -> Result<T, Error> {
-        // Use same strategy as for recipes: always include a "config", potentially null
+        // Use same strategy as for blueprints: always include a "config", potentially null
         if let Some(name) = parse_var(config) {
             // log::info!("Trying to load variable {name:?}");
             // Option 1: a simple variable name.
             self.load(name, &Config::Null)
         } else if let Some(config) = config.as_object() {
             // Option 2: an object with a key (variable name pointing to a cb
-            // recipe) and a body (config for the recipe).
+            // blueprint) and a body (config for the blueprint).
             let (key, value) = config.iter().next().ok_or_else(|| Error::InvalidConfig {
                 message: "Expected non-empty body".into(),
                 config: config.clone().into(),
@@ -402,7 +408,7 @@ impl Context {
             .ok_or_else(|| Error::invalid_config("Expected string", config))?;
 
         // Option 2: an object with a key (variable name pointing to a cb
-        // recipe) and a body (config for the recipe).
+        // blueprint) and a body (config for the blueprint).
         let (key, value) = config.iter().next().ok_or_else(|| Error::InvalidConfig {
             message: "Expected non-empty body".into(),
             config: config.clone().into(),
@@ -544,23 +550,25 @@ impl Context {
         self.store_entry(name, VarEntry::proxy(new_name));
     }
 
-    /// Register a new recipe _for this context only_.
-    pub fn register_recipe<F>(&mut self, name: impl Into<String>, recipe: F)
+    /// Register a new blueprint _for this context only_.
+    pub fn register_blueprint<F>(&mut self, name: impl Into<String>, blueprint: F)
     where
         F: Fn(&Config, &Context) -> Result<BoxedView, Error> + 'static + Send + Sync,
     {
-        if let Some(recipes) = Arc::get_mut(&mut self.recipes) {
-            recipes.recipes.insert(name.into(), Box::new(recipe));
+        if let Some(blueprints) = Arc::get_mut(&mut self.blueprints) {
+            blueprints
+                .blueprints
+                .insert(name.into(), Box::new(blueprint));
         }
     }
 
-    /// Register a new wrapper recipe _for this context only_.
-    pub fn register_wrapper_recipe<F>(&mut self, name: impl Into<String>, recipe: F)
+    /// Register a new wrapper blueprint _for this context only_.
+    pub fn register_wrapper_blueprint<F>(&mut self, name: impl Into<String>, blueprint: F)
     where
         F: Fn(&Config, &Context) -> Result<Wrapper, Error> + 'static + Send + Sync,
     {
-        if let Some(recipes) = Arc::get_mut(&mut self.recipes) {
-            recipes.wrappers.insert(name.into(), Box::new(recipe));
+        if let Some(blueprints) = Arc::get_mut(&mut self.blueprints) {
+            blueprints.wrappers.insert(name.into(), Box::new(blueprint));
         }
     }
 
@@ -640,7 +648,7 @@ impl Context {
             }
         };
 
-        let wrapper = self.recipes.build_wrapper(key, value, self)?;
+        let wrapper = self.blueprints.build_wrapper(key, value, self)?;
 
         Ok(wrapper)
     }
@@ -704,7 +712,7 @@ impl Context {
 
         let with = self.get_wrappers(value)?;
 
-        let mut view = self.recipes.build(key, value, self)?;
+        let mut view = self.blueprints.build(key, value, self)?;
 
         // Now, apply optional wrappers
         for wrapper in with {
@@ -724,13 +732,16 @@ impl Context {
             parent: Some(Arc::clone(&self.variables)),
         });
 
-        let recipes = Arc::new(Recipes {
-            recipes: HashMap::new(),
+        let blueprints = Arc::new(Blueprints {
+            blueprints: HashMap::new(),
             wrappers: HashMap::new(),
-            parent: Some(Arc::clone(&self.recipes)),
+            parent: Some(Arc::clone(&self.blueprints)),
         });
 
-        let mut context = Context { recipes, variables };
+        let mut context = Context {
+            blueprints,
+            variables,
+        };
         f(&mut context);
         context
     }
@@ -813,17 +824,17 @@ impl Variables {
 }
 
 /// Describes how to build a callback.
-pub struct CallbackRecipe {
+pub struct CallbackBlueprint {
     /// Name used in config file to use this callback.
     ///
     /// The config file will include an extra $ at the beginning.
     pub name: &'static str,
 
-    /// Function to run this recipe.
+    /// Function to run this blueprint.
     pub builder: BareVarBuilder,
 }
 
-impl CallbackRecipe {
+impl CallbackBlueprint {
     fn as_tuple(&self) -> (String, VarEntry) {
         let cb: AnyMaker = Box::new(self.builder);
         (self.name.into(), VarEntry::maker(cb))
@@ -831,57 +842,57 @@ impl CallbackRecipe {
 }
 
 /// Describes how to build a view.
-pub struct Recipe {
-    /// Name used in config file to use this recipe.
+pub struct Blueprint {
+    /// Name used in config file to use this blueprint.
     pub name: &'static str,
 
-    /// Function to run this recipe.
+    /// Function to run this blueprint.
     pub builder: BareBuilder,
 }
 
-impl Recipe {
+impl Blueprint {
     fn as_tuple(&self) -> (String, BoxedBuilder) {
         (self.name.into(), Box::new(self.builder))
     }
 }
 
 /// Describes how to build a view wrapper.
-pub struct WrapperRecipe {
+pub struct WrapperBlueprint {
     /// Name used in config file to use this wrapper.
     pub name: &'static str,
 
-    /// Function to run this recipe.
+    /// Function to run this blueprint.
     pub builder: BareWrapperBuilder,
 }
 
-impl WrapperRecipe {
+impl WrapperBlueprint {
     fn as_tuple(&self) -> (String, BoxedWrapperBuilder) {
         (self.name.into(), Box::new(self.builder))
     }
 }
 
 #[cfg(feature = "builder")]
-inventory::collect!(Recipe);
+inventory::collect!(Blueprint);
 #[cfg(feature = "builder")]
-inventory::collect!(CallbackRecipe);
+inventory::collect!(CallbackBlueprint);
 #[cfg(feature = "builder")]
-inventory::collect!(WrapperRecipe);
+inventory::collect!(WrapperBlueprint);
 
 #[cfg(not(feature = "builder"))]
 #[macro_export]
-/// Define a recipe to build this view from a config file.
-macro_rules! raw_recipe {
+/// Define a blueprint to build this view from a config file.
+macro_rules! manual_blueprint {
     ($name:ident from $config_builder:expr) => {};
     (with $name:ident, $builder:expr) => {};
     ($name:ident, $builder:expr) => {};
 }
 #[cfg(feature = "builder")]
 #[macro_export]
-/// Define a recipe to build this view from a config file.
-macro_rules! raw_recipe {
+/// Define a blueprint to build this view from a config file.
+macro_rules! manual_blueprint {
     ($name:ident from $config_builder:expr) => {
         $crate::submit! {
-            $crate::builder::Recipe {
+            $crate::builder::Blueprint {
                 name: stringify!($name),
                 builder: |config, context| {
                     let template = $config_builder;
@@ -892,7 +903,7 @@ macro_rules! raw_recipe {
     };
     (with $name:ident, $builder:expr) => {
         $crate::submit! {
-            $crate::builder::WrapperRecipe {
+            $crate::builder::WrapperBlueprint {
                 name: stringify!($name),
                 builder: |config, context| {
                     let builder: fn(&$crate::reexports::serde_json::Value, &$crate::builder::Context) -> Result<_, $crate::builder::Error> = $builder;
@@ -908,7 +919,7 @@ macro_rules! raw_recipe {
     };
     ($name:ident, $builder:expr) => {
         $crate::submit! {
-            $crate::builder::Recipe {
+            $crate::builder::Blueprint {
                 name: stringify!($name),
                 builder: |config, context| {
                     let builder: fn(&$crate::reexports::serde_json::Value, &$crate::builder::Context) -> Result<_,$crate::builder::Error> = $builder;
@@ -922,17 +933,17 @@ macro_rules! raw_recipe {
 #[cfg(not(feature = "builder"))]
 #[macro_export]
 /// Define a macro for a variable builder.
-macro_rules! var_recipe {
+macro_rules! fn_blueprint {
     ($name: expr, $builder:expr) => {};
 }
 
 #[cfg(feature = "builder")]
 #[macro_export]
 /// Define a macro for a variable builder.
-macro_rules! var_recipe {
+macro_rules! fn_blueprint {
     ($name: expr, $builder:expr) => {
         $crate::submit! {
-            $crate::builder::CallbackRecipe {
+            $crate::builder::CallbackBlueprint {
                 name: $name,
                 builder: |config, context| {
                     let builder: fn(&::serde_json::Value, &$crate::builder::Context) -> Result<_, $crate::builder::Error> = $builder;
@@ -943,18 +954,18 @@ macro_rules! var_recipe {
     };
 }
 
-// Simple recipe allowing to use variables as views, and attach a `with` clause.
-raw_recipe!(View, |config, context| {
+// Simple blueprint allowing to use variables as views, and attach a `with` clause.
+manual_blueprint!(View, |config, context| {
     let view: BoxedView = context.resolve(&config["view"])?;
     Ok(view)
 });
 
-// TODO: A $format recipe that parses a f-string and renders variables in there.
+// TODO: A $format blueprint that parses a f-string and renders variables in there.
 // Will need to look for various "string-able" types as variables.
 // (String mostly, maybe integers)
 // Probably needs regex crate to parse the template.
 
-var_recipe!("concat", |config, context| {
+fn_blueprint!("concat", |config, context| {
     let values = config
         .as_array()
         .ok_or_else(|| Error::invalid_config("Expected array", config))?;
@@ -968,7 +979,7 @@ var_recipe!("concat", |config, context| {
         .collect::<Result<String, _>>()
 });
 
-var_recipe!("cursup", |config, context| {
+fn_blueprint!("cursup", |config, context| {
     let text: String = context.resolve(config)?;
 
     Ok(crate::utils::markup::cursup::parse(text))

@@ -901,7 +901,7 @@ mod tests {
     }
 }
 
-crate::raw_recipe!(StackView, |config, context| {
+crate::manual_blueprint!(StackView, |config, context| {
     let mut stack = StackView::new();
 
     // TODO: Use `layers`?

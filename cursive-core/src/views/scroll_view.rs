@@ -429,7 +429,7 @@ where
 //         - name: text
 //         - scroll: true
 // ```
-crate::raw_recipe!(with scroll, |config, context| {
+crate::manual_blueprint!(with scroll, |config, context| {
     use crate::builder::{Config, Error};
 
     // Value could be:

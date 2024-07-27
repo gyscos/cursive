@@ -1122,14 +1122,14 @@ impl<T> Item<T> {
     }
 }
 
-#[crate::recipe(SelectView::<String>::new())]
-struct Recipe {
+#[crate::blueprint(SelectView::<String>::new())]
+struct Blueprint {
     autojump: Option<bool>,
     popup: Option<bool>,
 
     on_select: Option<_>,
 
-    #[recipe(foreach = add_item_str)]
+    #[blueprint(foreach = add_item_str)]
     items: Vec<String>,
 }
 

@@ -138,16 +138,16 @@ impl<V: View> ViewWrapper for Panel<V> {
     }
 }
 
-#[crate::recipe(Panel::new(child))]
-struct Recipe {
+#[crate::blueprint(Panel::new(child))]
+struct Blueprint {
     child: crate::views::BoxedView,
 
     title: Option<StyledString>,
     title_position: Option<HAlign>,
 }
 
-// TODO: reduce code duplication between recipes for the same view.
-crate::raw_recipe!(with panel, |config, context| {
+// TODO: reduce code duplication between blueprints for the same view.
+crate::manual_blueprint!(with panel, |config, context| {
     let title = match config {
         crate::builder::Config::String(_) => context.resolve(config)?,
         crate::builder::Config::Object(config) => {

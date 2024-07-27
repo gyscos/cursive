@@ -468,8 +468,8 @@ impl View for TextView {
 }
 
 // Need: a name, a base (potential dependencies), setters
-#[crate::recipe(TextView::empty())]
-enum Recipe {
+#[crate::blueprint(TextView::empty())]
+enum Blueprint {
     // We accept `TextView` without even a body
     Empty,
 

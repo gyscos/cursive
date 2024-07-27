@@ -939,21 +939,21 @@ impl View for Dialog {
 }
 
 /*
-#[crate::recipe(Dialog::new())]
-struct Recipe {
+#[crate::blueprint(Dialog::new())]
+struct Blueprint {
     title: String,
 
     content: Option<BoxedView>,
 
     // TODO: buttons?
     // Define some Button type?
-    // Implement Resolvable as recipe?
-    // Allow recipe(foreach) with multiple arguments?
+    // Implement Resolvable as blueprints?
+    // Allow blueprint(foreach) with multiple arguments?
     // Ex: foreach(add_button_with_cb( .key, .value ))
 }
 */
 
-crate::raw_recipe!(Dialog, |config, context| {
+crate::manual_blueprint!(Dialog, |config, context| {
     use crate::builder::{Config, Context, Error, Resolvable};
     let mut dialog = Dialog::new();
 
@@ -1010,12 +1010,12 @@ crate::raw_recipe!(Dialog, |config, context| {
 });
 
 /*
-#[crate::var_recipe(Dialog::info())]
+#[crate::fn_blueprint(Dialog::info())]
 struct Info(String);
 */
 
-// We can define some variables
-crate::var_recipe!("Dialog.info", |config, context| {
+// We can define some functions
+crate::fn_blueprint!("Dialog.info", |config, context| {
     let message: StyledString = context.resolve(config)?;
 
     // We want to return a generic single-argument callback.

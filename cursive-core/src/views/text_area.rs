@@ -653,7 +653,7 @@ impl View for TextArea {
     }
 }
 
-#[crate::recipe(TextArea::new())]
-struct Recipe {
+#[crate::blueprint(TextArea::new())]
+struct Blueprint {
     content: Option<String>,
 }

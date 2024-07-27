@@ -43,7 +43,7 @@ impl<T: View> ViewWrapper for ThemedView<T> {
     }
 }
 
-crate::raw_recipe!(with theme, |config, context| {
+crate::manual_blueprint!(with theme, |config, context| {
     let theme = context.resolve(config)?;
     Ok(move |view| ThemedView::new(theme, view))
 });

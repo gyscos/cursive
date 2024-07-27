@@ -16,7 +16,7 @@ Dialog:
             $cursup: /blue+underline{Fancy} /bold+red{prompt}
         # Some view don't even need any parameter at all.
         - DummyView
-        # This is a custom recipe defined in our example.
+        # This is a custom blueprint defined in our example.
         - Titled:
             title: Edit area
             child:

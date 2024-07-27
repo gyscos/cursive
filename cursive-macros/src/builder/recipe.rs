@@ -138,7 +138,7 @@ fn parse_enum(
     })
 }
 
-// #[recipe(
+// #[blueprint(
 //      config = false,
 //      setter = set_enabled,
 //      config_name = "foo",
@@ -227,9 +227,9 @@ impl VariableSpecs {
             config_name: None,
             default: None,
         };
-        // Look for an explicit #[recipe]
+        // Look for an explicit #[blueprint]
         for attr in &field.attrs {
-            if !attr.path().is_ident("recipe") {
+            if !attr.path().is_ident("blueprint") {
                 continue;
             }
 
@@ -292,8 +292,8 @@ impl Variable {
         // An example from TextView:
         //
         // ```
-        // #[crate::recipe(TextView::empty())]
-        // enum Recipe {
+        // #[crate::blueprint(TextView::empty())]
+        // enum Blueprint {
         //     Empty,
         //
         //     Content(String),
@@ -482,8 +482,8 @@ fn parse_struct(
     })
 }
 
-// Direct parsing (with minimal processing) of the attributes from a recipe.
-struct RecipeAttributes {
+// Direct parsing (with minimal processing) of the attributes from a blueprint.
+struct BlueprintAttributes {
     // Base expression to build. Ex: `TextView::new()`.
     // Might rely on variables in base_parameters.
     base: syn::Expr,
@@ -492,7 +492,7 @@ struct RecipeAttributes {
     // These might not need to be set separately.
     base_parameters: HashSet<String>,
 
-    // Name for the recipe.
+    // Name for the blueprint.
     name: String,
 }
 
@@ -546,9 +546,9 @@ fn base_default_name(expr: &syn::Expr) -> Option<String> {
     Some(ident.to_string())
 }
 
-impl syn::parse::Parse for RecipeAttributes {
-    // Parse attributes for a recipe. Ex:
-    // #[recipe(TextView::new(content), name="Text")]
+impl syn::parse::Parse for BlueprintAttributes {
+    // Parse attributes for a blueprint. Ex:
+    // #[blueprint(TextView::new(content), name="Text")]
     fn parse(input: syn::parse::ParseStream<'_>) -> syn::parse::Result<Self> {
         let base: syn::Expr = input.parse()?;
 
@@ -571,7 +571,7 @@ impl syn::parse::Parse for RecipeAttributes {
             }
         }
 
-        Ok(RecipeAttributes {
+        Ok(BlueprintAttributes {
             base,
             base_parameters,
             name,
@@ -579,15 +579,15 @@ impl syn::parse::Parse for RecipeAttributes {
     }
 }
 
-pub fn recipe(attrs: TokenStream, item: TokenStream) -> TokenStream {
+pub fn blueprint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(item as syn::Item);
 
-    // Parse the initial things given to the #[recipe(...)] macro.
+    // Parse the initial things given to the #[blueprint(...)] macro.
     // We expect:
     // Positional, first argument: an expression.
     // Optional, named arguments:
-    // name = "RecipeName"
-    let attributes = syn::parse_macro_input!(attrs as RecipeAttributes);
+    // name = "BlueprintName"
+    let attributes = syn::parse_macro_input!(attrs as BlueprintAttributes);
 
     // Either cursive or cursive_core are good roots.
     // If we can't find it, assume it's building cursive_core itself.
@@ -651,7 +651,7 @@ pub fn recipe(attrs: TokenStream, item: TokenStream) -> TokenStream {
 
     let ident = syn::Ident::new(&attributes.name, Span::call_site());
     let result = quote! {
-        #root::raw_recipe!(#ident, |config, context| {
+        #root::raw_blueprint!(#ident, |config, context| {
             Ok({ #builder })
         });
     };

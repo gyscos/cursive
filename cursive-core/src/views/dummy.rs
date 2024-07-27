@@ -22,7 +22,7 @@ impl View for DummyView {
     }
 }
 
-#[crate::recipe(DummyView::new())]
-struct Recipe;
+#[crate::blueprint(DummyView::new())]
+struct Blueprint;
 
-// crate::raw_recipe!(DummyView, |_config, _context| { Ok(DummyView) });
+// crate::manual_blueprint!(DummyView, |_config, _context| { Ok(DummyView) });

@@ -194,21 +194,21 @@ impl<T: View> ViewWrapper for CircularFocus<T> {
 }
 /*
 
-#[crate::recipe(with = "circular_focus", CircularFocus::new)]
-enum Recipe {
-    #[recipe(
+#[crate::blueprint(with = "circular_focus", CircularFocus::new)]
+enum Blueprint {
+    #[blueprint(
         set_wrap(wrap_kind, true),
         from=String,
     )]
     String(WrapKind),
 
-    #[recipe(
+    #[blueprint(
         foreach=set_wrap(wrap_kind, true),
         from=Array,
     )]
     Array(Vec<WrapKind>),
 
-    #[recipe(
+    #[blueprint(
         foreach=set_wrap,
         from=Object
     )]
@@ -216,7 +216,7 @@ enum Recipe {
 }
 */
 
-crate::raw_recipe!(with circular_focus, |config, context| {
+crate::manual_blueprint!(with circular_focus, |config, context| {
     use crate::builder::{Config, Error};
 
     // TODO: enable variable resolution across types
@@ -233,7 +233,7 @@ crate::raw_recipe!(with circular_focus, |config, context| {
     //
     // Maybe a method to "peek/resolve" a config value _as a config_? And then match that?
     // (Would return an error if the variable cannot be config'ed)
-    // Or instead try resolving different types in the recipe.
+    // Or instead try resolving different types in the blueprint.
     fn parse_keyword(word: &str) -> Result<(bool, bool, bool), Error> {
         Ok(match word {
             "tab" => (true, false, false),

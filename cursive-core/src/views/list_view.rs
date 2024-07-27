@@ -502,8 +502,8 @@ impl Resolvable for ListChild {
     }
 }
 
-#[crate::recipe(ListView::new())]
-struct Recipe {
+#[crate::blueprint(ListView::new())]
+struct Blueprint {
     children: Vec<ListChild>,
 
     on_select: Option<_>,

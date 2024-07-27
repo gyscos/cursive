@@ -33,4 +33,4 @@ impl<T: View> ViewWrapper for LastSizeView<T> {
     }
 }
 
-crate::raw_recipe!(with last_size, |_, _| Ok(LastSizeView::new));
+crate::manual_blueprint!(with last_size, |_, _| Ok(LastSizeView::new));

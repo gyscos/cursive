@@ -81,4 +81,4 @@ impl View for DebugView {
     }
 }
 
-crate::raw_recipe!(DebugView, |_, _| { Ok(DebugView::new()) });
+crate::manual_blueprint!(DebugView, |_, _| { Ok(DebugView::new()) });

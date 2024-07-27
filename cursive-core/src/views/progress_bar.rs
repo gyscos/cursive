@@ -312,8 +312,8 @@ impl View for ProgressBar {
     }
 }
 
-#[crate::recipe(ProgressBar::new())]
-struct Recipe {
+#[crate::blueprint(ProgressBar::new())]
+struct Blueprint {
     min: Option<usize>,
     max: Option<usize>,
     value: Option<usize>,

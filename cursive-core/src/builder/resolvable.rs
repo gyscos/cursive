@@ -500,8 +500,8 @@ impl Resolvable for crate::style::gradient::Dynterpolator {
                 let bilinear: crate::style::gradient::Bilinear = context.resolve(config)?;
                 Ok(Box::new(bilinear))
             }
-            // TODO: Allow external libraries to define their own recipes to be used here?
-            // Something like a type-map of recipes?...
+            // TODO: Allow external libraries to define their own blueprints to be used here?
+            // Something like a type-map of blueprints?...
             (key, _) => Err(Error::invalid_config(
                 format!("Received unsupported gradient type {key}."),
                 config,

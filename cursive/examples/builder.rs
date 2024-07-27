@@ -1,23 +1,23 @@
 use cursive::views::{BoxedView, Button, EditView, Panel, TextView};
 
-// This is how we can define some global recipes.
-// Here, we define a recipe from a template.
-cursive::raw_recipe!(LabeledField from {
+// This is how we can define some global blueprints.
+// Here, we define a blueprint from a template.
+cursive::manual_blueprint!(LabeledField from {
     // We just need to return a cursive::builder::Config here
     // (in practice, a serde_json::Value).
     // Here we parse yaml but any other serde-supported language would work.
     serde_yaml::from_str(include_str!("label-view.yaml")).unwrap()
 });
 
-cursive::raw_recipe!(VSpace from {
+cursive::manual_blueprint!(VSpace from {
     // Here we embed the template in the binary with `include_str!`,
     // but it'd be possible as well to dynamically read a file,
     // load from network, ...
     serde_yaml::from_str(include_str!("vspace.yaml")).unwrap()
 });
 
-// We can also define recipe that build arbitrary views.
-cursive::raw_recipe!(Titled, |config, context| {
+// We can also define blueprint that build arbitrary views.
+cursive::manual_blueprint!(Titled, |config, context| {
     // Fetch a string from the config
     let title: String = context.resolve(&config["title"])?;
 
@@ -28,9 +28,9 @@ cursive::raw_recipe!(Titled, |config, context| {
     Ok(Panel::new(child).title(title))
 });
 
-// Or we can use a declarative recipe definition
-#[cursive::recipe(Panel::new(child), name = "WithTitle")]
-struct Recipe {
+// Or we can use a declarative blueprint definition
+#[cursive::blueprint(Panel::new(child), name = "WithTitle")]
+struct Blueprint {
     child: BoxedView,
     title: String,
 }

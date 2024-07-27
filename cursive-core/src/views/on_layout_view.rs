@@ -64,7 +64,7 @@ impl<V: View> ViewWrapper for OnLayoutView<V> {
     }
 }
 
-crate::raw_recipe!(with on_layout, |config, context| {
+crate::manual_blueprint!(with on_layout, |config, context| {
     let callback = context.resolve(config)?;
     Ok(move |view| {
         let mut view = OnLayoutView::wrap(view);

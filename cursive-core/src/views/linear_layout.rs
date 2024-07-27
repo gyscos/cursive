@@ -723,14 +723,14 @@ impl View for LinearLayout {
 }
 
 /*
-#[crate::recipe(LinearLayout::new(orientation))]
-struct Recipe {
+#[crate::blueprint(LinearLayout::new(orientation))]
+struct Blueprint {
     orientation: direction::Orientation,
 
-    #[recipe(foreach=add_child)]
+    #[blueprint(foreach=add_child)]
     children: Vec<crate::views::BoxedView>,
 
-    #[recipe(
+    #[blueprint(
         set_focus_index,
         on_err="LinearLayout.focus cannot be larger than the number of views.",
     )]
@@ -738,7 +738,7 @@ struct Recipe {
 }
 */
 
-crate::raw_recipe!(LinearLayout, |config, context| {
+crate::manual_blueprint!(LinearLayout, |config, context| {
     let orientation = match config.get("orientation") {
         Some(orientation) => context.resolve(orientation)?,
         None => direction::Orientation::Vertical,

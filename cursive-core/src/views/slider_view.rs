@@ -241,8 +241,8 @@ impl View for SliderView {
 }
 
 // TODO: Rename the view itself as Slider to match the config?
-#[crate::recipe(SliderView::new(orientation, max_value))]
-struct Recipe {
+#[crate::blueprint(SliderView::new(orientation, max_value))]
+struct Blueprint {
     orientation: Orientation,
     max_value: usize,
 

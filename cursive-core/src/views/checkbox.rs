@@ -178,8 +178,8 @@ impl View for Checkbox {
     }
 }
 
-#[crate::recipe(Checkbox::new())]
-struct Recipe {
+#[crate::blueprint(Checkbox::new())]
+struct Blueprint {
     on_change: Option<_>,
 
     checked: Option<bool>,

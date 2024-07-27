@@ -303,8 +303,8 @@ impl Resolvable for RadioGroup<String> {
     }
 }
 
-#[crate::recipe(RadioButton::from_group_str(&mut group, label))]
-struct Recipe {
+#[crate::blueprint(RadioButton::from_group_str(&mut group, label))]
+struct Blueprint {
     group: RadioGroup<String>,
     label: String,
 }
