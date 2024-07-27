@@ -3,16 +3,22 @@ use cursive::views::{BoxedView, Button, EditView, Panel, TextView};
 // This is how we can define some global blueprints.
 // Here, we define a blueprint from a template.
 cursive::manual_blueprint!(LabeledField from {
-    // We just need to return a cursive::builder::Config here
+    // We just need to return a cursive::builder::Config
     // (in practice, a serde_json::Value).
+    //
     // Here we parse yaml but any other serde-supported language would work.
     serde_yaml::from_str(include_str!("label-view.yaml")).unwrap()
 });
 
 cursive::manual_blueprint!(VSpace from {
+    // Another similar blueprint.
+    //
     // Here we embed the template in the binary with `include_str!`,
     // but it'd be possible as well to dynamically read a file,
     // load from network, ...
+    //
+    // Note that this code only runs when this blueprint is actually called
+    // (when a `VSpace` view is requested).
     serde_yaml::from_str(include_str!("vspace.yaml")).unwrap()
 });
 
