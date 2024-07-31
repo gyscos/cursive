@@ -35,7 +35,7 @@ impl ConcreteStyle {
     /// Return a new concrete style that uses the terminal default colors.
     pub const fn terminal_default() -> Self {
         ConcreteStyle {
-            effects: EnumSet::EMPTY,
+            effects: EnumSet::empty(),
             color: ColorPair::terminal_default(),
         }
     }

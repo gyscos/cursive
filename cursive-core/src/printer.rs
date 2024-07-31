@@ -91,7 +91,7 @@ impl<'a, 'b> Printer<'a, 'b> {
             buffer,
             current_style: Cell::new(ConcreteStyle {
                 color: ColorPair::terminal_default(),
-                effects: EnumSet::EMPTY,
+                effects: EnumSet::empty(),
             }),
         }
     }
