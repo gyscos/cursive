@@ -1,23 +1,69 @@
 //! Build views from configuration.
 //!
+//! # Features
+//!
+//! This module is only active if the `builder` feature is enabled. Otherwise, types will still be
+//! exposed, blueprints can be defined, but they will be ignored.
+//!
+//! # Overview
+//!
+//! This module lets you build a view from a json-like config object.
+//!
+//! For example, this yaml could be parsed and used to build a basic TextView:
+//!
+//! ```yaml
+//! TextView:
+//!     content: foo
+//! ```
+//!
+//! Or, this slightly larger example could build a LinearLayout, relying on a `left_label`
+//! variable that would need to be fed:
+//!
+//! ```yaml
+//! LinearLayout:
+//!     orientation: horizontal
+//!     children:
+//!         - TextView: $left_label
+//!         - TextView: Center
+//!         - Button:
+//!             label: Right
+//!             callback: $Cursive.quit
+//! ```
+//!
+//! ## Configs
+//!
+//! Views are described using a `Config`, which is really just an alias for a `serde_json::Value`.
+//! Note that we use the json model here, but you could parse it from JSON, yaml, or almost any
+//! language supported by serde.
+//!
+//! ## Context
+//!
+//! A `Context` helps building views by providing variables that can be used by configs. They also
+//! keep a list of available blueprints.
+//!
 //! ## Blueprints
 //!
-//! Blueprints define how to build a view from a json-like config object.
+//! At the core of the builder system, blueprints define _how_ to build views.
 //!
-//! It should be easy for third-party view to define a blueprint.
+//! A blueprint essentially ties a name to a function `fn(Config, Context) -> Result<impl View>`.
 //!
-//! ## Builders
+//! They are defined using macros - either manually (`manual_blueprint!`) or declaratively
+//! (`#[blueprint]`). When a `Context` is created, they are automatically gathered from all
+//! dependencies - so third party crates can define blueprints too.
 //!
-//! * Users can prepare a builder `Context` to build views, which will collect all available
-//!   blueprints.
-//! * They can optionally store named "variables" in the context (callbacks, sizes, ...).
-//! * They can then load a configuration (often a yaml file) and render the view in there.
+//! ## Resolving things
 //!
-//! ## Details
+//! Blueprints will need to parse various types from the config to build their views - strings,
+//! integers, callbacks, ...
 //!
-//! This crate includes:
-//! - A public part, always enabled.
-//! - An implementation module, conditionally compiled.
+//! To do this, they will rely on the `Resolvable` trait.
+//!
+//! # Examples
+//!
+//! You can see the [`builder` example][builder.rs] and its [yaml config][config].
+//!
+//! [builder.rs]: https://github.com/gyscos/cursive/blob/main/cursive/examples/builder.rs
+//! [config]: https://github.com/gyscos/cursive/blob/main/cursive/examples/builder.yaml
 #![cfg_attr(not(feature = "builder"), allow(unused))]
 
 mod resolvable;
@@ -73,8 +119,11 @@ pub type BoxedVarBuilder =
     Arc<dyn Fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error> + Send + Sync>;
 
 /// Everything needed to prepare a view from a config.
+///
 /// - Current blueprints
 /// - Any stored variables/callbacks
+///
+/// Cheap to clone (uses `Arc` internally).
 #[derive(Clone)]
 pub struct Context {
     // TODO: Merge variables and blueprints?
@@ -886,10 +935,12 @@ macro_rules! manual_blueprint {
     (with $name:ident, $builder:expr) => {};
     ($name:ident, $builder:expr) => {};
 }
+
 #[cfg(feature = "builder")]
 #[macro_export]
 /// Define a blueprint to build this view from a config file.
 macro_rules! manual_blueprint {
+    // Remember to keep the inactive version above in sync
     ($name:ident from $config_builder:expr) => {
         $crate::submit! {
             $crate::builder::Blueprint {
@@ -941,6 +992,7 @@ macro_rules! fn_blueprint {
 #[macro_export]
 /// Define a macro for a variable builder.
 macro_rules! fn_blueprint {
+    // Remember to keep the inactive version above in sync
     ($name: expr, $builder:expr) => {
         $crate::submit! {
             $crate::builder::CallbackBlueprint {

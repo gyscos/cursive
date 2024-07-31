@@ -651,7 +651,7 @@ pub fn blueprint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 
     let ident = syn::Ident::new(&attributes.name, Span::call_site());
     let result = quote! {
-        #root::raw_blueprint!(#ident, |config, context| {
+        #root::manual_blueprint!(#ident, |config, context| {
             Ok({ #builder })
         });
     };
