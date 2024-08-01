@@ -1,7 +1,7 @@
 //! Backend using the pure-rust crossplatform crossterm library.
 //!
 //! Requires the `crossterm-backend` feature.
-#![cfg(feature = "crossterm")]
+#![cfg(feature = "crossterm-backend")]
 #![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "crossterm-backend")))]
 
 use std::{

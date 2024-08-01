@@ -1,7 +1,7 @@
 //! Backend using the pure-rust termion library.
 //!
 //! Requires the `termion-backend` feature.
-#![cfg(feature = "termion")]
+#![cfg(feature = "termion-backend")]
 #![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "termion-backend")))]
 
 pub use termion;

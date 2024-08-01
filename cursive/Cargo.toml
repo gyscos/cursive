@@ -47,17 +47,17 @@ version = "4"
 
 [dependencies.crossterm]
 optional = true
-version = "0.27"
+version = "0.28.1"
 
 [features]
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.
 builder = ["cursive_core/builder"]
-blt-backend = ["bear-lib-terminal"]
+blt-backend = ["dep:bear-lib-terminal"]
 default = ["crossterm-backend"]
-ncurses-backend = ["ncurses", "maplit"]
-pancurses-backend = ["pancurses", "maplit"]
-termion-backend = ["termion"]
-crossterm-backend = ["crossterm"]
+ncurses-backend = ["dep:ncurses", "dep:maplit"]
+pancurses-backend = ["dep:pancurses", "dep:maplit"]
+termion-backend = ["dep:termion"]
+crossterm-backend = ["dep:crossterm"]
 markdown = ["cursive_core/markdown"]
 ansi = ["cursive_core/ansi"]
 unstable_scroll = []  # Deprecated feature, remove in next version
