@@ -6,7 +6,7 @@
 
 - Defaults to crossterm backend (instead of ncurses)
 - Updates termion to 4.0
-- Updates crossterm to 0.27.0
+- Updates crossterm to 0.28.1
 - Updates cursive-core to 0.4.0
 - Updates ncurses to 6.0.1
 
