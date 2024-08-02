@@ -5,6 +5,7 @@ pub fn blueprint(_: TokenStream, _: TokenStream) -> TokenStream {
     TokenStream::new()
 }
 
+// Just return the annotated function unchanged.
 pub fn callback_helpers(item: TokenStream) -> TokenStream {
     item
 }

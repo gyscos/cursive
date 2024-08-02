@@ -80,6 +80,23 @@ pub fn callback_helpers(_attrs: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// Defines a blueprint for creating a view from config.
+///
+/// It should be added to a type which defines how to build the view.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// #[cursive::blueprint(TextView::empty())]
+/// struct BlueprintForTextview {
+///   content: StyledString,
+/// }
+/// ```
+///
+/// This recipe will:
+/// * Create a base view with `TextView::empty()`.
+/// * Look for a `content` key in the given config.
+/// * Try to resolve the associated value to a `StyledString`.
+/// * Call `set_content` on the base with the resulting `StyledString`.
 #[proc_macro_attribute]
 pub fn blueprint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     builder::blueprint(attrs, item)
