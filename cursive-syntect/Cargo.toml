@@ -7,7 +7,7 @@ documentation = "https://docs.rs/cursive-syntect"
 keywords = ["cursive", "TUI", "syntect"]
 repository = "https://github.com/gyscos/cursive"
 license = "MIT"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 include = ["src/lib.rs", "LICENSE", "README.md"]
 
