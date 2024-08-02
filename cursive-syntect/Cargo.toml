@@ -23,7 +23,7 @@ version = "5.0.0"
 features = ["parsing"]
 
 [dev-dependencies]
-cursive = { path = "../cursive", version = "0.20.0" }
+cursive = { path = "../cursive", version = "0.21.0" }
 
 [dev-dependencies.syntect]
 version = "5.0.0"
