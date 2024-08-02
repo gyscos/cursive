@@ -303,20 +303,20 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 /// This is where this macro comes into play: from an original function that requires a closure, it
 /// generates two helper functions:
 /// * A _maker_ function, to be used when storing variables. This function takes a generic type
-/// implementing the same `Fn` trait as the desired callback, and returns it wrapped in the correct
-/// trait object. It will be named `{name}_cb`, where `{name}` is the name of the original function
-/// this macro is attached to.
+///   implementing the same `Fn` trait as the desired callback, and returns it wrapped in the
+///   correct trait object. It will be named `{name}_cb`, where `{name}` is the name of the
+///   original function this macro is attached to.
 /// * A _setter_ function, to be used when writing blueprints. This function wraps the original
-/// function, but takes a trait-object instead of a generic `Fn` type, and unwraps it internally.
-/// It will be named `{name}_with_cb`, where `{name}` is the name of the original function this
-/// macro is attached to.
+///   function, but takes a trait-object instead of a generic `Fn` type, and unwraps it
+///   internally. It will be named `{name}_with_cb`, where `{name}` is the name of the original
+///   function this macro is attached to.
 ///
 /// # Notes
 ///
-/// * The wrapped function doesn't even have to take `self`, it can be a "static"
-/// constructor method.
-/// * The `maker` function always takes a `Fn`, not a `FnMut` or `FnOnce`.
-/// Use the `cursive::immut1!` (and others) macros to wrap a `FnMut` into a `Fn` if you need it.
+/// * The wrapped function doesn't even have to take `self`, it can be a "static" constructor
+///   method.
+/// * The `maker` function always takes a `Fn`, not a `FnMut` or `FnOnce`. Use the
+///   `cursive::immut1!` (and others) macros to wrap a `FnMut` into a `Fn` if you need it.
 ///
 /// # Examples
 ///
