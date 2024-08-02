@@ -18,10 +18,11 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Check
-      run: cargo check --features "blt-backend ncurses-backend pancurses-backend termion-backend crossterm-backend markdown toml ansi"
+      # We run checks with all backend features to make sure they compile, but don't actually build them as they require external libs.
+      run: cargo check --features "builder blt-backend ncurses-backend pancurses-backend termion-backend crossterm-backend markdown toml ansi"
     - name: Build
-      run: cargo build --features "toml markdown ansi termion-backend crossterm-backend" --no-default-features --verbose
+      run: cargo build --features "builder toml markdown ansi termion-backend crossterm-backend" --no-default-features --verbose
     - name: Run tests
       run: >
-        cargo test --features "toml markdown ansi termion-backend crossterm-backend" --no-default-features --verbose &&
+        cargo test --features "builder toml markdown ansi termion-backend crossterm-backend" --no-default-features --verbose &&
         cargo test --example select_test
