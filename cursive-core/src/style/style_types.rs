@@ -10,6 +10,9 @@ use enumset::EnumSet;
 /// Combine a color and effects.
 ///
 /// Represents any transformation that can be applied to text.
+///
+/// This is a "abstract" style, which can depend on the current theme, or on the previously active
+/// style.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Style {
     /// Effects to apply.
@@ -21,7 +24,8 @@ pub struct Style {
 
 /// Combine a concrete color and effects.
 ///
-/// This is a rendered version of `Style` or `StyleType`, which does not depend on the current theme.
+/// This is a rendered version of `Style` or `StyleType`, which does not depend on the current
+/// theme or the previously active style.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 pub struct ConcreteStyle {
     /// Effect to apply.

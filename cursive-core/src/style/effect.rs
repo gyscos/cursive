@@ -2,6 +2,11 @@ use enum_map::{Enum, EnumMap};
 use enumset::{EnumSet, EnumSetType};
 use std::str::FromStr;
 
+/// A concrete set of effects to enable.
+///
+/// Every missing effect should be disabled.
+pub type ConcreteEffects = EnumSet<Effect>;
+
 /// Text effect
 #[allow(clippy::derived_hash_with_manual_eq)] // We do derive it through EnumSetType
 #[derive(EnumSetType, Enum, Debug, Hash)]
@@ -170,11 +175,6 @@ impl std::ops::IndexMut<Effect> for Effects {
     }
 }
 
-/// A concrete set of effects to enable.
-///
-/// Every missing effect should be disabled.
-pub type ConcreteEffects = EnumSet<Effect>;
-
 /// Describes what to do with an effect.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum EffectStatus {
@@ -187,7 +187,7 @@ pub enum EffectStatus {
     /// Keep the same effect status as the parent.
     InheritParent,
 
-    /// Use the opposite state from the parent.
+    /// Use the opposite state from the parent (XOR).
     OppositeParent,
 }
 
