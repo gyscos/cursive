@@ -13,7 +13,6 @@ use crate::{
     views::{BoxedView, CircularFocus, Layer, ShadowView},
     Printer, Vec2, With,
 };
-use std::cell;
 use std::ops::Deref;
 
 /// Simple stack of views.
@@ -26,7 +25,7 @@ pub struct StackView {
     // and therefore need redrawing.
     // TODO: this is broken! Transparent views could change their content and lead to weirdness.
     // Instead, just rely on buffered backend.
-    bg_dirty: cell::Cell<bool>,
+    bg_dirty: std::sync::atomic::AtomicBool,
 }
 
 // This is a poor man's optional parameter, or kinda builder pattern.
@@ -310,7 +309,7 @@ impl StackView {
         StackView {
             layers: Vec::new(),
             last_size: Vec2::zero(),
-            bg_dirty: cell::Cell::new(true),
+            bg_dirty: std::sync::atomic::AtomicBool::new(true),
         }
     }
 
@@ -514,7 +513,7 @@ impl StackView {
     ///
     /// If the given position is out of bounds.
     pub fn remove_layer(&mut self, position: LayerPosition) -> Box<dyn View> {
-        self.bg_dirty.set(true);
+        self.set_dirty();
         let i = self.get_index(position).unwrap();
         self.layers
             .remove(i)
@@ -526,9 +525,23 @@ impl StackView {
             .unwrap()
     }
 
+    fn set_dirty(&self) {
+        self.bg_dirty
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    fn undirty(&self) {
+        self.bg_dirty
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    fn is_dirty(&self) -> bool {
+        self.bg_dirty.load(std::sync::atomic::Ordering::Relaxed)
+    }
+
     /// Remove the top-most layer.
     pub fn pop_layer(&mut self) -> Option<Box<dyn View>> {
-        self.bg_dirty.set(true);
+        self.set_dirty();
         self.layers
             .pop()
             .map(|child| child.view)
@@ -621,7 +634,7 @@ impl StackView {
         match child.placement {
             Placement::Floating(_) => {
                 child.placement = Placement::Floating(position);
-                self.bg_dirty.set(true);
+                self.set_dirty();
             }
             Placement::Fullscreen => (),
         }
@@ -642,7 +655,7 @@ impl StackView {
     /// You probably just want to call draw()
     pub fn draw_bg(&self, printer: &Printer) {
         // If the background is dirty draw a new background
-        if self.bg_dirty.get() {
+        if self.is_dirty() {
             for y in 0..printer.size.y {
                 printer.with_style(PaletteStyle::Background, |printer| {
                     printer.print_hline((0, y), printer.size.x, " ");
@@ -650,7 +663,7 @@ impl StackView {
             }
 
             // set background as clean, so we don't need to do this every frame
-            self.bg_dirty.set(false);
+            self.undirty();
         }
     }
 
@@ -732,7 +745,7 @@ impl View for StackView {
 
     fn on_event(&mut self, event: Event) -> EventResult {
         if event == Event::WindowResize {
-            self.bg_dirty.set(true);
+            self.set_dirty();
         }
 
         // Use the stack position iterator to get the offset of the top layer.

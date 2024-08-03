@@ -276,7 +276,7 @@ impl<T> Canvas<T> {
     }
 }
 
-impl<T: 'static + Send> View for Canvas<T> {
+impl<T: 'static + Send + Sync> View for Canvas<T> {
     fn draw(&self, printer: &Printer) {
         (self.draw)(&self.state, printer);
     }

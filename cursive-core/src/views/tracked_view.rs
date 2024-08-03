@@ -1,14 +1,14 @@
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 use crate::Vec2;
-use std::cell::Cell;
+use parking_lot::Mutex;
 
 /// Wrapper around a view that remembers its position.
 pub struct TrackedView<T> {
     /// Wrapped view.
     pub view: T,
     /// Last position the view was located.
-    offset: Cell<Vec2>,
+    offset: Mutex<Vec2>,
 }
 
 new_default!(TrackedView<T: Default>);
@@ -16,14 +16,14 @@ new_default!(TrackedView<T: Default>);
 impl<T> TrackedView<T> {
     /// Return the last offset at which the view was drawn.
     pub fn offset(&self) -> Vec2 {
-        self.offset.get()
+        *self.offset.lock()
     }
 
     /// Creates a new `TrackedView` around `view`.
     pub fn new(view: T) -> Self {
         TrackedView {
             view,
-            offset: Cell::new(Vec2::zero()),
+            offset: Mutex::new(Vec2::zero()),
         }
     }
 
@@ -34,7 +34,7 @@ impl<T: View> ViewWrapper for TrackedView<T> {
     wrap_impl!(self.view: T);
 
     fn wrap_draw(&self, printer: &Printer) {
-        self.offset.set(printer.offset);
+        *self.offset.lock() = printer.offset;
         self.view.draw(printer);
     }
 }

@@ -9,7 +9,7 @@ use crate::{
     views::{BoxedView, Button, DummyView, LastSizeView, TextView},
     Cursive, Printer, Vec2, With,
 };
-use std::cell::Cell;
+use parking_lot::Mutex;
 use std::cmp::{max, min};
 
 /// Identifies currently focused element in [`Dialog`].
@@ -64,7 +64,7 @@ impl crate::builder::Resolvable for DialogFocus {
 
 struct ChildButton {
     button: LastSizeView<Button>,
-    offset: Cell<Vec2>,
+    offset: Mutex<Vec2>,
 }
 
 impl ChildButton {
@@ -74,7 +74,7 @@ impl ChildButton {
     {
         ChildButton {
             button: LastSizeView::new(Button::new(label, cb)),
-            offset: Cell::new(Vec2::zero()),
+            offset: Mutex::new(Vec2::zero()),
         }
     }
 }
@@ -550,7 +550,7 @@ impl Dialog {
             let button = &mut self.buttons[button_id];
             button
                 .button
-                .on_event(event.relativized(button.offset.get()))
+                .on_event(event.relativized(*button.offset.lock()))
         };
         match result {
             EventResult::Ignored => {
@@ -644,7 +644,7 @@ impl Dialog {
             let size = button.button.size;
             // Add some special effect to the focused button
             let position = Vec2::new(offset, y);
-            button.offset.set(position);
+            *button.offset.lock() = position;
             button.button.draw(
                 &printer
                     .offset(position)
@@ -722,7 +722,7 @@ impl Dialog {
             // Now that we have a relative position, checks for buttons?
             if let Some(i) = self.buttons.iter().position(|btn| {
                 // If position fits there...
-                position.fits_in_rect(btn.offset.get(), btn.button.size)
+                position.fits_in_rect(*btn.offset.lock(), btn.button.size)
             }) {
                 return Some(self.set_focus(DialogFocus::Button(i)));
             } else if position

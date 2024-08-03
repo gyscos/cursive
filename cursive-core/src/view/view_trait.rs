@@ -31,7 +31,7 @@ impl std::error::Error for ViewNotFound {}
 /// Main trait defining a view behaviour.
 ///
 /// This is what you should implement to define a custom View.
-pub trait View: Any + AnyView + Send {
+pub trait View: Any + AnyView + Send + Sync {
     /// Draws the view with the given printer (includes bounds) and focus.
     ///
     /// This is the only *required* method to implement.

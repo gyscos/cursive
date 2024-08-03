@@ -72,8 +72,9 @@ pub use self::resolvable::{NoConfig, Resolvable};
 
 use crate::views::BoxedView;
 
+use parking_lot::Mutex;
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use std::any::Any;
 
@@ -140,7 +141,7 @@ struct Blueprints {
 }
 
 /// Wrapper around a value that makes it Cloneable, but can only be resolved once.
-pub struct ResolveOnce<T>(std::sync::Arc<std::sync::Mutex<Option<T>>>);
+pub struct ResolveOnce<T>(Arc<Mutex<Option<T>>>);
 
 /// Return a variable-maker (for use in store_with)
 pub fn resolve_once<T>(value: T) -> impl Fn(&Config, &Context) -> Result<T, Error>
@@ -151,7 +152,6 @@ where
     move |_, _| {
         value
             .lock()
-            .unwrap()
             .take()
             .ok_or_else(|| Error::MakerFailed("variable was already resolved".to_string()))
     }
@@ -160,17 +160,17 @@ where
 impl<T> ResolveOnce<T> {
     /// Create a new `ResolveOnce` which will resolve, once, to the given value.
     pub fn new(value: T) -> Self {
-        Self(std::sync::Arc::new(std::sync::Mutex::new(Some(value))))
+        Self(Arc::new(Mutex::new(Some(value))))
     }
 
     /// Take the value from self.
     pub fn take(&self) -> Option<T> {
-        self.0.lock().unwrap().take()
+        self.0.lock().take()
     }
 
     /// Check if there is a value still to be resolved in self.
     pub fn is_some(&self) -> bool {
-        self.0.lock().unwrap().is_some()
+        self.0.lock().is_some()
     }
 }
 
