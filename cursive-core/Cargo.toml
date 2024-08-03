@@ -18,7 +18,7 @@ all-features = true
 
 [dependencies]
 enum-map = "2.0"
-enumset = "1.1.0"
+enumset = "1.1.4"  # EnumSet::empty() became `const` in 1.1.4
 log = "0.4"
 unicode-segmentation = "1"
 unicode-width = "0.1"
