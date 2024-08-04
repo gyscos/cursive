@@ -938,7 +938,21 @@ macro_rules! manual_blueprint {
 
 #[cfg(feature = "builder")]
 #[macro_export]
-/// Define a blueprint to build this view from a config file.
+/// Define a blueprint to manually build this view from a config file.
+///
+/// Note: this is entirely ignored (not even type-checked) if the `builder` feature is not
+/// enabled.
+///
+/// There are 3 variants of this macro:
+///
+/// * `manual_blueprint!(Identifier, |config, context| make_the_view(...))`
+///   This registers the recipe under `Identifier`, and uses the given closure to build
+///   the view.
+/// * `manual_blueprint!(Identifier from { parse_some_config(...) })`
+///   This register under `Identifier` a recipe that forwards the creation to another
+///   config using [`Context::build_template`].
+/// * `manual_blueprint`(with Identifier, |config, context| Ok(|view| wrap_the_view(view, ...)))`
+///   This register a "with" blueprint under `Identifier`, which will prepare a view wrapper.
 macro_rules! manual_blueprint {
     // Remember to keep the inactive version above in sync
     ($name:ident from $config_builder:expr) => {

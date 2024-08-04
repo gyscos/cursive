@@ -61,6 +61,24 @@ impl Align {
     }
 }
 
+impl std::str::FromStr for Align {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "top_left" => Self::top_left(),
+            "top_center" => Self::top_center(),
+            "top_right" => Self::top_right(),
+            "center_left" => Self::center_left(),
+            "center" => Self::center(),
+            "center_right" => Self::center_right(),
+            "bot_left" | "bottom_left" => Self::bot_left(),
+            "bot_center" | "bottom_center" => Self::bot_center(),
+            "bot_right" | "bottom_right" => Self::bot_right(),
+            _ => return Err(()),
+        })
+    }
+}
+
 /// Horizontal alignment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum HAlign {
@@ -72,6 +90,18 @@ pub enum HAlign {
     Right,
 }
 
+impl std::str::FromStr for HAlign {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "left" | "Left" => Self::Left,
+            "center" | "Center" => Self::Center,
+            "right" | "Right" => Self::Right,
+            _ => return Err(()),
+        })
+    }
+}
+
 /// Vertical alignment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VAlign {
@@ -81,6 +111,18 @@ pub enum VAlign {
     Center,
     /// Place the element at the bottom of available space
     Bottom,
+}
+
+impl std::str::FromStr for VAlign {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Top" | "top" => Self::Top,
+            "Center" | "center" => Self::Center,
+            "Bottom" | "bottom" | "Bot" | "bot" => Self::Bottom,
+            _ => return Err(()),
+        })
+    }
 }
 
 impl HAlign {

@@ -1009,22 +1009,51 @@ impl Resolvable for crate::view::Margins {
     }
 }
 
+impl Resolvable for crate::align::Align {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        // Try a string shortcut
+        if let Some(config_str) = config.as_str() {
+            if let Ok(align) = config_str.parse() {
+                return Ok(align);
+            }
+
+            return Err(Error::invalid_config("Unexpected align string", config));
+        }
+
+        let h = context.resolve(&config["h"])?;
+        let v = context.resolve(&config["v"])?;
+
+        Ok(Self { h, v })
+    }
+}
+
+impl Resolvable for crate::align::VAlign {
+    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
+        if let Some(config) = config.as_str() {
+            if let Ok(align) = config.parse() {
+                return Ok(align);
+            }
+        }
+
+        Err(Error::invalid_config(
+            "Expected top, center or bottom",
+            config,
+        ))
+    }
+}
+
 impl Resolvable for crate::align::HAlign {
     fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
-        // TODO: also resolve single-value configs like strings.
-        // Also when resolving a variable with the wrong type, fallback on loading the type with
-        // the variable name.
-        Ok(match config.as_str() {
-            Some(config) if config == "Left" || config == "left" => Self::Left,
-            Some(config) if config == "Center" || config == "center" => Self::Center,
-            Some(config) if config == "Right" || config == "right" => Self::Right,
-            _ => {
-                return Err(Error::invalid_config(
-                    "Expected left, center or right",
-                    config,
-                ))
+        if let Some(config) = config.as_str() {
+            if let Ok(align) = config.parse() {
+                return Ok(align);
             }
-        })
+        }
+
+        Err(Error::invalid_config(
+            "Expected left, center or right",
+            config,
+        ))
     }
 }
 
