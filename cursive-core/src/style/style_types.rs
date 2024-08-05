@@ -195,6 +195,15 @@ impl FromStr for Style {
     }
 }
 
+impl From<Effects> for Style {
+    fn from(effects: Effects) -> Self {
+        Style {
+            effects,
+            color: ColorStyle::inherit_parent(),
+        }
+    }
+}
+
 impl From<Effect> for Style {
     fn from(effect: Effect) -> Self {
         Style {

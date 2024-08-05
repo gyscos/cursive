@@ -215,6 +215,19 @@ impl EffectStatus {
         }
     }
 }
+impl FromStr for EffectStatus {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "On" | "on" | "true" => Self::On,
+            "Off" | "off" | "false" => Self::Off,
+            "InheritParent" | "inherit_parent" => Self::InheritParent,
+            "OppositeParent" | "opposite_parent" => Self::OppositeParent,
+            _ => return Err(()),
+        })
+    }
+}
 
 impl FromStr for Effect {
     type Err = super::NoSuchColor;

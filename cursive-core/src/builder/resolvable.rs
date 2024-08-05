@@ -1,4 +1,5 @@
 use super::{Config, Context, Error, Object};
+use crate::style::ConcreteEffects;
 use crate::views::BoxedView;
 
 use std::collections::HashMap;
@@ -35,6 +36,24 @@ pub trait Resolvable {
     {
         any.downcast().ok().map(|b| *b)
     }
+}
+
+type Resolver<T> = fn(&Config, &Context) -> Result<T, Error>;
+
+fn try_all<T>(config: &Config, context: &Context, fns: &[Resolver<T>]) -> Result<T, Error> {
+    let mut errors = Vec::new();
+
+    for f in fns {
+        match f(config, context) {
+            Ok(res) => return Ok(res),
+            Err(err) => errors.push(err),
+        }
+    }
+
+    Err(Error::AllVariantsFailed {
+        config: config.clone(),
+        errors,
+    })
 }
 
 fn resolve_from_str<T, F, R>(config: &Config, context: &Context, err_map: F) -> Result<T, Error>
@@ -255,6 +274,68 @@ impl Resolvable for crate::style::BorderStyle {
     }
 }
 
+impl Resolvable for crate::style::PaletteStyle {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        resolve_from_str(config, context, |_| "Expected valid palette style")
+    }
+}
+
+impl Resolvable for crate::style::StyleType {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        try_all(
+            config,
+            context,
+            &[
+                |config, context| {
+                    let style = context.resolve::<crate::style::PaletteStyle>(config)?;
+                    Ok(crate::style::StyleType::Palette(style))
+                },
+                |config, context| {
+                    let style = context.resolve::<crate::style::Style>(config)?;
+                    Ok(crate::style::StyleType::Style(style))
+                },
+            ],
+        )
+    }
+}
+
+impl Resolvable for crate::style::Style {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        try_all(
+            config,
+            context,
+            &[
+                |config, context| {
+                    // Option A: explicit effects and color
+                    let effects = context.resolve(&config["effects"])?;
+                    let color = context.resolve(&config["color"])?;
+
+                    Ok(crate::style::Style { effects, color })
+                },
+                |config, context| {
+                    // Option B: just a color style
+                    let style = context.resolve::<crate::style::ColorStyle>(config)?;
+                    Ok(crate::style::Style::from(style))
+                },
+                |config, context| {
+                    // Option C: just effect(s)
+                    let effects = context.resolve::<crate::style::Effects>(config)?;
+                    Ok(crate::style::Style::from(effects))
+                },
+            ],
+        )
+    }
+}
+
 impl Resolvable for crate::theme::Theme {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let mut theme = Self::default();
@@ -311,8 +392,9 @@ where
     }
 }
 
-impl<T> Resolvable for HashMap<String, T>
+impl<K, T> Resolvable for HashMap<K, T>
 where
+    K: 'static + std::str::FromStr + Eq + std::hash::Hash,
     T: 'static + Resolvable,
 {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
@@ -325,7 +407,15 @@ where
 
         config
             .iter()
-            .map(|(k, v)| context.resolve(v).map(|v| (k.to_string(), v)))
+            .map(|(k, v)| {
+                context.resolve(v).and_then(|v| {
+                    Ok((
+                        k.parse::<K>()
+                            .map_err(|_| Error::invalid_config("Error parsing key", config))?,
+                        v,
+                    ))
+                })
+            })
             .collect()
     }
 }
@@ -689,6 +779,110 @@ impl Resolvable for crate::style::Color {
     }
 }
 
+impl Resolvable for crate::style::ConcreteStyle {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        // We _need_ colors for a concrete style, since "inherit parent" is not an option.
+        try_all(
+            config,
+            context,
+            &[
+                |config, context| {
+                    let color = context.resolve(config)?;
+                    Ok(Self {
+                        effects: ConcreteEffects::empty(),
+                        color,
+                    })
+                },
+                |config, context| {
+                    let effects = context
+                        .resolve::<Option<ConcreteEffects>>(&config["effects"])?
+                        .unwrap_or_else(ConcreteEffects::empty);
+                    let color = context.resolve(&config["color"])?;
+                    Ok(Self { effects, color })
+                },
+            ],
+        )
+    }
+}
+
+impl Resolvable for crate::style::ConcreteEffects {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        use crate::style::Effect;
+
+        // Either a single effect string, or a list of effects
+        try_all(
+            config,
+            context,
+            &[
+                |config, context| {
+                    // Option A: a single effect as string
+                    let effect = resolve_from_str(config, context, |_| "Expected valid effect")?;
+                    {
+                        Ok(ConcreteEffects::only(effect))
+                    }
+                },
+                |config, context| {
+                    // Option B: a list of effects
+                    let effects = context.resolve::<Vec<Effect>>(config)?;
+                    Ok(ConcreteEffects::from_iter(effects.iter().copied()))
+                },
+            ],
+        )
+    }
+}
+
+impl Resolvable for crate::style::Effects {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        use crate::style::{Effect, EffectStatus, Effects};
+
+        // Option A: a single effect as a string.
+        if let Ok(effect) = resolve_from_str(config, context, |_| "Expected valid effect") {
+            return Ok(Effects::only(effect));
+        }
+
+        // Option B: a list of effects to enable.
+        if let Ok(effects) = context.resolve::<Vec<Effect>>(config) {
+            let mut result = Effects::empty();
+            for effect in effects {
+                result.insert(effect);
+            }
+            return Ok(result);
+        }
+
+        // Option C: a map of effect to status
+        if let Ok(statuses) = context.resolve::<HashMap<Effect, EffectStatus>>(config) {
+            let mut result = Effects::empty();
+            for (key, value) in statuses {
+                result.statuses[key] = value;
+            }
+            return Ok(result);
+        }
+
+        Err(Error::invalid_config(
+            "Expected either an effect, a list of effects, or a map of effect statuses",
+            config,
+        ))
+    }
+}
+
+impl Resolvable for crate::style::EffectStatus {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        resolve_from_str(config, context, |_| "Expected valid effect status")
+    }
+}
+
 impl Resolvable for crate::style::Effect {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
     where
@@ -736,7 +930,7 @@ impl Resolvable for crate::style::ColorType {
             Config::String(config) => Self::from_str(config)
                 .map_err(|_| Error::invalid_config("Unrecognized color type", config)),
             Config::Object(config) => {
-                // Try to load as a color?
+                // Either a palette or a color?
                 let (key, value) = config
                     .iter()
                     .next()
@@ -759,16 +953,22 @@ impl Resolvable for crate::style::ColorType {
 
 impl Resolvable for crate::style::ColorStyle {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
-        if let Ok(color) = (|| -> Result<_, Error> {
-            let front = context.resolve(&config["front"])?;
-            let back = context.resolve(&config["back"])?;
+        try_all(
+            config,
+            context,
+            &[
+                |config, context| {
+                    let front = context.resolve(&config["front"])?;
+                    let back = context.resolve(&config["back"])?;
 
-            Ok(crate::style::ColorStyle { front, back })
-        })() {
-            return Ok(color);
-        }
-
-        unimplemented!()
+                    Ok(crate::style::ColorStyle { front, back })
+                },
+                |config, context| {
+                    let front = context.resolve::<crate::style::ColorType>(config)?;
+                    Ok(crate::style::ColorStyle::front(front))
+                },
+            ],
+        )
     }
 }
 
@@ -877,9 +1077,11 @@ impl Resolvable for crate::views::LayerPosition {
 
 impl Resolvable for String {
     fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
-        match config.as_str() {
-            Some(config) => Ok(config.into()),
-            None => Err(Error::invalid_config("Expected string type", config)),
+        match config {
+            Config::String(config) => Ok(config.into()),
+            Config::Bool(config) => Ok(format!("{config}")),
+            Config::Number(n) => Ok(format!("{n}")),
+            _ => Err(Error::invalid_config("Cannot resolve as string", config)),
         }
     }
 
@@ -1258,6 +1460,13 @@ mod tests {
         context.store("foo", value);
         let config = Config::String("$foo".into());
         assert_eq!(result, context.resolve::<R>(&config).unwrap());
+    }
+
+    #[test]
+    fn test_strings() {
+        check_resolves_from_conf(json!("1"), String::from("1"));
+        check_resolves_from_conf(json!(1), String::from("1"));
+        check_resolves_from_conf(json!(true), String::from("true"));
     }
 
     #[test]
