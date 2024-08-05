@@ -107,7 +107,7 @@ type BoxedWrapperBuilder =
     Box<dyn Fn(&serde_json::Value, &Context) -> Result<Wrapper, Error> + Send + Sync>;
 
 /// Can wrap a view.
-pub type Wrapper = Box<dyn FnOnce(BoxedView) -> BoxedView + Send + Sync>;
+pub type Wrapper = Box<dyn FnOnce(BoxedView) -> BoxedView + Send>;
 
 /// Can build a callback
 pub type BareVarBuilder = fn(&serde_json::Value, &Context) -> Result<Box<dyn Any>, Error>;

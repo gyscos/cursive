@@ -1,6 +1,20 @@
 # Changelog
 
-## cursive next (0.21)
+## cursive-core 0.4.3
+
+- Implement `Resolvable` for more types.
+- Relax `Sync` bound on FnMut and FnOnce callbacks.
+
+## cursive-core 0.4.2
+
+- Raise `enumset` version in dependency to make sure `EnumSet::empty()` is const fn.
+
+## cursive-core 0.4.1
+
+- Add missing `Sync` bound on `View`
+- Doc fixes
+
+## cursive 0.21
 
 ### Breaking Changes
 
@@ -19,7 +33,7 @@
 
 - Crossterm backend: properly reset the color when de-initializing.
 
-## cursive-core next (0.4.0)
+## cursive-core 0.4.0
 
 ### Breaking Changes
 

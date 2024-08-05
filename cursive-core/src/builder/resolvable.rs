@@ -722,10 +722,7 @@ impl Resolvable for crate::style::ColorPair {
 
 impl Resolvable for crate::style::PaletteColor {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
-        let color: String = context.resolve(config)?;
-
-        crate::style::PaletteColor::from_str(&color)
-            .map_err(|_| Error::invalid_config("Unrecognized palette color", config))
+        resolve_from_str(config, context, |_| "Unrecognized palette color")
     }
 }
 
@@ -1085,7 +1082,7 @@ impl<T: Resolvable + 'static> Resolvable for crate::XY<T> {
             // That one would require specialization?
             // Config::String(config) if config == "zero" => crate::Vec2::zero(),
             Config::String(config) if config == "zero" => {
-                let zero = Config::from("0");
+                let zero = Config::from(0);
                 let x = context.resolve(&zero)?;
                 let y = context.resolve(&zero)?;
                 crate::XY::new(x, y)
@@ -1229,6 +1226,8 @@ mod tests {
         utils::markup::StyledString,
     };
 
+    use serde_json::json;
+
     use super::Resolvable;
 
     fn check_resolves_from_conf<R>(config: Config, result: R)
@@ -1269,7 +1268,7 @@ mod tests {
             check_resolves_from_any(1i64, result.clone());
             check_resolves_from_any(1i128, result.clone());
 
-            check_resolves_from_conf(serde_json::json!(1), result.clone());
+            check_resolves_from_conf(json!(1), result.clone());
         }
 
         check_integer_types(1usize);
@@ -1284,6 +1283,16 @@ mod tests {
         check_integer_types(1i32);
         check_integer_types(1i64);
         check_integer_types(1i128);
+
+        check_resolves_from_conf(json!(-1), -1i32);
+        check_resolves_from_conf(json!(-1), -1isize);
+
+        check_resolves_from_conf(json!(1), 1u32);
+        check_resolves_from_conf(json!(1), 1u64);
+        check_resolves_from_conf(json!(1), 1usize);
+
+        check_resolves_from_conf(json!(0), 0u32);
+        check_resolves_from_conf(json!(0), 0u64);
     }
 
     #[test]
@@ -1292,10 +1301,10 @@ mod tests {
         check_resolves_from_any(1.0f32, 1.0f64);
         check_resolves_from_any(1.0f64, 1.0f32);
         check_resolves_from_any(1.0f64, 1.0f64);
-        check_resolves_from_conf(serde_json::json!(1), 1.0f32);
-        check_resolves_from_conf(serde_json::json!(1), 1.0f64);
-        check_resolves_from_conf(serde_json::json!(1.0), 1.0f32);
-        check_resolves_from_conf(serde_json::json!(1.0), 1.0f64);
+        check_resolves_from_conf(json!(1), 1.0f32);
+        check_resolves_from_conf(json!(1), 1.0f64);
+        check_resolves_from_conf(json!(1.0), 1.0f32);
+        check_resolves_from_conf(json!(1.0), 1.0f64);
     }
 
     #[test]
@@ -1308,23 +1317,23 @@ mod tests {
         check_resolves_from_any([1u32, 2, 3], [1u32, 2, 3]);
 
         // Both array and Vec can resolve from a config array.
-        check_resolves_from_conf(serde_json::json!([1, 2, 3]), [1u32, 2, 3]);
-        check_resolves_from_conf(serde_json::json!([1, 2, 3]), vec![1u32, 2, 3]);
+        check_resolves_from_conf(json!([1, 2, 3]), [1u32, 2, 3]);
+        check_resolves_from_conf(json!([1, 2, 3]), vec![1u32, 2, 3]);
     }
 
     #[test]
     fn test_option() {
         check_resolves_from_any(Some(42u32), Some(42u32));
         check_resolves_from_any(42u32, Some(42u32));
-        check_resolves_from_conf(serde_json::json!(42), Some(42u32));
-        check_resolves_from_conf(serde_json::json!(null), None::<u32>);
+        check_resolves_from_conf(json!(42), Some(42u32));
+        check_resolves_from_conf(json!(null), None::<u32>);
     }
 
     #[test]
     fn test_box() {
         check_resolves_from_any(Box::new(42u32), Box::new(42u32));
         check_resolves_from_any(42u32, Box::new(42u32));
-        check_resolves_from_conf(serde_json::json!(42), Box::new(42u32));
+        check_resolves_from_conf(json!(42), Box::new(42u32));
     }
 
     #[test]
@@ -1332,7 +1341,7 @@ mod tests {
         use std::sync::Arc;
         check_resolves_from_any(Arc::new(42u32), Arc::new(42u32));
         check_resolves_from_any(42u32, Arc::new(42u32));
-        check_resolves_from_conf(serde_json::json!(42), Arc::new(42u32));
+        check_resolves_from_conf(json!(42), Arc::new(42u32));
     }
 
     #[test]
@@ -1345,22 +1354,144 @@ mod tests {
         check_resolves_from_any(Rgb::new(0f32, 0f32, 1f32), Rgb::new(0f32, 0f32, 1f32));
 
         // We can resolve both u8 and f32 from either integers or floats in json.
-        check_resolves_from_conf(serde_json::json!([0, 0, 255]), Rgb::new(0u8, 0u8, 255u8));
-        check_resolves_from_conf(serde_json::json!([0, 0, 255]), Rgb::new(0f32, 0f32, 1f32));
-        check_resolves_from_conf(serde_json::json!([0, 0, 1.0]), Rgb::new(0f32, 0f32, 1f32));
-        check_resolves_from_conf(serde_json::json!([0, 0, 1.0]), Rgb::new(0u8, 0u8, 255u8));
+        check_resolves_from_conf(json!([0, 0, 255]), Rgb::new(0u8, 0u8, 255u8));
+        check_resolves_from_conf(json!([0, 0, 255]), Rgb::new(0f32, 0f32, 1f32));
+        check_resolves_from_conf(json!([0, 0, 1.0]), Rgb::new(0f32, 0f32, 1f32));
+        check_resolves_from_conf(json!([0, 0, 1.0]), Rgb::new(0u8, 0u8, 255u8));
 
-        check_resolves_from_conf(serde_json::json!("blue"), Rgb::blue());
-        check_resolves_from_conf(serde_json::json!("#0000FF"), Rgb::blue());
-        check_resolves_from_conf(serde_json::json!("0x0000FF"), Rgb::blue());
-        check_resolves_from_conf(serde_json::json!({"r": 0, "g": 0, "b": 255}), Rgb::blue());
+        check_resolves_from_conf(json!("blue"), Rgb::blue());
+        check_resolves_from_conf(json!("#0000FF"), Rgb::blue());
+        check_resolves_from_conf(json!("0x0000FF"), Rgb::blue());
+        check_resolves_from_conf(json!({"r": 0, "g": 0, "b": 255}), Rgb::blue());
+    }
+
+    #[test]
+    fn test_colors() {
+        use crate::style::{BaseColor, Color, ColorPair, ColorStyle, ColorType};
+
+        check_resolves_from_conf(json!("green"), BaseColor::Green);
+
+        check_resolves_from_conf(json!("dark red"), Color::Dark(BaseColor::Red));
+
+        check_resolves_from_conf(json!("terminal_default"), ColorPair::terminal_default());
+
+        check_resolves_from_conf(
+            json!({"front": "red", "back": "light blue"}),
+            ColorPair {
+                front: Color::Dark(BaseColor::Red),
+                back: Color::Light(BaseColor::Blue),
+            },
+        );
+
+        check_resolves_from_conf(json!("inherit_parent"), ColorType::InheritParent);
+
+        check_resolves_from_conf(
+            json!({
+                "front": "inherit_parent",
+                "back": "white",
+            }),
+            ColorStyle {
+                front: ColorType::InheritParent,
+                back: ColorType::Color(Color::Dark(BaseColor::White)),
+            },
+        );
+    }
+
+    #[test]
+    fn test_align() {
+        use crate::align::{Align, HAlign, VAlign};
+
+        check_resolves_from_conf(json!("left"), HAlign::Left);
+        check_resolves_from_conf(json!("center"), HAlign::Center);
+        check_resolves_from_conf(json!("right"), HAlign::Right);
+
+        check_resolves_from_conf(json!("top"), VAlign::Top);
+        check_resolves_from_conf(json!("center"), VAlign::Center);
+        check_resolves_from_conf(json!("bottom"), VAlign::Bottom);
+
+        check_resolves_from_conf(json!("top_center"), Align::top_center());
+        check_resolves_from_conf(json!({"v": "top", "h": "center"}), Align::top_center());
+    }
+
+    #[test]
+    fn test_directions() {
+        use crate::direction::{Absolute, Direction, Orientation, Relative};
+
+        check_resolves_from_conf(json!("front"), Relative::Front);
+        check_resolves_from_conf(json!("back"), Relative::Back);
+
+        check_resolves_from_conf(json!("up"), Absolute::Up);
+        check_resolves_from_conf(json!("down"), Absolute::Down);
+        check_resolves_from_conf(json!("left"), Absolute::Left);
+        check_resolves_from_conf(json!("right"), Absolute::Right);
+
+        check_resolves_from_conf(json!("front"), Direction::Rel(Relative::Front));
+        check_resolves_from_conf(json!("down"), Direction::Abs(Absolute::Down));
+        check_resolves_from_conf(json!("none"), Direction::Abs(Absolute::None));
+
+        check_resolves_from_conf(json!("horizontal"), Orientation::Horizontal);
+        check_resolves_from_conf(json!("vertical"), Orientation::Vertical);
+    }
+
+    #[test]
+    fn test_rect() {
+        use crate::Rect;
+
+        check_resolves_from_conf(
+            json!({"top_left": [0,0], "bottom_right": [4,2]}),
+            Rect::from_corners((0, 0), (4, 2)),
+        );
+
+        check_resolves_from_conf(
+            json!({"top_left": [1,1], "size": [4,2]}),
+            Rect::from_size((1, 1), (4, 2)),
+        );
+
+        check_resolves_from_conf(
+            json!({"corners": [[1,5], [4,2]]}),
+            Rect::from_corners((1, 5), (4, 2)),
+        );
+
+        check_resolves_from_conf(json!({"point": [4,2]}), Rect::from_point((4, 2)));
+    }
+
+    #[test]
+    fn test_xy() {
+        use crate::{Vec2, XY};
+
+        // Resolve zeroes
+        check_resolves_from_conf(json!("zero"), Vec2::zero());
+        check_resolves_from_conf(json!("zero"), XY::<isize>::zero());
+        check_resolves_from_conf(json!("zero"), XY::new(0f32, 0f32));
+
+        // Resolve array and object versions
+        check_resolves_from_conf(json!([4, 2]), Vec2::new(4, 2));
+        check_resolves_from_conf(json!({"x": 4, "y": 2}), Vec2::new(4, 2));
+
+        // Resolve strings
+        check_resolves_from_conf(
+            json!(["foo", "bar"]),
+            XY::new(String::from("foo"), String::from("bar")),
+        );
+        check_resolves_from_conf(
+            json!({"x": "foo", "y": "bar"}),
+            XY::new(String::from("foo"), String::from("bar")),
+        );
+    }
+
+    #[test]
+    fn test_borderstyle() {
+        use crate::style::BorderStyle;
+        check_resolves_from_conf(json!("none"), BorderStyle::None);
+        check_resolves_from_conf(json!("simple"), BorderStyle::Simple);
+        check_resolves_from_conf(json!("outset"), BorderStyle::Outset);
     }
 
     #[test]
     fn test_styled_string() {
         check_resolves_from_any(String::from("foo"), StyledString::plain("foo"));
         check_resolves_from_any(StyledString::plain("foo"), StyledString::plain("foo"));
-        check_resolves_from_conf(serde_json::json!("foo"), StyledString::plain("foo"));
+        check_resolves_from_conf(json!("foo"), StyledString::plain("foo"));
     }
 
     #[test]
