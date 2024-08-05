@@ -37,6 +37,17 @@ pub trait Resolvable {
     }
 }
 
+fn resolve_from_str<T, F, R>(config: &Config, context: &Context, err_map: F) -> Result<T, Error>
+where
+    T: std::str::FromStr,
+    F: FnOnce(T::Err) -> R,
+    R: Into<String>,
+{
+    let str: String = context.resolve(config)?;
+    str.parse()
+        .map_err(|e| Error::invalid_config(err_map(e).into(), config))
+}
+
 // Implement a trait for Fn(A, B), Fn(&A, B), Fn(A, &B), ...
 // We do this by going down a tree:
 // (D C B A)
@@ -207,11 +218,8 @@ impl Resolvable for BoxedView {
 }
 
 impl Resolvable for crate::style::BaseColor {
-    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
-        (|| Self::parse(config.as_str()?))().ok_or_else(|| Error::InvalidConfig {
-            message: "Invalid config for BaseColor".into(),
-            config: config.clone(),
-        })
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        resolve_from_str(config, context, |_| "Expected base color")
     }
 }
 
@@ -681,6 +689,37 @@ impl Resolvable for crate::style::Color {
     }
 }
 
+impl Resolvable for crate::style::Effect {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        resolve_from_str(config, context, |_| "Expected valid effect")
+    }
+}
+
+impl Resolvable for crate::style::ColorPair {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        if let Ok(config_str) = context.resolve::<String>(config) {
+            if config_str == "terminal_default" {
+                return Ok(Self::terminal_default());
+            }
+
+            return Err(Error::invalid_config(
+                "Expected {front, back} or terminal_default",
+                config,
+            ));
+        }
+
+        let front = context.resolve(&config["front"])?;
+        let back = context.resolve(&config["back"])?;
+        Ok(Self { front, back })
+    }
+}
+
 impl Resolvable for crate::style::PaletteColor {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         let color: String = context.resolve(config)?;
@@ -759,12 +798,92 @@ impl Resolvable for crate::view::Offset {
     }
 }
 
+impl Resolvable for crate::view::SizeConstraint {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        Ok(match config {
+            Config::String(config_str) => match config_str.as_str() {
+                "Free" | "free" => Self::Free,
+                "Full" | "full" => Self::Full,
+                _ => {
+                    return Err(Error::invalid_config(
+                        "Expected `free` or `full` string, or object",
+                        config,
+                    ))
+                }
+            },
+            Config::Object(config_obj) => {
+                if config_obj.len() != 1 {
+                    return Err(Error::invalid_config(
+                        "Expected object with a single `fixed`, `at_most` or `at_least` key",
+                        config,
+                    ));
+                }
+
+                let (key, value) = config_obj.iter().next().unwrap();
+                let value = context.resolve(value)?;
+
+                match key.as_str() {
+                    "fixed" => Self::Fixed(value),
+                    "at_most" => Self::AtMost(value),
+                    "at_least" => Self::AtLeast(value),
+                    _ => {
+                        return Err(Error::invalid_config(
+                            "Expected `fixed`, `at_most` or `at_least` key",
+                            config,
+                        ))
+                    }
+                }
+            }
+            _ => return Err(Error::invalid_config("Expected string or object", config)),
+        })
+    }
+}
+
+impl Resolvable for crate::views::LayerPosition {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        fn option_a(
+            config: &Config,
+            context: &Context,
+        ) -> Result<crate::views::LayerPosition, Error> {
+            let value = context.resolve(&config["from_back"])?;
+            Ok(crate::views::LayerPosition::FromBack(value))
+        }
+
+        fn option_b(
+            config: &Config,
+            context: &Context,
+        ) -> Result<crate::views::LayerPosition, Error> {
+            let value = context.resolve(&config["from_front"])?;
+            Ok(crate::views::LayerPosition::FromFront(value))
+        }
+
+        option_a(config, context).or_else(|_| option_b(config, context))
+    }
+}
+
 impl Resolvable for String {
     fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
         match config.as_str() {
             Some(config) => Ok(config.into()),
             None => Err(Error::invalid_config("Expected string type", config)),
         }
+    }
+
+    fn from_any(any: Box<dyn Any>) -> Option<Self>
+    where
+        Self: Sized + Any,
+    {
+        // Allow either String or &'static str (for easy literal insertion)
+        any.downcast()
+            .map(|b| *b)
+            .or_else(|any| any.downcast::<&'static str>().map(|str| String::from(*str)))
+            .ok()
     }
 }
 
@@ -965,6 +1084,12 @@ impl<T: Resolvable + 'static> Resolvable for crate::XY<T> {
             }
             // That one would require specialization?
             // Config::String(config) if config == "zero" => crate::Vec2::zero(),
+            Config::String(config) if config == "zero" => {
+                let zero = Config::from("0");
+                let x = context.resolve(&zero)?;
+                let y = context.resolve(&zero)?;
+                crate::XY::new(x, y)
+            }
             config => {
                 return Err(Error::invalid_config(
                     "Expected Array of length 2, object, or 'zero'.",
@@ -975,19 +1100,69 @@ impl<T: Resolvable + 'static> Resolvable for crate::XY<T> {
     }
 }
 
+impl Resolvable for crate::Rect {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        // Option A: (top_left, bottom_right)
+        fn option_a(config: &Config, context: &Context) -> Result<crate::Rect, Error> {
+            let top_left: crate::Vec2 = context.resolve(&config["top_left"])?;
+            let bottom_right: crate::Vec2 = context.resolve(&config["bottom_right"])?;
+            Ok(crate::Rect::from_corners(top_left, bottom_right))
+        }
+
+        // Option B: (top_left, size)
+        fn option_b(config: &Config, context: &Context) -> Result<crate::Rect, Error> {
+            let top_left: crate::Vec2 = context.resolve(&config["top_left"])?;
+            let size: crate::Vec2 = context.resolve(&config["size"])?;
+            Ok(crate::Rect::from_size(top_left, size))
+        }
+
+        // Option C: (corners)
+        fn option_c(config: &Config, context: &Context) -> Result<crate::Rect, Error> {
+            let corners: [crate::Vec2; 2] = context.resolve(&config["corners"])?;
+            Ok(crate::Rect::from_corners(corners[0], corners[1]))
+        }
+
+        // Option D: (point)
+        fn option_d(config: &Config, context: &Context) -> Result<crate::Rect, Error> {
+            let point: crate::Vec2 = context.resolve(&config["point"])?;
+            Ok(crate::Rect::from_point(point))
+        }
+
+        // TODO: automate trying several options, and return AllVariantsFailed
+        option_a(config, context)
+            .or_else(|_| option_b(config, context))
+            .or_else(|_| option_c(config, context))
+            .or_else(|_| option_d(config, context))
+    }
+}
+
 impl Resolvable for crate::direction::Orientation {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
-        let value: String = context.resolve(config)?;
-        Ok(match value.as_str() {
-            "vertical" | "Vertical" => Self::Vertical,
-            "horizontal" | "Horizontal" => Self::Horizontal,
-            _ => {
-                return Err(Error::invalid_config(
-                    "Unrecognized orientation. Should be horizontal or vertical.",
-                    config,
-                ))
-            }
-        })
+        resolve_from_str(config, context, |_| "Expected horizontal or vertical")
+    }
+}
+
+impl Resolvable for crate::direction::Direction {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        resolve_from_str(config, context, |_| "Expected a valid direction")
+    }
+}
+
+impl Resolvable for crate::direction::Relative {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        resolve_from_str(config, context, |_| "Expected a relative direction")
+    }
+}
+
+impl Resolvable for crate::direction::Absolute {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        resolve_from_str(config, context, |_| "Expected an absolute direction")
     }
 }
 
@@ -1012,48 +1187,29 @@ impl Resolvable for crate::view::Margins {
 impl Resolvable for crate::align::Align {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         // Try a string shortcut
-        if let Some(config_str) = config.as_str() {
-            if let Ok(align) = config_str.parse() {
-                return Ok(align);
-            }
+        let option_a =
+            |config, context| resolve_from_str(config, context, |_| "Unexpected align string");
 
-            return Err(Error::invalid_config("Unexpected align string", config));
-        }
+        let option_b = |config: &Config, context: &Context| {
+            let h = context.resolve(&config["h"])?;
+            let v = context.resolve(&config["v"])?;
 
-        let h = context.resolve(&config["h"])?;
-        let v = context.resolve(&config["v"])?;
+            Ok(Self { h, v })
+        };
 
-        Ok(Self { h, v })
+        option_a(config, context).or_else(|_| option_b(config, context))
     }
 }
 
 impl Resolvable for crate::align::VAlign {
-    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
-        if let Some(config) = config.as_str() {
-            if let Ok(align) = config.parse() {
-                return Ok(align);
-            }
-        }
-
-        Err(Error::invalid_config(
-            "Expected top, center or bottom",
-            config,
-        ))
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        resolve_from_str(config, context, |_| "Expected top, center or bottom")
     }
 }
 
 impl Resolvable for crate::align::HAlign {
-    fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
-        if let Some(config) = config.as_str() {
-            if let Ok(align) = config.parse() {
-                return Ok(align);
-            }
-        }
-
-        Err(Error::invalid_config(
-            "Expected left, center or right",
-            config,
-        ))
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        resolve_from_str(config, context, |_| "Expected left, center or right")
     }
 }
 

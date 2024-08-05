@@ -38,6 +38,17 @@ pub enum Orientation {
     Vertical,
 }
 
+impl std::str::FromStr for Orientation {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Vertical" | "vertical" => Self::Vertical,
+            "Horizontal" | "horizontal" => Self::Horizontal,
+            _ => return Err(()),
+        })
+    }
+}
+
 impl Orientation {
     /// Returns a `XY(Horizontal, Vertical)`.
     pub const fn pair() -> XY<Orientation> {
@@ -143,6 +154,15 @@ pub enum Direction {
     Rel(Relative),
 }
 
+impl std::str::FromStr for Direction {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse()
+            .map(Direction::Abs)
+            .or_else(|_| s.parse().map(Direction::Rel))
+    }
+}
+
 impl Direction {
     /// Returns the relative direction for the given orientation.
     ///
@@ -225,6 +245,18 @@ pub enum Relative {
     Back,
 }
 
+impl std::str::FromStr for Relative {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Front" | "front" => Self::Front,
+            "Back" | "back" => Self::Back,
+            _ => return Err(()),
+        })
+    }
+}
+
 impl Relative {
     /// Returns the absolute direction in the given `orientation`.
     pub const fn absolute(self, orientation: Orientation) -> Absolute {
@@ -286,6 +318,20 @@ pub enum Absolute {
     ///
     /// Used when the "direction" is across layers for instance.
     None,
+}
+
+impl std::str::FromStr for Absolute {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Left" | "left" => Self::Left,
+            "Up" | "up" => Self::Up,
+            "Right" | "right" => Self::Right,
+            "Down" | "down" => Self::Down,
+            "None" | "none" => Self::None,
+            _ => return Err(()),
+        })
+    }
 }
 
 impl Absolute {

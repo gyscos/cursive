@@ -422,11 +422,19 @@ impl Color {
     }
 }
 
+impl FromStr for BaseColor {
+    type Err = super::NoSuchColor;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s).ok_or(super::NoSuchColor)
+    }
+}
+
 impl FromStr for Color {
     type Err = super::NoSuchColor;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Color::parse(s).ok_or(super::NoSuchColor)
+        Self::parse(s).ok_or(super::NoSuchColor)
     }
 }
 
