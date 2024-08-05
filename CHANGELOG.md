@@ -1,5 +1,11 @@
 # Changelog
 
+## cursive-core 0.4.4
+
+- Implement more standalone blueprints
+- Panel and PaddedView blueprints now use `view` instead of `child`
+- Implement Debug for `builder::Context`
+
 ## cursive-core 0.4.3
 
 - Implement `Resolvable` for more types.
