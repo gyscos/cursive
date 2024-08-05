@@ -192,7 +192,7 @@ impl Callback {
     /// If this methods tries to call itself, nested calls will be no-ops.
     pub fn from_fn_mut<F>(f: F) -> Self
     where
-        F: 'static + FnMut(&mut Cursive) + Send + Sync,
+        F: 'static + FnMut(&mut Cursive) + Send,
     {
         Self::from_fn(crate::immut1!(f))
     }
@@ -202,7 +202,7 @@ impl Callback {
     /// After being called once, the callback will become a no-op.
     pub fn from_fn_once<F>(f: F) -> Self
     where
-        F: 'static + FnOnce(&mut Cursive) + Send + Sync,
+        F: 'static + FnOnce(&mut Cursive) + Send,
     {
         Self::from_fn_mut(crate::once1!(f))
     }
@@ -256,7 +256,7 @@ impl EventResult {
     /// After being called once, the callback will become a no-op.
     pub fn with_cb_once<F>(f: F) -> Self
     where
-        F: 'static + FnOnce(&mut Cursive) + Send + Sync,
+        F: 'static + FnOnce(&mut Cursive) + Send,
     {
         EventResult::Consumed(Some(Callback::from_fn_once(f)))
     }
