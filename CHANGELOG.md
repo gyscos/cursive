@@ -1,5 +1,9 @@
 # Changelog
 
+## cursive-core 0.4.5
+
+- Implement Resolvable for more types in the style module
+
 ## cursive-core 0.4.4
 
 - Implement more standalone blueprints
