@@ -772,6 +772,17 @@ impl Resolvable for crate::style::ColorStyle {
     }
 }
 
+impl Resolvable for crate::view::ScrollStrategy {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        resolve_from_str(config, context, |_| {
+            "Expected one of keep_row, stick_to_top, stick_to_bottom"
+        })
+    }
+}
+
 impl Resolvable for crate::view::Offset {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         if let Some("center" | "Center") = config.as_str() {

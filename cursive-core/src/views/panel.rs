@@ -138,9 +138,9 @@ impl<V: View> ViewWrapper for Panel<V> {
     }
 }
 
-#[crate::blueprint(Panel::new(child))]
+#[crate::blueprint(Panel::new(view))]
 struct Blueprint {
-    child: crate::views::BoxedView,
+    view: crate::views::BoxedView,
 
     title: Option<StyledString>,
     title_position: Option<HAlign>,

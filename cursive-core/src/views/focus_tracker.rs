@@ -81,6 +81,15 @@ impl<T: View> ViewWrapper for FocusTracker<T> {
     }
 }
 
+#[crate::blueprint(FocusTracker::new(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+
+    on_focus: Option<_>,
+
+    on_focus_lost: Option<_>,
+}
+
 crate::manual_blueprint!(with focus_tracker, |config, context| {
     let on_focus = context.resolve(&config["on_focus"])?;
     let on_focus_lost = context.resolve(&config["on_focus_lost"])?;

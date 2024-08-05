@@ -43,6 +43,12 @@ impl<T: View> ViewWrapper for ThemedView<T> {
     }
 }
 
+#[crate::blueprint(ThemedView::new(theme, view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+    theme: crate::theme::Theme,
+}
+
 crate::manual_blueprint!(with theme, |config, context| {
     let theme = context.resolve(config)?;
     Ok(move |view| ThemedView::new(theme, view))

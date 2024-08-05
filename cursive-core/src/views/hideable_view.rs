@@ -123,6 +123,12 @@ impl<V: View> ViewWrapper for HideableView<V> {
     }
 }
 
+#[crate::blueprint(HideableView::new(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+    visible: Option<bool>,
+}
+
 crate::manual_blueprint!(with hideable, |config, context| {
     let visible: Option<bool> = context.resolve(&config["visible"])?;
 

@@ -64,6 +64,13 @@ impl<V: View> ViewWrapper for OnLayoutView<V> {
     }
 }
 
+#[crate::blueprint(OnLayoutView::wrap(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+
+    on_layout: Option<_>,
+}
+
 crate::manual_blueprint!(with on_layout, |config, context| {
     let callback = context.resolve(config)?;
     Ok(move |view| {

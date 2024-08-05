@@ -347,6 +347,13 @@ mod tests {
     }
 }
 
+#[crate::blueprint(ResizedView::new(SizeConstraint::Free, SizeConstraint::Free, view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+    width: Option<SizeConstraint>,
+    height: Option<SizeConstraint>,
+}
+
 crate::manual_blueprint!(with full_screen, |_config, _context| {
     Ok(crate::views::ResizedView::with_full_screen)
 });

@@ -114,4 +114,9 @@ impl<T: View> ViewWrapper for ShadowView<T> {
     }
 }
 
+#[crate::blueprint(ShadowView::new(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+}
+
 crate::manual_blueprint!(with shadow, |_, _| Ok(ShadowView::new));

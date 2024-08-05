@@ -75,10 +75,10 @@ impl<V: View> ViewWrapper for PaddedView<V> {
     }
 }
 
-#[crate::blueprint(PaddedView::new(margins, child))]
+#[crate::blueprint(PaddedView::new(margins, view))]
 struct Blueprint {
     margins: Margins,
-    child: crate::views::BoxedView,
+    view: crate::views::BoxedView,
 }
 
 crate::manual_blueprint!(with padding, |config, context| {

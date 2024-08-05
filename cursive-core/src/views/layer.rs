@@ -52,6 +52,12 @@ impl<T: View> ViewWrapper for Layer<T> {
     }
 }
 
+#[crate::blueprint(Layer::new(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+    color: Option<ColorStyle>,
+}
+
 crate::manual_blueprint!(with layer, |config, context| {
     let color = match config {
         crate::builder::Config::Null => None,

@@ -134,6 +134,20 @@ pub struct Context {
     blueprints: Arc<Blueprints>,
 }
 
+impl std::fmt::Debug for Context {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let vars: Vec<_> = self.variables.keys().collect();
+        let blueprints: Vec<_> = self.blueprints.keys().collect();
+        let wrappers: Vec<_> = self.blueprints.wrapper_keys().collect();
+
+        write!(f, "Variables: {vars:?}, ")?;
+        write!(f, "Blueprints: {blueprints:?}, ")?;
+        write!(f, "Wrappers: {wrappers:?}")?;
+
+        Ok(())
+    }
+}
+
 struct Blueprints {
     blueprints: HashMap<String, BoxedBuilder>,
     wrappers: HashMap<String, BoxedWrapperBuilder>,
@@ -175,6 +189,24 @@ impl<T> ResolveOnce<T> {
 }
 
 impl Blueprints {
+    fn wrapper_keys(&self) -> impl Iterator<Item = &String> {
+        self.wrappers
+            .keys()
+            .chain(self.parent.iter().flat_map(|parent| {
+                let parent: Box<dyn Iterator<Item = &String>> = Box::new(parent.wrapper_keys());
+                parent
+            }))
+    }
+
+    fn keys(&self) -> impl Iterator<Item = &String> {
+        self.blueprints
+            .keys()
+            .chain(self.parent.iter().flat_map(|parent| {
+                let parent: Box<dyn Iterator<Item = &String>> = Box::new(parent.keys());
+                parent
+            }))
+    }
+
     fn build(&self, name: &str, config: &Config, context: &Context) -> Result<BoxedView, Error> {
         if let Some(blueprint) = self.blueprints.get(name) {
             (blueprint)(config, context)
@@ -826,6 +858,15 @@ fn parse_var(value: &Config) -> Option<&str> {
 }
 
 impl Variables {
+    fn keys(&self) -> impl Iterator<Item = &String> {
+        self.variables
+            .keys()
+            .chain(self.parent.iter().flat_map(|parent| {
+                let parent: Box<dyn Iterator<Item = &String>> = Box::new(parent.keys());
+                parent
+            }))
+    }
+
     /// Store a new variable for interpolation.
     ///
     /// Can be a callback, a usize, ...

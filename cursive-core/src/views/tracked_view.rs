@@ -39,4 +39,9 @@ impl<T: View> ViewWrapper for TrackedView<T> {
     }
 }
 
+#[crate::blueprint(TrackedView::new(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+}
+
 crate::manual_blueprint!(with tracked, |_, _| Ok(TrackedView::new));
