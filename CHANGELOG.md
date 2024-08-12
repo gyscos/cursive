@@ -1,5 +1,9 @@
 # Changelog
 
+## cursive-core 0.4.6
+
+- Remove serde_yaml dependency (moved to dev-dependency)
+
 ## cursive-core 0.4.5
 
 - Implement Resolvable for more types in the style module
