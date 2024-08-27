@@ -111,6 +111,7 @@ Here are some cool applications using cursive:
 * [tap](https://github.com/timdubbins/tap): An audio player for the terminal with fuzzy finder.
 * [ttyloop](https://github.com/gamma-delta/ttyloop): Clone of the mobile game Loop.
 * [wiki-tui](https://github.com/Builditluc/wiki-tui): A simple and easy to use Wikipedia Text User Interface
+* [glues](https://github.com/gluesql/glues): A simple note-taking app with Git, CSV, and JSON support
 
 ## Goals
 
