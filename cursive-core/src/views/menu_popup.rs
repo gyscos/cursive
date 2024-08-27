@@ -131,6 +131,10 @@ impl MenuPopup {
     //
     // If `self.menu.children.is_empty()`.
     fn scroll_up(&mut self, mut n: usize, mut cycle: bool) {
+        if self.menu.is_empty() {
+            return;
+        }
+
         while n > 0 {
             if self.focus > 0 {
                 self.focus -= 1;
@@ -154,6 +158,10 @@ impl MenuPopup {
     //
     // If `self.menu.children.is_empty()`.
     fn scroll_down(&mut self, mut n: usize, mut cycle: bool) {
+        if self.menu.is_empty() {
+            return;
+        }
+
         while n > 0 {
             if self.focus + 1 < self.menu.children.len() {
                 self.focus += 1;
