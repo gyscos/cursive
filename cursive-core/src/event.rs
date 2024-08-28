@@ -36,8 +36,32 @@ pub type AnyCb<'a> = &'a mut dyn FnMut(&mut dyn crate::view::View);
 ///
 /// It is meant to be stored in views.
 pub struct EventTrigger {
+    // A function called on each individual event to know if it applies.
     trigger: Box<dyn Fn(&Event) -> bool + Send + Sync>,
+
+    // Some marker to indicate the origin.
+    //
+    // In practice it could be a `&'static str` describing the trigger, or an `Event` for
+    // single-event triggers.
+    //
+    // TODO: Require `Debug` on the tag, so we could implement `Debug` for `EventTrigger`?
     tag: Box<dyn AnyTag + Send + Sync>,
+}
+
+impl std::fmt::Debug for EventTrigger {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // For some well-known types we can print something.
+        if let Some(event) = self.tag.as_any().downcast_ref::<Event>() {
+            return write!(f, "EventTrigger {{ {event:?} }}");
+        }
+
+        if let Some(str) = self.tag.as_any().downcast_ref::<&'static str>() {
+            return write!(f, "EventTrigger {{ {str:?} }}");
+        }
+
+        // But in the general case right now we can only guess
+        f.write_str("EventTrigger { ? }")
+    }
 }
 
 trait AnyTag: Any + std::fmt::Debug {
@@ -242,6 +266,16 @@ pub enum EventResult {
     Consumed(Option<Callback>), // TODO: make this a FnOnce?
 }
 
+impl std::fmt::Debug for EventResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EventResult::Ignored => f.write_str("EventResult::Ignored"),
+            EventResult::Consumed(None) => f.write_str("EventResult::Consumed(None)"),
+            EventResult::Consumed(_) => f.write_str("EventResult::Consumed(Some(_))"),
+        }
+    }
+}
+
 impl EventResult {
     /// Convenient method to create `Consumed(Some(f))`
     pub fn with_cb<F>(f: F) -> Self
@@ -311,6 +345,25 @@ impl EventResult {
                 })
             }
         }
+    }
+
+    /// Combines the given event results into a single one.
+    ///
+    /// If `results` is empty or if all results are `Ignored`, returns `Ignored`.
+    ///
+    /// Otherwise, returns a callback that runs all callback in results.
+    pub fn combine(results: Vec<Self>) -> Self {
+        if results.iter().all(|result| !result.is_consumed()) {
+            return EventResult::Ignored;
+        }
+
+        // TODO: if all events are `Ignored` or `Consumed(None)`,
+        // returns `Consumed(None)` and save the allocation?
+        EventResult::with_cb_once(move |siv| {
+            for res in results {
+                res.process(siv);
+            }
+        })
     }
 }
 
