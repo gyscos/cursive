@@ -39,11 +39,16 @@ type ListCallback = dyn Fn(&mut Cursive, &String) + Send + Sync;
 /// Displays a list of elements.
 pub struct ListView {
     children: Vec<ListChild>,
+
     // Height for each child.
     // This should have the same size as the `children` list.
     children_heights: Vec<usize>,
+
     // Which child is focused? Should index into the `children` list.
+    //
+    // This is `0` when `children` is empty.
     focus: usize,
+
     // This callback is called when the selection is changed.
     on_select: Option<Arc<ListCallback>>,
 }
@@ -80,6 +85,10 @@ impl ListView {
     }
 
     /// Returns a reference to the child at the given position.
+    ///
+    /// # Panics
+    ///
+    /// If `id >= self.len()`.
     pub fn get_row(&self, id: usize) -> &ListChild {
         &self.children[id]
     }
@@ -91,6 +100,20 @@ impl ListView {
     /// Panics if `id >= self.len()`.
     pub fn row_mut(&mut self, id: usize) -> &mut ListChild {
         &mut self.children[id]
+    }
+
+    /// Gives mutable access to the child at the given position.
+    ///
+    /// Returns `None` if `id >= self.len()`.
+    pub fn try_row_mut(&mut self, id: usize) -> Option<&mut ListChild> {
+        self.children.get_mut(id)
+    }
+
+    /// Gives access to the child at the given position.
+    ///
+    /// Returns `None` if `id >= self.len()`.
+    pub fn try_row(&self, id: usize) -> Option<&ListChild> {
+        self.children.get(id)
     }
 
     /// Sets the children for this view.
@@ -109,10 +132,30 @@ impl ListView {
         self.children_heights.push(0);
     }
 
+    /// Attempts to set the focus to the given position.
+    ///
+    /// Returns `None` if `if >= self.len()` or if the child at this location is not focusable.
+    pub fn set_focus(&mut self, id: usize) -> Option<EventResult> {
+        if id >= self.len() {
+            return None;
+        }
+
+        let ListChild::Row(_, ref mut view) = self.children[id] else {
+            return None;
+        };
+
+        let Ok(res) = view.take_focus(direction::Direction::none()) else {
+            return None;
+        };
+
+        Some(self.set_focus_unchecked(id).and(res))
+    }
+
     /// Removes all children from this view.
     pub fn clear(&mut self) {
         self.children.clear();
         self.children_heights.clear();
+        self.focus = 0;
     }
 
     /// Adds a view to the end of the list.
@@ -143,8 +186,21 @@ impl ListView {
     ///
     /// If `index >= self.len()`.
     pub fn remove_child(&mut self, index: usize) -> ListChild {
+        // TODO: fix the focus if it's > index.
+        // Drop the EventResult that would come from that?
         self.children_heights.remove(index);
         self.children.remove(index)
+    }
+
+    /// Removes a child from the view.
+    ///
+    /// Returns `None` if `index >= self.len()`.
+    pub fn try_remove(&mut self, index: usize) -> Option<ListChild> {
+        if index >= self.len() {
+            None
+        } else {
+            Some(self.remove_child(index))
+        }
     }
 
     /// Sets a callback to be used when an item is selected.
@@ -169,7 +225,7 @@ impl ListView {
 
     /// Returns the index of the currently focused item.
     ///
-    /// Panics if the list is empty.
+    /// Returns `0` if the list is empty.
     pub fn focus(&self) -> usize {
         self.focus
     }
