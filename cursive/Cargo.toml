@@ -84,6 +84,10 @@ name = "ansi"
 required-features = ["ansi"]
 
 [[example]]
+name = "ansi_crossterm"
+required-features = ["ansi", "crossterm-backend"]
+
+[[example]]
 name = "builder"
 required-features = ["builder"]
 
