@@ -84,7 +84,7 @@ name = "ansi"
 required-features = ["ansi"]
 
 [[example]]
-name = "ansi_crossterm"
+name = "colored_text"
 required-features = ["ansi", "crossterm-backend"]
 
 [[example]]
