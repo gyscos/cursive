@@ -27,7 +27,7 @@ cursive_core = { path = "../cursive-core", version= "0.4.0"}
 crossbeam-channel = "0.5"
 cfg-if = "1"
 unicode-segmentation = "1"
-unicode-width = "0.1"
+unicode-width = "0.2"
 lazy_static = "1"
 libc = "0.2"
 maplit = { version = "1.0", optional = true }
