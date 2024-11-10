@@ -1,13 +1,5 @@
 use crate::{
-    align::*,
-    direction::{Absolute, Direction, Relative},
-    event::{AnyCb, Event, EventResult, Key},
-    rect::Rect,
-    style::PaletteStyle,
-    utils::markup::StyledString,
-    view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound},
-    views::{BoxedView, Button, DummyView, LastSizeView, TextView},
-    Cursive, Printer, Vec2, With,
+    align::*, direction::{Absolute, Direction, Relative}, event::{AnyCb, Event, EventResult, Key}, rect::Rect, style::PaletteStyle, utils::markup::StyledString, view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound}, views::{BoxedView, Button, DummyView, LastSizeView, TextView}, Cursive, Printer, Vec2, With
 };
 use parking_lot::Mutex;
 use std::cmp::{max, min};
@@ -101,6 +93,9 @@ pub struct Dialog {
     // Include the top-left corner.
     buttons: Vec<ChildButton>,
 
+    // Option to set the buttons as a list next to the dialog box
+    vertical_button_orientation: bool,
+
     // Padding around the inner view.
     padding: Margins,
 
@@ -132,6 +127,7 @@ impl Dialog {
         Dialog {
             content: LastSizeView::new(BoxedView::boxed(view)),
             buttons: Vec::new(),
+            vertical_button_orientation: false,
             title: StyledString::new(),
             title_position: HAlign::Center,
             focus: DialogFocus::Content,
@@ -161,6 +157,16 @@ impl Dialog {
             s.set_content(view);
         })
     }
+
+    /// Changes the button layout orientation
+    /// 
+    /// The default orientation is horizontal
+    pub fn set_button_orientation(mut self, v: bool) -> Self {
+        self.vertical_button_orientation = v;
+        
+        self
+    }
+
 
     /// Gets the content of this dialog.
     ///
@@ -318,9 +324,6 @@ impl Dialog {
         self.align.h
     }
 
-    /*
-     * Commented out because currently un-implemented.
-     *
     /// Sets the vertical alignment for the buttons, if any.
     ///
     /// Only works if the buttons are as a column to the right of the dialog.
@@ -330,7 +333,14 @@ impl Dialog {
 
         self
     }
-    */
+
+    /// Gets the vertical alignment of the buttons, if any.
+    ///
+    /// Only works if the buttons are as a column to the right of the dialog.
+    pub fn get_v_align(&self) -> VAlign {
+        self.align.v
+    }
+    
 
     /// Shortcut method to add a button that will dismiss the dialog.
     ///
@@ -556,7 +566,7 @@ impl Dialog {
             EventResult::Ignored => {
                 match event {
                     // Up goes back to the content
-                    Event::Key(Key::Up) => {
+                    Event::Key(Key::Up) if self.vertical_button_orientation == false => {
                         if let Ok(res) = self.content.take_focus(Direction::down()) {
                             self.focus = DialogFocus::Content;
                             res
@@ -564,6 +574,16 @@ impl Dialog {
                             EventResult::Ignored
                         }
                     }
+
+                    Event::Key(Key::Left) if self.vertical_button_orientation == true => {
+                        if let Ok(res) = self.content.take_focus(Direction::down()) {
+                            self.focus = DialogFocus::Content;
+                            res
+                        } else {
+                            EventResult::Ignored
+                        }
+                    }
+
                     Event::Shift(Key::Tab) if self.focus == DialogFocus::Button(0) => {
                         // If we're at the first button, jump back to the content.
                         if let Ok(res) = self.content.take_focus(Direction::back()) {
@@ -596,12 +616,22 @@ impl Dialog {
                         }
                         EventResult::Consumed(None)
                     }
-                    // Left and Right move to other buttons
-                    Event::Key(Key::Right) if button_id + 1 < self.buttons.len() => {
+                    
+                    Event::Key(Key::Right) if self.vertical_button_orientation == false && button_id + 1 < self.buttons.len() => {
                         self.focus = DialogFocus::Button(button_id + 1);
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Left) if button_id > 0 => {
+                    Event::Key(Key::Left) if self.vertical_button_orientation == false && button_id > 0 => {
+                        self.focus = DialogFocus::Button(button_id - 1);
+                        EventResult::Consumed(None)
+                    }
+
+                    Event::Key(Key::Down) if self.vertical_button_orientation == true && button_id + 1 < self.buttons.len() => {
+                        self.focus = DialogFocus::Button(button_id + 1);
+                        EventResult::Consumed(None)
+                    }
+
+                    Event::Key(Key::Up) if self.vertical_button_orientation == true && button_id > 0 => {
                         self.focus = DialogFocus::Button(button_id - 1);
                         EventResult::Consumed(None)
                     }
@@ -613,51 +643,103 @@ impl Dialog {
     }
 
     fn draw_buttons(&self, printer: &Printer) -> Option<usize> {
-        let mut buttons_height = 0;
-        // Current horizontal position of the next button we'll draw.
+        match self.vertical_button_orientation {
+            false => {
+                let mut buttons_height = 0;
+                // Current horizontal position of the next button we'll draw.
+        
+                // Sum of the sizes + len-1 for margins
+                let width = self
+                    .buttons
+                    .iter()
+                    .map(|button| button.button.size.x)
+                    .sum::<usize>()
+                    + self.buttons.len().saturating_sub(1);
+                let overhead = self.padding + self.borders;
+                if printer.size.x < overhead.horizontal() {
+                    return None;
+                }
+                let mut offset = overhead.left
+                    + self
+                        .align
+                        .h
+                        .get_offset(width, printer.size.x - overhead.horizontal());
+        
+                let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
+        
+                let y = match printer.size.y.checked_sub(overhead_bottom) {
+                    Some(y) => y,
+                    None => return None,
+                };
+        
+                for (i, button) in self.buttons.iter().enumerate() {
+                    let size = button.button.size;
+                    // Add some special effect to the focused button
+                    let position = Vec2::new(offset, y);
+                    *button.offset.lock() = position;
+                    button.button.draw(
+                        &printer
+                            .offset(position)
+                            .cropped(size)
+                            .focused(self.focus == DialogFocus::Button(i)),
+                    );
+                    // Keep 1 blank between two buttons
+                    offset += size.x + 1;
+                    // Also keep 1 blank above the buttons
+                    buttons_height = max(buttons_height, size.y + 1);
+                }
+        
+                return Some(buttons_height);
+            }
+            true => {
+                let mut buttons_width = 0;
 
-        // Sum of the sizes + len-1 for margins
-        let width = self
-            .buttons
-            .iter()
-            .map(|button| button.button.size.x)
-            .sum::<usize>()
-            + self.buttons.len().saturating_sub(1);
-        let overhead = self.padding + self.borders;
-        if printer.size.x < overhead.horizontal() {
-            return None;
+                // Calculate the total height of buttons including spacing
+                let height = self
+                    .buttons
+                    .iter()
+                    .map(|button| button.button.size.y)
+                    .sum::<usize>()
+                    + self.buttons.len().saturating_sub(1);
+                
+
+                let overhead = self.padding + self.borders;
+                if printer.size.y < overhead.vertical() {
+                    return None;
+                }
+                let mut offset = overhead.top
+                    + self
+                        .align
+                        .v
+                        .get_offset(height, printer.size.y - overhead.vertical());
+
+                let overhead_right = self.padding.right + self.borders.right + 1;
+
+                let x = match printer.size.x.checked_sub(overhead_right) {
+                    Some(x) => x,
+                    None => return None,
+                };
+
+                for (i, button) in self.buttons.iter().enumerate() {
+                    let size = button.button.size;
+                    // Add some special effect to the focused button
+                    let position = Vec2::new(x, offset);
+                    *button.offset.lock() = position;
+                    button.button.draw(
+                        &printer
+                            .offset(position)
+                            .cropped(size)
+                            .focused(self.focus == DialogFocus::Button(i)),
+                    );
+                    // Keep 1 blank between two buttons
+                    offset += size.y + 1;
+                    // Also keep 1 blank to the left of the buttons
+                    buttons_width = max(buttons_width, size.x + 1);
+                }
+
+                return Some(buttons_width);
+            }
         }
-        let mut offset = overhead.left
-            + self
-                .align
-                .h
-                .get_offset(width, printer.size.x - overhead.horizontal());
-
-        let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
-
-        let y = match printer.size.y.checked_sub(overhead_bottom) {
-            Some(y) => y,
-            None => return None,
-        };
-
-        for (i, button) in self.buttons.iter().enumerate() {
-            let size = button.button.size;
-            // Add some special effect to the focused button
-            let position = Vec2::new(offset, y);
-            *button.offset.lock() = position;
-            button.button.draw(
-                &printer
-                    .offset(position)
-                    .cropped(size)
-                    .focused(self.focus == DialogFocus::Button(i)),
-            );
-            // Keep 1 blank between two buttons
-            offset += size.x + 1;
-            // Also keep 1 blank above the buttons
-            buttons_height = max(buttons_height, size.y + 1);
-        }
-
-        Some(buttons_height)
     }
 
     fn draw_content(&self, printer: &Printer, buttons_height: usize) {

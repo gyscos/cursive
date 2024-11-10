@@ -1,6 +1,5 @@
 use cursive::{
-    views::{CircularFocus, Dialog, TextView},
-    With as _,
+    views::{CircularFocus, Dialog, TextView}, With as _
 };
 
 fn main() {
@@ -11,11 +10,13 @@ fn main() {
     siv.add_layer(
         // Most views can be configured in a chainable way
         Dialog::around(TextView::new("Hello Dialog!"))
+            .set_button_orientation(true)
             .title("Cursive")
             .button("Foo", |_s| ())
+            .button("Bar", |_s| ())
             .button("Quit", |s| s.quit())
             .wrap_with(CircularFocus::new)
-            .wrap_tab(),
+            .wrap_tab()
     );
 
     // Starts the event loop.
