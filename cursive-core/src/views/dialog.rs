@@ -644,6 +644,7 @@ impl Dialog {
     }
 
     fn draw_buttons(&self, printer: &Printer) -> Option<usize> {
+        
         match self.button_orientation {
             direction::Orientation::Horizontal => {
                 let mut buttons_height = 0;
@@ -746,46 +747,19 @@ impl Dialog {
 
     fn draw_content(&self, printer: &Printer, buttons_size: usize) {
         // What do we have left?
-        match self.button_orientation {
-            direction::Orientation::Horizontal => {
-                let taken =
-                    Vec2::new(0, buttons_size) + self.borders.combined() + self.padding.combined();
+        let buttons_size = Vec2::from_major_minor(self.button_orientation, buttons_size, 0);
+        let taken = buttons_size + self.borders.combined() + self.padding.combined();
+        let inner_size = match printer.size.checked_sub(taken) {
+            Some(s) => s,
+            None => return,
+        };
 
-                let inner_size = match printer.size.checked_sub(taken) {
-                    Some(s) => s,
-                    None => return,
-                };
-
-                self.content.draw(
-                    &printer
-                        .offset(self.borders.top_left() + self.padding.top_left())
-                        .cropped(inner_size)
-                        .focused(self.focus == DialogFocus::Content),
-                );
-            }
-            direction::Orientation::Vertical => {
-                // TODO: show content if the buttons are vertically aligned
-                let taken = Vec2::new(buttons_size, 0) + self.padding.combined();
-
-                // Determine the remaining size for content
-                let inner_size = match printer.size.checked_sub(taken + self.borders.combined()) {
-                    Some(s) => s,
-                    None => return, // Not enough space for content
-                };
-
-                // Offset the content to leave space for the button column
-                self.content.draw(
-                    &printer
-                        .offset(
-                            self.borders.top_left()
-                                + self.padding.top_left(), // Padding for the content
-                        )
-                        .cropped(inner_size)
-                        .focused(self.focus == DialogFocus::Content),
-                );
-            }
-        }
-        
+        self.content.draw(
+            &printer
+                .offset(self.borders.top_left() + self.padding.top_left())
+                .cropped(inner_size)
+                .focused(self.focus == DialogFocus::Content),
+        )
     }
 
     fn draw_title(&self, printer: &Printer) {
