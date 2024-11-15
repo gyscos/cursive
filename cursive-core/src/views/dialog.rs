@@ -564,9 +564,9 @@ impl Dialog {
         };
         match result {
             EventResult::Ignored => {
-                match event {
+                match (event, self.button_orientation) {
                     // Up goes back to the content if buttons are horizontal
-                    Event::Key(Key::Up) if self.button_orientation == direction::Orientation::Horizontal => {
+                    (Event::Key(Key::Up), direction::Orientation::Horizontal) => {
                         if let Ok(res) = self.content.take_focus(Direction::down()) {
                             self.focus = DialogFocus::Content;
                             res
@@ -576,7 +576,7 @@ impl Dialog {
                     }
 
                     // Left goes back to the content if buttons are vertical
-                    Event::Key(Key::Left) if self.button_orientation == direction::Orientation::Vertical => {
+                    (Event::Key(Key::Left), direction::Orientation::Vertical) => {
                         if let Ok(res) = self.content.take_focus(Direction::right()) {
                             self.focus = DialogFocus::Content;
                             res
@@ -585,7 +585,7 @@ impl Dialog {
                         }
                     }
 
-                    Event::Shift(Key::Tab) if self.focus == DialogFocus::Button(0) => {
+                    (Event::Shift(Key::Tab), _) if self.focus == DialogFocus::Button(0) => {
                         // If we're at the first button, jump back to the content.
                         if let Ok(res) = self.content.take_focus(Direction::back()) {
                             self.focus = DialogFocus::Content;
@@ -594,7 +594,7 @@ impl Dialog {
                             EventResult::Ignored
                         }
                     }
-                    Event::Shift(Key::Tab) => {
+                    (Event::Shift(Key::Tab), _) => {
                         // Otherwise, jump to the previous button.
                         if let DialogFocus::Button(ref mut i) = self.focus {
                             // This should always be the case.
@@ -602,14 +602,14 @@ impl Dialog {
                         }
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Tab)
+                    (Event::Key(Key::Tab), _)
                         if self.focus
                             == DialogFocus::Button(self.buttons.len().saturating_sub(1)) =>
                     {
                         // End of the line
                         EventResult::Ignored
                     }
-                    Event::Key(Key::Tab) => {
+                    (Event::Key(Key::Tab), _) => {
                         // Otherwise, jump to the next button.
                         if let DialogFocus::Button(ref mut i) = self.focus {
                             // This should always be the case.
@@ -618,21 +618,21 @@ impl Dialog {
                         EventResult::Consumed(None)
                     }
                     
-                    Event::Key(Key::Right) if self.button_orientation == direction::Orientation::Horizontal && button_id + 1 < self.buttons.len() => {
+                    (Event::Key(Key::Right), direction::Orientation::Horizontal) if button_id + 1 < self.buttons.len() => {
                         self.focus = DialogFocus::Button(button_id + 1);
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Left) if self.button_orientation == direction::Orientation::Horizontal && button_id > 0 => {
+                    (Event::Key(Key::Left), direction::Orientation::Horizontal) if button_id > 0 => {
                         self.focus = DialogFocus::Button(button_id - 1);
                         EventResult::Consumed(None)
                     }
 
-                    Event::Key(Key::Down) if self.button_orientation == direction::Orientation::Vertical && button_id + 1 < self.buttons.len() => {
+                    (Event::Key(Key::Down), direction::Orientation::Vertical) if button_id + 1 < self.buttons.len() => {
                         self.focus = DialogFocus::Button(button_id + 1);
                         EventResult::Consumed(None)
                     }
 
-                    Event::Key(Key::Up) if self.button_orientation == direction::Orientation::Vertical && button_id > 0 => {
+                    (Event::Key(Key::Up), direction::Orientation::Vertical) if button_id > 0 => {
                         self.focus = DialogFocus::Button(button_id - 1);
                         EventResult::Consumed(None)
                     }
