@@ -93,7 +93,7 @@ pub struct Dialog {
     // Include the top-left corner.
     buttons: Vec<ChildButton>,
 
-    // Option to set the buttons as a list next to the dialog box
+    // Option to change the orientation of the buttons in the dialog box
     button_orientation: direction::Orientation,
 
     // Padding around the inner view.
