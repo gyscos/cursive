@@ -1,5 +1,5 @@
 use crate::{
-    align::*, direction::{Absolute, Direction, Relative}, event::{AnyCb, Event, EventResult, Key}, rect::Rect, style::PaletteStyle, utils::markup::StyledString, view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound}, views::{BoxedView, Button, DummyView, LastSizeView, TextView}, Cursive, Printer, Vec2, With
+    align::*, direction::{self, Absolute, Direction, Relative}, event::{AnyCb, Event, EventResult, Key}, rect::Rect, style::PaletteStyle, utils::markup::StyledString, view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound}, views::{BoxedView, Button, DummyView, LastSizeView, TextView}, Cursive, Printer, Vec2, With
 };
 use parking_lot::Mutex;
 use std::cmp::{max, min};
@@ -94,7 +94,7 @@ pub struct Dialog {
     buttons: Vec<ChildButton>,
 
     // Option to set the buttons as a list next to the dialog box
-    vertical_button_orientation: bool,
+    button_orientation: direction::Orientation,
 
     // Padding around the inner view.
     padding: Margins,
@@ -127,7 +127,7 @@ impl Dialog {
         Dialog {
             content: LastSizeView::new(BoxedView::boxed(view)),
             buttons: Vec::new(),
-            vertical_button_orientation: false,
+            button_orientation: direction::Orientation::Horizontal,
             title: StyledString::new(),
             title_position: HAlign::Center,
             focus: DialogFocus::Content,
@@ -161,8 +161,8 @@ impl Dialog {
     /// Changes the button layout orientation
     /// 
     /// The default orientation is horizontal
-    pub fn set_button_orientation(mut self, v: bool) -> Self {
-        self.vertical_button_orientation = v;
+    pub fn set_button_orientation(mut self, v: direction::Orientation) -> Self {
+        self.button_orientation = v;
         
         self
     }
@@ -566,7 +566,7 @@ impl Dialog {
             EventResult::Ignored => {
                 match event {
                     // Up goes back to the content if buttons are horizontal
-                    Event::Key(Key::Up) if self.vertical_button_orientation == false => {
+                    Event::Key(Key::Up) if self.button_orientation == direction::Orientation::Horizontal => {
                         if let Ok(res) = self.content.take_focus(Direction::down()) {
                             self.focus = DialogFocus::Content;
                             res
@@ -576,8 +576,8 @@ impl Dialog {
                     }
 
                     // Left goes back to the content if buttons are vertical
-                    Event::Key(Key::Left) if self.vertical_button_orientation == true => {
-                        if let Ok(res) = self.content.take_focus(Direction::down()) {
+                    Event::Key(Key::Left) if self.button_orientation == direction::Orientation::Vertical => {
+                        if let Ok(res) = self.content.take_focus(Direction::right()) {
                             self.focus = DialogFocus::Content;
                             res
                         } else {
@@ -618,21 +618,21 @@ impl Dialog {
                         EventResult::Consumed(None)
                     }
                     
-                    Event::Key(Key::Right) if self.vertical_button_orientation == false && button_id + 1 < self.buttons.len() => {
+                    Event::Key(Key::Right) if self.button_orientation == direction::Orientation::Horizontal && button_id + 1 < self.buttons.len() => {
                         self.focus = DialogFocus::Button(button_id + 1);
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Left) if self.vertical_button_orientation == false && button_id > 0 => {
+                    Event::Key(Key::Left) if self.button_orientation == direction::Orientation::Horizontal && button_id > 0 => {
                         self.focus = DialogFocus::Button(button_id - 1);
                         EventResult::Consumed(None)
                     }
 
-                    Event::Key(Key::Down) if self.vertical_button_orientation == true && button_id + 1 < self.buttons.len() => {
+                    Event::Key(Key::Down) if self.button_orientation == direction::Orientation::Vertical && button_id + 1 < self.buttons.len() => {
                         self.focus = DialogFocus::Button(button_id + 1);
                         EventResult::Consumed(None)
                     }
 
-                    Event::Key(Key::Up) if self.vertical_button_orientation == true && button_id > 0 => {
+                    Event::Key(Key::Up) if self.button_orientation == direction::Orientation::Vertical && button_id > 0 => {
                         self.focus = DialogFocus::Button(button_id - 1);
                         EventResult::Consumed(None)
                     }
@@ -644,8 +644,8 @@ impl Dialog {
     }
 
     fn draw_buttons(&self, printer: &Printer) -> Option<usize> {
-        match self.vertical_button_orientation {
-            false => {
+        match self.button_orientation {
+            direction::Orientation::Horizontal => {
                 let mut buttons_height = 0;
                 // Current horizontal position of the next button we'll draw.
                 
@@ -692,7 +692,7 @@ impl Dialog {
         
                 return Some(buttons_height);
             }
-            true => {
+            direction::Orientation::Vertical => {
                 // Current horizontal position of the next button
                 let mut buttons_width = 0;
 
@@ -746,8 +746,8 @@ impl Dialog {
 
     fn draw_content(&self, printer: &Printer, buttons_size: usize) {
         // What do we have left?
-        match self.vertical_button_orientation {
-            false => {
+        match self.button_orientation {
+            direction::Orientation::Horizontal => {
                 let taken =
                     Vec2::new(0, buttons_size) + self.borders.combined() + self.padding.combined();
 
@@ -763,7 +763,7 @@ impl Dialog {
                         .focused(self.focus == DialogFocus::Content),
                 );
             }
-            true => {
+            direction::Orientation::Vertical => {
                 // TODO: show content if the buttons are vertically aligned
                 let taken = Vec2::new(buttons_size, 0) + self.padding.combined();
 
@@ -855,8 +855,8 @@ impl Dialog {
 
 impl View for Dialog {
     fn draw(&self, printer: &Printer) {
-        match self.vertical_button_orientation {
-            false => {
+        match self.button_orientation {
+            direction::Orientation::Horizontal => {
                 // This will be the buttons_height used by the buttons.
                 let buttons_height = match self.draw_buttons(printer) {
                     Some(height) => height,
@@ -870,7 +870,7 @@ impl View for Dialog {
 
                 self.draw_title(printer);
             }
-            true => {
+            direction::Orientation::Vertical => {
                 let buttons_width = match self.draw_buttons(printer) {
                     Some(width) => width,
                     None => return,
@@ -903,8 +903,8 @@ impl View for Dialog {
     }
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
-        match self.vertical_button_orientation {
-            false => {
+        match self.button_orientation {
+            direction::Orientation::Horizontal => {
                 // Padding and borders are not available for kids.
                 let nomans_land = self.padding.combined() + self.borders.combined();
 
@@ -946,7 +946,7 @@ impl View for Dialog {
 
                 inner_size
             }
-            true => {
+            direction::Orientation::Vertical => {
                 // Padding and borders are not available for kids.
                 let nomans_land = self.padding.combined() + self.borders.combined();
 
@@ -994,8 +994,8 @@ impl View for Dialog {
     fn layout(&mut self, mut size: Vec2) {
         // Padding and borders are taken, sorry.
         // TODO: handle border-less themes?
-        match self.vertical_button_orientation {
-            false => {
+        match self.button_orientation {
+            direction::Orientation::Horizontal => {
                 let taken = self.borders.combined() + self.padding.combined();
                 size = size.saturating_sub(taken);
 
@@ -1017,8 +1017,7 @@ impl View for Dialog {
 
                 self.invalidated = false;
             }
-            true => {
-                //TODO: set layout if buttons are oriented vertically
+            direction::Orientation::Vertical => {
                 let mut buttons_width = 0;
                 for button in &mut self.buttons {
                     let button_size = button.button.required_size(size);
