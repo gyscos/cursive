@@ -1,5 +1,5 @@
 use cursive::{
-    views::{CircularFocus, Dialog, TextView}, With as _
+    direction, views::{CircularFocus, Dialog, TextView}, With as _
 };
 
 fn main() {
@@ -10,7 +10,7 @@ fn main() {
     siv.add_layer(
         // Most views can be configured in a chainable way
         Dialog::around(TextView::new("Hello Dialog!"))
-            .set_button_orientation(true)
+            .set_button_orientation(direction::Orientation::Vertical)
             .title("Cursive")
             .button("Foo", |_s| ())
             .button("Bar", |_s| ())
