@@ -644,105 +644,85 @@ impl Dialog {
     }
 
     fn draw_buttons(&self, printer: &Printer) -> Option<usize> {
-        
+        let mut buttons_height: usize = 0;
+        let mut buttons_width: usize = 0;
+        let mut max_size = 1;
         match self.button_orientation {
             direction::Orientation::Horizontal => {
-                let mut buttons_height = 0;
-                // Current horizontal position of the next button we'll draw.
-                
-                // Sum of the sizes + len-1 for margins
-                let width = self
+                buttons_width = self
                     .buttons
                     .iter()
                     .map(|button| button.button.size.x)
                     .sum::<usize>()
                     + self.buttons.len().saturating_sub(1);
-                let overhead = self.padding + self.borders;
-                if printer.size.x < overhead.horizontal() {
-                    return None;
-                }
-                let mut offset = overhead.left
-                    + self
-                        .align
-                        .h
-                        .get_offset(width, printer.size.x - overhead.horizontal());
-        
-                let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
-        
-                let y = match printer.size.y.checked_sub(overhead_bottom) {
-                    Some(y) => y,
-                    None => return None,
-                };
-        
-                for (i, button) in self.buttons.iter().enumerate() {
-                    let size = button.button.size;
-                    // Add some special effect to the focused button
-                    let position = Vec2::new(offset, y);
-                    *button.offset.lock() = position;
-                    button.button.draw(
-                        &printer
-                            .offset(position)
-                            .cropped(size)
-                            .focused(self.focus == DialogFocus::Button(i)),
-                    );
-                    // Keep 1 blank between two buttons
-                    offset += size.x + 1;
-                    // Also keep 1 blank above the buttons
-                    buttons_height = max(buttons_height, size.y + 1);
-                }
-        
-                return Some(buttons_height);
             }
             direction::Orientation::Vertical => {
-                // Current horizontal position of the next button
-                let mut buttons_width = 0;
-
-                // Calculate the total height of buttons including spacing
-                let height = self
+                buttons_height = self
                     .buttons
                     .iter()
                     .map(|button| button.button.size.y)
                     .sum::<usize>()
                     + self.buttons.len().saturating_sub(1);
-                
-                let max_size = self.buttons.iter().map(|button|button.button.size.x).max().unwrap_or_default();
-                let overhead = self.padding + self.borders;
-                if printer.size.y < overhead.horizontal() {
-                    return None;
-                }
-                let mut offset = overhead.top
+                max_size = self
+                    .buttons
+                    .iter()
+                    .map(|button|button.button.size.x)
+                    .max().unwrap_or_default();
+            }
+        }
+        let mut button_size = Vec2::from_major_minor(self.button_orientation, buttons_height, buttons_width);
+
+        let overhead = self.padding + self.borders;
+        if self.button_orientation == direction::Orientation::Horizontal && printer.size.x < overhead.horizontal() {
+            return None;
+        }
+        if self.button_orientation == direction::Orientation::Vertical && printer.size.y < overhead.horizontal() {
+            return None;
+        }
+        let offset_bottom = overhead.left
+                    + self
+                        .align
+                        .h
+                        .get_offset(buttons_width, printer.size.x - overhead.horizontal());
+        let offset_right = overhead.top
                     + self
                         .align
                         .v
-                        .get_offset(height, printer.size.y - overhead.vertical());
+                        .get_offset(buttons_height, printer.size.y - overhead.vertical());
+        let mut offset = Vec2::from_major_minor(self.button_orientation, offset_bottom, offset_right).x;
 
-                let overhead_right = self.padding.right + self.borders.right + max_size;
+        let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
+        let overhead_right = self.padding.right + self.borders.right + max_size;
 
-                let x = match printer.size.x.checked_sub(overhead_right) {
-                    Some(x) => x,
-                    None => return None,
-                };
+        let y = match printer.size.y.checked_sub(overhead_bottom) {
+            Some(y) => y,
+            None => return None,
+        };
+        let x = match printer.size.x.checked_sub(overhead_right) {
+            Some(x) => x,
+            None => return None,
+        };
+        let z = Vec2::from_major_minor(self.button_orientation, y, x).x;
 
-                for (i, button) in self.buttons.iter().enumerate() {
-                    let size = button.button.size;
-                    // Add some special effect to the focused button
-                    let position = Vec2::new(x, offset);
-                    *button.offset.lock() = position;
-                    button.button.draw(
-                        &printer
-                            .offset(position)
-                            .cropped(size)
-                            .focused(self.focus == DialogFocus::Button(i)),
-                    );
-                    // Keep 1 blank between two buttons
-                    offset += size.y + 1;
-                    // Also keep 1 blank to the left of the buttons
-                    buttons_width = max(buttons_width, size.x + 1);
-                }
+        for (i, button) in self.buttons.iter().enumerate() {
+            let size = Vec2::from_major_minor(self.button_orientation, button.button.size.x, button.button.size.y);
 
-                return Some(buttons_width);
-            }
+            // Add some special effect to the focused button
+            let position = Vec2::from_major_minor(self.button_orientation, offset, z);
+            *button.offset.lock() = position;
+            button.button.draw(
+                &printer
+                    .offset(position)
+                    .cropped(button.button.size)
+                    .focused(self.focus == DialogFocus::Button(i)),
+            );
+            // Keep 1 blank between two buttons
+            offset += size.x + 1;
+            // Also keep 1 blank to the left or above the buttons
+            button_size.x = max(button_size.x, size.y + 1);
         }
+
+        Some(button_size.x)
     }
 
     fn draw_content(&self, printer: &Printer, buttons_size: usize) {
