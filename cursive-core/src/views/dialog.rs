@@ -809,29 +809,15 @@ impl Dialog {
 
 impl View for Dialog {
     fn draw(&self, printer: &Printer) {
-        match self.button_orientation {
-            direction::Orientation::Horizontal => {
-                // This will be the buttons_height used by the buttons.
-                let buttons_height = match self.draw_buttons(printer) {
-                    Some(height) => height,
-                    None => return,
-                };
-
-                self.draw_content(printer, buttons_height);
-
-                // Print the borders
-                printer.print_box(Vec2::new(0, 0), printer.size, false);
-
-                self.draw_title(printer);
-            }
-            direction::Orientation::Vertical => {
-                let buttons_width = match self.draw_buttons(printer) {
-                    Some(width) => width,
-                    None => return,
-                };
-    
+        // Draw the buttons
+        let buttons_size = match self.draw_buttons(printer) {
+            Some(size) => size,
+            None => return,
+        };
+        
+        if self.button_orientation == direction::Orientation::Vertical {
                 // Adjust the content area size
-                let content_area_width = printer.size.x.saturating_sub(buttons_width + self.borders.horizontal());
+                let content_area_width = printer.size.x.saturating_sub(buttons_size + self.borders.horizontal());
                 let content_area_height = printer.size.y.saturating_sub(self.borders.vertical());
     
                 // Check if there's enough space for the content
@@ -846,14 +832,15 @@ impl View for Dialog {
     
                 // Draw the content
                 self.content.draw(&content_printer);
-    
-                // Print the borders
-                printer.print_box(Vec2::new(0, 0), printer.size, false);
-    
-                // Draw the title
-                self.draw_title(printer);
-            }
+        } else {
+            self.draw_content(printer, buttons_size);
         }
+    
+        // Print the borders
+        printer.print_box(Vec2::new(0, 0), printer.size, false);
+
+        // Draw the title
+        self.draw_title(printer);
     }
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
