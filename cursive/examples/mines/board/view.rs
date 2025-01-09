@@ -1,10 +1,10 @@
-use cursive_core::{Cursive, Printer, Vec2};
+use crate::board::model::{Board, CellContent, CellState, Options, RevealResult};
 use cursive_core::direction::Direction;
 use cursive_core::event::{Event, EventResult, MouseButton, MouseEvent};
 use cursive_core::theme::{BaseColor, Color, ColorStyle};
 use cursive_core::view::CannotFocus;
 use cursive_core::views::Dialog;
-use crate::board::model::{Board, CellContent, CellState, Options, RevealResult};
+use cursive_core::{Cursive, Printer, Vec2};
 
 pub struct BoardView {
     // Actual board, unknown to the player.
@@ -51,8 +51,12 @@ impl BoardView {
     fn handle_reveal_result(reveal_result: RevealResult) -> EventResult {
         match reveal_result {
             RevealResult::Revealed => EventResult::Consumed(None),
-            RevealResult::Victory => EventResult::with_cb(|s| Self::make_end_game_result(s, "Victory!")),
-            RevealResult::Loss => EventResult::with_cb(|s| Self::make_end_game_result(s, "Defeted")),
+            RevealResult::Victory => {
+                EventResult::with_cb(|s| Self::make_end_game_result(s, "Victory!"))
+            }
+            RevealResult::Loss => {
+                EventResult::with_cb(|s| Self::make_end_game_result(s, "Defeted"))
+            }
         }
     }
 
@@ -62,15 +66,18 @@ impl BoardView {
     }
     fn change_game_button_label(s: &mut Cursive, label: &str) {
         s.call_on_name("game", |d: &mut Dialog| {
-            d.buttons_mut().last().expect("button must exists").set_label(label);
+            d.buttons_mut()
+                .last()
+                .expect("button must exists")
+                .set_label(label);
         });
     }
 }
 
 impl cursive::view::View for BoardView {
     fn draw(&self, printer: &Printer) {
-        use CellState::*;
         use CellContent::*;
+        use CellState::*;
 
         for (i, cell) in self.board.iter().enumerate() {
             let x = (i % self.board.size.x) * 2;
@@ -79,8 +86,10 @@ impl cursive::view::View for BoardView {
             let text = match (cell.state, cell.content, self.board.is_ended) {
                 (Closed, _, false) => " □",
                 (Marked, _, false) => " ■",
-                (Opened, Free(n), false) | (_, Free(n), true) => ["  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"][n],
-                (Opened, Bomb, false) | (_, Bomb, true) => "\u{01F4A3}"
+                (Opened, Free(n), false) | (_, Free(n), true) => {
+                    ["  ", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8"][n]
+                }
+                (Opened, Bomb, false) | (_, Bomb, true) => "\u{01F4A3}",
             };
 
             let color = match (cell.state, cell.content, self.board.is_ended) {
@@ -96,7 +105,7 @@ impl cursive::view::View for BoardView {
                     7 => Color::RgbLowRes(5, 0, 2),
                     8 => Color::RgbLowRes(5, 0, 3),
                     _ => Color::Dark(BaseColor::White),
-                }
+                },
                 _ => Color::Dark(BaseColor::White),
             };
 

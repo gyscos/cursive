@@ -1,9 +1,9 @@
+use crate::board::model::CellState::*;
+use ahash::AHashSet;
+use cursive::{Rect, Vec2};
 use rand::seq::SliceRandom;
 use std::ops::{Index, IndexMut};
 use std::slice::Iter;
-use ahash::AHashSet;
-use cursive::{Rect, Vec2};
-use crate::board::model::CellState::*;
 
 #[derive(Clone, Copy)]
 pub struct Options {
@@ -73,14 +73,18 @@ impl Field {
         // init bombs on board
         let n_cells = self.cells.len();
         self.cells.clear();
-        self.cells.resize(bombs_count, Cell:: new(CellContent::Bomb));
-        self.cells.resize(n_cells - exclusion_cells.len(), Cell:: new(CellContent::Free(0)));
+        self.cells.resize(bombs_count, Cell::new(CellContent::Bomb));
+        self.cells.resize(
+            n_cells - exclusion_cells.len(),
+            Cell::new(CellContent::Free(0)),
+        );
         let mut rng = rand::thread_rng();
         self.cells.shuffle(&mut rng);
 
         // push empty cells near of cursor to avoid bombs in this positions
         for pos in exclusion_cells {
-            self.cells.insert(self.pos_to_cell_idx(pos), Cell::new(CellContent::Free(0)));
+            self.cells
+                .insert(self.pos_to_cell_idx(pos), Cell::new(CellContent::Free(0)));
         }
 
         // recalculate near bombs
@@ -91,7 +95,7 @@ impl Field {
         }
     }
 
-    pub fn all_cell_pos_iter(&self) -> impl Iterator<Item=Vec2> {
+    pub fn all_cell_pos_iter(&self) -> impl Iterator<Item = Vec2> {
         let size = self.size;
         (0..size.y).flat_map(move |x| (0..size.x).map(move |y| Vec2::new(y, x)))
     }
@@ -103,7 +107,7 @@ impl Field {
         Rect::from_corners(pos_min, pos_max)
     }
 
-    fn neighbours(&self, pos: Vec2) -> impl Iterator<Item=Vec2> {
+    fn neighbours(&self, pos: Vec2) -> impl Iterator<Item = Vec2> {
         let pos_min = pos.saturating_sub((1, 1));
         let pos_max = (pos + (2, 2)).or_min(self.size);
 
@@ -139,7 +143,6 @@ impl IndexMut<Vec2> for Field {
     }
 }
 
-
 pub struct Board {
     pub size: Vec2,
     pub bombs_count: usize,
@@ -169,8 +172,7 @@ impl Board {
         }
     }
 
-    pub fn iter(&self) -> Iter<'_, Cell>
-    {
+    pub fn iter(&self) -> Iter<'_, Cell> {
         self.field.cells.iter()
     }
 
@@ -203,10 +205,13 @@ impl Board {
     pub(crate) fn auto_reveal(&mut self, pos: Vec2) -> RevealResult {
         self.place_bombs_if_needed(pos);
 
-
         let mut opened = AHashSet::new();
         if let CellContent::Free(n) = self.field[pos].content {
-            let market_cells = self.field.neighbours(pos).filter(|pos| self.field[*pos].state == Marked).count();
+            let market_cells = self
+                .field
+                .neighbours(pos)
+                .filter(|pos| self.field[*pos].state == Marked)
+                .count();
             if market_cells == n {
                 for near_pos in self.field.neighbours(pos) {
                     if !self.check_neighbours_for_auto_reveal(near_pos, &mut opened) {
@@ -221,7 +226,7 @@ impl Board {
                 self.is_ended = true;
                 RevealResult::Victory
             }
-            false => RevealResult::Revealed
+            false => RevealResult::Revealed,
         }
     }
 
@@ -260,7 +265,11 @@ impl Board {
     }
 
     fn check_victory(&self) -> bool {
-        self.field.cells.iter().filter(|x| matches!(x.content, CellContent::Free(_))).all(|x| x.state == Opened)
+        self.field
+            .cells
+            .iter()
+            .filter(|x| matches!(x.content, CellContent::Free(_)))
+            .all(|x| x.state == Opened)
     }
 }
 

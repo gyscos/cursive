@@ -1,11 +1,11 @@
 mod board;
 
 use crate::board::model::{self};
-use cursive::{
-    Cursive,
-    Vec2, views::{Button, Dialog, LinearLayout, Panel, SelectView},
-};
 use board::view::BoardView;
+use cursive::{
+    views::{Button, Dialog, LinearLayout, Panel, SelectView},
+    Cursive, Vec2,
+};
 use cursive_core::traits::Nameable;
 
 fn main() {
@@ -64,12 +64,15 @@ fn show_options(siv: &mut Cursive) {
 }
 
 fn show_controls(s: &mut Cursive) {
-    s.add_layer(Dialog::info(
-        "Controls:
+    s.add_layer(
+        Dialog::info(
+            "Controls:
 Reveal cell:                  left click
 Mark as mine:                 right-click
 Reveal nearby unmarked cells: middle-click",
-    ).title("Controls"))
+        )
+        .title("Controls"),
+    )
 }
 
 fn show_scores(s: &mut Cursive) {
@@ -77,11 +80,15 @@ fn show_scores(s: &mut Cursive) {
 }
 
 fn new_game(siv: &mut Cursive, options: model::Options) {
-
     let dialog = Dialog::new()
         .title("Minesweeper")
-        .content(LinearLayout::horizontal().child(Panel::new(BoardView::new(options).with_name("board"))))
-        .button("Quit game", |s| { s.pop_layer(); })
+        .content(
+            LinearLayout::horizontal()
+                .child(Panel::new(BoardView::new(options).with_name("board"))),
+        )
+        .button("Quit game", |s| {
+            s.pop_layer();
+        })
         .with_name("game");
 
     siv.add_layer(dialog);
