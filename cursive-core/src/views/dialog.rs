@@ -635,10 +635,7 @@ impl Dialog {
 
         let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
 
-        let y = match printer.size.y.checked_sub(overhead_bottom) {
-            Some(y) => y,
-            None => return None,
-        };
+        let y = printer.size.y.checked_sub(overhead_bottom)?;
 
         for (i, button) in self.buttons.iter().enumerate() {
             let size = button.button.size;
@@ -712,10 +709,7 @@ impl Dialog {
                 return None;
             }
 
-            let position = match position.checked_sub(offset) {
-                None => return None,
-                Some(pos) => pos,
-            };
+            let position = position.checked_sub(offset)?;
 
             // eprintln!("Rel pos: {:?}", position);
 

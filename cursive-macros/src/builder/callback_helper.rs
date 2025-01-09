@@ -518,7 +518,7 @@ This is mostly useful when using this view in a template."#
                         ..
                     }) = predicate
                     {
-                        type_ident.map_or(false, |ident| !path.path.is_ident(ident))
+                        type_ident.is_some_and(|ident| !path.path.is_ident(ident))
                     } else {
                         false
                     }

@@ -1001,7 +1001,10 @@ impl Resolvable for crate::view::Offset {
         match key.as_str() {
             "Absolute" | "absolute" => Ok(Self::Absolute(context.resolve(value)?)),
             "Parent" | "parent" => Ok(Self::Parent(context.resolve(value)?)),
-            _ => Err(Error::invalid_config("Unexpected key `{key}`.", config)),
+            _ => Err(Error::invalid_config(
+                format!("Unexpected key `{key}`."),
+                config,
+            )),
         }
     }
 }

@@ -25,7 +25,7 @@ impl<'a> DummySpannedText<'a> {
     }
 }
 
-impl<'a> SpannedText for DummySpannedText<'a> {
+impl SpannedText for DummySpannedText<'_> {
     type S = IndexedSpan<()>;
 
     fn source(&self) -> &str {
@@ -58,7 +58,7 @@ impl<'a> LinesIterator<'a> {
     }
 }
 
-impl<'a> Iterator for LinesIterator<'a> {
+impl Iterator for LinesIterator<'_> {
     type Item = Row;
 
     fn next(&mut self) -> Option<Row> {

@@ -29,7 +29,6 @@ use std::sync::{Mutex, RwLock};
 /// logger::set_external_filter_level(LevelFilter::Debug);
 /// logger::init();
 /// ```
-
 pub struct CursiveLogger;
 
 lazy_static! {

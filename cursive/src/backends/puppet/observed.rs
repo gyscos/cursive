@@ -319,7 +319,7 @@ impl ObservedPieceInterface for ObservedScreen {
     }
 }
 
-impl<'a> ObservedPieceInterface for ObservedPiece<'a> {
+impl ObservedPieceInterface for ObservedPiece<'_> {
     fn min(&self) -> Vec2 {
         self.min
     }
@@ -365,7 +365,7 @@ impl<'a> ObservedLine<'a> {
     }
 }
 
-impl<'a> ObservedPieceInterface for ObservedLine<'a> {
+impl ObservedPieceInterface for ObservedLine<'_> {
     fn min(&self) -> Vec2 {
         self.line_start
     }
@@ -379,7 +379,7 @@ impl<'a> ObservedPieceInterface for ObservedLine<'a> {
     }
 }
 
-impl<'a> Display for ObservedLine<'a> {
+impl Display for ObservedLine<'_> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self.as_strings().remove(0))
     }

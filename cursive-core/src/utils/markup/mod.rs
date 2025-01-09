@@ -38,7 +38,7 @@ pub struct PlainStr<'a> {
     span: IndexedSpan<Style>,
 }
 
-impl<'a> SpannedText for PlainStr<'a> {
+impl SpannedText for PlainStr<'_> {
     type S = IndexedSpan<Style>;
 
     fn source(&self) -> &str {

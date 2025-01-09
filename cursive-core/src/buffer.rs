@@ -155,7 +155,7 @@ pub struct Window<'a> {
     viewport: Rect,
 }
 
-impl<'a> Window<'a> {
+impl Window<'_> {
     /// Returns the cell at the given location.
     ///
     /// Returns `None` if the cell is empty because the previous one was double-wide.

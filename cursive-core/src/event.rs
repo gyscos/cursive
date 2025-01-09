@@ -112,10 +112,7 @@ impl EventTrigger {
     /// );
     /// ```
     pub fn has_tag<T: PartialEq + 'static>(&self, tag: &T) -> bool {
-        (*self.tag)
-            .as_any()
-            .downcast_ref::<T>()
-            .map_or(false, |t| tag == t)
+        (*self.tag).as_any().downcast_ref::<T>() == Some(tag)
     }
 
     /// Checks if this trigger applies to the given `Event`.

@@ -70,15 +70,12 @@ fn heading(level: usize) -> &'static str {
     &"##########"[..level]
 }
 
-impl<'a> Iterator for Parser<'a> {
+impl Iterator for Parser<'_> {
     type Item = StyledIndexedSpan;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            let next = match self.parser.next() {
-                None => return None,
-                Some(event) => event,
-            };
+            let next = self.parser.next()?;
 
             match next {
                 Event::Start(tag) => match tag {

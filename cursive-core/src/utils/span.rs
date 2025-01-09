@@ -59,7 +59,7 @@ impl<T> Default for SpannedString<T> {
     }
 }
 
-impl<'a, T> SpannedText for &'a SpannedString<T> {
+impl<T> SpannedText for &SpannedString<T> {
     type S = IndexedSpan<T>;
 
     fn source(&self) -> &str {
@@ -173,7 +173,7 @@ where
     }
 }
 
-impl<'a, T> Clone for SpannedStr<'a, T> {
+impl<T> Clone for SpannedStr<'_, T> {
     fn clone(&self) -> Self {
         SpannedStr {
             source: self.source,

@@ -338,7 +338,7 @@ impl LinearLayout {
         &'a mut self,
         from_focus: bool,
         source: direction::Relative,
-    ) -> Box<dyn Iterator<Item = (usize, &mut Child)> + 'a> {
+    ) -> Box<dyn Iterator<Item = (usize, &'a mut Child)> + 'a> {
         match source {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
@@ -388,10 +388,7 @@ impl LinearLayout {
                 return None;
             }
 
-            let position = match position.checked_sub(offset) {
-                None => return None,
-                Some(pos) => pos,
-            };
+            let position = position.checked_sub(offset)?;
 
             // Find the selected child
             // Let's only care about the coordinate for our orientation.

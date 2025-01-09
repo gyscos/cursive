@@ -234,7 +234,7 @@ impl ListView {
         &'a mut self,
         from_focus: bool,
         source: direction::Relative,
-    ) -> Box<dyn Iterator<Item = (usize, &mut ListChild)> + 'a> {
+    ) -> Box<dyn Iterator<Item = (usize, &'a mut ListChild)> + 'a> {
         match source {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
@@ -316,10 +316,7 @@ impl ListView {
                 return None;
             }
 
-            let mut position = match position.checked_sub(offset) {
-                None => return None,
-                Some(pos) => pos,
-            };
+            let mut position = position.checked_sub(offset)?;
 
             // eprintln!("Rel pos: {:?}", position);
 
@@ -339,11 +336,8 @@ impl ListView {
 
                 // We found the correct target, try to focus it.
                 if let ListChild::Row(_, ref mut view) = child {
-                    match view.take_focus(direction::Direction::none()) {
-                        Ok(res) => {
-                            return Some(self.set_focus_unchecked(i).and(res));
-                        }
-                        Err(CannotFocus) => (),
+                    if let Ok(res) = view.take_focus(direction::Direction::none()) {
+                        return Some(self.set_focus_unchecked(i).and(res));
                     }
                 }
                 // We found the target, but we can't focus it.

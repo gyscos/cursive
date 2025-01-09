@@ -161,7 +161,7 @@ impl FixedLayout {
     fn iter_mut<'a>(
         source: Direction,
         children: &'a mut [Child],
-    ) -> Box<dyn Iterator<Item = (usize, &mut Child)> + 'a> {
+    ) -> Box<dyn Iterator<Item = (usize, &'a mut Child)> + 'a> {
         let children = children.iter_mut().enumerate();
         match source {
             Direction::Rel(Relative::Front) => Box::new(children),
@@ -240,10 +240,7 @@ impl FixedLayout {
                 return None;
             }
 
-            let position = match position.checked_sub(offset) {
-                None => return None,
-                Some(pos) => pos,
-            };
+            let position = position.checked_sub(offset)?;
 
             if let Some((i, res)) = self
                 .children
