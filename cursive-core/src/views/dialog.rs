@@ -1,13 +1,5 @@
 use crate::{
-    align::*,
-    direction::{Absolute, Direction, Relative},
-    event::{AnyCb, Event, EventResult, Key},
-    rect::Rect,
-    style::PaletteStyle,
-    utils::markup::StyledString,
-    view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound},
-    views::{BoxedView, Button, DummyView, LastSizeView, TextView},
-    Cursive, Printer, Vec2, With,
+    align::*, direction::{self, Absolute, Direction, Relative}, event::{AnyCb, Event, EventResult, Key}, rect::Rect, style::PaletteStyle, utils::markup::StyledString, view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound}, views::{BoxedView, Button, DummyView, LastSizeView, TextView}, Cursive, Printer, Vec2, With
 };
 use parking_lot::Mutex;
 use std::cmp::{max, min};
@@ -101,6 +93,9 @@ pub struct Dialog {
     // Include the top-left corner.
     buttons: Vec<ChildButton>,
 
+    // Option to change the orientation of the buttons in the dialog box
+    button_orientation: direction::Orientation,
+
     // Padding around the inner view.
     padding: Margins,
 
@@ -132,6 +127,7 @@ impl Dialog {
         Dialog {
             content: LastSizeView::new(BoxedView::boxed(view)),
             buttons: Vec::new(),
+            button_orientation: direction::Orientation::Horizontal,
             title: StyledString::new(),
             title_position: HAlign::Center,
             focus: DialogFocus::Content,
@@ -161,6 +157,16 @@ impl Dialog {
             s.set_content(view);
         })
     }
+
+    /// Changes the button layout orientation
+    /// 
+    /// The default orientation is horizontal
+    pub fn set_button_orientation(mut self, v: direction::Orientation) -> Self {
+        self.button_orientation = v;
+        
+        self
+    }
+
 
     /// Gets the content of this dialog.
     ///
@@ -318,9 +324,6 @@ impl Dialog {
         self.align.h
     }
 
-    /*
-     * Commented out because currently un-implemented.
-     *
     /// Sets the vertical alignment for the buttons, if any.
     ///
     /// Only works if the buttons are as a column to the right of the dialog.
@@ -330,7 +333,14 @@ impl Dialog {
 
         self
     }
-    */
+
+    /// Gets the vertical alignment of the buttons, if any.
+    ///
+    /// Only works if the buttons are as a column to the right of the dialog.
+    pub fn get_v_align(&self) -> VAlign {
+        self.align.v
+    }
+    
 
     /// Shortcut method to add a button that will dismiss the dialog.
     ///
@@ -554,9 +564,9 @@ impl Dialog {
         };
         match result {
             EventResult::Ignored => {
-                match event {
-                    // Up goes back to the content
-                    Event::Key(Key::Up) => {
+                match (event, self.button_orientation) {
+                    // Up goes back to the content if buttons are horizontal
+                    (Event::Key(Key::Up), direction::Orientation::Horizontal) => {
                         if let Ok(res) = self.content.take_focus(Direction::down()) {
                             self.focus = DialogFocus::Content;
                             res
@@ -564,7 +574,18 @@ impl Dialog {
                             EventResult::Ignored
                         }
                     }
-                    Event::Shift(Key::Tab) if self.focus == DialogFocus::Button(0) => {
+
+                    // Left goes back to the content if buttons are vertical
+                    (Event::Key(Key::Left), direction::Orientation::Vertical) => {
+                        if let Ok(res) = self.content.take_focus(Direction::right()) {
+                            self.focus = DialogFocus::Content;
+                            res
+                        } else {
+                            EventResult::Ignored
+                        }
+                    }
+
+                    (Event::Shift(Key::Tab), _) if self.focus == DialogFocus::Button(0) => {
                         // If we're at the first button, jump back to the content.
                         if let Ok(res) = self.content.take_focus(Direction::back()) {
                             self.focus = DialogFocus::Content;
@@ -573,7 +594,7 @@ impl Dialog {
                             EventResult::Ignored
                         }
                     }
-                    Event::Shift(Key::Tab) => {
+                    (Event::Shift(Key::Tab), _) => {
                         // Otherwise, jump to the previous button.
                         if let DialogFocus::Button(ref mut i) = self.focus {
                             // This should always be the case.
@@ -581,14 +602,14 @@ impl Dialog {
                         }
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Tab)
+                    (Event::Key(Key::Tab), _)
                         if self.focus
                             == DialogFocus::Button(self.buttons.len().saturating_sub(1)) =>
                     {
                         // End of the line
                         EventResult::Ignored
                     }
-                    Event::Key(Key::Tab) => {
+                    (Event::Key(Key::Tab), _) => {
                         // Otherwise, jump to the next button.
                         if let DialogFocus::Button(ref mut i) = self.focus {
                             // This should always be the case.
@@ -596,12 +617,22 @@ impl Dialog {
                         }
                         EventResult::Consumed(None)
                     }
-                    // Left and Right move to other buttons
-                    Event::Key(Key::Right) if button_id + 1 < self.buttons.len() => {
+                    
+                    (Event::Key(Key::Right), direction::Orientation::Horizontal) if button_id + 1 < self.buttons.len() => {
                         self.focus = DialogFocus::Button(button_id + 1);
                         EventResult::Consumed(None)
                     }
-                    Event::Key(Key::Left) if button_id > 0 => {
+                    (Event::Key(Key::Left), direction::Orientation::Horizontal) if button_id > 0 => {
+                        self.focus = DialogFocus::Button(button_id - 1);
+                        EventResult::Consumed(None)
+                    }
+
+                    (Event::Key(Key::Down), direction::Orientation::Vertical) if button_id + 1 < self.buttons.len() => {
+                        self.focus = DialogFocus::Button(button_id + 1);
+                        EventResult::Consumed(None)
+                    }
+
+                    (Event::Key(Key::Up), direction::Orientation::Vertical) if button_id > 0 => {
                         self.focus = DialogFocus::Button(button_id - 1);
                         EventResult::Consumed(None)
                     }
@@ -613,58 +644,91 @@ impl Dialog {
     }
 
     fn draw_buttons(&self, printer: &Printer) -> Option<usize> {
-        let mut buttons_height = 0;
-        // Current horizontal position of the next button we'll draw.
+        let mut buttons_height: usize = 0;
+        let mut buttons_width: usize = 0;
+        let mut max_size = 1;
+        match self.button_orientation {
+            direction::Orientation::Horizontal => {
+                buttons_width = self
+                    .buttons
+                    .iter()
+                    .map(|button| button.button.size.x)
+                    .sum::<usize>()
+                    + self.buttons.len().saturating_sub(1);
+            }
+            direction::Orientation::Vertical => {
+                buttons_height = self
+                    .buttons
+                    .iter()
+                    .map(|button| button.button.size.y)
+                    .sum::<usize>()
+                    + self.buttons.len().saturating_sub(1);
+                max_size = self
+                    .buttons
+                    .iter()
+                    .map(|button|button.button.size.x)
+                    .max().unwrap_or_default();
+            }
+        }
+        let mut button_size = Vec2::from_major_minor(self.button_orientation, buttons_height, buttons_width);
 
-        // Sum of the sizes + len-1 for margins
-        let width = self
-            .buttons
-            .iter()
-            .map(|button| button.button.size.x)
-            .sum::<usize>()
-            + self.buttons.len().saturating_sub(1);
         let overhead = self.padding + self.borders;
-        if printer.size.x < overhead.horizontal() {
+        if self.button_orientation == direction::Orientation::Horizontal && printer.size.x < overhead.horizontal() {
             return None;
         }
-        let mut offset = overhead.left
-            + self
-                .align
-                .h
-                .get_offset(width, printer.size.x - overhead.horizontal());
+        if self.button_orientation == direction::Orientation::Vertical && printer.size.y < overhead.horizontal() {
+            return None;
+        }
+        let offset_bottom = overhead.left
+                    + self
+                        .align
+                        .h
+                        .get_offset(buttons_width, printer.size.x - overhead.horizontal());
+        let offset_right = overhead.top
+                    + self
+                        .align
+                        .v
+                        .get_offset(buttons_height, printer.size.y - overhead.vertical());
+        let mut offset = Vec2::from_major_minor(self.button_orientation, offset_bottom, offset_right).x;
 
         let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
+        let overhead_right = self.padding.right + self.borders.right + max_size;
 
         let y = match printer.size.y.checked_sub(overhead_bottom) {
             Some(y) => y,
             None => return None,
         };
+        let x = match printer.size.x.checked_sub(overhead_right) {
+            Some(x) => x,
+            None => return None,
+        };
+        let z = Vec2::from_major_minor(self.button_orientation, y, x).x;
 
         for (i, button) in self.buttons.iter().enumerate() {
-            let size = button.button.size;
+            let size = Vec2::from_major_minor(self.button_orientation, button.button.size.x, button.button.size.y);
+
             // Add some special effect to the focused button
-            let position = Vec2::new(offset, y);
+            let position = Vec2::from_major_minor(self.button_orientation, offset, z);
             *button.offset.lock() = position;
             button.button.draw(
                 &printer
                     .offset(position)
-                    .cropped(size)
+                    .cropped(button.button.size)
                     .focused(self.focus == DialogFocus::Button(i)),
             );
             // Keep 1 blank between two buttons
             offset += size.x + 1;
-            // Also keep 1 blank above the buttons
-            buttons_height = max(buttons_height, size.y + 1);
+            // Also keep 1 blank to the left or above the buttons
+            button_size.x = max(button_size.x, size.y + 1);
         }
 
-        Some(buttons_height)
+        Some(button_size.x)
     }
 
-    fn draw_content(&self, printer: &Printer, buttons_height: usize) {
+    fn draw_content(&self, printer: &Printer, buttons_size: usize) {
         // What do we have left?
-        let taken =
-            Vec2::new(0, buttons_height) + self.borders.combined() + self.padding.combined();
-
+        let buttons_size = Vec2::from_major_minor(self.button_orientation, buttons_size, 0);
+        let taken = buttons_size + self.borders.combined() + self.padding.combined();
         let inner_size = match printer.size.checked_sub(taken) {
             Some(s) => s,
             None => return,
@@ -675,7 +739,7 @@ impl Dialog {
                 .offset(self.borders.top_left() + self.padding.top_left())
                 .cropped(inner_size)
                 .focused(self.focus == DialogFocus::Content),
-        );
+        )
     }
 
     fn draw_title(&self, printer: &Printer) {
@@ -745,86 +809,172 @@ impl Dialog {
 
 impl View for Dialog {
     fn draw(&self, printer: &Printer) {
-        // This will be the buttons_height used by the buttons.
-        let buttons_height = match self.draw_buttons(printer) {
-            Some(height) => height,
+        // Draw the buttons
+        let buttons_size = match self.draw_buttons(printer) {
+            Some(size) => size,
             None => return,
         };
-
-        self.draw_content(printer, buttons_height);
-
+        
+        if self.button_orientation == direction::Orientation::Vertical {
+                // Adjust the content area size
+                let content_area_width = printer.size.x.saturating_sub(buttons_size + self.borders.horizontal());
+                let content_area_height = printer.size.y.saturating_sub(self.borders.vertical());
+    
+                // Check if there's enough space for the content
+                if content_area_width == 0 || content_area_height == 0 {
+                    return; // Not enough space for content
+                }
+    
+                // Define the printer for the content area
+                let content_printer = printer
+                    .offset(Vec2::new(self.borders.left, self.borders.top)) // Adjust for borders
+                    .cropped(Vec2::new(content_area_width, content_area_height));
+    
+                // Draw the content
+                self.content.draw(&content_printer);
+        } else {
+            self.draw_content(printer, buttons_size);
+        }
+    
         // Print the borders
         printer.print_box(Vec2::new(0, 0), printer.size, false);
 
+        // Draw the title
         self.draw_title(printer);
     }
 
     fn required_size(&mut self, req: Vec2) -> Vec2 {
-        // Padding and borders are not available for kids.
-        let nomans_land = self.padding.combined() + self.borders.combined();
+        match self.button_orientation {
+            direction::Orientation::Horizontal => {
+                // Padding and borders are not available for kids.
+                let nomans_land = self.padding.combined() + self.borders.combined();
 
-        // Buttons are not flexible, so their size doesn't depend on ours.
-        let mut buttons_size = Vec2::new(0, 0);
+                // Buttons are not flexible, so their size doesn't depend on ours.
+                let mut buttons_size = Vec2::new(0, 0);
 
-        // Start with the inter-button space.
-        buttons_size.x += self.buttons.len().saturating_sub(1);
+                // Start with the inter-button space.
+                buttons_size.x += self.buttons.len().saturating_sub(1);
 
-        for button in &mut self.buttons {
-            let s = button.button.view.required_size(req);
-            buttons_size.x += s.x;
-            buttons_size.y = max(buttons_size.y, s.y + 1);
+                for button in &mut self.buttons {
+                    let s = button.button.view.required_size(req);
+                    buttons_size.x += s.x;
+                    buttons_size.y = max(buttons_size.y, s.y + 1);
+                }
+
+                // We also remove one row for the buttons.
+                let taken = nomans_land + Vec2::new(0, buttons_size.y);
+
+                let content_req = match req.checked_sub(taken) {
+                    Some(r) => r,
+                    // Bad!!
+                    None => return taken,
+                };
+
+                let content_size = self.content.required_size(content_req);
+
+                // On the Y axis, we add buttons and content.
+                // On the X axis, we take the max.
+                let mut inner_size = Vec2::new(
+                    max(content_size.x, buttons_size.x),
+                    content_size.y + buttons_size.y,
+                ) + self.padding.combined()
+                    + self.borders.combined();
+
+                if !self.title.is_empty() {
+                    // If we have a title, we have to fit it too!
+                    inner_size.x = max(inner_size.x, self.title.width() + 6);
+                }
+
+                inner_size
+            }
+            direction::Orientation::Vertical => {
+                // Padding and borders are not available for kids.
+                let nomans_land = self.padding.combined() + self.borders.combined();
+
+                // Buttons are not flexible, so their size doesn't depend on ours.
+                let mut buttons_size = Vec2::new(0, 0);
+
+                // Start with the inter-button space (vertical spacing).
+                buttons_size.y += self.buttons.len().saturating_sub(1);
+
+                for button in &mut self.buttons {
+                    let s = button.button.view.required_size(req);
+                    buttons_size.y += s.y;
+                    buttons_size.x = max(buttons_size.x, s.x + 1); // Track max width
+                }
+
+                // Remove the width taken by the buttons from the available space for content
+                let taken = nomans_land + Vec2::new(buttons_size.x, 0);
+
+                let content_req = match req.checked_sub(taken) {
+                    Some(r) => r,
+                    // If there's no space for content, return the size taken by buttons
+                    None => return taken,
+                };
+
+                let content_size = self.content.required_size(content_req);
+
+                // On the Y axis, we take the max of content and buttons height.
+                // On the X axis, we add the content and buttons widths together.
+                let mut inner_size = Vec2::new(
+                    content_size.x + buttons_size.x, // Add button width to content width
+                    max(content_size.y, buttons_size.y), // Max height of content and buttons
+                ) + self.padding.combined()
+                    + self.borders.combined();
+
+                if !self.title.is_empty() {
+                    // If we have a title, make sure it fits within the dialog width.
+                    inner_size.x = max(inner_size.x, self.title.width() + 6);
+                }
+
+                inner_size
+            }
         }
-
-        // We also remove one row for the buttons.
-        let taken = nomans_land + Vec2::new(0, buttons_size.y);
-
-        let content_req = match req.checked_sub(taken) {
-            Some(r) => r,
-            // Bad!!
-            None => return taken,
-        };
-
-        let content_size = self.content.required_size(content_req);
-
-        // On the Y axis, we add buttons and content.
-        // On the X axis, we take the max.
-        let mut inner_size = Vec2::new(
-            max(content_size.x, buttons_size.x),
-            content_size.y + buttons_size.y,
-        ) + self.padding.combined()
-            + self.borders.combined();
-
-        if !self.title.is_empty() {
-            // If we have a title, we have to fit it too!
-            inner_size.x = max(inner_size.x, self.title.width() + 6);
-        }
-
-        inner_size
     }
 
     fn layout(&mut self, mut size: Vec2) {
         // Padding and borders are taken, sorry.
         // TODO: handle border-less themes?
-        let taken = self.borders.combined() + self.padding.combined();
-        size = size.saturating_sub(taken);
+        match self.button_orientation {
+            direction::Orientation::Horizontal => {
+                let taken = self.borders.combined() + self.padding.combined();
+                size = size.saturating_sub(taken);
 
-        // Buttons are kings, we give them everything they want.
-        let mut buttons_height = 0;
-        for button in self.buttons.iter_mut().rev() {
-            let size = button.button.required_size(size);
-            buttons_height = max(buttons_height, size.y + 1);
-            button.button.layout(size);
+                // Buttons are kings, we give them everything they want.
+                let mut buttons_height = 0;
+                for button in self.buttons.iter_mut().rev() {
+                    let size = button.button.required_size(size);
+                    buttons_height = max(buttons_height, size.y + 1);
+                    button.button.layout(size);
+                }
+
+                // Poor content will have to make do with what's left.
+                if buttons_height > size.y {
+                    buttons_height = size.y;
+                }
+
+                self.content
+                    .layout(size.saturating_sub((0, buttons_height)));
+
+                self.invalidated = false;
+            }
+            direction::Orientation::Vertical => {
+                let mut buttons_width = 0;
+                for button in &mut self.buttons {
+                    let button_size = button.button.required_size(size);
+                    buttons_width = max(buttons_width, button_size.x + 1);
+                    button.button.layout(button_size);
+                }
+    
+                // Calculate the size left for the content
+                let content_size = size.saturating_sub((buttons_width, 0));
+    
+                // Poor content will have to fit into the remaining space.
+                self.content.layout(content_size);
+    
+                self.invalidated = false;
+            }
         }
-
-        // Poor content will have to make do with what's left.
-        if buttons_height > size.y {
-            buttons_height = size.y;
-        }
-
-        self.content
-            .layout(size.saturating_sub((0, buttons_height)));
-
-        self.invalidated = false;
     }
 
     fn on_event(&mut self, event: Event) -> EventResult {
