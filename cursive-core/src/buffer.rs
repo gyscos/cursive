@@ -451,7 +451,7 @@ impl PrintBuffer {
             // eprintln!("Non matching: {frozen:?} -> {active:?}");
 
             // Skip empty cells.
-            let Some(Cell { style, text, width }) = active else {
+            let Some(Cell { style, ref text, width, }) = *active else {
                 continue;
             };
 
@@ -466,8 +466,8 @@ impl PrintBuffer {
 
             // Make sure we have the correct style
             // eprintln!("Applying {style:?} over {:?} for {text} @ {x}:{y}", self.current_style);
-            apply_diff(&self.current_style, style, backend);
-            self.current_style = *style;
+            apply_diff(self.current_style, style, backend);
+            self.current_style = style;
 
             backend.print(text);
 
@@ -483,7 +483,7 @@ impl PrintBuffer {
     }
 }
 
-fn apply_diff(old: &ConcreteStyle, new: &ConcreteStyle, backend: &dyn Backend) {
+fn apply_diff(old: ConcreteStyle, new: ConcreteStyle, backend: &dyn Backend) {
     if old.color != new.color {
         // TODO: flush front/back colors separately?
         backend.set_color(new.color);
