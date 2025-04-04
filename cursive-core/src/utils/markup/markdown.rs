@@ -1,6 +1,30 @@
 //! Parse markdown text.
 //!
 //! Needs the `markdown` feature to be enabled.
+//!
+//! ### Examples
+//!
+//! ```rust
+//! use cursive::utils::markup::parse;
+//! use cursive::views::TextView;
+//! use cursive::{Cursive, CursiveExt};
+//!
+//! let mut siv = Cursive::default();
+//!
+//! let content = parse(
+//!     r#"# Example Markdown
+//! Hello, *world*!
+//!
+//! ## Header 2
+//!
+//! * List item 1
+//! * List item 2
+//! "#,
+//! );
+//!
+//! siv.add_layer(TextView::new(content));
+//! siv.run();
+//! ```
 #![cfg(feature = "markdown")]
 #![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "markdown")))]
 
