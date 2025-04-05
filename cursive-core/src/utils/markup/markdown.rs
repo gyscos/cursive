@@ -6,11 +6,10 @@
 //!
 //! ### Examples
 //!
-//! ```rust
-//! extern crate cursive_core as cursive;
+//! ```rust,ignore
 //! use cursive::utils::markup::markdown::parse;
 //! use cursive::views::TextView;
-//! use cursive::{Cursive, CursiveExt};
+//! use cursive::Cursive;
 //!
 //! let mut siv = Cursive::default();
 //!
