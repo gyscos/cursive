@@ -7,6 +7,7 @@
 //! ### Examples
 //!
 //! ```rust
+//! extern crate cursive_core as cursive
 //! use cursive::utils::markup::markdown::parse;
 //! use cursive::views::TextView;
 //! use cursive::{Cursive, CursiveExt};
