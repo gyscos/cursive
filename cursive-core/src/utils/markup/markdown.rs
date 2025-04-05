@@ -1,3 +1,5 @@
+#![cfg(feature = "markdown")]
+#![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "markdown")))]
 //! Parse markdown text.
 //!
 //! Needs the `markdown` feature to be enabled.
@@ -25,8 +27,6 @@
 //! siv.add_layer(TextView::new(content));
 //! siv.run();
 //! ```
-#![cfg(feature = "markdown")]
-#![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "markdown")))]
 
 use std::borrow::Cow;
 
