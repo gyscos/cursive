@@ -10,7 +10,7 @@ name = "cursive-macros"
 readme = "Readme.md"
 repository = "https://github.com/gyscos/cursive"
 version = "0.1.0"
-include = ["src/**/*"]
+include = ["src/**/*", "/LICENSE"]
 
 [lib]
 proc-macro = true
