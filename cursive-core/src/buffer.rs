@@ -420,9 +420,14 @@ impl PrintBuffer {
     ///
     /// (Successive calls should do nothing.)
     pub fn flush(&mut self, backend: &dyn Backend) {
-        let terminal_width = self.size.x;
+        match backend.is_persistent() {
+            true => self.flush_to_backend::<true>(backend),
+            false => self.flush_to_backend::<false>(backend),
+        }
+    }
 
-        let persistent = backend.is_persistent();
+    fn flush_to_backend<const IS_PERSISTENT: bool>(&mut self, backend: &dyn Backend) {
+        let terminal_width = self.size.x;
 
         let mut current_pos = Vec2::zero();
         backend.move_to(current_pos);
@@ -430,10 +435,10 @@ impl PrintBuffer {
         for (i, (active, frozen)) in self
             .active_buffer
             .iter()
-            .zip(self.frozen_buffer.iter())
+            .zip(self.frozen_buffer.iter_mut())
             .enumerate()
         {
-            if persistent && active == frozen {
+            if IS_PERSISTENT && active == frozen {
                 // TODO (optim): it may be pricier to omit printing a letter but to then "move to" the
                 // cell to the right. So there should be a price N for the jump, and wait until we see
                 // N bytes without changes to actually jump. If it changes before that, flush the
@@ -446,7 +451,7 @@ impl PrintBuffer {
             // eprintln!("Non matching: {frozen:?} -> {active:?}");
 
             // Skip empty cells.
-            let Some(Cell { style, text, width }) = active else {
+            let Some(Cell { style, ref text, width, }) = *active else {
                 continue;
             };
 
@@ -461,23 +466,24 @@ impl PrintBuffer {
 
             // Make sure we have the correct style
             // eprintln!("Applying {style:?} over {:?} for {text} @ {x}:{y}", self.current_style);
-            apply_diff(&self.current_style, style, backend);
-            self.current_style = *style;
+            apply_diff(self.current_style, style, backend);
+            self.current_style = style;
 
             backend.print(text);
 
             current_pos.x += width.as_usize();
+
+            *frozen = active.clone();
 
             // Assume we never wrap over?
         }
 
         // Keep the active buffer the same, because why not?
         // We could also flush it to Nones?
-        self.frozen_buffer.clone_from_slice(&self.active_buffer);
     }
 }
 
-fn apply_diff(old: &ConcreteStyle, new: &ConcreteStyle, backend: &dyn Backend) {
+fn apply_diff(old: ConcreteStyle, new: ConcreteStyle, backend: &dyn Backend) {
     if old.color != new.color {
         // TODO: flush front/back colors separately?
         backend.set_color(new.color);
