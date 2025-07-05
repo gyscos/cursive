@@ -39,7 +39,8 @@ pub struct Cursive {
 
     menubar: views::Menubar,
 
-    pub(crate) needs_clear: bool,
+    needs_clear: bool,
+    needs_complete_clear: bool,
 
     running: bool,
 
@@ -97,6 +98,7 @@ impl Cursive {
             menubar: views::Menubar::new(),
             last_size: Vec2::zero(),
             needs_clear: true,
+            needs_complete_clear: false,
             running: true,
             cb_source,
             cb_sink,
@@ -128,7 +130,11 @@ impl Cursive {
 
         let printer = Printer::new(size, &self.theme, buffer);
 
-        if self.needs_clear {
+        if self.needs_complete_clear {
+            buffer.write().clear();
+            self.needs_complete_clear = false;
+            self.needs_clear = false;
+        } else if self.needs_clear {
             printer.clear();
             self.needs_clear = false;
         }
@@ -406,6 +412,14 @@ impl Cursive {
     /// Users rarely have to call this directly.
     pub fn clear(&mut self) {
         self.needs_clear = true;
+    }
+
+    /// Force a full redraw on the next frame.
+    ///
+    /// [`clear`](Self::clear) clears only working area (that cursive writes to), while this method
+    /// will do a complete clear. Use it after running external programs, i.e. editor.
+    pub fn complete_clear(&mut self) {
+        self.needs_complete_clear = true;
     }
 
     /// Loads a theme from the given file.
