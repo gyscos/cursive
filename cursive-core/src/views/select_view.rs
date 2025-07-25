@@ -393,7 +393,10 @@ impl<T: 'static + Send + Sync> SelectView<T> {
     /// `Arc<T>` is still alive after calling `SelectView::selection()`).
     ///
     /// If `T` does not implement `Clone`, check `SelectView::try_iter_mut()`.
-    pub fn iter_mut(&mut self) -> impl ItemIterMut<'_, T>
+    pub fn iter_mut(&mut self)
+        -> impl Iterator<Item = (&mut StyledString, &mut T)>
+            + iter::DoubleEndedIterator
+            + iter::ExactSizeIterator
     where
         T: Clone,
     {
@@ -409,7 +412,11 @@ impl<T: 'static + Send + Sync> SelectView<T> {
     ///
     /// Some items may not be returned mutably, for example if a `Arc<T>` is
     /// still alive after calling `SelectView::selection()`.
-    pub fn try_iter_mut(&mut self) -> impl ItemIterMutOpt<'_, T> {
+    pub fn try_iter_mut(&mut self)
+        -> impl Iterator<Item = (&mut StyledString, Option<&mut T>)>
+            + iter::DoubleEndedIterator
+            + iter::ExactSizeIterator
+    {
         self.last_required_size = None;
         self.items
             .iter_mut()
@@ -419,7 +426,11 @@ impl<T: 'static + Send + Sync> SelectView<T> {
     /// Iterate on the items in this view.
     ///
     /// Returns an iterator with each item and their labels.
-    pub fn iter(&self) -> impl ItemIter<'_, T> {
+    pub fn iter(&self)
+        -> impl Iterator<Item = (&str, &T)>
+            + iter::DoubleEndedIterator
+            + iter::ExactSizeIterator
+    {
         self.items
             .iter()
             .map(|item| (item.label.source(), &*item.value))
@@ -1132,44 +1143,6 @@ struct Blueprint {
 
     #[blueprint(foreach = add_item_str)]
     items: Vec<String>,
-}
-
-pub trait ItemIter<'a, T: 'a>:
-    Iterator<Item = (&'a str, &'a T)> + iter::DoubleEndedIterator + iter::ExactSizeIterator
-{
-}
-
-impl<'a, T: 'a, I> ItemIter<'a, T> for I where
-    I: Iterator<Item = (&'a str, &'a T)> + iter::DoubleEndedIterator + iter::ExactSizeIterator
-{
-}
-
-pub trait ItemIterMut<'a, T: 'a>:
-    Iterator<Item = (&'a mut StyledString, &'a mut T)>
-    + iter::DoubleEndedIterator
-    + iter::ExactSizeIterator
-{
-}
-
-impl<'a, T: 'a, I> ItemIterMut<'a, T> for I where
-    I: Iterator<Item = (&'a mut StyledString, &'a mut T)>
-        + iter::DoubleEndedIterator
-        + iter::ExactSizeIterator
-{
-}
-
-pub trait ItemIterMutOpt<'a, T: 'a>:
-    Iterator<Item = (&'a mut StyledString, Option<&'a mut T>)>
-    + iter::DoubleEndedIterator
-    + iter::ExactSizeIterator
-{
-}
-
-impl<'a, T: 'a, I> ItemIterMutOpt<'a, T> for I where
-    I: Iterator<Item = (&'a mut StyledString, Option<&'a mut T>)>
-        + iter::DoubleEndedIterator
-        + iter::ExactSizeIterator
-{
 }
 
 #[cfg(test)]
