@@ -439,7 +439,7 @@ impl Key {
     ///
     /// # Panics
     ///
-    /// If `n == 0 || n > 12`
+    /// If `n > 12`
     pub fn from_f(n: u8) -> Key {
         match n {
             0 => Key::F0,
