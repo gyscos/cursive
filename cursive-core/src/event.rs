@@ -442,7 +442,6 @@ impl Key {
     /// If `n > 12`
     pub fn from_f(n: u8) -> Key {
         match n {
-            0 => Key::F0,
             1 => Key::F1,
             2 => Key::F2,
             3 => Key::F3,
