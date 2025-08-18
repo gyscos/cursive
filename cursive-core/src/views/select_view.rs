@@ -12,6 +12,7 @@ use crate::{
 };
 use std::borrow::Borrow;
 use std::cmp::{min, Ordering};
+use std::iter;
 use std::sync::atomic::AtomicUsize;
 use std::sync::{Arc, Mutex};
 
@@ -392,7 +393,10 @@ impl<T: 'static + Send + Sync> SelectView<T> {
     /// `Arc<T>` is still alive after calling `SelectView::selection()`).
     ///
     /// If `T` does not implement `Clone`, check `SelectView::try_iter_mut()`.
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&mut StyledString, &mut T)>
+    pub fn iter_mut(&mut self)
+        -> impl Iterator<Item = (&mut StyledString, &mut T)>
+            + iter::DoubleEndedIterator
+            + iter::ExactSizeIterator
     where
         T: Clone,
     {
@@ -408,7 +412,11 @@ impl<T: 'static + Send + Sync> SelectView<T> {
     ///
     /// Some items may not be returned mutably, for example if a `Arc<T>` is
     /// still alive after calling `SelectView::selection()`.
-    pub fn try_iter_mut(&mut self) -> impl Iterator<Item = (&mut StyledString, Option<&mut T>)> {
+    pub fn try_iter_mut(&mut self)
+        -> impl Iterator<Item = (&mut StyledString, Option<&mut T>)>
+            + iter::DoubleEndedIterator
+            + iter::ExactSizeIterator
+    {
         self.last_required_size = None;
         self.items
             .iter_mut()
@@ -418,7 +426,11 @@ impl<T: 'static + Send + Sync> SelectView<T> {
     /// Iterate on the items in this view.
     ///
     /// Returns an iterator with each item and their labels.
-    pub fn iter(&self) -> impl Iterator<Item = (&str, &T)> {
+    pub fn iter(&self)
+        -> impl Iterator<Item = (&str, &T)>
+            + iter::DoubleEndedIterator
+            + iter::ExactSizeIterator
+    {
         self.items
             .iter()
             .map(|item| (item.label.source(), &*item.value))
