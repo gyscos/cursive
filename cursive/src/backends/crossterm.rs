@@ -102,6 +102,11 @@ fn translate_event(event: CKeyEvent) -> Option<Event> {
                 ..
             } => Event::AltChar(c),
             CKeyEvent {
+                modifiers: ALT_SHIFT,
+                code: KeyCode::Char(c),
+                ..
+            } => Event::AltChar(c),
+            CKeyEvent {
                 modifiers: KeyModifiers::SHIFT,
                 code: KeyCode::Char(c),
                 ..
