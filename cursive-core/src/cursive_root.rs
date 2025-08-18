@@ -1,10 +1,10 @@
 use std::any::Any;
+use std::cell::RefCell;
 use std::num::NonZeroU32;
 #[cfg(feature = "toml")]
 use std::path::Path;
 
 use crossbeam_channel::{self, Receiver, Sender};
-use parking_lot::RwLock;
 
 use crate::{
     backend,
@@ -123,8 +123,8 @@ impl Cursive {
         self.root.layout(size);
     }
 
-    pub(crate) fn draw(&mut self, buffer: &RwLock<crate::buffer::PrintBuffer>) {
-        let size = buffer.read().size();
+    pub(crate) fn draw(&mut self, buffer: &RefCell<crate::buffer::PrintBuffer>) {
+        let size = buffer.borrow().size();
 
         let printer = Printer::new(size, &self.theme, buffer);
 
