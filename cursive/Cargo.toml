@@ -80,6 +80,10 @@ name = "theme"
 required-features = ["toml"]
 
 [[example]]
+name = "markdown"
+required-features = ["markdown"]
+
+[[example]]
 name = "ansi"
 required-features = ["ansi"]
 

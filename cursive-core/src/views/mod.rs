@@ -136,7 +136,7 @@ pub use self::{
     slider_view::SliderView,
     stack_view::{LayerPosition, StackView},
     text_area::TextArea,
-    text_view::{TextContent, TextContentRef, TextView},
+    text_view::TextView,
     themed_view::ThemedView,
     tracked_view::TrackedView,
 };

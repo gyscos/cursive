@@ -4,6 +4,7 @@ use crate::{
     rect::Rect,
     style::{PaletteStyle, StyleType},
     utils::lines::simple::{simple_prefix, simple_suffix},
+    utils::{BRx, Rx},
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
@@ -68,9 +69,8 @@ pub type OnSubmit = dyn Fn(&mut Cursive, &str) + Send + Sync;
 /// }
 /// ```
 pub struct EditView {
-    /// Current content.
-    #[allow(clippy::rc_buffer)] // Arc::make_mut is what we want here.
-    content: Arc<String>,
+    /// Current shared content
+    content: BRx<String>,
 
     /// Cursor position in the content, in bytes.
     cursor: usize,
@@ -117,7 +117,7 @@ impl EditView {
     /// Creates a new, empty edit view.
     pub fn new() -> Self {
         EditView {
-            content: Arc::new(String::new()),
+            content: BRx::new(String::new()),
             cursor: 0,
             offset: 0,
             last_length: 0, // scrollable: false,
@@ -263,13 +263,14 @@ impl EditView {
     /// # Examples
     ///
     /// ```
-    /// use cursive_core::views::{EditView, TextContent, TextView};
+    /// use cursive_core::utils::Rx;
+    /// use cursive_core::views::{EditView, TextView};
     /// // Keep the length of the text in a separate view.
-    /// let mut content = TextContent::new("0");
+    /// let mut content = Rx::new("0".into());
     /// let text_view = TextView::new_with_content(content.clone());
     ///
     /// let on_edit = EditView::new().on_edit(move |_s, text, _cursor| {
-    ///     content.set_content(format!("{}", text.len()));
+    ///     content.set(format!("{}", text.len()).into());
     /// });
     /// ```
     #[must_use]
@@ -360,9 +361,9 @@ impl EditView {
     /// You should run this callback with a `&mut Cursive`.
     pub fn set_content<S: Into<String>>(&mut self, content: S) -> Callback {
         let content = content.into();
-        let len = content.len();
 
-        self.content = Arc::new(content);
+        self.content.set(content);
+        let len = self.content.len();
         self.offset = 0;
         self.set_cursor(len);
 
@@ -372,7 +373,26 @@ impl EditView {
     /// Get the current text.
     #[allow(clippy::rc_buffer)]
     pub fn get_content(&self) -> Arc<String> {
-        Arc::clone(&self.content)
+        self.content.buffer()
+    }
+
+    /// Returns a shared `Rx`, which can be used to update this view's content.
+    pub fn get_shared_content(&self) -> Rx<String> {
+        self.content.rx()
+    }
+
+    /// Sets this view to use the given shared content. Changes to the shared value will be
+    /// automatically reflected here.
+    pub fn set_shared_content(&mut self, content: Rx<String>) {
+        self.content = BRx::wrap(content);
+    }
+
+    /// Sets this view to use the given shared content. Changes to the shared value will be
+    /// automatically reflected here.
+    ///
+    /// Chainable variant.
+    pub fn shared_content(self, content: Rx<String>) -> Self {
+        self.with(|s| s.set_shared_content(content))
     }
 
     /// Sets the current content to the given value.
@@ -410,7 +430,7 @@ impl EditView {
             // Is that true? What about weird combined unicode thingies?
             // Also, say the user copy+paste some content, do we want to
             // stop halfway through a possibly split grapheme?
-            if ch.width().unwrap_or(0) + self.content.width() > width {
+            if ch.width().unwrap_or(0) + self.content.get().width() > width {
                 // ABORT
                 return Callback::dummy();
             }
@@ -420,7 +440,8 @@ impl EditView {
         // It means it'll just return a ref if no one else has a ref,
         // and it will clone it into `self.content` otherwise.
 
-        Arc::make_mut(&mut self.content).insert(self.cursor, ch);
+        self.content.call_on_mut(|c| c.insert(self.cursor, ch));
+
         self.cursor += ch.len_utf8();
 
         self.keep_cursor_in_view();
@@ -436,7 +457,8 @@ impl EditView {
     pub fn remove(&mut self, len: usize) -> Callback {
         let start = self.cursor;
         let end = self.cursor + len.min(self.content.len() - self.cursor);
-        for _ in Arc::make_mut(&mut self.content).drain(start..end) {}
+        self.content
+            .call_on_mut(|c| for _ in c.drain(start..end) {});
 
         self.keep_cursor_in_view();
 
@@ -446,7 +468,7 @@ impl EditView {
     fn make_edit_cb(&self) -> Option<Callback> {
         self.on_edit.clone().map(|cb| {
             // Get a new Arc on the content
-            let content = Arc::clone(&self.content);
+            let content = self.content.buffer();
             let cursor = self.cursor;
 
             Callback::from_fn(move |s| {
@@ -585,7 +607,8 @@ impl View for EditView {
                     .unwrap_or_else(|| {
                         panic!(
                             "Found no char at cursor {} in {}",
-                            self.cursor, &self.content
+                            self.cursor,
+                            self.content.get(),
                         )
                     });
                 if self.secret {
@@ -602,6 +625,13 @@ impl View for EditView {
     }
 
     fn layout(&mut self, size: Vec2) {
+        self.content.refresh();
+        if self.cursor > self.content.len() {
+            self.cursor = self.content.len();
+        }
+        if self.offset > self.content.len() {
+            self.offset = 0;
+        }
         self.last_length = size.x;
     }
 
@@ -672,7 +702,7 @@ impl View for EditView {
             }
             Event::Key(Key::Enter) if self.on_submit.is_some() => {
                 let cb = self.on_submit.clone().unwrap();
-                let content = Arc::clone(&self.content);
+                let content = self.content.buffer();
                 return EventResult::with_cb(move |s| {
                     cb(s, &content);
                 });

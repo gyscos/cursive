@@ -360,20 +360,32 @@ impl<T> SpannedString<T> {
         self.append_raw(&other.source, other.spans);
     }
 
+    /// Appends the given spanned string to `self`.
+    pub fn extend(&mut self, other: SpannedStr<T>)
+    where
+        T: Clone,
+    {
+        self.append_raw(other.source, other.spans.iter().cloned())
+    }
+
     /// Appends `content` and its corresponding spans to the end.
     ///
     /// It is not recommended to use this directly;
     /// instead, look at the `append` method.
-    pub fn append_raw(&mut self, source: &str, spans: Vec<IndexedSpan<T>>) {
+    pub fn append_raw<I>(&mut self, source: &str, spans: I)
+    // Vec<IndexedSpan<T>>) {
+    where
+        I: IntoIterator<Item = IndexedSpan<T>>,
+    {
         let offset = self.source.len();
-        let mut spans = spans;
 
-        for span in &mut spans {
+        let spans = spans.into_iter().map(|mut span| {
             span.content.offset(offset);
-        }
+            span
+        });
 
         self.source.push_str(source);
-        self.spans.append(&mut spans);
+        self.spans.extend(spans);
     }
 
     /// Remove the given range of spans from the styled string.

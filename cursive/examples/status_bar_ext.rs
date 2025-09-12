@@ -8,22 +8,23 @@
 
 use cursive::{
     style::Style,
-    utils::span::SpannedString,
+    utils::{markup::StyledString, span::SpannedString, Rx},
     view::{Nameable, Resizable, View},
-    views::{FixedLayout, Layer, OnLayoutView, TextContent, TextContentRef, TextView},
+    views::{FixedLayout, Layer, OnLayoutView, TextView},
     Cursive, Rect, Vec2,
 };
+use std::sync::Arc;
 
 pub trait StatusBarExt {
-    fn status_bar(&mut self, content: impl Into<SpannedString<Style>>) -> TextContent;
-    fn get_status_bar_content(&mut self) -> TextContentRef;
+    fn status_bar(&mut self, content: impl Into<SpannedString<Style>>) -> Rx<StyledString>;
+    fn get_status_bar_content(&mut self) -> Arc<StyledString>;
     fn set_status_bar_content(&mut self, content: impl Into<SpannedString<Style>>);
 }
 
 impl StatusBarExt for Cursive {
     /// Create a new status bar, set to the given content.
-    fn status_bar(&mut self, content: impl Into<SpannedString<Style>>) -> TextContent {
-        let text_content = TextContent::new(content);
+    fn status_bar(&mut self, content: impl Into<SpannedString<Style>>) -> Rx<StyledString> {
+        let text_content = Rx::new(content.into());
         self.screen_mut().add_transparent_layer(
             OnLayoutView::new(
                 FixedLayout::new().child(
@@ -44,7 +45,7 @@ impl StatusBarExt for Cursive {
         text_content
     }
 
-    fn get_status_bar_content(&mut self) -> TextContentRef {
+    fn get_status_bar_content(&mut self) -> Arc<StyledString> {
         self.call_on_name("status", |text_view: &mut TextView| text_view.get_content())
             .expect("get_status")
     }
