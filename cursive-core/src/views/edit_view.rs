@@ -601,8 +601,14 @@ impl View for EditView {
         }
     }
 
+    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+        let content_width = self.content.width();
+        constraint.or_min((content_width + 1, 1))
+    }
+
     fn layout(&mut self, size: Vec2) {
         self.last_length = size.x;
+        self.keep_cursor_in_view();
     }
 
     fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
