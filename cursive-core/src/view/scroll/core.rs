@@ -180,6 +180,7 @@ impl Core {
         }
 
         // Draw content
+        // eprintln!("Outer: {size:?} Inner: {:?}", self.inner_size());
         printer
             .cropped(size)
             .content_offset(self.offset)
@@ -211,11 +212,15 @@ impl Core {
 
     /// Specifies the size given in a layout phase.
     pub(crate) fn set_last_size(&mut self, last_size: Vec2, scrolling: XY<bool>) {
-        self.last_available = last_size.saturating_sub(
-            scrolling
-                .swap()
-                .select_or(self.scrollbar_padding + (1, 1), Vec2::zero()),
-        );
+        self.last_available = if self.show_scrollbars {
+            last_size.saturating_sub(
+                scrolling
+                    .swap()
+                    .select_or(self.scrollbar_padding + (1, 1), Vec2::zero()),
+            )
+        } else {
+            last_size
+        };
     }
 
     /// Specifies the size allocated to the content.
