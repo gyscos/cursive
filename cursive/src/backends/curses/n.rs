@@ -144,7 +144,7 @@ impl Backend {
         write_to_tty(b"\x1B[?1002h")?;
 
         let c = Backend {
-            current_style: Cell::new(ColorPair::from_256colors(0, 0)),
+            current_style: Cell::new(ColorPair::terminal_default()),
             pairs: RefCell::new(HashMap::default()),
             key_codes: initialize_keymap(),
             last_mouse_button: None,

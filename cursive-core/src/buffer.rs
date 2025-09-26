@@ -460,7 +460,6 @@ impl PrintBuffer {
             }
 
             // Make sure we have the correct style
-            // eprintln!("Applying {style:?} over {:?} for {text} @ {x}:{y}", self.current_style);
             apply_diff(&self.current_style, style, backend);
             self.current_style = *style;
 

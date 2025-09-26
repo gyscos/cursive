@@ -141,7 +141,7 @@ impl Backend {
 
         let c = Backend {
             terminal,
-            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
+            current_style: Cell::new(theme::ColorPair::terminal_default()),
 
             last_button: None,
             events: input_file.events(),

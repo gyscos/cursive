@@ -228,7 +228,7 @@ impl Backend {
         )?;
 
         Ok(Box::new(Backend {
-            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
+            current_style: Cell::new(theme::ColorPair::terminal_default()),
             stdout: RefCell::new(BufWriter::new(stdout)),
         }))
     }

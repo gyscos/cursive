@@ -380,6 +380,7 @@ where
     }
 
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+        // eprintln!("Top constraint: {constraint:?}");
         scroll::required_size(self, constraint, self.inner.needs_relayout(), |s, c| {
             s.inner.required_size(c)
         })
