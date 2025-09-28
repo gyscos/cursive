@@ -39,7 +39,7 @@ pub struct Cursive {
 
     menubar: views::Menubar,
 
-    pub(crate) needs_clear: bool,
+    needs_clear: bool,
 
     running: bool,
 
@@ -126,16 +126,16 @@ impl Cursive {
     pub(crate) fn draw(&mut self, buffer: &RwLock<crate::buffer::PrintBuffer>) {
         let size = buffer.read().size();
 
-        let printer = Printer::new(size, &self.theme, buffer);
-
         if self.needs_clear {
-            printer.clear();
+            buffer.write().clear();
             self.needs_clear = false;
         }
 
         let selected = self.menubar.receive_events();
 
         let offset = usize::from(!self.menubar.autohide);
+
+        let printer = Printer::new(size, &self.theme, buffer);
 
         // The printer for the stackview
         let sv_printer = printer.offset((0, offset)).focused(!selected);
