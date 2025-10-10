@@ -119,3 +119,7 @@ A larger example showing an implementation of minesweeper.
 ## [`window_title`](./window_title.rs)
 
 This shows how to change the terminal window title.
+
+## [`checkbox`](./checkbox.rs)
+
+This shows how to use `Checkbox`.
