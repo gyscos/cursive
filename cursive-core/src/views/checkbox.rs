@@ -4,6 +4,7 @@ use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     style::PaletteStyle,
+    utils::markup::StyledString,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
