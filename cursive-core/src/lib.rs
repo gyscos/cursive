@@ -54,7 +54,7 @@ pub mod reexports {
 
 // use crate as cursive;
 
-pub use cursive_macros::{callback_helpers, recipe};
+pub use cursive_macros::{blueprint, callback_helpers};
 
 #[macro_use]
 pub mod utils;
@@ -69,6 +69,7 @@ pub mod direction;
 pub mod event;
 pub mod logger;
 pub mod menu;
+pub mod style;
 pub mod theme;
 pub mod traits;
 pub mod vec;
@@ -79,6 +80,7 @@ pub use inventory::submit;
 #[macro_use]
 pub mod builder;
 
+pub mod buffer;
 mod cursive_root;
 mod cursive_run;
 mod dump;

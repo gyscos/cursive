@@ -1,4 +1,4 @@
-use cursive::theme::{BaseColor, Color, Effect, Style};
+use cursive::style::{BaseColor, Color, Effect, Style};
 use cursive::utils::markup::StyledString;
 use cursive::{menu, traits::*};
 

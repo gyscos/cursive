@@ -274,49 +274,49 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
     args.inputs.len()
 }
 
-/// Generate two helper functions to help working with callbacks in cursive recipes.
+/// Generate two helper functions to help working with callbacks in cursive blueprints.
 ///
 /// # Problem to solve
 ///
-/// When writing cursive recipes, it is often necessary to load parameters or variables.
+/// When writing cursive blueprints, it is often necessary to load parameters or variables.
 ///
 /// Some of these have simple types like `u64` or `String`, but in some cases we need to load a
 /// callback. Most of the time, the existing setter function will take a generic `<F: Fn(...)>`.
 ///
-/// In this case, the recipe loading the variable and the user storing the variable need
+/// In this case, the blueprint loading the variable and the user storing the variable need
 /// to use the exact same type (otherwise, downcasting will not work). This is made complicated by Rust's
 /// closures, where each closure is a unique anonymous type: if the user directly stores a closure,
-/// there will be no way to identify its exact type to downcast it in the recipe.
+/// there will be no way to identify its exact type to downcast it in the blueprint.
 ///
-/// Instead, both sides (recipe and user) need to agree to use a fixed type, for example a trait
+/// Instead, both sides (blueprint and user) need to agree to use a fixed type, for example a trait
 /// object like `Arc<dyn Fn(&mut Cursive)>` (we use `Arc` rather than `Box` because we want variables
 /// to be cloneable).
 ///
 /// It's a bit cumbersome having to write the exact type including the `Arc` whenever we want to
-/// store a callback for a recipe. Similarly, it's a bit annoying when writing the recipe to make
+/// store a callback for a blueprint. Similarly, it's a bit annoying when writing the blueprint to make
 /// sure the correct `Arc<...>` type is fetched and converted to a type directly usable as callback.
 /// Most importantly, it increases the chances of the two sides not using _exactly_ the same type,
-/// leading to failures when attempting to load the variable for the recipe.
+/// leading to failures when attempting to load the variable for the blueprint.
 ///
 /// # Solution
 ///
 /// This is where this macro comes into play: from an original function that requires a closure, it
 /// generates two helper functions:
 /// * A _maker_ function, to be used when storing variables. This function takes a generic type
-/// implementing the same `Fn` trait as the desired callback, and returns it wrapped in the correct
-/// trait object. It will be named `{name}_cb`, where `{name}` is the name of the original function
-/// this macro is attached to.
-/// * A _setter_ function, to be used when writing recipes. This function wraps the original
-/// function, but takes a trait-object instead of a generic `Fn` type, and unwraps it internally.
-/// It will be named `{name}_with_cb`, where `{name}` is the name of the original function this
-/// macro is attached to.
+///   implementing the same `Fn` trait as the desired callback, and returns it wrapped in the
+///   correct trait object. It will be named `{name}_cb`, where `{name}` is the name of the
+///   original function this macro is attached to.
+/// * A _setter_ function, to be used when writing blueprints. This function wraps the original
+///   function, but takes a trait-object instead of a generic `Fn` type, and unwraps it
+///   internally. It will be named `{name}_with_cb`, where `{name}` is the name of the original
+///   function this macro is attached to.
 ///
 /// # Notes
 ///
-/// * The wrapped function doesn't even have to take `self`, it can be a "static"
-/// constructor method.
-/// * The `maker` function always takes a `Fn`, not a `FnMut` or `FnOnce`.
-/// Use the `cursive::immut1!` (and others) macros to wrap a `FnMut` into a `Fn` if you need it.
+/// * The wrapped function doesn't even have to take `self`, it can be a "static" constructor
+///   method.
+/// * The `maker` function always takes a `Fn`, not a `FnMut` or `FnOnce`. Use the
+///   `cursive::immut1!` (and others) macros to wrap a `FnMut` into a `Fn` if you need it.
 ///
 /// # Examples
 ///
@@ -340,8 +340,8 @@ fn get_arity(bound: &syn::TraitBound) -> usize {
 ///     }
 /// }
 ///
-/// cursive::recipe!(Foo, |config, context| {
-///     // In a recipe, we use `new_with_cb` to resolve the proper callback type.
+/// cursive::blueprint!(Foo, |config, context| {
+///     // In a blueprint, we use `new_with_cb` to resolve the proper callback type.
 ///     let foo =
 ///         Foo::new_with_cb(context.resolve(config["callback"])?);
 ///
@@ -518,7 +518,7 @@ This is mostly useful when using this view in a template."#
                         ..
                     }) = predicate
                     {
-                        type_ident.map_or(false, |ident| !path.path.is_ident(ident))
+                        type_ident.is_some_and(|ident| !path.path.is_ident(ident))
                     } else {
                         false
                     }
@@ -538,7 +538,7 @@ This is mostly useful when using this view in a template."#
     let setter_doc = format!(
         r#"Helper method to call [`Self::{fn_ident}`] with a variable from a config.
 
-This is mostly useful when writing a cursive recipe for this view."#
+This is mostly useful when writing a cursive blueprint for this view."#
     );
     let setter_fn = quote! {
         #[doc = #setter_doc]

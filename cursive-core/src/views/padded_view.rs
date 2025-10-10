@@ -75,13 +75,13 @@ impl<V: View> ViewWrapper for PaddedView<V> {
     }
 }
 
-#[crate::recipe(PaddedView::new(margins, child))]
-struct Recipe {
+#[crate::blueprint(PaddedView::new(margins, view))]
+struct Blueprint {
     margins: Margins,
-    child: crate::views::BoxedView,
+    view: crate::views::BoxedView,
 }
 
-crate::raw_recipe!(with padding, |config, context| {
+crate::manual_blueprint!(with padding, |config, context| {
     let margins = context.resolve(config)?;
     Ok(move |view| PaddedView::new(margins, view))
 });

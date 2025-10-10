@@ -33,7 +33,8 @@ impl<V> ScrollView<V> {
             on_scroll: Arc::new(|_, _| EventResult::Ignored),
         }
     }
-
+}
+impl<V: 'static> ScrollView<V> {
     /// Returns the viewport in the inner content.
     pub fn content_viewport(&self) -> Rect {
         self.core.content_viewport()
@@ -221,6 +222,7 @@ impl<V> ScrollView<V> {
     ///
     /// If you just need to run a callback on `&mut Cursive`, consider
     /// `set_on_scroll`.
+    #[crate::callback_helpers]
     pub fn set_on_scroll_inner<F>(&mut self, on_scroll: F)
     where
         F: FnMut(&mut Self, Rect) -> EventResult + 'static + Send + Sync,
@@ -229,6 +231,7 @@ impl<V> ScrollView<V> {
     }
 
     /// Sets a callback to be run whenever scrolling happens.
+    #[crate::callback_helpers]
     pub fn set_on_scroll<F>(&mut self, on_scroll: F)
     where
         F: FnMut(&mut Cursive, Rect) + 'static + Send + Sync,
@@ -264,19 +267,19 @@ impl<V> ScrollView<V> {
     }
 
     /// Sets a callback to be run whenever the scroll offset changes.
+    #[crate::callback_helpers]
     pub fn set_on_scroll_change_inner<F>(&mut self, on_scroll: F)
     where
         F: FnMut(&mut Self, Rect) -> EventResult + 'static + Send + Sync,
-        V: 'static,
     {
         self.set_on_scroll_inner(Self::skip_unchanged(on_scroll, || EventResult::Ignored));
     }
 
     /// Sets a callback to be run whenever the scroll offset changes.
+    #[crate::callback_helpers]
     pub fn set_on_scroll_change<F>(&mut self, on_scroll: F)
     where
         F: FnMut(&mut Cursive, Rect) + 'static + Send + Sync,
-        V: 'static,
     {
         self.set_on_scroll(Self::skip_unchanged(on_scroll, || ()));
     }
@@ -377,6 +380,7 @@ where
     }
 
     fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+        // eprintln!("Top constraint: {constraint:?}");
         scroll::required_size(self, constraint, self.inner.needs_relayout(), |s, c| {
             s.inner.required_size(c)
         })
@@ -422,6 +426,22 @@ where
     }
 }
 
+#[crate::blueprint(ScrollView::new(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+
+    scroll_x: Option<bool>,
+    scroll_y: Option<bool>,
+    scroll_strategy: Option<ScrollStrategy>,
+    show_scrollbars: Option<bool>,
+
+    on_scroll: Option<_>,
+    on_scroll_inner: Option<_>,
+
+    on_scroll_change: Option<_>,
+    on_scroll_change_inner: Option<_>,
+}
+
 // ```yaml
 // - TextView
 //     content: $content
@@ -429,7 +449,7 @@ where
 //         - name: text
 //         - scroll: true
 // ```
-crate::raw_recipe!(with scroll, |config, context| {
+crate::manual_blueprint!(with scroll, |config, context| {
     use crate::builder::{Config, Error};
 
     // Value could be:

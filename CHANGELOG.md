@@ -1,12 +1,42 @@
 # Changelog
 
-## cursive next (0.21)
+## cursive-core 0.4.6
+
+- Remove serde_yaml dependency (moved to dev-dependency)
+
+## cursive-core 0.4.5
+
+- Implement Resolvable for more types in the style module
+
+## cursive-core 0.4.4
+
+- Implement more standalone blueprints
+- Panel and PaddedView blueprints now use `view` instead of `child`
+- Implement Debug for `builder::Context`
+
+## cursive-core 0.4.3
+
+- Implement `Resolvable` for more types.
+- Relax `Sync` bound on FnMut and FnOnce callbacks.
+
+## cursive-core 0.4.2
+
+- Raise `enumset` version in dependency to make sure `EnumSet::empty()` is const fn.
+
+## cursive-core 0.4.1
+
+- Add missing `Sync` bound on `View`
+- Doc fixes
+
+## cursive 0.21
 
 ### Breaking Changes
 
-- Updates termion to 3.0
-- Updates crossterm to 0.27.0
+- Defaults to crossterm backend (instead of ncurses)
+- Updates termion to 4.0
+- Updates crossterm to 0.28.1
 - Updates cursive-core to 0.4.0
+- Updates ncurses to 6.0.1
 
 ### Improvements
 
@@ -17,13 +47,19 @@
 
 - Crossterm backend: properly reset the color when de-initializing.
 
-## cursive-core next (0.4.0)
+## cursive-core 0.4.0
 
 ### Breaking Changes
 
 - The `View` now requires `Send + Sync`, to allow accessing or moving views between threads.
   This prevents using `Rc`/`RefCell`, and may require using `Arc`/`Mutex` instead.
   This should eventually open the way for more multi-threaded processing of the view tree.
+- `theme::Style::effects` is now a map from `Effect` to `EffectStatus`.
+- The `Backend` trait was changed:
+    - `print_at` was split into `move_to` and `print`.
+    - `print_at_rep` was removed.
+- Some dependencies were updated:
+    - toml was bumped from 0.5 to 0.8
 
 ### API updates
 
@@ -33,10 +69,29 @@
 - Added `Cursive::clear_all_global_callbacks()`.
 - Improved `CursiveLogger`
 - Added `Event::char(&self) -> Option<char>`
+- Some functions are now callable in const context.
+- Most of `cursive::theme` has moved to a new `cursive::style` module, with a re-export from `cursive::theme` for backward compatibility.
+- Added `cursive::style::{Rgb, gradient}` for better gradient support.
+- Added `GradientView`.
+- Added `cursive::utils::markup::cursup` for a simple cursive-focused markup parser.
+- Added `cursive::utils::markup::gradient` to decorate text with gradients.
+- Made `cursive::theme::Theme::load_toml` public.
+- `SelectView` can now use different decorators instead of `< >`.
 
 ## Bugfixes
 
-- Fix shift+tab handling on termion
+- Fix shift+tab handling on termion.
+- Fix possible panics with empty `MenuPopup`.
+
+## Improvements
+
+- The menubar now properly supports styled entries.
+- The output to the backend is now buffered and delta-patched, resulting in improved performance for most backends.
+- `owning_ref` was replaced with `parking_lot`
+- `pulldown_cmark` was updated to 0.10
+- `ansi-parser` was updated to 0.9
+- Scrollable pages now scroll an entire page on left/right key presses.
+- Fixed example links in Readme.md.
 
 ## cursive-core 0.3.7
 

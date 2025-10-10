@@ -12,5 +12,5 @@ See the example for usage.
 
 ```toml
 [dependencies]
-cursive-syntect = "0.1"
+cursive-syntect = "0.2"
 ```

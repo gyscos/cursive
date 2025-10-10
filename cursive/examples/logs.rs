@@ -1,8 +1,8 @@
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use cursive::traits::*;
 use cursive::Vec2;
 use cursive::{Cursive, Printer};
 use std::collections::VecDeque;
-use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
@@ -20,7 +20,7 @@ fn main() {
     siv.add_global_callback('q', |s| s.quit());
 
     // A channel will communicate data from our running task to the UI.
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = unbounded();
 
     // Generate data in a separate thread.
     thread::spawn(move || {
@@ -35,7 +35,7 @@ fn main() {
 
 // We will only simulate log generation here.
 // In real life, this may come from a running task, a separate process, ...
-fn generate_logs(tx: &mpsc::Sender<String>, cb_sink: cursive::CbSink) {
+fn generate_logs(tx: &Sender<String>, cb_sink: cursive::CbSink) {
     let mut i = 1;
     loop {
         let line = format!("Interesting log line {i}");
@@ -55,12 +55,12 @@ struct BufferView {
     // We'll use a ring buffer
     buffer: VecDeque<String>,
     // Receiving end of the stream
-    rx: mpsc::Receiver<String>,
+    rx: Receiver<String>,
 }
 
 impl BufferView {
     // Creates a new view with the given buffer size
-    fn new(size: usize, rx: mpsc::Receiver<String>) -> Self {
+    fn new(size: usize, rx: Receiver<String>) -> Self {
         let mut buffer = VecDeque::new();
         buffer.resize(size, String::new());
         BufferView { buffer, rx }

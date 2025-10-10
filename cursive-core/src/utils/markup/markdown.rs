@@ -6,7 +6,7 @@
 
 use std::borrow::Cow;
 
-use crate::theme::{Effect, Style};
+use crate::style::{Effect, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
 
@@ -37,6 +37,9 @@ fn cowvert(cow: CowStr) -> Cow<str> {
 
 /// Iterator that parse a markdown text and outputs styled spans.
 pub struct Parser<'a> {
+    /// Did we process the first item already?
+    ///
+    /// Used to omit newlines before the very first block.
     first: bool,
     stack: Vec<Style>,
     input: &'a str,
@@ -67,28 +70,30 @@ fn heading(level: usize) -> &'static str {
     &"##########"[..level]
 }
 
-impl<'a> Iterator for Parser<'a> {
+impl Iterator for Parser<'_> {
     type Item = StyledIndexedSpan;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            let next = match self.parser.next() {
-                None => return None,
-                Some(event) => event,
-            };
+            let next = self.parser.next()?;
 
             match next {
                 Event::Start(tag) => match tag {
                     // Add to the stack!
                     Tag::Emphasis => self.stack.push(Style::from(Effect::Italic)),
                     Tag::Heading { level, .. } => {
-                        return Some(self.literal(format!("{} ", heading(level as usize))))
+                        let lines = if self.first { "" } else { "\n\n" };
+                        return Some(self.literal(format!(
+                            "{}{} ",
+                            lines,
+                            heading(level as usize)
+                        )));
                     }
                     Tag::BlockQuote(_) => return Some(self.literal("> ")),
                     Tag::Link {
                         dest_url, title, ..
                     } => return Some(self.literal(format!("[{title}]({dest_url})"))),
-                    Tag::CodeBlock(_) => return Some(self.literal("```")),
+                    Tag::CodeBlock(_) => return Some(self.literal("```\n")),
                     Tag::Strong => self.stack.push(Style::from(Effect::Bold)),
                     Tag::Paragraph if !self.first => return Some(self.literal("\n\n")),
                     _ => (),
@@ -96,8 +101,11 @@ impl<'a> Iterator for Parser<'a> {
                 Event::End(tag) => match tag {
                     // Remove from stack!
                     TagEnd::Paragraph if self.first => self.first = false,
-                    TagEnd::Heading(..) => return Some(self.literal("\n\n")),
-                    TagEnd::CodeBlock => return Some(self.literal("```")),
+                    TagEnd::Heading(..) => self.first = false,
+                    TagEnd::CodeBlock => {
+                        self.first = false;
+                        return Some(self.literal("```"));
+                    }
                     TagEnd::Emphasis | TagEnd::Strong => {
                         self.stack.pop().unwrap();
                     }
@@ -169,7 +177,7 @@ I *really* love __Cursive__!";
                 },
                 Span {
                     content: "\n\n",
-                    width: 0,
+                    width: "\n\n".width(),
                     attr: &Style::none(),
                 },
                 Span {

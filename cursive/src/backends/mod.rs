@@ -38,12 +38,12 @@ pub fn try_default() -> Result<Box<dyn cursive_core::backend::Backend>, Box<dyn 
             Ok(blt::Backend::init())
         } else if #[cfg(feature = "termion-backend")] {
             termion::Backend::init().map_err(boxed)
-        } else if #[cfg(feature = "crossterm-backend")] {
-            crossterm::Backend::init().map_err(boxed)
         } else if #[cfg(feature = "pancurses-backend")] {
             curses::pan::Backend::init().map_err(boxed)
         } else if #[cfg(feature = "ncurses-backend")] {
             curses::n::Backend::init().map_err(boxed)
+        } else if #[cfg(feature = "crossterm-backend")] {
+            crossterm::Backend::init().map_err(boxed)
         } else {
             log::warn!("No built-it backend, falling back to Dummy backend.");
             Ok(cursive_core::backend::Dummy::init())

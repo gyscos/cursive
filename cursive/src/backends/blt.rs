@@ -1,14 +1,18 @@
 //! Backend using BearLibTerminal
 //!
 //! Requires the `blt-backend` feature.
-#![cfg(feature = "bear-lib-terminal")]
+#![cfg(feature = "blt-backend")]
 #![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "blt-backend")))]
 
 pub use bear_lib_terminal;
 
+use std::cell::Cell;
+
 use bear_lib_terminal::geometry::Size;
 use bear_lib_terminal::terminal::{self, state, Event as BltEvent, KeyCode};
 use bear_lib_terminal::Color as BltColor;
+
+use unicode_width::UnicodeWidthStr;
 
 use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
@@ -26,6 +30,7 @@ enum ColorRole {
 /// Backend using BearLibTerminal
 pub struct Backend {
     buttons_pressed: HashSet<MouseButton>,
+    cursor: Cell<Vec2>,
     mouse_position: Vec2,
 }
 
@@ -49,6 +54,7 @@ impl Backend {
         let c = Backend {
             buttons_pressed: HashSet::default(),
             mouse_position: Vec2::zero(),
+            cursor: Cell::new(Vec2::zero()),
         };
 
         Box::new(c)
@@ -271,10 +277,8 @@ impl backend::Backend for Backend {
             | Effect::Strikethrough
             | Effect::Blink
             | Effect::Simple => {}
-            // TODO: how to do this correctly?`
-            //       BLT itself doesn't do this kind of thing,
-            //       we'd need the colours in our position,
-            //       but `f()` can do whatever
+            // TODO: implement this correctly.
+            // Add a `reverse` flag in the Backend, and check it when calling `set_colors`.
             Effect::Reverse => terminal::set_colors(state::background(), state::foreground()),
         }
     }
@@ -312,8 +316,14 @@ impl backend::Backend for Backend {
         terminal::refresh();
     }
 
-    fn print_at(&self, pos: Vec2, text: &str) {
+    fn move_to(&self, pos: Vec2) {
+        self.cursor.set(pos);
+    }
+
+    fn print(&self, text: &str) {
+        let pos = self.cursor.get();
         terminal::print_xy(pos.x as i32, pos.y as i32, text);
+        self.cursor.set(pos + (text.width(), 0));
     }
 
     fn poll_event(&mut self) -> Option<Event> {

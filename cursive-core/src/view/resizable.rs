@@ -21,7 +21,7 @@ pub trait Resizable: View + Sized {
         ResizedView::with_fixed_width(width, self)
     }
 
-    /// Wraps `self` into a fixed-width `ResizedView`.
+    /// Wraps `self` into a fixed-height `ResizedView`.
     fn fixed_height(self, height: usize) -> ResizedView<Self> {
         ResizedView::with_fixed_height(height, self)
     }

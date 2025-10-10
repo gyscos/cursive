@@ -4,7 +4,7 @@
 #![cfg(feature = "ansi")]
 #![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "ansi")))]
 
-use crate::theme::{BaseColor, Color, Effect, Style};
+use crate::style::{BaseColor, Color, Effect, Style};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use crate::utils::span::IndexedCow;
 
@@ -176,7 +176,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-impl<'a> Iterator for Parser<'a> {
+impl Iterator for Parser<'_> {
     type Item = StyledIndexedSpan;
 
     fn next(&mut self) -> Option<Self::Item> {

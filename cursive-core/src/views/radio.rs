@@ -2,7 +2,7 @@ use crate::builder::{Config, Context, Error, Resolvable};
 use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
-    theme::PaletteStyle,
+    style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2,
@@ -303,8 +303,8 @@ impl Resolvable for RadioGroup<String> {
     }
 }
 
-#[crate::recipe(RadioButton::from_group_str(&mut group, label))]
-struct Recipe {
+#[crate::blueprint(RadioButton::from_group_str(&mut group, label))]
+struct Blueprint {
     group: RadioGroup<String>,
     label: String,
 }

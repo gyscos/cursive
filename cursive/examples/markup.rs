@@ -1,7 +1,7 @@
-use cursive::theme::BaseColor;
-use cursive::theme::Color;
-use cursive::theme::Effect;
-use cursive::theme::Style;
+use cursive::style::BaseColor;
+use cursive::style::Color;
+use cursive::style::Effect;
+use cursive::style::Style;
 use cursive::utils::markup::StyledString;
 use cursive::views::{Dialog, TextView};
 

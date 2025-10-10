@@ -82,28 +82,20 @@ fn parse_enum(
             syn::Fields::Unnamed(fields) => {
                 if fields.unnamed.len() == 1 {
                     // Direct value?
-                    match &fields.unnamed[0].ty {
-                        syn::Type::Path(path) => {
-                            if path.path.is_ident("String") {
-                                // String! With name of variant as ident?
-                                // variant.ident
-                                // The match case
-                                let consumer = parse_struct(
-                                    &variant.fields,
-                                    params,
-                                    &variant_name,
-                                    base,
-                                    root,
-                                )?;
-                                cases.push(quote! {
-                                    #root::builder::Config::String(_) => {
-                                        #consumer
-                                    }
-                                });
-                            }
+                    // String! With name of variant as ident?
+                    // variant.ident
+                    // The match case
+                    let consumer =
+                        parse_struct(&variant.fields, params, &variant_name, base, root)?;
+
+                    cases.push(quote! {
+                        match || -> Result<_, crate::builder::Error> {
+                            Ok({#consumer})
+                        }() {
+                            Ok(res) => return Ok(res),
+                            Err(err) => errors.push(err),
                         }
-                        _ => unimplemented!("Non-path type in tuple variant"),
-                    }
+                    });
                 } else {
                     // Array?
                     unimplemented!("Non-singleton in tuple variant");
@@ -113,34 +105,40 @@ fn parse_enum(
                 // An object.
                 let consumer = parse_struct(&variant.fields, params, &variant_name, base, root)?;
                 cases.push(quote! {
-                    #root::builder::Config::Object(_) => {
-                        #consumer
+                    match || -> Result<_, crate::builder::Error> {
+                        Ok({#consumer})
+                    }() {
+                        Ok(res) => return Ok(res),
+                        Err(err) => errors.push(err),
                     }
                 });
             }
             syn::Fields::Unit => {
                 // Null?
                 cases.push(quote! {
-                    #root::builder::Config::Null => {
-                        #base
+                    if config.is_null() {
+                        return Ok({#base});
+                    } else {
+
                     }
                 });
             }
         }
     }
 
-    cases.push(quote! {
-        _ => return Err(#root::builder::Error::invalid_config("Unexpected config", config)),
-    });
-
     Ok(quote! {
-        match config {
-            #(#cases),*
-        }
+        || -> Result<_, crate::builder::Error> {
+            let mut errors = Vec::new();
+            #(#cases)*
+            Err(#root::builder::Error::AllVariantsFailed {
+                config: config.clone(),
+                errors
+            })
+        }()?
     })
 }
 
-// #[recipe(
+// #[blueprint(
 //      config = false,
 //      setter = set_enabled,
 //      config_name = "foo",
@@ -229,9 +227,9 @@ impl VariableSpecs {
             config_name: None,
             default: None,
         };
-        // Look for an explicit #[recipe]
+        // Look for an explicit #[blueprint]
         for attr in &field.attrs {
-            if !attr.path().is_ident("recipe") {
+            if !attr.path().is_ident("blueprint") {
                 continue;
             }
 
@@ -294,8 +292,8 @@ impl Variable {
         // An example from TextView:
         //
         // ```
-        // #[crate::recipe(TextView::empty())]
-        // enum Recipe {
+        // #[crate::blueprint(TextView::empty())]
+        // enum Blueprint {
         //     Empty,
         //
         //     Content(String),
@@ -351,7 +349,7 @@ impl Variable {
         };
 
         // Some types have special handling
-        if let Some(_) = is_option_type(&field.ty) {
+        if is_option_type(&field.ty).is_some() {
             consumer = Consumer::Opt(Box::new(consumer));
         }
 
@@ -484,8 +482,8 @@ fn parse_struct(
     })
 }
 
-// Direct parsing (with minimal processing) of the attributes from a recipe.
-struct RecipeAttributes {
+// Direct parsing (with minimal processing) of the attributes from a blueprint.
+struct BlueprintAttributes {
     // Base expression to build. Ex: `TextView::new()`.
     // Might rely on variables in base_parameters.
     base: syn::Expr,
@@ -494,7 +492,7 @@ struct RecipeAttributes {
     // These might not need to be set separately.
     base_parameters: HashSet<String>,
 
-    // Name for the recipe.
+    // Name for the blueprint.
     name: String,
 }
 
@@ -548,9 +546,9 @@ fn base_default_name(expr: &syn::Expr) -> Option<String> {
     Some(ident.to_string())
 }
 
-impl syn::parse::Parse for RecipeAttributes {
-    // Parse attributes for a recipe. Ex:
-    // #[recipe(TextView::new(content), name="Text")]
+impl syn::parse::Parse for BlueprintAttributes {
+    // Parse attributes for a blueprint. Ex:
+    // #[blueprint(TextView::new(content), name="Text")]
     fn parse(input: syn::parse::ParseStream<'_>) -> syn::parse::Result<Self> {
         let base: syn::Expr = input.parse()?;
 
@@ -558,7 +556,7 @@ impl syn::parse::Parse for RecipeAttributes {
         find_parameters(&base, &mut base_parameters);
 
         // Compute name and parameters from the expression.
-        let mut name = base_default_name(&base).unwrap_or_else(String::new);
+        let mut name = base_default_name(&base).unwrap_or_default();
 
         // We can't parse this as a regular nested meta.
         // Parse it as a list of `key = value` items.
@@ -573,23 +571,23 @@ impl syn::parse::Parse for RecipeAttributes {
             }
         }
 
-        return Ok(RecipeAttributes {
+        Ok(BlueprintAttributes {
             base,
             base_parameters,
             name,
-        });
+        })
     }
 }
 
-pub fn recipe(attrs: TokenStream, item: TokenStream) -> TokenStream {
+pub fn blueprint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(item as syn::Item);
 
-    // Parse the initial things given to the #[recipe(...)] macro.
+    // Parse the initial things given to the #[blueprint(...)] macro.
     // We expect:
     // Positional, first argument: an expression.
     // Optional, named arguments:
-    // name = "RecipeName"
-    let attributes = syn::parse_macro_input!(attrs as RecipeAttributes);
+    // name = "BlueprintName"
+    let attributes = syn::parse_macro_input!(attrs as BlueprintAttributes);
 
     // Either cursive or cursive_core are good roots.
     // If we can't find it, assume it's building cursive_core itself.
@@ -653,7 +651,7 @@ pub fn recipe(attrs: TokenStream, item: TokenStream) -> TokenStream {
 
     let ident = syn::Ident::new(&attributes.name, Span::call_site());
     let result = quote! {
-        #root::raw_recipe!(#ident, |config, context| {
+        #root::manual_blueprint!(#ident, |config, context| {
             Ok({ #builder })
         });
     };

@@ -91,6 +91,10 @@ This example shows the effect of the `Color::TerminalDefault` setting.
 
 This example draws a colorful square to show off true color support.
 
+## [`colored_text`](./colored_text.rs)
+
+This example showcasing various methods to color and remove text styles, highlighting the limitations of Crossterm's raw ANSI output.
+
 ## [`refcell_view`](./refcell_view.rs)
 
 Here we show how to access multiple views concurrently through their name.

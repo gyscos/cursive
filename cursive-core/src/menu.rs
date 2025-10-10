@@ -13,25 +13,12 @@
 //! [`Tree`]: struct.Tree.html
 //! [menubar]: ../struct.Cursive.html#method.menubar
 
-use crate::utils::span::{IndexedCow, IndexedSpan, SpannedStr};
-use crate::{
-    event::Callback, theme::ColorStyle, theme::ColorType, theme::Style,
-    utils::markup::StyledString, Cursive, With,
-};
-use enumset::EnumSet;
+use crate::utils::markup::PlainStr;
+use crate::utils::span::{SpannedStr, SpannedText as _};
+use crate::{event::Callback, style::Style, utils::markup::StyledString, Cursive, With};
 use std::sync::Arc;
 
-const PLAIN_1CHAR_SPAN: &'static [IndexedSpan<Style>] = &[IndexedSpan {
-    content: IndexedCow::Borrowed { start: 0, end: 1 },
-    attr: Style {
-        effects: EnumSet::EMPTY, // This needs a recent enough `enumset` dependency, we should bump the minimum version to 1.1.0
-        color: ColorStyle {
-            front: ColorType::InheritParent,
-            back: ColorType::InheritParent,
-        },
-    },
-    width: 1,
-}];
+static DELIMITER: PlainStr = PlainStr::new_with_width("│", 1);
 
 /// Root of a menu tree.
 #[derive(Default, Clone)]
@@ -104,7 +91,7 @@ impl Item {
     /// Returns a vertical bar string if `self` is a delimiter.
     pub fn label(&self) -> &str {
         match *self {
-            Item::Delimiter => "│",
+            Item::Delimiter => DELIMITER.source(),
             Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => label.source(),
         }
     }
@@ -114,7 +101,7 @@ impl Item {
     /// Returns a vertical bar string if `self` is a delimiter.
     pub fn styled_label(&self) -> SpannedStr<Style> {
         match *self {
-            Item::Delimiter => SpannedStr::new("|", PLAIN_1CHAR_SPAN),
+            Item::Delimiter => DELIMITER.as_styled_str(),
             Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => {
                 SpannedStr::from(label)
             }
@@ -182,8 +169,10 @@ impl Item {
 
 impl Tree {
     /// Creates a new, empty tree.
-    pub fn new() -> Self {
-        Self::default()
+    pub const fn new() -> Self {
+        Self {
+            children: Vec::new(),
+        }
     }
 
     /// Remove every children from this tree.
@@ -357,20 +346,19 @@ impl Tree {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::theme::{ColorStyle, ColorType, Style};
+    use crate::style::{ColorStyle, ColorType, Effects, Style};
     use crate::utils::span::Span;
-    use enumset::EnumSet;
 
     #[test]
     fn test_styled_label_delimiter() {
         let item = Item::Delimiter;
         let styled_label = item.styled_label();
-        assert_eq!(styled_label.source(), "|");
+        assert_eq!(styled_label.source(), DELIMITER.source());
 
         let expected_spans: Vec<Span<Style>> = vec![Span {
-            content: "|",
+            content: DELIMITER.source(),
             attr: &Style {
-                effects: EnumSet::EMPTY,
+                effects: Effects::EMPTY,
                 color: ColorStyle {
                     front: ColorType::InheritParent,
                     back: ColorType::InheritParent,

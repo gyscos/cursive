@@ -44,6 +44,18 @@ impl Default for ScrollStrategy {
     }
 }
 
+impl std::str::FromStr for ScrollStrategy {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "KeepRow" | "keep_row" => Self::KeepRow,
+            "StickToTop" | "stick_to_top" => Self::StickToTop,
+            "StickToBottom" | "stick_to_bottom" => Self::StickToBottom,
+            _ => return Err(()),
+        })
+    }
+}
+
 /// Performs `View::on_event` on a `scroll::Scroller`.
 ///
 /// Example:

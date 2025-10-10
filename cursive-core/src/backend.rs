@@ -9,9 +9,8 @@
 //! [`Backend`]: trait.Backend.html
 
 use crate::event::Event;
-use crate::theme;
+use crate::style;
 use crate::Vec2;
-use unicode_width::UnicodeWidthStr;
 
 /// Trait defining the required methods to be a backend.
 ///
@@ -57,47 +56,41 @@ pub trait Backend {
     /// Returns the screen size.
     fn screen_size(&self) -> Vec2;
 
-    /// Main method used for printing
-    fn print_at(&self, pos: Vec2, text: &str);
-
-    /// Efficient method to print repetitions of the same text.
+    /// Move the cursor to the given cell.
     ///
-    /// Usually used to draw horizontal lines/borders.
+    /// The next call to `print()` will start at this place.
+    fn move_to(&self, pos: Vec2);
+
+    /// Print some text at the current cursor.
     ///
-    /// It is a small optimization to avoid moving the cursor after each step.
-    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
-        if repetitions > 0 {
-            self.print_at(pos, text);
-
-            let width = text.width();
-            let mut pos = pos;
-            let mut dupes_left = repetitions - 1;
-
-            while dupes_left > 0 {
-                pos = pos.saturating_add((width, 0));
-                self.print_at(pos, text);
-                dupes_left -= 1;
-            }
-        }
-    }
+    /// The cursor will then be moved past the end of the printed text.
+    fn print(&self, text: &str);
 
     /// Clears the screen with the given color.
-    fn clear(&self, color: theme::Color);
+    fn clear(&self, color: style::Color);
 
     /// Starts using a new color.
     ///
     /// This should return the previously active color.
     ///
     /// Any call to `print_at` from now on should use the given color.
-    fn set_color(&self, colors: theme::ColorPair) -> theme::ColorPair;
+    fn set_color(&self, colors: style::ColorPair) -> style::ColorPair;
 
     /// Enables the given effect.
     ///
     /// Any call to `print_at` from now on should use the given effect.
-    fn set_effect(&self, effect: theme::Effect);
+    fn set_effect(&self, effect: style::Effect);
+
+    /// Returns `true` if the backend has persistent output.
+    ///
+    /// If true, this means that output stays there between calls to
+    /// `refresh()`, so only delta needs to be sent.
+    fn is_persistent(&self) -> bool {
+        false
+    }
 
     /// Disables the given effect.
-    fn unset_effect(&self, effect: theme::Effect);
+    fn unset_effect(&self, effect: style::Effect);
 
     /// Returns a name to identify the backend.
     ///
@@ -142,19 +135,18 @@ impl Backend for Dummy {
         Some(Event::Exit)
     }
 
-    fn print_at(&self, _: Vec2, _: &str) {}
+    fn move_to(&self, _: Vec2) {}
+    fn print(&self, _: &str) {}
 
-    fn print_at_rep(&self, _pos: Vec2, _repetitions: usize, _text: &str) {}
-
-    fn clear(&self, _: theme::Color) {}
+    fn clear(&self, _: style::Color) {}
 
     // This sets the Colours and returns the previous colours
     // to allow you to set them back when you're done.
-    fn set_color(&self, colors: theme::ColorPair) -> theme::ColorPair {
+    fn set_color(&self, colors: style::ColorPair) -> style::ColorPair {
         // TODO: actually save a stack of colors?
         colors
     }
 
-    fn set_effect(&self, _: theme::Effect) {}
-    fn unset_effect(&self, _: theme::Effect) {}
+    fn set_effect(&self, _: style::Effect) {}
+    fn unset_effect(&self, _: style::Effect) {}
 }

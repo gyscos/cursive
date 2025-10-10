@@ -1,6 +1,6 @@
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
-use crate::theme::PaletteStyle;
+use crate::style::PaletteStyle;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 use crate::Vec2;
@@ -114,4 +114,9 @@ impl<T: View> ViewWrapper for ShadowView<T> {
     }
 }
 
-crate::raw_recipe!(with shadow, |_, _| Ok(ShadowView::new));
+#[crate::blueprint(ShadowView::new(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+}
+
+crate::manual_blueprint!(with shadow, |_, _| Ok(ShadowView::new));

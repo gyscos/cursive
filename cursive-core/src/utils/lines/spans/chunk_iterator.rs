@@ -110,9 +110,11 @@ where
                     // We didn't know it was a hard-stop at the time.
                     // But now we do, so let's omit the last character from
                     // that segment.
-                    if let Some(to_remove) = prev_text.graphemes(true).next_back().map(|g| g.len())
-                    {
-                        segments.last_mut().unwrap().end -= to_remove;
+                    if let Some(last_grapheme) = prev_text.graphemes(true).next_back() {
+                        segments.last_mut().unwrap().end -= last_grapheme.len();
+                        // Before unicode-segmentation 0.1.13, newlines were width=0.
+                        // They are now width=1.
+                        segments.last_mut().unwrap().width -= last_grapheme.width();
                     }
                 }
 
@@ -134,6 +136,7 @@ where
                 total_width += width;
                 let to_remove = if hard_stop {
                     let text = &span_text[self.offset..pos];
+                    // Remove the last grapheme.
                     text.graphemes(true)
                         .next_back()
                         .map(|g| g.len())
@@ -145,7 +148,7 @@ where
                     span_id: self.current_span,
                     start: self.offset,
                     end: pos - to_remove,
-                    width,
+                    width: width - span_text[pos - to_remove..pos].width(),
                 });
             }
 
@@ -173,7 +176,10 @@ where
                     if span_text.ends_with('\n') {
                         // This is basically a hard-stop here.
                         // Easy, just remove 1 byte.
-                        segments.last_mut().unwrap().end -= 1;
+                        segments.last_mut().unwrap().end -= "\n".len();
+
+                        // With unicode-width 0.1.13, "\n" now has width 1.
+                        segments.last_mut().unwrap().width -= "\n".width();
                     }
 
                     return Some(Chunk {

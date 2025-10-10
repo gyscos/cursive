@@ -1,7 +1,7 @@
 use crate::align::*;
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
-use crate::theme::PaletteStyle;
+use crate::style::PaletteStyle;
 use crate::utils::markup::StyledString;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
@@ -138,25 +138,25 @@ impl<V: View> ViewWrapper for Panel<V> {
     }
 }
 
-#[crate::recipe(Panel::new(child))]
-struct Recipe {
-    child: crate::views::BoxedView,
+#[crate::blueprint(Panel::new(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
 
-    title: Option<String>,
+    title: Option<StyledString>,
     title_position: Option<HAlign>,
 }
 
-// TODO: reduce code duplication between recipes for the same view.
-crate::raw_recipe!(with panel, |config, context| {
+// TODO: reduce code duplication between blueprints for the same view.
+crate::manual_blueprint!(with panel, |config, context| {
     let title = match config {
         crate::builder::Config::String(_) => context.resolve(config)?,
         crate::builder::Config::Object(config) => {
             match config.get("title") {
                 Some(title) => context.resolve(title)?,
-                None => String::new()
+                None => StyledString::new()
             }
         }
-        _ => String::new(),
+        _ => StyledString::new(),
     };
 
     let title_position = context.resolve(&config["title_position"])?;

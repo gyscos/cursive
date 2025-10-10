@@ -7,19 +7,27 @@ edition = "2021"
 keywords = ["ncurses", "TUI", "UI"]
 license = "MIT"
 name = "cursive"
-readme = "Readme.md"
+readme = "README.md"
 repository = "https://github.com/gyscos/cursive"
-version = "0.20.0"
+version = "0.21.1"
+include = ["src/**/*", "LICENSE", "README.md"]
 
 [package.metadata.docs.rs]
-all-features = true
+features = [
+    "doc-cfg",
+    "ansi", "toml", "markdown",
+    "builder",
+    "termion-backend",
+    "crossterm-backend",
+    "pancurses-backend",
+]
 
 [dependencies]
-cursive_core = { path = "../cursive-core", version= "0.3.0"}
+cursive_core = { path = "../cursive-core", version= "0.4.0"}
 crossbeam-channel = "0.5"
 cfg-if = "1"
 unicode-segmentation = "1"
-unicode-width = "0.1"
+unicode-width = "0.2"
 lazy_static = "1"
 libc = "0.2"
 maplit = { version = "1.0", optional = true }
@@ -33,7 +41,7 @@ version = "2"
 [dependencies.ncurses]
 features = ["wide"]
 optional = true
-version = "5.99.0"
+version = "6.0.1"
 
 [dependencies.pancurses]
 features = ["wide"]
@@ -46,21 +54,20 @@ version = "4"
 
 [dependencies.crossterm]
 optional = true
-version = "0.27"
+version = "0.29.0"
 
 [features]
 doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature.
-builder = ["cursive_core/builder"]
-blt-backend = ["bear-lib-terminal"]
-default = ["ncurses-backend"]
-ncurses-backend = ["ncurses", "maplit"]
-pancurses-backend = ["pancurses", "maplit"]
-termion-backend = ["termion"]
-crossterm-backend = ["crossterm"]
-markdown = ["cursive_core/markdown"]
-ansi = ["cursive_core/ansi"]
-unstable_scroll = []  # Deprecated feature, remove in next version
-toml = ["cursive_core/toml"]
+builder = ["cursive_core/builder"]  # Enable the builder module to build views from config blobs.
+blt-backend = ["dep:bear-lib-terminal"]  # Enable the BearLibTerminal backend. Requires BLT to be installed separately.
+default = ["crossterm-backend"]  # Defaults to crossterm, supported on windows, linux and macos.
+ncurses-backend = ["dep:ncurses", "dep:maplit"]  # Enable the ncurses backend.
+pancurses-backend = ["dep:pancurses", "dep:maplit"]  # Enable the pancurses backend.
+termion-backend = ["dep:termion"]  # Enable the termion backend.
+crossterm-backend = ["dep:crossterm"]  # Enable the crossterm backend.
+markdown = ["cursive_core/markdown"]  # Allows parsing StyledString from markdown text.
+ansi = ["cursive_core/ansi"]  # Allows parsing StyledString from ANSI-marked up text.
+toml = ["cursive_core/toml"]  # Allows parsing themes from toml.
 
 [lib]
 name = "cursive"
@@ -77,12 +84,15 @@ name = "ansi"
 required-features = ["ansi"]
 
 [[example]]
+name = "colored_text"
+required-features = ["ansi", "crossterm-backend"]
+
+[[example]]
 name = "builder"
 required-features = ["builder"]
 
 [dev-dependencies]
-rand = "0.8"
-atty = "0.2"
+rand = "0.9"
 pretty-bytes = "0.2"
 serde_json = "1.0.85"
 serde_yaml = "0.9.13"

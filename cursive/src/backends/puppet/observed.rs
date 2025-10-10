@@ -5,7 +5,6 @@ use crate::theme::Effect;
 use crate::Vec2;
 use std::ops::Index;
 use std::ops::IndexMut;
-use std::string::ToString;
 use std::sync::Arc;
 use std::{fmt, fmt::Display, fmt::Formatter};
 use unicode_segmentation::UnicodeSegmentation;
@@ -320,7 +319,7 @@ impl ObservedPieceInterface for ObservedScreen {
     }
 }
 
-impl<'a> ObservedPieceInterface for ObservedPiece<'a> {
+impl ObservedPieceInterface for ObservedPiece<'_> {
     fn min(&self) -> Vec2 {
         self.min
     }
@@ -366,7 +365,7 @@ impl<'a> ObservedLine<'a> {
     }
 }
 
-impl<'a> ObservedPieceInterface for ObservedLine<'a> {
+impl ObservedPieceInterface for ObservedLine<'_> {
     fn min(&self) -> Vec2 {
         self.line_start
     }
@@ -380,9 +379,9 @@ impl<'a> ObservedPieceInterface for ObservedLine<'a> {
     }
 }
 
-impl<'a> ToString for ObservedLine<'a> {
-    fn to_string(&self) -> String {
-        self.as_strings().remove(0)
+impl Display for ObservedLine<'_> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.as_strings().remove(0))
     }
 }
 
@@ -420,7 +419,7 @@ mod tests {
     use crate::backends::puppet::DEFAULT_OBSERVED_STYLE;
 
     /// Expecting fake_screen to be square, # will be replaced with blank.
-    fn get_observed_screen(fake_screen: &Vec<&str>) -> ObservedScreen {
+    fn get_observed_screen(fake_screen: &[&str]) -> ObservedScreen {
         let observed_style: Arc<ObservedStyle> = Arc::new(DEFAULT_OBSERVED_STYLE.clone());
 
         let height = fake_screen.len();

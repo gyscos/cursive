@@ -122,19 +122,19 @@ impl<T: View + 'static> ViewWrapper for NamedView<T> {
     }
 }
 
-#[crate::recipe(NamedView::new(name, view))]
-struct Recipe {
+#[crate::blueprint(NamedView::new(name, view))]
+struct Blueprint {
     name: String,
     view: crate::views::BoxedView,
 }
 
-crate::raw_recipe!(with name, |config, context| {
+crate::manual_blueprint!(with name, |config, context| {
     let name: String = context.resolve(config)?;
     Ok(|view| NamedView::new(name, view))
 });
 
 /*
-crate::raw_recipe!(NamedView, |config, context| {
+crate::manual_blueprint!(NamedView, |config, context| {
     let name: String = context.resolve(&config["name"])?;
     let view: crate::views::BoxedView = context.resolve(&config["view"])?;
     Ok(NamedView::new(name, view))

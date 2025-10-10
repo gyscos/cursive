@@ -1,7 +1,7 @@
 //! Backend using the pure-rust crossplatform crossterm library.
 //!
 //! Requires the `crossterm-backend` feature.
-#![cfg(feature = "crossterm")]
+#![cfg(feature = "crossterm-backend")]
 #![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "crossterm-backend")))]
 
 use std::{
@@ -228,7 +228,7 @@ impl Backend {
         )?;
 
         Ok(Box::new(Backend {
-            current_style: Cell::new(theme::ColorPair::from_256colors(0, 0)),
+            current_style: Cell::new(theme::ColorPair::terminal_default()),
             stdout: RefCell::new(BufWriter::new(stdout)),
         }))
     }
@@ -327,6 +327,10 @@ impl Drop for Backend {
 }
 
 impl backend::Backend for Backend {
+    fn is_persistent(&self) -> bool {
+        true
+    }
+
     fn poll_event(&mut self) -> Option<Event> {
         match poll(Duration::from_millis(1)) {
             Ok(true) => match read() {
@@ -358,31 +362,14 @@ impl backend::Backend for Backend {
         Vec2::from(size)
     }
 
-    fn print_at(&self, pos: Vec2, text: &str) {
+    fn move_to(&self, pos: Vec2) {
         self.with_stdout(|stdout| {
-            queue!(
-                stdout,
-                cursor::MoveTo(pos.x as u16, pos.y as u16),
-                Print(text)
-            )
-            .unwrap()
+            queue!(stdout, cursor::MoveTo(pos.x as u16, pos.y as u16)).unwrap()
         });
     }
 
-    fn print_at_rep(&self, pos: Vec2, repetitions: usize, text: &str) {
-        if repetitions > 0 {
-            self.with_stdout(|out| {
-                queue!(out, cursor::MoveTo(pos.x as u16, pos.y as u16)).unwrap();
-
-                out.write_all(text.as_bytes()).unwrap();
-
-                let mut dupes_left = repetitions - 1;
-                while dupes_left > 0 {
-                    out.write_all(text.as_bytes()).unwrap();
-                    dupes_left -= 1;
-                }
-            });
-        }
+    fn print(&self, text: &str) {
+        self.with_stdout(|stdout| queue!(stdout, Print(text)).unwrap());
     }
 
     fn clear(&self, color: theme::Color) {

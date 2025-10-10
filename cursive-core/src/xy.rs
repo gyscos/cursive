@@ -11,6 +11,12 @@ pub struct XY<T> {
     pub y: T,
 }
 
+impl<T: PartialEq> PartialEq<(T, T)> for XY<T> {
+    fn eq(&self, (x, y): &(T, T)) -> bool {
+        &self.x == x && &self.y == y
+    }
+}
+
 impl<T> IntoIterator for XY<T> {
     type Item = T;
     type IntoIter = iter::Chain<iter::Once<T>, iter::Once<T>>;
@@ -23,8 +29,19 @@ impl<T> IntoIterator for XY<T> {
 
 impl<T> XY<T> {
     /// Creates a new `XY` from the given values.
-    pub fn new(x: T, y: T) -> Self {
+    pub const fn new(x: T, y: T) -> Self {
         XY { x, y }
+    }
+
+    /// Creates a new `XY` from a the major and minor components of an orientation.
+    ///
+    /// * For `Orientation::Horizontal`, major is X and minor is Y.
+    /// * For `Orientation::Vertical`, major is Y and minor is X.
+    pub const fn from_major_minor(orientation: Orientation, major: T, minor: T) -> Self {
+        match orientation {
+            Orientation::Horizontal => Self::new(major, minor),
+            Orientation::Vertical => Self::new(minor, major),
+        }
     }
 
     /// Swaps the x and y values.
@@ -185,7 +202,7 @@ impl<T> XY<T> {
     ///
     /// assert_eq!(longer(&xy, 2), XY::new(false, true));
     /// ```
-    pub fn as_ref(&self) -> XY<&T> {
+    pub const fn as_ref(&self) -> XY<&T> {
         XY::new(&self.x, &self.y)
     }
 
@@ -219,7 +236,7 @@ impl<T> XY<T> {
     /// assert_eq!(xy.get(Orientation::Horizontal), &1);
     /// assert_eq!(xy.get(Orientation::Vertical), &2);
     /// ```
-    pub fn get(&self, o: Orientation) -> &T {
+    pub const fn get(&self, o: Orientation) -> &T {
         match o {
             Orientation::Horizontal => &self.x,
             Orientation::Vertical => &self.y,
@@ -371,9 +388,9 @@ impl<T: Clone> XY<T> {
     /// ```
     #[must_use]
     pub fn with_axis(&self, o: Orientation, value: T) -> Self {
-        let mut new = self.clone();
-        *o.get_ref(&mut new) = value;
-        new
+        let minor = self.get(o.swap()).clone();
+        let major = value;
+        Self::from_major_minor(o, major, minor)
     }
 
     /// Returns a new `XY` with the axis `o` set to the value from `other`.
@@ -409,7 +426,7 @@ impl<T: Clone> XY<T> {
     /// assert_eq!(xy, XY::new(3, 2));
     /// ```
     pub fn set_axis_from(&mut self, o: Orientation, other: &Self) {
-        *o.get_ref(self) = o.get(other);
+        *o.get_mut(self) = o.get(other);
     }
 
     /// Creates a `XY` with both `x` and `y` set to `value`.

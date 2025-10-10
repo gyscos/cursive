@@ -1,4 +1,4 @@
-use crate::theme::ColorStyle;
+use crate::style::ColorStyle;
 use crate::view::{View, ViewWrapper};
 use crate::Printer;
 
@@ -52,7 +52,13 @@ impl<T: View> ViewWrapper for Layer<T> {
     }
 }
 
-crate::raw_recipe!(with layer, |config, context| {
+#[crate::blueprint(Layer::new(view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+    color: Option<ColorStyle>,
+}
+
+crate::manual_blueprint!(with layer, |config, context| {
     let color = match config {
         crate::builder::Config::Null => None,
         config => Some(context.resolve(config)?),

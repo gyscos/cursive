@@ -38,9 +38,20 @@ pub enum Orientation {
     Vertical,
 }
 
+impl std::str::FromStr for Orientation {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Vertical" | "vertical" => Self::Vertical,
+            "Horizontal" | "horizontal" => Self::Horizontal,
+            _ => return Err(()),
+        })
+    }
+}
+
 impl Orientation {
     /// Returns a `XY(Horizontal, Vertical)`.
-    pub fn pair() -> XY<Orientation> {
+    pub const fn pair() -> XY<Orientation> {
         XY::new(Orientation::Horizontal, Orientation::Vertical)
     }
 
@@ -54,12 +65,21 @@ impl Orientation {
 
     /// Returns the other orientation.
     #[must_use]
-    pub fn swap(self) -> Self {
+    pub const fn swap(self) -> Self {
         match self {
             Orientation::Horizontal => Orientation::Vertical,
             Orientation::Vertical => Orientation::Horizontal,
         }
     }
+
+    // /// Returns a reference to the component of the given vector
+    // /// corresponding to this orientation.
+    // pub const fn get_ref<T>(self, v: &XY<T>) -> &T {
+    //     match self {
+    //         Orientation::Horizontal => &v.x,
+    //         Orientation::Vertical => &v.y,
+    //     }
+    // }
 
     /// Returns a mutable reference to the component of the given vector
     /// corresponding to this orientation.
@@ -70,15 +90,21 @@ impl Orientation {
     /// # use cursive_core::direction::Orientation;
     /// let o = Orientation::Horizontal;
     /// let mut xy = XY::new(1, 2);
-    /// *o.get_ref(&mut xy) = 42;
+    /// *o.get_mut(&mut xy) = 42;
     ///
     /// assert_eq!(xy, XY::new(42, 2));
     /// ```
-    pub fn get_ref<T>(self, v: &mut XY<T>) -> &mut T {
+    pub fn get_mut<T>(self, v: &mut XY<T>) -> &mut T {
         match self {
             Orientation::Horizontal => &mut v.x,
             Orientation::Vertical => &mut v.y,
         }
+    }
+
+    /// Same as [`Self::get_mut()`].
+    #[deprecated]
+    pub fn get_ref<T>(self, v: &mut XY<T>) -> &mut T {
+        self.get_mut(v)
     }
 
     /// Takes an iterator on sizes, and stack them in the current orientation,
@@ -111,11 +137,8 @@ impl Orientation {
     ///
     /// assert_eq!(vec, Vec2::new(2, 1));
     /// ```
-    pub fn make_vec(self, main_axis: usize, second_axis: usize) -> Vec2 {
-        let mut result = Vec2::zero();
-        *self.get_ref(&mut result) = main_axis;
-        *self.swap().get_ref(&mut result) = second_axis;
-        result
+    pub const fn make_vec(self, main_axis: usize, second_axis: usize) -> Vec2 {
+        Vec2::from_major_minor(self, main_axis, second_axis)
     }
 }
 
@@ -131,12 +154,21 @@ pub enum Direction {
     Rel(Relative),
 }
 
+impl std::str::FromStr for Direction {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse()
+            .map(Direction::Abs)
+            .or_else(|_| s.parse().map(Direction::Rel))
+    }
+}
+
 impl Direction {
     /// Returns the relative direction for the given orientation.
     ///
     /// Some combination have no corresponding relative position. For example,
     /// `Direction::Abs(Up)` means nothing for `Orientation::Horizontal`.
-    pub fn relative(self, orientation: Orientation) -> Option<Relative> {
+    pub const fn relative(self, orientation: Orientation) -> Option<Relative> {
         match self {
             Direction::Abs(abs) => abs.relative(orientation),
             Direction::Rel(rel) => Some(rel),
@@ -144,7 +176,7 @@ impl Direction {
     }
 
     /// Returns the absolute direction in the given `orientation`.
-    pub fn absolute(self, orientation: Orientation) -> Absolute {
+    pub const fn absolute(self, orientation: Orientation) -> Absolute {
         match self {
             Direction::Abs(abs) => abs,
             Direction::Rel(rel) => rel.absolute(orientation),
@@ -153,7 +185,7 @@ impl Direction {
 
     /// Returns the direction opposite `self`.
     #[must_use]
-    pub fn opposite(self) -> Self {
+    pub const fn opposite(self) -> Self {
         match self {
             Direction::Abs(abs) => Direction::Abs(abs.opposite()),
             Direction::Rel(rel) => Direction::Rel(rel.swap()),
@@ -161,37 +193,37 @@ impl Direction {
     }
 
     /// Shortcut to create `Direction::Rel(Relative::Back)`
-    pub fn back() -> Self {
+    pub const fn back() -> Self {
         Direction::Rel(Relative::Back)
     }
 
     /// Shortcut to create `Direction::Rel(Relative::Front)`
-    pub fn front() -> Self {
+    pub const fn front() -> Self {
         Direction::Rel(Relative::Front)
     }
 
     /// Shortcut to create `Direction::Abs(Absolute::Left)`
-    pub fn left() -> Self {
+    pub const fn left() -> Self {
         Direction::Abs(Absolute::Left)
     }
 
     /// Shortcut to create `Direction::Abs(Absolute::Right)`
-    pub fn right() -> Self {
+    pub const fn right() -> Self {
         Direction::Abs(Absolute::Right)
     }
 
     /// Shortcut to create `Direction::Abs(Absolute::Up)`
-    pub fn up() -> Self {
+    pub const fn up() -> Self {
         Direction::Abs(Absolute::Up)
     }
 
     /// Shortcut to create `Direction::Abs(Absolute::Down)`
-    pub fn down() -> Self {
+    pub const fn down() -> Self {
         Direction::Abs(Absolute::Down)
     }
 
     /// Shortcut to create `Direction::Abs(Absolute::None)`
-    pub fn none() -> Self {
+    pub const fn none() -> Self {
         Direction::Abs(Absolute::None)
     }
 }
@@ -213,9 +245,21 @@ pub enum Relative {
     Back,
 }
 
+impl std::str::FromStr for Relative {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Front" | "front" => Self::Front,
+            "Back" | "back" => Self::Back,
+            _ => return Err(()),
+        })
+    }
+}
+
 impl Relative {
     /// Returns the absolute direction in the given `orientation`.
-    pub fn absolute(self, orientation: Orientation) -> Absolute {
+    pub const fn absolute(self, orientation: Orientation) -> Absolute {
         match (orientation, self) {
             (Orientation::Horizontal, Relative::Front) => Absolute::Left,
             (Orientation::Horizontal, Relative::Back) => Absolute::Right,
@@ -236,25 +280,24 @@ impl Relative {
 
     /// Returns the other relative direction.
     #[must_use]
-    pub fn swap(self) -> Self {
+    pub const fn swap(self) -> Self {
         match self {
             Relative::Front => Relative::Back,
             Relative::Back => Relative::Front,
         }
     }
 
-    /// Returns the relative position of `a` to `b`.
+    /// Returns the position of `a` relative to `b`.
     ///
     /// If `a < b`, it would be `Front`.
     /// If `a > b`, it would be `Back`.
     /// If `a == b`, returns `None`.
-    pub fn a_to_b(a: usize, b: usize) -> Option<Self> {
-        use std::cmp::Ordering;
-
-        match a.cmp(&b) {
-            Ordering::Less => Some(Relative::Front),
-            Ordering::Greater => Some(Relative::Back),
-            Ordering::Equal => None,
+    pub const fn a_to_b(a: usize, b: usize) -> Option<Self> {
+        // TODO: use std::cmp::Ordering once const trait are a thing.
+        match (a < b, a == b) {
+            (_, true) => None,
+            (true, false) => Some(Relative::Front),
+            (false, false) => Some(Relative::Back),
         }
     }
 }
@@ -277,12 +320,26 @@ pub enum Absolute {
     None,
 }
 
+impl std::str::FromStr for Absolute {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Left" | "left" => Self::Left,
+            "Up" | "up" => Self::Up,
+            "Right" | "right" => Self::Right,
+            "Down" | "down" => Self::Down,
+            "None" | "none" => Self::None,
+            _ => return Err(()),
+        })
+    }
+}
+
 impl Absolute {
     /// Returns the relative direction for the given orientation.
     ///
     /// Returns `None` when the direction does not apply to the given
     /// orientation (ex: `Left` and `Vertical`).
-    pub fn relative(self, orientation: Orientation) -> Option<Relative> {
+    pub const fn relative(self, orientation: Orientation) -> Option<Relative> {
         match (orientation, self) {
             (Orientation::Horizontal, Absolute::Left) | (Orientation::Vertical, Absolute::Up) => {
                 Some(Relative::Front)
@@ -295,7 +352,7 @@ impl Absolute {
 
     /// Returns the direction opposite `self`.
     #[must_use]
-    pub fn opposite(self) -> Self {
+    pub const fn opposite(self) -> Self {
         match self {
             Absolute::Left => Absolute::Right,
             Absolute::Right => Absolute::Left,
@@ -308,7 +365,7 @@ impl Absolute {
     /// Splits this absolute direction into an orientation and relative direction.
     ///
     /// For example, `Right` will give `(Horizontal, Back)`.
-    pub fn split(self) -> (Orientation, Relative) {
+    pub const fn split(self) -> (Orientation, Relative) {
         match self {
             Absolute::Left => (Orientation::Horizontal, Relative::Front),
             Absolute::Right => (Orientation::Horizontal, Relative::Back),

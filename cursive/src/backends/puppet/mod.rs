@@ -28,6 +28,7 @@ pub struct Backend {
     size: Cell<Vec2>,
     current_style: RefCell<Arc<ObservedStyle>>,
     screen_channel: (Sender<ObservedScreen>, Receiver<ObservedScreen>),
+    cursor: Cell<Vec2>,
 }
 
 impl Backend {
@@ -45,6 +46,7 @@ impl Backend {
             prev_frame: RefCell::new(None),
             current_frame: RefCell::new(ObservedScreen::new(size)),
             size: Cell::new(size),
+            cursor: Cell::new(Vec2::zero()),
             current_style: RefCell::new(Arc::new(DEFAULT_OBSERVED_STYLE.clone())),
             screen_channel: crossbeam_channel::unbounded(),
         };
@@ -99,7 +101,12 @@ impl backend::Backend for Backend {
         self.size.get()
     }
 
-    fn print_at(&self, pos: Vec2, text: &str) {
+    fn move_to(&self, pos: Vec2) {
+        self.cursor.set(pos);
+    }
+
+    fn print(&self, text: &str) {
+        let pos = self.cursor.get();
         let style = self.current_style.borrow().clone();
         let mut screen = self.current_frame.borrow_mut();
         let mut offset: usize = 0;
@@ -118,6 +125,7 @@ impl backend::Backend for Backend {
                 screen[spos] = Some(ObservedCell::new(spos, style.clone(), None));
             }
         }
+        self.cursor.set(pos + (text.width(), 0));
     }
 
     fn clear(&self, clear_color: theme::Color) {

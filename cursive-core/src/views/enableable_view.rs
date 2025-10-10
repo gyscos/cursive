@@ -65,7 +65,7 @@ impl<V: View> ViewWrapper for EnableableView<V> {
     }
 }
 
-crate::raw_recipe!(with enableable, |config, context| {
+crate::manual_blueprint!(with enableable, |config, context| {
     let enabled = context.resolve_or(&config["enabled"], true)?;
 
     Ok(move |view| EnableableView::new(view).with_enabled(enabled))

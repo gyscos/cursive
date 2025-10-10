@@ -37,13 +37,19 @@ impl<T: View> ViewWrapper for ThemedView<T> {
         // but that's not easy for now.
         printer
             .theme(&self.theme)
-            .with_style(crate::theme::PaletteStyle::View, |printer| {
+            .with_style(crate::style::PaletteStyle::View, |printer| {
                 self.view.draw(printer);
             });
     }
 }
 
-crate::raw_recipe!(with theme, |config, context| {
+#[crate::blueprint(ThemedView::new(theme, view))]
+struct Blueprint {
+    view: crate::views::BoxedView,
+    theme: crate::theme::Theme,
+}
+
+crate::manual_blueprint!(with theme, |config, context| {
     let theme = context.resolve(config)?;
     Ok(move |view| ThemedView::new(theme, view))
 });

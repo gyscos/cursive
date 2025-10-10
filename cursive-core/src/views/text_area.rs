@@ -3,7 +3,7 @@ use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     rect::Rect,
-    theme::PaletteStyle,
+    style::PaletteStyle,
     utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row},
     view::{CannotFocus, ScrollBase, SizeCache, View},
     Vec2, {Printer, With, XY},
@@ -653,7 +653,7 @@ impl View for TextArea {
     }
 }
 
-#[crate::recipe(TextArea::new())]
-struct Recipe {
+#[crate::blueprint(TextArea::new())]
+struct Blueprint {
     content: Option<String>,
 }

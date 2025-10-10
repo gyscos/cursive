@@ -3,7 +3,7 @@ use crate::{
     event::*,
     menu,
     rect::Rect,
-    theme::PaletteStyle,
+    style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, Position, View},
     views::{MenuPopup, OnEventView},
@@ -266,7 +266,6 @@ fn show_child(s: &mut Cursive, offset: Vec2, menu: Arc<menu::Tree>) {
         }),
     );
 }
-
 
 impl View for Menubar {
     fn draw(&self, printer: &Printer) {

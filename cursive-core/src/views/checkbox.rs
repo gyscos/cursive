@@ -3,8 +3,7 @@ use ahash::{HashSet, HashSetExt};
 use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
-    theme::PaletteStyle,
-    utils::markup::StyledString,
+    style::PaletteStyle,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
@@ -313,8 +312,8 @@ impl View for Checkbox {
     }
 }
 
-#[crate::recipe(Checkbox::new())]
-struct Recipe {
+#[crate::blueprint(Checkbox::new())]
+struct Blueprint {
     on_change: Option<_>,
 
     checked: Option<bool>,

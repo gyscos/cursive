@@ -338,7 +338,7 @@ impl LinearLayout {
         &'a mut self,
         from_focus: bool,
         source: direction::Relative,
-    ) -> Box<dyn Iterator<Item = (usize, &mut Child)> + 'a> {
+    ) -> Box<dyn Iterator<Item = (usize, &'a mut Child)> + 'a> {
         match source {
             direction::Relative::Front => {
                 let start = if from_focus { self.focus } else { 0 };
@@ -388,10 +388,7 @@ impl LinearLayout {
                 return None;
             }
 
-            let position = match position.checked_sub(offset) {
-                None => return None,
-                Some(pos) => pos,
-            };
+            let position = position.checked_sub(offset)?;
 
             // Find the selected child
             // Let's only care about the coordinate for our orientation.
@@ -403,7 +400,7 @@ impl LinearLayout {
                 self.children.iter_mut(),
                 self.orientation,
                 // TODO: get actual width (not super important)
-                usize::max_value(),
+                usize::MAX,
             )
             .enumerate()
             {
@@ -640,11 +637,8 @@ impl View for LinearLayout {
             .unwrap_or(EventResult::Ignored);
 
         let result = {
-            let mut iterator = ChildIterator::new(
-                self.children.iter_mut(),
-                self.orientation,
-                usize::max_value(),
-            );
+            let mut iterator =
+                ChildIterator::new(self.children.iter_mut(), self.orientation, usize::MAX);
             let item = iterator.nth(self.focus).unwrap();
             let offset = self.orientation.make_vec(item.offset, 0);
             item.child.view.on_event(event.relativized(offset))
@@ -710,7 +704,7 @@ impl View for LinearLayout {
         // Pick the focused item, with its offset
         let item = {
             let mut iterator =
-                ChildIterator::new(self.children.iter(), self.orientation, usize::max_value());
+                ChildIterator::new(self.children.iter(), self.orientation, usize::MAX);
             iterator.nth(self.focus).unwrap()
         };
 
@@ -726,14 +720,14 @@ impl View for LinearLayout {
 }
 
 /*
-#[crate::recipe(LinearLayout::new(orientation))]
-struct Recipe {
+#[crate::blueprint(LinearLayout::new(orientation))]
+struct Blueprint {
     orientation: direction::Orientation,
 
-    #[recipe(foreach=add_child)]
+    #[blueprint(foreach=add_child)]
     children: Vec<crate::views::BoxedView>,
 
-    #[recipe(
+    #[blueprint(
         set_focus_index,
         on_err="LinearLayout.focus cannot be larger than the number of views.",
     )]
@@ -741,7 +735,7 @@ struct Recipe {
 }
 */
 
-crate::raw_recipe!(LinearLayout, |config, context| {
+crate::manual_blueprint!(LinearLayout, |config, context| {
     let orientation = match config.get("orientation") {
         Some(orientation) => context.resolve(orientation)?,
         None => direction::Orientation::Vertical,

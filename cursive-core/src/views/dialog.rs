@@ -3,13 +3,13 @@ use crate::{
     direction::{Absolute, Direction, Relative},
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
-    theme::PaletteStyle,
+    style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound},
     views::{BoxedView, Button, DummyView, LastSizeView, TextView},
     Cursive, Printer, Vec2, With,
 };
-use std::cell::Cell;
+use parking_lot::Mutex;
 use std::cmp::{max, min};
 
 /// Identifies currently focused element in [`Dialog`].
@@ -32,7 +32,7 @@ impl crate::builder::Resolvable for DialogFocus {
             // The config can be either:
             // A string: content
             // An object: button: i
-            if let Ok(string) = context.resolve::<String>(&config) {
+            if let Ok(string) = context.resolve::<String>(config) {
                 if string == "Content" || string == "content" {
                     return Some(DialogFocus::Content);
                 } else {
@@ -40,7 +40,7 @@ impl crate::builder::Resolvable for DialogFocus {
                 }
             }
 
-            if let Ok(obj) = context.resolve::<Object>(&config) {
+            if let Ok(obj) = context.resolve::<Object>(config) {
                 let (key, value) = obj.iter().next()?;
 
                 if key != "Button" {
@@ -64,7 +64,7 @@ impl crate::builder::Resolvable for DialogFocus {
 
 struct ChildButton {
     button: LastSizeView<Button>,
-    offset: Cell<Vec2>,
+    offset: Mutex<Vec2>,
 }
 
 impl ChildButton {
@@ -74,7 +74,7 @@ impl ChildButton {
     {
         ChildButton {
             button: LastSizeView::new(Button::new(label, cb)),
-            offset: Cell::new(Vec2::zero()),
+            offset: Mutex::new(Vec2::zero()),
         }
     }
 }
@@ -550,7 +550,7 @@ impl Dialog {
             let button = &mut self.buttons[button_id];
             button
                 .button
-                .on_event(event.relativized(button.offset.get()))
+                .on_event(event.relativized(*button.offset.lock()))
         };
         match result {
             EventResult::Ignored => {
@@ -635,16 +635,13 @@ impl Dialog {
 
         let overhead_bottom = self.padding.bottom + self.borders.bottom + 1;
 
-        let y = match printer.size.y.checked_sub(overhead_bottom) {
-            Some(y) => y,
-            None => return None,
-        };
+        let y = printer.size.y.checked_sub(overhead_bottom)?;
 
         for (i, button) in self.buttons.iter().enumerate() {
             let size = button.button.size;
             // Add some special effect to the focused button
             let position = Vec2::new(offset, y);
-            button.offset.set(position);
+            *button.offset.lock() = position;
             button.button.draw(
                 &printer
                     .offset(position)
@@ -712,17 +709,14 @@ impl Dialog {
                 return None;
             }
 
-            let position = match position.checked_sub(offset) {
-                None => return None,
-                Some(pos) => pos,
-            };
+            let position = position.checked_sub(offset)?;
 
             // eprintln!("Rel pos: {:?}", position);
 
             // Now that we have a relative position, checks for buttons?
             if let Some(i) = self.buttons.iter().position(|btn| {
                 // If position fits there...
-                position.fits_in_rect(btn.offset.get(), btn.button.size)
+                position.fits_in_rect(*btn.offset.lock(), btn.button.size)
             }) {
                 return Some(self.set_focus(DialogFocus::Button(i)));
             } else if position
@@ -939,26 +933,26 @@ impl View for Dialog {
 }
 
 /*
-#[crate::recipe(Dialog::new())]
-struct Recipe {
+#[crate::blueprint(Dialog::new())]
+struct Blueprint {
     title: String,
 
     content: Option<BoxedView>,
 
     // TODO: buttons?
     // Define some Button type?
-    // Implement Resolvable as recipe?
-    // Allow recipe(foreach) with multiple arguments?
+    // Implement Resolvable as blueprints?
+    // Allow blueprint(foreach) with multiple arguments?
     // Ex: foreach(add_button_with_cb( .key, .value ))
 }
 */
 
-crate::raw_recipe!(Dialog, |config, context| {
+crate::manual_blueprint!(Dialog, |config, context| {
     use crate::builder::{Config, Context, Error, Resolvable};
     let mut dialog = Dialog::new();
 
     if let Some(title) = context.resolve(&config["title"])? {
-        dialog.set_title::<String>(title);
+        dialog.set_title::<StyledString>(title);
     }
 
     if let Some(title_position) = context.resolve(&config["title_position"])? {
@@ -1010,16 +1004,16 @@ crate::raw_recipe!(Dialog, |config, context| {
 });
 
 /*
-#[crate::var_recipe(Dialog::info())]
+#[crate::fn_blueprint(Dialog::info())]
 struct Info(String);
 */
 
-// We can define some variables
-crate::var_recipe!("Dialog.info", |config, context| {
-    let message: String = context.resolve(config)?;
+// We can define some functions
+crate::fn_blueprint!("Dialog.info", |config, context| {
+    let message: StyledString = context.resolve(config)?;
 
     // We want to return a generic single-argument callback.
     Ok(Dialog::add_button_cb(move |s| {
-        s.add_layer(Dialog::info(&message));
+        s.add_layer(Dialog::info(message.clone()));
     }))
 });

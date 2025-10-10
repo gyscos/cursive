@@ -1,5 +1,5 @@
 use crate::logger;
-use crate::theme;
+use crate::style;
 use crate::view::View;
 use crate::Printer;
 use crate::Vec2;
@@ -46,11 +46,11 @@ impl View for DebugView {
                 &format!("{} | [     ] {}", formatted, record.message),
             );
             let color = match record.level {
-                log::Level::Error => theme::BaseColor::Red.dark(),
-                log::Level::Warn => theme::BaseColor::Yellow.dark(),
-                log::Level::Info => theme::BaseColor::Black.light(),
-                log::Level::Debug => theme::BaseColor::Green.dark(),
-                log::Level::Trace => theme::BaseColor::Blue.dark(),
+                log::Level::Error => style::BaseColor::Red.dark(),
+                log::Level::Warn => style::BaseColor::Yellow.dark(),
+                log::Level::Info => style::BaseColor::Black.light(),
+                log::Level::Debug => style::BaseColor::Green.dark(),
+                log::Level::Trace => style::BaseColor::Blue.dark(),
             };
             printer.with_color(color.into(), |printer| {
                 printer.print((16, i), &format!("{:5}", record.level))
@@ -81,4 +81,4 @@ impl View for DebugView {
     }
 }
 
-crate::raw_recipe!(DebugView, |_, _| { Ok(DebugView::new()) });
+crate::manual_blueprint!(DebugView, |_, _| { Ok(DebugView::new()) });

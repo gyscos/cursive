@@ -1,4 +1,4 @@
-use std::io;
+use std::io::{self, IsTerminal};
 
 use cursive::traits::{Resizable, With};
 use cursive::utils;
@@ -80,7 +80,7 @@ fn main() {
             .button("Abort", Cursive::quit),
     );
 
-    if source.is_none() && atty::is(atty::Stream::Stdin) {
+    if source.is_none() && io::stdin().is_terminal() {
         siv.add_layer(
             Dialog::text(
                 "Please specify an input file or redirect a file to stdin.

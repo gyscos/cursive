@@ -2,7 +2,7 @@ use crate::{
     direction::Direction,
     event::{Callback, Event, EventResult, Key, MouseEvent},
     rect::Rect,
-    theme::{PaletteStyle, StyleType},
+    style::{PaletteStyle, StyleType},
     utils::lines::simple::{simple_prefix, simple_suffix},
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
@@ -601,8 +601,14 @@ impl View for EditView {
         }
     }
 
+    fn required_size(&mut self, constraint: Vec2) -> Vec2 {
+        let content_width = self.content.width();
+        constraint.or_min((content_width + 1, 1))
+    }
+
     fn layout(&mut self, size: Vec2) {
         self.last_length = size.x;
+        self.keep_cursor_in_view();
     }
 
     fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
@@ -714,8 +720,8 @@ impl View for EditView {
     }
 }
 
-#[crate::recipe(EditView::new())]
-struct Recipe {
+#[crate::blueprint(EditView::new())]
+struct Blueprint {
     content: Option<String>,
 
     on_edit: Option<_>,
@@ -723,9 +729,9 @@ struct Recipe {
     on_submit: Option<_>,
 }
 
-// The above recipe would expand to:
+// The above blueprint would expand to:
 /*
-crate::raw_recipe!(EditView, |config, context| {
+crate::manual_blueprint!(EditView, |config, context| {
     let mut edit_view = EditView::new();
 
     if let Some(content) = config.get("content") {
@@ -744,7 +750,7 @@ crate::raw_recipe!(EditView, |config, context| {
 });
 */
 
-crate::var_recipe!("EditView.with_content", |config, context| {
+crate::fn_blueprint!("EditView.with_content", |config, context| {
     let name: String = context.resolve(&config["name"])?;
 
     // We won't resolve the callback just yet.
