@@ -148,8 +148,8 @@ fn parse_enum(
 // )]
 struct VariableSpecs {
     no_config: bool,
-    setter: Option<syn::Ident>,
-    foreach: Option<syn::Ident>,
+    setter: Option<syn::Expr>,
+    foreach: Option<syn::Expr>,
     callback: Option<bool>,
     config_name: Option<String>,
     default: Option<syn::Expr>,
@@ -319,33 +319,7 @@ impl Variable {
             Consumer::Noop
         } else {
             let inferred_type = looks_inferred(&field.ty);
-            match (specs.setter, specs.foreach, specs.callback, inferred_type) {
-                (None, None, None | Some(false), false) | (None, None, Some(false), true) => {
-                    // Default case: use a setter based on the ident.
-                    let setter = format!("set_{parameter_name}");
-                    Consumer::Setter(Setter {
-                        method: syn::Ident::new(&setter, Span::call_site()),
-                    })
-                }
-                (Some(setter), None, None | Some(false), _) => {
-                    // Explicit setter function
-                    Consumer::Setter(Setter { method: setter })
-                }
-                (None, Some(foreach), None | Some(false), _) => {
-                    // Foreach function (like `add_item`)
-                    Consumer::ForEach(Box::new(Consumer::Setter(Setter { method: foreach })))
-                }
-                (None, None, Some(true), _) | (None, None, _, true) => {
-                    // TODO: Check that the type is iterable? A Vec?
-
-                    // Callback flag means we use the callback_helper-generated `_cb` setter.
-                    let setter = format!("set_{parameter_name}_cb");
-                    Consumer::Setter(Setter {
-                        method: syn::Ident::new(&setter, Span::call_site()),
-                    })
-                }
-                _ => panic!("unsupported configuration"),
-            }
+            Consumer::parse(&specs, inferred_type, &parameter_name)
         };
 
         // Some types have special handling
@@ -372,8 +346,11 @@ impl Variable {
     }
 }
 
-struct Setter {
-    method: syn::Ident,
+enum Setter {
+    /// A method call, implicitly applied to the target object.
+    Call(syn::ExprCall),
+    /// An ident, the name of the method to call, with a single arg.
+    Ident(syn::Ident),
 }
 
 impl Setter {
@@ -382,9 +359,30 @@ impl Setter {
         base_ident: &syn::Ident,
         field_ident: &syn::Ident,
     ) -> proc_macro2::TokenStream {
-        let function = &self.method;
-        quote! {
-            #base_ident.#function(#field_ident);
+        match self {
+            Self::Call(call) => {
+                // Here we don't care about the field ident.
+                quote! {
+                    #base_ident.#call;
+                }
+            }
+            Self::Ident(function) => {
+                quote! {
+                    #base_ident.#function(#field_ident);
+                }
+            }
+        }
+    }
+
+    fn parse(expr: &syn::Expr) -> Self {
+        match expr {
+            syn::Expr::Path(path) => {
+                let ident = path.path.get_ident().unwrap();
+                Self::Ident(ident.clone())
+            }
+            syn::Expr::Call(call) => Self::Call(call.clone()),
+
+            _ => panic!("Unsupported setter expression ({expr:?})"),
         }
     }
 }
@@ -401,6 +399,7 @@ enum Consumer {
     // The value is a Vec<T> and we need to call something on each item.
     ForEach(Box<Consumer>),
 
+    // Optional consumer - unwraps an option and calls the inner consumer.
     Opt(Box<Consumer>),
 
     // We need to call this method to "set" the value.
@@ -434,6 +433,37 @@ impl Consumer {
                     }
                 }
             }
+        }
+    }
+
+    fn parse(specs: &VariableSpecs, inferred_type: bool, parameter_name: &str) -> Self {
+        match (
+            &specs.setter,
+            &specs.foreach,
+            &specs.callback,
+            inferred_type,
+        ) {
+            (None, None, None | Some(false), false) | (None, None, Some(false), true) => {
+                // Default case: use a setter based on the ident.
+                let setter = format!("set_{parameter_name}");
+                Consumer::Setter(Setter::Ident(syn::Ident::new(&setter, Span::call_site())))
+            }
+            (Some(setter), None, None | Some(false), _) => {
+                // Explicit setter function
+                Consumer::Setter(Setter::parse(setter))
+            }
+            (None, Some(foreach), None | Some(false), _) => {
+                // Foreach function (like `add_item`)
+                Consumer::ForEach(Box::new(Consumer::Setter(Setter::parse(foreach))))
+            }
+            (None, None, Some(true), _) | (None, None, _, true) => {
+                // TODO: Check that the type is iterable? A Vec?
+
+                // Callback flag means we use the callback_helper-generated `_cb` setter.
+                let setter = format!("set_{parameter_name}_cb");
+                Consumer::Setter(Setter::Ident(syn::Ident::new(&setter, Span::call_site())))
+            }
+            _ => panic!("unsupported configuration"),
         }
     }
 }

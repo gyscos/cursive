@@ -932,76 +932,46 @@ impl View for Dialog {
     }
 }
 
-/*
+struct Btn {
+    key: String,
+    value: std::sync::Arc<dyn Fn(&mut Cursive) + Send + Sync>,
+}
+
+#[cfg(feature = "builder")]
+use crate::builder::{Config, Context, Error, Resolvable};
+
+#[cfg(feature = "builder")]
+impl Resolvable for Btn {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        let config = config
+            .as_object()
+            .ok_or_else(|| Error::invalid_config("Expected object", config))?;
+
+        let (key, value) = config
+            .iter()
+            .next()
+            .ok_or_else(|| Error::invalid_config("Expected non-empty object", config))?;
+
+        let key = key.into();
+        let value = context.resolve(value)?;
+
+        Ok(Btn { key, value })
+    }
+}
+
 #[crate::blueprint(Dialog::new())]
 struct Blueprint {
     title: String,
+    title_position: Option<HAlign>,
 
     content: Option<BoxedView>,
 
-    // TODO: buttons?
-    // Define some Button type?
-    // Implement Resolvable as blueprints?
-    // Allow blueprint(foreach) with multiple arguments?
-    // Ex: foreach(add_button_with_cb( .key, .value ))
+    #[blueprint(foreach=add_button_with_cb(buttons.key, buttons.value))]
+    buttons: Vec<Btn>,
+
+    padding: Option<Margins>,
+    focus: Option<DialogFocus>,
 }
-*/
-
-crate::manual_blueprint!(Dialog, |config, context| {
-    use crate::builder::{Config, Context, Error, Resolvable};
-    let mut dialog = Dialog::new();
-
-    if let Some(title) = context.resolve(&config["title"])? {
-        dialog.set_title::<StyledString>(title);
-    }
-
-    if let Some(title_position) = context.resolve(&config["title_position"])? {
-        dialog.set_title_position(title_position);
-    }
-
-    let content: Option<BoxedView> = context.resolve(&config["content"])?;
-    if let Some(content) = content {
-        dialog.set_content(content);
-    }
-
-    if let Some(padding) = context.resolve(&config["padding"])? {
-        dialog.set_padding(padding);
-    }
-
-    struct Btn {
-        key: String,
-        value: std::sync::Arc<dyn Fn(&mut Cursive) + Send + Sync>,
-    }
-
-    impl Resolvable for Btn {
-        fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
-            let config = config
-                .as_object()
-                .ok_or_else(|| Error::invalid_config("Expected object", config))?;
-
-            let (key, value) = config
-                .iter()
-                .next()
-                .ok_or_else(|| Error::invalid_config("Expected non-empty object", config))?;
-
-            let key = key.into();
-            let value = context.resolve(value)?;
-
-            Ok(Btn { key, value })
-        }
-    }
-
-    let buttons: Vec<Btn> = context.resolve(&config["buttons"])?;
-    for btn in buttons {
-        dialog.add_button_with_cb(btn.key, btn.value);
-    }
-
-    if let Some(focus) = context.resolve(&config["focus"])? {
-        dialog.set_focus(focus);
-    }
-
-    Ok(dialog)
-});
 
 /*
 #[crate::fn_blueprint(Dialog::info())]
