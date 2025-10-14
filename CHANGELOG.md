@@ -1,5 +1,25 @@
 # Changelog
 
+## Next (cursive-core 0.4.7)
+
+- Implement `Debug` for `EventResult` and `EventTrigger`.
+- Add `ListView::try_remove` and some other missing functions.
+- Fix markdown newlines around headind and code blcoks.
+- Correctly implement missing `EditView::required_size`.
+- Fix scrollview layout when scrollbars are hidden.
+- Allow call expressions with multiple args in builder `#[blueprint]`.
+
+## Next (cursive 0.22.0)
+
+### Breaking Changes
+
+- Update crossterm to 0.29
+
+### Bugfixes
+
+- Fix a bug where using black on black color would not properly apply to the
+  start of the screen.
+
 ## cursive-core 0.4.6
 
 - Remove serde_yaml dependency (moved to dev-dependency)
