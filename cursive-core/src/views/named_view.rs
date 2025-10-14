@@ -2,8 +2,9 @@ use crate::{
     event::{AnyCb, EventResult},
     view::{Selector, View, ViewNotFound, ViewWrapper},
 };
-use parking_lot::Mutex;
 use std::sync::Arc;
+
+use parking_lot::{ArcMutexGuard, MappedArcMutexGuard, Mutex};
 
 /// Wrapper around a view to make it identifiable.
 ///
@@ -21,7 +22,27 @@ pub struct NamedView<V> {
 ///
 /// [`MutexGuard`]: std::sync::MutexGuard
 pub struct ViewRef<V: 'static> {
-    guard: parking_lot::lock_api::ArcMutexGuard<parking_lot::RawMutex, V>,
+    guard: MappedArcMutexGuard<V>,
+}
+
+impl<V: 'static> ViewRef<V> {
+    pub(crate) fn try_map<F, U>(self, f: F) -> Result<ViewRef<U>, Self>
+    where
+        F: FnOnce(&mut V) -> Option<&mut U>,
+    {
+        match MappedArcMutexGuard::try_map(self.guard, f) {
+            Ok(guard) => Ok(ViewRef { guard }),
+            Err(guard) => Err(Self { guard }),
+        }
+    }
+
+    pub(crate) fn map<F, U>(self, f: F) -> ViewRef<U>
+    where
+        F: FnOnce(&mut V) -> &mut U,
+    {
+        let guard = MappedArcMutexGuard::map(self.guard, f);
+        ViewRef { guard }
+    }
 }
 
 impl<V> std::ops::Deref for ViewRef<V> {
@@ -55,6 +76,8 @@ impl<V> NamedView<V> {
     /// Panics if another reference for this view already exists.
     pub fn get_mut(&mut self) -> ViewRef<V> {
         let guard = self.view.lock_arc();
+        // Use an identify mapping so we have a `MappedArcMutexGuard` type.
+        let guard = ArcMutexGuard::map(guard, |v| v);
 
         ViewRef { guard }
     }

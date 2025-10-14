@@ -202,7 +202,7 @@ impl XY<usize> {
 impl<T: Sub<Output = T> + Mul<Output = T> + Add<Output = T> + Copy> XY<T> {
     /// Returns the square distance between `a` and `b`.
     pub fn sq_norm(self) -> T {
-        self.map(|x| (x * x)).sum()
+        self.map(|x| x * x).sum()
     }
 }
 

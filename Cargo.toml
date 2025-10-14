@@ -5,4 +5,3 @@ resolver = "2"
 
 [profile.dev]
 incremental = false
-

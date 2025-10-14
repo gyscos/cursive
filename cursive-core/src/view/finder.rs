@@ -48,13 +48,28 @@ pub trait Finder {
     /// Convenient method to find a view wrapped in an [`NamedView`].
     fn find_name<V>(&mut self, name: &str) -> Option<ViewRef<V>>
     where
-        V: View,
-    {
-        self.call_on_name(name, NamedView::<V>::get_mut)
-    }
+        V: View;
 }
 
 impl<T: View> Finder for T {
+    fn find_name<V>(&mut self, name: &str) -> Option<ViewRef<V>>
+    where
+        V: View,
+    {
+        let mut result = None;
+        self.call_on_any(&Selector::Name(name), &mut |v: &mut dyn View| {
+            if let Some(v) = v.downcast_mut::<NamedView<V>>() {
+                result = Some(v.get_mut());
+            } else if let Some(v) = v.downcast_mut::<NamedView<BoxedView>>() {
+                let boxed = v.get_mut();
+                if let Ok(v) = boxed.try_map(|v| v.downcast_mut::<V>()) {
+                    result = Some(v);
+                }
+            }
+        });
+        result
+    }
+
     fn call_on_all<V, F>(&mut self, sel: &Selector, mut callback: F)
     where
         V: View,

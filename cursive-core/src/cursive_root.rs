@@ -545,7 +545,7 @@ impl Cursive {
         V: View,
         F: FnOnce(&mut V) -> R,
     {
-        self.call_on(&view::Selector::Name(name), callback)
+        self.root.call_on_name(name, callback)
     }
 
     /// Call the given closure on all views with the given name and the correct type.
@@ -606,7 +606,7 @@ impl Cursive {
     where
         V: View,
     {
-        self.call_on_name(id, views::NamedView::<V>::get_mut)
+        self.root.find_name(id)
     }
 
     /// Moves the focus to the view identified by `name`.
