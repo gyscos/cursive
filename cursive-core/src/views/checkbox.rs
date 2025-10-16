@@ -15,16 +15,47 @@ use std::sync::Arc;
 type GroupCallback<T> = dyn Fn(&mut Cursive, &HashSet<Arc<T>>) + Send + Sync;
 type Callback = dyn Fn(&mut Cursive, bool) + Send + Sync;
 
+struct Item<T> {
+    value: Arc<T>,
+    checked: bool,
+}
+
+// We have to manually implement Clone.
+// Using derive(Clone) would add am unwanted `T: Clone` where-clause.
+impl<T> Clone for Item<T> {
+    fn clone(&self) -> Self {
+        Self {
+            value: Arc::clone(&self.value),
+            checked: self.checked,
+        }
+    }
+}
+
 struct SharedState<T> {
-    selections: HashSet<Arc<T>>,
-    values: Vec<Arc<T>>,
+    items: Vec<Item<T>>,
 
     on_change: Option<Arc<GroupCallback<T>>>,
 }
 
 impl<T> SharedState<T> {
-    pub fn selections(&self) -> &HashSet<Arc<T>> {
-        &self.selections
+    fn add(&mut self, value: T, checked: bool) -> usize {
+        let value = Arc::new(value);
+        let i = self.items.len();
+        self.items.push(Item { value, checked });
+        i
+    }
+
+    fn set_checked(&mut self, i: usize, checked: bool) {
+        self.items[i].checked = checked;
+    }
+
+    fn selections(&self) -> Vec<Arc<T>> {
+        self.items
+            .iter()
+            .filter(|item| item.checked)
+            .cloned()
+            .map(|item| item.value)
+            .collect()
     }
 }
 
@@ -59,14 +90,11 @@ impl<T: 'static + Hash + Eq> MultiChoiceGroup<T> {
     pub fn new() -> Self {
         Self {
             state: Arc::new(Mutex::new(SharedState {
-                selections: HashSet::new(),
-                values: Vec::new(),
+                items: Vec::new(),
                 on_change: None,
             })),
         }
     }
-
-    // TODO: Handling of the global state
 
     /// Adds a new checkbox to the group.
     ///
@@ -75,27 +103,18 @@ impl<T: 'static + Hash + Eq> MultiChoiceGroup<T> {
     where
         T: Send + Sync,
     {
-        let element = Arc::new(value);
-        self.state.lock().values.push(element.clone());
+        let i = self.state.lock().add(value, false);
         Checkbox::labelled(label).on_change({
-            // TODO: consider consequences
-            let selectable = Arc::downgrade(&element);
-            let groupstate = self.state.clone();
+            let groupstate = Arc::clone(&self.state);
             move |_, checked| {
-                if checked {
-                    if let Some(v) = selectable.upgrade() {
-                        groupstate.lock().selections.insert(v);
-                    }
-                } else if let Some(v) = selectable.upgrade() {
-                    groupstate.lock().selections.remove(&v);
-                }
+                groupstate.lock().set_checked(i, checked);
             }
         })
     }
 
-    /// Returns the reference to a set associated with the selected checkboxes.
-    pub fn selections(&self) -> HashSet<Arc<T>> {
-        self.state.lock().selections().clone()
+    /// Returns the reference to a vector associated with the selected checkboxes.
+    pub fn selections(&self) -> Vec<Arc<T>> {
+        self.state.lock().selections()
     }
 
     /// Sets a callback to be user when choices change.
@@ -268,19 +287,15 @@ impl Checkbox {
             printer.print_styled((4, 0), &self.label);
         }
     }
+}
 
-    fn req_size(&self) -> Vec2 {
+impl View for Checkbox {
+    fn required_size(&mut self, _: Vec2) -> Vec2 {
         if self.label.is_empty() {
             Vec2::new(3, 1)
         } else {
             Vec2::new(3 + 1 + self.label.width(), 1)
         }
-    }
-}
-
-impl View for Checkbox {
-    fn required_size(&mut self, _: Vec2) -> Vec2 {
-        self.req_size()
     }
 
     fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
