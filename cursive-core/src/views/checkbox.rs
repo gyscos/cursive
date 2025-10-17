@@ -1,13 +1,140 @@
+use ahash::{HashSet, HashSetExt};
+
 use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     style::PaletteStyle,
+    utils::markup::StyledString,
     view::{CannotFocus, View},
     Cursive, Printer, Vec2, With,
 };
+use parking_lot::Mutex;
+use std::hash::Hash;
 use std::sync::Arc;
 
+type GroupCallback<T> = dyn Fn(&mut Cursive, &HashSet<Arc<T>>) + Send + Sync;
 type Callback = dyn Fn(&mut Cursive, bool) + Send + Sync;
+
+struct Item<T> {
+    value: Arc<T>,
+    checked: bool,
+}
+
+// We have to manually implement Clone.
+// Using derive(Clone) would add am unwanted `T: Clone` where-clause.
+impl<T> Clone for Item<T> {
+    fn clone(&self) -> Self {
+        Self {
+            value: Arc::clone(&self.value),
+            checked: self.checked,
+        }
+    }
+}
+
+struct SharedState<T> {
+    items: Vec<Item<T>>,
+
+    on_change: Option<Arc<GroupCallback<T>>>,
+}
+
+impl<T> SharedState<T> {
+    fn add(&mut self, value: T, checked: bool) -> usize {
+        let value = Arc::new(value);
+        let i = self.items.len();
+        self.items.push(Item { value, checked });
+        i
+    }
+
+    fn set_checked(&mut self, i: usize, checked: bool) {
+        self.items[i].checked = checked;
+    }
+
+    fn selections(&self) -> Vec<Arc<T>> {
+        self.items
+            .iter()
+            .filter(|item| item.checked)
+            .cloned()
+            .map(|item| item.value)
+            .collect()
+    }
+}
+
+/// Group to coordinate multiple checkboxes.
+///
+/// A `MultiChoiceGroup` can be used to create and manage multiple [`Checkbox`]es.
+///
+/// A `MultiChoiceGroup` can be cloned; it will keep shared state (pointing to the same group).
+pub struct MultiChoiceGroup<T> {
+    // Given to every child button
+    state: Arc<Mutex<SharedState<T>>>,
+}
+
+// We have to manually implement Clone.
+// Using derive(Clone) would add am unwanted `T: Clone` where-clause.
+impl<T> Clone for MultiChoiceGroup<T> {
+    fn clone(&self) -> Self {
+        Self {
+            state: Arc::clone(&self.state),
+        }
+    }
+}
+
+impl<T: 'static + Hash + Eq> Default for MultiChoiceGroup<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T: 'static + Hash + Eq> MultiChoiceGroup<T> {
+    /// Creates an empty group for check boxes.
+    pub fn new() -> Self {
+        Self {
+            state: Arc::new(Mutex::new(SharedState {
+                items: Vec::new(),
+                on_change: None,
+            })),
+        }
+    }
+
+    /// Adds a new checkbox to the group.
+    ///
+    /// The checkbox will display `label` next to it, and will ~embed~ `value`.
+    pub fn checkbox<S: Into<StyledString>>(&mut self, value: T, label: S) -> Checkbox
+    where
+        T: Send + Sync,
+    {
+        let i = self.state.lock().add(value, false);
+        Checkbox::labelled(label).on_change({
+            let groupstate = Arc::clone(&self.state);
+            move |_, checked| {
+                groupstate.lock().set_checked(i, checked);
+            }
+        })
+    }
+
+    /// Returns the reference to a vector associated with the selected checkboxes.
+    pub fn selections(&self) -> Vec<Arc<T>> {
+        self.state.lock().selections()
+    }
+
+    /// Sets a callback to be user when choices change.
+    pub fn set_on_change<F>(&mut self, on_change: F)
+    where
+        F: Send + Sync + 'static + Fn(&mut Cursive, &HashSet<Arc<T>>),
+    {
+        self.state.lock().on_change = Some(Arc::new(on_change));
+    }
+
+    /// Set a callback to use used when choices change.
+    ///
+    /// Chainable variant.
+    pub fn on_change<F>(self, on_change: F) -> Self
+    where
+        F: Send + Sync + 'static + Fn(&mut Cursive, &HashSet<Arc<T>>),
+    {
+        crate::With::with(self, |s| s.set_on_change(on_change))
+    }
+}
 
 /// Checkable box.
 ///
@@ -25,6 +152,8 @@ pub struct Checkbox {
     enabled: bool,
 
     on_change: Option<Arc<Callback>>,
+
+    label: StyledString,
 }
 
 new_default!(Checkbox);
@@ -32,12 +161,23 @@ new_default!(Checkbox);
 impl Checkbox {
     impl_enabled!(self.enabled);
 
-    /// Creates a new, unchecked checkbox.
+    /// Creates a new, unlabelled, unchecked checkbox.
     pub fn new() -> Self {
         Checkbox {
             checked: false,
             enabled: true,
             on_change: None,
+            label: StyledString::new(),
+        }
+    }
+
+    /// Creates a new, labelled, unchecked checkbox.
+    pub fn labelled<S: Into<StyledString>>(label: S) -> Self {
+        Checkbox {
+            checked: false,
+            enabled: true,
+            on_change: None,
+            label: label.into(),
         }
     }
 
@@ -140,12 +280,22 @@ impl Checkbox {
         if self.checked {
             printer.print((1, 0), "X");
         }
+
+        if !self.label.is_empty() {
+            // We want the space to be highlighted if focused
+            printer.print((3, 0), " ");
+            printer.print_styled((4, 0), &self.label);
+        }
     }
 }
 
 impl View for Checkbox {
     fn required_size(&mut self, _: Vec2) -> Vec2 {
-        Vec2::new(3, 1)
+        if self.label.is_empty() {
+            Vec2::new(3, 1)
+        } else {
+            Vec2::new(3 + 1 + self.label.width(), 1)
+        }
     }
 
     fn take_focus(&mut self, _: Direction) -> Result<EventResult, CannotFocus> {
