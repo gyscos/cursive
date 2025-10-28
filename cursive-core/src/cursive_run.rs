@@ -1,6 +1,6 @@
 use crate::{backend, buffer, event, Cursive, Vec2};
-use parking_lot::RwLock;
 use std::borrow::{Borrow, BorrowMut};
+use std::cell::RefCell;
 use std::time::Duration;
 
 // How long we wait between two empty input polls
@@ -16,7 +16,7 @@ pub struct CursiveRunner<C> {
     siv: C,
 
     backend: Box<dyn backend::Backend>,
-    buffer: RwLock<buffer::PrintBuffer>,
+    buffer: RefCell<buffer::PrintBuffer>,
 
     boring_frame_count: u32,
     // Last layer sizes of the stack view.
@@ -50,7 +50,7 @@ impl<C> CursiveRunner<C> {
         CursiveRunner {
             siv,
             backend,
-            buffer: RwLock::new(buffer::PrintBuffer::new()),
+            buffer: RefCell::new(buffer::PrintBuffer::new()),
             boring_frame_count: 0,
             last_sizes: Vec::new(),
         }
@@ -93,9 +93,9 @@ where
             self.last_sizes = sizes;
         }
 
-        self.buffer.write().resize(self.screen_size());
+        self.buffer.borrow_mut().resize(self.screen_size());
         self.siv.borrow_mut().draw(&self.buffer);
-        self.buffer.write().flush(&*self.backend);
+        self.buffer.borrow_mut().flush(&*self.backend);
     }
 
     /// Performs the first half of `Self::step()`.

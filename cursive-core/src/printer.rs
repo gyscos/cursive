@@ -14,8 +14,7 @@ use crate::with::With;
 use crate::Vec2;
 
 use enumset::EnumSet;
-use parking_lot::RwLock;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::cmp::min;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -70,7 +69,7 @@ pub struct Printer<'a, 'b> {
     current_style: Cell<ConcreteStyle>,
 
     /// Backend used to actually draw things
-    buffer: &'b RwLock<PrintBuffer>,
+    buffer: &'b RefCell<PrintBuffer>,
 }
 
 impl<'a, 'b> Printer<'a, 'b> {
@@ -78,7 +77,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// But nobody needs to know that.
     #[doc(hidden)]
-    pub fn new<T: Into<Vec2>>(size: T, theme: &'a Theme, buffer: &'b RwLock<PrintBuffer>) -> Self {
+    pub fn new<T: Into<Vec2>>(size: T, theme: &'a Theme, buffer: &'b RefCell<PrintBuffer>) -> Self {
         let size = size.into();
         Printer {
             offset: Vec2::zero(),
@@ -105,7 +104,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     ///
     /// This is the size of the entire terminal, not just the area this printer can write into.
     pub fn buffer_size(&self) -> Vec2 {
-        self.buffer.read().size()
+        self.buffer.borrow().size()
     }
 
     /// Clear the screen.
@@ -115,7 +114,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// Users rarely need to call this directly.
     pub fn clear(&self) {
         let color = self.theme.palette[PaletteColor::Background];
-        self.buffer.write().fill(
+        self.buffer.borrow_mut().fill(
             " ",
             ColorPair {
                 front: color,
@@ -258,7 +257,7 @@ impl<'a, 'b> Printer<'a, 'b> {
 
         let start = start + self.offset;
         self.buffer
-            .write()
+            .borrow_mut()
             .print_at(start, text, self.current_style());
     }
 
@@ -294,7 +293,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let start = start + self.offset;
         for y in 0..height {
             self.buffer
-                .write()
+                .borrow_mut()
                 .print_at(start + (0, y), c, self.current_style());
         }
     }
@@ -304,7 +303,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     where
         F: FnOnce(&mut Window<'_>) -> R,
     {
-        let mut buffer = self.buffer.write();
+        let mut buffer = self.buffer.borrow_mut();
         let mut window = buffer
             .window(self.output_window())
             .expect("printer size exceeds backend size");
@@ -362,7 +361,7 @@ impl<'a, 'b> Printer<'a, 'b> {
         let repetitions = min(width, self.output_size.x - start.x) / c_width;
 
         let mut start = start + self.offset;
-        let mut buffer = self.buffer.write();
+        let mut buffer = self.buffer.borrow_mut();
         let style = self.current_style();
         for _ in 0..repetitions {
             buffer.print_at(start, c, style);
@@ -424,10 +423,7 @@ impl<'a, 'b> Printer<'a, 'b> {
     /// that will apply the given color on prints.
     ///
     /// Does not change the current set of active effects (bold/underline/...).
-    pub fn with_color<F>(&self, c: ColorStyle, f: F)
-    where
-        F: FnOnce(&Printer),
-    {
+    pub fn with_color<F: FnOnce(&Printer)>(&self, c: ColorStyle, f: F) {
         let sub = self.clone().with(|sub| sub.set_color(c));
 
         f(&sub);
