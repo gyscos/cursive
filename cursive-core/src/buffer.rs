@@ -17,6 +17,15 @@ pub enum CellWidth {
 
     /// This character takes 2 cells in the grid (mostly for emojis and asian characters).
     Double,
+
+    /// This character takes 3 cells in the grid (hindi???).
+    Triple,
+
+    /// This character takes 4 cells in the grid (hindi???).
+    Quadruple,
+
+    /// This character takes 5 cells in the grid (hindi???).
+    Quintuple,
 }
 
 impl Default for CellWidth {
@@ -30,20 +39,26 @@ impl CellWidth {
     ///
     /// # Panics
     ///
-    /// If `width > 2`.
+    /// If `width > 5`.
     pub fn from_usize(width: usize) -> Self {
         match width {
             1 => CellWidth::Single,
             2 => CellWidth::Double,
-            n => panic!("expected width of 1 or 2 only. Got {n}."),
+            3 => CellWidth::Triple,
+            4 => CellWidth::Quadruple,
+            5 => CellWidth::Quintuple,
+            n => panic!("expected width of 1 or 2 or 3 or 4 or 5 only. Got {n}."),
         }
     }
 
-    /// Returns the width as a usize: 1 or 2.
+    /// Returns the width as a usize: 1 or 2 or 3 or 4 or 5.
     pub fn as_usize(self) -> usize {
         match self {
             CellWidth::Single => 1,
             CellWidth::Double => 2,
+            CellWidth::Triple => 3,
+            CellWidth::Quadruple => 4,
+            CellWidth::Quintuple => 5,
         }
     }
 
@@ -51,7 +66,7 @@ impl CellWidth {
     ///
     /// # Panics
     ///
-    /// If `text` has a width > 2 (it means it is not a single grapheme).
+    /// If `text` has a width > 5 (it means it is not a single grapheme).
     pub fn from_grapheme(text: &str) -> Self {
         Self::from_usize(text.width())
     }
@@ -71,9 +86,9 @@ pub struct Cell {
     /// Most graphemes fit in a couple bytes, but there's theoretically no limit.
     text: compact_str::CompactString,
 
-    /// Either 1 or 2.
+    /// Either 1 or 2 or 3 or 4 or 5.
     ///
-    /// If it's 2, the next cell should be None.
+    /// If it's 5, the next cell should be None.
     ///
     /// Should be equal to `text.width()`
     ///
@@ -89,9 +104,9 @@ impl Cell {
         &self.text
     }
 
-    /// Returns the width of this cell: either 1 or 2.
+    /// Returns the width of this cell: either 1 or 2 or 3 or 4 or 5.
     ///
-    /// If this returns 2, then the next cell in the grid should be empty.
+    /// If this returns more than 1, then the next cells in the grid should be empty.
     pub fn width(&self) -> usize {
         self.width.as_usize()
     }
@@ -103,11 +118,11 @@ impl Cell {
 
     /// Sets the content of this cell.
     ///
-    /// `text` should be a single grapheme, with width 1 or 2.
+    /// `text` should be a single grapheme, with width 1 or 2 or 3 or 4 or 5.
     ///
     /// # Panics
     ///
-    /// If `text.width() > 2`.
+    /// If `text.width() > 5`.
     pub fn set_text(&mut self, text: &str) {
         self.text.clear();
         self.text.push_str(text);
