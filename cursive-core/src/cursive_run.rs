@@ -71,8 +71,7 @@ impl<C> CursiveRunner<C>
 where
     C: BorrowMut<Cursive>,
 {
-    fn layout(&mut self) {
-        let size = self.screen_size();
+    fn layout(&mut self, size: Vec2) {
         self.siv.borrow_mut().layout(size);
     }
 
@@ -84,7 +83,7 @@ where
         }
     }
 
-    fn draw(&mut self) {
+    fn draw(&mut self, size: Vec2) {
         let sizes = self.screen().layer_sizes();
         if self.last_sizes != sizes {
             // TODO: Maybe we only need to clear if the _max_ size differs?
@@ -93,7 +92,7 @@ where
             self.last_sizes = sizes;
         }
 
-        self.buffer.write().resize(self.screen_size());
+        self.buffer.write().resize(size);
         self.siv.borrow_mut().draw(&self.buffer);
         self.buffer.write().flush(&*self.backend);
     }
@@ -183,14 +182,19 @@ where
     pub fn refresh(&mut self) {
         self.boring_frame_count = 0;
 
+        // Capture screen size once during a refresh to
+        // ensure layout and draw receive the same screen
+        // size, otherwise bad things can happen.
+        let screen_size = self.screen_size();
+
         // Do we need to redraw every time?
         // Probably, actually.
         // TODO: Do we need to re-layout every time?
-        self.layout();
+        self.layout(screen_size);
 
         // TODO: Do we need to redraw every view every time?
         // (Is this getting repetitive? :p)
-        self.draw();
+        self.draw(screen_size);
         self.backend.refresh();
     }
 
@@ -236,5 +240,209 @@ where
         while self.is_running() {
             self.step();
         }
+    }
+}
+
+#[cfg(test)]
+mod test_layout_draw_refresh {
+    use super::*;
+    use crate::backend::Backend;
+    use crate::event::Event;
+    use crate::views::{EditView, Panel};
+    use crate::{style, Vec2};
+    use std::sync::{Arc, Mutex};
+
+    // WigglyBackend is a Mock backend that simulates a previous
+    // race condition by returning different sizes on successive
+    // calls to screen_size().
+    struct WigglyBackend {
+        // call_count is a simple ounter for how many times
+        // screen_size() has been called.
+        call_count: Arc<Mutex<usize>>,
+        // sizes are the sizes to return on successive calls
+        // to screen_size(). We just pop a size off each time
+        // it gets called.
+        sizes: Vec<Vec2>,
+    }
+
+    impl WigglyBackend {
+        fn new(sizes: Vec<Vec2>) -> Self {
+            WigglyBackend {
+                call_count: Arc::new(Mutex::new(0)),
+                sizes,
+            }
+        }
+
+        // shinking creates a backend that simulates
+        // shrinking: first call returns 100, second returns 98.
+        fn shrinking() -> Self {
+            Self::new(vec![Vec2::new(100, 30), Vec2::new(98, 30)])
+        }
+
+        // growing creates a backend that simulates
+        // growing: first call returns 98, second returns 100.
+        fn growing() -> Self {
+            Self::new(vec![Vec2::new(98, 30), Vec2::new(100, 30)])
+        }
+    }
+
+    // And now make WigglyBackend a Backend.
+    impl Backend for WigglyBackend {
+        fn name(&self) -> &str {
+            "WigglyBackend"
+        }
+
+        fn screen_size(&self) -> Vec2 {
+            let mut count = self.call_count.lock().unwrap();
+            let idx = *count;
+            *count += 1;
+
+            // And here's where we return different sizes on
+            // successive calls to simulate potential race
+            // condition issues if the bug is re-introduced
+            // and/or screen_size() starts being called twice
+            // in the same refresh cycle again.
+            self.sizes.get(idx).copied().unwrap_or_else(|| {
+                // ..if we've returned all of the sizes,
+                // just keep returning the last size.
+                *self.sizes.last().unwrap()
+            })
+        }
+
+        // poll_event is nused, but part of the trait.
+        fn poll_event(&mut self) -> Option<Event> {
+            None
+        }
+
+        // set_title is unused, but part of the trait.
+        fn set_title(&mut self, _title: String) {}
+
+        // refresh is unused, but part of the trait.
+        fn refresh(&mut self) {}
+
+        // has_colors is unused, but part of the trait.
+        fn has_colors(&self) -> bool {
+            false
+        }
+
+        // move_to is unused, but part of the trait.
+        fn move_to(&self, _pos: Vec2) {}
+
+        // print is unused, but part of the trait.
+        fn print(&self, _text: &str) {}
+
+        // clear is unused, but part of the trait.
+        fn clear(&self, _color: style::Color) {}
+
+        // set_color unused, but part of the trait.
+        fn set_color(&self, colors: style::ColorPair) -> style::ColorPair {
+            colors
+        }
+
+        // set_effect is unused, but part of the trait.
+        fn set_effect(&self, _effect: style::Effect) {}
+
+        // unset_effecct is unnused, but part of the trait.
+        fn unset_effect(&self, _effect: style::Effect) {}
+    }
+
+    #[test]
+    // Test to make sure the window can shrink and EditView won't panic.
+    fn test_shrink_race_condition() {
+        let mut siv = Cursive::new();
+
+        // Add EditView in Panel, which would be where the panic
+        // triggers if screen_size() is being called multiple times
+        // in a refresh cycle.
+        siv.add_layer(Panel::new(
+            EditView::new().content("i exist to stay calm and not panic when shrinking"),
+        ));
+
+        // Create a backend that returns 100 on first call, 98 on second call.
+        // If screen_size() gets called twice during a refresh, this would
+        // trigger a panic in EditView.
+        let backend = Box::new(WigglyBackend::shrinking());
+        let mut runner = CursiveRunner::new(siv, backend);
+        runner.refresh();
+    }
+
+    #[test]
+    // Test to make sure the window can grow and EditView won't panic.
+    fn test_grow_race_condition() {
+        let mut siv = Cursive::new();
+
+        siv.add_layer(Panel::new(EditView::new().content("i exist to stay calm and not panic when growing")));
+
+        // Backend returns 98 on first call, 100 on second call.
+        let backend = Box::new(WigglyBackend::growing());
+        let mut runner = CursiveRunner::new(siv, backend);
+        runner.refresh();
+    }
+
+    #[test]
+    // Verifies that screen_size() is only called once for a given refresh cycle.
+    fn test_screen_size_called_once() {
+        let mut siv = Cursive::new();
+
+        siv.add_layer(Panel::new(EditView::new().content("i exist to test")));
+
+        let backend = Box::new(WigglyBackend::shrinking());
+        let call_count = backend.call_count.clone();
+        let mut runner = CursiveRunner::new(siv, backend);
+
+        runner.refresh();
+
+        let count = *call_count.lock().unwrap();
+        assert_eq!(
+            count, 1,
+            "screen_size() should only be called once per refresh(), but was called {} times",
+            count
+        );
+    }
+
+    #[test]
+    // Verifies that layout() and draw() receive the same size.
+    fn test_layout_draw_size_consistency() {
+        let mut siv = Cursive::new();
+
+        let layout_size = Arc::new(Mutex::new(None));
+        let draw_size = Arc::new(Mutex::new(None));
+
+        struct SizeRecorder {
+            layout_size: Arc<Mutex<Option<Vec2>>>,
+            draw_size: Arc<Mutex<Option<Vec2>>>,
+        }
+
+        impl crate::view::View for SizeRecorder {
+            fn layout(&mut self, size: Vec2) {
+                *self.layout_size.lock().unwrap() = Some(size);
+            }
+
+            fn draw(&self, printer: &crate::Printer) {
+                *self.draw_size.lock().unwrap() = Some(printer.size);
+            }
+        }
+
+        siv.add_layer(Panel::new(SizeRecorder {
+            layout_size: layout_size.clone(),
+            draw_size: draw_size.clone(),
+        }));
+
+        // Use the wiggly backend that would return different sizes
+        // if we asked for the screen size twice in the same
+        // refresh cycle.
+        let backend = Box::new(WigglyBackend::shrinking());
+        let mut runner = CursiveRunner::new(siv, backend);
+
+        runner.refresh();
+
+        let layout = layout_size.lock().unwrap().unwrap();
+        let draw = draw_size.lock().unwrap().unwrap();
+
+        assert_eq!(
+            layout, draw,
+            "layout and draw must always get the same size. Got layout={:?}, draw={:?}.",
+            layout, draw
+        );
     }
 }
