@@ -181,6 +181,30 @@ impl From<toml::de::Error> for Error {
     }
 }
 
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Error::Io(err) => write!(f, "An error occured when reading the theme file: {}", err),
+            #[cfg(feature = "toml")]
+            Error::Parse(err) => write!(
+                f,
+                "An error occured while parsing the theme TOML content: {}",
+                err
+            ),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Error::Io(err) => Some(err),
+            #[cfg(feature = "toml")]
+            Error::Parse(err) => Some(err),
+        }
+    }
+}
+
 /// Loads a theme from file.
 ///
 /// Must have the `toml` feature enabled.
@@ -214,4 +238,65 @@ pub fn load_toml(content: &str) -> Result<Theme, Error> {
 /// Loads the default theme, and returns its representation.
 pub fn load_default() -> Theme {
     Theme::default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::error::Error as _;
+
+    #[test]
+    // Make sure Error::Io correctly implements std::error::Error.
+    fn test_io_error_implements_std_error() {
+        let io_error = io::Error::new(io::ErrorKind::NotFound, "file not found");
+        let theme_error = Error::Io(io_error);
+
+        // Should be able to use as std::error::Error.
+        let _error_trait: &dyn std::error::Error = &theme_error;
+
+        // Should have a Display implementation.
+        let display_str = format!("{}", theme_error);
+        assert!(display_str.contains("when reading the theme file"));
+
+        // And a source.
+        assert!(theme_error.source().is_some());
+    }
+
+    #[cfg(feature = "toml")]
+    #[test]
+    // Make sure Error::Parse correctly implements std::error::Error.
+    fn test_parse_error_implements_std_error() {
+        let parse_result = load_toml("invalid toml {{{");
+        assert!(parse_result.is_err());
+
+        let theme_error = parse_result.unwrap_err();
+
+        // Should be able to use as std::error::Error.
+        let _error_trait: &dyn std::error::Error = &theme_error;
+
+        // Should have a Display implementation.
+        let display_str = format!("{}", theme_error);
+        assert!(display_str.contains("while parsing the theme"));
+
+        // And a source.
+        assert!(theme_error.source().is_some());
+    }
+
+    #[cfg(feature = "toml")]
+    #[test]
+    // Make sure ? works for returning Error results.
+    fn test_error_works_with_question_mark_operator() {
+        fn load_theme_simple(content: &str) -> Result<Theme, Box<dyn std::error::Error>> {
+            let theme = load_toml(content)?;
+            Ok(theme)
+        }
+
+        // Test with "invalid" TOML.
+        let result = load_theme_simple("invalid toml {{{");
+        assert!(result.is_err());
+
+        // Test with valid TOML.
+        let result = load_theme_simple("shadow = false");
+        assert!(result.is_ok());
+    }
 }
