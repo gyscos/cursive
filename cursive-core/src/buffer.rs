@@ -478,9 +478,43 @@ impl PrintBuffer {
             apply_diff(&self.current_style, style, backend);
             self.current_style = *style;
 
+            let width = width.as_usize();
+            // Graphemes larger than 2 are not very well supported in terminals.
+            // The actual rendered width may vary (the terminal is wrong in this case).
+            // This disagreement between UnicodeWidth and the terminal can result in UI glitches.
+            // For example, we increment our internal cursor by the grapheme width, and expect the
+            // terminal to increment its own cursor, so we don't usually need to call move_to all
+            // the time.
+            // But if the terminal increment the cursor by the wrong value, it will result in
+            // shifted text. To avoid that, we'd like to force a move_to after these large
+            // graphemes, to reduce the risk of drift.
+            //
+            // One way to do that is to force the cursor to be out of sync with the grid.
+            // To do that, we'll increment the X position of the cursor by a wrong value if the
+            // width is >2. Incrementing it by min(2, width) ensures that: if the width is >2,
+            // the next cell will call move_to and re-sync the cursor.
+            //
+            // It does not prevent _all_ glitches. If the grapheme ends up rendered smaller than
+            // the proper width, then the missing cells will never be written to. To avoid that, we
+            // pre-fill the space covered by this grapheme with spaces.
+            //
+            // If the rendered width is _larger_ than the proper width, then there's not much we
+            // can do, and it will mess up with the UI. Forcing a move_to after ensures that it
+            // doesn't lead to cascading shift, but it will still look weird. Not much we can do.
+            //
+            // All of this comes at a performance cost, but the hope is that such wide graphemes
+            // are rare enough that being correct matters more.
+            //
+            // See https://github.com/gyscos/cursive/issues/821
+            if width > 2 {
+                for _ in 0..width {
+                    backend.print(" ");
+                }
+                backend.move_to(current_pos);
+            }
             backend.print(text);
 
-            current_pos.x += width.as_usize();
+            current_pos.x += usize::min(2, width);
 
             // Assume we never wrap over?
         }
