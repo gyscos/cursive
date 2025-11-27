@@ -306,13 +306,31 @@ impl PrintBuffer {
         if self.active_buffer[id].is_none() && start.x > 0 {
             // If the previous character is double-wide, then this cell would be None.
             // So only check that if we're None to begin with.
-            // Here `id - 1` is safe to compute since `start.x > 0`.
-            if let Some(ref mut prev) = self.active_buffer[id - 1] {
-                if prev.width == CellWidth::Double {
-                    prev.width = CellWidth::Single;
-                    prev.text.clear();
-                    prev.text.push_str(" ");
-                    // Preserve style.
+            // Here `id - i` is safe to compute since `start.x >= i`, and `id >= start_x`.
+            for i in 1..=start.x {
+                let mut style_to_clear = None;
+                if let Some(ref mut prev) = self.active_buffer[id - i] {
+                    // For ex, double-wide with i=1: remove it
+                    if prev.width.as_usize() > i {
+                        // Clear out all cells between id-i and id
+                        prev.width = CellWidth::Single;
+                        prev.text.clear();
+                        prev.text.push_str(" ");
+                        // Preserve style.
+                        style_to_clear = Some(prev.style);
+                    } else {
+                        break;
+                    }
+                }
+                if let Some(style) = style_to_clear {
+                    for j in 0..i {
+                        self.active_buffer[id - j] = Some(Cell {
+                            style,
+                            width: CellWidth::Single,
+                            text: " ".into(),
+                        });
+                    }
+                    break;
                 }
             }
         }
