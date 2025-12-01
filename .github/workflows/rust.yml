@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Check
       # We run checks with all backend features to make sure they compile, but don't actually build them as they require external libs.
       run: cargo check --features "builder blt-backend ncurses-backend pancurses-backend termion-backend crossterm-backend markdown toml ansi"
