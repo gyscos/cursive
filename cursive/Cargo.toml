@@ -73,7 +73,7 @@ toml = ["cursive_core/toml"]  # Allows parsing themes from toml.
 name = "cursive"
 
 [target.'cfg(unix)'.dependencies]
-signal-hook = "0.3"
+signal-hook = "0.4"
 
 [[example]]
 name = "theme"
