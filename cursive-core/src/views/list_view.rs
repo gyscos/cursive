@@ -287,7 +287,7 @@ impl ListView {
         } else {
             return EventResult::Ignored;
         };
-        self.set_focus_unchecked(i);
+        let res = res.and(self.set_focus_unchecked(i));
 
         res.and(EventResult::Consumed(self.on_select.clone().map(|cb| {
             let i = self.focus();
