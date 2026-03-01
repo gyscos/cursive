@@ -48,7 +48,7 @@ features = ["local-offset", "formatting"]
 
 [dependencies.toml]
 optional = true
-version = "0.9"
+version = "1.0"
 
 [dependencies.num]
 default-features = false
