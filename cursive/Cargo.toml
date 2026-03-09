@@ -91,8 +91,12 @@ required-features = ["ansi", "crossterm-backend"]
 name = "builder"
 required-features = ["builder"]
 
+[[example]]
+name = "markdown"
+required-features = ["markdown"]
+
 [dev-dependencies]
-rand = "0.9"
+rand = "0.10"
 pretty-bytes = "0.2"
 serde_json = "1.0.85"
 serde_yaml = "0.9.13"

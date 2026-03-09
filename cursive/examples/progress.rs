@@ -2,7 +2,6 @@ use cursive::traits::*;
 use cursive::utils::Counter;
 use cursive::views::{Button, Dialog, LinearLayout, ProgressBar, TextView};
 use cursive::Cursive;
-use rand::Rng;
 use std::cmp::min;
 use std::thread;
 use std::time::Duration;
@@ -73,9 +72,7 @@ fn phase_2(s: &mut Cursive) {
     // Each task will have its own shiny counter
     let counters: Vec<_> = (0..n_bars).map(|_| Counter::new(0)).collect();
     // To make things more interesting, we'll give a random speed to each bar
-    let speeds: Vec<_> = (0..n_bars)
-        .map(|_| rand::thread_rng().gen_range(50..150))
-        .collect();
+    let speeds: Vec<_> = (0..n_bars).map(|_| rand::random_range(50..150)).collect();
 
     let n_max = 100_000;
     let cb = s.cb_sink().clone();

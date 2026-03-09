@@ -78,7 +78,7 @@ impl Field {
             n_cells - exclusion_cells.len(),
             Cell::new(CellContent::Free(0)),
         );
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         self.cells.shuffle(&mut rng);
 
         // push empty cells near of cursor to avoid bombs in this positions
