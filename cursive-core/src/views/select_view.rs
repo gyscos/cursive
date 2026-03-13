@@ -454,6 +454,15 @@ impl<T: 'static + Send + Sync> SelectView<T> {
             .unwrap_or_else(Callback::dummy)
     }
 
+    /// Replaces an item in the list.
+    pub fn replace_item<S>(&mut self, id: usize, label: S, value: T)
+    where
+        S: Into<StyledString>,
+    {
+        self.items[id] = Item::new(label.into(), value);
+        self.last_required_size = None;
+    }
+
     /// Inserts an item at position `index`, shifting all elements after it to
     /// the right.
     pub fn insert_item<S>(&mut self, index: usize, label: S, value: T)
