@@ -72,18 +72,20 @@ These tutorials may help you get started with cursive:
 
 Here are a few crates implementing new views for you to use:
 
-* [cursive-aligned-view](https://github.com/deinstapel/cursive-aligned-view): A view wrapper for gyscos/cursive views which aligns child views.
+* [cursive-aligned-view](https://github.com/deinstapel/cursive-aligned-view): A view wrapper which aligns child views.
 * [cursive-async-view](https://github.com/deinstapel/cursive-async-view): A loading-screen wrapper.
-* [cursive-flexi-logger-view](https://github.com/deinstapel/cursive-flexi-logger-view): An alternative debug view using `emabee/flexi_logger`.
+* [cursive_calendar_view](https://github.com/BonsaiDen/cursive_calendar_view): A basic calendar view implementation.
+* [cursive-flexi-logger-view](https://github.com/deinstapel/cursive-flexi-logger-view): An alternative debug view using [flexi_logger](https://github.com/emabee/flexi_logger).
+* [cursive_hexview](https://github.com/hellow554/cursive_hexview): A simple hexview.
+* [cursive-hjkl](https://github.com/gamma-delta/cursive-hjkl): Wraps any view to use Vim-like `hjkl` controls.
+* [cursive-image](https://codeberg.org/tliron/cursive-image): A graphical image view. Supported formats include PNG, GIF, JPEG, SVG, and PDF.
 * [cursive-markup](https://sr.ht/~ireas/cursive-markup-rs): A view that renders HTML or other markup.
 * [cursive-multiplex](https://github.com/deinstapel/cursive-multiplex): A tmux like multiplexer.
 * [cursive-spinner-view](https://github.com/otov4its/cursive-spinner-view): A spinner view.
-* [cursive-tabs](https://github.com/deinstapel/cursive-tabs): Tabs.
-* [cursive_calendar_view](https://github.com/BonsaiDen/cursive_calendar_view): A basic calendar view implementation.
-* [cursive_hexview](https://github.com/hellow554/cursive_hexview): A simple hexview.
+* [cursive-split-panel](https://codeberg.org/tliron/cursive-split-panel): A split panel view with a movable divider. 
 * [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view): A basic table view component.
-* [cursive_tree_view](https://github.com/BonsaiDen/cursive_tree_view): A tree view implementation.
-* [cursive-hjkl](https://github.com/gamma-delta/cursive-hjkl): Wraps any view to use Vim-like `hjkl` controls.
+* [cursive-tabs](https://github.com/deinstapel/cursive-tabs): Tabs.
+* [cursive-tree](https://codeberg.org/tliron/cursive-tree): A tree view implementation. (Also see [this alternative abandoned implementation](https://github.com/BonsaiDen/cursive_tree_view).)
 
 ## Showcases
 
