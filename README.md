@@ -85,7 +85,7 @@ Here are a few crates implementing new views for you to use:
 * [cursive-split-panel](https://codeberg.org/tliron/cursive-split-panel): A split panel view with a movable divider. 
 * [cursive_table_view](https://github.com/BonsaiDen/cursive_table_view): A basic table view component.
 * [cursive-tabs](https://github.com/deinstapel/cursive-tabs): Tabs.
-* [cursive-tree](https://codeberg.org/tliron/cursive-tree): A tree view implementation. (Also see [this alternative abandoned implementation](https://github.com/BonsaiDen/cursive_tree_view).)
+* [cursive-tree](https://codeberg.org/tliron/cursive-tree): A tree view implementation.
 
 ## Showcases
 
