@@ -1,4 +1,4 @@
-use ahash::{HashSet, HashSetExt};
+use ahash::HashSet;
 
 use crate::{
     direction::Direction,
