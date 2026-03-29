@@ -350,7 +350,7 @@ impl View for MenuPopup {
         scroll::draw_box_frame(
             self,
             printer,
-            |s, y| s.menu.children.get(y).map_or(false, |c| c.is_delimiter()),
+            |s, y| s.menu.children.get(y).is_some_and(|c| c.is_delimiter()),
             |_s, _x| false,
         );
 

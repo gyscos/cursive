@@ -99,7 +99,7 @@ impl Item {
     /// Returns the styled lable for this item
     ///
     /// Returns a vertical bar string if `self` is a delimiter.
-    pub fn styled_label(&self) -> SpannedStr<Style> {
+    pub fn styled_label(&self) -> SpannedStr<'_, Style> {
         match *self {
             Item::Delimiter => DELIMITER.as_styled_str(),
             Item::Leaf { ref label, .. } | Item::Subtree { ref label, .. } => {

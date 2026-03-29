@@ -83,10 +83,10 @@ pub trait View: Any + AnyView + Send + Sync {
     ///
     /// You can return an `EventResult`:
     /// * `EventResult::Ignored` means the event was not processed and may be
-    ///    sent to another view.
+    ///   sent to another view.
     /// * `EventResult::Consumed` means the event was consumed and should not
-    ///    be sent to any other view. It may in addition include a callback
-    ///    to be run.
+    ///   be sent to any other view. It may in addition include a callback
+    ///   to be run.
     ///
     /// The default implementation just ignores any event.
     fn on_event(&mut self, _: Event) -> EventResult {

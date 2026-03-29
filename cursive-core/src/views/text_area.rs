@@ -258,7 +258,7 @@ impl TextArea {
             }
 
             let text = &self.content[self.rows[row].start..self.cursor];
-            text.graphemes(true).last().unwrap().len()
+            text.graphemes(true).next_back().unwrap().len()
         };
         self.cursor -= len;
     }

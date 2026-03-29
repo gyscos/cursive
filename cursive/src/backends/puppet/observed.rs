@@ -169,7 +169,7 @@ impl ObservedScreen {
     }
 
     /// Returns a rectangular subset of observed screen.
-    pub fn piece(&self, min: Vec2, max: Vec2) -> ObservedPiece {
+    pub fn piece(&self, min: Vec2, max: Vec2) -> ObservedPiece<'_> {
         ObservedPiece::new(self, min, max)
     }
 
@@ -179,7 +179,7 @@ impl ObservedScreen {
     }
 
     /// Returns occurrences of given string pattern
-    pub fn find_occurences(&self, pattern: &str) -> Vec<ObservedLine> {
+    pub fn find_occurences(&self, pattern: &str) -> Vec<ObservedLine<'_>> {
         // TODO(njskalski): test for two-cell letters.
         // TODO(njskalski): fails with whitespaces like "\t".
 
@@ -282,7 +282,7 @@ pub trait ObservedPieceInterface {
     /// Returns expanded sibling of this piece
     ///
     /// Asserts if request can be satisfied.
-    fn expanded(&self, up_left: Vec2, down_right: Vec2) -> ObservedPiece {
+    fn expanded(&self, up_left: Vec2, down_right: Vec2) -> ObservedPiece<'_> {
         assert!(self.min().x >= up_left.x);
         assert!(self.min().y >= up_left.y);
         assert!(self.max().x + down_right.x <= self.parent().size.x);
