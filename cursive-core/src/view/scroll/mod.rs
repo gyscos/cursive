@@ -28,20 +28,15 @@ use crate::event::{Event, EventResult};
 use crate::{Printer, Rect, Vec2};
 
 /// Defines the scrolling behaviour on content or size change
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum ScrollStrategy {
     /// Keeps the same row number
+    #[default]
     KeepRow,
     /// Sticks to the top.
     StickToTop,
     /// Sticks to the bottom of the view.
     StickToBottom,
-}
-
-impl Default for ScrollStrategy {
-    fn default() -> Self {
-        ScrollStrategy::KeepRow
-    }
 }
 
 impl std::str::FromStr for ScrollStrategy {
