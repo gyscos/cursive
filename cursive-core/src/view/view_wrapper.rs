@@ -157,11 +157,17 @@ impl<T: ViewWrapper> View for T {
 /// impl<T: View> ViewWrapper for FooView<T> {
 ///     cursive_core::wrap_impl!(self.view: T);
 /// }
+///
+/// struct BarView<T: View>(T);
+///
+/// impl<T: View> ViewWrapper for BarView<T> {
+///     cursive_core::wrap_impl!(self.0: T);
+/// }
 /// # fn main() { }
 /// ```
 #[macro_export]
 macro_rules! wrap_impl {
-    (self.$v:ident: $t:ty) => {
+    (self.$v:tt: $t:ty) => {
         type V = $t;
 
         fn with_view<F, R>(&self, f: F) -> ::std::option::Option<R>
