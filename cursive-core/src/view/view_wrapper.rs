@@ -231,3 +231,38 @@ macro_rules! inner_getters {
         }
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[allow(dead_code, unused_variables)]
+    fn standard_struct() {
+        struct FooView<T: View> {
+            view: T,
+            enabled: bool,
+        }
+
+        impl<T: View> ViewWrapper for FooView<T> {
+            wrap_impl!(self.view: T);
+        }
+
+        let foo = FooView {
+            view: crate::views::TextView::new("Hello, World!"),
+            enabled: true,
+        };
+    }
+
+    #[test]
+    #[allow(dead_code, unused_variables)]
+    fn tuple_struct() {
+        struct BarView<T: View>(T);
+
+        impl<T: View> ViewWrapper for BarView<T> {
+            wrap_impl!(self.0: T);
+        }
+
+        let bar = BarView(crate::views::TextView::new("Hello, World!"));
+    }
+}
