@@ -687,8 +687,8 @@ impl View for LinearLayout {
 
     fn focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
         for (i, child) in self.children.iter_mut().enumerate() {
-            if child.view.focus_view(selector).is_ok() {
-                return Ok(self.set_focus_unchecked(i));
+            if let Ok(res) = child.view.focus_view(selector) {
+                return Ok(res.and(self.set_focus_unchecked(i)));
             }
         }
 
