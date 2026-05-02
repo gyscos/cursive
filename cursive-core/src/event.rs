@@ -494,12 +494,16 @@ pub enum MouseEvent {
     WheelUp,
     /// The wheel was moved down.
     WheelDown,
+    /// The wheel was moved to the left.
+    WheelLeft,
+    /// The wheel was moved to the right.
+    WheelRight,
 }
 
 impl MouseEvent {
     /// Returns the button used by this event, if any.
     ///
-    /// Returns `None` if `self` is `WheelUp` or `WheelDown`.
+    /// Returns `None` if `self` is `WheelUp`, `WheelDown`, `WheelLeft` or `WheelRight`.
     pub fn button(self) -> Option<MouseButton> {
         match self {
             MouseEvent::Press(btn) | MouseEvent::Release(btn) | MouseEvent::Hold(btn) => Some(btn),
@@ -509,7 +513,7 @@ impl MouseEvent {
 
     /// Returns `true` if `self` is an event that can grab focus.
     ///
-    /// This includes `Press`, `WheelUp` and `WheelDown`.
+    /// This includes `Press`, `WheelUp`, `WheelDown`, `WheelLeft` and `WheelRight`.
     ///
     /// It does _not_ include `Release` or `Hold`.
     ///
@@ -518,7 +522,11 @@ impl MouseEvent {
     pub fn grabs_focus(self) -> bool {
         matches!(
             self,
-            MouseEvent::Press(_) | MouseEvent::WheelUp | MouseEvent::WheelDown
+            MouseEvent::Press(_)
+                | MouseEvent::WheelUp
+                | MouseEvent::WheelDown
+                | MouseEvent::WheelLeft
+                | MouseEvent::WheelRight
         )
     }
 }
