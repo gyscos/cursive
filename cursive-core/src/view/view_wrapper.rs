@@ -157,11 +157,17 @@ impl<T: ViewWrapper> View for T {
 /// impl<T: View> ViewWrapper for FooView<T> {
 ///     cursive_core::wrap_impl!(self.view: T);
 /// }
+///
+/// struct BarView<T: View>(T);
+///
+/// impl<T: View> ViewWrapper for BarView<T> {
+///     cursive_core::wrap_impl!(self.0: T);
+/// }
 /// # fn main() { }
 /// ```
 #[macro_export]
 macro_rules! wrap_impl {
-    (self.$v:ident: $t:ty) => {
+    (self.$v:tt: $t:ty) => {
         type V = $t;
 
         fn with_view<F, R>(&self, f: F) -> ::std::option::Option<R>
@@ -224,4 +230,39 @@ macro_rules! inner_getters {
             &mut self.$v
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[allow(dead_code, unused_variables)]
+    fn standard_struct() {
+        struct FooView<T: View> {
+            view: T,
+            enabled: bool,
+        }
+
+        impl<T: View> ViewWrapper for FooView<T> {
+            wrap_impl!(self.view: T);
+        }
+
+        let foo = FooView {
+            view: crate::views::TextView::new("Hello, World!"),
+            enabled: true,
+        };
+    }
+
+    #[test]
+    #[allow(dead_code, unused_variables)]
+    fn tuple_struct() {
+        struct BarView<T: View>(T);
+
+        impl<T: View> ViewWrapper for BarView<T> {
+            wrap_impl!(self.0: T);
+        }
+
+        let bar = BarView(crate::views::TextView::new("Hello, World!"));
+    }
 }
