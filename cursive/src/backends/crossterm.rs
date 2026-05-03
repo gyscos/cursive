@@ -289,10 +289,8 @@ impl Backend {
                     }
                     MouseEventKind::ScrollDown => MouseEvent::WheelDown,
                     MouseEventKind::ScrollUp => MouseEvent::WheelUp,
-                    MouseEventKind::ScrollLeft | MouseEventKind::ScrollRight => {
-                        // TODO: Currently unsupported.
-                        return None;
-                    }
+                    MouseEventKind::ScrollLeft => MouseEvent::WheelLeft,
+                    MouseEventKind::ScrollRight => MouseEvent::WheelRight,
                 };
 
                 Event::Mouse {

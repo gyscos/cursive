@@ -252,6 +252,18 @@ pub fn on_event<Model: ?Sized>(
                     get_scroller(model).scroll_down(3);
                 }
                 Event::Mouse {
+                    event: MouseEvent::WheelLeft,
+                    ..
+                } if get_scroller(model).can_scroll_left() => {
+                    get_scroller(model).scroll_left(3);
+                }
+                Event::Mouse {
+                    event: MouseEvent::WheelRight,
+                    ..
+                } if get_scroller(model).can_scroll_right() => {
+                    get_scroller(model).scroll_right(3);
+                }
+                Event::Mouse {
                     event: MouseEvent::Press(MouseButton::Left),
                     position,
                     offset,
