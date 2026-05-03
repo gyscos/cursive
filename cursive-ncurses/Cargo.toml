@@ -1,0 +1,16 @@
+[package]
+name = "cursive-ncurses"
+authors = ["Alexandre Bury <alexandre.bury@gmail.com>"]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Ncurses backend for the cursive TUI library"
+repository = "https://github.com/gyscos/cursive"
+
+[dependencies]
+cursive_core = { path = "../cursive-core", version = "0.4.0" }
+ncurses = { version = "6.0.1", features = ["wide"] }
+maplit = "1.0"
+ahash = "0.8"
+libc = "0.2"
+log = "0.4"

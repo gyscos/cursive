@@ -84,13 +84,13 @@ impl CursiveExt for cursive_core::Cursive {
     #[cfg(feature = "ncurses-backend")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "curses-backend")))]
     fn run_ncurses(&mut self) -> std::io::Result<()> {
-        self.try_run_with(crate::backends::curses::n::Backend::init)
+        self.try_run_with(crate::backends::n::Backend::init)
     }
 
     #[cfg(feature = "pancurses-backend")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "pancurses-backend")))]
     fn run_pancurses(&mut self) -> std::io::Result<()> {
-        self.try_run_with(crate::backends::curses::pan::Backend::init)
+        self.try_run_with(crate::backends::pan::Backend::init)
     }
 
     #[cfg(feature = "termion-backend")]

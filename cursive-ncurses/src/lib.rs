@@ -1,6 +1,10 @@
-//! Ncurses-specific backend.
-#![cfg(feature = "ncurses-backend")]
-#![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "ncurses-backend")))]
+//! Ncurses backend for the cursive TUI library.
+//!
+//! This crate provides the ncurses backend implementation, including
+//! build-time detection of BUTTON5 support (which varies by platform).
+
+mod utf8;
+
 pub use ncurses;
 
 use log::{debug, warn};
@@ -12,16 +16,20 @@ use std::fs::File;
 use std::io;
 use std::io::Write;
 
-use crate::backend;
-use crate::event::{Event, Key, MouseButton, MouseEvent};
-use crate::theme::{Color, ColorPair, Effect};
-use crate::utf8;
-use crate::Vec2;
+use cursive_core::backend;
+use cursive_core::event::{Event, Key, MouseButton, MouseEvent};
+use cursive_core::style::{BaseColor, Color, ColorPair, Effect};
+use cursive_core::Vec2;
 
-use super::split_i32;
+use maplit::hashmap;
 
 // Use AHash instead of the slower SipHash
 type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
+
+/// Split a i32 into individual bytes, little endian (least significant byte first).
+fn split_i32(code: i32) -> Vec<u8> {
+    (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()
+}
 
 /// Backend using ncurses.
 pub struct Backend {
@@ -42,8 +50,62 @@ pub struct Backend {
     input_buffer: Option<Event>,
 }
 
-fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
-    super::find_closest_pair(pair, ncurses::COLORS() as i16)
+fn find_closest_pair(pair: ColorPair, max_colors: i16) -> (i16, i16) {
+    (
+        find_closest(pair.front, max_colors),
+        find_closest(pair.back, max_colors),
+    )
+}
+
+/// Finds the closest index in the 256-color palette.
+///
+/// If `max_colors` is less than 256 (like 8 or 16), the color will be
+/// downgraded to the closest one available.
+fn find_closest(color: Color, max_colors: i16) -> i16 {
+    let max_colors = std::cmp::max(max_colors, 8);
+    match color {
+        Color::TerminalDefault => -1,
+        Color::Dark(BaseColor::Black) => 0,
+        Color::Dark(BaseColor::Red) => 1,
+        Color::Dark(BaseColor::Green) => 2,
+        Color::Dark(BaseColor::Yellow) => 3,
+        Color::Dark(BaseColor::Blue) => 4,
+        Color::Dark(BaseColor::Magenta) => 5,
+        Color::Dark(BaseColor::Cyan) => 6,
+        Color::Dark(BaseColor::White) => 7,
+        Color::Light(BaseColor::Black) => 8 % max_colors,
+        Color::Light(BaseColor::Red) => 9 % max_colors,
+        Color::Light(BaseColor::Green) => 10 % max_colors,
+        Color::Light(BaseColor::Yellow) => 11 % max_colors,
+        Color::Light(BaseColor::Blue) => 12 % max_colors,
+        Color::Light(BaseColor::Magenta) => 13 % max_colors,
+        Color::Light(BaseColor::Cyan) => 14 % max_colors,
+        Color::Light(BaseColor::White) => 15 % max_colors,
+        Color::Rgb(r, g, b) if max_colors >= 256 => {
+            if r == g && g == b && (8..247).contains(&r) {
+                let n = (r - 8) / 10;
+                i16::from(232 + n)
+            } else {
+                let r = 6 * u16::from(r) / 256;
+                let g = 6 * u16::from(g) / 256;
+                let b = 6 * u16::from(b) / 256;
+                (16 + 36 * r + 6 * g + b) as i16
+            }
+        }
+        Color::Rgb(r, g, b) => {
+            let r = i16::from(r > 127);
+            let g = i16::from(g > 127);
+            let b = i16::from(b > 127);
+            r + 2 * g + 4 * b
+        }
+        Color::RgbLowRes(r, g, b) if max_colors >= 256 => i16::from(16 + 36 * r + 6 * g + b),
+        Color::RgbLowRes(r, g, b) => {
+            let r = i16::from(r > 2);
+            let g = i16::from(g > 2);
+            let b = i16::from(b > 2);
+            r + 2 * g + 4 * b
+        }
+    }
 }
 
 /// Writes some bytes directly to `/dev/tty`
@@ -53,7 +115,6 @@ fn find_closest_pair(pair: ColorPair) -> (i16, i16) {
 fn write_to_tty(bytes: &[u8]) -> io::Result<()> {
     let mut tty_output = File::create("/dev/tty").expect("cursive can only run with a tty");
     tty_output.write_all(bytes)?;
-    // tty_output will be flushed automatically at the end of the function.
     Ok(())
 }
 
@@ -159,12 +220,9 @@ impl Backend {
         let n = 1 + pairs.len() as i16;
 
         let target = if ncurses::COLOR_PAIRS() > i32::from(n) {
-            // We still have plenty of space for everyone.
             n
         } else {
-            // The world is too small for both of us.
             let target = n - 1;
-            // Remove the mapping to n-1
             pairs.retain(|_, &mut v| v != target);
             target
         };
@@ -177,8 +235,7 @@ impl Backend {
     fn get_or_create(&self, pair: ColorPair) -> i16 {
         let mut pairs = self.pairs.borrow_mut();
 
-        // Find if we have this color in stock
-        let result = find_closest_pair(pair);
+        let result = find_closest_pair(pair, ncurses::COLORS() as i16);
         let lookup = pairs.get(&result).copied();
         lookup.unwrap_or_else(|| self.insert_color(&mut pairs, result))
     }
@@ -198,12 +255,10 @@ impl Backend {
 
         let ch: i32 = ncurses::getch();
 
-        // Non-blocking input will return -1 as long as no input is available.
         if ch == -1 {
             return None;
         }
 
-        // Is it a UTF-8 starting point?
         let event = if (32..=255).contains(&ch) && ch != 127 {
             utf8::read_char(ch as u8, || Some(ncurses::getch() as u8))
                 .map(Event::Char)
@@ -219,7 +274,6 @@ impl Backend {
     }
 
     fn parse_ncurses_char(&mut self, ch: i32) -> Event {
-        // eprintln!("Found {:?}", ncurses::keyname(ch));
         if ch == ncurses::KEY_MOUSE {
             self.parse_mouse_event()
         } else {
@@ -239,16 +293,13 @@ impl Backend {
             bstate: 0,
         };
         if ncurses::getmouse(&mut mevent as *mut ncurses::MEVENT) == ncurses::OK {
-            // Currently unused
             let _ctrl = (mevent.bstate & ncurses::BUTTON_CTRL as mmask_t) != 0;
             let _shift = (mevent.bstate & ncurses::BUTTON_SHIFT as mmask_t) != 0;
             let _alt = (mevent.bstate & ncurses::BUTTON_ALT as mmask_t) != 0;
 
-            // Keep the base state, without the modifiers
             mevent.bstate &=
                 !(ncurses::BUTTON_SHIFT | ncurses::BUTTON_ALT | ncurses::BUTTON_CTRL) as mmask_t;
 
-            // This makes a full `Event` from a `MouseEvent`.
             let make_event = |event| Event::Mouse {
                 offset: Vec2::zero(),
                 position: Vec2::new(mevent.x as usize, mevent.y as usize),
@@ -256,33 +307,30 @@ impl Backend {
             };
 
             if mevent.bstate == ncurses::REPORT_MOUSE_POSITION as mmask_t {
-                // The event is either a mouse drag event,
-                // or a weird double-release event. :S
-
                 self.last_mouse_button
                     .map(MouseEvent::Hold)
                     .or_else(|| {
-                        // In legacy mode, some buttons overlap,
-                        // so we need to disambiguate.
-                        (mevent.bstate == ncurses::BUTTON5_DOUBLE_CLICKED as mmask_t)
-                            .then_some(MouseEvent::WheelDown)
+                        #[cfg(has_ncurses_button5)]
+                        {
+                            (mevent.bstate == ncurses::BUTTON5_DOUBLE_CLICKED as mmask_t)
+                                .then_some(MouseEvent::WheelDown)
+                        }
+                        #[cfg(not(has_ncurses_button5))]
+                        {
+                            None
+                        }
                     })
                     .map(make_event)
                     .unwrap_or_else(|| Event::Unknown(vec![]))
             } else {
-                // Identify the button
                 let mut bare_event = mevent.bstate & ((1 << 25) - 1);
 
                 let mut event = None;
-                // ncurses encodes multiple events in the same value.
                 while bare_event != 0 {
                     let single_event = 1 << bare_event.trailing_zeros();
                     bare_event ^= single_event;
 
-                    // Process single_event
                     on_mouse_event(single_event as i32, |e| {
-                        // Keep one event for later,
-                        // send the rest through the channel.
                         if event.is_none() {
                             event = Some(e);
                         } else {
@@ -349,7 +397,6 @@ impl backend::Backend for Backend {
     }
 
     fn set_color(&self, colors: ColorPair) -> ColorPair {
-        // eprintln!("Color used: {:?}", colors);
         let current = self.current_style.get();
         if current != colors {
             self.set_colors(colors);
@@ -405,8 +452,6 @@ impl backend::Backend for Backend {
     }
 
     fn print(&self, text: &str) {
-        // &str is assured it doesn't contain any \0 aka nuls here due to PR 786
-        // thus we can ignore the return value and avoid warning: unused `Result` that must be used
         let _ = ncurses::addstr(text);
     }
 }
@@ -434,6 +479,7 @@ fn get_mouse_button(bare_event: i32) -> MouseButton {
         | ncurses::BUTTON4_CLICKED
         | ncurses::BUTTON4_DOUBLE_CLICKED
         | ncurses::BUTTON4_TRIPLE_CLICKED => MouseButton::Button4,
+        #[cfg(has_ncurses_button5)]
         ncurses::BUTTON5_RELEASED
         | ncurses::BUTTON5_PRESSED
         | ncurses::BUTTON5_CLICKED
@@ -463,9 +509,8 @@ where
             f(MouseEvent::Press(button))
         }
         ncurses::BUTTON4_PRESSED => f(MouseEvent::WheelUp),
+        #[cfg(has_ncurses_button5)]
         ncurses::BUTTON5_PRESSED => f(MouseEvent::WheelDown),
-        // BUTTON4_RELEASED? BUTTON5_RELEASED?
-        // Do they ever happen?
         _ => debug!("Unknown event: {:032b}", bare_event),
     }
 }
@@ -479,24 +524,59 @@ where
     }
 }
 
+fn fill_key_codes<F>(target: &mut HashMap<i32, Event>, f: F)
+where
+    F: Fn(i32) -> Option<String>,
+{
+    let key_names = hashmap! {
+        "DC" => Key::Del,
+        "DN" => Key::Down,
+        "END" => Key::End,
+        "HOM" => Key::Home,
+        "IC" => Key::Ins,
+        "LFT" => Key::Left,
+        "NXT" => Key::PageDown,
+        "PRV" => Key::PageUp,
+        "RIT" => Key::Right,
+        "UP" => Key::Up,
+    };
+
+    for code in 512..1024 {
+        let name = match f(code) {
+            Some(name) => name,
+            None => continue,
+        };
+
+        if !name.starts_with('k') {
+            continue;
+        }
+
+        let (key_name, modifier) = name[1..].split_at(name.len() - 2);
+        let key = match key_names.get(key_name) {
+            Some(&key) => key,
+            None => continue,
+        };
+        let event = match modifier {
+            "3" => Event::Alt(key),
+            "4" => Event::AltShift(key),
+            "5" => Event::Ctrl(key),
+            "6" => Event::CtrlShift(key),
+            "7" => Event::CtrlAlt(key),
+            _ => continue,
+        };
+        target.insert(code, event);
+    }
+}
+
 fn initialize_keymap() -> HashMap<i32, Event> {
-    // First, define the static mappings.
     let mut map = HashMap::default();
 
-    // Value sent by ncurses when nothing happens
     map.insert(-1, Event::Refresh);
 
-    // Values under 256 are chars and control values
-    // Tab is '\t'
     map.insert(9, Event::Key(Key::Tab));
-    // Treat '\n' and the numpad Enter the same
     map.insert(10, Event::Key(Key::Enter));
     map.insert(ncurses::KEY_ENTER, Event::Key(Key::Enter));
-    // This is the escape key when pressed by itself.
-    // When used for control sequences,
-    // it should have been caught earlier.
     map.insert(27, Event::Key(Key::Esc));
-    // `Backspace` sends 127, but Ctrl-H sends `Backspace`
     map.insert(127, Event::Key(Key::Backspace));
     map.insert(ncurses::KEY_BACKSPACE, Event::Key(Key::Backspace));
 
@@ -524,12 +604,8 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     map.insert(ncurses::KEY_SNEXT, Event::Shift(Key::PageDown));
     map.insert(ncurses::KEY_SPREVIOUS, Event::Shift(Key::PageUp));
 
-    // Then add some dynamic ones
-
     for c in 1..=26 {
         let event = match c {
-            // Ctrl-i and Ctrl-j are special, they use the same codes as Tab
-            // and Enter respectively. There's just no way to detect them. :(
             9 => Event::Key(Key::Tab),
             10 => Event::Key(Key::Enter),
             other => Event::CtrlChar((b'a' - 1 + other as u8) as char),
@@ -537,15 +613,13 @@ fn initialize_keymap() -> HashMap<i32, Event> {
         map.insert(c, event);
     }
 
-    // Ncurses provides a F1 variable, but no modifiers
     add_fn(ncurses::KEY_F(1), Event::Key, &mut map);
     add_fn(277, Event::Shift, &mut map);
     add_fn(289, Event::Ctrl, &mut map);
     add_fn(301, Event::CtrlShift, &mut map);
     add_fn(313, Event::Alt, &mut map);
 
-    // Those codes actually vary between ncurses versions...
-    super::fill_key_codes(&mut map, ncurses::keyname);
+    fill_key_codes(&mut map, ncurses::keyname);
 
     map
 }
