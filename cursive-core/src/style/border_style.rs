@@ -1,6 +1,6 @@
 use enum_map::Enum;
 
-use std::ops::Deref;
+use std::str::FromStr;
 
 /// Specifies how some borders should be drawn.
 ///
@@ -22,14 +22,15 @@ impl BorderStyle {
     }
 }
 
-impl<S: Deref<Target = String>> From<S> for BorderStyle {
-    fn from(s: S) -> Self {
-        if &*s == "simple" {
-            BorderStyle::Simple
-        } else if &*s == "outset" {
-            BorderStyle::Outset
-        } else {
-            BorderStyle::None
+impl FromStr for BorderStyle {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "simple" => Ok(BorderStyle::Simple),
+            "outset" => Ok(BorderStyle::Outset),
+            "none" => Ok(BorderStyle::None),
+            _ => Err(()),
         }
     }
 }

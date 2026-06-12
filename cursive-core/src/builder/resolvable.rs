@@ -268,9 +268,7 @@ impl Resolvable for crate::style::Palette {
 
 impl Resolvable for crate::style::BorderStyle {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
-        let borders: String = context.resolve(config)?;
-
-        Ok(Self::from(&borders))
+        resolve_from_str(config, context, |_| "Expected valid border style")
     }
 }
 

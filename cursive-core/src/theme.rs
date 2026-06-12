@@ -140,7 +140,9 @@ impl Theme {
         }
 
         if let Some(toml::Value::String(borders)) = table.get("borders") {
-            self.borders = BorderStyle::from(borders);
+            if let Ok(style) = borders.parse() {
+                self.borders = style;
+            }
         }
 
         if let Some(toml::Value::Table(table)) = table.get("colors") {
