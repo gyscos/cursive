@@ -41,7 +41,7 @@ pub mod reexports {
     pub use crossbeam_channel;
     pub use enumset;
     pub use log;
-    pub use time;
+    pub use jiff;
 
     #[cfg(feature = "toml")]
     pub use toml;

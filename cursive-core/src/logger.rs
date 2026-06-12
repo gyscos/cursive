@@ -83,7 +83,7 @@ pub struct Record {
     /// Log level used for this record
     pub level: log::Level,
     /// Time this message was logged
-    pub time: time::OffsetDateTime,
+    pub time: jiff::Zoned,
     /// Message content
     pub message: String,
 }
@@ -98,7 +98,7 @@ pub fn log(record: &log::Record) {
     logs.push_back(Record {
         level: record.level(),
         message: format!("{}", record.args()),
-        time: time::OffsetDateTime::now_local().unwrap_or_else(|_| time::OffsetDateTime::now_utc()),
+        time: jiff::Zoned::now(),
     });
 }
 
