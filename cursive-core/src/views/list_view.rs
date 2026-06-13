@@ -335,10 +335,10 @@ impl ListView {
                 }
 
                 // We found the correct target, try to focus it.
-                if let ListChild::Row(_, ref mut view) = child {
-                    if let Ok(res) = view.take_focus(direction::Direction::none()) {
-                        return Some(self.set_focus_unchecked(i).and(res));
-                    }
+                if let ListChild::Row(_, view) = child
+                    && let Ok(res) = view.take_focus(direction::Direction::none())
+                {
+                    return Some(self.set_focus_unchecked(i).and(res));
                 }
                 // We found the target, but we can't focus it.
                 break;
@@ -373,7 +373,7 @@ impl View for ListView {
         debug!("Offset: {}", offset);
         for (i, (child, &height)) in self.children.iter().zip(&self.children_heights).enumerate() {
             match child {
-                ListChild::Row(ref label, ref view) => {
+                ListChild::Row(label, view) => {
                     printer.print((0, y), label);
                     view.draw(
                         &printer
@@ -401,7 +401,7 @@ impl View for ListView {
         let view_size =
             direction::Orientation::Vertical.stack(self.children.iter_mut().map(|c| match c {
                 ListChild::Delimiter => Vec2::new(0, 1),
-                ListChild::Row(_, ref mut view) => view.required_size(req),
+                ListChild::Row(_, view) => view.required_size(req),
             }));
 
         view_size + (1 + label_width, 0)

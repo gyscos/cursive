@@ -170,10 +170,10 @@ impl Style {
 }
 
 fn parse_single_style(s: &str) -> Result<Style, super::NoSuchColor> {
-    if let Some(s) = s.strip_prefix("back.") {
-        if let Ok(back) = s.parse::<ColorType>() {
-            return Ok(ColorStyle::back(back).into());
-        }
+    if let Some(s) = s.strip_prefix("back.")
+        && let Ok(back) = s.parse::<ColorType>()
+    {
+        return Ok(ColorStyle::back(back).into());
     }
 
     if let Ok(front) = s.parse::<ColorType>() {

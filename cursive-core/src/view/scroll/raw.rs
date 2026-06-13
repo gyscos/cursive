@@ -103,10 +103,10 @@ where
     GetScroller: FnMut(&mut Model) -> &mut scroll::Core,
     RequiredSize: FnMut(&mut Model, Vec2) -> Vec2,
 {
-    if !needs_relayout {
-        if let Some(cached) = get_scroller(model).try_cache(constraint) {
-            return cached;
-        }
+    if !needs_relayout
+        && let Some(cached) = get_scroller(model).try_cache(constraint)
+    {
+        return cached;
     }
 
     // Attempt 1: try without scrollbars

@@ -131,10 +131,10 @@ impl Item {
     /// Does not affect delimiters.
     pub fn disable(&mut self) {
         if let Item::Leaf {
-            ref mut enabled, ..
+            enabled, ..
         }
         | Item::Subtree {
-            ref mut enabled, ..
+            enabled, ..
         } = self
         {
             *enabled = false;

@@ -192,14 +192,14 @@ impl Core {
     /// This also updates `event` so that it is relative to the content.
     pub fn is_event_inside(&self, event: &mut Event) -> bool {
         if let Event::Mouse {
-            ref mut position,
-            ref offset,
+            position,
+            offset,
             ..
         } = event
         {
             // For mouse events, check if it falls inside the available area
             let inside = position
-                .checked_sub(offset)
+                .checked_sub(*offset)
                 .map(|p| p.fits_in(self.last_available_size()))
                 .unwrap_or(false);
             *position = *position + self.offset;

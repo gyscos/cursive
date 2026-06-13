@@ -585,7 +585,7 @@ impl View for EditView {
                     .unwrap_or_else(|| {
                         panic!(
                             "Found no char at cursor {} in {}",
-                            self.cursor, &self.content
+                            self.cursor, self.content
                         )
                     });
                 if self.secret {

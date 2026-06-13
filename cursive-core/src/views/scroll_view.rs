@@ -393,9 +393,8 @@ where
     }
 
     fn focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
-        self.inner.focus_view(selector).map(|res| {
+        self.inner.focus_view(selector).inspect(|_res| {
             self.scroll_to_important_area();
-            res
         })
     }
 

@@ -82,7 +82,7 @@ pub fn parse_spans(input: &str) -> Vec<StyledIndexedSpan> {
                 });
                 state = State::Plain;
             }
-            (State::Slash(ref mut start), b'/') => {
+            (State::Slash(start), b'/') => {
                 // The previous slash is unusable, try with this one.
                 *start = i;
             }

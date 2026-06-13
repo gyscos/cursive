@@ -480,10 +480,10 @@ impl Resolvable for crate::style::Rgb<f32> {
         Self: Sized,
     {
         // Try as a hex string?
-        if let Ok(rgb) = context.resolve::<String>(config) {
-            if let Ok(rgb) = rgb.parse::<crate::style::Rgb<u8>>() {
-                return Ok(rgb.as_f32());
-            }
+        if let Ok(rgb) = context.resolve::<String>(config)
+            && let Ok(rgb) = rgb.parse::<crate::style::Rgb<u8>>()
+        {
+            return Ok(rgb.as_f32());
         }
 
         // Allow storing a list of f32 or a list of u8.
@@ -538,10 +538,10 @@ impl Resolvable for crate::style::Rgb<u8> {
         Self: Sized,
     {
         // Try as a hex string?
-        if let Ok(rgb) = context.resolve::<String>(config) {
-            if let Ok(rgb) = rgb.parse::<crate::style::Rgb<u8>>() {
-                return Ok(rgb);
-            }
+        if let Ok(rgb) = context.resolve::<String>(config)
+            && let Ok(rgb) = rgb.parse::<crate::style::Rgb<u8>>()
+        {
+            return Ok(rgb);
         }
 
         // Allow storing a list of f32 or a list of u8.

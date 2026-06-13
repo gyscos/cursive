@@ -507,7 +507,7 @@ impl View for TextArea {
             }
         });
 
-        debug!("Content: `{}`", &self.content);
+        debug!("Content: `{}`", self.content);
         self.scrollbase.draw(printer, |printer, i| {
             debug!("Drawing row {}", i);
             let row = &self.rows[i];

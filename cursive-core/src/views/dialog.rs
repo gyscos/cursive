@@ -721,12 +721,11 @@ impl Dialog {
                 return Some(self.set_focus(DialogFocus::Button(i)));
             } else if position
                 .fits_in_rect((self.padding + self.borders).top_left(), self.content.size)
+                && let Ok(res) = self.content.take_focus(Direction::none())
             {
-                if let Ok(res) = self.content.take_focus(Direction::none()) {
-                    // Or did we click the content?
-                    self.focus = DialogFocus::Content;
-                    return Some(res);
-                }
+                // Or did we click the content?
+                self.focus = DialogFocus::Content;
+                return Some(res);
             }
         }
         None
@@ -936,6 +935,7 @@ impl View for Dialog {
     }
 }
 
+#[cfg(feature = "builder")]
 struct Btn {
     key: String,
     value: std::sync::Arc<dyn Fn(&mut Cursive) + Send + Sync>,

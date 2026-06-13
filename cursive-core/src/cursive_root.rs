@@ -801,14 +801,12 @@ impl Cursive {
         if let Event::Mouse {
             event, position, ..
         } = event
+            && event.grabs_focus()
+            && !self.menubar.autohide
+            && !self.menubar.has_submenu()
+            && position.y == 0
         {
-            if event.grabs_focus()
-                && !self.menubar.autohide
-                && !self.menubar.has_submenu()
-                && position.y == 0
-            {
-                self.select_menubar();
-            }
+            self.select_menubar();
         }
 
         if self.menubar.receive_events() {

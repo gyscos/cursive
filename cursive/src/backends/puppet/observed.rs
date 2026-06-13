@@ -200,7 +200,7 @@ impl ObservedScreen {
                         .graphemes(true)
                         .nth(pattern_cursor)
                         .unwrap_or_else(|| {
-                            panic!("Found no char at cursor {} in {}", pattern_cursor, &pattern)
+                            panic!("Found no char at cursor {} in {}", pattern_cursor, pattern)
                         });
 
                     let pos_it = Vec2::new(x + pos_cursor, y);
