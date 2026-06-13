@@ -1,7 +1,7 @@
 [workspace]
 
 members = ["cursive", "cursive-core", "cursive-syntect", "cursive-macros"]
-resolver = "2"
+resolver = "3"
 
 [profile.dev]
 incremental = false
