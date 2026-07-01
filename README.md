@@ -143,4 +143,4 @@ There is initial support for [wide characters](https://en.wikipedia.org/wiki/CJK
 ## [Contributing](CONTRIBUTING.md)
 ## Alternatives
 
-See also [ratatui](https://github.com/ratatui-org/ratatui) - and a small [comparison page](https://github.com/gyscos/cursive/wiki/Cursive-vs-tui%E2%80%90rs).
+See also [ratatui](https://github.com/ratatui-org/ratatui) - and a small [comparison page](https://github.com/gyscos/cursive/wiki/Cursive-vs-ratatui).
