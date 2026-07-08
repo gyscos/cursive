@@ -13,9 +13,12 @@ mod resize;
 
 pub mod blt;
 pub mod crossterm;
-pub mod curses;
+#[cfg(feature = "ncurses-backend")]
+pub mod n;
 pub mod puppet;
 pub mod termion;
+#[cfg(feature = "pancurses-backend")]
+pub mod pan;
 
 #[allow(dead_code)]
 fn boxed(e: impl std::error::Error + 'static) -> Box<dyn std::error::Error> {
@@ -39,9 +42,9 @@ pub fn try_default() -> Result<Box<dyn cursive_core::backend::Backend>, Box<dyn 
         } else if #[cfg(feature = "termion-backend")] {
             termion::Backend::init().map_err(boxed)
         } else if #[cfg(feature = "pancurses-backend")] {
-            curses::pan::Backend::init().map_err(boxed)
+            pan::Backend::init().map_err(boxed)
         } else if #[cfg(feature = "ncurses-backend")] {
-            curses::n::Backend::init().map_err(boxed)
+            n::Backend::init().map_err(boxed)
         } else if #[cfg(feature = "crossterm-backend")] {
             crossterm::Backend::init().map_err(boxed)
         } else {

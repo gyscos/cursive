@@ -1,6 +1,6 @@
 [workspace]
 
-members = ["cursive", "cursive-core", "cursive-syntect", "cursive-macros"]
+members = ["cursive", "cursive-core", "cursive-ncurses", "cursive-syntect", "cursive-macros"]
 resolver = "2"
 
 [profile.dev]

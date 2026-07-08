@@ -156,7 +156,7 @@ impl CursiveRunnable {
     #[cfg(feature = "ncurses-backend")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "ncurses-backend")))]
     pub fn ncurses() -> Self {
-        Self::new(backends::curses::n::Backend::init)
+        Self::new(backends::n::Backend::init)
     }
 
     /// Creates a new Cursive wrapper using the panncurses backend.
@@ -165,7 +165,7 @@ impl CursiveRunnable {
     #[cfg(feature = "pancurses-backend")]
     #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "pancurses-backend")))]
     pub fn pancurses() -> Self {
-        Self::new(backends::curses::pan::Backend::init)
+        Self::new(backends::pan::Backend::init)
     }
 
     /// Creates a new Cursive wrapper using the termion backend.
