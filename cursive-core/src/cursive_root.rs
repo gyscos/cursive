@@ -298,8 +298,8 @@ impl Cursive {
     /// // quit() will be called during the next event cycle
     /// siv.cb_sink().send(Box::new(|s| s.quit())).unwrap();
     /// ```
-    pub fn cb_sink(&self) -> &CbSink {
-        &self.cb_sink
+    pub fn cb_sink(&self) -> CbSink {
+        self.cb_sink.clone()
     }
 
     /// Selects the menubar.
