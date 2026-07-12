@@ -42,7 +42,7 @@ fn is_option(path: &syn::Path) -> Option<&syn::Type> {
 
 fn is_option_type(ty: &syn::Type) -> Option<&syn::Type> {
     match ty {
-        syn::Type::Path(syn::TypePath { ref path, .. }) => is_option(path),
+        syn::Type::Path(syn::TypePath { path, .. }) => is_option(path),
         _ => None,
     }
 }
