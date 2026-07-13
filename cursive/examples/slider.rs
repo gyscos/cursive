@@ -14,6 +14,7 @@ fn main() {
         Dialog::around(
             // We give the number of steps in the constructor
             SliderView::horizontal(15)
+                .min_value(5)
                 // Sets the initial value
                 .value(7)
                 .on_change(|s, v| {

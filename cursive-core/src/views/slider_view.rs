@@ -33,21 +33,28 @@ pub struct SliderView {
     on_enter: Option<Arc<SliderCallback>>,
     value: usize,
     max_value: usize,
+    min_value: usize,
+    length: usize,
     dragging: bool,
 }
 
 impl SliderView {
     /// Creates a new `SliderView` in the given orientation.
     ///
-    /// The view will have a fixed length of `max_value`,
+    /// The view will have a fixed length of `max_value - min_value`,
     /// with one tick per block.
     ///
-    /// The actual range of values for this slider is `[0, max_value - 1]`.
+    /// The actual range of values for this slider is `[min_value, max_value - 1]`.
+    ///
+    /// `min_value` defaults to `0` and can be set with [`set_min_value`](Self::set_min_value) or [`min_value`](Self::min_value).
     pub fn new(orientation: Orientation, max_value: usize) -> Self {
+        let min_value = 0;
         SliderView {
             orientation,
-            value: 0,
+            value: min_value,
+            min_value,
             max_value,
+            length: max_value - min_value,
             on_change: None,
             on_enter: None,
             dragging: false,
@@ -83,6 +90,29 @@ impl SliderView {
         })
     }
 
+    /// Sets the min value, adjusting the current value if needed.
+    ///
+    /// Returns `false` if the new `min_value` is greater than or equal to `max_value`.
+    pub fn set_min_value(&mut self, min_value: usize) -> bool {
+        if min_value >= self.max_value {
+            return false;
+        }
+        self.min_value = min_value;
+        self.length = self.max_value - self.min_value;
+        self.value = self.value.max(self.min_value);
+        true
+    }
+
+    /// Sets the min value.
+    ///
+    /// Chainable variant.
+    #[must_use]
+    pub fn min_value(self, min_value: usize) -> Self {
+        self.with(|s| {
+            s.set_min_value(min_value);
+        })
+    }
+
     /// Gets the current value.
     pub fn get_value(&self) -> usize {
         self.value
@@ -91,6 +121,11 @@ impl SliderView {
     /// Gets the max value.
     pub fn get_max_value(&self) -> usize {
         self.max_value
+    }
+
+    /// Gets the min value.
+    pub fn get_min_value(&self) -> usize {
+        self.min_value
     }
 
     /// Sets a callback to be called when the slider is moved.
@@ -150,7 +185,7 @@ impl SliderView {
     }
 
     fn slide_minus(&mut self) -> EventResult {
-        if self.value > 0 {
+        if self.value > self.min_value {
             self.value -= 1;
             self.get_change_result()
         } else {
@@ -159,15 +194,15 @@ impl SliderView {
     }
 
     fn req_size(&self) -> Vec2 {
-        self.orientation.make_vec(self.max_value, 1)
+        self.orientation.make_vec(self.length, 1)
     }
 }
 
 impl View for SliderView {
     fn draw(&self, printer: &Printer) {
         match self.orientation {
-            Orientation::Vertical => printer.print_vline((0, 0), self.max_value, "|"),
-            Orientation::Horizontal => printer.print_hline((0, 0), self.max_value, "-"),
+            Orientation::Vertical => printer.print_vline((0, 0), self.length, "|"),
+            Orientation::Horizontal => printer.print_hline((0, 0), self.length, "-"),
         }
 
         let style = if printer.focused {
@@ -177,7 +212,10 @@ impl View for SliderView {
         };
 
         printer.with_style(style, |printer| {
-            printer.print(self.orientation.make_vec(self.value, 0), " ");
+            printer.print(
+                self.orientation.make_vec(self.value - self.min_value, 0),
+                " ",
+            );
         });
     }
 
@@ -208,8 +246,11 @@ impl View for SliderView {
                 offset,
             } if self.dragging => {
                 let position = position.saturating_sub(offset);
-                let position = self.orientation.get(&position);
-                let position = ::std::cmp::min(position, self.max_value.saturating_sub(1));
+                let position = self
+                    .orientation
+                    .get(&position)
+                    .saturating_add(self.min_value);
+                let position = position.min(self.max_value.saturating_sub(1));
                 self.value = position;
                 self.get_change_result()
             }
@@ -220,7 +261,12 @@ impl View for SliderView {
             } if position.fits_in_rect(offset, self.req_size()) => {
                 if let Some(position) = position.checked_sub(offset) {
                     self.dragging = true;
-                    self.value = self.orientation.get(&position);
+                    let position = self
+                        .orientation
+                        .get(&position)
+                        .saturating_add(self.min_value);
+                    let position = position.min(self.max_value.saturating_sub(1));
+                    self.value = position;
                 }
                 self.get_change_result()
             }
