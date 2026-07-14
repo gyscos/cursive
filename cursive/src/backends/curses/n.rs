@@ -96,7 +96,7 @@ impl Backend {
         // The delay is the time ncurses wait after pressing ESC
         // to see if it's an escape sequence.
         // Default delay is way too long. 25 is imperceptible yet works fine.
-        ::std::env::set_var("ESCDELAY", "25");
+        unsafe { std::env::set_var("ESCDELAY", "25") };
 
         // Don't output to standard IO, directly feed into /dev/tty
         // This leaves stdin and stdout usable for other purposes.
