@@ -2,7 +2,7 @@ use cursive::{
     align::HAlign,
     event::{EventResult, Key},
     traits::With,
-    view::{scroll::Scroller, Scrollable},
+    view::{Scrollable, scroll::Scroller},
     views::{Dialog, OnEventView, Panel, TextView},
 };
 

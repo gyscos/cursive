@@ -1,12 +1,12 @@
 use ahash::HashSet;
 
 use crate::{
+    Cursive, Printer, Vec2, With,
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, View},
-    Cursive, Printer, Vec2, With,
 };
 use parking_lot::Mutex;
 use std::hash::Hash;

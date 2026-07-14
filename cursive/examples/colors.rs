@@ -1,7 +1,7 @@
+use cursive::Printer;
 use cursive::style::{Color, ColorStyle};
 use cursive::view::Resizable;
 use cursive::views::Canvas;
-use cursive::Printer;
 
 // This example will draw a colored square with a gradient.
 //

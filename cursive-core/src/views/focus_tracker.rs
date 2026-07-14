@@ -1,8 +1,8 @@
 use crate::{
+    With,
     direction::Direction,
     event::{Event, EventResult},
     view::{CannotFocus, View, ViewWrapper},
-    With,
 };
 
 /// Detects focus events for a view.

@@ -1,9 +1,9 @@
+use crate::Printer;
+use crate::Vec2;
 use crate::direction::Direction;
 use crate::event::{AnyCb, Event, EventResult};
 use crate::rect::Rect;
 use crate::view::{AnyView, Selector};
-use crate::Printer;
-use crate::Vec2;
 use std::any::Any;
 
 /// Error indicating a view was not found.

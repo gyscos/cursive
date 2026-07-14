@@ -1,4 +1,5 @@
 use crate::{
+    Cursive, Printer, Vec2, With,
     align::Align,
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
     menu,
@@ -7,7 +8,6 @@ use crate::{
     view::scroll,
     view::{Position, View},
     views::OnEventView,
-    Cursive, Printer, Vec2, With,
 };
 use std::cmp::min;
 use std::sync::Arc;

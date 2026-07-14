@@ -1,4 +1,4 @@
-use crate::{backend, backends, Cursive, CursiveRunner};
+use crate::{Cursive, CursiveRunner, backend, backends};
 
 type Initializer = dyn FnMut() -> Result<Box<dyn backend::Backend>, Box<dyn std::error::Error>>;
 

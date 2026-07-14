@@ -1,6 +1,6 @@
+use cursive::With;
 use cursive::view::{Nameable, Resizable};
 use cursive::views::{Dialog, EditView, LinearLayout, ListView, RadioGroup, SliderView};
-use cursive::With;
 
 #[derive(Clone, Debug, Default)]
 struct UserData {

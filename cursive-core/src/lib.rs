@@ -40,8 +40,8 @@ pub mod reexports {
     pub use ahash;
     pub use crossbeam_channel;
     pub use enumset;
-    pub use log;
     pub use jiff;
+    pub use log;
 
     #[cfg(feature = "toml")]
     pub use toml;

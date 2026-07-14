@@ -1,7 +1,7 @@
+use cursive::Printer;
 use cursive::traits::Resizable;
 use cursive::view::Scrollable;
 use cursive::views::{Button, Canvas, Dialog, LinearLayout};
-use cursive::Printer;
 
 fn main() {
     let mut siv = cursive::default();

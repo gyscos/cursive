@@ -1,5 +1,6 @@
 //! Provide higher-level abstraction to draw things on buffers.
 
+use crate::Vec2;
 use crate::buffer::{PrintBuffer, Window};
 use crate::direction::Orientation;
 use crate::rect::Rect;
@@ -11,7 +12,6 @@ use crate::theme::Theme;
 use crate::utils::lines::simple::{prefix, suffix};
 use crate::utils::span::IndexedSpan;
 use crate::with::With;
-use crate::Vec2;
 
 use enumset::EnumSet;
 use parking_lot::RwLock;

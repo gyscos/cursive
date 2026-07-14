@@ -7,12 +7,12 @@ pub use pancurses;
 use log::{debug, warn};
 
 use std::cell::{Cell, RefCell};
-use std::io::{stdout, Write};
+use std::io::{Write, stdout};
 
+use crate::Vec2;
 use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{Color, ColorPair, Effect};
-use crate::Vec2;
 
 use super::split_i32;
 use pancurses::mmask_t;

@@ -1,9 +1,9 @@
 use std::io::{self, IsTerminal};
 
+use cursive::Cursive;
 use cursive::traits::{Resizable, With};
 use cursive::utils;
 use cursive::views::{Canvas, Dialog, LinearLayout, ProgressBar};
-use cursive::Cursive;
 use pretty_bytes::converter::convert;
 use std::thread;
 use std::time;

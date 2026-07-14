@@ -1,7 +1,7 @@
+use cursive::Cursive;
 use cursive::traits::*;
 use cursive::utils::Counter;
 use cursive::views::{Button, Dialog, LinearLayout, ProgressBar, TextView};
-use cursive::Cursive;
 use std::cmp::min;
 use std::thread;
 use std::time::Duration;

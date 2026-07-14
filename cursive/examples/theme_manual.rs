@@ -1,7 +1,7 @@
+use cursive::Cursive;
 use cursive::style::{BorderStyle, Palette};
 use cursive::traits::With;
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
-use cursive::Cursive;
 
 fn main() {
     let mut siv = cursive::default();

@@ -1,8 +1,8 @@
+use crate::Printer;
+use crate::Vec2;
 use crate::logger;
 use crate::style;
 use crate::view::View;
-use crate::Printer;
-use crate::Vec2;
 
 use unicode_width::UnicodeWidthStr;
 
@@ -33,10 +33,7 @@ impl View for DebugView {
         for (i, record) in logs.iter().skip(skipped).enumerate() {
             // TODO: Apply style to message? (Ex: errors in bold?)
             // TODO: customizable time format? (24h/AM-PM)
-            let formatted = record
-                .time
-                .strftime("%H:%M:%S.%3f")
-                .to_string();
+            let formatted = record.time.strftime("%H:%M:%S.%3f").to_string();
             printer.print(
                 (0, i),
                 &format!("{} | [     ] {}", formatted, record.message),

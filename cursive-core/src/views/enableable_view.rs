@@ -1,6 +1,6 @@
+use crate::Printer;
 use crate::event::{Event, EventResult};
 use crate::view::{View, ViewWrapper};
-use crate::Printer;
 
 /// Wrapper around another view that can be enabled/disabled at will.
 ///
@@ -9,9 +9,9 @@ use crate::Printer;
 /// # Examples
 ///
 /// ```
+/// use cursive_core::Cursive;
 /// use cursive_core::traits::Nameable;
 /// use cursive_core::views::{Button, Checkbox, EnableableView, LinearLayout};
-/// use cursive_core::Cursive;
 ///
 /// let mut siv = Cursive::new();
 ///

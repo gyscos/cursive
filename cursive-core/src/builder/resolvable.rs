@@ -637,7 +637,7 @@ impl Resolvable for crate::style::gradient::Angled {
                     return Err(Error::AllVariantsFailed {
                         config: config.clone(),
                         errors: vec![err1, err2],
-                    })
+                    });
                 }
             },
         };
@@ -821,9 +821,7 @@ impl Resolvable for crate::style::ConcreteEffects {
                 |config, context| {
                     // Option A: a single effect as string
                     let effect = resolve_from_str(config, context, |_| "Expected valid effect")?;
-                    {
-                        Ok(ConcreteEffects::only(effect))
-                    }
+                    { Ok(ConcreteEffects::only(effect)) }
                 },
                 |config, context| {
                     // Option B: a list of effects
@@ -940,7 +938,7 @@ impl Resolvable for crate::style::ColorType {
                         return Err(Error::invalid_config(
                             format!("Found unrecognized key `{key}` in color type config"),
                             config,
-                        ))
+                        ));
                     }
                 })
             }
@@ -975,9 +973,11 @@ impl Resolvable for crate::view::ScrollStrategy {
     where
         Self: Sized,
     {
-        resolve_from_str(config, context, |_| {
-            "Expected one of keep_row, stick_to_top, stick_to_bottom"
-        })
+        resolve_from_str(
+            config,
+            context,
+            |_| "Expected one of keep_row, stick_to_top, stick_to_bottom",
+        )
     }
 }
 
@@ -1020,7 +1020,7 @@ impl Resolvable for crate::view::SizeConstraint {
                     return Err(Error::invalid_config(
                         "Expected `free` or `full` string, or object",
                         config,
-                    ))
+                    ));
                 }
             },
             Config::Object(config_obj) => {
@@ -1042,7 +1042,7 @@ impl Resolvable for crate::view::SizeConstraint {
                         return Err(Error::invalid_config(
                             "Expected `fixed`, `at_most` or `at_least` key",
                             config,
-                        ))
+                        ));
                     }
                 }
             }
@@ -1305,7 +1305,7 @@ impl<T: Resolvable + 'static> Resolvable for crate::XY<T> {
                 return Err(Error::invalid_config(
                     "Expected Array of length 2, object, or 'zero'.",
                     config,
-                ))
+                ));
             }
         })
     }

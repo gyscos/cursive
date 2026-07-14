@@ -1,10 +1,9 @@
 /// Event fired when the view is about to lose focus.
 use crate::{
-    direction,
+    Printer, Vec2, With, XY, direction,
     event::{AnyCb, Event, EventResult, Key},
     rect::Rect,
     view::{CannotFocus, IntoBoxedView, Selector, SizeCache, View, ViewNotFound},
-    Printer, Vec2, With, XY,
 };
 use log::debug;
 use std::cmp::min;

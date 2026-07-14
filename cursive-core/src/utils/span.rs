@@ -414,7 +414,7 @@ impl<T> SpannedString<T> {
     pub fn spans_raw_attr_mut(
         &mut self,
     ) -> impl DoubleEndedIterator<Item = IndexedSpanRefMut<'_, T>>
-           + ExactSizeIterator<Item = IndexedSpanRefMut<'_, T>> {
+    + ExactSizeIterator<Item = IndexedSpanRefMut<'_, T>> {
         self.spans.iter_mut().map(IndexedSpan::as_ref_mut)
     }
 

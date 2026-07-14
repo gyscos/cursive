@@ -18,22 +18,22 @@ pub use crossterm;
 use crossterm::{
     cursor,
     event::{
-        poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode,
-        KeyEvent as CKeyEvent, KeyEventKind, KeyModifiers, MouseButton as CMouseButton,
-        MouseEvent as CMouseEvent, MouseEventKind,
+        DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent as CKeyEvent,
+        KeyEventKind, KeyModifiers, MouseButton as CMouseButton, MouseEvent as CMouseEvent,
+        MouseEventKind, poll, read,
     },
     execute, queue,
     style::{Attribute, Color, Print, SetAttribute, SetBackgroundColor, SetForegroundColor},
     terminal::{
-        self, disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
-        LeaveAlternateScreen,
+        self, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode,
+        enable_raw_mode,
     },
 };
 
 use crate::{
-    backend,
+    Vec2, backend,
     event::{Event, Key, MouseButton, MouseEvent},
-    theme, Vec2,
+    theme,
 };
 
 #[cfg(windows)]

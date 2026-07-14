@@ -1,11 +1,11 @@
 use crate::{
+    Cursive, Printer, Vec2, With,
     direction::Direction,
     event::{Callback, Event, EventResult, Key, MouseEvent},
     rect::Rect,
     style::{PaletteStyle, StyleType},
     utils::lines::simple::{simple_prefix, simple_suffix},
     view::{CannotFocus, View},
-    Cursive, Printer, Vec2, With,
 };
 use std::sync::{Arc, Mutex};
 use unicode_segmentation::UnicodeSegmentation;
@@ -548,11 +548,7 @@ impl View for EditView {
                     .graphemes(true)
                     .scan(0, |w, g| {
                         *w += g.width();
-                        if *w > self.last_length {
-                            None
-                        } else {
-                            Some(g)
-                        }
+                        if *w > self.last_length { None } else { Some(g) }
                     })
                     .map(str::len)
                     .sum();

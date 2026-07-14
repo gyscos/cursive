@@ -1,4 +1,5 @@
 use crate::{
+    Cursive, Printer, Vec2,
     align::HAlign,
     direction::Direction,
     event::*,
@@ -6,7 +7,6 @@ use crate::{
     style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, View},
-    Cursive, Printer, Vec2,
 };
 
 /// Simple text label with a callback when `<Enter>` is pressed.

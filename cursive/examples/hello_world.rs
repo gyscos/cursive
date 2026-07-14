@@ -1,5 +1,5 @@
-use cursive::views::TextView;
 use cursive::Cursive;
+use cursive::views::TextView;
 
 fn main() {
     let mut siv = cursive::default();

@@ -1,6 +1,7 @@
 use std::cmp::min;
 
 use crate::{
+    Vec2, XY,
     direction::Orientation,
     event::{AnyCb, Event},
     printer::Printer,
@@ -8,7 +9,6 @@ use crate::{
     style::Style,
     view::{ScrollStrategy, Selector, SizeCache, ViewNotFound},
     with::With,
-    Vec2, XY,
 };
 
 /// Describes an item with a scroll core.
@@ -192,9 +192,7 @@ impl Core {
     /// This also updates `event` so that it is relative to the content.
     pub fn is_event_inside(&self, event: &mut Event) -> bool {
         if let Event::Mouse {
-            position,
-            offset,
-            ..
+            position, offset, ..
         } = event
         {
             // For mouse events, check if it falls inside the available area

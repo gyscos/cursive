@@ -3,11 +3,11 @@
 //! Most functions take a generic `Model` class, and various closures to get
 //! the required things from this model.
 use crate::{
+    Printer, Vec2,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     rect::Rect,
     view::scroll,
     xy::XY,
-    Printer, Vec2,
 };
 
 /// Implements `View::draw` over the `model`.
@@ -103,9 +103,7 @@ where
     GetScroller: FnMut(&mut Model) -> &mut scroll::Core,
     RequiredSize: FnMut(&mut Model, Vec2) -> Vec2,
 {
-    if !needs_relayout
-        && let Some(cached) = get_scroller(model).try_cache(constraint)
-    {
+    if !needs_relayout && let Some(cached) = get_scroller(model).try_cache(constraint) {
         return cached;
     }
 

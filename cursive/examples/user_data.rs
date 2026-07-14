@@ -6,8 +6,8 @@
 //! `Cursive::set_user_data` is used to store or update the user data, while
 //! `Cursive::user_data` and `Cursive::with_user_data` can access it, if they
 //! know the exact type.
-use cursive::views::Dialog;
 use cursive::Cursive;
+use cursive::views::Dialog;
 
 struct Data {
     counter: u32,

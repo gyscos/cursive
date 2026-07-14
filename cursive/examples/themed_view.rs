@@ -1,4 +1,4 @@
-use cursive::{views, With};
+use cursive::{With, views};
 
 fn main() {
     let mut cursive = cursive::default();

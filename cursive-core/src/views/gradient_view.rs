@@ -1,7 +1,7 @@
 use crate::{
-    style::{gradient::Interpolator, ColorStyle, Style},
-    traits::With,
     Printer, Rect, Vec2, View,
+    style::{ColorStyle, Style, gradient::Interpolator},
+    traits::With,
 };
 
 enum CoordinateSystem {

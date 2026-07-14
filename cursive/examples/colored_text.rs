@@ -2,7 +2,7 @@ use crossterm::style::Stylize;
 use cursive_core::style::BaseColor::{Black, Red};
 use cursive_core::style::ColorStyle;
 use cursive_core::theme::Style;
-use cursive_core::utils::markup::{cursup, StyledString};
+use cursive_core::utils::markup::{StyledString, cursup};
 use cursive_core::views::{Dialog, LinearLayout, TextView};
 
 fn main() {

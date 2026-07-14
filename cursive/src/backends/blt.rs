@@ -8,16 +8,16 @@ pub use bear_lib_terminal;
 
 use std::cell::Cell;
 
-use bear_lib_terminal::geometry::Size;
-use bear_lib_terminal::terminal::{self, state, Event as BltEvent, KeyCode};
 use bear_lib_terminal::Color as BltColor;
+use bear_lib_terminal::geometry::Size;
+use bear_lib_terminal::terminal::{self, Event as BltEvent, KeyCode, state};
 
 use unicode_width::UnicodeWidthStr;
 
+use crate::Vec2;
 use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{BaseColor, Color, ColorPair, Effect};
-use crate::Vec2;
 
 // Use AHash instead of the slower SipHash
 type HashSet<K> = std::collections::HashSet<K, ahash::RandomState>;

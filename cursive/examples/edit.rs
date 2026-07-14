@@ -1,6 +1,6 @@
+use cursive::Cursive;
 use cursive::traits::*;
 use cursive::views::{Dialog, EditView, TextView};
-use cursive::Cursive;
 
 fn main() {
     let mut siv = cursive::default();

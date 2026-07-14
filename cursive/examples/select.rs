@@ -1,8 +1,8 @@
+use cursive::Cursive;
 use cursive::align::HAlign;
 use cursive::event::EventResult;
 use cursive::traits::*;
 use cursive::views::{Dialog, OnEventView, SelectView, TextView};
-use cursive::Cursive;
 
 // We'll use a SelectView here.
 //

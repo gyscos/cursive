@@ -1,4 +1,5 @@
 use crate::{
+    Cursive, Printer, Vec2, With,
     align::{Align, HAlign, VAlign},
     direction,
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
@@ -8,10 +9,9 @@ use crate::{
     utils::markup::StyledString,
     view::{CannotFocus, Position, View},
     views::{LayerPosition, MenuPopup},
-    Cursive, Printer, Vec2, With,
 };
 use std::borrow::Borrow;
-use std::cmp::{min, Ordering};
+use std::cmp::{Ordering, min};
 use std::iter;
 use std::sync::atomic::AtomicUsize;
 use std::sync::{Arc, Mutex};
@@ -360,8 +360,8 @@ impl<T: 'static + Send + Sync> SelectView<T> {
     /// Gets an item at given idx or None.
     ///
     /// ```
-    /// use cursive_core::views::{SelectView, TextView};
     /// use cursive_core::Cursive;
+    /// use cursive_core::views::{SelectView, TextView};
     /// let select = SelectView::new().item("Short", 1);
     /// assert_eq!(select.get_item(0), Some(("Short", &1)));
     /// ```
@@ -414,7 +414,7 @@ impl<T: 'static + Send + Sync> SelectView<T> {
     pub fn try_iter_mut(
         &mut self,
     ) -> impl iter::DoubleEndedIterator<Item = (&mut StyledString, Option<&mut T>)>
-           + iter::ExactSizeIterator {
+    + iter::ExactSizeIterator {
         self.last_required_size = None;
         self.items
             .iter_mut()

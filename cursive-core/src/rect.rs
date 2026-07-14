@@ -1,6 +1,6 @@
 //! Rectangles on the 2D character grid.
-use crate::direction::{Absolute, Orientation};
 use crate::Vec2;
+use crate::direction::{Absolute, Orientation};
 
 use std::ops::Add;
 

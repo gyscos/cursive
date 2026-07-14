@@ -1,6 +1,6 @@
 //! Generate StyledString with gradients.
 
-use crate::style::{gradient::Linear, ColorStyle, Rgb, Style};
+use crate::style::{ColorStyle, Rgb, Style, gradient::Linear};
 use crate::utils::markup::{StyledIndexedSpan, StyledString};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;

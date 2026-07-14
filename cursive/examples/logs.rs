@@ -1,6 +1,6 @@
-use crossbeam_channel::{unbounded, Receiver, Sender};
-use cursive::traits::*;
+use crossbeam_channel::{Receiver, Sender, unbounded};
 use cursive::Vec2;
+use cursive::traits::*;
 use cursive::{Cursive, Printer};
 use std::collections::VecDeque;
 use std::thread;

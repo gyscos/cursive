@@ -7,7 +7,7 @@ use crossbeam_channel::{self, Receiver, Sender};
 use parking_lot::RwLock;
 
 use crate::{
-    backend,
+    Dump, Vec2, backend,
     cursive_run::CursiveRunner,
     direction,
     event::{Event, EventResult},
@@ -15,7 +15,6 @@ use crate::{
     theme,
     view::{self, Finder, IntoBoxedView, Position, View, ViewNotFound},
     views::{self, LayerPosition},
-    Dump, Vec2,
 };
 
 static DEBUG_VIEW_NAME: &str = "_cursive_debug_view";
@@ -760,7 +759,7 @@ impl Cursive {
     /// # Examples
     ///
     /// ```rust
-    /// use cursive_core::{views, Cursive};
+    /// use cursive_core::{Cursive, views};
     /// let mut siv = Cursive::new();
     ///
     /// siv.add_layer(views::TextView::new("Hello world!"));

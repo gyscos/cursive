@@ -14,8 +14,8 @@ use crate::{
 ///
 /// ```rust
 /// use cursive_core::{
-///     views::{Button, FixedLayout, TextView},
 ///     Rect,
+///     views::{Button, FixedLayout, TextView},
 /// };
 ///
 /// let layout = FixedLayout::new()

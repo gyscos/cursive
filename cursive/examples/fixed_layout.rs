@@ -1,6 +1,6 @@
 use cursive::{
-    views::{Button, FixedLayout, TextView},
     Rect,
+    views::{Button, FixedLayout, TextView},
 };
 fn main() {
     let mut siv = cursive::default();

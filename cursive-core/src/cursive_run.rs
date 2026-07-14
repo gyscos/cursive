@@ -1,4 +1,4 @@
-use crate::{backend, buffer, event, Cursive, Vec2};
+use crate::{Cursive, Vec2, backend, buffer, event};
 use parking_lot::RwLock;
 use std::borrow::{Borrow, BorrowMut};
 use std::time::Duration;
@@ -249,7 +249,7 @@ mod test_layout_draw_refresh {
     use crate::backend::Backend;
     use crate::event::Event;
     use crate::views::{EditView, Panel};
-    use crate::{style, Vec2};
+    use crate::{Vec2, style};
     use std::sync::{Arc, Mutex};
 
     // WigglyBackend is a Mock backend that simulates a previous
@@ -371,7 +371,9 @@ mod test_layout_draw_refresh {
     fn test_grow_race_condition() {
         let mut siv = Cursive::new();
 
-        siv.add_layer(Panel::new(EditView::new().content("i exist to stay calm and not panic when growing")));
+        siv.add_layer(Panel::new(
+            EditView::new().content("i exist to stay calm and not panic when growing"),
+        ));
 
         // Backend returns 98 on first call, 100 on second call.
         let backend = Box::new(WigglyBackend::growing());

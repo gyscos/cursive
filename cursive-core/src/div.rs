@@ -7,9 +7,5 @@ where
 {
     let d = p.clone() / q.clone();
 
-    if p % q == T::zero() {
-        d
-    } else {
-        T::one() + d
-    }
+    if p % q == T::zero() { d } else { T::one() + d }
 }

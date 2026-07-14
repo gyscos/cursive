@@ -1,4 +1,4 @@
-use crate::{theme::Theme, views, Cursive};
+use crate::{Cursive, theme::Theme, views};
 use crossbeam_channel::{Receiver, Sender};
 use std::any::Any;
 use std::num::NonZeroU32;

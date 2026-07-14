@@ -1,9 +1,9 @@
 use crate::{
+    Cursive, Printer, Vec2, With,
     direction::{Direction, Orientation},
     event::{Callback, Event, EventResult, Key, MouseButton, MouseEvent},
     style::PaletteStyle,
     view::{CannotFocus, View},
-    Cursive, Printer, Vec2, With,
 };
 use std::sync::Arc;
 

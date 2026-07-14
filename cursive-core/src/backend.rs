@@ -8,9 +8,9 @@
 //!
 //! [`Backend`]: trait.Backend.html
 
+use crate::Vec2;
 use crate::event::Event;
 use crate::style;
-use crate::Vec2;
 
 /// Trait defining the required methods to be a backend.
 ///

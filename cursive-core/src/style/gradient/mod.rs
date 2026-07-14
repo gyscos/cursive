@@ -13,7 +13,7 @@
 //!
 //! Note that this module works with `Rgb<f32>`, where each color has a f32 value between 0 and 1.
 //! Various conversions to/from `Rgb<u8>` and [`crate::style::Color`] are available.
-use crate::{style::Rgb, Vec2, XY};
+use crate::{Vec2, XY, style::Rgb};
 
 /// A 2D color distribution.
 ///

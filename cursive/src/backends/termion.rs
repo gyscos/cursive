@@ -17,17 +17,17 @@ use termion::raw::{IntoRawMode, RawTerminal};
 use termion::screen::{AlternateScreen, IntoAlternateScreen};
 use termion::style as tstyle;
 
+use crate::Vec2;
 use crate::backend;
 use crate::backends;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme;
-use crate::Vec2;
 
 use std::cell::{Cell, RefCell};
 use std::fs::File;
 use std::io::Write;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Backend using termion
 pub struct Backend {
@@ -77,7 +77,7 @@ pub struct Backend {
 /// SOFTWARE.
 #[cfg(unix)]
 fn set_blocking(fd: std::os::unix::io::RawFd, blocking: bool) -> std::io::Result<()> {
-    use libc::{fcntl, F_GETFL, F_SETFL, O_NONBLOCK};
+    use libc::{F_GETFL, F_SETFL, O_NONBLOCK, fcntl};
 
     let flags = unsafe { fcntl(fd, F_GETFL, 0) };
     if flags < 0 {

@@ -1,8 +1,8 @@
 use crate::{
+    With,
     direction::Direction,
     event::{Event, EventResult, Key},
     view::{View, ViewWrapper},
-    With,
 };
 
 /// Adds circular focus to a wrapped view.

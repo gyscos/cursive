@@ -1,9 +1,9 @@
 use crate::{
+    Printer, Vec2,
     direction::Direction,
     event::{AnyCb, Event, EventResult},
     rect::Rect,
     view::{CannotFocus, Selector, View, ViewNotFound},
-    Printer, Vec2,
 };
 
 /// Generic wrapper around a view.

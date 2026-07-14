@@ -1,9 +1,9 @@
 use crate::{
+    Printer, Vec2, With,
     direction::Direction,
     event::{AnyCb, Event, EventResult},
     rect::Rect,
     view::{CannotFocus, Selector, View, ViewNotFound},
-    Printer, Vec2, With,
 };
 
 // Define these types separately to appease the Clippy god

@@ -1,5 +1,5 @@
-use crate::view::View;
 use crate::Printer;
+use crate::view::View;
 
 /// Dummy view.
 ///

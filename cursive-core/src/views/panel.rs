@@ -1,12 +1,12 @@
+use crate::Printer;
+use crate::Vec2;
+use crate::With;
 use crate::align::*;
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
 use crate::style::PaletteStyle;
 use crate::utils::markup::StyledString;
 use crate::view::{View, ViewWrapper};
-use crate::Printer;
-use crate::Vec2;
-use crate::With;
 
 /// Draws a border around a wrapped view.
 #[derive(Debug)]

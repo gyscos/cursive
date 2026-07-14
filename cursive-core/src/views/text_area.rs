@@ -1,12 +1,13 @@
 #[allow(deprecated)]
 use crate::{
+    Vec2,
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     rect::Rect,
     style::PaletteStyle,
-    utils::lines::simple::{prefix, simple_prefix, LinesIterator, Row},
+    utils::lines::simple::{LinesIterator, Row, prefix, simple_prefix},
     view::{CannotFocus, ScrollBase, SizeCache, View},
-    Vec2, {Printer, With, XY},
+    {Printer, With, XY},
 };
 use log::debug;
 use std::cmp::min;

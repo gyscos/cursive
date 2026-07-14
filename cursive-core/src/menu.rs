@@ -15,7 +15,7 @@
 
 use crate::utils::markup::PlainStr;
 use crate::utils::span::{SpannedStr, SpannedText as _};
-use crate::{event::Callback, style::Style, utils::markup::StyledString, Cursive, With};
+use crate::{Cursive, With, event::Callback, style::Style, utils::markup::StyledString};
 use std::sync::Arc;
 
 static DELIMITER: PlainStr = PlainStr::new_with_width("│", 1);
@@ -130,13 +130,7 @@ impl Item {
     ///
     /// Does not affect delimiters.
     pub fn disable(&mut self) {
-        if let Item::Leaf {
-            enabled, ..
-        }
-        | Item::Subtree {
-            enabled, ..
-        } = self
-        {
+        if let Item::Leaf { enabled, .. } | Item::Subtree { enabled, .. } = self {
             *enabled = false;
         }
     }

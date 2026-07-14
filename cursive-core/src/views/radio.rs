@@ -1,11 +1,11 @@
 use crate::builder::{Config, Context, Error, Resolvable};
 use crate::{
+    Cursive, Printer, Vec2,
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     style::PaletteStyle,
     utils::markup::StyledString,
     view::{CannotFocus, View},
-    Cursive, Printer, Vec2,
 };
 use std::any::Any;
 use std::any::TypeId;

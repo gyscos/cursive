@@ -1,6 +1,6 @@
-use crate::view::{View, ViewWrapper};
 use crate::Printer;
 use crate::Vec2;
+use crate::view::{View, ViewWrapper};
 use parking_lot::Mutex;
 
 /// Wrapper around a view that remembers its position.

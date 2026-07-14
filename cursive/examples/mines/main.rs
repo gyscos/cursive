@@ -3,8 +3,8 @@ mod board;
 use crate::board::model::{self};
 use board::view::BoardView;
 use cursive::{
-    views::{Button, Dialog, LinearLayout, Panel, SelectView},
     Cursive, Vec2,
+    views::{Button, Dialog, LinearLayout, Panel, SelectView},
 };
 use cursive_core::traits::Nameable;
 

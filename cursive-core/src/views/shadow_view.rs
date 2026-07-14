@@ -1,9 +1,9 @@
+use crate::Printer;
+use crate::Vec2;
 use crate::event::{Event, EventResult};
 use crate::rect::Rect;
 use crate::style::PaletteStyle;
 use crate::view::{View, ViewWrapper};
-use crate::Printer;
-use crate::Vec2;
 
 /// Wrapper view that adds a shadow.
 ///

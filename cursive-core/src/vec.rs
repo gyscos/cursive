@@ -1,12 +1,12 @@
 //! Points on the 2D character grid.
 
-use std::cmp::{max, min, Ordering};
+use std::cmp::{Ordering, max, min};
 use std::ops::{Add, Div, Mul, Sub};
 
 use num::traits::Zero;
 
-use crate::div;
 use crate::XY;
+use crate::div;
 
 /// Simple 2D size, in cells.
 ///

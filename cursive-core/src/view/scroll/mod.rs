@@ -57,7 +57,7 @@ impl std::str::FromStr for ScrollStrategy {
 ///
 /// ```
 /// use cursive_core::event::{Event, EventResult};
-/// use cursive_core::view::{scroll, View};
+/// use cursive_core::view::{View, scroll};
 /// use cursive_core::{Printer, Rect, Vec2};
 ///
 /// struct MyView {

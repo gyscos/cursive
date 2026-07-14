@@ -1,6 +1,6 @@
 use cursive::{
-    views::{CircularFocus, Dialog, TextView},
     With as _,
+    views::{CircularFocus, Dialog, TextView},
 };
 
 fn main() {

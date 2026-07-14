@@ -1,4 +1,4 @@
-use crate::{view::ViewWrapper, Vec2, View};
+use crate::{Vec2, View, view::ViewWrapper};
 
 type Callback<V> = dyn FnMut(&mut V, Vec2) + Send + Sync;
 
@@ -15,8 +15,8 @@ impl<V: 'static> OnLayoutView<V> {
     ///
     /// ```rust
     /// use cursive_core::{
-    ///     views::{OnLayoutView, TextView},
     ///     View,
+    ///     views::{OnLayoutView, TextView},
     /// };
     ///
     /// let view = TextView::new("foo");

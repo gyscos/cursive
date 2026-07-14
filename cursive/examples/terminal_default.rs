@@ -1,7 +1,7 @@
+use cursive::Cursive;
 use cursive::style::{Color, PaletteColor};
 use cursive::theme::Theme;
 use cursive::views::TextView;
-use cursive::Cursive;
 
 // This example sets the background color to the terminal default.
 //

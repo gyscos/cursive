@@ -1,6 +1,6 @@
+use cursive::Cursive;
 use cursive::view::{Nameable, Resizable};
 use cursive::views::{Dialog, EditView, LinearLayout, TextView};
-use cursive::Cursive;
 
 // This example shows a way to access multiple views at the same time.
 

@@ -165,8 +165,8 @@ where
 #[cfg(test)]
 mod tests {
     use crate::style::{BaseColor, Color, ColorType, Effect, Style};
-    use crate::utils::markup::cursup::parse;
     use crate::utils::markup::StyledString;
+    use crate::utils::markup::cursup::parse;
     use crate::utils::span::Span;
 
     #[test]

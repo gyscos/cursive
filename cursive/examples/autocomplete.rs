@@ -1,8 +1,8 @@
+use cursive::Cursive;
 use cursive::align::HAlign;
 use cursive::traits::Scrollable;
 use cursive::view::{Nameable, Resizable};
 use cursive::views::{Dialog, EditView, LinearLayout, SelectView, TextView};
-use cursive::Cursive;
 
 // This example shows a way to implement a (Google-like) autocomplete search box.
 // Try entering "tok"!

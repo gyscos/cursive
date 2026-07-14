@@ -1,5 +1,5 @@
 use crate::{
-    direction,
+    Cursive, Printer, Vec2, direction,
     event::*,
     menu,
     rect::Rect,
@@ -7,7 +7,6 @@ use crate::{
     utils::markup::StyledString,
     view::{CannotFocus, Position, View},
     views::{MenuPopup, OnEventView},
-    Cursive, Printer, Vec2,
 };
 use std::sync::Arc;
 use unicode_width::UnicodeWidthStr;

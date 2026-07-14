@@ -1,4 +1,5 @@
 use crate::{
+    Cursive, Printer, Vec2, With,
     align::*,
     direction::{Absolute, Direction, Relative},
     event::{AnyCb, Event, EventResult, Key},
@@ -7,7 +8,6 @@ use crate::{
     utils::markup::StyledString,
     view::{CannotFocus, IntoBoxedView, Margins, Selector, View, ViewNotFound},
     views::{BoxedView, Button, DummyView, LastSizeView, TextView},
-    Cursive, Printer, Vec2, With,
 };
 use parking_lot::Mutex;
 use std::cmp::{max, min};

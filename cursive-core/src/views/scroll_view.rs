@@ -1,8 +1,8 @@
 use crate::{
+    Cursive, Printer, Rect, Vec2, With,
     direction::Direction,
     event::{AnyCb, Event, EventResult},
-    view::{scroll, CannotFocus, ScrollStrategy, Selector, View, ViewNotFound},
-    Cursive, Printer, Rect, Vec2, With,
+    view::{CannotFocus, ScrollStrategy, Selector, View, ViewNotFound, scroll},
 };
 
 use std::sync::Arc;

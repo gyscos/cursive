@@ -1,7 +1,7 @@
+use cursive::Cursive;
 use cursive::event::{Event, Key};
 use cursive::traits::*;
 use cursive::views::{Dialog, EditView, OnEventView, TextArea};
-use cursive::Cursive;
 
 fn main() {
     let mut siv = cursive::default();

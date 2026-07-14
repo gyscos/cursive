@@ -1,8 +1,8 @@
 //! Structs representing output of puppet backend
+use crate::Vec2;
 use crate::reexports::enumset::EnumSet;
 use crate::theme::ColorPair;
 use crate::theme::Effect;
-use crate::Vec2;
 use std::ops::Index;
 use std::ops::IndexMut;
 use std::sync::Arc;

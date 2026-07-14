@@ -4,6 +4,7 @@
 //!
 //! To be used with `StackView::add_layer`.
 use crate::{
+    Printer, Vec2, With,
     direction::Direction,
     event::{AnyCb, Event, EventResult},
     style::PaletteStyle,
@@ -11,7 +12,6 @@ use crate::{
         CannotFocus, IntoBoxedView, Offset, Position, Selector, View, ViewNotFound, ViewWrapper,
     },
     views::{BoxedView, CircularFocus, Layer, ShadowView},
-    Printer, Vec2, With,
 };
 use std::ops::Deref;
 
@@ -895,22 +895,30 @@ mod tests {
             .layer(TextView::new("1"))
             .layer(TextView::new("2"));
 
-        assert!(stack
-            .get(LayerPosition::FromFront(0))
-            .unwrap()
-            .is::<TextView>());
-        assert!(stack
-            .get(LayerPosition::FromBack(0))
-            .unwrap()
-            .is::<TextView>());
-        assert!(stack
-            .get_mut(LayerPosition::FromFront(0))
-            .unwrap()
-            .is::<TextView>());
-        assert!(stack
-            .get_mut(LayerPosition::FromBack(0))
-            .unwrap()
-            .is::<TextView>());
+        assert!(
+            stack
+                .get(LayerPosition::FromFront(0))
+                .unwrap()
+                .is::<TextView>()
+        );
+        assert!(
+            stack
+                .get(LayerPosition::FromBack(0))
+                .unwrap()
+                .is::<TextView>()
+        );
+        assert!(
+            stack
+                .get_mut(LayerPosition::FromFront(0))
+                .unwrap()
+                .is::<TextView>()
+        );
+        assert!(
+            stack
+                .get_mut(LayerPosition::FromBack(0))
+                .unwrap()
+                .is::<TextView>()
+        );
     }
 }
 

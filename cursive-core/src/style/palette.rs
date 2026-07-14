@@ -1,5 +1,5 @@
 use super::{Color, Effects, NoSuchColor, Style};
-use enum_map::{enum_map, Enum, EnumMap};
+use enum_map::{Enum, EnumMap, enum_map};
 #[cfg(feature = "toml")]
 use log::warn;
 

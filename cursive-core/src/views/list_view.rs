@@ -1,10 +1,9 @@
 use crate::builder::{Config, Context, Error, Resolvable};
 use crate::{
-    direction,
+    Cursive, Printer, Vec2, With, direction,
     event::{AnyCb, Callback, Event, EventResult, Key},
     rect::Rect,
     view::{CannotFocus, IntoBoxedView, Selector, View, ViewNotFound},
-    Cursive, Printer, Vec2, With,
 };
 use log::debug;
 use std::sync::Arc;

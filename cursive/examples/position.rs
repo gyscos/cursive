@@ -1,7 +1,7 @@
 use cursive::{
+    Cursive,
     view::Position,
     views::{LayerPosition, TextView},
-    Cursive,
 };
 
 /// Moves top layer by the specified amount

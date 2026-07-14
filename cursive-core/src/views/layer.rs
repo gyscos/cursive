@@ -1,6 +1,6 @@
+use crate::Printer;
 use crate::style::ColorStyle;
 use crate::view::{View, ViewWrapper};
-use crate::Printer;
 
 /// Wrapper view that fills the background.
 ///

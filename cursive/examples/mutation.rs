@@ -1,7 +1,7 @@
+use cursive::Cursive;
 use cursive::traits::*;
 use cursive::view::{Offset, Position};
 use cursive::views::{Dialog, OnEventView, TextView};
-use cursive::Cursive;
 
 // This example modifies a view after creation.
 

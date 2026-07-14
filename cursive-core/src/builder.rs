@@ -725,7 +725,7 @@ impl Context {
                 return Err(Error::InvalidConfig {
                     message: "Expected string or object".into(),
                     config: config.clone(),
-                })
+                });
             }
         };
 
@@ -787,7 +787,7 @@ impl Context {
                 return Err(Error::InvalidConfig {
                     message: "Expected object or string.".into(),
                     config: config.clone(),
-                })
+                });
             }
         };
 
@@ -1139,9 +1139,10 @@ mod tests {
         let mut res = context.build(&config).unwrap();
 
         // The top-level view should be a full-screen view
-        assert!(res
-            .downcast_ref::<crate::views::ResizedView<crate::views::BoxedView>>()
-            .is_some());
+        assert!(
+            res.downcast_ref::<crate::views::ResizedView<crate::views::BoxedView>>()
+                .is_some()
+        );
 
         // The view should be reachable by name
         let content = res

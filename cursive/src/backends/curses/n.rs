@@ -12,11 +12,11 @@ use std::fs::File;
 use std::io;
 use std::io::Write;
 
+use crate::Vec2;
 use crate::backend;
 use crate::event::{Event, Key, MouseButton, MouseEvent};
 use crate::theme::{Color, ColorPair, Effect};
 use crate::utf8;
-use crate::Vec2;
 
 use super::split_i32;
 
