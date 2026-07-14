@@ -82,7 +82,7 @@ impl CursiveExt for cursive_core::Cursive {
     }
 
     #[cfg(feature = "ncurses-backend")]
-    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "curses-backend")))]
+    #[cfg_attr(feature = "doc-cfg", doc(cfg(feature = "ncurses-backend")))]
     fn run_ncurses(&mut self) -> std::io::Result<()> {
         self.try_run_with(crate::backends::curses::n::Backend::init)
     }

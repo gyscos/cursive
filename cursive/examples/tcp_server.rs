@@ -77,7 +77,7 @@ fn serve(model: Model) -> std::io::Result<()> {
         let stream = stream?;
 
         // Process each byte according to the current model.
-        for byte in (&stream).bytes() {
+        for byte in std::io::BufReader::new(&stream).bytes() {
             let byte = byte?;
             let mut model = model.lock().unwrap();
             let response = byte.wrapping_add(model.offset);

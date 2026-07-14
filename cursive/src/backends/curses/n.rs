@@ -82,8 +82,7 @@ impl Backend {
             .map(|var| var.is_empty())
             .unwrap_or(true)
         {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
+            return Err(io::Error::other(
                 "$TERM is unset. Cannot initialize ncurses interface.",
             ));
         }
@@ -111,7 +110,7 @@ impl Backend {
             unsafe { libc::fopen(path.as_ptr(), mode.as_ptr()) }
         };
         ncurses::newterm(None, output, input).map_err(|e| {
-            io::Error::new(io::ErrorKind::Other, format!("could not call newterm: {e}"))
+            io::Error::other(format!("could not call newterm: {e}"))
         })?;
 
         // Enable keypad (like arrows)

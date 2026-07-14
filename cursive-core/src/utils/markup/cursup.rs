@@ -15,7 +15,6 @@
 //! // Highlight a letter from the word to show a shortcut available.
 //! Button::new(cursup::parse("/red{Q}uit"), |s| s.quit());
 //! ```
-#![cfg_attr(feature = "doc-cfg", doc(cfg(feature = "cursup")))]
 
 use crate::style::Style;
 use crate::utils::markup::{StyledIndexedSpan, StyledString};

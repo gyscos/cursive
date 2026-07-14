@@ -49,13 +49,12 @@ impl Backend {
                 .map(|var| var.is_empty())
                 .unwrap_or(true)
         {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(std::io::Error::other(
                 "$TERM is unset. Cannot initialize pancurses interface.",
             ));
         }
 
-        ::std::env::set_var("ESCDELAY", "25");
+        unsafe { std::env::set_var("ESCDELAY", "25") };
 
         if cfg!(unix) {
             let buf = std::ffi::CString::new("").unwrap();

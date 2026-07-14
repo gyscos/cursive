@@ -95,7 +95,7 @@ impl Field {
         }
     }
 
-    pub fn all_cell_pos_iter(&self) -> impl Iterator<Item = Vec2> {
+    pub fn all_cell_pos_iter(&self) -> impl Iterator<Item = Vec2> + use<> {
         let size = self.size;
         (0..size.y).flat_map(move |x| (0..size.x).map(move |y| Vec2::new(y, x)))
     }
@@ -107,7 +107,7 @@ impl Field {
         Rect::from_corners(pos_min, pos_max)
     }
 
-    fn neighbours(&self, pos: Vec2) -> impl Iterator<Item = Vec2> {
+    fn neighbours(&self, pos: Vec2) -> impl Iterator<Item = Vec2> + use<> {
         let pos_min = pos.saturating_sub((1, 1));
         let pos_max = (pos + (2, 2)).or_min(self.size);
 

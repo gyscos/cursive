@@ -95,14 +95,13 @@ fn find_dependent_generics(
     ) {
         let mut new_idents = Vec::new();
         visit_path_idents(&bound.path, &mut |ident| {
-            if let Some(r) = relevant.get_mut(ident) {
-                if !(*r) {
+            if let Some(r) = relevant.get_mut(ident)
+                && !(*r) {
                     *r = true;
                     new_idents.push(ident.clone());
                     // Find the new bound
                     check_new_dependent(/* signature, */ relevant, bound);
                 }
-            }
         });
     }
 
@@ -176,7 +175,7 @@ fn find_fn_generic(
                 _ => continue,
             };
 
-            let segment = match bound.path.segments.iter().last() {
+            let segment = match bound.path.segments.iter().next_back() {
                 Some(segment) => segment,
                 None => continue,
             };
@@ -202,7 +201,7 @@ fn find_fn_generic(
                 _ => continue,
             };
 
-            let segment = match bound.path.segments.iter().last() {
+            let segment = match bound.path.segments.iter().next_back() {
                 Some(segment) => segment,
                 None => continue,
             };
@@ -242,7 +241,7 @@ fn find_fn_generic(
                 _ => continue,
             };
 
-            let segment = match bound.path.segments.iter().last() {
+            let segment = match bound.path.segments.iter().next_back() {
                 Some(segment) => segment,
                 None => continue,
             };
@@ -266,7 +265,7 @@ fn bound_to_dyn(bound: &syn::TraitBound) -> proc_macro2::TokenStream {
 }
 
 fn get_arity(bound: &syn::TraitBound) -> usize {
-    let segment = bound.path.segments.iter().last().unwrap();
+    let segment = bound.path.segments.iter().next_back().unwrap();
     let args = match &segment.arguments {
         syn::PathArguments::Parenthesized(args) => args,
         _ => panic!("Expected Fn trait arguments"),
@@ -435,13 +434,11 @@ This is mostly useful when using this view in a template."#
         .inputs
         .iter()
         .map(|arg| {
-            if let syn::FnArg::Typed(arg) = arg {
-                if let syn::Pat::Ident(ident) = arg.pat.as_ref() {
-                    if &ident.ident == cb_arg_name {
+            if let syn::FnArg::Typed(arg) = arg
+                && let syn::Pat::Ident(ident) = arg.pat.as_ref()
+                    && &ident.ident == cb_arg_name {
                         return quote! { #cb_arg_name: #dyn_type };
                     }
-                }
-            }
 
             quote! { #arg }
         })
@@ -468,13 +465,12 @@ This is mostly useful when using this view in a template."#
                 quote! { self }
             }
             syn::FnArg::Typed(arg) => {
-                if let syn::Pat::Ident(ident) = arg.pat.as_ref() {
-                    if &ident.ident == cb_arg_name {
+                if let syn::Pat::Ident(ident) = arg.pat.as_ref()
+                    && &ident.ident == cb_arg_name {
                         return quote! {
                             move |#cb_args| { (*#cb_arg_name)(#cb_args) }
                         };
                     }
-                }
 
                 let pat = &arg.pat;
                 quote! { #pat }

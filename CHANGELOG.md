@@ -1,6 +1,14 @@
 # Changelog
 
-## Next (cursive-core 0.4.7)
+## Unreleased
+
+- Support tuple structs in `wrap_impl!`.
+- `Cursive::cb_sink` now returns a `CbSink` instead of a reference to one.
+- Fix `ProgressBar` to inherit the background color instead of hard-coding it.
+- Replace the generic `From<S>` impl for `BorderStyle` with `FromStr`.
+- Bump MSRV requirements: bump resolver and rust edition to 2024.
+
+## cursive-core 0.4.7
 
 - Implement `Debug` for `EventResult` and `EventTrigger`.
 - Add `ListView::try_remove` and some other missing functions.

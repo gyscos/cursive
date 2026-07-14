@@ -821,7 +821,7 @@ impl Resolvable for crate::style::ConcreteEffects {
                 |config, context| {
                     // Option A: a single effect as string
                     let effect = resolve_from_str(config, context, |_| "Expected valid effect")?;
-                    { Ok(ConcreteEffects::only(effect)) }
+                    Ok(ConcreteEffects::only(effect))
                 },
                 |config, context| {
                     // Option B: a list of effects
