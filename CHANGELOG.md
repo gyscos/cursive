@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add `TextArea::set_style` and `TextArea::style` to customize the text style.
 - Support tuple structs in `wrap_impl!`.
 - `Cursive::cb_sink` now returns a `CbSink` instead of a reference to one.
 - Fix `ProgressBar` to inherit the background color instead of hard-coding it.
