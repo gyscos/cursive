@@ -4,7 +4,7 @@ use crate::{
     direction::Direction,
     event::{Event, EventResult, Key, MouseButton, MouseEvent},
     rect::Rect,
-    style::PaletteStyle,
+    style::{PaletteStyle, StyleType},
     utils::lines::simple::{LinesIterator, Row, prefix, simple_prefix},
     view::{CannotFocus, ScrollBase, SizeCache, View},
     {Printer, With, XY},
@@ -54,6 +54,15 @@ pub struct TextArea {
 
     /// Byte offset of the currently selected grapheme.
     cursor: usize,
+
+    /// Style used for the text when the view is enabled.
+    regular_style: StyleType,
+
+    /// Style used for the text when the view is disabled.
+    inactive_style: StyleType,
+
+    /// Style used for the cursor.
+    cursor_style: StyleType,
 }
 
 fn make_rows(text: &str, width: usize) -> Vec<Row> {
@@ -76,6 +85,9 @@ impl TextArea {
             size_cache: None,
             last_size: Vec2::zero(),
             cursor: 0,
+            regular_style: PaletteStyle::EditableText.into(),
+            inactive_style: PaletteStyle::EditableTextInactive.into(),
+            cursor_style: PaletteStyle::EditableTextCursor.into(),
         }
         .with(|area| area.compute_rows(Vec2::new(1, 1)))
         // Make sure we have valid rows, even for empty text.
@@ -138,6 +150,29 @@ impl TextArea {
     #[must_use]
     pub fn content<S: Into<String>>(self, content: S) -> Self {
         self.with(|s| s.set_content(content))
+    }
+
+    /// Sets the style used for the text.
+    ///
+    /// Defaults to `PaletteStyle::EditableText`.
+    pub fn set_style<S: Into<StyleType>>(&mut self, style: S) {
+        self.regular_style = style.into();
+    }
+
+    /// Sets the style used for the text.
+    ///
+    /// Chainable variant.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use cursive_core::views::TextArea;
+    /// # use cursive_core::style::PaletteColor;
+    /// let text_area = TextArea::new().style(PaletteColor::Primary);
+    /// ```
+    #[must_use]
+    pub fn style<S: Into<StyleType>>(self, style: S) -> Self {
+        self.with(|s| s.set_style(style))
     }
 
     /// Disables this view.
@@ -489,12 +524,9 @@ impl View for TextArea {
 
     fn draw(&self, printer: &Printer) {
         let (style, cursor_style) = if self.enabled && printer.enabled {
-            (PaletteStyle::EditableText, PaletteStyle::EditableTextCursor)
+            (self.regular_style, self.cursor_style)
         } else {
-            (
-                PaletteStyle::EditableTextInactive,
-                PaletteStyle::EditableTextInactive,
-            )
+            (self.inactive_style, self.inactive_style)
         };
 
         let w = if self.scrollbase.scrollable() {
@@ -657,4 +689,26 @@ impl View for TextArea {
 #[crate::blueprint(TextArea::new())]
 struct Blueprint {
     content: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::style::PaletteColor;
+
+    #[test]
+    fn set_style_overrides_default() {
+        let mut area = TextArea::new();
+        assert_eq!(area.regular_style, PaletteStyle::EditableText.into());
+
+        area.set_style(PaletteColor::Primary);
+        assert_eq!(area.regular_style, PaletteColor::Primary.into());
+
+        // Setting the text style leaves the cursor and inactive styles alone.
+        assert_eq!(area.cursor_style, PaletteStyle::EditableTextCursor.into());
+        assert_eq!(
+            area.inactive_style,
+            PaletteStyle::EditableTextInactive.into()
+        );
+    }
 }
