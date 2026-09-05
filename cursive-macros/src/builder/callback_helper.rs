@@ -52,8 +52,8 @@ fn find_dependent_generics(
                     }
                 }
                 syn::PathArguments::Parenthesized(arguments) => {
-                    for t in &arguments.inputs {
-                        visit_type_idents(t, f);
+                    for arg in &arguments.inputs {
+                        visit_type_idents(&arg.ty, f);
                     }
                     if let syn::ReturnType::Type(_, t) = &arguments.output {
                         visit_type_idents(t, f);
