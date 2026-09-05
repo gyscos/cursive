@@ -88,6 +88,11 @@ impl SliderView {
         self.value
     }
 
+    /// Sets the max value.
+    pub fn set_max_value(&mut self, max_value: usize) {
+        self.max_value = max_value;
+    }
+
     /// Gets the max value.
     pub fn get_max_value(&self) -> usize {
         self.max_value
