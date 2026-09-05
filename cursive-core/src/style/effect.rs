@@ -37,6 +37,9 @@ pub enum Effect {
 }
 
 impl Effect {
+    /// The number of variants in this enum.
+    pub const LENGTH: usize = crate::style::enum_length::<Self>();
+
     /// Returns the order of the effect in the effect set/map.
     ///
     /// This is very brittle and should be kept in sync with the enum definition. Might benefit

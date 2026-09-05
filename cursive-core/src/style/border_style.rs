@@ -16,6 +16,9 @@ pub enum BorderStyle {
 }
 
 impl BorderStyle {
+    /// The number of variants in this enum.
+    pub const LENGTH: usize = crate::style::enum_length::<Self>();
+
     /// Returns an iterator on all possible border styles.
     pub fn all() -> impl Iterator<Item = Self> {
         (0..Self::LENGTH).map(Self::from_usize)

@@ -39,6 +39,9 @@ pub enum BaseColor {
 }
 
 impl BaseColor {
+    /// The number of variants in this enum.
+    pub const LENGTH: usize = crate::style::enum_length::<Self>();
+
     /// Returns the regular (dark) version of this base color.
     pub const fn dark(self) -> Color {
         Color::Dark(self)

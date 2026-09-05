@@ -141,6 +141,14 @@ pub use self::effect::{ConcreteEffects, Effect, EffectStatus, Effects};
 pub use self::palette::{Palette, PaletteColor, PaletteNode, PaletteStyle};
 pub use self::style_types::{ConcreteStyle, Style, StyleType};
 
+/// Returns the number of variants in the given enum.
+///
+/// `enum_map` no longer exposes the length directly on the `Enum` trait, it is only reachable
+/// through the array type it maps to.
+pub(crate) const fn enum_length<E: enum_map::Enum>() -> usize {
+    <E::Array<()> as enum_map::Array>::LENGTH
+}
+
 /// Error parsing a color.
 #[derive(Debug)]
 pub struct NoSuchColor;

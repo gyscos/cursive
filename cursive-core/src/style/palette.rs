@@ -419,6 +419,9 @@ pub enum PaletteStyle {
 }
 
 impl PaletteStyle {
+    /// The number of variants in this enum.
+    pub const LENGTH: usize = crate::style::enum_length::<Self>();
+
     /// Given a style palette, resolve `self` to a concrete style.
     pub fn resolve(self, palette: &Palette) -> Style {
         palette[self]
@@ -431,6 +434,9 @@ impl PaletteStyle {
 }
 
 impl PaletteColor {
+    /// The number of variants in this enum.
+    pub const LENGTH: usize = crate::style::enum_length::<Self>();
+
     /// Given a palette, resolve `self` to a concrete color.
     pub fn resolve(self, palette: &Palette) -> Color {
         palette[self]
