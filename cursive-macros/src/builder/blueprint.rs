@@ -620,15 +620,20 @@ pub fn blueprint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let attributes = syn::parse_macro_input!(attrs as BlueprintAttributes);
 
     // Either cursive or cursive_core are good roots.
-    // If we can't find it, assume it's building cursive_core itself.
-    let root = match find_crate::find_crate(|s| {
-        s == "cursive" || s == "cursive-core" || s == "cursive_core"
+    // Only look for actual dependencies here: `FoundCrate::Itself` means we are building the crate
+    // itself (or one of its examples/tests), and there `::cursive` would not resolve.
+    // If we can't find any, assume it's building cursive_core itself.
+    let root = match ["cursive", "cursive_core", "cursive-core"].into_iter().find_map(|name| {
+        match proc_macro_crate::crate_name(name) {
+            Ok(proc_macro_crate::FoundCrate::Name(name)) => Some(name),
+            _ => None,
+        }
     }) {
-        Ok(cursive) => {
-            let root = syn::Ident::new(&cursive.name, Span::call_site());
+        Some(name) => {
+            let root = syn::Ident::new(&name, Span::call_site());
             quote! { ::#root }
         }
-        Err(_) => {
+        None => {
             quote! { crate }
         }
     };

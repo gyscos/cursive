@@ -28,9 +28,7 @@ crossbeam-channel = "0.5"
 cfg-if = "1"
 unicode-segmentation = "1"
 unicode-width = "0.2"
-lazy_static = "1"
 libc = "0.2"
-maplit = { version = "1.0", optional = true }
 log = "0.4"
 ahash = "0.8"
 
@@ -61,8 +59,8 @@ doc-cfg = ["cursive_core/doc-cfg"]  # Enable doc_cfg, a nightly-only doc feature
 builder = ["cursive_core/builder"]  # Enable the builder module to build views from config blobs.
 blt-backend = ["dep:bear-lib-terminal"]  # Enable the BearLibTerminal backend. Requires BLT to be installed separately.
 default = ["crossterm-backend"]  # Defaults to crossterm, supported on windows, linux and macos.
-ncurses-backend = ["dep:ncurses", "dep:maplit"]  # Enable the ncurses backend.
-pancurses-backend = ["dep:pancurses", "dep:maplit"]  # Enable the pancurses backend.
+ncurses-backend = ["dep:ncurses"]  # Enable the ncurses backend.
+pancurses-backend = ["dep:pancurses"]  # Enable the pancurses backend.
 termion-backend = ["dep:termion"]  # Enable the termion backend.
 crossterm-backend = ["dep:crossterm"]  # Enable the crossterm backend.
 markdown = ["cursive_core/markdown"]  # Allows parsing StyledString from markdown text.
@@ -95,5 +93,5 @@ required-features = ["builder"]
 rand = "0.10"
 pretty-bytes = "0.2"
 serde_json = "1.0.85"
-serde_yaml = "0.9.13"
+yaml_serde = "0.10.7"
 parking_lot = "0.12"

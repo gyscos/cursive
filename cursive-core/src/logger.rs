@@ -1,10 +1,9 @@
 //! Logging utilities.
 
-use lazy_static::lazy_static;
 use std::cmp::Ord;
 use std::collections::VecDeque;
 use std::str::FromStr;
-use std::sync::{Mutex, RwLock};
+use std::sync::{LazyLock, Mutex, RwLock};
 
 /// Saves all log records in a global deque.
 ///
@@ -31,18 +30,16 @@ use std::sync::{Mutex, RwLock};
 /// ```
 pub struct CursiveLogger;
 
-lazy_static! {
-    /// Circular buffer for logs. Use it to implement [`DebugView`].
-    ///
-    /// [`DebugView`]: ../views/struct.DebugView.html
-    pub static ref LOGS: Mutex<VecDeque<Record>> =
-        Mutex::new(VecDeque::with_capacity(1_000));
+/// Circular buffer for logs. Use it to implement [`DebugView`].
+///
+/// [`DebugView`]: ../views/struct.DebugView.html
+pub static LOGS: LazyLock<Mutex<VecDeque<Record>>> =
+    LazyLock::new(|| Mutex::new(VecDeque::with_capacity(1_000)));
 
-    // Log filter level for log messages from within cursive
-    static ref INT_FILTER_LEVEL: RwLock<log::LevelFilter> = RwLock::new(log::LevelFilter::Trace);
-    // Log filter level for log messages from sources outside of cursive
-    static ref EXT_FILTER_LEVEL: RwLock<log::LevelFilter> = RwLock::new(log::LevelFilter::Trace);
-}
+// Log filter level for log messages from within cursive
+static INT_FILTER_LEVEL: RwLock<log::LevelFilter> = RwLock::new(log::LevelFilter::Trace);
+// Log filter level for log messages from sources outside of cursive
+static EXT_FILTER_LEVEL: RwLock<log::LevelFilter> = RwLock::new(log::LevelFilter::Trace);
 
 /// Sets the internal log filter level.
 pub fn set_internal_filter_level(level: log::LevelFilter) {

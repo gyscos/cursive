@@ -1123,7 +1123,7 @@ mod tests {
 
         let foo = "Foo";
 
-        let config: crate::builder::Config = serde_yaml::from_str(config).unwrap();
+        let config: crate::builder::Config = yaml_serde::from_str(config).unwrap();
 
         let mut context = crate::builder::Context::new();
 

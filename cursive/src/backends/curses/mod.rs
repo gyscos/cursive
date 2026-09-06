@@ -5,7 +5,6 @@
 
 use crate::event::{Event, Key};
 use crate::theme::{BaseColor, Color, ColorPair};
-use maplit::hashmap;
 
 pub mod n;
 pub mod pan;
@@ -18,11 +17,9 @@ fn split_i32(code: i32) -> Vec<u8> {
     (0..4).map(|i| ((code >> (8 * i)) & 0xFF) as u8).collect()
 }
 
-fn fill_key_codes<F>(target: &mut HashMap<i32, Event>, f: F)
-where
-    F: Fn(i32) -> Option<String>,
-{
-    let key_names = hashmap! {
+/// Maps a terminfo key name (stripped of its leading `k` and trailing modifier) to a key.
+fn key_from_name(name: &str) -> Option<Key> {
+    Some(match name {
         "DC" => Key::Del,
         "DN" => Key::Down,
         "END" => Key::End,
@@ -33,29 +30,42 @@ where
         "PRV" => Key::PageUp,
         "RIT" => Key::Right,
         "UP" => Key::Up,
-    };
+        _ => return None,
+    })
+}
 
+fn fill_key_codes<F>(target: &mut HashMap<i32, Event>, f: F)
+where
+    F: Fn(i32) -> Option<String>,
+{
     for code in 512..1024 {
         let name = match f(code) {
             Some(name) => name,
             None => continue,
         };
 
-        if !name.starts_with('k') {
+        // Key names look like `k<KEY><MODIFIER>`, for example `kDC3`.
+        let Some(rest) = name.strip_prefix('k') else {
             continue;
-        }
+        };
 
-        let (key_name, modifier) = name[1..].split_at(name.len() - 2);
-        let key = match key_names.get(key_name) {
-            Some(&key) => key,
+        // The modifier is the last character, the key name is everything before it.
+        // Splitting on `len_utf8()` keeps us on a char boundary even for non-ascii names.
+        let Some(modifier) = rest.chars().next_back() else {
+            continue;
+        };
+        let key_name = &rest[..rest.len() - modifier.len_utf8()];
+
+        let key = match key_from_name(key_name) {
+            Some(key) => key,
             None => continue,
         };
         let event = match modifier {
-            "3" => Event::Alt(key),
-            "4" => Event::AltShift(key),
-            "5" => Event::Ctrl(key),
-            "6" => Event::CtrlShift(key),
-            "7" => Event::CtrlAlt(key),
+            '3' => Event::Alt(key),
+            '4' => Event::AltShift(key),
+            '5' => Event::Ctrl(key),
+            '6' => Event::CtrlShift(key),
+            '7' => Event::CtrlAlt(key),
             _ => continue,
         };
         target.insert(code, event);

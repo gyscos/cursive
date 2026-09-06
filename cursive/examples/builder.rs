@@ -7,7 +7,7 @@ cursive::manual_blueprint!(LabeledField from {
     // (in practice, a serde_json::Value).
     //
     // Here we parse yaml but any other serde-supported language would work.
-    serde_yaml::from_str(include_str!("label-view.yaml")).unwrap()
+    yaml_serde::from_str(include_str!("label-view.yaml")).unwrap()
 });
 
 cursive::manual_blueprint!(VSpace from {
@@ -19,7 +19,7 @@ cursive::manual_blueprint!(VSpace from {
     //
     // Note that this code only runs when this blueprint is actually called
     // (when a `VSpace` view is requested).
-    serde_yaml::from_str(include_str!("vspace.yaml")).unwrap()
+    yaml_serde::from_str(include_str!("vspace.yaml")).unwrap()
 });
 
 // We can also define blueprint that build arbitrary views.
@@ -66,7 +66,7 @@ fn main() {
 
     // Load the template - here it's a yaml file.
     const CONFIG: &str = include_str!("builder.yaml");
-    let config = serde_yaml::from_str(CONFIG).unwrap();
+    let config = yaml_serde::from_str(CONFIG).unwrap();
 
     // And build the view
     let view = context.build(&config).unwrap_or_else(|e| {
