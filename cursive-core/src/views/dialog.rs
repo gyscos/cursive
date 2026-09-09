@@ -923,11 +923,17 @@ impl View for Dialog {
     }
 
     fn important_area(&self, _: Vec2) -> Rect {
-        // Only the content is important.
-        // TODO: if a button is focused, return the button position instead.
-        self.content.important_area(self.content.size)
-            + self.borders.top_left()
-            + self.padding.top_left()
+        match self.focus {
+            DialogFocus::Content => {
+                self.content.important_area(self.content.size)
+                    + self.borders.top_left()
+                    + self.padding.top_left()
+            }
+            DialogFocus::Button(i) => {
+                let button = &self.buttons[i];
+                button.button.important_area(button.button.size) + *button.offset.lock()
+            }
+        }
     }
 
     fn needs_relayout(&self) -> bool {
@@ -991,3 +997,47 @@ crate::fn_blueprint!("Dialog.info", |config, context| {
         s.add_layer(Dialog::info(message.clone()));
     }))
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::buffer::PrintBuffer;
+    use crate::theme::Theme;
+    use parking_lot::RwLock;
+
+    // #813: with a button focused, the important area must point at that button,
+    // so a wrapping ScrollView scrolls far enough down to reveal it.
+    #[test]
+    fn important_area_follows_focused_button() {
+        let mut dialog = Dialog::around(TextView::new("hello"))
+            .button("Ok", |_| {})
+            .button("Cancel", |_| {});
+
+        let size = Vec2::new(20, 5);
+        dialog.layout(size);
+
+        let theme = Theme::default();
+        let buffer = RwLock::new(PrintBuffer::new());
+        dialog.draw(&Printer::new(size, &theme, &buffer));
+
+        // Focus on the content: the text at the top.
+        assert_eq!(
+            dialog.important_area(size),
+            Rect::from_corners((2, 1), (17, 1))
+        );
+
+        // Focus on a button: that button on the last line. The buttons are
+        // right-aligned, so `<Ok>` sits left of `<Cancel>`.
+        dialog.set_focus(DialogFocus::Button(0));
+        assert_eq!(
+            dialog.important_area(size),
+            Rect::from_corners((5, 3), (8, 3))
+        );
+
+        dialog.set_focus(DialogFocus::Button(1));
+        assert_eq!(
+            dialog.important_area(size),
+            Rect::from_corners((10, 3), (17, 3))
+        );
+    }
+}

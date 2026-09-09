@@ -8,6 +8,7 @@
 - Fix `ProgressBar` to inherit the background color instead of hard-coding it.
 - Replace the generic `From<S>` impl for `BorderStyle` with `FromStr`.
 - Bump MSRV requirements: bump resolver and rust edition to 2024.
+- Fix `Dialog::important_area` to point at the focused button, so scroll views can reach it.
 
 ## cursive-core 0.4.7
 
