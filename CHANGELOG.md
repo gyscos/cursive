@@ -9,6 +9,8 @@
 - Replace the generic `From<S>` impl for `BorderStyle` with `FromStr`.
 - Bump MSRV requirements: bump resolver and rust edition to 2024.
 - Fix `Dialog::important_area` to point at the focused button, so scroll views can reach it.
+- Add `Printer::try_on_window`, a non-panicking alternative to `Printer::on_window` for when
+  the output window no longer fits the backend buffer (e.g. a terminal resize race).
 
 ## cursive-core 0.4.7
 

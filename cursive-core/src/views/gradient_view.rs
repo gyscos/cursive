@@ -112,7 +112,10 @@ where
         self.view.draw(printer);
 
         let buffer_size = printer.buffer_size();
-        printer.on_window(|window| {
+        // Use the non-panicking variant: if the backend was resized smaller between the
+        // layout pass and this draw, just skip the gradient overlay for this frame instead
+        // of crashing the whole app (see #885). The next layout pass will correct the sizes.
+        printer.try_on_window(|window| {
             let viewport = window.viewport();
             for y in 0..viewport.height() {
                 for x in 0..viewport.width() {
