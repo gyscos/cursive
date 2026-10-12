@@ -317,16 +317,12 @@ impl Backend {
         };
 
         if mevent.bstate == pancurses::REPORT_MOUSE_POSITION as mmask_t {
-            // The event is either a mouse drag event,
-            // or a weird double-release event. :S
-            self.last_mouse_button
-                .map(MouseEvent::Hold)
-                .or_else(|| {
-                    // In legacy mode, some buttons overlap,
-                    // so we need to disambiguate.
-                    (mevent.bstate == pancurses::BUTTON5_DOUBLE_CLICKED as mmask_t)
-                        .then_some(MouseEvent::WheelDown)
-                })
+            // The event is either a mouse drag event, a weird
+            // double-release event, or (on ncurses builds that don't
+            // support a 5th mouse button, e.g. the legacy ncurses 5.x that
+            // macOS ships as its system library) a wheel-down scroll. See
+            // `disambiguate_position_report` for details.
+            disambiguate_position_report(self.last_mouse_button)
                 .map(make_event)
                 .unwrap_or_else(|| {
                     debug!("We got a mouse drag, but no last mouse pressed?");
@@ -459,6 +455,38 @@ impl backend::Backend for Backend {
     }
 }
 
+/// Disambiguates a `bstate` that is exactly `REPORT_MOUSE_POSITION`, with no
+/// other button bit set.
+///
+/// Ncurses sends this both for genuine "mouse moved, no button held" drag
+/// reports, and - on builds that don't support a 5th mouse button (i.e.
+/// `NCURSES_MOUSE_VERSION < 2`, which is what ships as the system ncurses on
+/// macOS) - for a wheel-down scroll. In ncurses' own `lib_mouse.c`, a wheel
+/// event for button 5 is deliberately downgraded to a bare
+/// `REPORT_MOUSE_POSITION` on those builds (see `handle_wheel()`), since
+/// `BUTTON5_PRESSED` doesn't exist in that ABI. This is indistinguishable
+/// from a real position report using only the `bstate` value.
+///
+/// If a button is currently held (`last_button` is `Some`), we know this is
+/// a drag/hold event, not a wheel event (wheel events never coincide with a
+/// held button here). Otherwise, since a plain idle mouse-move with no
+/// button pressed is rarely useful to applications (and was previously
+/// dropped as `Event::Unknown` anyway), we treat it as the most likely
+/// culprit: a wheel-down scroll that the ncurses build couldn't report more
+/// precisely.
+///
+/// This mirrors what a previous (dead) check in this function seemed to
+/// intend: it compared `bstate` against `BUTTON5_DOUBLE_CLICKED`, but that
+/// branch could never trigger since it was nested under a check that
+/// `bstate == REPORT_MOUSE_POSITION`, and `BUTTON5_DOUBLE_CLICKED` and
+/// `REPORT_MOUSE_POSITION` are different bits.
+fn disambiguate_position_report(last_button: Option<MouseButton>) -> Option<MouseEvent> {
+    match last_button {
+        Some(button) => Some(MouseEvent::Hold(button)),
+        None => Some(MouseEvent::WheelDown),
+    }
+}
+
 /// Parse the given code into one or more event.
 ///
 /// If the given event code should expend into multiple events
@@ -553,4 +581,38 @@ fn initialize_keymap() -> HashMap<i32, Event> {
     super::fill_key_codes(&mut map, pancurses::keyname);
 
     map
+}
+
+#[cfg(test)]
+mod tests {
+    use super::disambiguate_position_report;
+    use crate::event::{MouseButton, MouseEvent};
+
+    #[test]
+    fn bare_position_report_with_no_held_button_is_wheel_down() {
+        // See issue #722: on ncurses builds that can't represent a 5th
+        // mouse button (e.g. macOS's system ncurses), a wheel-down scroll
+        // is reported identically to an idle "mouse moved, no button
+        // pressed" event: a bare REPORT_MOUSE_POSITION bstate. Since we
+        // can't tell those apart from the bstate alone, and there's no
+        // button currently held, we treat it as a wheel-down scroll.
+        assert_eq!(
+            disambiguate_position_report(None),
+            Some(MouseEvent::WheelDown)
+        );
+    }
+
+    #[test]
+    fn position_report_with_held_button_is_a_hold() {
+        // If a button is already held down, this is a drag/hold event for
+        // that button, not a wheel scroll.
+        assert_eq!(
+            disambiguate_position_report(Some(MouseButton::Left)),
+            Some(MouseEvent::Hold(MouseButton::Left))
+        );
+        assert_eq!(
+            disambiguate_position_report(Some(MouseButton::Middle)),
+            Some(MouseEvent::Hold(MouseButton::Middle))
+        );
+    }
 }
