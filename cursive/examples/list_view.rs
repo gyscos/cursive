@@ -67,10 +67,7 @@ fn main() {
                     .with(|list| {
                         // We can also add children procedurally
                         for i in 0..50 {
-                            list.add_child(
-                                format!("Item {i}"),
-                                EditView::new(),
-                            );
+                            list.add_child(format!("Item {i}"), EditView::new());
                         }
                     })
                     .scrollable(),

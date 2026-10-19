@@ -42,11 +42,20 @@ fn main() {
                             .child(size_group.button(25, "Large").disabled()),
                     )
                     .child(DummyView)
-                    .child(LinearLayout::vertical()
-                        .child(RadioButton::global("flavor", Flavor::Vanilla, "Vanilla"))
-                        .child(RadioButton::global("flavor", Flavor::Strawberry, "Strawberry"))
-                        .child(RadioButton::global("flavor", Flavor::Chocolate, "Chocolate"))
-                    )
+                    .child(
+                        LinearLayout::vertical()
+                            .child(RadioButton::global("flavor", Flavor::Vanilla, "Vanilla"))
+                            .child(RadioButton::global(
+                                "flavor",
+                                Flavor::Strawberry,
+                                "Strawberry",
+                            ))
+                            .child(RadioButton::global(
+                                "flavor",
+                                Flavor::Chocolate,
+                                "Chocolate",
+                            )),
+                    ),
             )
             .button("Ok", move |s| {
                 // We retrieve the stored value for both group.

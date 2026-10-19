@@ -109,9 +109,8 @@ impl Backend {
             let path = CString::new(output_path).unwrap();
             unsafe { libc::fopen(path.as_ptr(), mode.as_ptr()) }
         };
-        ncurses::newterm(None, output, input).map_err(|e| {
-            io::Error::other(format!("could not call newterm: {e}"))
-        })?;
+        ncurses::newterm(None, output, input)
+            .map_err(|e| io::Error::other(format!("could not call newterm: {e}")))?;
 
         // Enable keypad (like arrows)
         ncurses::keypad(ncurses::stdscr(), true);
