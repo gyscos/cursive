@@ -140,9 +140,10 @@ impl Theme {
         }
 
         if let Some(toml::Value::String(borders)) = table.get("borders")
-            && let Ok(style) = borders.parse() {
-                self.borders = style;
-            }
+            && let Ok(style) = borders.parse()
+        {
+            self.borders = style;
+        }
 
         if let Some(toml::Value::Table(table)) = table.get("colors") {
             self.palette.load_toml(table);

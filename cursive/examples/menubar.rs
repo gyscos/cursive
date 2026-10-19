@@ -41,7 +41,9 @@ fn main() {
                             // We don't actually do anything here,
                             // but you could!
                             tree.add_item(menu::Item::leaf(format!("Item {i}"), |_| ()).with(|s| {
-                                if i % 5 == 0 { s.disable(); }
+                                if i % 5 == 0 {
+                                    s.disable();
+                                }
                             }))
                         }
                     }),
@@ -61,18 +63,14 @@ fn main() {
                 .subtree(
                     "Help",
                     menu::Tree::new()
-                        .leaf("General", |s| {
-                            s.add_layer(Dialog::info("Help message!"))
-                        })
+                        .leaf("General", |s| s.add_layer(Dialog::info("Help message!")))
                         .leaf("Online", |s| {
                             let text = "Google it yourself!\n\
                                         Kids, these days...";
                             s.add_layer(Dialog::info(text))
                         }),
                 )
-                .leaf("About", |s| {
-                    s.add_layer(Dialog::info("Cursive v0.0.0"))
-                }),
+                .leaf("About", |s| s.add_layer(Dialog::info("Cursive v0.0.0"))),
         )
         .add_delimiter()
         .add_leaf("Quit", |s| s.quit());

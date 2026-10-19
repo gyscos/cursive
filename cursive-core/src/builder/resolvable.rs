@@ -1170,21 +1170,17 @@ impl Resolvable for bool {
 macro_rules! resolve_float {
     ($ty:ty) => {
         impl Resolvable for $ty {
-            fn from_any(any: Box<dyn Any>) -> Option<Self>
-            {
+            fn from_any(any: Box<dyn Any>) -> Option<Self> {
                 // Accept both f32 and f64, just cast between them.
                 any.downcast::<f32>()
                     .map(|b| *b as Self)
-                    .or_else(|any| {
-                        any.downcast::<f64>()
-                            .map(|b| *b as Self)
-                    })
+                    .or_else(|any| any.downcast::<f64>().map(|b| *b as Self))
                     .ok()
             }
 
             fn from_config(config: &Config, _context: &Context) -> Result<Self, Error> {
                 config
-                    .as_f64()  // This already handles converting from integers
+                    .as_f64() // This already handles converting from integers
                     .map(|config| config as Self)
                     .ok_or_else(|| Error::invalid_config(format!("Expected float value"), config))
             }
