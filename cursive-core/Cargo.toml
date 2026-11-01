@@ -25,7 +25,7 @@ xi-unicode = "0.3"
 crossbeam-channel = "0.5"
 ahash = "0.8"
 serde_json = "1.0.85"
-parking_lot = { version = "0.12.1", features = ["arc_lock"] }
+parking_lot = { version = "0.13.0", features = ["arc_lock"] }
 compact_str = "0.10.0"
 
 [dependencies.cursive-macros]
