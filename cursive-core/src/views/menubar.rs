@@ -80,6 +80,9 @@ impl Menubar {
     /// Adds a new item to the menubar.
     pub fn insert(&mut self, i: usize, item: menu::Item) -> &mut Self {
         self.root.insert(i, item);
+        if self.len() > 1 && i <= self.focus {
+            self.focus += 1;
+        }
         self
     }
 
@@ -122,16 +125,14 @@ impl Menubar {
     where
         S: Into<StyledString>,
     {
-        self.root.insert_subtree(i, title, menu);
-        self
+        self.insert(i, menu::Item::subtree(title, menu))
     }
 
     /// Inserts a new delimiter at the given position.
     ///
     /// It will show up as `|`.
     pub fn insert_delimiter(&mut self, i: usize) -> &mut Self {
-        self.root.insert_delimiter(i);
-        self
+        self.insert(i, menu::Item::Delimiter)
     }
 
     /// Inserts a new leaf node at the given position.
@@ -142,14 +143,14 @@ impl Menubar {
         S: Into<StyledString>,
         F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
-        self.root.insert_leaf(i, title, cb);
-        self
+        self.insert(i, menu::Item::leaf(title, cb))
     }
 
     /// Removes all menu items from this menubar.
     pub fn clear(&mut self) {
         self.root.clear();
         self.focus = 0;
+        self.hide();
     }
 
     /// Returns the number of items in this menubar.
@@ -182,8 +183,23 @@ impl Menubar {
     }
 
     /// Remove the item at the given position.
+    ///
+    /// Preserves the selected item when possible; otherwise selects the next
+    /// enabled item, falling back to a preceding item.
     pub fn remove(&mut self, i: usize) {
         self.root.remove(i);
+        if i < self.focus {
+            self.focus -= 1;
+        }
+        self.focus = self.focus.min(self.len().saturating_sub(1));
+        if let Some(index) = (self.focus..self.len())
+            .chain((0..self.focus).rev())
+            .find(|&index| self.root.children[index].is_enabled())
+        {
+            self.focus = index;
+        } else {
+            self.hide();
+        }
     }
 
     fn child_at(&self, x: usize) -> Option<usize> {
@@ -203,7 +219,15 @@ impl Menubar {
     }
 
     fn select_child(&mut self, open_only: bool) -> EventResult {
-        match self.root.children[self.focus] {
+        let Some(item) = self
+            .root
+            .children
+            .get(self.focus)
+            .filter(|item| item.is_enabled())
+        else {
+            return EventResult::Ignored;
+        };
+        match *item {
             menu::Item::Leaf { ref cb, .. } if !open_only => {
                 // Go inactive after an action.
                 self.state = State::Inactive;
@@ -318,27 +342,31 @@ impl View for Menubar {
                 self.hide();
                 return EventResult::with_cb(Cursive::clear);
             }
-            Event::Key(Key::Left) => loop {
-                // TODO: fix endless loop if nothing is enabled?
-                if self.focus > 0 {
-                    self.focus -= 1;
-                } else {
-                    self.focus = self.root.len() - 1;
+            Event::Key(key @ (Key::Left | Key::Right)) => {
+                let mut index = self.focus;
+                let mut found = None;
+                for _ in 0..self.len() {
+                    index = if key == Key::Left {
+                        if index == 0 {
+                            self.len() - 1
+                        } else {
+                            index - 1
+                        }
+                    } else if index + 1 == self.len() {
+                        0
+                    } else {
+                        index + 1
+                    };
+                    if self.root.children[index].is_enabled() {
+                        found = Some(index);
+                        break;
+                    }
                 }
-                if self.root.children[self.focus].is_enabled() {
-                    break;
-                }
-            },
-            Event::Key(Key::Right) => loop {
-                if self.focus + 1 < self.root.len() {
-                    self.focus += 1;
-                } else {
-                    self.focus = 0;
-                }
-                if self.root.children[self.focus].is_enabled() {
-                    break;
-                }
-            },
+                let Some(index) = found else {
+                    return EventResult::Ignored;
+                };
+                self.focus = index;
+            }
             Event::Key(Key::Down) => {
                 return self.select_child(true);
             }
@@ -389,6 +417,14 @@ impl View for Menubar {
     }
 
     fn take_focus(&mut self, _: direction::Direction) -> Result<EventResult, CannotFocus> {
+        let Some(index) = (self.focus..self.len())
+            .chain(0..self.focus)
+            .find(|&index| self.root.children[index].is_enabled())
+        else {
+            self.hide();
+            return Err(CannotFocus);
+        };
+        self.focus = index;
         self.state = State::Selected;
         Ok(EventResult::consumed())
     }
@@ -424,5 +460,92 @@ impl View for Menubar {
         let width = self.root.children[self.focus].label().width();
 
         Rect::from_size((x, 0), (width, 1))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn leaf(name: &str) -> menu::Item {
+        menu::Item::leaf(name, |_| panic!("disabled action ran"))
+    }
+
+    #[test]
+    fn unavailable_menus_ignore_navigation_and_activation() {
+        for items in [
+            vec![],
+            vec![menu::Item::Delimiter],
+            vec![leaf("off").disabled()],
+        ] {
+            let mut bar = Menubar::new();
+            for item in items {
+                bar.item(item);
+            }
+            assert!(bar.take_focus(direction::Direction::none()).is_err());
+            for key in [Key::Left, Key::Right, Key::Enter, Key::Down] {
+                assert!(!bar.on_event(Event::Key(key)).is_consumed());
+            }
+        }
+    }
+
+    #[test]
+    fn navigation_wraps_and_mutations_preserve_selection() {
+        let mut bar = Menubar::new();
+        bar.add_leaf("a", |_| {})
+            .add_delimiter()
+            .item(leaf("off").disabled())
+            .add_leaf("b", |_| {});
+        bar.take_focus(direction::Direction::none()).unwrap();
+        bar.on_event(Event::Key(Key::Left));
+        assert_eq!(bar.focus, 3);
+        bar.on_event(Event::Key(Key::Right));
+        assert_eq!(bar.focus, 0);
+        bar.insert_leaf(0, "new", |_| {});
+        assert_eq!(bar.focus, 1);
+        bar.remove(0);
+        assert_eq!(bar.focus, 0);
+        bar.remove(0);
+        assert_eq!(bar.root.children[bar.focus].label(), "b");
+        bar.remove(bar.focus);
+        assert!(!bar.receive_events());
+        bar.important_area(Vec2::new(20, 1));
+        bar.clear();
+        assert_eq!(bar.focus, 0);
+        assert!(!bar.on_event(Event::Key(Key::Right)).is_consumed());
+    }
+
+    #[test]
+    fn disabled_selection_cannot_activate_with_keyboard_or_mouse() {
+        let mut bar = Menubar::new();
+        bar.item(leaf("off").disabled());
+        for event in [
+            Event::Key(Key::Enter),
+            Event::Key(Key::Down),
+            Event::Mouse {
+                event: MouseEvent::Release(MouseButton::Left),
+                position: Vec2::new(2, 0),
+                offset: Vec2::zero(),
+            },
+        ] {
+            bar.on_event(event).process(&mut Cursive::new());
+        }
+        bar.clear();
+        bar.item(menu::Item::subtree("off", menu::Tree::new()).disabled());
+        assert!(!bar.select_child(true).is_consumed());
+        assert!(!bar.has_submenu());
+    }
+
+    #[test]
+    fn popup_switching_tolerates_cleared_menu() {
+        let mut siv = Cursive::new();
+        siv.menubar()
+            .add_subtree("menu", menu::Tree::new().leaf("action", |_| {}));
+        siv.select_menubar();
+        let open = siv.menubar().on_event(Event::Key(Key::Down));
+        open.process(&mut siv);
+        siv.menubar().clear();
+        siv.on_event(Event::Key(Key::Right));
+        assert!(!siv.menubar().receive_events());
     }
 }
