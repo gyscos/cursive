@@ -29,6 +29,10 @@ const LEGEND_MIN_RUN: usize = 4;
 /// legend takes an extra line below the plot, and shows the scale from low to
 /// high values.
 ///
+/// Samples that are not finite numbers are not drawn: their cell is left unset, so the
+/// background shows (or the other row of the line, if it has a sample there). They do not
+/// affect the bounds. See [Invalid values](Series#invalid-values).
+///
 /// This view is not focusable and ignores events.
 ///
 /// # Examples
@@ -264,8 +268,11 @@ impl View for Heatmap {
             for (y, samples) in samples.iter().enumerate() {
                 let start = plot_width - samples.len();
                 for (x, &sample) in samples.iter().enumerate() {
+                    let Some(value) = bounds.finite_ratio(sample) else {
+                        continue;
+                    };
                     let pos = FillPos {
-                        value: bounds.ratio(sample),
+                        value,
                         ..FillPos::default()
                     };
                     grid.set((start + x, y), scale.color_at(pos));
@@ -496,6 +503,90 @@ mod tests {
         let cells = cells(&four, (1, 2));
         assert_ne!(cells[0][0].1, WHITE);
         assert_eq!(cells[1][0].1, WHITE);
+    }
+
+    const NAN: f64 = f64::NAN;
+    const INF: f64 = f64::INFINITY;
+    const NEG_INF: f64 = f64::NEG_INFINITY;
+
+    #[test]
+    fn invalid_samples_leave_cells_unset() {
+        let heatmap = plain()
+            .row("", [1.0, NAN, 0.0, INF, NEG_INF])
+            .row("", [0.0, 1.0, NEG_INF, 1.0, NAN]);
+        let (cells, background) = draw_in(&heatmap, Vec2::new(5, 1));
+        let line = &cells[0];
+        // Both set.
+        assert_eq!(line[0], ("▀".into(), WHITE, BLACK));
+        // Only the bottom half is set: the top half shows the background.
+        assert_eq!(line[1], ("▄".into(), WHITE, background));
+        // Only the top half is set.
+        assert_eq!(line[2], ("▀".into(), BLACK, background));
+        assert_eq!(line[3], ("▄".into(), WHITE, background));
+        // Neither half is set: the cell is not drawn at all.
+        assert_eq!(line[4].0, "");
+    }
+
+    #[test]
+    fn invalid_samples_do_not_change_the_scale() {
+        // The default range is 0 to the largest finite sample: 4.
+        let mixed = Heatmap::new()
+            .scale([BLACK, WHITE])
+            .row("", [1.0, NAN, 4.0, INF])
+            .row("", [NEG_INF, 2.0, NAN, 3.0]);
+        let fixed = Heatmap::new()
+            .range(0.0..=4.0)
+            .scale([BLACK, WHITE])
+            .row("", [1.0, NAN, 4.0, INF])
+            .row("", [NEG_INF, 2.0, NAN, 3.0]);
+        assert_eq!(cells(&mixed, (4, 1)), cells(&fixed, (4, 1)));
+        // And the 4 is not clamped: the highest finite value is the hottest color.
+        assert_eq!(cells(&mixed, (4, 1))[0][2].1, WHITE);
+
+        // Without the invalid samples, the finite ones draw the same colors.
+        let finite = Heatmap::new()
+            .scale([BLACK, WHITE])
+            .row("", [1.0, 4.0])
+            .row("", [2.0, 3.0]);
+        let (mixed, finite) = (cells(&mixed, (4, 1)), cells(&finite, (2, 1)));
+        // A lone top half is the front color, a lone bottom half too (with the other glyph).
+        assert_eq!(mixed[0][0].1, finite[0][0].1);
+        assert_eq!(mixed[0][1].1, finite[0][0].2);
+        assert_eq!(mixed[0][2].1, finite[0][1].1);
+        assert_eq!(mixed[0][3].1, finite[0][1].2);
+    }
+
+    #[test]
+    fn only_invalid_samples_draw_like_no_data() {
+        let build = |a: &[f64], b: &[f64], c: &[f64]| {
+            Heatmap::new()
+                .row("ab", a)
+                .row("cd", b)
+                .row("e", c)
+                .legend("low", "high")
+        };
+        let empty = build(&[], &[], &[]);
+        let invalid = build(&[NAN, INF], &[NEG_INF, NAN], &[INF, INF]);
+        assert_eq!(cells(&invalid, (12, 3)), cells(&empty, (12, 3)));
+
+        // One invalid row does not disturb the scale of the others.
+        let with = build(&[NAN, INF], &[0.5, 1.0], &[]);
+        let without = build(&[], &[0.5, 1.0], &[]);
+        assert_eq!(cells(&with, (12, 3)), cells(&without, (12, 3)));
+    }
+
+    #[test]
+    fn invalid_samples_survive_every_size() {
+        let heatmap = plain()
+            .row("a", [1.0, NAN, INF])
+            .row("b", [NEG_INF, 0.5, NAN])
+            .row("c", [NAN; 4])
+            .legend("low", "high");
+        for width in 0..=6 {
+            for height in 0..=4 {
+                cells(&heatmap, (width, height));
+            }
+        }
     }
 
     #[test]

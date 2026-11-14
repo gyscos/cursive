@@ -14,7 +14,11 @@ pub struct Bounds {
 impl Bounds {
     /// Returns where `value` is between the bounds: 0 for `min`, 1 for `max`.
     ///
-    /// The result is clamped between 0 and 1. Invalid values (`NaN`) give 0.
+    /// The result is clamped between 0 and 1: values outside of the bounds, including
+    /// infinite ones, give 0 or 1. `NaN` gives 0.
+    ///
+    /// Data views should use [`finite_ratio`](Self::finite_ratio) for samples instead: it
+    /// leaves out the values that are not data.
     pub fn ratio(&self, value: f64) -> f32 {
         let ratio = (value - self.min) / (self.max - self.min);
         if ratio.is_nan() {
@@ -22,6 +26,30 @@ impl Bounds {
         } else {
             ratio.clamp(0.0, 1.0) as f32
         }
+    }
+
+    /// Returns where a sample is between the bounds, or `None` if it is not a finite number.
+    ///
+    /// This is [`ratio`](Self::ratio) for the samples of a [`Series`](crate::views::Series):
+    /// `NaN` and infinite values are not data, see [Invalid values] there. Data views draw
+    /// nothing for the `None` case.
+    ///
+    /// [Invalid values]: crate::views::Series#invalid-values
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use cursive_core::views::ValueRange;
+    ///
+    /// let bounds = ValueRange::fixed(0.0, 10.0).resolve([]);
+    /// assert_eq!(bounds.finite_ratio(5.0), Some(0.5));
+    /// // Out of the bounds, but still data.
+    /// assert_eq!(bounds.finite_ratio(50.0), Some(1.0));
+    /// assert_eq!(bounds.finite_ratio(f64::NAN), None);
+    /// assert_eq!(bounds.finite_ratio(f64::INFINITY), None);
+    /// ```
+    pub fn finite_ratio(&self, value: f64) -> Option<f32> {
+        value.is_finite().then(|| self.ratio(value))
     }
 }
 
@@ -182,7 +210,8 @@ impl ValueRange {
 
     /// Computes the actual bounds for the given data.
     ///
-    /// Invalid and infinite values are ignored. The result always has finite bounds with
+    /// `NaN` and infinite values are ignored, like everywhere in data views: see
+    /// [Invalid values](crate::views::Series#invalid-values). The result always has finite bounds with
     /// `max > min`: when there is nothing to show a range of (no data, or a single value), the
     /// range goes one unit (or one [step](Self::step)) above the minimum. For values too large
     /// for that to make a difference, the room grows with their magnitude, and at the very top

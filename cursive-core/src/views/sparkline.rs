@@ -13,6 +13,8 @@ use crate::views::{Series, ValueRange};
 ///
 /// The bounds of the chart come from the samples that are visible, through its
 /// [`ValueRange`]. With fewer samples than columns, the left columns stay empty.
+/// So do the columns of samples that are not finite numbers, which do not affect the range
+/// either: see [Invalid values](Series#invalid-values).
 ///
 /// This view has no preferred width other than the number of samples: wrap it
 /// in [`full_width`](crate::view::Resizable::full_width) or
@@ -141,7 +143,9 @@ impl View for Sparkline {
         let start = size.x - samples.len();
         for (i, &sample) in samples.iter().enumerate() {
             let column = start + i;
-            let ratio = bounds.ratio(sample);
+            let Some(ratio) = bounds.finite_ratio(sample) else {
+                continue;
+            };
             // Both the bar and the fill count rows from the bottom.
             printer.print_vbar_with((column, 0), size.y, ratio, |row| {
                 ColorStyle::front(fill.color_at(FillPos::cell(column, row, size, ratio)))
@@ -256,13 +260,84 @@ mod tests {
         assert!(render(&sparkline, (3, 0)).is_empty());
     }
 
+    const NAN: f64 = f64::NAN;
+    const INF: f64 = f64::INFINITY;
+    const NEG_INF: f64 = f64::NEG_INFINITY;
+
+    /// Inserts an empty column at each of the given (final) positions.
+    fn with_gaps(rows: Vec<String>, gaps: &[usize]) -> Vec<String> {
+        rows.into_iter()
+            .map(|row| {
+                let mut row = row.chars();
+                let width = row.clone().count() + gaps.len();
+                (0..width)
+                    .map(|x| {
+                        if gaps.contains(&x) {
+                            '.'
+                        } else {
+                            row.next().unwrap()
+                        }
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+
     #[test]
-    fn invalid_samples_are_skipped() {
-        let sparkline = Sparkline::new([f64::NAN, 4.0, f64::INFINITY]).range(0.0..=4.0);
-        assert_eq!(render(&sparkline, (3, 1)), [".██"]);
-        // The range ignores them: 4.0 is the only finite value.
-        let sparkline = Sparkline::new([f64::NAN, 4.0]);
-        assert_eq!(render(&sparkline, (2, 1)), [".█"]);
+    fn invalid_samples_leave_empty_columns() {
+        // NaN, +inf and -inf are not data: their column is empty, like in an area plot.
+        let sparkline = Sparkline::new([NAN, 4.0, INF, 2.0, NEG_INF]).range(0.0..=4.0);
+        assert_eq!(render(&sparkline, (5, 1)), [".█.▄."]);
+        assert_eq!(render(&sparkline, (5, 2)), [".█...", ".█.█."]);
+    }
+
+    #[test]
+    fn invalid_samples_do_not_change_the_scale() {
+        let mixed = [2.0, NAN, 4.0, INF, NEG_INF, 3.0];
+        let finite = [2.0, 4.0, 3.0];
+        for range in [
+            ValueRange::default(),
+            ValueRange::auto(),
+            ValueRange::auto().include(0.0).step(5.0).margin(0.2),
+        ] {
+            for height in 1..=3 {
+                let expected = with_gaps(
+                    render(&Sparkline::new(finite).range(range), (3, height)),
+                    &[1, 3, 4],
+                );
+                let got = render(&Sparkline::new(mixed).range(range), (6, height));
+                assert_eq!(got, expected, "{range:?} at height {height}");
+            }
+        }
+        // Non-finite samples that are scrolled out of view change nothing either.
+        let sparkline = Sparkline::new([INF, NEG_INF, 2.0, 4.0]).range(ValueRange::auto());
+        let reference = Sparkline::new([2.0, 4.0]).range(ValueRange::auto());
+        assert_eq!(render(&sparkline, (2, 1)), render(&reference, (2, 1)));
+    }
+
+    #[test]
+    fn only_invalid_samples_draw_like_no_data() {
+        let empty = render(&Sparkline::new(Series::new()), (4, 2));
+        for samples in [[NAN; 4], [INF; 4], [NEG_INF; 4], [NAN, INF, NEG_INF, NAN]] {
+            for range in [
+                ValueRange::default(),
+                ValueRange::auto(),
+                (0.0..=1.0).into(),
+            ] {
+                let sparkline = Sparkline::new(samples).range(range);
+                assert_eq!(render(&sparkline, (4, 2)), empty, "{samples:?} {range:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn invalid_samples_survive_every_size() {
+        let sparkline = Sparkline::new([1.0, NAN, INF, 3.0, NEG_INF, NAN, 2.0]);
+        for width in 0..=6 {
+            for height in 0..=4 {
+                render(&sparkline, (width, height));
+            }
+        }
     }
 
     #[test]
