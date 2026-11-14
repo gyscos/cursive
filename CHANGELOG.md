@@ -12,6 +12,7 @@
 
 ### Breaking changes
 
+- `Theme` has a new public field `glyphs`: struct literals need to set it.
 - `ColorType`, `StyleType` and `BorderStyle` have new variants (`Custom`, `Custom` and `Rounded`):
   exhaustive matches on them need a new arm.
 - `Palette::set_color` and `Palette::custom` treat dots in a name as namespace separators:
@@ -23,6 +24,10 @@
 
 ### Theming
 
+- Add `GlyphSet` and `Theme::glyphs` (`glyphs = "unicode"` in TOML and blueprints) to switch the
+  decorations of the standard form widgets (checkmarks, button brackets, fillers, slider and
+  scrollbar tracks...) between ASCII (the default) and Unicode glyphs. Both sets have the same
+  widths, so layouts do not change.
 - Add custom colors and styles: `ColorKey` and `StyleKey` are named palette entries with a
   fallback, usable wherever a color or a style is expected (`ColorType::Custom`,
   `StyleType::Custom`). A key named like a standard palette entry reads that entry.

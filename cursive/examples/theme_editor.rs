@@ -297,6 +297,7 @@ fn apply(siv: &mut cursive::Cursive) {
     siv.set_theme(Theme {
         shadow,
         borders,
+        glyphs: Default::default(),
         palette,
     })
 }

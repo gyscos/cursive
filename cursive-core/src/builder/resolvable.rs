@@ -449,6 +449,12 @@ impl Resolvable for crate::style::BorderStyle {
     }
 }
 
+impl Resolvable for crate::style::GlyphSet {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        resolve_from_str(config, context, |_| "Expected valid glyph set")
+    }
+}
+
 impl Resolvable for crate::views::TabPlacement {
     fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
         resolve_from_str(
@@ -586,6 +592,10 @@ impl Resolvable for crate::theme::Theme {
 
         if let Some(borders) = context.resolve(&config["borders"])? {
             theme.borders = borders;
+        }
+
+        if let Some(glyphs) = context.resolve(&config["glyphs"])? {
+            theme.glyphs = glyphs;
         }
 
         if let Some(palette) = context.resolve(&config["palette"])? {
@@ -2656,6 +2666,15 @@ mod tests {
         check_resolves_from_conf(json!("simple"), BorderStyle::Simple);
         check_resolves_from_conf(json!("rounded"), BorderStyle::Rounded);
         check_resolves_from_conf(json!("outset"), BorderStyle::Outset);
+    }
+
+    #[test]
+    fn test_glyphset() {
+        use crate::style::GlyphSet;
+        check_resolves_from_conf(json!("ascii"), GlyphSet::Ascii);
+        check_resolves_from_conf(json!("unicode"), GlyphSet::Unicode);
+        let context = Context::new();
+        assert!(context.resolve::<GlyphSet>(&json!("fancy")).is_err());
     }
 
     #[test]

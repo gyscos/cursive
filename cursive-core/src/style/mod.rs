@@ -131,6 +131,7 @@ mod color_pair;
 mod color_style;
 pub mod custom;
 mod effect;
+mod glyph_set;
 pub mod gradient;
 mod palette;
 mod style_types;
@@ -141,6 +142,7 @@ pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
 pub use self::custom::{ColorKey, StyleKey};
 pub use self::effect::{ConcreteEffects, Effect, EffectStatus, Effects};
+pub use self::glyph_set::GlyphSet;
 pub use self::palette::{Palette, PaletteColor, PaletteNode, PaletteStyle, StyleNode};
 pub use self::style_types::{ConcreteStyle, Style, StyleType};
 
