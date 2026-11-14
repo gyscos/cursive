@@ -601,4 +601,408 @@ mod tests {
         bar.insert_leaf(0, "z", |_| {});
         assert_eq!(bar.root.children[bar.focus].label(), "b");
     }
+
+    /// The kind of item in the model.
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    enum Kind {
+        Leaf,
+        Subtree,
+        Delimiter,
+    }
+
+    /// One item of the model.
+    #[derive(Clone, Copy, Debug)]
+    struct Entry {
+        /// Unique. Also used in the label (except for delimiters).
+        id: u32,
+        kind: Kind,
+        enabled: bool,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    enum Mode {
+        Inactive,
+        Selected,
+        Submenu,
+    }
+
+    /// An independent model of what a menubar should do.
+    ///
+    /// It is a list of items, the id of the remembered item and whether the bar was ever
+    /// activated. It never looks at `focus`: the remembered item is tracked by id.
+    struct Model {
+        entries: Vec<Entry>,
+        /// The remembered item. Only tracked once the menubar was activated.
+        sel: Option<u32>,
+        touched: bool,
+        /// An item was removed while the menubar was never activated.
+        removed_untouched: bool,
+        mode: Mode,
+        next_id: u32,
+    }
+
+    impl Model {
+        fn position(&self, id: u32) -> usize {
+            self.entries.iter().position(|e| e.id == id).unwrap()
+        }
+
+        /// The item `steps` away from `from`, wrapping around.
+        fn step(&self, from: usize, steps: usize, forward: bool) -> usize {
+            let len = self.entries.len();
+            if forward {
+                (from + steps) % len
+            } else {
+                (from + len - steps % len) % len
+            }
+        }
+    }
+
+    /// A tiny deterministic generator (xorshift64*).
+    struct Rng(u64);
+
+    impl Rng {
+        fn new(seed: u64) -> Self {
+            // Spread the seeds, and avoid the all-zero state.
+            Rng(seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1)
+        }
+
+        fn next(&mut self) -> u64 {
+            self.0 ^= self.0 >> 12;
+            self.0 ^= self.0 << 25;
+            self.0 ^= self.0 >> 27;
+            self.0.wrapping_mul(0x2545_F491_4F6C_DD1D) >> 11
+        }
+
+        /// A number in `0..n`.
+        fn below(&mut self, n: usize) -> usize {
+            (self.next() % n as u64) as usize
+        }
+    }
+
+    const DIRECTIONS: [fn() -> direction::Direction; 7] = [
+        direction::Direction::none,
+        direction::Direction::front,
+        direction::Direction::back,
+        direction::Direction::left,
+        direction::Direction::right,
+        direction::Direction::up,
+        direction::Direction::down,
+    ];
+
+    fn check(condition: bool, what: impl FnOnce() -> String) -> Result<(), String> {
+        if condition { Ok(()) } else { Err(what()) }
+    }
+
+    /// Compares the menubar with the model after an operation.
+    fn check_invariants(bar: &Menubar, model: &Model) -> Result<(), String> {
+        let items = &bar.root.children;
+        check(items.len() == model.entries.len(), || {
+            format!("{} items, expected {}", items.len(), model.entries.len())
+        })?;
+        for (i, (item, entry)) in items.iter().zip(&model.entries).enumerate() {
+            let same = match entry.kind {
+                Kind::Delimiter => item.is_delimiter(),
+                Kind::Leaf => item.is_leaf() && item.label() == format!("i{}", entry.id),
+                Kind::Subtree => item.is_subtree() && item.label() == format!("i{}", entry.id),
+            };
+            check(same && item.is_enabled() == entry.enabled, || {
+                format!("item {i} is {:?}, expected {entry:?}", item.label())
+            })?;
+        }
+
+        check(
+            bar.receive_events() == (model.mode == Mode::Selected),
+            || {
+                format!(
+                    "receive_events is {}, mode {:?}",
+                    bar.receive_events(),
+                    model.mode
+                )
+            },
+        )?;
+        check(bar.has_submenu() == (model.mode == Mode::Submenu), || {
+            format!(
+                "has_submenu is {}, mode {:?}",
+                bar.has_submenu(),
+                model.mode
+            )
+        })?;
+        check(bar.visible() == (model.mode != Mode::Inactive), || {
+            format!("visible is {}, mode {:?}", bar.visible(), model.mode)
+        })?;
+        check(bar.touched == model.touched, || {
+            format!("touched is {}, expected {}", bar.touched, model.touched)
+        })?;
+
+        if model.entries.is_empty() {
+            return check(bar.focus == 0 && model.mode == Mode::Inactive, || {
+                format!(
+                    "empty menubar with focus {} and mode {:?}",
+                    bar.focus, model.mode
+                )
+            });
+        }
+        check(bar.focus < items.len(), || {
+            format!("focus {} out of range for {} items", bar.focus, items.len())
+        })?;
+
+        if model.mode != Mode::Inactive {
+            let item = &items[bar.focus];
+            check(!item.is_delimiter() && item.is_enabled(), || {
+                format!("active on {:?}, which cannot be selected", item.label())
+            })?;
+        }
+        if model.touched {
+            // The same item stays selected, whatever is inserted or removed around it.
+            let expected = model.position(model.sel.unwrap());
+            check(bar.focus == expected, || {
+                format!(
+                    "focus {}, expected the remembered item at {expected}",
+                    bar.focus
+                )
+            })?;
+        }
+        Ok(())
+    }
+
+    /// Does `ops` random operations on a menubar and on the model, and compares them.
+    ///
+    /// Returns a description of the first difference. The operations are appended to `log`.
+    ///
+    /// The first activation of a menubar must land on its leftmost enabled item. Unless
+    /// `strict`, this is not checked for a menubar from which an item was removed before its
+    /// first activation (see the ignored tests below).
+    fn run_menubar_fuzz(
+        seed: u64,
+        ops: usize,
+        strict: bool,
+        log: &mut Vec<String>,
+    ) -> Result<(), String> {
+        let mut rng = Rng::new(seed);
+        let mut bar = Menubar::new();
+        let mut model = Model {
+            entries: Vec::new(),
+            sel: None,
+            touched: false,
+            removed_untouched: false,
+            mode: Mode::Inactive,
+            next_id: 0,
+        };
+
+        for _ in 0..ops {
+            let len = model.entries.len();
+            let roll = rng.below(100);
+            if roll < 28 && len < 8 {
+                // Insert a leaf, a subtree or a delimiter, sometimes disabled.
+                let i = rng.below(len + 1);
+                let id = model.next_id;
+                model.next_id += 1;
+                let (kind, enabled) = match rng.below(10) {
+                    0..=3 => (Kind::Leaf, true),
+                    4 => (Kind::Leaf, false),
+                    5 | 6 => (Kind::Subtree, true),
+                    7 => (Kind::Subtree, false),
+                    _ => (Kind::Delimiter, false),
+                };
+                log.push(format!(
+                    "insert {kind:?}{} #{id} at {i}",
+                    if enabled { "" } else { " (disabled)" }
+                ));
+                let label = format!("i{id}");
+                let item = match kind {
+                    Kind::Delimiter => menu::Item::Delimiter,
+                    Kind::Leaf => menu::Item::leaf(label, |_| {}),
+                    Kind::Subtree => menu::Item::subtree(label, menu::Tree::new()),
+                };
+                bar.insert(i, if enabled { item } else { item.disabled() });
+                model.entries.insert(i, Entry { id, kind, enabled });
+                if model.entries.len() == 1 {
+                    // The only item is at the remembered position.
+                    model.sel = model.touched.then_some(id);
+                }
+            } else if roll < 50 {
+                if len == 0 {
+                    continue;
+                }
+                let i = rng.below(len);
+                log.push(format!("remove at {i} (#{})", model.entries[i].id));
+                bar.remove(i);
+                let removed = model.entries.remove(i).id;
+                if !model.touched {
+                    model.removed_untouched = true;
+                } else if model.entries.is_empty() {
+                    model.sel = None;
+                    model.mode = Mode::Inactive;
+                } else {
+                    // Keep the remembered item if it is still there and usable. Otherwise the
+                    // next enabled one, then the closest enabled one before it.
+                    let at = if model.sel == Some(removed) {
+                        i.min(model.entries.len() - 1)
+                    } else {
+                        model.position(model.sel.unwrap())
+                    };
+                    let usable = (at..model.entries.len())
+                        .chain((0..at).rev())
+                        .find(|&j| model.entries[j].enabled);
+                    match usable {
+                        Some(j) => model.sel = Some(model.entries[j].id),
+                        None => {
+                            model.sel = Some(model.entries[at].id);
+                            model.mode = Mode::Inactive;
+                        }
+                    }
+                }
+            } else if roll < 65 {
+                let direction = DIRECTIONS[rng.below(DIRECTIONS.len())]();
+                log.push(format!("take_focus {direction:?}"));
+                let result = bar.take_focus(direction);
+                match model.entries.iter().position(|e| e.enabled) {
+                    None => {
+                        check(result.is_err(), || {
+                            "take_focus worked without enabled items".into()
+                        })?;
+                        model.mode = Mode::Inactive;
+                    }
+                    Some(first) => {
+                        check(result.is_ok(), || {
+                            "take_focus failed with enabled items".into()
+                        })?;
+                        let landing = if model.touched {
+                            // The remembered item, or the next enabled one after it.
+                            let from = model.position(model.sel.unwrap());
+                            (0..model.entries.len())
+                                .map(|k| model.step(from, k, true))
+                                .find(|&j| model.entries[j].enabled)
+                                .unwrap()
+                        } else {
+                            // The first activation: the leftmost enabled item, whatever was
+                            // inserted before.
+                            if strict || !model.removed_untouched {
+                                check(bar.focus == first, || {
+                                    format!(
+                                        "first activation on item {}, the leftmost enabled is {first}",
+                                        bar.focus
+                                    )
+                                })?;
+                            }
+                            bar.focus
+                        };
+                        check(
+                            landing < model.entries.len() && model.entries[landing].enabled,
+                            || format!("activated item {landing}, which cannot be selected"),
+                        )?;
+                        model.sel = Some(model.entries[landing].id);
+                        model.touched = true;
+                        model.mode = Mode::Selected;
+                    }
+                }
+            } else if roll < 90 {
+                // A key, as the root view sends it: only while the bar is selected.
+                let key = [
+                    Key::Left,
+                    Key::Right,
+                    Key::Right,
+                    Key::Down,
+                    Key::Enter,
+                    Key::Left,
+                ][rng.below(6)];
+                if model.mode != Mode::Selected {
+                    log.push(format!("{key:?} (not selected, not sent)"));
+                    continue;
+                }
+                log.push(format!("{key:?}"));
+                let result = bar.on_event(Event::Key(key));
+                let from = model.position(model.sel.unwrap());
+                let kind = model.entries[from].kind;
+                match key {
+                    Key::Left | Key::Right => {
+                        // The closest enabled item in that direction. Going all the way
+                        // around gives the same item back.
+                        let target = (1..=model.entries.len())
+                            .map(|k| model.step(from, k, key == Key::Right))
+                            .find(|&j| model.entries[j].enabled);
+                        check(result.is_consumed() == target.is_some(), || {
+                            format!("consumed is {}", result.is_consumed())
+                        })?;
+                        if let Some(target) = target {
+                            model.sel = Some(model.entries[target].id);
+                        }
+                    }
+                    _ => match (kind, key) {
+                        (Kind::Subtree, _) => {
+                            check(result.is_consumed(), || "a subtree did not open".into())?;
+                            model.mode = Mode::Submenu;
+                        }
+                        (_, Key::Enter) => {
+                            check(result.is_consumed(), || "a leaf was not activated".into())?;
+                            model.mode = Mode::Inactive;
+                        }
+                        _ => check(!result.is_consumed(), || {
+                            "Down on a leaf was consumed".into()
+                        })?,
+                    },
+                }
+            } else if roll < 94 {
+                log.push("Esc".into());
+                let result = bar.on_event(Event::Key(Key::Esc));
+                check(result.is_consumed(), || "Esc was ignored".into())?;
+                model.mode = Mode::Inactive;
+            } else if roll < 98 {
+                // A popup was dismissed or acted on.
+                log.push("hide".into());
+                bar.hide();
+                model.mode = Mode::Inactive;
+            } else {
+                log.push("clear".into());
+                bar.clear();
+                model.entries.clear();
+                model.sel = None;
+                model.touched = false;
+                model.removed_untouched = false;
+                model.mode = Mode::Inactive;
+            }
+            check_invariants(&bar, &model)?;
+        }
+        Ok(())
+    }
+
+    fn fuzz(runs: u64, strict: bool) {
+        for seed in 0..runs {
+            let mut log = Vec::new();
+            let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                run_menubar_fuzz(seed, 40, strict, &mut log)
+            }));
+            match outcome {
+                Ok(Ok(())) => (),
+                Ok(Err(error)) => panic!("seed {seed}: {error}\noperations: {log:#?}"),
+                Err(_) => panic!("seed {seed}: panic\noperations: {log:#?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn random_operations_keep_the_selection_consistent() {
+        fuzz(4000, false);
+    }
+
+    #[test]
+    #[ignore = "known bug: removing an item moves the default position of a never-activated bar"]
+    fn random_operations_on_a_never_activated_menubar_land_on_the_leftmost_item() {
+        fuzz(4000, true);
+    }
+
+    #[test]
+    #[ignore = "known bug: removing an item moves the default position of a never-activated bar"]
+    fn first_activation_after_a_removal_is_the_leftmost_item() {
+        let mut bar = Menubar::new();
+        bar.item(leaf("off").disabled())
+            .add_leaf("e", |_| {})
+            .add_leaf("f", |_| {});
+        // The default position moves to the first enabled item...
+        bar.remove(2);
+        // ...and stays there when an item is inserted before it.
+        bar.insert_leaf(0, "new", |_| {});
+        bar.take_focus(direction::Direction::none()).unwrap();
+        assert_eq!(bar.root.children[bar.focus].label(), "new");
+    }
 }
