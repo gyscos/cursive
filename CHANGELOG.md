@@ -10,6 +10,71 @@
 - Bump MSRV requirements: bump resolver and rust edition to 2024.
 - Fix `Dialog::important_area` to point at the focused button, so scroll views can reach it.
 
+### Breaking changes
+
+- `ColorType`, `StyleType` and `BorderStyle` have new variants (`Custom`, `Custom` and `Rounded`):
+  exhaustive matches on them need a new arm.
+- `Palette::set_color` and `Palette::custom` treat dots in a name as namespace separators:
+  `set_color("a.b", ..)` now stores `b` in the namespace `a`.
+- TOML themes: a dot in a key is a namespace separator at any depth (also in quoted keys inside
+  a table), and an empty table no longer creates a namespace.
+- `ProgressBar` centers its label by display width instead of bytes: labels with non-ASCII
+  characters move.
+
+### Theming
+
+- Add custom colors and styles: `ColorKey` and `StyleKey` are named palette entries with a
+  fallback, usable wherever a color or a style is expected (`ColorType::Custom`,
+  `StyleType::Custom`). A key named like a standard palette entry reads that entry.
+- Custom styles nest in namespaces like custom colors (`Palette::set_style`,
+  `Palette::custom_style`, `StyleNode`), in code, in TOML (`[styles.a.b]`) and in blueprints.
+  `Palette::merge` now carries styles too.
+- TOML styles can use custom colors with `front = { custom = "name" }`.
+- Add `ThemeOverlay`, a view wrapper that changes the theme inherited by its content and follows
+  later changes of that parent theme. Its blueprint (`theme_overlay`) can take colors from the
+  parent theme with `{parent: name}`.
+- Add `BorderStyle::Rounded`.
+- Add the `border` and `border_focused` palette colors (`style::BORDER`, `style::BORDER_FOCUSED`)
+  for boxes, dialogs and popup frames. Without them, borders look as before.
+- Add `Panel::title_delimiters` and `Dialog::title_delimiters` to draw a title without `┤` and `├`.
+- `Theme` implements `PartialEq`; `gradient::Linear` implements `Clone`, `Debug` and `PartialEq`.
+- Add `From<Rgb>` for `ColorType` and `ColorStyle`, and `Color::to_rgb`.
+
+### New views
+
+- Add `TabView`: tabs with a bar on any side, keyboard and mouse switching, live titles
+  (`tab_live`) and a title formatter (`title_format`). `TabView::detached_bar` returns a `TabBar`
+  to place the titles elsewhere in the layout.
+- Add `Row`: a label (text or any view) and a value on one line.
+- Add data views reading shared `Series`: `Chart` (line and area plots), `Sparkline`, `Heatmap`
+  and `Gauge`, with `ValueRange` to pick the range of values shown, and `style::chart::Fill` to
+  color them with a color, a gradient or thresholds. Their default colors are the `chart.axis`
+  and `chart.series.N` palette entries.
+- Add `TextView::live` and `TextView::set_source`: the content comes from a closure, evaluated
+  once per refresh. Layouts are only invalidated when the text changes. Setting the content by
+  hand removes the closure.
+- `ProgressBar`: add `BarStyle` (solid, line, block; shared with `Gauge`), `LabelPosition`, a
+  track color and a `Fill`. The default look is unchanged.
+- Add blueprints for the new views and types.
+
+### Drawing
+
+- `Printer`: add `print_hbar`, `print_vbar` and their `_with` and `_filled` variants (bars with a
+  precision of an eighth of a cell), `print_aligned`, `print_styled_aligned`, `print_filled` and
+  `resolve_color`.
+- Add `utils::DotGrid` to draw with braille dots or half-blocks, and `utils::format_compact` for
+  short numbers (`1.5k`).
+
+### Other
+
+- Add `Cursive::play_events` to replay a scripted sequence of events, for demos and tests.
+- `ListView`: keep the focus consistent when rows are removed or replaced (including through
+  `row_mut`), call `on_select` once when the focus is repaired, and keep forwarding mouse events
+  when no row can take the focus.
+- `Menubar`: keep the selection on the same item when items are inserted or removed, and skip
+  disabled items.
+- Fix `ProgressBar` panicking on an empty range (`min == max`).
+
 ## cursive-core 0.4.7
 
 - Implement `Debug` for `EventResult` and `EventTrigger`.
