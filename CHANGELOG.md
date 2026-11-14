@@ -72,7 +72,7 @@
   `row_mut`), call `on_select` once when the focus is repaired, and keep forwarding mouse events
   when no row can take the focus.
 - `Menubar`: keep the selection on the same item when items are inserted or removed, and skip
-  disabled items.
+  disabled items. A menubar that was never activated starts on its leftmost enabled item.
 - Fix `ProgressBar` panicking on an empty range (`min == max`).
 
 ## cursive-core 0.4.7

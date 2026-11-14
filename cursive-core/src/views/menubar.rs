@@ -199,6 +199,15 @@ impl Menubar {
     /// enabled item, falling back to a preceding item.
     pub fn remove(&mut self, i: usize) {
         self.root.remove(i);
+        if !self.touched {
+            // Nothing was ever selected: the default position stays on the leftmost item, and
+            // the first activation picks the first enabled one from there.
+            self.focus = 0;
+            if !self.root.children.iter().any(|child| child.is_enabled()) {
+                self.hide();
+            }
+            return;
+        }
         if i < self.focus {
             self.focus -= 1;
         }
@@ -986,13 +995,11 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "known bug: removing an item moves the default position of a never-activated bar"]
     fn random_operations_on_a_never_activated_menubar_land_on_the_leftmost_item() {
         fuzz(4000, true);
     }
 
     #[test]
-    #[ignore = "known bug: removing an item moves the default position of a never-activated bar"]
     fn first_activation_after_a_removal_is_the_leftmost_item() {
         let mut bar = Menubar::new();
         bar.item(leaf("off").disabled())
