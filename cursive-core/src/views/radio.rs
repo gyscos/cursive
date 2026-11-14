@@ -224,7 +224,7 @@ impl<T: 'static + Send + Sync> RadioButton<T> {
     fn draw_internal(&self, printer: &Printer) {
         printer.print((0, 0), "( )");
         if self.is_selected() {
-            printer.print((1, 0), "X");
+            printer.print((1, 0), printer.theme.glyphs.radio_mark());
         }
 
         if !self.label.is_empty() {

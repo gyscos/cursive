@@ -145,7 +145,11 @@ impl Core {
             let lengths = self.scrollbar_thumb_lengths();
             let offsets = self.scrollbar_thumb_offsets(lengths);
 
-            let line_c = XY::new("-", "|");
+            let glyphs = printer.theme.glyphs;
+            let line_c = XY::new(
+                glyphs.scrollbar_track(Orientation::Horizontal),
+                glyphs.scrollbar_track(Orientation::Vertical),
+            );
 
             let style = if printer.focused {
                 Style::highlight()
@@ -171,7 +175,7 @@ impl Core {
                     {
                         " "
                     } else {
-                        "▒"
+                        glyphs.scrollbar_thumb()
                     };
                     printer.with_style(style, |printer| {
                         printer.print_line(orientation, start + offset, length, thumb_c);

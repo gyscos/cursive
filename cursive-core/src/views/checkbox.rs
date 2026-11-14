@@ -278,7 +278,7 @@ impl Checkbox {
     fn draw_internal(&self, printer: &Printer) {
         printer.print((0, 0), "[ ]");
         if self.checked {
-            printer.print((1, 0), "X");
+            printer.print((1, 0), printer.theme.glyphs.checkbox_mark());
         }
 
         if !self.label.is_empty() {

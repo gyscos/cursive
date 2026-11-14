@@ -177,9 +177,10 @@ impl View for SliderView {
     }
 
     fn draw(&self, printer: &Printer) {
+        let track = printer.theme.glyphs.slider_track(self.orientation);
         match self.orientation {
-            Orientation::Vertical => printer.print_vline((0, 0), self.max_value, "|"),
-            Orientation::Horizontal => printer.print_hline((0, 0), self.max_value, "-"),
+            Orientation::Vertical => printer.print_vline((0, 0), self.max_value, track),
+            Orientation::Horizontal => printer.print_hline((0, 0), self.max_value, track),
         }
 
         let style = if printer.focused {

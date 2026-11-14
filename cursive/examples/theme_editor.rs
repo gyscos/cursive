@@ -1,4 +1,4 @@
-use cursive::style::{BaseColor, BorderStyle, Color, Palette, PaletteColor};
+use cursive::style::{BaseColor, BorderStyle, Color, GlyphSet, Palette, PaletteColor};
 use cursive::theme::Theme;
 use cursive::traits::{Finder, Nameable, Resizable, With};
 
@@ -161,6 +161,16 @@ fn make_dialog(theme: &Theme) -> impl cursive::View {
                                 .max_width(10),
                         )
                         .child(
+                            "Glyphs",
+                            cursive::views::SelectView::new()
+                                .popup()
+                                .with_all(GlyphSet::all().map(|g| (format!("{g:?}"), g)))
+                                .selected(theme.glyphs as usize)
+                                .on_submit(|s, _| apply(s))
+                                .with_name("glyphs")
+                                .max_width(10),
+                        )
+                        .child(
                             "Palette",
                             cursive::views::ListView::new().with(|l| {
                                 for color in PaletteColor::all() {
@@ -287,6 +297,12 @@ fn apply(siv: &mut cursive::Cursive) {
         )
         .unwrap();
 
+    let glyphs = siv
+        .call_on_name("glyphs", |c: &mut cursive::views::SelectView<GlyphSet>| {
+            *c.selection().unwrap()
+        })
+        .unwrap();
+
     let mut palette = Palette::default();
     for color in PaletteColor::all() {
         if let Some(c) = find_color(siv, &format!("{color:?}")) {
@@ -297,7 +313,7 @@ fn apply(siv: &mut cursive::Cursive) {
     siv.set_theme(Theme {
         shadow,
         borders,
-        glyphs: Default::default(),
+        glyphs,
         palette,
     })
 }

@@ -162,6 +162,8 @@ pub use self::{
 };
 
 #[cfg(test)]
+mod glyph_tests;
+#[cfg(test)]
 mod layout_key_tests;
 #[cfg(test)]
 mod robustness_tests;
