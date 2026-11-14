@@ -48,6 +48,11 @@ enum FocusState {
     ///
     /// Focus is acquired on the next event, and `on_select` is called.
     Lost,
+    /// The focused row was handed out mutably (see [`ListView::row_mut`]).
+    ///
+    /// The next event or focus request checks that the child at `focus` is still a row that
+    /// takes focus. If it is, nothing changes. If it is not, this becomes `Lost`.
+    Unchecked,
 }
 
 /// Displays a list of elements.
@@ -66,6 +71,11 @@ pub struct ListView {
     // Whether the child at `focus` actually has focus.
     focus_state: FocusState,
 
+    // Set when a scan found no focusable child, so events don't repeat it.
+    //
+    // Cleared whenever the children may have changed.
+    scan_failed: bool,
+
     // This callback is called when the selection is changed.
     on_select: Option<Arc<ListCallback>>,
 }
@@ -81,6 +91,7 @@ impl ListView {
             children_heights: Vec::new(),
             focus: 0,
             focus_state: FocusState::Unset,
+            scan_failed: false,
             on_select: None,
         }
     }
@@ -113,18 +124,41 @@ impl ListView {
 
     /// Gives mutable access to the child at the given position.
     ///
+    /// The list cannot see what is done with the child. If this is the focused one, the list
+    /// checks it on the next event or focus request: if it is not a row that takes focus
+    /// anymore (it was replaced by a delimiter, or by a view that refuses focus), the focus is
+    /// moved like when the focused child is removed, and `on_select` is called for the new
+    /// selection.
+    ///
+    /// The check asks the focused view to take focus again, so a view that was replaced by
+    /// another one that takes focus gets it, and the selection does not change. The list cannot
+    /// tell this from a change to the same view, which is then asked to take focus again too
+    /// (which is harmless for the usual views).
+    ///
     /// # Panics
     ///
     /// Panics if `id >= self.len()`.
     pub fn row_mut(&mut self, id: usize) -> &mut ListChild {
+        self.row_will_change(id);
         &mut self.children[id]
     }
 
     /// Gives mutable access to the child at the given position.
     ///
     /// Returns `None` if `id >= self.len()`.
+    ///
+    /// See [`ListView::row_mut`] for what happens to the focus.
     pub fn try_row_mut(&mut self, id: usize) -> Option<&mut ListChild> {
+        self.row_will_change(id);
         self.children.get_mut(id)
+    }
+
+    // The child at `id` is about to be handed out mutably.
+    fn row_will_change(&mut self, id: usize) {
+        self.scan_failed = false;
+        if id == self.focus && self.focus_state == FocusState::Settled {
+            self.focus_state = FocusState::Unchecked;
+        }
     }
 
     /// Gives access to the child at the given position.
@@ -142,6 +176,7 @@ impl ListView {
     pub fn set_children(&mut self, children: Vec<ListChild>) {
         self.children_heights.resize(children.len(), 0);
         self.children = children;
+        self.scan_failed = false;
         self.focus = self.focus.min(self.len().saturating_sub(1));
         self.lose_focus();
     }
@@ -152,6 +187,7 @@ impl ListView {
 
         // Why were we doing this here?
         // view.take_focus(direction::Direction::none());
+        self.scan_failed = false;
         self.children.push(ListChild::Row(label.into(), view));
         self.children_heights.push(0);
     }
@@ -159,7 +195,18 @@ impl ListView {
     /// Attempts to set the focus to the given position.
     ///
     /// Returns `None` if `if >= self.len()` or if the child at this location is not focusable.
+    ///
+    /// If the previously focused child was removed or replaced, this also
+    /// calls the `on_select` callback for the new selection.
     pub fn set_focus(&mut self, id: usize) -> Option<EventResult> {
+        let checked = self.recheck_focus();
+        let lost = self.focus_state == FocusState::Lost;
+        let res = self.set_focus_quiet(id)?;
+        Some(checked.and(self.notify_if(lost, res)))
+    }
+
+    // Like `set_focus`, but never calls `on_select`.
+    fn set_focus_quiet(&mut self, id: usize) -> Option<EventResult> {
         if id >= self.len() {
             return None;
         }
@@ -181,6 +228,7 @@ impl ListView {
         self.children_heights.clear();
         self.focus = 0;
         self.focus_state = FocusState::Unset;
+        self.scan_failed = false;
     }
 
     /// Adds a view to the end of the list.
@@ -193,6 +241,7 @@ impl ListView {
 
     /// Adds a delimiter to the end of the list.
     pub fn add_delimiter(&mut self) {
+        self.scan_failed = false;
         self.children.push(ListChild::Delimiter);
         self.children_heights.push(0);
     }
@@ -218,6 +267,7 @@ impl ListView {
     pub fn remove_child(&mut self, index: usize) -> ListChild {
         self.children_heights.remove(index);
         let child = self.children.remove(index);
+        self.scan_failed = false;
         if index == self.focus {
             self.lose_focus();
         } else if index < self.focus {
@@ -304,13 +354,40 @@ impl ListView {
         };
         self.focus = index;
         self.focus_state = FocusState::Settled;
+        self.scan_failed = false;
         res
     }
 
     // The focused child is gone: the next focus acquisition is a selection change.
     fn lose_focus(&mut self) {
-        if self.focus_state == FocusState::Settled {
+        if matches!(
+            self.focus_state,
+            FocusState::Settled | FocusState::Unchecked
+        ) {
             self.focus_state = FocusState::Lost;
+        }
+    }
+
+    // Checks the focused child if it was handed out with `row_mut`.
+    //
+    // If it is still a row that takes focus, it has it again (which does not change the
+    // selection). If it is not, the focus is lost: the child is told, and the next focus
+    // acquisition is a selection change.
+    //
+    // Returns what the child answered. Does nothing in any other state.
+    fn recheck_focus(&mut self) -> EventResult {
+        if self.focus_state != FocusState::Unchecked {
+            return EventResult::Ignored;
+        }
+        match self.set_focus_quiet(self.focus) {
+            // Nothing happened, as far as the caller is concerned.
+            Some(EventResult::Consumed(None)) => EventResult::Ignored,
+            Some(res) => res,
+            None => {
+                let res = self.unfocus_child();
+                self.focus_state = FocusState::Lost;
+                res
+            }
         }
     }
 
@@ -319,17 +396,31 @@ impl ListView {
     // Returns the new child's focus result, followed by `on_select` if a
     // previous selection was lost.
     fn repair_focus(&mut self) -> Result<EventResult, CannotFocus> {
+        // (If no child can take focus, what the old child answered when losing it is dropped.)
+        let checked = self.recheck_focus();
+        if self.focus_state == FocusState::Settled {
+            return Ok(checked);
+        }
         let notify = self.focus_state == FocusState::Lost;
         for index in (self.focus..self.len()).chain((0..self.focus).rev()) {
-            if let Some(res) = self.set_focus(index) {
-                return Ok(if notify {
-                    res.and(self.on_select_result())
-                } else {
-                    res
-                });
+            if let Some(res) = self.set_focus_quiet(index) {
+                return Ok(checked.and(self.notify_if(notify, res)));
             }
         }
+        self.scan_failed = true;
         Err(CannotFocus)
+    }
+
+    // Appends the `on_select` callback to `res` if `notify` is set.
+    //
+    // `notify` must have been read before the focus was moved, since moving
+    // it settles the state.
+    fn notify_if(&self, notify: bool, res: EventResult) -> EventResult {
+        if notify {
+            res.and(self.on_select_result())
+        } else {
+            res
+        }
     }
 
     // Runs the `on_select` callback (if any) with the focused child's label.
@@ -383,6 +474,9 @@ impl ListView {
 
             let mut position = position.checked_sub(offset)?;
 
+            let checked = self.recheck_focus();
+            let lost = self.focus_state == FocusState::Lost;
+
             // eprintln!("Rel pos: {:?}", position);
 
             // Now that we have a relative position, checks for buttons?
@@ -403,7 +497,8 @@ impl ListView {
                 if let ListChild::Row(_, view) = child
                     && let Ok(res) = view.take_focus(direction::Direction::none())
                 {
-                    return Some(self.set_focus_unchecked(i).and(res));
+                    let res = self.set_focus_unchecked(i).and(res);
+                    return Some(checked.and(self.notify_if(lost, res)));
                 }
                 // We found the target, but we can't focus it.
                 break;
@@ -532,20 +627,30 @@ impl View for ListView {
         }
 
         // Losing focus must not acquire a new child just to unfocus it.
-        if self.focus_state != FocusState::Settled && event == Event::FocusLost {
-            return EventResult::Ignored;
+        if event == Event::FocusLost {
+            match self.focus_state {
+                FocusState::Settled => (),
+                // The focused row may have been replaced, but it is the one to tell.
+                FocusState::Unchecked => self.focus_state = FocusState::Settled,
+                FocusState::Unset | FocusState::Lost => return EventResult::Ignored,
+            }
         }
         let res = self
             .check_focus_grab(&event)
             .unwrap_or(EventResult::Ignored);
-        let res = if self.focus_state != FocusState::Settled {
+        let res = if self.focus_state != FocusState::Settled && !self.scan_failed {
             match self.repair_focus() {
                 Ok(repaired) => res.and(repaired),
-                Err(_) => return res,
+                Err(_) => res,
             }
         } else {
             res
         };
+        // Nothing can take focus: only mouse events (scrolling, clicks on
+        // rows that react without focus) still go to the child at `focus`.
+        if self.focus_state != FocusState::Settled && !matches!(event, Event::Mouse { .. }) {
+            return res;
+        }
 
         // Send the event to the focused child.
         let labels_width = self.labels_width();
@@ -584,6 +689,8 @@ impl View for ListView {
         if self.focus_state != FocusState::Settled && source == direction::Direction::none() {
             return self.repair_focus();
         }
+        let checked = self.recheck_focus();
+        let lost = self.focus_state == FocusState::Lost;
         let rel = source.relative(direction::Orientation::Vertical);
         let (i, res) = if let Some((i, res)) = self
             .iter_mut(rel.is_none(), rel.unwrap_or(direction::Relative::Front))
@@ -594,10 +701,12 @@ impl View for ListView {
             // No one wants to be in focus
             return Err(CannotFocus);
         };
-        Ok(self.set_focus_unchecked(i).and(res))
+        let res = self.set_focus_unchecked(i).and(res);
+        Ok(checked.and(self.notify_if(lost, res)))
     }
 
     fn call_on_any(&mut self, selector: &Selector, callback: AnyCb) {
+        self.scan_failed = false;
         for view in self.children.iter_mut().filter_map(ListChild::view) {
             view.call_on_any(selector, callback);
         }
@@ -605,6 +714,8 @@ impl View for ListView {
 
     fn focus_view(&mut self, selector: &Selector) -> Result<EventResult, ViewNotFound> {
         // Try to focus each view. Skip over delimiters.
+        let checked = self.recheck_focus();
+        let lost = self.focus_state == FocusState::Lost;
         if let Some((i, res)) = self
             .children
             .iter_mut()
@@ -612,7 +723,8 @@ impl View for ListView {
             .filter_map(|(i, v)| v.view().map(|v| (i, v)))
             .find_map(|(i, v)| v.focus_view(selector).ok().map(|res| (i, res)))
         {
-            Ok(self.set_focus_unchecked(i).and(res))
+            let res = self.set_focus_unchecked(i).and(res);
+            Ok(checked.and(self.notify_if(lost, res)))
         } else {
             Err(ViewNotFound)
         }
@@ -664,6 +776,7 @@ struct Blueprint {
 #[cfg(test)]
 mod focus_tests {
     use super::*;
+    use crate::event::{MouseButton, MouseEvent};
     use std::sync::Mutex;
 
     struct Probe {
@@ -909,5 +1022,557 @@ mod focus_tests {
         exercise(&mut list);
         assert_eq!(list.focus, 0);
         assert!(list.try_remove(0).is_none());
+    }
+
+    // A row that refuses focus, counts `take_focus` calls and logs mouse events.
+    struct Stubborn {
+        scans: Arc<Mutex<usize>>,
+        log: Arc<Mutex<Vec<String>>>,
+    }
+    impl View for Stubborn {
+        fn draw(&self, _: &Printer) {}
+        fn take_focus(&mut self, _: direction::Direction) -> Result<EventResult, CannotFocus> {
+            *self.scans.lock().unwrap() += 1;
+            Err(CannotFocus)
+        }
+        fn on_event(&mut self, event: Event) -> EventResult {
+            if matches!(event, Event::Mouse { .. }) {
+                self.log.lock().unwrap().push("mouse".into());
+                return EventResult::consumed();
+            }
+            EventResult::Ignored
+        }
+    }
+    fn mouse(event: MouseEvent) -> Event {
+        Event::Mouse {
+            event,
+            position: Vec2::new(0, 0),
+            offset: Vec2::zero(),
+        }
+    }
+
+    fn stubborn_list(rows: usize) -> (ListView, Arc<Mutex<usize>>, Arc<Mutex<Vec<String>>>) {
+        let scans = Arc::new(Mutex::new(0));
+        let log = Arc::new(Mutex::new(Vec::new()));
+        let mut list = ListView::new();
+        for i in 0..rows {
+            list.add_child(
+                i.to_string(),
+                Stubborn {
+                    scans: scans.clone(),
+                    log: log.clone(),
+                },
+            );
+        }
+        (list, scans, log)
+    }
+
+    #[test]
+    fn unfocusable_rows_still_get_mouse_events() {
+        let (mut list, _, log) = stubborn_list(3);
+        for _ in 0..4 {
+            assert!(list.on_event(mouse(MouseEvent::WheelDown)).is_consumed());
+        }
+        assert!(!list.on_event(Event::Char('x')).is_consumed());
+        assert_eq!(log.lock().unwrap().len(), 4);
+    }
+
+    #[test]
+    fn unfocusable_rows_are_not_rescanned_on_every_event() {
+        let (mut list, scans, _) = stubborn_list(3);
+        for _ in 0..4 {
+            list.on_event(Event::Char('x'));
+            list.on_event(mouse(MouseEvent::WheelDown));
+        }
+        // One scan of the 3 rows, not one per event.
+        assert_eq!(*scans.lock().unwrap(), 3);
+
+        // Changing the children allows a new scan.
+        list.add_delimiter();
+        list.on_event(Event::Char('x'));
+        assert_eq!(*scans.lock().unwrap(), 6);
+        list.take_focus(direction::Direction::none()).unwrap_err();
+        assert_eq!(*scans.lock().unwrap(), 9);
+    }
+
+    #[test]
+    fn every_way_of_regaining_focus_selects_once_after_removal() {
+        type Regain = fn(&mut ListView) -> Option<EventResult>;
+        let ways: [(&str, Regain); 5] = [
+            ("none", |l| l.take_focus(direction::Direction::none()).ok()),
+            ("front", |l| {
+                l.take_focus(direction::Direction::front()).ok()
+            }),
+            ("back", |l| l.take_focus(direction::Direction::back()).ok()),
+            ("click", |l| {
+                // Rows are 1 high, the label column is 1 wide.
+                l.layout(Vec2::new(20, 5));
+                Some(l.on_event(Event::Mouse {
+                    event: MouseEvent::Press(MouseButton::Left),
+                    position: Vec2::new(5, 0),
+                    offset: Vec2::zero(),
+                }))
+            }),
+            ("set_focus", |l| l.set_focus(0)),
+        ];
+        for (name, regain) in ways {
+            let (mut list, log) = list();
+            process(list.set_focus(1).unwrap());
+            list.remove_child(1);
+            log.lock().unwrap().clear();
+            process(regain(&mut list).unwrap());
+            let selected = format!("select {}", list.children[list.focus].label());
+            let selects = |log: &Arc<Mutex<Vec<String>>>| {
+                log.lock()
+                    .unwrap()
+                    .iter()
+                    .filter(|e| e.starts_with("select"))
+                    .cloned()
+                    .collect::<Vec<_>>()
+            };
+            assert_eq!(selects(&log), vec![selected], "{name}");
+            exercise(&mut list);
+            assert_eq!(selects(&log).len(), 1, "{name}: second select");
+        }
+    }
+
+    // Replaces the focused row (1) of `list()` with `replace`, then regains the focus in every
+    // way. The selection changes once, to the row that gets the focus.
+    fn check_replacing_the_focused_row(
+        name: &str,
+        replace: impl Fn(&mut ListView, &Arc<Mutex<Vec<String>>>),
+    ) {
+        type Regain = fn(&mut ListView) -> Option<EventResult>;
+        // The row that gets the focus: events and a request for no direction prefer the following
+        // row, like after a removal.
+        let ways: [(&str, Regain, usize); 6] = [
+            ("event", |l| Some(l.on_event(Event::Char('x'))), 2),
+            (
+                "none",
+                |l| l.take_focus(direction::Direction::none()).ok(),
+                2,
+            ),
+            (
+                "front",
+                |l| l.take_focus(direction::Direction::front()).ok(),
+                0,
+            ),
+            (
+                "back",
+                |l| l.take_focus(direction::Direction::back()).ok(),
+                2,
+            ),
+            (
+                "click",
+                |l| {
+                    // Rows are 1 high, the label column is 1 wide.
+                    l.layout(Vec2::new(20, 5));
+                    Some(l.on_event(Event::Mouse {
+                        event: MouseEvent::Press(MouseButton::Left),
+                        position: Vec2::new(5, 0),
+                        offset: Vec2::zero(),
+                    }))
+                },
+                0,
+            ),
+            ("set_focus", |l| l.set_focus(0), 0),
+        ];
+        for (way, regain, focus) in ways {
+            let (mut list, log) = list();
+            process(list.set_focus(1).unwrap());
+            replace(&mut list, &log);
+            log.lock().unwrap().clear();
+            process(regain(&mut list).unwrap());
+            exercise(&mut list);
+            let selects: Vec<String> = log
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|e| e.starts_with("select"))
+                .cloned()
+                .collect();
+            assert_eq!(list.focus, focus, "{name} / {way}");
+            assert_eq!(selects, vec![format!("select {focus}")], "{name} / {way}");
+            assert_eq!(list.focus_state, FocusState::Settled, "{name} / {way}");
+        }
+    }
+
+    #[test]
+    fn replacing_the_focused_row_with_a_delimiter_moves_the_focus() {
+        // The repair prefers the following row, like after a removal.
+        check_replacing_the_focused_row("row_mut", |list, _| {
+            *list.row_mut(1) = ListChild::Delimiter
+        });
+        check_replacing_the_focused_row("try_row_mut", |list, _| {
+            *list.try_row_mut(1).unwrap() = ListChild::Delimiter
+        });
+    }
+
+    #[test]
+    fn replacing_the_focused_row_with_a_row_that_refuses_focus_moves_the_focus() {
+        check_replacing_the_focused_row("refusing", |list, log| {
+            *list.row_mut(1) = ListChild::Row(
+                "refuses".into(),
+                Box::new(Probe {
+                    id: 9,
+                    accepts: false,
+                    log: log.clone(),
+                }),
+            )
+        });
+    }
+
+    #[test]
+    fn replacing_the_focused_row_with_a_focusable_one_keeps_the_selection() {
+        let (mut list, log) = list();
+        process(list.set_focus(1).unwrap());
+        *list.row_mut(1) = ListChild::Row(
+            "new".into(),
+            Box::new(Probe {
+                id: 9,
+                accepts: true,
+                log: log.clone(),
+            }),
+        );
+        log.lock().unwrap().clear();
+        exercise(&mut list);
+        exercise(&mut list);
+        assert_eq!(list.focus, 1);
+        // The new view was given the focus once, and nothing was selected.
+        let log = log.lock().unwrap();
+        assert_eq!(log.iter().filter(|e| *e == "focus 9").count(), 1);
+        assert_eq!(log.iter().filter(|e| *e == "callback 9").count(), 1);
+        assert!(!log.iter().any(|e| e.starts_with("select")));
+    }
+
+    #[test]
+    fn replacing_the_only_focusable_row_leaves_a_pending_selection() {
+        let (mut list, log) = list();
+        list.remove_child(2);
+        list.remove_child(0);
+        process(list.set_focus(0).unwrap());
+        *list.row_mut(0) = ListChild::Delimiter;
+        exercise(&mut list);
+        exercise(&mut list);
+        assert_eq!(list.focus_state, FocusState::Lost);
+        assert!(list.scan_failed);
+
+        // A row that can take focus is selected when it is added.
+        list.add_child(
+            "late",
+            Probe {
+                id: 7,
+                accepts: true,
+                log: log.clone(),
+            },
+        );
+        log.lock().unwrap().clear();
+        exercise(&mut list);
+        assert_eq!(list.focus, 1);
+        assert!(log.lock().unwrap().contains(&"select late".to_string()));
+    }
+
+    #[test]
+    fn changing_another_row_does_not_check_the_focus() {
+        let (mut list, log) = list();
+        process(list.set_focus(0).unwrap());
+        *list.row_mut(1) = ListChild::Delimiter;
+        assert_eq!(list.focus_state, FocusState::Settled);
+        log.lock().unwrap().clear();
+        exercise(&mut list);
+        assert!(
+            !log.lock()
+                .unwrap()
+                .iter()
+                .any(|e| e.starts_with("focus") || e.starts_with("select"))
+        );
+    }
+
+    #[test]
+    fn editing_the_focused_row_in_place_does_not_swallow_events() {
+        struct Plain;
+        impl View for Plain {
+            fn draw(&self, _: &Printer) {}
+            fn take_focus(&mut self, _: direction::Direction) -> Result<EventResult, CannotFocus> {
+                Ok(EventResult::Consumed(None))
+            }
+        }
+        let mut list = ListView::new().child("a", Plain).child("b", Plain);
+        list.take_focus(direction::Direction::none()).unwrap();
+        list.row_mut(0);
+        // Nothing wants this event, and the check changed nothing.
+        assert!(!list.on_event(Event::Char('x')).is_consumed());
+        assert_eq!(list.focus(), 0);
+        assert_eq!(list.focus_state, FocusState::Settled);
+    }
+
+    #[test]
+    fn losing_focus_reaches_a_row_that_was_handed_out() {
+        let (mut list, log) = list();
+        process(list.set_focus(1).unwrap());
+        list.row_mut(1);
+        log.lock().unwrap().clear();
+        process(list.on_event(Event::FocusLost));
+        assert_eq!(*log.lock().unwrap(), vec!["event 1 FocusLost"]);
+    }
+}
+
+#[cfg(test)]
+mod fuzz_tests {
+    use super::*;
+    use crate::event::{MouseButton, MouseEvent};
+    use std::sync::Mutex;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    #[derive(Clone)]
+    struct Flags {
+        accepts: Arc<AtomicBool>,
+        focused: Arc<AtomicBool>,
+        events: Arc<Mutex<Vec<String>>>,
+        id: usize,
+    }
+    struct P(Flags);
+    impl View for P {
+        fn draw(&self, _: &Printer) {}
+        fn take_focus(&mut self, _: direction::Direction) -> Result<EventResult, CannotFocus> {
+            if !self.0.accepts.load(Ordering::SeqCst) {
+                return Err(CannotFocus);
+            }
+            self.0.focused.store(true, Ordering::SeqCst);
+            Ok(EventResult::Consumed(None))
+        }
+        fn on_event(&mut self, event: Event) -> EventResult {
+            if event == Event::FocusLost {
+                self.0.focused.store(false, Ordering::SeqCst);
+            }
+            self.0
+                .events
+                .lock()
+                .unwrap()
+                .push(format!("{} {:?}", self.0.id, event));
+            EventResult::Ignored
+        }
+    }
+
+    struct Rng(u64);
+    impl Rng {
+        fn next(&mut self, n: usize) -> usize {
+            self.0 = self
+                .0
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            ((self.0 >> 33) as usize) % n
+        }
+    }
+
+    fn row(next_id: &mut usize, flags: &mut Vec<Flags>, accepts: bool) -> ListChild {
+        let f = Flags {
+            accepts: Arc::new(AtomicBool::new(accepts)),
+            focused: Arc::new(AtomicBool::new(false)),
+            events: Arc::new(Mutex::new(Vec::new())),
+            id: *next_id,
+        };
+        *next_id += 1;
+        flags.push(f.clone());
+        ListChild::Row(format!("r{}", f.id), Box::new(P(f)))
+    }
+
+    #[test]
+    fn random_operations_keep_the_focus_consistent() {
+        let selected = Arc::new(Mutex::new(Vec::<String>::new()));
+        let mut siv = crate::Cursive::new();
+        for seed in 0..400u64 {
+            let mut rng = Rng(seed * 7919 + 1);
+            let mut next_id = 0;
+            let mut all_flags: Vec<Flags> = Vec::new();
+            let sel = selected.clone();
+            let mut list =
+                ListView::new().on_select(move |_, l| sel.lock().unwrap().push(l.clone()));
+            let mut trace: Vec<String> = Vec::new();
+            for step in 0..40 {
+                selected.lock().unwrap().clear();
+                let op = rng.next(12);
+                let lost_before = list.focus_state == FocusState::Lost;
+                let mut res = EventResult::Ignored;
+                let mut was_event = false;
+                match op {
+                    0 => {
+                        let acc = rng.next(4) != 0;
+                        let c = row(&mut next_id, &mut all_flags, acc);
+                        if let ListChild::Row(l, v) = c {
+                            list.add_child(l.clone(), v);
+                            trace.push(format!("add {l} acc={acc}"));
+                        }
+                    }
+                    1 => {
+                        list.add_delimiter();
+                        trace.push("add delim".into());
+                    }
+                    2 if !list.is_empty() => {
+                        let i = rng.next(list.len());
+                        list.remove_child(i);
+                        trace.push(format!("remove {i}"));
+                    }
+                    3 => {
+                        let n = rng.next(4);
+                        let mut v = Vec::new();
+                        for _ in 0..n {
+                            if rng.next(4) == 0 {
+                                v.push(ListChild::Delimiter);
+                            } else {
+                                let acc = rng.next(4) != 0;
+                                v.push(row(&mut next_id, &mut all_flags, acc));
+                            }
+                        }
+                        trace.push(format!("set_children {n}"));
+                        list.set_children(v);
+                    }
+                    4 => {
+                        list.clear();
+                        trace.push("clear".into());
+                    }
+                    5 => {
+                        let d = [
+                            direction::Direction::none(),
+                            direction::Direction::front(),
+                            direction::Direction::back(),
+                            direction::Direction::up(),
+                            direction::Direction::down(),
+                        ][rng.next(5)];
+                        trace.push(format!("take_focus {d:?}"));
+                        if let Ok(r) = list.take_focus(d) {
+                            res = r;
+                        }
+                    }
+                    6 => {
+                        let e = [
+                            Event::Key(Key::Up),
+                            Event::Key(Key::Down),
+                            Event::Key(Key::Tab),
+                            Event::Shift(Key::Tab),
+                            Event::Char('x'),
+                        ][rng.next(5)]
+                        .clone();
+                        trace.push(format!("event {e:?}"));
+                        list.layout(Vec2::new(20, 10));
+                        res = list.on_event(e);
+                        was_event = true;
+                    }
+                    7 if !list.is_empty() => {
+                        list.layout(Vec2::new(20, 10));
+                        let y = rng.next(list.len() + 1);
+                        trace.push(format!("click y={y}"));
+                        res = list.on_event(Event::Mouse {
+                            event: MouseEvent::Press(MouseButton::Left),
+                            position: Vec2::new(5, y),
+                            offset: Vec2::zero(),
+                        });
+                        was_event = true;
+                    }
+                    8 if !list.is_empty() => {
+                        let i = rng.next(list.len());
+                        if let ListChild::Row(_, _) = list.get_row(i) {
+                            let lbl = list.get_row(i).label().to_string();
+                            let id: usize = lbl[1..].parse().unwrap();
+                            let f = &all_flags[id];
+                            let now = !f.accepts.load(Ordering::SeqCst);
+                            f.accepts.store(now, Ordering::SeqCst);
+                            list.row_mut(i);
+                            trace.push(format!("toggle {i} -> accepts={now}"));
+                        }
+                    }
+                    9 if !list.is_empty() => {
+                        let i = rng.next(list.len());
+                        trace.push(format!("set_focus {i}"));
+                        if let Some(r) = list.set_focus(i) {
+                            res = r;
+                        }
+                    }
+                    10 if !list.is_empty() => {
+                        // Replace any row, the focused one included.
+                        let i = rng.next(list.len());
+                        let new = match rng.next(3) {
+                            0 => ListChild::Delimiter,
+                            1 => row(&mut next_id, &mut all_flags, true),
+                            _ => row(&mut next_id, &mut all_flags, false),
+                        };
+                        *list.row_mut(i) = new;
+                        trace.push(format!("replace {i}"));
+                    }
+                    _ => {}
+                }
+                res.process(&mut siv);
+                let sels = selected.lock().unwrap().clone();
+                let ctx =
+                    || format!("seed {seed} step {step}\ntrace: {trace:#?}\nselected {sels:?}");
+                // Invariants.
+                if !list.is_empty() {
+                    assert!(list.focus < list.len(), "focus out of range\n{}", ctx());
+                }
+                if list.focus_state == FocusState::Settled && !list.is_empty() {
+                    match &list.children[list.focus] {
+                        ListChild::Delimiter => {
+                            panic!("settled on a delimiter\n{}", ctx())
+                        }
+                        ListChild::Row(l, _) => {
+                            let id: usize = l[1..].parse().unwrap();
+                            assert!(
+                                all_flags[id].focused.load(Ordering::SeqCst),
+                                "settled on a row that is not focused ({l})\n{}",
+                                ctx()
+                            );
+                        }
+                    }
+                }
+                let focused_now: Vec<_> = list
+                    .children
+                    .iter()
+                    .filter_map(|c| match c {
+                        ListChild::Row(l, _) => {
+                            let id: usize = l[1..].parse().unwrap();
+                            all_flags[id]
+                                .focused
+                                .load(Ordering::SeqCst)
+                                .then(|| l.clone())
+                        }
+                        _ => None,
+                    })
+                    .collect();
+                assert!(
+                    focused_now.len() <= 1,
+                    "several focused rows {focused_now:?}\n{}",
+                    ctx()
+                );
+                if sels.len() > 1 && !(lost_before && sels.len() == 2 && was_event) {
+                    panic!("on_select fired {} times\n{}", sels.len(), ctx());
+                }
+                if let Some(s) = sels.last() {
+                    if list.focus_state == FocusState::Settled {
+                        assert_eq!(
+                            s,
+                            list.children[list.focus].label(),
+                            "selected label is not the focused row\n{}",
+                            ctx()
+                        );
+                    }
+                }
+                if was_event && !list.is_empty() {
+                    let any = list.children.iter().any(|c| match c {
+                        ListChild::Row(l, _) => {
+                            let id: usize = l[1..].parse().unwrap();
+                            all_flags[id].accepts.load(Ordering::SeqCst)
+                        }
+                        _ => false,
+                    });
+                    if any {
+                        assert!(
+                            list.focus_state == FocusState::Settled,
+                            "an event left the list without focus although a row accepts it\n{}",
+                            ctx()
+                        );
+                    }
+                }
+            }
+        }
     }
 }
