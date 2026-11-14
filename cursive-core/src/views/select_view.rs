@@ -76,7 +76,8 @@ pub struct SelectView<T = String> {
     // `true` if we show a one-line view, with popup on selection.
     popup: bool,
     // Decorators to draw around the popup button.
-    decorators: [String; 2],
+    /// Explicit decorators. If unset, the theme's glyph set decides.
+    decorators: Option<[String; 2]>,
 
     // We need the last offset to place the popup window
     // We "cache" it during the draw, so we need interior mutability.
@@ -110,7 +111,7 @@ impl<T: 'static + Send + Sync> SelectView<T> {
             on_submit: None,
             align: Align::top_left(),
             popup: false,
-            decorators: ["<".to_string(), ">".to_string()],
+            decorators: None,
             autojump: false,
             last_offset: Mutex::new(Vec2::zero()),
             last_size: Vec2::zero(),
@@ -177,7 +178,8 @@ impl<T: 'static + Send + Sync> SelectView<T> {
         self.invalidate();
     }
 
-    /// Use custom decorators around the popup button instead of "<" and ">".
+    /// Use custom decorators around the popup button instead of "<" and ">"
+    /// (or whatever the theme's [`GlyphSet`](crate::style::GlyphSet) uses).
     ///
     /// Chainable variant.
     #[must_use]
@@ -185,9 +187,12 @@ impl<T: 'static + Send + Sync> SelectView<T> {
         self.with(|s| s.set_decorators(start, end))
     }
 
-    /// Use custom decorators around the popup button instead of "<" and ">".
+    /// Use custom decorators around the popup button instead of "<" and ">"
+    /// (or whatever the theme's [`GlyphSet`](crate::style::GlyphSet) uses).
+    ///
+    /// Explicit decorators always override the theme.
     pub fn set_decorators<S: Into<String>>(&mut self, start: S, end: S) {
-        self.decorators = [start.into(), end.into()];
+        self.decorators = Some([start.into(), end.into()]);
         self.invalidate();
     }
 
@@ -827,7 +832,7 @@ impl<T: 'static + Send + Sync> SelectView<T> {
             .saturating_sub(self.decorators_width())
             .saturating_sub(item_length)
             / 2
-            + self.decorators[0].width();
+            + self.decorator0_width();
         // The total offset for the window is:
         // * the last absolute offset at which we drew this view
         // * shifted to the right of the text offset
@@ -873,8 +878,21 @@ impl<T: 'static + Send + Sync> SelectView<T> {
         }
     }
 
+    /// Width of the decorators.
+    ///
+    /// Every decorator from a glyph set is 1 cell wide, so this does not depend on the theme.
     fn decorators_width(&self) -> usize {
-        self.decorators.iter().map(|d| d.width()).sum()
+        match &self.decorators {
+            Some(decorators) => decorators.iter().map(|d| d.width()).sum(),
+            None => 2,
+        }
+    }
+
+    fn decorator0_width(&self) -> usize {
+        match &self.decorators {
+            Some(decorators) => decorators[0].width(),
+            None => 1,
+        }
     }
 }
 
@@ -1014,12 +1032,16 @@ impl<T: 'static + Send + Sync> View for SelectView<T> {
             };
 
             printer.with_style(style, |printer| {
-                let decorator0_width = self.decorators[0].width();
+                let decorator0_width = self.decorator0_width();
+                let [left, right] = match &self.decorators {
+                    Some([left, right]) => [left.as_str(), right.as_str()],
+                    None => printer.theme.glyphs.select_decorators(),
+                };
                 // Prepare the label background
                 printer.print_hline((decorator0_width, 0), available, " ");
                 // Draw the decorators
-                printer.print((0, 0), &self.decorators[0]);
-                printer.print((decorator0_width + available, 0), &self.decorators[1]);
+                printer.print((0, 0), left);
+                printer.print((decorator0_width + available, 0), right);
 
                 if let Some(label) = self.items.get(focus).map(|item| &item.label) {
                     // And center the text?

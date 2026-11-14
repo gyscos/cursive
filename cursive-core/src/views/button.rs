@@ -21,7 +21,14 @@ use crate::{
 /// let quit_button = Button::new("Quit", |s| s.quit());
 /// ```
 pub struct Button {
+    /// The label, without brackets.
     label: StyledString,
+    /// Whether to draw brackets (from the theme) around the label.
+    brackets: bool,
+    /// What `label()` returns: the source of the label, with `<` and `>` if `brackets` is set.
+    ///
+    /// The brackets drawn depend on the theme, but `label()` always reports ASCII ones.
+    source: String,
     callback: Callback,
     enabled: bool,
     last_size: Vec2,
@@ -39,11 +46,7 @@ impl Button {
         F: 'static + Fn(&mut Cursive) + Send + Sync,
         S: Into<StyledString>,
     {
-        let label = label.into();
-        let label: StyledString =
-            StyledString::concatenate([StyledString::plain("<"), label, StyledString::plain(">")]);
-
-        Self::new_raw(label, cb)
+        Self::build(label.into(), true, cb)
     }
 
     /// Creates a new button without angle brackets.
@@ -59,8 +62,17 @@ impl Button {
     where
         F: 'static + Fn(&mut Cursive) + Send + Sync,
     {
+        Self::build(label.into(), false, cb)
+    }
+
+    fn build<F>(label: StyledString, brackets: bool, cb: F) -> Self
+    where
+        F: 'static + Fn(&mut Cursive) + Send + Sync,
+    {
         Button {
-            label: label.into(),
+            source: Self::make_source(&label, brackets),
+            label,
+            brackets,
             callback: Callback::from_fn(cb),
             enabled: true,
             last_size: Vec2::zero(),
@@ -90,7 +102,15 @@ impl Button {
     /// assert_eq!(button.label(), "<Quit>");
     /// ```
     pub fn label(&self) -> &str {
-        self.label.source()
+        &self.source
+    }
+
+    fn make_source(label: &StyledString, brackets: bool) -> String {
+        if brackets {
+            format!("<{}>", label.source())
+        } else {
+            label.source().to_string()
+        }
     }
 
     /// Sets the label to the given value.
@@ -109,7 +129,7 @@ impl Button {
     where
         S: Into<String>,
     {
-        self.set_label_raw(format!("<{}>", label.into()));
+        self.set_label_inner(StyledString::plain(label.into()), true);
     }
 
     /// Sets the label exactly to the given value.
@@ -119,12 +139,23 @@ impl Button {
     where
         S: Into<StyledString>,
     {
-        self.label = label.into();
+        self.set_label_inner(label.into(), false);
+    }
+
+    fn set_label_inner(&mut self, label: StyledString, brackets: bool) {
+        self.source = Self::make_source(&label, brackets);
+        self.label = label;
+        self.brackets = brackets;
         self.invalidate();
     }
 
+    /// Display width of the label, including brackets (each is always 1 cell wide).
+    fn label_width(&self) -> usize {
+        self.label.width() + if self.brackets { 2 } else { 0 }
+    }
+
     fn req_size(&self) -> Vec2 {
-        Vec2::new(self.label.width(), 1)
+        Vec2::new(self.label_width(), 1)
     }
 
     fn invalidate(&mut self) {
@@ -134,7 +165,7 @@ impl Button {
 
 impl View for Button {
     fn layout_key(&self) -> u64 {
-        crate::view::combine_layout_key(crate::view::layout_key_seed::<Self>(), &self.label.width())
+        crate::view::combine_layout_key(crate::view::layout_key_seed::<Self>(), &self.label_width())
     }
 
     fn draw(&self, printer: &Printer) {
@@ -153,13 +184,20 @@ impl View for Button {
             PaletteStyle::Primary
         };
 
-        let offset = HAlign::Center.get_offset(self.label.width(), printer.size.x);
+        let offset = HAlign::Center.get_offset(self.label_width(), printer.size.x);
 
         // eprintln!("Button style: {style:?}");
         printer.with_style(style, |printer| {
             // TODO: do we want to "fill" the button highlight color to the full given size?
             // printer.print_hline((0, 0), offset, " ");
-            printer.print_styled((offset, 0), &self.label);
+            if self.brackets {
+                let [left, right] = printer.theme.glyphs.button_brackets();
+                printer.print((offset, 0), left);
+                printer.print_styled((offset + 1, 0), &self.label);
+                printer.print((offset + 1 + self.label.width(), 0), right);
+            } else {
+                printer.print_styled((offset, 0), &self.label);
+            }
             // let end = offset + self.label.width();
             // printer.print_hline(
             //     (end, 0),
@@ -186,7 +224,7 @@ impl View for Button {
 
         // eprintln!("{:?}", event);
         // eprintln!("{:?}", self.req_size());
-        let width = self.label.width();
+        let width = self.label_width();
         let self_offset = HAlign::Center.get_offset(width, self.last_size.x);
         match event {
             Event::Key(Key::Enter) => EventResult::Consumed(Some(self.callback.clone())),
@@ -206,7 +244,7 @@ impl View for Button {
     }
 
     fn important_area(&self, view_size: Vec2) -> Rect {
-        let width = self.label.width();
+        let width = self.label_width();
         let offset = HAlign::Center.get_offset(width, view_size.x);
 
         Rect::from_size((offset, 0), (width, 1))

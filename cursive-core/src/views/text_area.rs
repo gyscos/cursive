@@ -559,7 +559,7 @@ impl View for TextArea {
             if printer.focused && i == self.selected_row() {
                 let cursor_offset = self.cursor - row.start;
                 let c = if cursor_offset == text.len() {
-                    "_"
+                    printer.theme.glyphs.edit_filler()
                 } else {
                     text[cursor_offset..]
                         .graphemes(true)

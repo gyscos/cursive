@@ -276,11 +276,16 @@ impl ScrollBase {
             // eprintln!("Drawing bar at x={}", scrollbar_x);
 
             // The background
-            printer.print_vline((scrollbar_x, 0), printer.size.y, "|");
+            let glyphs = printer.theme.glyphs;
+            printer.print_vline(
+                (scrollbar_x, 0),
+                printer.size.y,
+                glyphs.scrollbar_track(crate::direction::Orientation::Vertical),
+            );
 
             // The scrollbar thumb
             printer.with_style(style, |printer| {
-                printer.print_vline((scrollbar_x, start), height, "▒");
+                printer.print_vline((scrollbar_x, start), height, glyphs.scrollbar_thumb());
             });
         }
     }

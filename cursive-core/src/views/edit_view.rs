@@ -100,7 +100,8 @@ pub struct EditView {
     secret: bool,
 
     /// Character to fill empty space
-    filler: String,
+    /// Explicit filler. If unset, the theme's glyph set decides.
+    filler: Option<String>,
 
     enabled: bool,
 
@@ -125,7 +126,7 @@ impl EditView {
             on_submit: None,
             max_content_width: None,
             secret: false,
-            filler: "_".to_string(),
+            filler: None,
             enabled: true,
             regular_style: PaletteStyle::EditableText.into(),
             inactive_style: PaletteStyle::EditableTextInactive.into(),
@@ -169,9 +170,10 @@ impl EditView {
 
     /// Sets the character to fill in blank space.
     ///
-    /// Defaults to "_".
+    /// Defaults to "_" (or whatever the theme's [`GlyphSet`](crate::style::GlyphSet) uses).
+    /// Setting it explicitly overrides the theme.
     pub fn set_filler<S: Into<String>>(&mut self, filler: S) {
-        self.filler = filler.into();
+        self.filler = Some(filler.into());
     }
 
     /// Sets the character to fill in blank space.
@@ -537,6 +539,10 @@ impl View for EditView {
             (self.inactive_style, self.inactive_style)
         };
 
+        let filler = self
+            .filler
+            .as_deref()
+            .unwrap_or_else(|| printer.theme.glyphs.edit_filler());
         let width = self.content.width();
         printer.with_style(style, |printer| {
             if width < self.last_length {
@@ -547,8 +553,8 @@ impl View for EditView {
                 } else {
                     printer.print((0, 0), &self.content);
                 }
-                let filler_len = (printer.size.x - width) / self.filler.width();
-                printer.print_hline((width, 0), filler_len, self.filler.as_str());
+                let filler_len = (printer.size.x - width) / filler.width();
+                printer.print_hline((width, 0), filler_len, filler);
             } else {
                 let content = &self.content[self.offset..];
                 let display_bytes = content
@@ -570,8 +576,8 @@ impl View for EditView {
                 }
 
                 if width < self.last_length {
-                    let filler_len = (self.last_length - width) / self.filler.width();
-                    printer.print_hline((width, 0), filler_len, self.filler.as_str());
+                    let filler_len = (self.last_length - width) / filler.width();
+                    printer.print_hline((width, 0), filler_len, filler);
                 }
             }
         });
@@ -579,7 +585,7 @@ impl View for EditView {
         // Now print cursor
         if printer.focused {
             let c: &str = if self.cursor == self.content.len() {
-                &self.filler
+                filler
             } else {
                 // Get the char from the string... Is it so hard?
                 let selected = self.content[self.cursor..]
