@@ -47,6 +47,10 @@ fn main() {
 
 [![Cursive dialog example](https://raw.githubusercontent.com/gyscos/cursive/main/doc/cursive_example.png)](https://github.com/gyscos/cursive/tree/main/cursive/examples/dialog.rs)
 
+Larger applications can look like this ([`showcase`](https://github.com/gyscos/cursive/tree/main/cursive/examples/showcase) example):
+
+[![Cursive showcase example](https://raw.githubusercontent.com/gyscos/cursive/main/doc/showcase.webp)](https://github.com/gyscos/cursive/tree/main/cursive/examples/showcase)
+
 Check out the other [examples](https://github.com/gyscos/cursive/tree/main/cursive/examples) to get these results, and more:
 
 <div>

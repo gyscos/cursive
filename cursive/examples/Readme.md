@@ -112,6 +112,12 @@ This shows how to use `RadioGroup` and `RadioButton`.
 
 This is a demonstration of the `SliderView`.
 
+## [`showcase`](./showcase)
+
+A larger example: a fake monitoring dashboard combining standard views, custom
+views drawing charts, live data from a background thread, and themes that can
+be changed on the fly. Run it with `--demo` to watch it drive itself.
+
 ## [`mines`](./mines) (**Work in progress**)
 
 A larger example showing an implementation of minesweeper.

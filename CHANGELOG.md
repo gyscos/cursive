@@ -80,6 +80,7 @@
 - `Menubar`: keep the selection on the same item when items are inserted or removed, and skip
   disabled items. A menubar that was never activated starts on its leftmost enabled item.
 - Fix `ProgressBar` panicking on an empty range (`min == max`).
+- Add a `showcase` example.
 
 ## cursive-core 0.4.7
 
