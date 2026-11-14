@@ -61,9 +61,11 @@ macro_rules! impl_enabled {
     };
 }
 
+mod bar;
 mod boxed_view;
 mod button;
 mod canvas;
+mod chart;
 mod checkbox;
 mod circular_focus;
 mod debug_view;
@@ -73,7 +75,9 @@ mod edit_view;
 mod enableable_view;
 mod fixed_layout;
 mod focus_tracker;
+mod gauge;
 mod gradient_view;
+mod heatmap;
 mod hideable_view;
 mod last_size_view;
 mod layer;
@@ -89,21 +93,29 @@ mod panel;
 mod progress_bar;
 mod radio;
 mod resized_view;
+mod row;
 mod screens_view;
 mod scroll_view;
 mod select_view;
+mod series;
 mod shadow_view;
 mod slider_view;
+mod sparkline;
 pub mod stack_view;
+mod tab_view;
 mod text_area;
 mod text_view;
+mod theme_overlay;
 mod themed_view;
 mod tracked_view;
+mod value_range;
 
 pub use self::{
+    bar::{BarStyle, LabelPosition},
     boxed_view::BoxedView,
     button::Button,
     canvas::Canvas,
+    chart::{Chart, Plot, PlotKind},
     checkbox::{Checkbox, MultiChoiceGroup},
     circular_focus::CircularFocus,
     debug_view::DebugView,
@@ -113,7 +125,9 @@ pub use self::{
     enableable_view::EnableableView,
     fixed_layout::FixedLayout,
     focus_tracker::FocusTracker,
+    gauge::Gauge,
     gradient_view::GradientView,
+    heatmap::Heatmap,
     hideable_view::HideableView,
     last_size_view::LastSizeView,
     layer::Layer,
@@ -129,16 +143,22 @@ pub use self::{
     progress_bar::ProgressBar,
     radio::{RadioButton, RadioGroup},
     resized_view::ResizedView,
+    row::Row,
     screens_view::ScreensView,
     scroll_view::ScrollView,
     select_view::SelectView,
+    series::Series,
     shadow_view::ShadowView,
     slider_view::SliderView,
+    sparkline::Sparkline,
     stack_view::{LayerPosition, StackView},
+    tab_view::{TAB_ACTIVE, TAB_INACTIVE, TabBar, TabPlacement, TabState, TabView},
     text_area::TextArea,
     text_view::{TextContent, TextContentRef, TextView},
+    theme_overlay::ThemeOverlay,
     themed_view::ThemedView,
     tracked_view::TrackedView,
+    value_range::{Bounds, ValueRange},
 };
 
 #[cfg(test)]

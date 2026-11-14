@@ -20,6 +20,9 @@ pub struct Panel<V> {
     // Where to put the title position
     title_position: HAlign,
 
+    // Whether to draw `┤` and `├` around the title
+    title_delimiters: bool,
+
     // `true` when we needs to relayout
     invalidated: bool,
 }
@@ -36,6 +39,7 @@ impl<V> Panel<V> {
             view,
             title: StyledString::new(),
             title_position: HAlign::Center,
+            title_delimiters: true,
             invalidated: true,
         }
     }
@@ -67,6 +71,33 @@ impl<V> Panel<V> {
         self.title_position = align;
     }
 
+    /// Sets whether the title is surrounded by delimiters (`┤ Title ├`).
+    ///
+    /// Without them, the title is only separated from the border by spaces.
+    ///
+    /// The default is `true`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use cursive_core::views::{Panel, TextView};
+    ///
+    /// let panel = Panel::new(TextView::new("Content"))
+    ///     .title("Title")
+    ///     .title_delimiters(false);
+    /// ```
+    #[must_use]
+    pub fn title_delimiters(self, delimiters: bool) -> Self {
+        self.with(|s| s.set_title_delimiters(delimiters))
+    }
+
+    /// Sets whether the title is surrounded by delimiters (`┤ Title ├`).
+    ///
+    /// The default is `true`.
+    pub fn set_title_delimiters(&mut self, delimiters: bool) {
+        self.title_delimiters = delimiters;
+    }
+
     fn draw_title(&self, printer: &Printer) {
         if !self.title.is_empty() {
             let available = match printer.size.x.checked_sub(2 * TITLE_SPACING) {
@@ -82,9 +113,15 @@ impl<V> Panel<V> {
                 .with_style(PaletteStyle::TitlePrimary, |p| {
                     p.print_styled((0, 0), &self.title)
                 });
+            let (left, right) = if self.title_delimiters {
+                ("┤ ", " ├")
+            } else {
+                // Only leave a gap in the border.
+                ("─ ", " ─")
+            };
             printer.with_high_border(false, |printer| {
-                printer.print((x - 2, 0), "┤ ");
-                printer.print((x + len, 0), " ├");
+                printer.print((x - 2, 0), left);
+                printer.print((x + len, 0), right);
             });
         }
     }
@@ -152,6 +189,7 @@ struct Blueprint {
 
     title: Option<StyledString>,
     title_position: Option<HAlign>,
+    title_delimiters: Option<bool>,
 }
 
 // TODO: reduce code duplication between blueprints for the same view.
@@ -168,6 +206,7 @@ crate::manual_blueprint!(with panel, |config, context| {
     };
 
     let title_position = context.resolve(&config["title_position"])?;
+    let title_delimiters: Option<bool> = context.resolve(&config["title_delimiters"])?;
 
     Ok(move |view| {
         let mut panel = crate::views::Panel::new(view).title(title);
@@ -176,6 +215,43 @@ crate::manual_blueprint!(with panel, |config, context| {
             panel.set_title_position(title_position);
         }
 
+        if let Some(title_delimiters) = title_delimiters {
+            panel.set_title_delimiters(title_delimiters);
+        }
+
         panel
     })
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::buffer::PrintBuffer;
+    use crate::theme::Theme;
+    use crate::views::DummyView;
+    use parking_lot::RwLock;
+
+    fn top_row(panel: &Panel<DummyView>) -> String {
+        let theme = Theme::retro();
+        let mut buffer = PrintBuffer::new();
+        buffer.resize(Vec2::new(14, 3));
+        let buffer = RwLock::new(buffer);
+        panel.draw(&Printer::new((14, 3), &theme, &buffer));
+
+        let buffer = buffer.read();
+        (0..14)
+            .map(|x| buffer.cell_text(Vec2::new(x, 0)).unwrap_or(" ").to_string())
+            .collect()
+    }
+
+    #[test]
+    fn title_delimiters() {
+        let panel = Panel::new(DummyView)
+            .title("Hi")
+            .title_position(HAlign::Left);
+        assert_eq!(top_row(&panel), "┌┤ Hi ├──────┐");
+
+        let panel = panel.title_delimiters(false);
+        assert_eq!(top_row(&panel), "┌─ Hi ───────┐");
+    }
+}

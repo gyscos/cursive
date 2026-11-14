@@ -2,8 +2,8 @@ use std::iter::FromIterator;
 use std::str::FromStr;
 
 use super::{
-    Color, ColorPair, ColorStyle, ColorType, ConcreteEffects, Effect, Effects, Palette,
-    PaletteColor, PaletteStyle,
+    Color, ColorKey, ColorPair, ColorStyle, ColorType, ConcreteEffects, Effect, Effects, Palette,
+    PaletteColor, PaletteStyle, StyleKey,
 };
 use enumset::EnumSet;
 
@@ -246,6 +246,12 @@ impl From<ColorType> for Style {
     }
 }
 
+impl From<&'static ColorKey> for Style {
+    fn from(key: &'static ColorKey) -> Self {
+        ColorStyle::from(key).into()
+    }
+}
+
 /// Returns an direct Style that just inherits the parent color.
 impl Default for StyleType {
     fn default() -> Self {
@@ -263,6 +269,12 @@ pub enum StyleType {
 
     /// A direct style.
     Style(Style),
+
+    /// References a custom style from the palette.
+    ///
+    /// If the palette does not define this style, the fallback from the key is used. A key named
+    /// like a standard style reads the standard style instead (see [`StyleKey`]).
+    Custom(&'static StyleKey),
 }
 
 impl StyleType {
@@ -271,6 +283,11 @@ impl StyleType {
         match self {
             StyleType::Style(style) => style,
             StyleType::Palette(style) => style.resolve(palette),
+            StyleType::Custom(key) => match palette.style_for_key(key.name()) {
+                Some(style) => style,
+                // The fallback is never another custom key.
+                None => key.fallback().resolve(palette),
+            },
         }
     }
 
@@ -389,6 +406,18 @@ impl From<Style> for StyleType {
 impl From<PaletteStyle> for StyleType {
     fn from(style: PaletteStyle) -> Self {
         StyleType::Palette(style)
+    }
+}
+
+impl From<&'static StyleKey> for StyleType {
+    fn from(key: &'static StyleKey) -> Self {
+        StyleType::Custom(key)
+    }
+}
+
+impl From<&'static ColorKey> for StyleType {
+    fn from(key: &'static ColorKey) -> Self {
+        StyleType::Style(key.into())
     }
 }
 

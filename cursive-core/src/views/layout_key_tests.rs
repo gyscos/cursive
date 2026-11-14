@@ -14,6 +14,38 @@ use crate::{
     },
 };
 
+/// Checks that a view and a layout holding it can cache their layout.
+///
+/// With nothing changing, the key must be the same from one call to the next
+/// (a new key every time means no container can ever reuse a size),
+/// and no view may ask for a relayout once laid out.
+pub(crate) fn assert_layout_is_cached<V: View>(make: impl Fn() -> V) {
+    let mut view = make();
+    assert_eq!(view.layout_key(), view.layout_key(), "key of the view");
+    let size = view.required_size(Vec2::new(30, 10));
+    view.layout(size);
+    assert!(!view.needs_relayout(), "needs_relayout after layout");
+    assert_eq!(view.layout_key(), view.layout_key(), "key after layout");
+
+    let mut layout = LinearLayout::vertical().child(make()).child(make());
+    assert_eq!(
+        layout.layout_key(),
+        layout.layout_key(),
+        "key of the layout"
+    );
+    let size = layout.required_size(Vec2::new(30, 10));
+    layout.layout(size);
+    assert!(
+        !layout.needs_relayout(),
+        "layout needs_relayout after layout"
+    );
+    assert_eq!(
+        layout.layout_key(),
+        layout.layout_key(),
+        "layout key after layout"
+    );
+}
+
 #[derive(Clone)]
 struct State {
     edit: String,
@@ -357,4 +389,21 @@ mod scroll_trees {
             }
         }
     }
+}
+
+#[test]
+fn progress_bar_and_theme_overlay_cache_their_layout() {
+    use crate::views::{Gauge, ProgressBar, ThemeOverlay};
+
+    assert_layout_is_cached(ProgressBar::new);
+    assert_layout_is_cached(|| ThemeOverlay::new(Gauge::value(0.5), |_| ()));
+    assert_layout_is_cached(|| ThemeOverlay::new(TextView::new("text"), |_| ()));
+
+    // The overlay shares the key of the view it wraps: it follows its size.
+    let mut overlay = ThemeOverlay::new(TextView::new("a"), |_| ());
+    let key = overlay.layout_key();
+    assert_eq!(overlay.layout_key(), key);
+    overlay.get_inner_mut().set_content("abc");
+    assert_ne!(overlay.layout_key(), key);
+    assert_eq!(overlay.required_size(Vec2::new(10, 1)), Vec2::new(3, 1));
 }
