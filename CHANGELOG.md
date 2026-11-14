@@ -76,6 +76,7 @@
 
 ### Other
 
+- `Dialog::dismiss_on` closes the dialog on the given event (for example Esc).
 - Add `Cursive::play_events` to replay a scripted sequence of events, for demos and tests.
 - `ListView`: keep the focus consistent when rows are removed or replaced (including through
   `row_mut`), call `on_select` once when the focus is repaired, and keep forwarding mouse events
