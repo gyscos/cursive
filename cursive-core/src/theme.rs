@@ -37,6 +37,7 @@
 //! # First come some various options
 //! shadow = false  # Don't draw shadows around stacked views
 //! borders = "simple"  # Alternatives are "rounded", "outset" and "none"
+//! glyphs = "ascii"  # Decorations of form widgets. The alternative is "unicode"
 //!
 //! # Here we define the color palette.
 //! [colors]
@@ -136,6 +137,7 @@ pub use crate::style::{
     PaletteStyle, Style, StyleType,
 };
 
+use crate::style::GlyphSet;
 #[cfg(feature = "toml")]
 use std::fs::File;
 use std::io;
@@ -155,6 +157,11 @@ pub struct Theme {
     /// Border colors can be changed with the [`BORDER`](crate::style::BORDER) palette entry.
     pub borders: BorderStyle,
 
+    /// Which glyphs form widgets use for their decorations (checkmarks, brackets, fillers...).
+    ///
+    /// All sets use the same widths, so this never changes a layout.
+    pub glyphs: GlyphSet,
+
     /// What colors should be used through the application?
     pub palette: Palette,
 }
@@ -172,6 +179,7 @@ impl Theme {
         Theme {
             shadow: false,
             borders: BorderStyle::Simple,
+            glyphs: GlyphSet::Ascii,
             palette: Palette::terminal_default(),
         }
     }
@@ -181,6 +189,7 @@ impl Theme {
         Theme {
             shadow: true,
             borders: BorderStyle::Simple,
+            glyphs: GlyphSet::Ascii,
             palette: Palette::retro(),
         }
     }
@@ -199,6 +208,12 @@ impl Theme {
             && let Ok(style) = borders.parse()
         {
             self.borders = style;
+        }
+
+        if let Some(toml::Value::String(glyphs)) = table.get("glyphs")
+            && let Ok(glyphs) = glyphs.parse()
+        {
+            self.glyphs = glyphs;
         }
 
         if let Some(toml::Value::Table(table)) = table.get("colors") {
@@ -338,6 +353,23 @@ mod tests {
 
         // And a source.
         assert!(theme_error.source().is_some());
+    }
+
+    #[cfg(feature = "toml")]
+    #[test]
+    fn test_load_glyphs() {
+        assert_eq!(Theme::default().glyphs, GlyphSet::Ascii);
+        assert_eq!(Theme::terminal_default().glyphs, GlyphSet::Ascii);
+        assert_eq!(
+            load_toml("glyphs = \"unicode\"").unwrap().glyphs,
+            GlyphSet::Unicode
+        );
+        // Absent or invalid keys keep the default.
+        assert_eq!(load_toml("shadow = false").unwrap().glyphs, GlyphSet::Ascii);
+        assert_eq!(
+            load_toml("glyphs = \"fancy\"").unwrap().glyphs,
+            GlyphSet::Ascii
+        );
     }
 
     #[cfg(feature = "toml")]

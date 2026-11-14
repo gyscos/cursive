@@ -43,7 +43,7 @@ type Patch = dyn Fn(&mut Theme) + Send + Sync;
 ///
 /// # Blueprint
 ///
-/// In a blueprint, the `theme_overlay` decorator can set the `shadow`, `borders`, `palette`
+/// In a blueprint, the `theme_overlay` decorator can set the `shadow`, `borders`, `glyphs`, `palette`
 /// and `styles` of the theme. Colors in `palette` are concrete colors, or `{parent: name}` to
 /// take the color `name` from the parent theme: a standard palette color (`background`) or a
 /// custom color (`charts.axis`). Names are looked up in the theme as it was before this
@@ -166,6 +166,7 @@ crate::manual_blueprint!(with theme_overlay, |config, context| {
 
     let shadow: Option<bool> = context.resolve(&config["shadow"])?;
     let borders: Option<crate::style::BorderStyle> = context.resolve(&config["borders"])?;
+    let glyphs: Option<crate::style::GlyphSet> = context.resolve(&config["glyphs"])?;
     let colors = resolve_overlay_colors(&config["palette"], context)?;
     let styles = resolve_palette_styles(&config["styles"], context)?;
 
@@ -176,6 +177,9 @@ crate::manual_blueprint!(with theme_overlay, |config, context| {
             }
             if let Some(borders) = borders {
                 theme.borders = borders;
+            }
+            if let Some(glyphs) = glyphs {
+                theme.glyphs = glyphs;
             }
             // Read the colors from the parent theme before changing anything.
             let colors: Vec<_> = colors

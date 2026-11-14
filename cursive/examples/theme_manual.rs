@@ -10,6 +10,7 @@ fn main() {
     siv.set_theme(cursive::theme::Theme {
         shadow: true,
         borders: BorderStyle::Simple,
+        glyphs: cursive::style::GlyphSet::Ascii,
         palette: Palette::retro().with(|palette| {
             use cursive::style::BaseColor::*;
 
