@@ -40,6 +40,12 @@ pub struct Menubar {
     pub autohide: bool,
     focus: usize,
 
+    /// Whether the user has ever selected an item (the menubar was activated).
+    ///
+    /// Until then `focus` is only the default starting position, not a
+    /// selection to preserve when items are inserted.
+    touched: bool,
+
     // TODO: make Menubar impl View and take out the State management
     state: State,
 }
@@ -54,6 +60,7 @@ impl Menubar {
             autohide: true,
             state: State::Inactive,
             focus: 0,
+            touched: false,
         }
     }
 
@@ -80,7 +87,10 @@ impl Menubar {
     /// Adds a new item to the menubar.
     pub fn insert(&mut self, i: usize, item: menu::Item) -> &mut Self {
         self.root.insert(i, item);
-        if self.len() > 1 && i <= self.focus {
+        // Keep an existing selection on the same item when inserting before it.
+        // An untouched menubar has no selection yet: its default position
+        // stays on the leftmost item.
+        if self.touched && self.len() > 1 && i <= self.focus {
             self.focus += 1;
         }
         self
@@ -150,6 +160,7 @@ impl Menubar {
     pub fn clear(&mut self) {
         self.root.clear();
         self.focus = 0;
+        self.touched = false;
         self.hide();
     }
 
@@ -425,6 +436,7 @@ impl View for Menubar {
             return Err(CannotFocus);
         };
         self.focus = index;
+        self.touched = true;
         self.state = State::Selected;
         Ok(EventResult::consumed())
     }
@@ -547,5 +559,46 @@ mod tests {
         siv.menubar().clear();
         siv.on_event(Event::Key(Key::Right));
         assert!(!siv.menubar().receive_events());
+    }
+
+    #[test]
+    fn insert_before_untouched_menubar_keeps_leftmost_default() {
+        let mut bar = Menubar::new();
+        bar.add_leaf("File", |_| {});
+        bar.insert_leaf(0, "App", |_| {});
+        bar.insert_leaf(0, "Zero", |_| {});
+        bar.take_focus(direction::Direction::none()).unwrap();
+        assert_eq!(bar.focus, 0);
+        assert_eq!(bar.root.children[bar.focus].label(), "Zero");
+    }
+
+    #[test]
+    fn insert_and_remove_keep_active_selection() {
+        let mut bar = Menubar::new();
+        bar.add_leaf("a", |_| {})
+            .add_leaf("b", |_| {})
+            .add_leaf("c", |_| {});
+        bar.take_focus(direction::Direction::none()).unwrap();
+        bar.on_event(Event::Key(Key::Right));
+        assert_eq!(bar.root.children[bar.focus].label(), "b");
+
+        // After the selection: nothing changes.
+        bar.insert_leaf(3, "d", |_| {});
+        assert_eq!(bar.root.children[bar.focus].label(), "b");
+        // Before (and at) the selection: same item stays selected.
+        bar.insert_leaf(1, "x", |_| {});
+        bar.insert_leaf(0, "y", |_| {});
+        assert_eq!(bar.root.children[bar.focus].label(), "b");
+        // Removals mirror this.
+        bar.remove(0);
+        bar.remove(0);
+        assert_eq!(bar.root.children[bar.focus].label(), "b");
+        bar.remove(bar.len() - 1);
+        assert_eq!(bar.root.children[bar.focus].label(), "b");
+
+        // Still the same once the menubar went inactive again.
+        bar.hide();
+        bar.insert_leaf(0, "z", |_| {});
+        assert_eq!(bar.root.children[bar.focus].label(), "b");
     }
 }
