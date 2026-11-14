@@ -19,14 +19,31 @@ impl Inner {
 
 /// A shared sequence of numbers, to be drawn by data views.
 ///
-/// This is the data behind [`Chart`](crate::views::Chart), [`Sparkline`](crate::views::Sparkline)
-/// and [`Heatmap`](crate::views::Heatmap). Values are ordered from the oldest to the most recent.
+/// This is the data behind [`Chart`](crate::views::Chart), [`Sparkline`](crate::views::Sparkline),
+/// [`Heatmap`](crate::views::Heatmap) and [`Gauge`](crate::views::Gauge). Values are ordered from the oldest to the most recent.
 ///
 /// Cloning a `Series` gives another handle to the same data: give one to a view, keep the other
 /// to add values later, possibly from another thread.
 ///
 /// Note that adding values does not by itself refresh the screen: see
 /// [`Cursive::set_fps`](crate::Cursive::set_fps) or [`Cursive::cb_sink`](crate::Cursive::cb_sink).
+///
+/// # Invalid values
+///
+/// A sample that is not a finite number (`NaN`, `+inf` or `-inf`) is not data: views do not
+/// draw it, and it never takes part in the scale of the view, whatever its [`ValueRange`](
+/// crate::views::ValueRange). Its place in the series is kept: it still takes a column, and it
+/// breaks a line plot. A view that only has such samples looks like a view without data.
+///
+/// [`Bounds::finite_ratio`](crate::views::Bounds::finite_ratio) is what views use to
+/// apply this rule. What "not drawn" means for each view:
+///
+/// * [`Chart`](crate::views::Chart): nothing is drawn for the sample. A line plot has a gap
+///   there, and an area plot an empty column. The axis and legend do not change.
+/// * [`Sparkline`](crate::views::Sparkline): the column of the sample is left empty.
+/// * [`Heatmap`](crate::views::Heatmap): the cell is left unset, so the background shows.
+/// * [`Gauge`](crate::views::Gauge): when the current value is not finite, only the track is
+///   shown, like an empty series.
 ///
 /// # Examples
 ///

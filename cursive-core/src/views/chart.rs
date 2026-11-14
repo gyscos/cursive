@@ -74,7 +74,8 @@ impl Plot {
     /// The line is drawn with braille dots, so a cell shows two samples. Consecutive samples
     /// are connected.
     ///
-    /// Samples that are not finite (`NaN` or infinite) are not drawn, and leave a gap in the line.
+    /// Samples that are not finite leave a gap in the line: see
+    /// [Invalid values](Series#invalid-values).
     pub fn line(series: impl Into<Series>) -> Self {
         Self::new(PlotKind::Line, series)
     }
@@ -84,7 +85,8 @@ impl Plot {
     /// Each sample is a column of blocks, from the bottom of the chart up to the sample's value.
     /// A cell shows one sample.
     ///
-    /// Samples that are not finite (`NaN` or infinite) are not drawn, and leave an empty column.
+    /// Samples that are not finite leave an empty column: see
+    /// [Invalid values](Series#invalid-values).
     pub fn area(series: impl Into<Series>) -> Self {
         Self::new(PlotKind::Area, series)
     }
@@ -146,6 +148,9 @@ type LabelFormatter = Arc<dyn Fn(f64) -> String + Send + Sync>;
 /// Adding values does not by itself redraw the screen. Either call
 /// [`Cursive::set_fps`](crate::Cursive::set_fps) to refresh periodically, or trigger a refresh
 /// from a callback sent through [`Cursive::cb_sink`](crate::Cursive::cb_sink).
+///
+/// Samples that are not finite numbers are not drawn and do not affect the scale: see
+/// [Invalid values](Series#invalid-values).
 ///
 /// # Size
 ///
@@ -436,11 +441,10 @@ impl Chart {
         let visible = &values[values.len().saturating_sub(size.x)..];
         let start = size.x - visible.len();
         for (i, &value) in visible.iter().enumerate() {
-            if !value.is_finite() {
+            let Some(ratio) = bounds.finite_ratio(value) else {
                 continue;
-            }
+            };
             let column = start + i;
-            let ratio = bounds.ratio(value);
             printer.print_vbar_with((column, 0), size.y, ratio, |row| {
                 ColorStyle::front(fill.color_at(FillPos::cell(column, row, size, ratio)))
             });
@@ -460,13 +464,12 @@ impl Chart {
 
         let mut previous = None;
         for (i, &value) in visible.iter().enumerate() {
-            if !value.is_finite() {
+            let Some(ratio) = bounds.finite_ratio(value) else {
                 // Leave a gap.
                 previous = None;
                 continue;
-            }
+            };
             let x = start + i;
-            let ratio = bounds.ratio(value);
             let y = dots.y - 1 - (ratio * (dots.y - 1) as f32).round() as usize;
             let color = fill.color_at(FillPos {
                 x: fraction(x, dots.x),
@@ -774,6 +777,78 @@ mod tests {
         // The gap is not connected. Dots: bottom left, nothing, top right.
         let chart = bare(0.0, 3.0).plot(Plot::line([0.0, f64::NAN, 3.0]));
         assert_eq!(rows(&chart, (2, 1)), ["⢀⠈"]);
+    }
+
+    const NAN: f64 = f64::NAN;
+    const INF: f64 = f64::INFINITY;
+    const NEG_INF: f64 = f64::NEG_INFINITY;
+
+    #[test]
+    fn invalid_samples_do_not_change_the_scale() {
+        // Area: the scale is the one of the finite samples (0 to 4 with the default range).
+        let mixed = [2.0, NAN, 4.0, INF, NEG_INF, 3.0];
+        let area = bare_auto().plot(Plot::area(mixed));
+        let reference = bare(0.0, 4.0).plot(Plot::area(mixed));
+        assert_eq!(rows(&area, (6, 2)), rows(&reference, (6, 2)));
+        assert_eq!(rows(&area, (6, 2)), ["  █  ▄", "█ █  █"]);
+
+        // Line.
+        let line = bare_auto().plot(Plot::line(mixed));
+        let reference = bare(0.0, 4.0).plot(Plot::line(mixed));
+        assert_eq!(rows(&line, (3, 2)), rows(&reference, (3, 2)));
+
+        // The axis only depends on the finite samples.
+        for plot in [Plot::area, Plot::line] {
+            let mixed = Chart::new().plot(plot(vec![40.0, NAN, INF, NEG_INF, 100.0]));
+            let finite = Chart::new().plot(plot(vec![40.0, 100.0]));
+            let labels = |chart: &Chart| -> Vec<String> {
+                rows(chart, (12, 5))
+                    .iter()
+                    .map(|row| row.chars().take(5).collect())
+                    .collect()
+            };
+            assert_eq!(labels(&mixed), labels(&finite));
+            assert!(labels(&mixed)[0].contains("100"));
+        }
+    }
+
+    #[test]
+    fn only_invalid_samples_draw_like_no_data() {
+        let empty = Chart::new()
+            .plot(Plot::area(Series::new()).label("a"))
+            .plot(Plot::line(Series::new()).label("b"))
+            .legend(true);
+        let invalid = Chart::new()
+            .plot(Plot::area([NAN, INF, NEG_INF]).label("a"))
+            .plot(Plot::line([NAN, NAN, INF, NEG_INF]).label("b"))
+            .legend(true);
+        assert_eq!(rows(&invalid, (20, 5)), rows(&empty, (20, 5)));
+
+        // They do not disturb the scale, the axis or the legend of the other plots either.
+        let with = Chart::new()
+            .plot(Plot::area([1.0, 5.0, 3.0]).label("a"))
+            .plot(Plot::line([INF, NAN, NEG_INF]).label("b"))
+            .legend(true);
+        let without = Chart::new()
+            .plot(Plot::area([1.0, 5.0, 3.0]).label("a"))
+            .plot(Plot::line(Series::new()).label("b"))
+            .legend(true);
+        assert_eq!(rows(&with, (20, 5)), rows(&without, (20, 5)));
+        assert!(rows(&with, (20, 5))[0].contains('a') && rows(&with, (20, 5))[0].contains('b'));
+    }
+
+    #[test]
+    fn invalid_samples_survive_every_size() {
+        let chart = Chart::new()
+            .plot(Plot::area([1.0, NAN, INF, 3.0, NEG_INF]).label("a"))
+            .plot(Plot::line([NAN, 2.0, INF, NEG_INF, NAN, 1.0]).label("b"))
+            .plot(Plot::line([NAN; 3]))
+            .legend(true);
+        for width in 0..=6 {
+            for height in 0..=4 {
+                draw(&chart, (width, height));
+            }
+        }
     }
 
     #[test]

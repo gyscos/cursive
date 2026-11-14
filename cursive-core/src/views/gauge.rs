@@ -25,11 +25,16 @@ enum Source {
 /// The value comes from one of three sources:
 ///
 /// * The latest value of a [`Series`], with [`Gauge::new`]. An empty series
-///   shows only the track (nothing with [`BarStyle::Solid`]).
+///   shows only the track.
 /// * A fixed number, with [`Gauge::value`].
 /// * A closure, with [`Gauge::live`]. It is called when the gauge is drawn.
 ///
 /// Setting a new source replaces the previous one.
+///
+/// A value that is not a finite number (from any source) is not data: see
+/// [Invalid values](Series#invalid-values). The gauge then shows only the track, like an
+/// empty series. [`BarStyle::Solid`] has no track, so it shows only the background of the
+/// view, like a value of zero.
 ///
 /// The [`Fill`] sees the whole bar as its area: [`Fill::by_value`] colors the
 /// bar according to the current value, and [`Fill::horizontal`] gives a gradient
@@ -271,10 +276,10 @@ impl View for Gauge {
             Source::Value(value) => Some(*value),
             Source::Live(source) => Some(source()),
         };
-        let ratio = match value {
-            Some(value) => self.range.resolve([value]).ratio(value),
-            None => 0.0,
-        };
+        // No value, or not a number: only the track.
+        let ratio = value
+            .and_then(|value| self.range.resolve([value]).finite_ratio(value))
+            .unwrap_or(0.0);
         Bar {
             style: self.style,
             eighths: self.style.eighths(ratio, width),
@@ -409,6 +414,56 @@ mod tests {
         assert_eq!(fronts(&line(Series::new()), 3), [BLUE; 3]);
         assert_eq!(render(&block(Series::new()), 3), "___");
         assert_eq!(backs(&block(Series::new()), 3), [BLUE; 3]);
+    }
+
+    #[test]
+    fn invalid_values_show_only_the_track() {
+        let invalid = [f64::NAN, f64::INFINITY, f64::NEG_INFINITY];
+        let ranges = [
+            ValueRange::fixed(0.0, 1.0),
+            ValueRange::auto(),
+            ValueRange::default(),
+        ];
+        for style in [BarStyle::Solid, BarStyle::Line, BarStyle::Block] {
+            for range in ranges {
+                let empty = line(Series::new()).style(style).range(range);
+                for value in invalid {
+                    let expected = (render(&empty, 4), fronts(&empty, 4), backs(&empty, 4));
+                    let sources = [
+                        // A series, even if an older value was fine.
+                        line([0.5, value]),
+                        line([value]),
+                        Gauge::value(value).fill(RED).track(BLUE),
+                        Gauge::live(move || value).fill(RED).track(BLUE),
+                    ];
+                    for gauge in sources {
+                        let gauge = gauge.style(style).range(range);
+                        let got = (render(&gauge, 4), fronts(&gauge, 4), backs(&gauge, 4));
+                        assert_eq!(got, expected, "{style:?} {range:?} {value}");
+                    }
+                }
+            }
+        }
+        // Concretely.
+        assert_eq!(fronts(&line([f64::INFINITY]), 3), [BLUE; 3]);
+        assert_eq!(fronts(&Gauge::value(f64::NAN).track(BLUE), 3), [BLUE; 3]);
+        assert_eq!(backs(&block([f64::NEG_INFINITY]), 3), [BLUE; 3]);
+        // `Solid` has no track: like a value of zero, only blank cells.
+        let solid = Gauge::value(f64::INFINITY).style(BarStyle::Solid);
+        let zero = Gauge::value(0.0).style(BarStyle::Solid);
+        assert_eq!(render(&solid, 3), "_..");
+        assert_eq!(render(&solid, 3), render(&zero, 3));
+        assert_eq!(backs(&solid, 3), backs(&zero, 3));
+    }
+
+    #[test]
+    fn a_valid_value_after_an_invalid_one_is_drawn() {
+        let series = Series::new();
+        let gauge = block(&series);
+        series.push(f64::NAN);
+        assert_eq!(render(&gauge, 4), "____");
+        series.push(0.5);
+        assert_eq!(render(&gauge, 4), "██__");
     }
 
     #[test]
