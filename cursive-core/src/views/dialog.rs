@@ -118,6 +118,9 @@ pub struct Dialog {
 
     // `true` when we needs to relayout
     invalidated: bool,
+
+    // Events that dismiss the dialog when nothing else consumed them.
+    dismiss_events: Vec<Event>,
 }
 
 new_default!(Dialog);
@@ -143,6 +146,7 @@ impl Dialog {
             borders: Margins::lrtb(1, 1, 1, 1),
             align: Align::top_right(),
             invalidated: true,
+            dismiss_events: Vec::new(),
         }
     }
 
@@ -347,9 +351,47 @@ impl Dialog {
     /// ```
     #[must_use]
     pub fn dismiss_button<S: Into<StyledString>>(self, label: S) -> Self {
-        self.button(label, |s| {
-            s.pop_layer();
-        })
+        self.button(label, Self::dismiss)
+    }
+
+    // Removes the top layer. Shared by the dismiss button and dismiss events.
+    fn dismiss(s: &mut Cursive) {
+        s.pop_layer();
+    }
+
+    /// Closes the dialog when it receives the given event.
+    ///
+    /// The event is only handled if neither the content nor the buttons consumed it, and
+    /// it is then consumed by the dialog (so global callbacks for it do not run).
+    /// The dialog is dismissed like with [`Dialog::dismiss_button`]: the top layer is popped.
+    ///
+    /// Can be called several times to register several events.
+    ///
+    /// Chainable variant of [`Dialog::add_dismiss_event`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cursive_core::event::Key;
+    /// use cursive_core::views::Dialog;
+    ///
+    /// let dialog = Dialog::text("Press Esc to close").dismiss_on(Key::Esc);
+    /// ```
+    #[must_use]
+    pub fn dismiss_on<E: Into<Event>>(self, event: E) -> Self {
+        self.with(|s| s.add_dismiss_event(event))
+    }
+
+    /// Closes the dialog when it receives the given event.
+    ///
+    /// Non-chainable variant of [`Dialog::dismiss_on`].
+    pub fn add_dismiss_event<E: Into<Event>>(&mut self, event: E) {
+        self.dismiss_events.push(event.into());
+    }
+
+    /// Removes all events registered with [`Dialog::dismiss_on`].
+    pub fn clear_dismiss_events(&mut self) {
+        self.dismiss_events.clear();
     }
 
     /// Sets the title of the dialog.
@@ -878,13 +920,20 @@ impl View for Dialog {
             .check_focus_grab(&event)
             .unwrap_or(EventResult::Ignored);
 
-        res.and(match self.focus {
+        let dismiss = self.dismiss_events.contains(&event);
+
+        let handled = res.and(match self.focus {
             // If we are on the content, we can only go down.
             // TODO: Careful if/when we add buttons elsewhere on the dialog!
             DialogFocus::Content => self.on_event_content(event),
             // If we are on a button, we have more choice
             DialogFocus::Button(i) => self.on_event_button(event, i),
-        })
+        });
+
+        match handled {
+            EventResult::Ignored if dismiss => EventResult::with_cb(Self::dismiss),
+            res => res,
+        }
     }
 
     fn take_focus(&mut self, source: Direction) -> Result<EventResult, CannotFocus> {
@@ -1058,6 +1107,77 @@ mod tests {
     use crate::theme::Theme;
     use parking_lot::RwLock;
 
+    fn esc_dismisses(dialog: Dialog) -> (bool, usize) {
+        // Returns (event consumed, layers left after running the callback).
+        let mut siv = Cursive::new();
+        siv.add_layer(DummyView);
+        siv.add_layer(dialog);
+        let res = siv.screen_mut().on_event(Event::Key(Key::Esc));
+        let consumed = res.is_consumed();
+        res.process(&mut siv);
+        (consumed, siv.screen().len())
+    }
+
+    #[test]
+    fn dismiss_on_absent_by_default() {
+        let mut dialog = Dialog::text("hi");
+        assert!(matches!(
+            dialog.on_event(Event::Key(Key::Esc)),
+            EventResult::Ignored
+        ));
+        assert_eq!(esc_dismisses(Dialog::text("hi")), (false, 2));
+    }
+
+    #[test]
+    fn dismiss_on_closes_dialog() {
+        let mut dialog = Dialog::text("hi").dismiss_on(Key::Esc);
+        assert!(matches!(
+            dialog.on_event(Event::Key(Key::Esc)),
+            EventResult::Consumed(Some(_))
+        ));
+        assert!(matches!(
+            dialog.on_event(Event::Key(Key::Enter)),
+            EventResult::Ignored
+        ));
+        assert_eq!(
+            esc_dismisses(Dialog::text("hi").dismiss_on(Key::Esc)),
+            (true, 1)
+        );
+        // Also when a button has focus.
+        let mut dialog = Dialog::text("hi").button("Ok", |_| {}).dismiss_on(Key::Esc);
+        dialog.set_focus(DialogFocus::Button(0));
+        assert!(matches!(
+            dialog.on_event(Event::Key(Key::Esc)),
+            EventResult::Consumed(Some(_))
+        ));
+    }
+
+    #[test]
+    fn dismiss_on_lets_content_consume_first() {
+        use crate::views::OnEventView;
+        let content = OnEventView::new(TextView::new("hi")).on_event(Key::Esc, |_| {});
+        let dialog = Dialog::around(content).dismiss_on(Key::Esc);
+        assert_eq!(esc_dismisses(dialog), (true, 2));
+    }
+
+    #[test]
+    fn dismiss_on_several_and_clear() {
+        let mut dialog = Dialog::text("hi")
+            .dismiss_on(Key::Esc)
+            .dismiss_on(Event::Char('q'));
+        for event in [Event::Key(Key::Esc), Event::Char('q')] {
+            assert!(matches!(
+                dialog.on_event(event),
+                EventResult::Consumed(Some(_))
+            ));
+        }
+        dialog.clear_dismiss_events();
+        for event in [Event::Key(Key::Esc), Event::Char('q')] {
+            assert!(matches!(dialog.on_event(event), EventResult::Ignored));
+        }
+        dialog.add_dismiss_event(Key::Esc);
+        assert!(dialog.on_event(Event::Key(Key::Esc)).is_consumed());
+    }
     // #813: with a button focused, the important area must point at that button,
     // so a wrapping ScrollView scrolls far enough down to reveal it.
     #[test]
