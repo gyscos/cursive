@@ -66,7 +66,7 @@
 //! [config]: https://github.com/gyscos/cursive/blob/main/cursive/examples/builder.yaml
 #![cfg_attr(not(feature = "builder"), allow(unused))]
 
-mod resolvable;
+pub(crate) mod resolvable;
 
 pub use self::resolvable::{NoConfig, Resolvable};
 

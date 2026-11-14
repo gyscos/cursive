@@ -381,6 +381,62 @@ impl Color {
         }
     }
 
+    /// Returns the RGB value of this color, when it is known.
+    ///
+    /// * `Color::Rgb` is returned as-is.
+    /// * `Color::RgbLowRes` maps each channel `n` (in `0..=5`) to `n * 51`. A channel above 5
+    ///   (the variant can be built by hand) counts as 5.
+    /// * `Color::Dark` and `Color::Light` use the default xterm palette. This
+    ///   is only an approximation: the terminal decides the actual values, and
+    ///   many use their own palette.
+    /// * `Color::TerminalDefault` returns `None`, since there is no way to
+    ///   know what the terminal will show.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use cursive_core::style::{BaseColor, Color, Rgb};
+    ///
+    /// assert_eq!(Color::Rgb(1, 2, 3).to_rgb(), Some(Rgb::new(1, 2, 3)));
+    /// assert_eq!(
+    ///     Color::RgbLowRes(5, 0, 1).to_rgb(),
+    ///     Some(Rgb::new(255, 0, 51))
+    /// );
+    /// assert_eq!(
+    ///     Color::Light(BaseColor::Red).to_rgb(),
+    ///     Some(Rgb::new(255, 0, 0))
+    /// );
+    /// assert_eq!(Color::TerminalDefault.to_rgb(), None);
+    /// ```
+    pub fn to_rgb(self) -> Option<Rgb<u8>> {
+        let (r, g, b) = match self {
+            Color::TerminalDefault => return None,
+            Color::Rgb(r, g, b) => (r, g, b),
+            Color::RgbLowRes(r, g, b) => (r.min(5) * 51, g.min(5) * 51, b.min(5) * 51),
+            Color::Dark(base) => match base {
+                BaseColor::Black => (0, 0, 0),
+                BaseColor::Red => (205, 0, 0),
+                BaseColor::Green => (0, 205, 0),
+                BaseColor::Yellow => (205, 205, 0),
+                BaseColor::Blue => (0, 0, 238),
+                BaseColor::Magenta => (205, 0, 205),
+                BaseColor::Cyan => (0, 205, 205),
+                BaseColor::White => (229, 229, 229),
+            },
+            Color::Light(base) => match base {
+                BaseColor::Black => (127, 127, 127),
+                BaseColor::Red => (255, 0, 0),
+                BaseColor::Green => (0, 255, 0),
+                BaseColor::Yellow => (255, 255, 0),
+                BaseColor::Blue => (92, 92, 255),
+                BaseColor::Magenta => (255, 0, 255),
+                BaseColor::Cyan => (0, 255, 255),
+                BaseColor::White => (255, 255, 255),
+            },
+        };
+        Some(Rgb::new(r, g, b))
+    }
+
     /// Creates a `Color::RgbLowRes` from the given values for red, green and
     /// blue.
     ///
@@ -508,7 +564,51 @@ fn load_hex(s: &str) -> u16 {
 
 #[cfg(test)]
 mod tests {
-    use super::Color;
+    use super::{BaseColor, Color, Rgb};
+
+    #[test]
+    fn to_rgb_clamps_out_of_range_low_res_channels() {
+        // Channels go from 0 to 5, but the variant can be built with any `u8`.
+        assert_eq!(
+            Color::RgbLowRes(6, 5, 200).to_rgb(),
+            Some(Rgb::new(255, 255, 255))
+        );
+        assert_eq!(
+            Color::RgbLowRes(255, 0, 5).to_rgb(),
+            Some(Rgb::new(255, 0, 255))
+        );
+    }
+
+    #[test]
+    fn test_to_rgb() {
+        assert_eq!(Color::Rgb(1, 2, 3).to_rgb(), Some(Rgb::new(1, 2, 3)));
+        assert_eq!(
+            Color::RgbLowRes(0, 3, 5).to_rgb(),
+            Some(Rgb::new(0, 153, 255))
+        );
+        assert_eq!(
+            Color::Dark(BaseColor::Blue).to_rgb(),
+            Some(Rgb::new(0, 0, 238))
+        );
+        assert_eq!(
+            Color::Dark(BaseColor::White).to_rgb(),
+            Some(Rgb::new(229, 229, 229))
+        );
+        assert_eq!(
+            Color::Light(BaseColor::Black).to_rgb(),
+            Some(Rgb::new(127, 127, 127))
+        );
+        assert_eq!(
+            Color::Light(BaseColor::Blue).to_rgb(),
+            Some(Rgb::new(92, 92, 255))
+        );
+        assert_eq!(Color::TerminalDefault.to_rgb(), None);
+        // Every base color resolves.
+        for base in BaseColor::all() {
+            assert!(Color::Dark(base).to_rgb().is_some());
+            assert!(Color::Light(base).to_rgb().is_some());
+        }
+    }
 
     #[test]
     fn test_256_colors() {

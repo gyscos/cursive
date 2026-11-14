@@ -57,7 +57,8 @@ fn main() {
                         theme.palette[View] = TerminalDefault;
                         BorderStyle::Simple
                     }
-                    _ => {
+                    BorderStyle::Simple => BorderStyle::Rounded,
+                    BorderStyle::Rounded | BorderStyle::Outset => {
                         theme.palette[View] = Black.light();
                         BorderStyle::None
                     }

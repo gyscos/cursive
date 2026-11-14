@@ -200,6 +200,9 @@ where
 
 /// Draws a frame around the scrollable content.
 ///
+/// If the palette defines the `border` color (see [`BORDER`](crate::style::BORDER)), the frame
+/// uses it as its front color, like [`Printer::print_box`] does.
+///
 /// `left_border` will be called for each row to draw the left border for the given line number.
 pub fn draw_frame<T, LeftBorder, TopBorder, RightBorder, BottomBorder>(
     scroller: &T,
@@ -215,30 +218,39 @@ pub fn draw_frame<T, LeftBorder, TopBorder, RightBorder, BottomBorder>(
     RightBorder: FnMut(&T, &Printer, usize),
     BottomBorder: FnMut(&T, &Printer, usize),
 {
-    let viewport = scroller.get_scroller().content_viewport();
-    let size = printer.size.saturating_sub((1, 1));
+    printer.with_border_color(|printer| {
+        let viewport = scroller.get_scroller().content_viewport();
+        let size = printer.size.saturating_sub((1, 1));
 
-    for (i, x) in (viewport.left()..=viewport.right()).enumerate() {
-        top_border(scroller, &printer.offset((i + 1, 0)), x);
-        bottom_border(scroller, &printer.offset((i + 1, size.y)), x);
-    }
+        for (i, x) in (viewport.left()..=viewport.right()).enumerate() {
+            top_border(scroller, &printer.offset((i + 1, 0)), x);
+            bottom_border(scroller, &printer.offset((i + 1, size.y)), x);
+        }
 
-    // Also draw padding
-    let scrollbar_size = scroller.get_scroller().scrollbar_size();
-    printer.print_hline((viewport.right() + 2, 0), scrollbar_size.x, "─");
-    printer.print_hline((viewport.right() + 2, size.y), scrollbar_size.x, "─");
-    printer.print_vline((0, viewport.bottom() + 2), scrollbar_size.y, "│");
-    printer.print_vline((size.x, viewport.bottom() + 2), scrollbar_size.y, "│");
+        // Also draw padding
+        let scrollbar_size = scroller.get_scroller().scrollbar_size();
+        printer.print_hline((viewport.right() + 2, 0), scrollbar_size.x, "─");
+        printer.print_hline((viewport.right() + 2, size.y), scrollbar_size.x, "─");
+        printer.print_vline((0, viewport.bottom() + 2), scrollbar_size.y, "│");
+        printer.print_vline((size.x, viewport.bottom() + 2), scrollbar_size.y, "│");
 
-    for (i, y) in (viewport.top()..=viewport.bottom()).enumerate() {
-        left_border(scroller, &printer.offset((0, i + 1)), y);
-        right_border(scroller, &printer.offset((size.x, i + 1)), y);
-    }
+        for (i, y) in (viewport.top()..=viewport.bottom()).enumerate() {
+            left_border(scroller, &printer.offset((0, i + 1)), y);
+            right_border(scroller, &printer.offset((size.x, i + 1)), y);
+        }
 
-    printer.print((0, 0), "┌");
-    printer.print(size.keep_y(), "└");
-    printer.print(size.keep_x(), "┐");
-    printer.print(size, "┘");
+        // Draw the corners the same way `Printer::print_box` does.
+        // (This frame is always drawn, even when the theme has no borders.)
+        let [top_left, top_right, bottom_left, bottom_right] = printer
+            .theme
+            .borders
+            .corners()
+            .unwrap_or(["┌", "┐", "└", "┘"]);
+        printer.print((0, 0), top_left);
+        printer.print(size.keep_y(), bottom_left);
+        printer.print(size.keep_x(), top_right);
+        printer.print(size, bottom_right);
+    });
 }
 
 /// Draws a box-style frame around a scrollable content.

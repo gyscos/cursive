@@ -472,3 +472,97 @@ impl View for MenuPopup {
         .with(|area| area.offset((1, 1)))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::buffer::PrintBuffer;
+    use crate::style::{BORDER, BorderStyle, Color, ConcreteStyle};
+    use crate::theme::Theme;
+    use parking_lot::RwLock;
+
+    /// The size of the popup (and the buffer it is drawn in).
+    const SIZE: Vec2 = Vec2::new(5, 5);
+
+    /// Draws a popup with 2 items and a delimiter in the given style.
+    fn draw_popup(theme: &Theme, style: PaletteStyle) -> RwLock<PrintBuffer> {
+        let tree = menu::Tree::new()
+            .leaf("a", |_| ())
+            .delimiter()
+            .leaf("b", |_| ());
+        let mut popup = MenuPopup::new(Arc::new(tree));
+        let size = SIZE;
+        assert_eq!(popup.required_size(Vec2::new(10, 10)), size);
+        popup.layout(size);
+
+        let mut buffer = PrintBuffer::new();
+        buffer.resize(size);
+        let buffer = RwLock::new(buffer);
+        Printer::new(size, theme, &buffer).with_style(style, |printer| popup.draw(printer));
+        buffer
+    }
+
+    /// Returns the style of a cell printed by a printer using the given style.
+    fn style_of(theme: &Theme, style: PaletteStyle) -> ConcreteStyle {
+        let mut buffer = PrintBuffer::new();
+        buffer.resize(SIZE);
+        let buffer = RwLock::new(buffer);
+        Printer::new(SIZE, theme, &buffer).with_style(style, |p| p.print((0, 0), "x"));
+        let style = buffer.read().cell_style(Vec2::new(0, 0)).unwrap();
+        style
+    }
+
+    fn cell_style(buffer: &RwLock<PrintBuffer>, x: usize, y: usize) -> ConcreteStyle {
+        buffer.read().cell_style(Vec2::new(x, y)).unwrap()
+    }
+
+    /// Positions of frame cells: corners, edges, and the delimiter junction.
+    const FRAME: [(usize, usize); 8] = [
+        (0, 0),
+        (4, 0),
+        (0, 4),
+        (4, 4),
+        (2, 0),
+        (2, 4),
+        (0, 1),
+        (4, 3),
+    ];
+
+    #[test]
+    fn frame_uses_border_color_when_defined() {
+        // Draw in the view style, and in a style with a different background.
+        for style in [PaletteStyle::View, PaletteStyle::Highlight] {
+            let mut theme = Theme::retro();
+            theme.borders = BorderStyle::Rounded;
+            let caller = style_of(&theme, style);
+
+            // Without the entry, the frame is drawn in the caller's style.
+            let buffer = draw_popup(&theme, style);
+            for (x, y) in FRAME {
+                assert_eq!(
+                    cell_style(&buffer, x, y),
+                    caller,
+                    "({x}, {y}) without border, {style:?}"
+                );
+            }
+            assert_eq!(buffer.read().cell_text(Vec2::new(0, 0)), Some("╭"));
+            // The delimiter junctions are part of the frame too.
+            assert_eq!(buffer.read().cell_text(Vec2::new(0, 2)), Some("├"));
+            assert_eq!(buffer.read().cell_text(Vec2::new(4, 2)), Some("┤"));
+
+            // With the entry, only the front color changes.
+            let border = Color::Rgb(1, 2, 3);
+            theme.palette.set_custom_color(&BORDER, border);
+            let buffer = draw_popup(&theme, style);
+            for (x, y) in FRAME {
+                let cell = cell_style(&buffer, x, y);
+                assert_eq!(cell.color.front, border, "({x}, {y}) with border");
+                assert_eq!(cell.color.back, caller.color.back, "({x}, {y}) back");
+                assert_eq!(cell.effects, caller.effects, "({x}, {y}) effects");
+            }
+
+            // The content is not affected.
+            assert_ne!(cell_style(&buffer, 1, 1).color.front, border);
+        }
+    }
+}

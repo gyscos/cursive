@@ -36,7 +36,7 @@
 //!
 //! # First come some various options
 //! shadow = false  # Don't draw shadows around stacked views
-//! borders = "simple"  # Alternatives are "none" and "outset"
+//! borders = "simple"  # Alternatives are "rounded", "outset" and "none"
 //!
 //! # Here we define the color palette.
 //! [colors]
@@ -60,7 +60,61 @@
 //!     # Lower precision values can use only 3 digits.
 //!     highlight          = "#F00"
 //!     highlight_inactive = "#5555FF"
+//!
+//!     # Custom entries are allowed too. `border` is used by the standard
+//!     # views to draw borders (`style::BORDER`): it defaults to `primary`.
+//!     border = "#888888"
+//!     # `border_focused`, if set, is used around what has the focus.
+//!     border_focused = "#FFFFFF"
+//!
+//!     # Tables define namespaces of custom colors (here `chart.axis`).
+//!     [colors.chart]
+//!     axis = "#555555"
+//!
+//! # Styles can be defined too: standard ones (`highlight`, `title_primary`, ...)
+//! # or custom ones (`my_title`; `[styles.charts.title]` defines the style `title` in the
+//! # namespace `charts`). Styles nest like colors: `[styles.charts] title = { ... }` is the
+//! # same, and a namespace can hold both a color and a style called `title`, each in its own
+//! # section. In a blueprint, `styles: {charts: {title: ...}}` and `"charts.title": ...` both
+//! # work.
+//! # A style needs `effects`, `front` and `back`.
+//! # A table that has one of these keys is a style: if it cannot be parsed (a missing or
+//! # misspelled key, a wrong type, an unknown color), a warning names the style, and it is not
+//! # defined. Any other table is a namespace. The one exception: a namespace may hold styles
+//! # that are themselves called `front`, `back` or `effects` (`[styles.ns.front]`), as long as
+//! # they are tables holding a style or another namespace, not a color or a list of effects.
+//! [styles.my_title]
+//! effects = ["bold"]
+//! # A color is either a color (`"red"`, `"#ff0000"`), a palette color
+//! # (`"title_primary"`), or `"inherit_parent"`.
+//! # To use a custom color from the palette, write `{ custom = "name" }`.
+//! # An unknown name written as a plain string is an error, not a custom color.
+//! front = { custom = "chart.axis" }
+//! # Use a table to give a fallback (a color or a palette color), used when the
+//! # palette does not define the entry. Without it, the parent color is used.
+//! back = { custom = { name = "chart.background", fallback = "view" } }
 //! ```
+//!
+//! # Dots in names
+//!
+//! A dot in a name always separates namespaces, wherever the name is written, in `[colors]` and
+//! in `[styles]`: `[colors.chart] axis = ...`, `[colors] "chart.axis" = ...` and
+//! `[colors.chart] "deep.axis" = ...` (which is `chart.deep.axis`) all define colors that are
+//! read with a name like `chart.axis`. A quoted key with a dot in it is never a single name.
+//!
+//! An empty table defines nothing: `[colors.chart]` with no entry does not create an empty
+//! namespace (and does not replace an existing one, see below). The same palette read from a
+//! blueprint has the same entries, except that an empty object in `styles` is a style that
+//! changes nothing, not a namespace.
+//!
+//! # Loading over an existing theme
+//!
+//! A file only changes what it defines, but a namespace is replaced as a whole. A table in
+//! `[colors]` or `[styles]` (`[colors.chart]`, `[styles.charts]`) replaces the namespace of the
+//! same name in the theme it is loaded into, in that section only: entries the namespace had
+//! before and the file does not repeat are dropped. Entries that are set one by one, outside of
+//! a table (`axis = ...` in `[colors]`, `"chart.axis" = ...`), do not replace anything else, and
+//! namespaces the file does not mention are left as they were.
 //!
 //! [`Theme`]: ./struct.Theme.html
 //! [`Cursive::current_theme`]: ../struct.Cursive.html#method.current_theme
@@ -91,12 +145,14 @@ use std::io::Read;
 use std::path::Path;
 
 /// Represents the style a Cursive application will use.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Theme {
     /// Whether views in a StackView should have shadows.
     pub shadow: bool,
 
     /// How view borders should be drawn.
+    ///
+    /// Border colors can be changed with the [`BORDER`](crate::style::BORDER) palette entry.
     pub borders: BorderStyle,
 
     /// What colors should be used through the application?

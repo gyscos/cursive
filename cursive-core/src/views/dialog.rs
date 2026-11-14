@@ -94,6 +94,9 @@ pub struct Dialog {
     // Where to put the title position
     title_position: HAlign,
 
+    // Whether to draw `┤` and `├` around the title
+    title_delimiters: bool,
+
     // The actual inner view.
     content: LastSizeView<BoxedView>,
 
@@ -134,6 +137,7 @@ impl Dialog {
             buttons: Vec::new(),
             title: StyledString::new(),
             title_position: HAlign::Center,
+            title_delimiters: true,
             focus: DialogFocus::Content,
             padding: Margins::lr(1, 1),
             borders: Margins::lrtb(1, 1, 1, 1),
@@ -675,6 +679,33 @@ impl Dialog {
         );
     }
 
+    /// Sets whether the title is surrounded by delimiters (`┤ Title ├`).
+    ///
+    /// Without them, the title is only separated from the border by spaces.
+    ///
+    /// The default is `true`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use cursive_core::views::Dialog;
+    ///
+    /// let dialog = Dialog::text("Content")
+    ///     .title("Title")
+    ///     .title_delimiters(false);
+    /// ```
+    #[must_use]
+    pub fn title_delimiters(self, delimiters: bool) -> Self {
+        self.with(|s| s.set_title_delimiters(delimiters))
+    }
+
+    /// Sets whether the title is surrounded by delimiters (`┤ Title ├`).
+    ///
+    /// The default is `true`.
+    pub fn set_title_delimiters(&mut self, delimiters: bool) {
+        self.title_delimiters = delimiters;
+    }
+
     fn draw_title(&self, printer: &Printer) {
         if !self.title.is_empty() {
             let len = self.title.width();
@@ -687,9 +718,15 @@ impl Dialog {
                 + self
                     .title_position
                     .get_offset(len, printer.size.x - spacing_both_ends);
+            let (left, right) = if self.title_delimiters {
+                ("┤ ", " ├")
+            } else {
+                // Only leave a gap in the border.
+                ("─ ", " ─")
+            };
             printer.with_high_border(false, |printer| {
-                printer.print((x - 2, 0), "┤ ");
-                printer.print((x + len, 0), " ├");
+                printer.print((x - 2, 0), left);
+                printer.print((x + len, 0), right);
             });
 
             printer.with_style(PaletteStyle::TitlePrimary, |p| {
@@ -988,6 +1025,7 @@ impl Resolvable for Btn {
 struct Blueprint {
     title: String,
     title_position: Option<HAlign>,
+    title_delimiters: Option<bool>,
 
     content: Option<BoxedView>,
 
@@ -1054,5 +1092,30 @@ mod tests {
             dialog.important_area(size),
             Rect::from_corners((10, 3), (17, 3))
         );
+    }
+
+    #[test]
+    fn title_delimiters() {
+        fn top_row(dialog: &mut Dialog) -> String {
+            let size = Vec2::new(14, 3);
+            dialog.layout(size);
+
+            let theme = Theme::retro();
+            let mut buffer = PrintBuffer::new();
+            buffer.resize(size);
+            let buffer = RwLock::new(buffer);
+            dialog.draw(&Printer::new(size, &theme, &buffer));
+
+            let buffer = buffer.read();
+            (0..size.x)
+                .map(|x| buffer.cell_text(Vec2::new(x, 0)).unwrap_or(" ").to_string())
+                .collect()
+        }
+
+        let mut dialog = Dialog::new().title("Hi").title_position(HAlign::Left);
+        assert_eq!(top_row(&mut dialog), "┌┤ Hi ├──────┐");
+
+        dialog.set_title_delimiters(false);
+        assert_eq!(top_row(&mut dialog), "┌─ Hi ───────┐");
     }
 }

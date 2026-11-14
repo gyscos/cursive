@@ -1,4 +1,4 @@
-use super::{BaseColor, Color, ColorPair, Palette, PaletteColor};
+use super::{BaseColor, Color, ColorKey, ColorPair, Palette, PaletteColor, Rgb};
 use std::str::FromStr;
 
 /// Possible color style for a cell.
@@ -248,8 +248,8 @@ impl ColorStyle {
 
     #[cfg(feature = "toml")]
     pub(crate) fn parse(table: &toml::value::Table) -> Option<Self> {
-        let front = table.get("front")?.as_str()?.parse().ok()?;
-        let back = table.get("back")?.as_str()?.parse().ok()?;
+        let front = ColorType::parse_toml(table.get("front")?)?;
+        let back = ColorType::parse_toml(table.get("back")?)?;
 
         Some(ColorStyle { front, back })
     }
@@ -285,6 +285,18 @@ impl From<ColorType> for ColorStyle {
     }
 }
 
+impl From<Rgb<u8>> for ColorStyle {
+    fn from(color: Rgb<u8>) -> Self {
+        Self::front(color)
+    }
+}
+
+impl From<&'static ColorKey> for ColorStyle {
+    fn from(key: &'static ColorKey) -> Self {
+        Self::front(key)
+    }
+}
+
 impl<F, B> From<(F, B)> for ColorStyle
 where
     F: Into<ColorType>,
@@ -309,6 +321,12 @@ pub enum ColorType {
     /// Uses a direct color, independent of the current palette.
     Color(Color),
 
+    /// Uses a custom color from the application palette.
+    ///
+    /// If the palette does not define this color, the fallback from the key is used. A key named
+    /// like a standard color reads the standard color instead (see [`ColorKey`]).
+    Custom(&'static ColorKey),
+
     /// Re-uses the color from the parent.
     #[default]
     InheritParent,
@@ -320,6 +338,11 @@ impl ColorType {
         match self {
             ColorType::Color(color) => color,
             ColorType::Palette(color) => color.resolve(palette),
+            ColorType::Custom(key) => match palette.color_for_key(key.name()) {
+                Some(color) => color,
+                // The fallback is never another custom key.
+                None => key.fallback().resolve(palette, previous),
+            },
             ColorType::InheritParent => previous,
         }
     }
@@ -422,6 +445,44 @@ impl ColorType {
     }
 }
 
+impl ColorType {
+    /// Parses a color from a toml value.
+    ///
+    /// A string is a color or a palette color (see the `FromStr` implementation).
+    ///
+    /// A table with a `custom` key refers to a custom palette entry: `{ custom = "name" }`, or
+    /// `{ custom = { name = "name", fallback = "red" } }` to give a fallback (a color or palette
+    /// color name). Without a fallback, the entry inherits the parent color.
+    #[cfg(feature = "toml")]
+    pub(crate) fn parse_toml(value: &toml::Value) -> Option<Self> {
+        match value {
+            toml::Value::String(s) => s.parse().ok(),
+            toml::Value::Table(table) => {
+                if table.len() != 1 {
+                    return None;
+                }
+                let (name, fallback) = match table.get("custom")? {
+                    toml::Value::String(name) => (name.as_str(), ColorType::InheritParent),
+                    toml::Value::Table(custom) => {
+                        if custom.keys().any(|k| k != "name" && k != "fallback") {
+                            return None;
+                        }
+                        let name = custom.get("name")?.as_str()?;
+                        let fallback = match custom.get("fallback") {
+                            None => ColorType::InheritParent,
+                            Some(fallback) => fallback.as_str()?.parse().ok()?,
+                        };
+                        (name, fallback)
+                    }
+                    _ => return None,
+                };
+                Some(ColorType::Custom(super::ColorKey::intern(name, fallback)))
+            }
+            _ => None,
+        }
+    }
+}
+
 impl FromStr for ColorType {
     type Err = super::NoSuchColor;
 
@@ -457,5 +518,17 @@ impl From<Color> for ColorType {
 impl From<PaletteColor> for ColorType {
     fn from(color: PaletteColor) -> Self {
         ColorType::Palette(color)
+    }
+}
+
+impl From<Rgb<u8>> for ColorType {
+    fn from(color: Rgb<u8>) -> Self {
+        ColorType::Color(color.into())
+    }
+}
+
+impl From<&'static ColorKey> for ColorType {
+    fn from(key: &'static ColorKey) -> Self {
+        ColorType::Custom(key)
     }
 }

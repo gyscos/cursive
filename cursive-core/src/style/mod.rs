@@ -125,20 +125,23 @@
 //! [`ColorType`]: ./enum.ColorType.html
 //! [`ColorStyle`]: ./struct.ColorStyle.html
 mod border_style;
+pub mod chart;
 mod color;
 mod color_pair;
 mod color_style;
+pub mod custom;
 mod effect;
 pub mod gradient;
 mod palette;
 mod style_types;
 
-pub use self::border_style::BorderStyle;
+pub use self::border_style::{BORDER, BORDER_FOCUSED, BorderStyle};
 pub use self::color::{BaseColor, Color, Rgb};
 pub use self::color_pair::ColorPair;
 pub use self::color_style::{ColorStyle, ColorType};
+pub use self::custom::{ColorKey, StyleKey};
 pub use self::effect::{ConcreteEffects, Effect, EffectStatus, Effects};
-pub use self::palette::{Palette, PaletteColor, PaletteNode, PaletteStyle};
+pub use self::palette::{Palette, PaletteColor, PaletteNode, PaletteStyle, StyleNode};
 pub use self::style_types::{ConcreteStyle, Style, StyleType};
 
 /// Returns the number of variants in the given enum.

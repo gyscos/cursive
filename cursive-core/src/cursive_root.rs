@@ -308,6 +308,69 @@ impl Cursive {
         self.cb_sink.clone()
     }
 
+    /// Plays a scripted sequence of events, as if they were typed.
+    ///
+    /// Each event is sent after waiting for its delay, counted from the
+    /// previous event (or from this call for the first one). This returns
+    /// immediately: a background thread waits for each delay, then queues a
+    /// callback (through [`cb_sink`](Cursive::cb_sink)) that calls
+    /// [`on_event`](Cursive::on_event) on the UI thread. Scripted events
+    /// follow the same path as real input: the menubar, the focused view,
+    /// then the global callbacks.
+    ///
+    /// The thread ends after the last event, or as soon as the `Cursive`
+    /// instance is gone (it notices when trying to send the next event,
+    /// so it may first sleep for the remaining delay). It never keeps the
+    /// process alive. The returned handle can be used to wait for the end
+    /// of the script; it can be ignored.
+    ///
+    /// The application does not quit at the end of the script. End it with
+    /// an event that quits (for example a key bound to `quit`), or send a
+    /// callback yourself with [`cb_sink`](Cursive::cb_sink).
+    ///
+    /// The event loop processes queued callbacks within one polling period
+    /// (a few tens of milliseconds) and redraws the screen right after, so
+    /// there is no need for [`set_fps`](Cursive::set_fps) to see the effect
+    /// of each event. This holds for [`CursiveRunner::run`] and
+    /// [`CursiveRunner::step`] (so for the `run` methods of the `cursive`
+    /// crate); a custom loop must process callbacks itself.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use cursive_core::event::{Event, Key};
+    /// use std::time::Duration;
+    ///
+    /// let mut siv = cursive_core::Cursive::new();
+    /// siv.add_global_callback('q', |s| s.quit());
+    ///
+    /// // The script starts now; it plays while the event loop runs.
+    /// siv.play_events([
+    ///     (Duration::from_millis(500), Event::Key(Key::Down)),
+    ///     (Duration::from_millis(200), Event::Char('d')),
+    ///     (Duration::from_secs(1), Event::Char('q')),
+    /// ]);
+    ///
+    /// // Then run the event loop with a backend of your choice,
+    /// // for example `siv.run()` from the `cursive` crate.
+    /// ```
+    pub fn play_events<I>(&self, events: I) -> std::thread::JoinHandle<()>
+    where
+        I: IntoIterator<Item = (std::time::Duration, Event)>,
+    {
+        let events: Vec<_> = events.into_iter().collect();
+        let cb_sink = self.cb_sink();
+        std::thread::spawn(move || {
+            for (delay, event) in events {
+                std::thread::sleep(delay);
+                if cb_sink.send(Box::new(move |s| s.on_event(event))).is_err() {
+                    // The application is gone.
+                    return;
+                }
+            }
+        })
+    }
+
     /// Selects the menubar.
     pub fn select_menubar(&mut self) {
         if let Ok(res) = self.menubar.take_focus(direction::Direction::none()) {
@@ -974,3 +1037,112 @@ crate::fn_blueprint!("Cursive.quit", |_config, _context| {
     let cb: std::sync::Arc<dyn Fn(&mut Cursive) + Send + Sync> = std::sync::Arc::new(|s| s.quit());
     Ok(cb)
 });
+
+#[cfg(test)]
+mod test_play_events {
+    use super::*;
+    use crate::event::Key;
+    use crate::view::Nameable;
+    use crate::views::EditView;
+    use crate::{Vec2, style};
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::time::{Duration, Instant};
+
+    /// Backend with no input and no output.
+    struct Idle;
+
+    impl backend::Backend for Idle {
+        fn poll_event(&mut self) -> Option<Event> {
+            None
+        }
+        fn set_title(&mut self, _: String) {}
+        fn refresh(&mut self) {}
+        fn has_colors(&self) -> bool {
+            false
+        }
+        fn screen_size(&self) -> Vec2 {
+            Vec2::new(20, 5)
+        }
+        fn move_to(&self, _: Vec2) {}
+        fn print(&self, _: &str) {}
+        fn clear(&self, _: style::Color) {}
+        fn set_color(&self, colors: style::ColorPair) -> style::ColorPair {
+            colors
+        }
+        fn set_effect(&self, _: style::Effect) {}
+        fn unset_effect(&self, _: style::Effect) {}
+    }
+
+    fn ms(n: u64) -> Duration {
+        Duration::from_millis(n)
+    }
+
+    #[test]
+    fn events_arrive_in_order_and_take_effect() {
+        let mut siv = Cursive::new();
+        siv.add_layer(EditView::new().with_name("edit"));
+
+        let presses = Arc::new(AtomicUsize::new(0));
+        let counter = Arc::clone(&presses);
+        siv.add_global_callback(Key::F1, move |_| {
+            counter.fetch_add(1, Ordering::SeqCst);
+        });
+        siv.add_global_callback(Key::F2, |s| s.quit());
+
+        let handle = siv.play_events([
+            (ms(1), Event::Char('a')),
+            (ms(1), Event::Key(Key::F1)),
+            (ms(1), Event::Char('b')),
+            (ms(1), Event::Key(Key::F1)),
+            (ms(1), Event::Char('c')),
+            (ms(1), Event::Key(Key::F2)),
+        ]);
+
+        // Generous deadline, so that a failure cannot hang the test.
+        let deadline = Instant::now() + Duration::from_secs(20);
+        {
+            let mut runner = siv.runner(Box::new(Idle));
+            while runner.is_running() && Instant::now() < deadline {
+                runner.step();
+            }
+            assert!(!runner.is_running(), "script did not reach its quit event");
+        }
+
+        handle.join().unwrap();
+        assert_eq!(presses.load(Ordering::SeqCst), 2);
+        let content = siv
+            .call_on_name("edit", |v: &mut EditView| v.get_content())
+            .unwrap();
+        assert_eq!(&*content, "abc");
+    }
+
+    #[test]
+    fn empty_script_ends() {
+        let siv = Cursive::new();
+        siv.play_events(std::iter::empty()).join().unwrap();
+    }
+
+    #[test]
+    fn dropping_the_application_ends_the_script() {
+        let siv = Cursive::new();
+        let handle = siv.play_events([
+            (ms(50), Event::Char('a')),
+            (Duration::from_secs(3600), Event::Char('b')),
+        ]);
+        drop(siv);
+
+        // The first send fails after ~50ms, so the hour-long delay is never
+        // waited. Poll `is_finished` so that a regression fails instead of
+        // hanging.
+        let deadline = Instant::now() + Duration::from_secs(20);
+        while !handle.is_finished() && Instant::now() < deadline {
+            std::thread::sleep(ms(5));
+        }
+        assert!(
+            handle.is_finished(),
+            "script thread outlived the application"
+        );
+        handle.join().unwrap();
+    }
+}

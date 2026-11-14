@@ -38,6 +38,7 @@ impl Interpolator for Dynterpolator {
 }
 
 /// A linear gradient interpolating color for floats between 0 and 1.
+#[derive(Clone, Debug, PartialEq)]
 pub struct Linear {
     /// List of (position, color) intermediate points in the gradient.
     ///
