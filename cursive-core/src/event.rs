@@ -652,6 +652,310 @@ impl Event {
     }
 }
 
+/// Error returned when a string cannot be parsed as a [`Key`] or an [`Event`].
+///
+/// The message names the offending input.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseEventError {
+    input: String,
+    reason: &'static str,
+}
+
+impl ParseEventError {
+    fn new(input: &str, reason: &'static str) -> Self {
+        ParseEventError {
+            input: input.to_string(),
+            reason,
+        }
+    }
+
+    /// The input that could not be parsed.
+    pub fn input(&self) -> &str {
+        &self.input
+    }
+}
+
+impl std::fmt::Display for ParseEventError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "cannot parse {:?} as an event: {}",
+            self.input, self.reason
+        )
+    }
+}
+
+impl std::error::Error for ParseEventError {}
+
+// Canonical name of each key. `Display` prints these, `FromStr` accepts them in any case.
+const KEY_NAMES: &[(Key, &str)] = &[
+    (Key::Enter, "Enter"),
+    (Key::Tab, "Tab"),
+    (Key::Backspace, "Backspace"),
+    (Key::Esc, "Esc"),
+    (Key::Left, "Left"),
+    (Key::Right, "Right"),
+    (Key::Up, "Up"),
+    (Key::Down, "Down"),
+    (Key::Ins, "Ins"),
+    (Key::Del, "Del"),
+    (Key::Home, "Home"),
+    (Key::End, "End"),
+    (Key::PageUp, "PageUp"),
+    (Key::PageDown, "PageDown"),
+    (Key::PauseBreak, "PauseBreak"),
+    (Key::NumpadCenter, "NumpadCenter"),
+    (Key::F0, "F0"),
+    (Key::F1, "F1"),
+    (Key::F2, "F2"),
+    (Key::F3, "F3"),
+    (Key::F4, "F4"),
+    (Key::F5, "F5"),
+    (Key::F6, "F6"),
+    (Key::F7, "F7"),
+    (Key::F8, "F8"),
+    (Key::F9, "F9"),
+    (Key::F10, "F10"),
+    (Key::F11, "F11"),
+    (Key::F12, "F12"),
+];
+
+// Extra names accepted when parsing (compared case-insensitively).
+const KEY_ALIASES: &[(Key, &str)] = &[
+    (Key::Enter, "return"),
+    (Key::Esc, "escape"),
+    (Key::Ins, "insert"),
+    (Key::Del, "delete"),
+    (Key::PageUp, "pgup"),
+    (Key::PageDown, "pgdn"),
+];
+
+impl std::fmt::Display for Key {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = KEY_NAMES
+            .iter()
+            .find(|(k, _)| k == self)
+            .map_or("?", |(_, name)| name);
+        f.write_str(name)
+    }
+}
+
+/// Parses a key from its name.
+///
+/// The name is the name of the variant, case-insensitive: `Esc`, `enter`, `PageUp`, `F5`...
+/// A few aliases are also accepted: `return`, `escape`, `insert`, `delete`, `pgup` and `pgdn`.
+///
+/// `Display` prints the variant name, which parses back to the same key.
+///
+/// # Examples
+///
+/// ```
+/// use cursive_core::event::Key;
+///
+/// assert_eq!("Esc".parse::<Key>(), Ok(Key::Esc));
+/// assert_eq!("pageup".parse::<Key>(), Ok(Key::PageUp));
+/// assert!("nope".parse::<Key>().is_err());
+/// ```
+impl std::str::FromStr for Key {
+    type Err = ParseEventError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        KEY_NAMES
+            .iter()
+            .chain(KEY_ALIASES)
+            .find(|(_, name)| name.eq_ignore_ascii_case(s))
+            .map(|(key, _)| *key)
+            .ok_or_else(|| ParseEventError::new(s, "unknown key name"))
+    }
+}
+
+/// Parses an event from a string like `ctrl+c`, `alt+shift+up` or `F5`.
+///
+/// The syntax is some optional modifiers (`ctrl`, `alt`, `shift`; `control` is also accepted),
+/// each followed by `+`, and then a key name (see [`Key`]) or a single character.
+/// Modifiers and key names are case-insensitive, and modifiers can come in any order.
+/// A single character is case-sensitive: `a` and `A` are different events.
+///
+/// Only combinations that exist as an [`Event`] variant are accepted, so `ctrl+alt+c`,
+/// `shift+a` or `ctrl+alt+shift+left` are errors, as are repeated modifiers. With a character,
+/// the possible modifiers are `ctrl` or `alt` (alone). With a key, any of `shift`, `alt`,
+/// `ctrl`, `alt+shift`, `ctrl+shift` or `ctrl+alt`.
+///
+/// A trailing `+` is the character `+`: `+` is `Char('+')` and `ctrl++` is `CtrlChar('+')`.
+/// A single space is `Char(' ')`, and `space` is accepted as well.
+/// Surrounding whitespace is otherwise ignored.
+///
+/// Three events without data have a name: `refresh` ([`Event::Refresh`]), `resize`
+/// ([`Event::WindowResize`]) and `focus_lost` ([`Event::FocusLost`]). They take no modifiers.
+///
+/// Mouse events, unknown events and the exit event cannot be parsed.
+///
+/// # Examples
+///
+/// ```
+/// use cursive_core::event::{Event, Key};
+///
+/// assert_eq!("ctrl+c".parse::<Event>(), Ok(Event::CtrlChar('c')));
+/// assert_eq!(
+///     "Alt+Shift+Up".parse::<Event>(),
+///     Ok(Event::AltShift(Key::Up))
+/// );
+/// assert_eq!("a".parse::<Event>(), Ok(Event::Char('a')));
+/// assert_eq!("F5".parse::<Event>(), Ok(Event::Key(Key::F5)));
+/// assert_eq!("ctrl++".parse::<Event>(), Ok(Event::CtrlChar('+')));
+///
+/// // There is no event for this combination.
+/// assert!("ctrl+alt+c".parse::<Event>().is_err());
+/// ```
+impl std::str::FromStr for Event {
+    type Err = ParseEventError;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let err = |reason| ParseEventError::new(input, reason);
+
+        // A single character is always that character (even a space).
+        let mut it = input.chars();
+        if let (Some(c), None) = (it.next(), it.next()) {
+            return Ok(Event::Char(c));
+        }
+
+        let s = input.trim();
+        if s.is_empty() {
+            return Err(err("empty input"));
+        }
+
+        // A trailing `+` is the character, not a separator.
+        let (modifiers, key) = if let Some(prefix) = s.strip_suffix("++") {
+            (Some(prefix), "+")
+        } else if s == "+" {
+            (None, "+")
+        } else if s.ends_with('+') {
+            return Err(err("missing key after '+'"));
+        } else {
+            match s.rsplit_once('+') {
+                Some((prefix, key)) => (Some(prefix), key),
+                None => (None, s),
+            }
+        };
+
+        let (mut ctrl, mut alt, mut shift) = (false, false, false);
+        for modifier in modifiers.into_iter().flat_map(|m| m.split('+')) {
+            let flag = match modifier.trim().to_ascii_lowercase().as_str() {
+                "ctrl" | "control" => &mut ctrl,
+                "alt" => &mut alt,
+                "shift" => &mut shift,
+                "" => return Err(err("empty modifier")),
+                _ => return Err(err("unknown modifier")),
+            };
+            if std::mem::replace(flag, true) {
+                return Err(err("repeated modifier"));
+            }
+        }
+        let mods = (ctrl, alt, shift);
+
+        // Trim the key, unless it is a lone character (which could be whitespace).
+        let key = if key.chars().count() == 1 {
+            key
+        } else {
+            key.trim()
+        };
+        let mut it = key.chars();
+        let single = match (it.next(), it.next()) {
+            (Some(c), None) => Some(c),
+            _ => None,
+        };
+        let lower = key.to_ascii_lowercase();
+
+        let c = match (single, lower.as_str()) {
+            (Some(c), _) => Some(c),
+            (None, "space") => Some(' '),
+            _ => None,
+        };
+        if let Some(c) = c {
+            return match mods {
+                (false, false, false) => Ok(Event::Char(c)),
+                (true, false, false) => Ok(Event::CtrlChar(c)),
+                (false, true, false) => Ok(Event::AltChar(c)),
+                _ => Err(err(
+                    "no event for this combination of modifiers and character",
+                )),
+            };
+        }
+
+        let simple = match lower.as_str() {
+            "refresh" => Some(Event::Refresh),
+            "resize" => Some(Event::WindowResize),
+            "focus_lost" => Some(Event::FocusLost),
+            _ => None,
+        };
+        if let Some(event) = simple {
+            return if mods == (false, false, false) {
+                Ok(event)
+            } else {
+                Err(err("this event takes no modifiers"))
+            };
+        }
+
+        let key: Key = key.parse().map_err(|_| err("unknown key name"))?;
+        match mods {
+            (false, false, false) => Ok(Event::Key(key)),
+            (false, false, true) => Ok(Event::Shift(key)),
+            (false, true, false) => Ok(Event::Alt(key)),
+            (false, true, true) => Ok(Event::AltShift(key)),
+            (true, false, false) => Ok(Event::Ctrl(key)),
+            (true, false, true) => Ok(Event::CtrlShift(key)),
+            (true, true, false) => Ok(Event::CtrlAlt(key)),
+            (true, true, true) => Err(err("no event for ctrl+alt+shift")),
+        }
+    }
+}
+
+/// Prints an event in the syntax accepted by `FromStr`: `ctrl+c`, `alt+shift+Up`, `space`...
+///
+/// Modifiers are printed in the order `ctrl`, `alt`, `shift`, in lowercase.
+///
+/// Mouse, unknown and exit events cannot be parsed back: they are printed in their `Debug`
+/// form, which `FromStr` rejects.
+///
+/// # Examples
+///
+/// ```
+/// use cursive_core::event::{Event, Key};
+///
+/// assert_eq!(Event::CtrlChar('c').to_string(), "ctrl+c");
+/// assert_eq!(Event::CtrlAlt(Key::Left).to_string(), "ctrl+alt+Left");
+/// assert_eq!(Event::Char(' ').to_string(), "space");
+/// ```
+impl std::fmt::Display for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        fn ch(f: &mut std::fmt::Formatter<'_>, prefix: &str, c: char) -> std::fmt::Result {
+            if c == ' ' {
+                write!(f, "{prefix}space")
+            } else {
+                write!(f, "{prefix}{c}")
+            }
+        }
+
+        match self {
+            Event::WindowResize => f.write_str("resize"),
+            Event::FocusLost => f.write_str("focus_lost"),
+            Event::Refresh => f.write_str("refresh"),
+            Event::Char(c) => ch(f, "", *c),
+            Event::CtrlChar(c) => ch(f, "ctrl+", *c),
+            Event::AltChar(c) => ch(f, "alt+", *c),
+            Event::Key(k) => write!(f, "{k}"),
+            Event::Shift(k) => write!(f, "shift+{k}"),
+            Event::Alt(k) => write!(f, "alt+{k}"),
+            Event::AltShift(k) => write!(f, "alt+shift+{k}"),
+            Event::Ctrl(k) => write!(f, "ctrl+{k}"),
+            Event::CtrlShift(k) => write!(f, "ctrl+shift+{k}"),
+            Event::CtrlAlt(k) => write!(f, "ctrl+alt+{k}"),
+            // These do not round-trip.
+            Event::Mouse { .. } | Event::Unknown(_) | Event::Exit => write!(f, "{self:?}"),
+        }
+    }
+}
+
 impl From<char> for Event {
     fn from(c: char) -> Event {
         Event::Char(c)
@@ -661,5 +965,161 @@ impl From<char> for Event {
 impl From<Key> for Event {
     fn from(k: Key) -> Event {
         Event::Key(k)
+    }
+}
+
+#[cfg(test)]
+mod parse_tests {
+    use super::*;
+
+    fn parse(s: &str) -> Result<Event, ParseEventError> {
+        s.parse()
+    }
+
+    #[test]
+    fn key_round_trip() {
+        assert_eq!(KEY_NAMES.len(), 29);
+        for (key, name) in KEY_NAMES {
+            assert_eq!(key.to_string(), *name);
+            assert_eq!(name.parse::<Key>(), Ok(*key));
+            assert_eq!(name.to_lowercase().parse::<Key>(), Ok(*key));
+            assert_eq!(name.to_uppercase().parse::<Key>(), Ok(*key));
+        }
+        for (key, alias) in KEY_ALIASES {
+            assert_eq!(alias.parse::<Key>(), Ok(*key));
+        }
+        assert!("".parse::<Key>().is_err());
+        assert!("F13".parse::<Key>().is_err());
+    }
+
+    #[test]
+    fn table() {
+        let cases: Vec<(&str, Event)> = vec![
+            ("a", Event::Char('a')),
+            ("A", Event::Char('A')),
+            ("5", Event::Char('5')),
+            ("é", Event::Char('é')),
+            ("Esc", Event::Key(Key::Esc)),
+            ("enter", Event::Key(Key::Enter)),
+            ("PageUp", Event::Key(Key::PageUp)),
+            ("pgdn", Event::Key(Key::PageDown)),
+            ("escape", Event::Key(Key::Esc)),
+            ("F5", Event::Key(Key::F5)),
+            ("ctrl+c", Event::CtrlChar('c')),
+            ("control+c", Event::CtrlChar('c')),
+            ("CTRL+C", Event::CtrlChar('C')),
+            ("alt+x", Event::AltChar('x')),
+            ("shift+tab", Event::Shift(Key::Tab)),
+            ("alt+left", Event::Alt(Key::Left)),
+            ("ctrl+left", Event::Ctrl(Key::Left)),
+            ("alt+shift+up", Event::AltShift(Key::Up)),
+            ("shift+alt+up", Event::AltShift(Key::Up)),
+            ("ctrl+shift+Home", Event::CtrlShift(Key::Home)),
+            ("ctrl+alt+left", Event::CtrlAlt(Key::Left)),
+            ("Alt+Ctrl+Left", Event::CtrlAlt(Key::Left)),
+            ("refresh", Event::Refresh),
+            ("Resize", Event::WindowResize),
+            ("FOCUS_LOST", Event::FocusLost),
+            ("  ctrl+c  ", Event::CtrlChar('c')),
+            ("ctrl + c", Event::CtrlChar('c')),
+        ];
+        for (s, e) in cases {
+            assert_eq!(parse(s), Ok(e), "parsing {s:?}");
+        }
+    }
+
+    #[test]
+    fn plus_and_space() {
+        assert_eq!(parse("+"), Ok(Event::Char('+')));
+        assert_eq!(parse("ctrl++"), Ok(Event::CtrlChar('+')));
+        assert_eq!(parse("alt++"), Ok(Event::AltChar('+')));
+        assert_eq!(parse(" "), Ok(Event::Char(' ')));
+        assert_eq!(parse("space"), Ok(Event::Char(' ')));
+        assert_eq!(parse("Space"), Ok(Event::Char(' ')));
+        assert_eq!(parse("ctrl+space"), Ok(Event::CtrlChar(' ')));
+        assert!(parse("ctrl+").is_err());
+        assert!(parse("++").is_err());
+        assert!(parse("+ctrl").is_err());
+        assert!(parse("   ").is_err());
+        assert!(parse("").is_err());
+    }
+
+    #[test]
+    fn rejected() {
+        for s in [
+            "ctrl+alt+c",
+            "shift+a",
+            "alt+shift+a",
+            "ctrl+alt+shift+left",
+            "ctrl+ctrl+c",
+            "ctrl+ctrl+left",
+            "shift+shift+left",
+            "ctrl+refresh",
+            "shift+resize",
+            "alt+focus_lost",
+            "meta+c",
+            "super+left",
+            "ctrl+nope",
+            "nope",
+            "ab",
+            "ctrl+ab",
+            "ctrl++x",
+            "+ctrl+c",
+            "ctrl+c+",
+            "Mouse",
+            "Unknown",
+            "exit",
+        ] {
+            assert!(parse(s).is_err(), "{s:?} should be rejected");
+        }
+        let err = parse("ctrl+alt+c").unwrap_err();
+        assert!(err.to_string().contains("ctrl+alt+c"));
+        assert_eq!(err.input(), "ctrl+alt+c");
+    }
+
+    #[test]
+    fn display_round_trip() {
+        let mut events = vec![Event::Refresh, Event::WindowResize, Event::FocusLost];
+        for c in ['a', 'A', '+', ' ', '5', 'é'] {
+            events.push(Event::Char(c));
+            events.push(Event::CtrlChar(c));
+            events.push(Event::AltChar(c));
+        }
+        for (k, _) in KEY_NAMES {
+            let k = *k;
+            events.extend([
+                Event::Key(k),
+                Event::Shift(k),
+                Event::Alt(k),
+                Event::AltShift(k),
+                Event::Ctrl(k),
+                Event::CtrlShift(k),
+                Event::CtrlAlt(k),
+            ]);
+        }
+        for e in events {
+            let s = e.to_string();
+            assert_eq!(parse(&s), Ok(e.clone()), "round-tripping {s:?}");
+        }
+
+        assert_eq!(Event::Char(' ').to_string(), "space");
+        assert_eq!(Event::CtrlChar('c').to_string(), "ctrl+c");
+        assert_eq!(Event::AltShift(Key::Up).to_string(), "alt+shift+Up");
+    }
+
+    #[test]
+    fn display_unsupported() {
+        let events = [
+            Event::Unknown(vec![1, 2]),
+            Event::Exit,
+            Event::Mouse {
+                offset: Vec2::zero(),
+                position: Vec2::zero(),
+                event: MouseEvent::WheelUp,
+            },
+        ];
+        for e in events {
+            assert!(parse(&e.to_string()).is_err());
+        }
     }
 }
