@@ -9,6 +9,10 @@
 - Replace the generic `From<S>` impl for `BorderStyle` with `FromStr`.
 - Bump MSRV requirements: bump resolver and rust edition to 2024.
 - Fix `Dialog::important_area` to point at the focused button, so scroll views can reach it.
+- Add `FromStr` and `Display` for `Key` and `Event` (`"ctrl+c"`, `"alt+shift+up"`, `"F5"`...), with a
+  new `ParseEventError`. Mouse and unknown events do not round-trip.
+- `Key`, `Event` and `EventTrigger` (from one event string or an array of them) can be resolved in
+  blueprints.
 
 ### Breaking changes
 

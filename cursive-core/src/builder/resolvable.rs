@@ -1848,6 +1848,41 @@ impl Resolvable for crate::align::HAlign {
     }
 }
 
+impl Resolvable for crate::event::Key {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        resolve_from_str(config, context, |e: crate::event::ParseEventError| {
+            e.to_string()
+        })
+    }
+}
+
+impl Resolvable for crate::event::Event {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        resolve_from_str(config, context, |e: crate::event::ParseEventError| {
+            e.to_string()
+        })
+    }
+}
+
+/// An `EventTrigger` is resolved from an event string, or from an array of event strings
+/// (any of them triggers it).
+impl Resolvable for crate::event::EventTrigger {
+    fn from_config(config: &Config, context: &Context) -> Result<Self, Error> {
+        use crate::event::{Event, EventTrigger};
+
+        match config {
+            Config::Array(items) => {
+                let mut trigger = EventTrigger::none();
+                for item in items {
+                    trigger = trigger.or(context.resolve::<Event>(item)?);
+                }
+                Ok(trigger)
+            }
+            _ => Ok(EventTrigger::from(context.resolve::<Event>(config)?)),
+        }
+    }
+}
+
 // TODO: This could be solved with NoConfig instead.
 // Implement Resolvable for all functions taking 4 or less arguments.
 // (They will all fail to deserialize, but at least we can call resolve() on them)
@@ -2463,6 +2498,34 @@ mod tests {
                 front: ColorType::InheritParent,
                 back: ColorType::Color(Color::Dark(BaseColor::White)),
             },
+        );
+    }
+
+    #[test]
+    fn test_event() {
+        use crate::event::{Event, EventTrigger, Key};
+
+        check_resolves_from_conf(json!("ctrl+c"), Event::CtrlChar('c'));
+        check_resolves_from_conf(json!("alt+shift+up"), Event::AltShift(Key::Up));
+        check_resolves_from_conf(json!("Esc"), Key::Esc);
+
+        let context = Context::new();
+        assert!(context.resolve::<Event>(&json!("ctrl+alt+c")).is_err());
+
+        let single: EventTrigger = context.resolve(&json!("ctrl+c")).unwrap();
+        assert!(single.apply(&Event::CtrlChar('c')));
+        assert!(!single.apply(&Event::Char('c')));
+
+        let any: EventTrigger = context.resolve(&json!(["esc", "q", "ctrl+c"])).unwrap();
+        assert!(any.apply(&Event::Key(Key::Esc)));
+        assert!(any.apply(&Event::Char('q')));
+        assert!(any.apply(&Event::CtrlChar('c')));
+        assert!(!any.apply(&Event::Char('x')));
+
+        assert!(
+            context
+                .resolve::<EventTrigger>(&json!(["esc", "nope"]))
+                .is_err()
         );
     }
 
