@@ -13,6 +13,9 @@
   new `ParseEventError`. Mouse and unknown events do not round-trip.
 - `Key`, `Event` and `EventTrigger` (from one event string or an array of them) can be resolved in
   blueprints.
+- `Printer::on_window` no longer panics when the output window does not fit the backend buffer: the
+  closure now gets the part that fits, which can be empty. This fixes a panic in off-screen
+  `GradientView`s.
 
 ### Breaking changes
 

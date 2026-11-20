@@ -163,6 +163,10 @@ pub struct PrintBuffer {
 pub struct Window<'a> {
     buffer: &'a mut PrintBuffer,
     viewport: Rect,
+    /// Actual size of the window, always within the buffer.
+    ///
+    /// Unlike `viewport` (whose corners are inclusive), this can be zero.
+    size: Vec2,
 }
 
 impl Window<'_> {
@@ -176,7 +180,7 @@ impl Window<'_> {
     }
 
     fn absolute_pos(&self, pos: Vec2) -> Option<Vec2> {
-        if !pos.fits_in(self.viewport.size()) {
+        if !pos.strictly_lt(self.size) {
             return None;
         }
 
@@ -188,18 +192,23 @@ impl Window<'_> {
         self.buffer
             .rows()
             .skip(self.viewport.top())
-            .take(self.viewport.height())
-            .map(|row| &row[self.viewport.left()..=self.viewport.right()])
+            .take(self.size.y)
+            .map(|row| &row[self.viewport.left()..self.viewport.left() + self.size.x])
     }
 
     /// Returns the viewport this window is covering.
+    ///
+    /// For an empty window (see [`Self::size`]), this is a single point where
+    /// the window starts, and does not cover any cell of the window.
     pub fn viewport(&self) -> Rect {
         self.viewport
     }
 
     /// Returns the size of this window.
+    ///
+    /// This can be zero if the window does not cover any cell of the buffer.
     pub fn size(&self) -> Vec2 {
-        self.viewport.size()
+        self.size
     }
 
     /// Get mutable access to the style at the given cell, if any.
@@ -390,10 +399,23 @@ impl PrintBuffer {
             return None;
         }
 
-        Some(Window {
+        Some(self.clipped_window(viewport.top_left(), viewport.size()))
+    }
+
+    /// Returns a mutable access to the part of a region that lies in this buffer.
+    ///
+    /// The region starts at `top_left` and spans `size` cells. Anything outside
+    /// the buffer is cut off, so the window can be empty.
+    pub(crate) fn clipped_window(&mut self, top_left: Vec2, size: Vec2) -> Window<'_> {
+        let top_left = top_left.or_min(self.size);
+        let end = (top_left + size).or_min(self.size);
+        let size = end.saturating_sub(top_left);
+
+        Window {
             buffer: self,
-            viewport,
-        })
+            viewport: Rect::from_size(top_left, size),
+            size,
+        }
     }
 
     /// Get the text at the given position

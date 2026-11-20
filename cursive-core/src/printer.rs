@@ -333,14 +333,17 @@ impl<'a, 'b> Printer<'a, 'b> {
     }
 
     /// Calls a closure on the output window for this printer.
+    ///
+    /// The window is the part of [`Self::output_window`] that lies in the
+    /// backend buffer. It can be empty, for instance for a view placed
+    /// entirely off-screen, so `f` should rely on [`Window::size`] rather than
+    /// assume any cell is available.
     pub fn on_window<F, R>(&self, f: F) -> R
     where
         F: FnOnce(&mut Window<'_>) -> R,
     {
         let mut buffer = self.buffer.write();
-        let mut window = buffer
-            .window(self.output_window())
-            .expect("printer size exceeds backend size");
+        let mut window = buffer.clipped_window(self.offset, self.output_size);
         f(&mut window)
     }
 
@@ -1490,9 +1493,10 @@ mod tests {
         child.on_window(|window| {
             called = true;
             // The window collapses to a zero-size rect pinned on the
-            // buffer edge (its inclusive `size()` still reports the
-            // single pinned point).
+            // buffer edge (the rect's inclusive `size()` still reports the
+            // single pinned point, but the window itself is empty).
             assert_eq!(window.viewport(), Rect::from_size((10, 10), (0, 0)));
+            assert_eq!(window.size(), Vec2::zero());
         });
         assert!(called, "closure should run on the clamped (empty) window");
     }
@@ -1521,6 +1525,68 @@ mod tests {
         let printer = Printer::new((10, 10), &theme, &buffer);
         let layout = FixedLayout::new().child(Rect::from_size((50, 50), (5, 5)), WindowUser);
         layout.draw(&printer);
+    }
+
+    #[test]
+    fn on_window_clips_to_a_smaller_buffer() {
+        let (theme, buffer) = buffer_10x10();
+        let printer = Printer::new((10, 10), &theme, &buffer);
+        // The output window no longer fits once the buffer shrinks.
+        buffer.write().resize(Vec2::new(5, 5));
+
+        let size = printer.on_window(|window| window.size());
+        assert_eq!(size, Vec2::new(5, 5));
+    }
+
+    #[test]
+    fn on_window_runs_on_empty_window_outside_buffer() {
+        let (theme, buffer) = buffer_10x10();
+        let printer = Printer::new((10, 10), &theme, &buffer);
+        let child = printer.offset((8, 8));
+        buffer.write().resize(Vec2::new(5, 5));
+
+        let size = child.on_window(|window| {
+            assert!(window.style_at_mut((0, 0)).is_none());
+            assert_eq!(window.rows().count(), 0);
+            window.size()
+        });
+        assert_eq!(size, Vec2::zero());
+    }
+
+    #[test]
+    fn offscreen_gradient_view_leaves_buffer_alone() {
+        use crate::style::gradient::{Angled, Linear};
+        use crate::views::{DummyView, GradientView};
+
+        let gradient = || {
+            GradientView::new(
+                DummyView::new(),
+                Angled {
+                    angle_rad: 0.0,
+                    gradient: Linear::black_to_white(),
+                },
+            )
+        };
+
+        let styles = |buffer: &RwLock<PrintBuffer>| {
+            let buffer = buffer.read();
+            (0..100)
+                .map(|i| buffer.cell_style(Vec2::new(i % 10, i / 10)))
+                .collect::<Vec<_>>()
+        };
+
+        let (theme, buffer) = buffer_10x10();
+        let printer = Printer::new((10, 10), &theme, &buffer);
+        printer.clear();
+        let before = styles(&buffer);
+
+        // Off-screen past the bottom-right corner, and past the right edge.
+        let layout = FixedLayout::new()
+            .child(Rect::from_size((50, 50), (5, 5)), gradient())
+            .child(Rect::from_size((50, 3), (5, 5)), gradient());
+        layout.draw(&printer);
+
+        assert_eq!(styles(&buffer), before);
     }
 
     /// Draws a 6x4 box with the given theme.
