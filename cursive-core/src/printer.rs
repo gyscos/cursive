@@ -1492,10 +1492,8 @@ mod tests {
         let mut called = false;
         child.on_window(|window| {
             called = true;
-            // The window collapses to a zero-size rect pinned on the
-            // buffer edge (the rect's inclusive `size()` still reports the
-            // single pinned point, but the window itself is empty).
-            assert_eq!(window.viewport(), Rect::from_size((10, 10), (0, 0)));
+            // The window is empty: it does not cover any cell.
+            assert_eq!(window.viewport(), None);
             assert_eq!(window.size(), Vec2::zero());
         });
         assert!(called, "closure should run on the clamped (empty) window");
@@ -1551,6 +1549,18 @@ mod tests {
             window.size()
         });
         assert_eq!(size, Vec2::zero());
+    }
+
+    #[test]
+    fn on_window_rows_on_zero_width_buffer() {
+        let theme = Theme::default();
+        let mut buffer = PrintBuffer::new();
+        buffer.resize(Vec2::new(0, 5));
+        let buffer = RwLock::new(buffer);
+        let printer = Printer::new((0, 5), &theme, &buffer);
+
+        let rows = printer.on_window(|window| window.rows().count());
+        assert_eq!(rows, 0);
     }
 
     #[test]

@@ -113,10 +113,11 @@ where
 
         let buffer_size = printer.buffer_size();
         printer.on_window(|window| {
-            let viewport = window.viewport();
-            let size = window.size();
-            for y in 0..size.y {
-                for x in 0..size.x {
+            let Some(viewport) = window.viewport() else {
+                return;
+            };
+            for y in 0..viewport.height() {
+                for x in 0..viewport.width() {
                     let pos = Vec2::new(x, y);
                     let Some(style) = window.style_at_mut(pos) else {
                         continue;

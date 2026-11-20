@@ -162,11 +162,10 @@ pub struct PrintBuffer {
 /// A view into a rectangular area of the buffer.
 pub struct Window<'a> {
     buffer: &'a mut PrintBuffer,
-    viewport: Rect,
-    /// Actual size of the window, always within the buffer.
+    /// Area covered by this window, always within the buffer.
     ///
-    /// Unlike `viewport` (whose corners are inclusive), this can be zero.
-    size: Vec2,
+    /// `None` if the window does not cover any cell.
+    viewport: Option<Rect>,
 }
 
 impl Window<'_> {
@@ -180,27 +179,36 @@ impl Window<'_> {
     }
 
     fn absolute_pos(&self, pos: Vec2) -> Option<Vec2> {
-        if !pos.strictly_lt(self.size) {
+        let viewport = self.viewport?;
+        if !pos.strictly_lt(viewport.size()) {
             return None;
         }
 
-        Some(pos + self.viewport.top_left())
+        Some(pos + viewport.top_left())
     }
 
     /// Iterate on the rows of this window.
     pub fn rows(&self) -> impl Iterator<Item = &[Option<Cell>]> {
+        let (top, height, columns) = match self.viewport {
+            Some(viewport) => (
+                viewport.top(),
+                viewport.height(),
+                viewport.left()..viewport.right() + 1,
+            ),
+            None => (0, 0, 0..0),
+        };
+
         self.buffer
             .rows()
-            .skip(self.viewport.top())
-            .take(self.size.y)
-            .map(|row| &row[self.viewport.left()..self.viewport.left() + self.size.x])
+            .skip(top)
+            .take(height)
+            .map(move |row| &row[columns.clone()])
     }
 
     /// Returns the viewport this window is covering.
     ///
-    /// For an empty window (see [`Self::size`]), this is a single point where
-    /// the window starts, and does not cover any cell of the window.
-    pub fn viewport(&self) -> Rect {
+    /// Returns `None` if the window is empty and does not cover any cell.
+    pub fn viewport(&self) -> Option<Rect> {
         self.viewport
     }
 
@@ -208,7 +216,8 @@ impl Window<'_> {
     ///
     /// This can be zero if the window does not cover any cell of the buffer.
     pub fn size(&self) -> Vec2 {
-        self.size
+        self.viewport
+            .map_or(Vec2::zero(), |viewport| viewport.size())
     }
 
     /// Get mutable access to the style at the given cell, if any.
@@ -242,7 +251,8 @@ impl PrintBuffer {
 
     /// Iterate on the rows of this buffer.
     pub fn rows(&self) -> impl Iterator<Item = &[Option<Cell>]> {
-        self.active_buffer.chunks(self.size.x)
+        // `chunks` panics on a zero size. A zero-width buffer has no cell anyway.
+        self.active_buffer.chunks(self.size.x.max(1))
     }
 
     /// Clear this buffer.
@@ -395,7 +405,7 @@ impl PrintBuffer {
 
     /// Returns a mutable access to a sub-region from this buffer.
     pub fn window(&mut self, viewport: Rect) -> Option<Window<'_>> {
-        if !viewport.bottom_right().fits_in(self.size) {
+        if !viewport.bottom_right().strictly_lt(self.size) {
             return None;
         }
 
@@ -411,10 +421,11 @@ impl PrintBuffer {
         let end = (top_left + size).or_min(self.size);
         let size = end.saturating_sub(top_left);
 
+        let viewport = (size.x > 0 && size.y > 0).then(|| Rect::from_size(top_left, size));
+
         Window {
             buffer: self,
-            viewport: Rect::from_size(top_left, size),
-            size,
+            viewport,
         }
     }
 

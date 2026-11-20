@@ -28,6 +28,7 @@
   a table), and an empty table no longer creates a namespace.
 - `ProgressBar` centers its label by display width instead of bytes: labels with non-ASCII
   characters move.
+- `buffer::Window::viewport` returns an `Option<Rect>`, `None` when the window is empty.
 
 ### Theming
 
